@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Tindroid</string>
+    <string name="action_settings">Settings</string>
+    <string name="login_hint">Login: alice, bob, carol, dave, eve, frank</string>
+    <string name="password_hint">Password: alice123, bob123,...</string>
+    <string name="new_message_hint">Type a message</string>
+    <string name="send_message_button_hint">Send message</string>
+    <string name="sign_in">Sign In</string>
+    <string name="tinode_url">https://github.com/tinode/</string>
+    <string name="app_description">Tinode Demo Chat</string>
+    <string name="action_signup">Sign Up</string>
+</resources>
