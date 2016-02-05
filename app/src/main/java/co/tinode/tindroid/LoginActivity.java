@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -10,7 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-public class Login extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +46,10 @@ public class Login extends AppCompatActivity {
     }
 
     public void onLogin(View v) {
+        Intent intent = new Intent(this, ContactsActivity.class);
+
+        startActivity(intent);
+
         Toast.makeText(getApplicationContext(),
                 "Woohoohoo!", Toast.LENGTH_LONG).show();
     }
