@@ -5,12 +5,12 @@
     <solid android:color="#98AFC7" />
 
     <stroke
-        android:width="2dp"
+        android:width="2sp"
         android:color="#98AFC7" />
 
-    <!--size
-        android:width="16sp"
-        android:height="16sp" /-->
+    <size
+        android:width="14sp"
+        android:height="14sp" />
 
     <!--corners
         android:bottomLeftRadius="20dp"

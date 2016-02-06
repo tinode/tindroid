@@ -20,9 +20,9 @@ public class ContactsListAdapter extends BaseAdapter {
     private Context mContext;
     private List<Contact> mContactItems;
 
-    public ContactsListAdapter(Context context, List<Contact> navDrawerItems) {
+    public ContactsListAdapter(Context context, List<Contact> items) {
         mContext = context;
-        mContactItems = navDrawerItems;
+        mContactItems = items;
     }
 
     @Override
@@ -42,11 +42,6 @@ public class ContactsListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
-        /**
-         * The following list not implemented reusable list items as list items
-         * are showing incorrect data Add the solution if you have one
-         * */
 
         Contact c = mContactItems.get(position);
 
@@ -72,7 +67,9 @@ public class ContactsListAdapter extends BaseAdapter {
         // TODO(gene): set avatar
 
         ((ImageView) convertView.findViewById(R.id.online))
-                .setColorFilter(Color.argb(255, 192, c.online ? 255: 192, 192));
+                .setColorFilter(c.online ?
+                                Color.argb(255, 64, 192, 64) :
+                                Color.argb(255, 192, 192, 192));
 
         return convertView;
     }

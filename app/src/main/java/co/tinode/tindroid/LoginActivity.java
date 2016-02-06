@@ -47,7 +47,6 @@ public class LoginActivity extends AppCompatActivity {
 
     public void onLogin(View v) {
         Intent intent = new Intent(this, ContactsActivity.class);
-
         startActivity(intent);
 
         Toast.makeText(getApplicationContext(),

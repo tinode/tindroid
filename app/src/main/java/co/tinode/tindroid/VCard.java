@@ -5,7 +5,7 @@ package co.tinode.tindroid;
  */
 public class VCard {
     public String fn;
-    public Photo phot;
+    public Photo photo;
 
     public class Photo {
         public byte[] data;
