@@ -60,13 +60,7 @@ public class MessagesListAdapter extends BaseAdapter {
         int[] colors = {0xff00ffc0, 0xff00c0ff, 0xffc000ff};
         NinePatchDrawable np = (NinePatchDrawable) convertView
                 .findViewById(R.id.contentWithBackground).getBackground();
-        np.mutate().setColorFilter(colors[position], PorterDuff.Mode.MULTIPLY); //(new
-         //       PorterDuffColorFilter(0xffff00, PorterDuff.Mode.MULTIPLY));
-
-        //((ImageView) convertView.findViewById(R.id.online))
-        //       .setColorFilter(c.online ?
-        //                Color.argb(255, 64, 192, 64) :
-        //                Color.argb(255, 192, 192, 192));
+        np.mutate().setColorFilter(colors[position % 3], PorterDuff.Mode.MULTIPLY); //(new
 
         return convertView;
     }

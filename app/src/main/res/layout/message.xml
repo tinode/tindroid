@@ -11,13 +11,13 @@
         android:layout_alignParentRight="true"
         android:orientation="vertical">
 
-        <TextView
+        <!--TextView
             android:id="@+id/txtInfo"
             android:layout_width="wrap_content"
             android:layout_height="30sp"
             android:layout_gravity="end"
             android:textSize="12sp"
-            android:textColor="@android:color/darker_gray"/>
+            android:textColor="@android:color/darker_gray"/-->
 
         <LinearLayout
             android:id="@+id/contentWithBackground"
@@ -28,13 +28,14 @@
             android:paddingStart="10dp"
             android:paddingLeft="10dp"
             android:paddingBottom="10dp"
+            android:elevation="1dp"
             android:orientation="vertical">
 
             <TextView android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/black"
-                android:maxWidth="300dp"/>
+                android:maxWidth="280dp"/>
 
         </LinearLayout>
 

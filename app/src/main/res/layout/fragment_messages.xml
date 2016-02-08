@@ -1,0 +1,55 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    tools:context="co.tinode.tindroid.MessagesFragment"
+    tools:showIn="@layout/activity_messages">
+
+    <ListView
+        android:id="@+id/messages_container"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/sendMessagePanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:listSelector="@android:color/transparent"
+        android:background="@drawable/message_view_bkg"
+        android:transcriptMode="alwaysScroll"
+        android:divider="@null" />
+
+    <LinearLayout
+        android:id="@+id/sendMessagePanel"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:paddingLeft="6sp"
+        android:paddingStart="6sp"
+        android:orientation="horizontal"
+        android:background="@android:color/background_light">
+
+        <EditText
+            android:layout_width="111dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/editMessage"
+            android:inputType="text"
+            android:hint="@string/new_message_hint"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/chatSendButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_send"
+            android:contentDescription="@string/send_message_button_hint"
+            android:tint="@android:color/holo_blue_dark"
+            android:layout_weight="0.1"
+            android:background="@android:color/background_light" />
+
+    </LinearLayout>
+
+</RelativeLayout>
