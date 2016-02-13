@@ -11,6 +11,7 @@
         <activity
             android:name=".LoginActivity"
             android:label="@string/app_name"
+            android:noHistory="true"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,9 +29,8 @@
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
 
-        <service android:name=".NetworkService" />
-
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 
 </manifest>

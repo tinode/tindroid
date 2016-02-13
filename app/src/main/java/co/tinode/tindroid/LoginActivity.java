@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -26,28 +27,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
-
-    NetworkService mNetwork;
-    boolean mBound = false;
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        // Bind to LocalService.
-        bindService(new Intent(getApplicationContext(), NetworkService.class),
-                mConnection,
-                Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        // Unbind from the service
-        if (mBound) {
-            unbindService(mConnection);
-            mBound = false;
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,63 +64,44 @@ public class LoginActivity extends AppCompatActivity {
         final String login = ((EditText) findViewById(R.id.editLogin)).getText().toString();
         final String password = ((EditText) findViewById(R.id.editPassword)).getText().toString();
 
-        new AsyncTask<Void,Void,Void>() {
-            @Override
-            protected Void doInBackground(Void... unused) {
-                try {
-                    mNetwork.getTinode().connect()
-                            .thenApply(
-                                    new PromisedReply.SuccessListener<ServerMessage>() {
-                                        @Override
-                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                            return mNetwork.getTinode().loginBasic(
-                                                    login,
-                                                    password);
-                                        }
-                                    },
-                                    null)
-                            .thenApply(
-                                    new PromisedReply.SuccessListener<ServerMessage>() {
-                                        @Override
-                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                            Intent intent = new Intent(getApplicationContext(), ContactsActivity.class);
-                                            startActivity(intent);
-                                            return null;
-                                        }
-                                    },
-                                    new PromisedReply.FailureListener<ServerMessage>() {
-                                        @Override
-                                        public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                            Log.i(TAG, "connection failed :( " + err.getMessage());
+        try {
+            // This is called on websocket thread.
+            InmemoryCache.getTinode().connect()
+                    .thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                    return InmemoryCache.getTinode().loginBasic(
+                                            login,
+                                            password);
+                                }
+                            },
+                            null)
+                    .thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                    Intent intent = new Intent(getApplicationContext(), ContactsActivity.class);
+                                    startActivity(intent);
+                                    return null;
+                                }
+                            },
+                            new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                    final String message = err.getMessage();
+                                    Log.i(TAG, "connection failed :( " + err.getMessage());
+                                    LoginActivity.this.runOnUiThread(new Runnable() {
+                                        public void run() {
                                             Toast.makeText(getApplicationContext(),
-                                                    "Failed to login", Toast.LENGTH_LONG).show();
-                                            return null;
+                                                    "Login failed: " + message, Toast.LENGTH_SHORT).show();
                                         }
                                     });
-                } catch (Exception e) {
-                    Log.e(TAG, "Something went wrong", e);
-                }
-                return null;
-            }
-        }.execute();
+                                    return null;
+                                }
+                            });
+        } catch (Exception e) {
+            Log.e(TAG, "Something went wrong", e);
+        }
     }
-
-    /** Defines callbacks for service binding, passed to bindService() */
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            NetworkService.LocalBinder binder = (NetworkService.LocalBinder) service;
-            mNetwork = binder.getService();
-            mBound = true;
-            Log.d(TAG, "Activity bound");
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mBound = false;
-            Log.d(TAG, "Activity unbound");
-        }
-    };
 }
