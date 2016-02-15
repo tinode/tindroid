@@ -40,6 +40,9 @@ public class Tinode {
     private static ObjectMapper sJsonMapper;
     private static TypeFactory sTypeFactory;
 
+    protected JavaType mTypeOfDataPacket;
+    protected JavaType mTypeOfMetaPacket;
+
     private String mApiKey;
     private String mServerHost;
     private String mAppName;
@@ -290,6 +293,60 @@ public class Tinode {
         return sJsonMapper;
     }
 
+    public static boolean isNull(Object obj) {
+        // Del control character
+        return (obj instanceof String) && ((String) obj).equals("\u2421");
+    }
+    /**
+     * Assign default types of generic parameters. Needed for packet deserialization.
+     *
+     * @param typeOfPublic - type of public values
+     * @param typeOfPrivate - type of private values
+     * @param typeOfContent - type of content sent in {pub}/{data} messages
+     */
+    public void setDefaultTypes(JavaType typeOfPublic,
+                                JavaType typeOfPrivate, JavaType typeOfContent) {
+        mTypeOfDataPacket = sTypeFactory
+                .constructParametricType(MsgServerData.class, typeOfContent);
+        mTypeOfMetaPacket = sTypeFactory
+                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
+    }
+
+    /**
+     * Assign default types of generic parameters. Needed for packet deserialization.
+     *
+     * @param typeOfPublic - type of public values
+     * @param typeOfPrivate - type of private values
+     * @param typeOfContent - type of content sent in {pub}/{data} messages
+     */
+    public void setDefaultTypes(Class<?> typeOfPublic,
+                                Class<?> typeOfPrivate, Class<?> typeOfContent) {
+        mTypeOfDataPacket = sTypeFactory
+                .constructParametricType(MsgServerData.class, typeOfContent);
+        mTypeOfMetaPacket = sTypeFactory
+                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
+    }
+
+    protected JavaType getTypeOfDataPacket() {
+        return mTypeOfDataPacket;
+    }
+
+    protected JavaType getTypeOfDataPacket(String topicName) {
+        Topic topic = mTopics.get(topicName);
+        JavaType result = (topic != null) ? topic.getTypeOfDataPacket() : null;
+        return result != null ? result : mTypeOfDataPacket;
+    }
+
+    protected JavaType getTypeOfMetaPacket() {
+        return mTypeOfMetaPacket;
+    }
+
+    protected JavaType getTypeOfMetaPacket(String topicName) {
+        Topic topic = mTopics.get(topicName);
+        JavaType result = (topic != null) ? topic.getTypeOfMetaPacket() : null;
+        return result != null ? result : mTypeOfMetaPacket;
+    }
+
     protected String makeUserAgent() {
         return mAppName + " (Android " + Build.VERSION.RELEASE + "; "
                 + Locale.getDefault().toString() + "; "
@@ -469,10 +526,10 @@ public class Tinode {
      */
     protected ServerMessage parseServerMessageFromJson(String jsonMessage) {
         ServerMessage msg = new ServerMessage();
-
         try {
             ObjectMapper mapper = Tinode.getJsonMapper();
             JsonParser parser = mapper.getFactory().createParser(jsonMessage);
+
             // Sanity check: verify that we got "Json Object":
             if (parser.nextToken() != JsonToken.START_OBJECT) {
                 throw new JsonParseException(parser, "Packet must start with an object",
@@ -482,21 +539,28 @@ public class Tinode {
             while (parser.nextToken() != JsonToken.END_OBJECT) {
                 String name = parser.getCurrentName();
                 parser.nextToken();
+                JsonNode node = mapper.readTree(parser);
                 switch (name) {
                     case "ctrl":
-                        msg.ctrl = mapper.readValue(parser, MsgServerCtrl.class);
+                        msg.ctrl = mapper.readValue(node.traverse(), MsgServerCtrl.class);
                         break;
                     case "pres":
-                        msg.pres = mapper.readValue(parser, MsgServerPres.class);
+                        msg.pres = mapper.readValue(node.traverse(), MsgServerPres.class);
                         break;
                     case "info":
-                        msg.info = mapper.readValue(parser, MsgServerInfo.class);
+                        msg.info = mapper.readValue(node.traverse(), MsgServerInfo.class);
                         break;
                     case "data":
-                        msg.data = parseMsgServerData(parser);
+                        if (node.has("topic")) {
+                            msg.data = mapper.readValue(node.traverse(),
+                                    getTypeOfDataPacket(node.get("topic").asText()));
+                        }
                         break;
                     case "meta":
-                        msg.meta = parseMsgServerMeta(parser);
+                        if (node.has("topic")) {
+                            msg.meta = mapper.readValue(node.traverse(),
+                                    getTypeOfMetaPacket(node.get("topic").asText()));
+                        }
                         break;
                     default:  // Unrecognized field, ignore
                         Log.i(TAG, "Unknown field in packet: '" + name + "'");
@@ -509,60 +573,6 @@ public class Tinode {
         }
 
         return msg.isValid() ? msg : null;
-    }
-
-    protected MsgServerData<?> parseMsgServerData(JsonParser parser) throws IOException {
-        ObjectMapper mapper = Tinode.getJsonMapper();
-        JsonNode node = mapper.readTree(parser);
-        if (node.has("topic")) {
-            String topicName = node.get("topic").asText();
-            Topic<?,?,?> topic = getTopic(topicName);
-            MsgServerData data = new MsgServerData();
-            if (node.has("id")) {
-                data.id = node.get("id").asText();
-            }
-            data.topic = topicName;
-            if (node.has("from")) {
-                data.from = node.get("from").asText();
-            }
-            if (node.has("ts")) {
-                data.ts = mapper.readValue(node.get("ts").traverse(), Date.class);
-            }
-            if (node.has("content")) {
-                data.content = mapper.readValue(node.get("content").traverse(), topic.getTypeOfDataContent());
-            }
-            return data;
-        } else {
-            throw new JsonParseException(parser, "Invalid {data} packet: missing topic name",
-                    parser.getCurrentLocation());
-        }
-    }
-
-    protected MsgServerMeta<?,?> parseMsgServerMeta(JsonParser parser) throws IOException {
-        ObjectMapper mapper = Tinode.getJsonMapper();
-        JsonNode node = mapper.readTree(parser);
-        if (node.has("topic")) {
-            String topicName = node.get("topic").asText();
-            Topic<?,?,?> topic = getTopic(topicName);
-            MsgServerMeta meta = new MsgServerMeta();
-            if (node.has("id")) {
-                meta.id = node.get("id").asText();
-            }
-            meta.topic = topicName;
-            if (node.has("ts")) {
-                meta.ts = mapper.readValue(node.get("ts").traverse(), Date.class);
-            }
-            if (node.has("desc")) {
-                meta.desc = mapper.readValue(node.get("desc").traverse(), topic.getTypeOfDataContent());
-            }
-            if (node.has("sub")) {
-                meta.sub = mapper.readValue(node.get("sub").traverse(), topic.getTypeOfDataContent());
-            }
-            return meta;
-        } else {
-            throw new JsonParseException(parser, "Invalid {meta} packet: missing topic name",
-                    parser.getCurrentLocation());
-        }
     }
 
     /**
@@ -587,6 +597,7 @@ public class Tinode {
          * @param reason should be always "Created"
          * @param params server parameters, such as protocol version
          */
+        @SuppressWarnings("unused")
         public void onConnect(int code, String reason, Map<String, Object> params) {
         }
 
@@ -597,6 +608,7 @@ public class Tinode {
          * @param code numeric code of the error which caused connection to drop
          * @param reason error message
          */
+        @SuppressWarnings("unused")
         public void onDisconnect(boolean byServer, int code, String reason) {
         }
 
@@ -606,6 +618,7 @@ public class Tinode {
          * @param code a numeric value between 200 and 2999 on success, 400 or higher on failure
          * @param text "OK" on success or error message
          */
+        @SuppressWarnings("unused")
         public void onLogin(int code, String text) {
         }
 
@@ -614,6 +627,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
+        @SuppressWarnings("unused")
         public void onMessage(ServerMessage<?,?,?> msg) {
         }
 
@@ -624,6 +638,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
+        @SuppressWarnings("unused")
         public void onRawMessage(String msg) {
         }
 
@@ -632,6 +647,7 @@ public class Tinode {
          *
          * @param ctrl control message to process
          */
+        @SuppressWarnings("unused")
         public void onCtrlMessage(MsgServerCtrl ctrl) {
         }
 
@@ -640,6 +656,7 @@ public class Tinode {
          *
          * @param data control message to process
          */
+        @SuppressWarnings("unused")
         public void onDataMessage(MsgServerData<?> data) {
         }
 
@@ -648,6 +665,7 @@ public class Tinode {
          *
          * @param info info message to process
          */
+        @SuppressWarnings("unused")
         public void onInfoMessage(MsgServerInfo info) {
         }
 
@@ -656,6 +674,7 @@ public class Tinode {
          *
          * @param meta meta message to process
          */
+        @SuppressWarnings("unused")
         public void onMetaMessage(MsgServerMeta<?,?> meta) {
         }
 
@@ -664,6 +683,7 @@ public class Tinode {
          *
          * @param pres control message to process
          */
+        @SuppressWarnings("unused")
         public void onPresMessage(MsgServerPres pres) {
         }
 

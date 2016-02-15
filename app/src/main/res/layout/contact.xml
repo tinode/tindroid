@@ -19,14 +19,14 @@
             android:layout_width="48sp"
             android:layout_height="48sp"
             android:tint="@color/material_grey_600"
-            android:src="@drawable/ic_account_circle_24dp"
+            android:src="@drawable/ic_account_circle"
             />
 
         <ImageView
             android:id="@+id/online"
             android:layout_width="16sp"
             android:layout_height="16sp"
-            android:src="@drawable/ic_brightness_1_24dp"
+            android:src="@drawable/ic_brightness_1"
             android:tint="@color/material_grey_300"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"

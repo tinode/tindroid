@@ -2,9 +2,12 @@ package co.tinode.tindroid;
 
 import java.util.List;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,15 +15,17 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import co.tinode.tinodesdk.model.Subscription;
+
 /**
  * Created by gsokolov on 2/4/16.
  */
 public class ContactsListAdapter extends BaseAdapter {
 
     private Context mContext;
-    private List<Contact> mContactItems;
+    private List<String> mContactItems;
 
-    public ContactsListAdapter(Context context, List<Contact> items) {
+    public ContactsListAdapter(Context context, List<String> items) {
         mContext = context;
         mContactItems = items;
     }
@@ -43,7 +48,8 @@ public class ContactsListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        Contact c = mContactItems.get(position);
+        Subscription<VCard,String> s = (Subscription) InmemoryCache.getTinode().getMeTopic()
+                .getSubscription(mContactItems.get(position));
 
         LayoutInflater inflater = (LayoutInflater) mContext
                 .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
@@ -52,10 +58,10 @@ public class ContactsListAdapter extends BaseAdapter {
             convertView = inflater.inflate(R.layout.contact, null);
         }
 
-        ((TextView) convertView.findViewById(R.id.contactName)).setText(c.pub.fn);
-        ((TextView) convertView.findViewById(R.id.contactPriv)).setText(c.priv);
+        ((TextView) convertView.findViewById(R.id.contactName)).setText(s.pub.fn);
+        ((TextView) convertView.findViewById(R.id.contactPriv)).setText(s.priv);
 
-        int unread = c.seq - c.read;
+        int unread = s.seq - s.read;
         TextView unreadBadge = (TextView) convertView.findViewById(R.id.unreadCount);
         if (unread > 0) {
             unreadBadge.setText(unread > 9 ? "9+" : String.valueOf(unread));
@@ -63,13 +69,16 @@ public class ContactsListAdapter extends BaseAdapter {
         } else {
             unreadBadge.setVisibility(View.INVISIBLE);
         }
-
-        // TODO(gene): set avatar
+        Bitmap bmp = s.pub != null ? s.pub.getBitmap() : null;
+        if (bmp != null) {
+            ImageView avatar = (ImageView) convertView.findViewById(R.id.avatar);
+            avatar.setImageDrawable(new RoundedImage(bmp));
+        }
 
         ((ImageView) convertView.findViewById(R.id.online))
-                .setColorFilter(c.online ?
-                                Color.argb(255, 64, 192, 64) :
-                                Color.argb(255, 192, 192, 192));
+                .setColorFilter(s.online ?
+                        Color.argb(255, 64, 192, 64) :
+                        Color.argb(255, 192, 192, 192));
 
         return convertView;
     }

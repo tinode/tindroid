@@ -4,16 +4,15 @@
 
 package co.tinode.tinodesdk;
 
-import android.util.Log;
-
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Defacs;
+import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
-import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.Subscription;
 
 import com.fasterxml.jackson.databind.JavaType;
 
@@ -21,6 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
+import java.util.Map;
 
 
 /**
@@ -31,52 +31,37 @@ import java.util.Date;
 public class Topic<Pu,Pr,T> {
     private static final String TAG = "co.tinode.tinodesdk.Topic";
 
-    protected JavaType mTypeOfDataContent;
-    protected JavaType mTypeOfPublic;
-    protected JavaType mTypeOfPrivate;
+    protected JavaType mTypeOfDataPacket = null;
+    protected JavaType mTypeOfMetaPacket = null;
 
     protected String mName;
 
-    protected Pu mPublic;
-    protected Pr mPrivate;
-
-    protected Date mCreated;
-    protected Date mUpdated;
-
-    // Topics default access mode (visible to managers only)
-    protected Defacs defacs;
-    // Actual access mode
-    protected Acs mAccess;
-
-    // Max message ID
-    protected int mSeq = 0;
-    protected int mRead = 0;
-    protected int mRecv = 0;
-    protected int mClear = 0;
+    protected Description<Pu,Pr> mDescription;
 
     protected Tinode mTinode;
 
-    protected List<TopicSub<Pu,Pr>> mSubs;
+    protected HashMap<String,Subscription<Pu,Pr>> mSubs;
 
     protected boolean mSubscribed;
-    protected Listener<T> mListener;
+    protected Listener<Pu,Pr,T> mListener;
 
-    public Topic(Tinode tinode, String name, JavaType typeOfT, Listener<T> l) {
-        mTypeOfDataContent = typeOfT;
+    /**
+     * Create a named topic.
+     *
+     * @param tinode instance of Tinode object to communicate with the server
+     * @param name name of the topic
+     * @param l event listener, optional
+     */
+    public Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
         mTinode = tinode;
         mName = name;
         mListener = l;
         mSubscribed = false;
-    }
-
-    public Topic(Tinode tinode, String name, Class<?> typeOfT, Listener<T> l) {
-        this(tinode, name, Tinode.getTypeFactory().constructType(typeOfT), l);
+        mSubs = new HashMap<>();
     }
 
     /**
-     * Construct a topic for a group chat. Use this constructor if payload is non-trivial, such as
-     * collection or a generic class. If content is trivial (POJO), use constructor which takes
-     * Class&lt;?&gt; as a typeOfT parameter.
+     * Start a new topic.
      *
      * Construct {@code }typeOfT} with one of {@code
      * com.fasterxml.jackson.databind.type.TypeFactory.constructXYZ()} methods such as
@@ -85,20 +70,44 @@ public class Topic<Pu,Pr,T> {
      * The actual topic name will be set after completion of a successful subscribe call
      *
      * @param tinode tinode instance
-     * @param typeOfT type of content
-     * @param l event listener
+     * @param l event listener, optional
      */
-    public Topic(Tinode tinode, JavaType typeOfT, Listener<T> l) {
-        this(tinode, Tinode.TOPIC_NEW, typeOfT, l);
+    public Topic(Tinode tinode, Listener<Pu,Pr,T> l) {
+        this(tinode, Tinode.TOPIC_NEW, l);
     }
 
     /**
-     * Create topic for a new group chat. Use this constructor if payload is trivial (POJO)
-     * Topic will not be usable until Subscribe is called
+     * Set custom types of payload: {data} as well as public and private content. Needed for
+     * deserialization of server messages.
+     *
+     * @param typeOfPublic type of {meta.desc.public}
+     * @param typeOfPrivate type of {meta.desc.private}
+     * @param typeOfContent type of {data.content}
      *
      */
-    public Topic(Tinode tinode, Class<?> typeOfT, Listener<T> l) {
-        this(tinode, Tinode.getTypeFactory().constructType(typeOfT), l);
+    public void setTypes(JavaType typeOfPublic,
+                                JavaType typeOfPrivate, JavaType typeOfContent) {
+        mTypeOfDataPacket = Tinode.getTypeFactory()
+                .constructParametricType(MsgServerData.class, typeOfContent);
+        mTypeOfMetaPacket = Tinode.getTypeFactory()
+                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
+    }
+
+    /**
+     * Set custom types of payload: {data} as well as public and private content. Needed for
+     * deserialization of server messages.
+     *
+     * @param typeOfPublic type of {meta.desc.public}
+     * @param typeOfPrivate type of {meta.desc.private}
+     * @param typeOfContent type of {data.content}
+     *
+     */
+    public void setTypes(Class<?> typeOfPublic,
+                                Class<?> typeOfPrivate, Class<?> typeOfContent) {
+        mTypeOfDataPacket = Tinode.getTypeFactory()
+                .constructParametricType(MsgServerData.class, typeOfContent);
+        mTypeOfMetaPacket = Tinode.getTypeFactory()
+                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
     }
 
     /**
@@ -109,7 +118,7 @@ public class Topic<Pu,Pr,T> {
     public PromisedReply subscribe() throws IOException {
         if (!mSubscribed) {
             MsgGetMeta getParams = null;
-            if (mUpdated == null) {
+            if (mDescription == null || mDescription.updated == null) {
                 getParams = new MsgGetMeta();
                 getParams.what = "desc sub data";
             }
@@ -141,8 +150,12 @@ public class Topic<Pu,Pr,T> {
         return mTinode.publish(getName(), content);
     }
 
-    public JavaType getTypeOfDataContent() {
-        return mTypeOfDataContent;
+    protected JavaType getTypeOfDataPacket() {
+        return mTypeOfDataPacket;
+    }
+
+    protected JavaType getTypeOfMetaPacket() {
+        return mTypeOfMetaPacket;
     }
 
     public String getName() {
@@ -152,10 +165,11 @@ public class Topic<Pu,Pr,T> {
         mName = name;
     }
 
-    public Listener<T> getListener() {
-        return mListener;
+    public Subscription<Pu,Pr> getSubscription(String key) {
+        return mSubs.get(key);
     }
-    protected void setListener(Listener<T> l) {
+
+    protected void setListener(Listener<Pu,Pr,T> l) {
         mListener = l;
     }
 
@@ -166,25 +180,41 @@ public class Topic<Pu,Pr,T> {
     protected void subscribed() {
         if (!mSubscribed) {
             mSubscribed = true;
-            mListener.onSubscribe(200, "subscribed");
+
+            if (mListener != null) {
+                mListener.onSubscribe(200, "subscribed");
+            }
         }
     }
     protected void disconnected() {
         if (mSubscribed) {
             mSubscribed = false;
-            mListener.onLeave(503, "connection lost");
+
+            if (mListener != null) {
+                mListener.onLeave(503, "connection lost");
+            }
         }
     }
 
-    protected void routeMeta(MsgServerMeta<?,?> meta) {
+    protected void routeMeta(MsgServerMeta<Pu,Pr> meta) {
+        if (meta.desc != null) {
+            processMetaDesc(meta.desc);
+        }
+        if (meta.sub != null) {
+            processMetaSubs(meta.sub);
+        }
+
+        if (mListener != null) {
+            mListener.onMeta(meta);
+        }
     }
 
     protected void routeData(MsgServerData<T> data) {
         // TODO(gene): cache/save message
         // TODO(gene): cache/save sender
 
-        if (data.seq > mSeq) {
-            mSeq = data.seq;
+        if (data.seq > mDescription.seq) {
+            mDescription.seq = data.seq;
         }
         mListener.onData(data);
     }
@@ -199,12 +229,53 @@ public class Topic<Pu,Pr,T> {
         mListener.onInfo(info);
     }
 
-    public interface Listener<T> {
-        public void onSubscribe(int code, String text);
-        public void onLeave(int code, String text);
-        public void onData(MsgServerData<T> data);
-        public void onPres(MsgServerPres pres);
-        public void onInfo(MsgServerInfo info);
-        public void onMeta();
+    protected void processMetaDesc(Description<Pu,Pr> desc) {
+        if (mDescription != null) {
+            mDescription.merge(desc);
+        } else {
+            mDescription = desc;
+        }
+
+        if (mListener != null) {
+            mListener.onMetaDesc(desc);
+        }
+    }
+
+    // Called by Tinode when meta.sub is recived.
+    protected void processMetaSubs(Subscription<Pu,Pr>[] subs) {
+        for (Subscription<Pu,Pr> sub : subs) {
+            // Response to get.sub on 'me' topic does not have .user set
+            if (sub.user != null && !sub.user.equals("")) {
+                // Cache user in the topic as well.
+                Subscription<Pu,Pr> cached = mSubs.get(sub.user);
+                if (cached != null) {
+                    cached.merge(sub);
+                } else {
+                    mSubs.put(sub.user, sub);
+                }
+
+                // TODO(gene): Save the object to global cache.
+            }
+
+            if (mListener != null) {
+                mListener.onMetaSub(sub);
+            }
+        }
+
+        if (mListener != null) {
+            mListener.onSubsUpdated();
+        }
+    }
+
+    public interface Listener<Pu,Pr,T> {
+        void onSubscribe(int code, String text);
+        void onLeave(int code, String text);
+        void onData(MsgServerData<T> data);
+        void onPres(MsgServerPres pres);
+        void onInfo(MsgServerInfo info);
+        void onMeta(MsgServerMeta<Pu,Pr> meta);
+        void onMetaSub(Subscription<Pu,Pr> sub);
+        void onMetaDesc(Description<Pu,Pr> desc);
+        void onSubsUpdated();
     }
 }

@@ -7,20 +7,20 @@ import java.util.Date;
  */
 public class MsgGetMeta {
     public String what;
-    public Desc desc;
-    public Sub sub;
-    public Data data;
+    public GetDesc desc;
+    public GetSub sub;
+    public GetData data;
 
-    public class Desc {
+    public class GetDesc {
         public Date ims;
     }
 
-    public class Sub {
+    public class GetSub {
         public Date ims;
         public int limit;
     }
 
-    public class Data {
+    public class GetData {
         public int since;
         public int before;
         public int limit;

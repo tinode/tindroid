@@ -15,4 +15,6 @@ public class Invitation<T> {
     public Acs acs;
     // Free-form payload
     public T info;
+
+    public Invitation() {}
 }

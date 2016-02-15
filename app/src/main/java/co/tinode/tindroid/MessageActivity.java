@@ -3,12 +3,13 @@ package co.tinode.tindroid;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.widget.ListView;
 
 import java.util.ArrayList;
 
 /**
- * Created by gsokolov on 2/5/16.
+ * View to display a single conversation
  */
 public class MessageActivity extends AppCompatActivity {
 
@@ -19,5 +20,12 @@ public class MessageActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_topic_settings, menu);
+        return true;
     }
 }

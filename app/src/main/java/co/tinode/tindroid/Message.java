@@ -11,4 +11,6 @@ public class Message<T> {
     public int seq;
 
     public T content;
+
+    public Message() {}
 }

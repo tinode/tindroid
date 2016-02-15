@@ -10,10 +10,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MsgClientSub<Pu,Pr,Inv> {
     public String id;
     public String topic;
-    public MsgSetMeta set;
+    public MsgSetMeta<Pu,Pr,Inv> set;
     public MsgGetMeta get;
 
-    public MsgClientSub(String id, String topic, MsgSetMeta set, MsgGetMeta get) {
+    public MsgClientSub(String id, String topic, MsgSetMeta<Pu,Pr,Inv> set, MsgGetMeta get) {
         this.id = id;
         this.topic = topic;
         this.set = set;

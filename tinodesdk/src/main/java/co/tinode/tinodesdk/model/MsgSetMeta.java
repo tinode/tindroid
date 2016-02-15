@@ -7,20 +7,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class MsgSetMeta<Pu,Pr,Inv> {
 
-    public Desc<Pu,Pr> desc;
-    public Sub<Inv> sub;
+    public SetDesc<Pu,Pr> desc;
+    public SetSub<Inv> sub;
 
-    public class Desc<Pu,Pr> {
+    public class SetDesc<Pu,Pr> {
         public Defacs defacs;
         @JsonProperty("public")
         public Pu pub;
         @JsonProperty("private")
         public Pr priv;
+
+        public SetDesc() {}
     }
 
-    public class Sub<Inv> {
+    public class SetSub<Inv> {
         public String user;
         public String mode;
         public Inv info;
+
+        public SetSub() {}
     }
+
+    public MsgSetMeta() {}
 }
