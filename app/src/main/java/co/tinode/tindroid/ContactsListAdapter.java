@@ -48,6 +48,7 @@ public class ContactsListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
+        @SuppressWarnings("unchecked")
         Subscription<VCard,String> s = (Subscription) InmemoryCache.getTinode().getMeTopic()
                 .getSubscription(mContactItems.get(position));
 

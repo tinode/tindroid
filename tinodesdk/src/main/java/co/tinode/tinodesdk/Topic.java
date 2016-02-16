@@ -17,6 +17,7 @@ import co.tinode.tinodesdk.model.Subscription;
 import com.fasterxml.jackson.databind.JavaType;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
@@ -41,6 +42,7 @@ public class Topic<Pu,Pr,T> {
     protected Tinode mTinode;
 
     protected HashMap<String,Subscription<Pu,Pr>> mSubs;
+    protected List<MsgServerData<T>> mMessages;
 
     protected boolean mSubscribed;
     protected Listener<Pu,Pr,T> mListener;
@@ -58,6 +60,7 @@ public class Topic<Pu,Pr,T> {
         mListener = l;
         mSubscribed = false;
         mSubs = new HashMap<>();
+        mMessages = new ArrayList<>();
     }
 
     /**
@@ -165,6 +168,18 @@ public class Topic<Pu,Pr,T> {
         mName = name;
     }
 
+    public Pu getPublic() {
+        return mDescription.pub;
+    }
+
+    public int getMessageCount() {
+        return mMessages.size();
+    }
+
+    public MsgServerData<T> getMessageAt(int position) {
+        return mMessages.get(position);
+    }
+
     public Subscription<Pu,Pr> getSubscription(String key) {
         return mSubs.get(key);
     }
@@ -210,17 +225,27 @@ public class Topic<Pu,Pr,T> {
     }
 
     protected void routeData(MsgServerData<T> data) {
-        // TODO(gene): cache/save message
         // TODO(gene): cache/save sender
 
         if (data.seq > mDescription.seq) {
             mDescription.seq = data.seq;
         }
-        mListener.onData(data);
+        mMessages.add(data);
+
+        if (mListener != null) {
+            mListener.onData(data);
+        }
     }
 
     protected void routePres(MsgServerPres pres) {
-        mListener.onPres(pres);
+        Subscription<Pu,Pr> sub = mSubs.get(pres.topic);
+        if (sub != null) {
+            // FIXME(gene): add actual handler
+            sub.online = pres.what.equals("on");
+        }
+        if (mListener != null) {
+            mListener.onPres(pres);
+        }
     }
 
     protected void routeInfo(MsgServerInfo info) {
@@ -267,15 +292,15 @@ public class Topic<Pu,Pr,T> {
         }
     }
 
-    public interface Listener<Pu,Pr,T> {
-        void onSubscribe(int code, String text);
-        void onLeave(int code, String text);
-        void onData(MsgServerData<T> data);
-        void onPres(MsgServerPres pres);
-        void onInfo(MsgServerInfo info);
-        void onMeta(MsgServerMeta<Pu,Pr> meta);
-        void onMetaSub(Subscription<Pu,Pr> sub);
-        void onMetaDesc(Description<Pu,Pr> desc);
-        void onSubsUpdated();
+    public static class Listener<PPu,PPr,Tt> {
+        public void onSubscribe(int code, String text) {}
+        public void onLeave(int code, String text) {}
+        public void onData(MsgServerData<Tt> data) {}
+        public void onPres(MsgServerPres pres) {}
+        public void onInfo(MsgServerInfo info) {}
+        public void onMeta(MsgServerMeta<PPu,PPr> meta) {}
+        public void onMetaSub(Subscription<PPu,PPr> sub) {}
+        public void onMetaDesc(Description<PPu,PPr> desc) {}
+        public void onSubsUpdated() {}
     }
 }

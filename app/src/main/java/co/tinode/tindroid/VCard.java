@@ -7,7 +7,7 @@ import android.graphics.Bitmap;
  */
 public class VCard {
     public String fn;
-    public Photo photo;
+    public AvatarPhoto photo;
 
     public VCard() {
     }

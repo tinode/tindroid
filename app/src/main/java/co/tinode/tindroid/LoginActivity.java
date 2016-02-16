@@ -19,9 +19,7 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import co.tinode.tinodesdk.Connection;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 public class LoginActivity extends AppCompatActivity {
@@ -35,7 +33,11 @@ public class LoginActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        //getSupportActionBar().hide();
+
+        if (InmemoryCache.getTinode().isAuthenticated()) {
+            startActivity(new Intent(getApplicationContext(), ContactsActivity.class));
+            finish();
+        }
     }
 
     @Override
@@ -81,8 +83,9 @@ public class LoginActivity extends AppCompatActivity {
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    Intent intent = new Intent(getApplicationContext(), ContactsActivity.class);
-                                    startActivity(intent);
+                                    startActivity(new Intent(getApplicationContext(),
+                                            ContactsActivity.class));
+                                    finish();
                                     return null;
                                 }
                             },

@@ -45,6 +45,7 @@ package co.tinode.tinodesdk;
  *
  */
 public class PromisedReply<T> {
+
     private enum State {WAITING, RESOLVED, REJECTED}
 
     private T mResult = null;

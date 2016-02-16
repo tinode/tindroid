@@ -36,7 +36,7 @@ public class ContactsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mContactIndex = new ArrayList<>();
@@ -44,15 +44,6 @@ public class ContactsActivity extends AppCompatActivity {
 
         MeTopic<VCard,String,String> me = new MeTopic<>(InmemoryCache.getTinode(),
                 new Topic.Listener<VCard, String, Invitation<String>>() {
-            @Override
-            public void onSubscribe(int code, String text) {
-
-            }
-
-            @Override
-            public void onLeave(int code, String text) {
-
-            }
 
             @Override
             public void onData(MsgServerData<Invitation<String>> data) {
@@ -66,7 +57,6 @@ public class ContactsActivity extends AppCompatActivity {
 
             @Override
             public void onInfo(MsgServerInfo info) {
-
             }
 
             @Override
@@ -81,8 +71,13 @@ public class ContactsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onMetaDesc(Description<VCard, String> desc) {
-
+            public void onMetaDesc(final Description<VCard, String> desc) {
+                ContactsActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        toolbar.setTitle(desc.pub.fn);
+                    }
+                });
             }
 
             @Override

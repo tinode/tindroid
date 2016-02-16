@@ -226,6 +226,7 @@ public class Tinode {
                 mListener.onMetaMessage(pkt.meta);
             }
         } else if (pkt.data != null) {
+            pkt.data.isMine = pkt.data.from.equals(mMyUid);
             Topic topic = mTopics.get(pkt.data.topic);
             if (topic != null) {
                 topic.routeData(pkt.data);
@@ -367,7 +368,7 @@ public class Tinode {
         return login(MsgClientLogin.LOGIN_BASIC, MsgClientLogin.makeBasicToken(uname, password));
     }
 
-    protected PromisedReply<ServerMessage> login(String scheme, String secret) throws IOException, Exception {
+    protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {
         if (isAuthenticated()) {
             // Don't try to login again if we are logged in.
             return new PromisedReply<>((ServerMessage) null);
@@ -378,8 +379,9 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = null;
             if (msg.login.id != null) {
-                future = new PromisedReply<ServerMessage>().
-                        thenApply(
+                future = new PromisedReply<ServerMessage>();
+                mFutures.put(msg.login.id, future);
+                future = future.thenApply(
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
@@ -390,7 +392,6 @@ public class Tinode {
                                         return null;
                                     }
                                 }, null);
-                mFutures.put(msg.login.id, future);
             }
             return future;
         } catch (JsonProcessingException e) {

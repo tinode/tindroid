@@ -44,6 +44,7 @@ public class ContactsFragment extends Fragment {
                         s.topic, Toast.LENGTH_LONG).show();
 
                 Intent intent = new Intent(getActivity(), MessageActivity.class);
+                intent.putExtra("topic", s.topic);
                 startActivity(intent);
             }
         });
@@ -52,7 +53,7 @@ public class ContactsFragment extends Fragment {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "This will open a new topic dialog", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });

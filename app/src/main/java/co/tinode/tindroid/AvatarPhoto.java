@@ -7,13 +7,13 @@ import android.graphics.BitmapFactory;
  * Created by gene on 13/02/16.
  */
 
-public class Photo {
+public class AvatarPhoto {
     protected Bitmap mImage = null;
 
     public byte[] data;
     public String type;
 
-    public Photo() {}
+    public AvatarPhoto() {}
 
     public boolean construct() {
         if (data != null) {

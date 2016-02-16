@@ -6,7 +6,7 @@ import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Created by gsokolov on 2/10/16.
+ * MeTopic handles invites and manages contact list
  */
 public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
 
