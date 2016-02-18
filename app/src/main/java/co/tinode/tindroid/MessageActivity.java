@@ -1,14 +1,19 @@
 package co.tinode.tindroid;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.ListView;
+import android.widget.TextView;
 
-import java.io.IOException;
 
-import co.tinode.tinodesdk.PromisedReply;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -26,80 +31,124 @@ public class MessageActivity extends AppCompatActivity {
 
     private static final String TAG = "MessageActivity";
 
+    // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
+    //private static final int RECEIVED_DELAY = 500;
+    private static final int READ_DELAY = 3000;
+
     private String mTopicName;
+    private Topic<VCard,String,String> mTopic;
+    private MessagesListAdapter mMessagesAdapter;
+
+    private Timer mNoteTimer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages);
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        mMessagesAdapter = new MessagesListAdapter(this);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+            }
+        });
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         mTopicName = getIntent().getStringExtra("topic");
+        ((TextView) findViewById(R.id.editMessage)).setText("");
 
-        @SuppressWarnings("unchecked")
-        Topic<VCard,String,String> topic =
-                (Topic<VCard,String,String>) getTinode().getTopic(mTopicName);
-        if (topic != null) {
-            VCard desc = topic.getPublic();
+        mTopic = (Topic<VCard,String,String>) getTinode().getTopic(mTopicName);
+        if (mTopic != null) {
+            VCard desc = mTopic.getPublic();
             toolbar.setTitle(desc.fn);
         } else {
-            topic = new Topic<>(getTinode(), mTopicName,
+            mTopic = new Topic<>(getTinode(), mTopicName,
                     new Topic.Listener<VCard,String,String>() {
 
-                @Override
-                public void onData(MsgServerData data) {
-
-                }
-
-                @Override
-                public void onPres(MsgServerPres pres) {
-
-                }
-
-                @Override
-                public void onInfo(MsgServerInfo info) {
-
-                }
-
-                @Override
-                public void onMeta(MsgServerMeta meta) {
-
-                }
-
-                @Override
-                public void onMetaSub(Subscription sub) {
-
-                }
-
-                @Override
-                public void onMetaDesc(final Description<VCard,String> desc) {
-                    MessageActivity.this.runOnUiThread(new Runnable() {
                         @Override
-                        public void run() {
-                            toolbar.setTitle(desc.pub.fn);
+                        public void onData(MsgServerData data) {
+                            runOnUiThread(new Runnable() {
+                                              @Override
+                                              public void run() {
+                                                  mMessagesAdapter.notifyDataSetChanged();
+                                              }
+                                          });
+
+                            // Notify other subscribers that some messages were received
+                            if (mNoteTimer == null) {
+                                mNoteTimer = new Timer();
+                                mNoteTimer.schedule(new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        mNoteTimer = null;
+                                        mTopic.noteRead();
+                                    }
+                                }, READ_DELAY);
+                            }
+                        }
+
+                        @Override
+                        public void onPres(MsgServerPres pres) {
+
+                        }
+
+                        @Override
+                        public void onInfo(MsgServerInfo info) {
+
+                        }
+
+                        @Override
+                        public void onMeta(MsgServerMeta meta) {
+
+                        }
+
+                        @Override
+                        public void onMetaSub(Subscription sub) {
+
+                        }
+
+                        @Override
+                        public void onMetaDesc(final Description<VCard,String> desc) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    toolbar.setTitle(desc.pub.fn);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onSubsUpdated() {
+
                         }
                     });
-                }
-
-                @Override
-                public void onSubsUpdated() {
-
-                }
-            });
-            getTinode().registerTopic(topic);
+            getTinode().registerTopic(mTopic);
         }
 
-        if (!topic.isSubscribed()) {
+        if (!mTopic.isSubscribed()) {
             try {
-                topic.subscribe();
+                mTopic.subscribe();
             } catch (Exception ex) {
                 Log.e(TAG, "something went wrong", ex);
             }
         }
+
+        ListView listViewMessages = (ListView) findViewById(R.id.messages_container);
+        mMessagesAdapter.changeTopic(mTopicName);
+        listViewMessages.setAdapter(mMessagesAdapter);
     }
 
     @Override
@@ -109,7 +158,16 @@ public class MessageActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    protected void onNewIntent (Intent intent) {
+        setIntent(intent);
+    }
+
     public String getTopicName() {
         return mTopicName;
+    }
+
+    public MessagesListAdapter getMessagesAdapter() {
+        return mMessagesAdapter;
     }
 }

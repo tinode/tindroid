@@ -445,7 +445,7 @@ public class Tinode {
 
 
     /**
-     * Low-level request to publish data. A {@link Topic#Publish(Object)} should be normally
+     * Low-level request to publish data. A {@link Topic#publish} should be normally
      * used instead.
      *
      * @param topicName name of the topic to publish to
@@ -465,6 +465,35 @@ public class Tinode {
             return null;
         }
     }
+
+    /**
+     * Inform all other topic subscribers of activity, such as receiving/reading a message or a typing notification.
+     * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
+     *
+     * @param topicName name of the topic to inform
+     * @param what one or "read", "recv", "kp"
+     * @param seq id of the message being acknowledged
+     */
+    public void note(String topicName, String what, int seq) {
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(new ClientMessage(new MsgClientNote(topicName,what, seq))));
+        } catch (JsonProcessingException ignored) {
+        }
+    }
+
+    /**
+     * Send typing notification to all other topic subscribers.
+     * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
+     *
+     * @param topicName name of the topic to inform
+     */
+    public void noteKeyPress(String topicName) {
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(new ClientMessage(new MsgClientNote(topicName, "kp", 0))));
+        } catch (JsonProcessingException ignored) {
+        }
+    }
+
 
     /**
      * Writes a string to websocket.

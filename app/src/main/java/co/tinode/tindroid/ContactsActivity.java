@@ -51,8 +51,13 @@ public class ContactsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPres(MsgServerPres pres) {
-
+            public void onContactUpdate(String what, Subscription<VCard,String> sub) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mContactsAdapter.notifyDataSetChanged();
+                    }
+                });
             }
 
             @Override
@@ -72,7 +77,7 @@ public class ContactsActivity extends AppCompatActivity {
 
             @Override
             public void onMetaDesc(final Description<VCard, String> desc) {
-                ContactsActivity.this.runOnUiThread(new Runnable() {
+                runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         toolbar.setTitle(desc.pub.fn);
@@ -82,7 +87,7 @@ public class ContactsActivity extends AppCompatActivity {
 
             @Override
             public void onSubsUpdated() {
-                ContactsActivity.this.runOnUiThread(new Runnable() {
+                runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mContactsAdapter.notifyDataSetChanged();
@@ -95,7 +100,7 @@ public class ContactsActivity extends AppCompatActivity {
         InmemoryCache.getTinode().registerTopic(me);
         try {
             me.subscribe();
-        } catch (IOException err) {
+        } catch (Exception err) {
             Log.i(TAG, "connection failed :( " + err.getMessage());
             Toast.makeText(getApplicationContext(),
                     "Failed to login", Toast.LENGTH_LONG).show();

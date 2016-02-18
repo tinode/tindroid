@@ -3,12 +3,20 @@ package co.tinode.tinodesdk;
 import com.fasterxml.jackson.databind.JavaType;
 
 import co.tinode.tinodesdk.model.Invitation;
+import co.tinode.tinodesdk.model.LastSeen;
+import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * MeTopic handles invites and manages contact list
  */
 public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
+
+    protected Map<String,String> mP2PMap = new HashMap<>();
 
     public MeTopic(Tinode tinode, Listener<Pu,Pr,Invitation<T>> l) {
         super(tinode, Tinode.TOPIC_ME, l);
@@ -40,6 +48,10 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
 
             // TODO(gene): Save the object to global cache.
 
+            if (sub.with != null && !sub.with.equals("")) {
+                mP2PMap.put(sub.with, sub.topic);
+            }
+
             if (mListener != null) {
                 mListener.onMetaSub(sub);
             }
@@ -49,5 +61,60 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
             mListener.onSubsUpdated();
         }
 
+    }
+
+    @Override
+    protected void routePres(MsgServerPres pres) {
+        // p2p topics are not getting what=on/off/upd updates,
+        // such updates are sent with pres.topic set to user ID
+        String contactName = mP2PMap.get(pres.src);
+        contactName = contactName == null ? pres.src : contactName;
+        Subscription sub = mSubs.get(contactName);
+        if (sub != null) {
+            switch(pres.what) {
+                case "on": // topic came online
+                    sub.online = true;
+                    break;
+
+                case "off": // topic went offline
+                    sub.online = false;
+                    if (sub.seen == null) {
+                        sub.seen = new LastSeen();
+                    }
+                    sub.seen.when = new Date();
+                    break;
+
+                case "msg": // new message received
+                    sub.seq = pres.seq;
+                    break;
+
+                case "upd": // desc updated
+                    // TODO(gene): request updated description
+                    break;
+
+                case "ua": // user agent changed
+                    sub.seen = new LastSeen(new Date(),pres.ua);
+                    break;
+
+                case "recv": // user's other session marked some messges as received
+                    sub.recv = Math.max(sub.recv, pres.seq);
+                    break;
+
+                case "read": // user's other session marked some messages as read
+                    sub.read = Math.max(sub.read, pres.seq);
+                    break;
+
+                case "del": // messages or topic deleted in other session
+                    // TODO(gene): add handling for del
+            }
+
+            if (mListener != null) {
+                mListener.onContactUpdate(pres.what, sub);
+            }
+        }
+
+        if (mListener != null) {
+            mListener.onPres(pres);
+        }
     }
 }

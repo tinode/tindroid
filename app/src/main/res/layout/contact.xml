@@ -3,8 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:paddingLeft="4dp"
-    android:paddingRight="4dp"
     android:paddingTop="2dp"
     android:paddingBottom="2dp">
 
@@ -14,7 +12,7 @@
         android:layout_height="48sp"
         android:layout_alignParentLeft="true">
 
-        <ImageView
+        <android.support.v7.widget.AppCompatImageView
             android:id="@+id/avatar"
             android:layout_width="48sp"
             android:layout_height="48sp"
@@ -22,7 +20,7 @@
             android:src="@drawable/ic_account_circle"
             />
 
-        <ImageView
+        <android.support.v7.widget.AppCompatImageView
             android:id="@+id/online"
             android:layout_width="16sp"
             android:layout_height="16sp"

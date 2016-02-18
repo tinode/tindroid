@@ -3,17 +3,12 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="10dp"
     android:orientation="vertical">
 
     <LinearLayout
         android:id="@+id/messageBubble"
-        android:background="@drawable/bubble_right"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingStart="10dp"
-        android:paddingLeft="10dp"
-        android:elevation="1dp"
         android:orientation="vertical">
 
         <TextView android:id="@+id/messageText"
@@ -22,12 +17,28 @@
             android:textColor="?android:attr/textColorPrimary"
             android:maxWidth="280dp"/>
 
-        <TextView android:id="@+id/messageMeta"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="12sp"
-            android:gravity="end"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="end">
+
+            <TextView android:id="@+id/messageMeta"
+                android:layout_width="wrap_content"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="11sp"
+                android:layout_height="wrap_content" />
+
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/messageViewedIcon"
+                android:tint="?android:attr/textColorSecondary"
+                android:paddingLeft="5sp"
+                android:paddingRight="3sp"
+                android:layout_gravity="center_vertical"
+                android:layout_width="18sp"
+                android:layout_height="11sp">
+            </android.support.v7.widget.AppCompatImageView>
+
+        </LinearLayout>
 
     </LinearLayout>
 

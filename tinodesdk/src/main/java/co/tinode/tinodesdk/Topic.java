@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Date;
 import java.util.Map;
@@ -118,14 +119,22 @@ public class Topic<Pu,Pr,T> {
      *
      * @throws IOException
      */
-    public PromisedReply subscribe() throws IOException {
+    public PromisedReply subscribe() throws Exception {
         if (!mSubscribed) {
             MsgGetMeta getParams = null;
             if (mDescription == null || mDescription.updated == null) {
                 getParams = new MsgGetMeta();
                 getParams.what = "desc sub data";
             }
-            return mTinode.subscribe(getName(), null, getParams);
+
+            return mTinode.subscribe(getName(), null, getParams).thenApply(
+                    new PromisedReply.SuccessListener() {
+                        @Override
+                        public PromisedReply onSuccess(Object result) throws Exception {
+                            subscribed();
+                            return null;
+                        }
+                    }, null);
         }
         return null;
     }
@@ -149,9 +158,25 @@ public class Topic<Pu,Pr,T> {
      * @param content payload
      * @throws IOException
      */
-    public PromisedReply Publish(T content) throws IOException {
+    public PromisedReply publish(T content) throws IOException {
         return mTinode.publish(getName(), content);
     }
+
+    /**
+     * Let server know the seq id of the most recent message
+     */
+    public void noteRecv() {
+        mTinode.note(getName(), "recv", mDescription.seq);
+    }
+
+    public void noteRead() {
+        mTinode.note(getName(), "read", mDescription.seq);
+    }
+
+    public void noteKeyPress() {
+        mTinode.noteKeyPress(getName());
+    }
+
 
     protected JavaType getTypeOfDataPacket() {
         return mTypeOfDataPacket;
@@ -176,6 +201,21 @@ public class Topic<Pu,Pr,T> {
         return mMessages.size();
     }
 
+    /**
+     * Given a sender UID, return a integer index of the sender within the topic. The index is guaranteed
+     * to be a small number (< 16), consistent within a session.
+     *
+     * @return index of the given sender or -1 if sender is not found;
+     *
+     */
+    public int getSenderIndex(String sender) {
+        Subscription s = mSubs.get(sender);
+        if (s == null) {
+            return -1;
+        }
+        return s.getTopicIndex();
+    }
+
     public MsgServerData<T> getMessageAt(int position) {
         return mMessages.get(position);
     }
@@ -192,6 +232,53 @@ public class Topic<Pu,Pr,T> {
         return mSubscribed;
     }
 
+    /**
+     * Tells how many topic subscribers have reported the message as received.
+     *
+     * @param seq sequence id of the message to test
+     *
+     * @return count of recepients who claim to have received the message
+     */
+    public int msgRecvCount(int seq) {
+        int count = 0;
+        if (seq > 0) {
+            Iterator it = mSubs.entrySet().iterator();
+            String me = mTinode.getMyId();
+            while (it.hasNext()) {
+                Subscription s = (Subscription) ((Map.Entry) it.next()).getValue();
+                if (!s.user.equals(me) && s.recv >= seq) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Tells how many topic subscribers have reported the message as read.
+     *
+     * @param seq sequence id of the message to test.
+     *
+     * @return count of recepients who claim to have read the message.
+     */
+    public int msgReadCount(int seq) {
+        int count = 0;
+        if (seq > 0) {
+            Iterator it = mSubs.entrySet().iterator();
+            String me = mTinode.getMyId();
+            while (it.hasNext()) {
+                Subscription s = (Subscription) ((Map.Entry) it.next()).getValue();
+                if (!s.user.equals(me) && s.read >= seq) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Called when the topic receives subscription confirmation
+     */
     protected void subscribed() {
         if (!mSubscribed) {
             mSubscribed = true;
@@ -201,6 +288,7 @@ public class Topic<Pu,Pr,T> {
             }
         }
     }
+
     protected void disconnected() {
         if (mSubscribed) {
             mSubscribed = false;
@@ -229,6 +317,22 @@ public class Topic<Pu,Pr,T> {
 
         if (data.seq > mDescription.seq) {
             mDescription.seq = data.seq;
+        }
+        int count = mMessages.size();
+        if (count == 0) {
+            data.setDisplay(MsgServerData.DisplayAs.SINGLE);
+        } else {
+            MsgServerData<?> prev = mMessages.get(count - 1);
+            if (prev.from.equals(data.from)) {
+                if (prev.getDisplay() == MsgServerData.DisplayAs.SINGLE) {
+                    prev.setDisplay(MsgServerData.DisplayAs.FIRST);
+                } else if (prev.getDisplay() == MsgServerData.DisplayAs.LAST) {
+                    prev.setDisplay(MsgServerData.DisplayAs.MIDDLE);
+                }
+                data.setDisplay(MsgServerData.DisplayAs.LAST);
+            } else {
+                data.setDisplay(MsgServerData.DisplayAs.SINGLE);
+            }
         }
         mMessages.add(data);
 
@@ -276,6 +380,7 @@ public class Topic<Pu,Pr,T> {
                 if (cached != null) {
                     cached.merge(sub);
                 } else {
+                    sub.setTopicIndex(mSubs.size());
                     mSubs.put(sub.user, sub);
                 }
 
@@ -297,6 +402,7 @@ public class Topic<Pu,Pr,T> {
         public void onLeave(int code, String text) {}
         public void onData(MsgServerData<Tt> data) {}
         public void onPres(MsgServerPres pres) {}
+        public void onContactUpdate(String what, Subscription<PPu,PPr> sub) {}
         public void onInfo(MsgServerInfo info) {}
         public void onMeta(MsgServerMeta<PPu,PPr> meta) {}
         public void onMetaSub(Subscription<PPu,PPr> sub) {}

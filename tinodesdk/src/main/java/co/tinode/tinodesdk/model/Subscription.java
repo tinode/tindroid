@@ -25,6 +25,9 @@ public class Subscription<Pu,Pr> {
     public Pu pub;
     public LastSeen seen;
 
+    // Locally-assigned value;
+    protected int mTopicIndex;
+
     public Subscription() {
     }
 
@@ -69,5 +72,12 @@ public class Subscription<Pu,Pr> {
         } else {
             seen.merge(sub.seen);
         }
+    }
+
+    public int getTopicIndex() {
+        return mTopicIndex;
+    }
+    public void setTopicIndex(int index) {
+        mTopicIndex = index;
     }
 }

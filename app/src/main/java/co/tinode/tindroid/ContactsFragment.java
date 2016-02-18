@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,8 @@ import co.tinode.tinodesdk.model.Subscription;
  * Created by gsokolov on 2/3/16.
  */
 public class ContactsFragment extends Fragment {
+
+    private static final String TAG = "ContactsFragment";
 
     public ContactsFragment() {
     }
@@ -40,11 +43,10 @@ public class ContactsFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Subscription s = ((ContactsActivity) getActivity()).getContactByPos(position);
-                Toast.makeText(getActivity().getApplicationContext(),
-                        s.topic, Toast.LENGTH_LONG).show();
-
                 Intent intent = new Intent(getActivity(), MessageActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("topic", s.topic);
+                Log.d(TAG, "adding extra '" + s.topic + "'");
                 startActivity(intent);
             }
         });
