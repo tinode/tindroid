@@ -21,7 +21,7 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
- * Created by gsokolov on 2/5/16.
+ * Handle display of a conversation
  */
 public class MessagesListAdapter extends BaseAdapter {
     private static final String TAG = "MessagesListAdapter";
@@ -30,6 +30,8 @@ public class MessagesListAdapter extends BaseAdapter {
     private static final int SINGLE_PADDING = 10;
     // Vertical padding between two messages from the same sender
     private static final int TRAIN_PADDING = 2;
+
+    private enum DisplayAs {SINGLE, FIRST, MIDDLE, LAST}
 
     // Material colors, shade #200
     private static final colorizer[] sColorizer = {
@@ -81,8 +83,24 @@ public class MessagesListAdapter extends BaseAdapter {
         @SuppressWarnings("unchecked")
         MsgServerData<String> m = mTopic.getMessageAt(position);
         int senderIdx = mTopic.getSenderIndex(m.from);
+        boolean isMine = mTopic.isMyMessage(m.from);
         if (senderIdx < 0) {
             senderIdx = 0;
+        }
+
+        // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
+        int messageCount = mTopic.getMessageCount();
+        String prevFrom = (position > 0) ? mTopic.getMessageAt(position-1).from : null;
+        String nextFrom = (position + 1 < messageCount) ? mTopic.getMessageAt(position+1).from : null;
+        DisplayAs display = DisplayAs.SINGLE;
+        if (m.from.equals(prevFrom)) {
+            if (m.from.equals(nextFrom)) {
+                display = DisplayAs.MIDDLE;
+            } else {
+                display = DisplayAs.LAST;
+            }
+        } else if (m.from.equals(nextFrom)) {
+            display = DisplayAs.FIRST;
         }
 
         LayoutInflater inflater = (LayoutInflater) mContext
@@ -93,34 +111,35 @@ public class MessagesListAdapter extends BaseAdapter {
         }
 
         LinearLayout container = (LinearLayout) convertView.findViewById(R.id.container);
-        container.setGravity(m.isMine ? Gravity.RIGHT : Gravity.LEFT);
-        // First set background, then set text.
+        container.setGravity(isMine ? Gravity.RIGHT : Gravity.LEFT);
+
+        // To make sure padding is properly set, first set background, then set text.
         View bubble = convertView.findViewById(R.id.messageBubble);
-        int bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
-        switch (m.getDisplay()) {
+        int bg_bubble = isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+        switch (display) {
             case SINGLE:
-                bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+                bg_bubble = isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
                 container.setPadding(container.getPaddingLeft(), SINGLE_PADDING,
                         container.getPaddingRight(), SINGLE_PADDING);
                 break;
             case FIRST:
-                bg_bubble = m.isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
+                bg_bubble = isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
                 container.setPadding(container.getPaddingLeft(), SINGLE_PADDING,
                         container.getPaddingRight(), TRAIN_PADDING);
                 break;
             case MIDDLE:
-                bg_bubble = m.isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
+                bg_bubble = isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
                 container.setPadding(container.getPaddingLeft(), TRAIN_PADDING,
                         container.getPaddingRight(), TRAIN_PADDING);
                 break;
             case LAST:
-                bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+                bg_bubble = isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
                 container.setPadding(container.getPaddingLeft(), TRAIN_PADDING,
                         container.getPaddingRight(), SINGLE_PADDING);
                 break;
         }
         bubble.setBackgroundResource(bg_bubble);
-        if (!m.isMine) {
+        if (!isMine) {
             bubble.getBackground().mutate()
                     .setColorFilter(sColorizer[senderIdx].bg, PorterDuff.Mode.MULTIPLY);
         }
@@ -129,7 +148,7 @@ public class MessagesListAdapter extends BaseAdapter {
 
         ImageView delivered = (ImageView) convertView.findViewById(R.id.messageViewedIcon);
         delivered.setImageResource(android.R.color.transparent);
-        if (m.isMine) {
+        if (isMine) {
             if (mTopic.msgReadCount(m.seq) > 0) {
                 delivered.setImageResource(R.drawable.ic_done_all);
             } else if (mTopic.msgRecvCount(m.seq) > 0) {

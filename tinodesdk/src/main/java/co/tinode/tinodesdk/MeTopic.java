@@ -69,7 +69,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
         // such updates are sent with pres.topic set to user ID
         String contactName = mP2PMap.get(pres.src);
         contactName = contactName == null ? pres.src : contactName;
-        Subscription sub = mSubs.get(contactName);
+        Subscription<Pu,Pr> sub = mSubs.get(contactName);
         if (sub != null) {
             switch(pres.what) {
                 case "on": // topic came online
@@ -117,4 +117,56 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
             mListener.onPres(pres);
         }
     }
+
+    /**
+     * Set read value, update listener
+     *
+     * @param topicName name of the contact to update
+     * @param seq the 'read' value
+     */
+    protected void setRead(String topicName, int seq) {
+        Subscription<Pu,Pr> sub = mSubs.get(topicName);
+        boolean ret = false;
+        if (sub != null && sub.read < seq) {
+            sub.read = seq;
+            if (mListener != null) {
+                mListener.onContactUpdate("read", sub);
+            }
+        }
+    }
+
+    /**
+     * Set recv value, update listener
+     *
+     * @param topicName name of the contact to update
+     * @param seq the 'recv' value
+     */
+    protected void setRecv(String topicName, int seq) {
+        Subscription<Pu,Pr> sub = mSubs.get(topicName);
+        boolean ret = false;
+        if (sub != null && sub.recv < seq) {
+            sub.recv = seq;
+            if (mListener != null) {
+                mListener.onContactUpdate("recv", sub);
+            }
+        }
+    }
+
+    /**
+     * Set message count for a contact, update listener
+     *
+     * @param topicName name of the contact to update
+     * @param seq the 'msg' value
+     */
+    protected void setMsg(String topicName, int seq) {
+        Subscription<Pu,Pr> sub = mSubs.get(topicName);
+        boolean ret = false;
+        if (sub != null && sub.recv < seq) {
+            sub.recv = seq;
+            if (mListener != null) {
+                mListener.onContactUpdate("msg", sub);
+            }
+        }
+    }
+
 }

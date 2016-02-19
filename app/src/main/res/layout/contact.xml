@@ -16,7 +16,6 @@
             android:id="@+id/avatar"
             android:layout_width="48sp"
             android:layout_height="48sp"
-            android:tint="@color/material_grey_600"
             android:src="@drawable/ic_account_circle"
             />
 
@@ -25,7 +24,6 @@
             android:layout_width="16sp"
             android:layout_height="16sp"
             android:src="@drawable/ic_brightness_1"
-            android:tint="@color/material_grey_300"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"
             />
@@ -64,7 +62,7 @@
                 android:text="9+"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
-                android:layout_gravity="end"
+                android:layout_gravity="end|center_vertical"
                 android:textAlignment="center"
                 android:padding="3dp" />
 

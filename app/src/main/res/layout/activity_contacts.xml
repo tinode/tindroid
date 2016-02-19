@@ -8,20 +8,7 @@
     android:fitsSystemWindows="true"
     tools:context=".ContactsActivity">
 
-    <!--android.support.design.widget.AppBarLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="fill_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimaryDark"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
-
-    </android.support.design.widget.AppBarLayout-->
-    <include layout="@layout/toolbar" />
+    <include layout="@layout/toolbar_contacts" />
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"

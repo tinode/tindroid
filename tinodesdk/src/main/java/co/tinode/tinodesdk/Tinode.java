@@ -226,7 +226,6 @@ public class Tinode {
                 mListener.onMetaMessage(pkt.meta);
             }
         } else if (pkt.data != null) {
-            pkt.data.isMine = pkt.data.from.equals(mMyUid);
             Topic topic = mTopics.get(pkt.data.topic);
             if (topic != null) {
                 topic.routeData(pkt.data);

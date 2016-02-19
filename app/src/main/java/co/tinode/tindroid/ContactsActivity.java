@@ -1,10 +1,13 @@
 package co.tinode.tindroid;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -36,7 +39,7 @@ public class ContactsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_contacts);
         setSupportActionBar(toolbar);
 
         mContactIndex = new ArrayList<>();
@@ -80,7 +83,23 @@ public class ContactsActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        toolbar.setTitle(desc.pub.fn);
+                        if (desc.pub != null) {
+                            toolbar.setTitle(" " + desc.pub.fn);
+
+                            desc.pub.constructBitmap();
+                            Bitmap bmp = desc.pub.getBitmap();
+                            if (bmp != null) {
+                                toolbar.setLogo(new RoundedImage(bmp));
+                            } else {
+                                Drawable icon;
+                                if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+                                    icon = getDrawable(R.drawable.ic_account_circle_white);
+                                } else {
+                                    icon = getResources().getDrawable(R.drawable.ic_account_circle_white);
+                                }
+                                toolbar.setLogo(icon);
+                            }
+                        }
                     }
                 });
             }

@@ -26,6 +26,8 @@
                 android:layout_width="wrap_content"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="11sp"
+                android:paddingLeft="4sp"
+                android:paddingRight="4sp"
                 android:layout_height="wrap_content" />
 
             <android.support.v7.widget.AppCompatImageView

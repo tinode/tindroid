@@ -1,12 +1,17 @@
 package co.tinode.tindroid;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -107,7 +112,22 @@ public class MessageActivity extends AppCompatActivity {
 
                         @Override
                         public void onInfo(MsgServerInfo info) {
-
+                            switch (info.what) {
+                                case "read":
+                                case "recv":
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mMessagesAdapter.notifyDataSetChanged();
+                                        }
+                                    });
+                                    break;
+                                case "kp":
+                                    // TODO(gene): show typing notification
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
 
                         @Override
@@ -125,7 +145,23 @@ public class MessageActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    toolbar.setTitle(desc.pub.fn);
+                                    if (desc.pub != null) {
+                                        toolbar.setTitle(" " + desc.pub.fn);
+
+                                        desc.pub.constructBitmap();
+                                        Bitmap bmp = desc.pub.getBitmap();
+                                        if (bmp != null) {
+                                            toolbar.setLogo(new RoundedImage(bmp));
+                                        } else {
+                                            Drawable icon;
+                                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                                                icon = getDrawable(R.drawable.ic_account_circle_white);
+                                            } else {
+                                                icon = getResources().getDrawable(R.drawable.ic_account_circle_white);
+                                            }
+                                            toolbar.setLogo(icon);
+                                        }
+                                    }
                                 }
                             });
                         }

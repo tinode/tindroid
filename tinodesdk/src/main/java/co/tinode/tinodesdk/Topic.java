@@ -4,6 +4,8 @@
 
 package co.tinode.tinodesdk;
 
+import android.util.Log;
+
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
@@ -31,7 +33,9 @@ import java.util.Map;
  *
  */
 public class Topic<Pu,Pr,T> {
-    private static final String TAG = "co.tinode.tinodesdk.Topic";
+    private static final String TAG = "tinodesdk.Topic";
+
+    protected enum NoteType {READ, RECV}
 
     protected JavaType mTypeOfDataPacket = null;
     protected JavaType mTypeOfMetaPacket = null;
@@ -163,16 +167,56 @@ public class Topic<Pu,Pr,T> {
     }
 
     /**
-     * Let server know the seq id of the most recent message
+     * Let server know the seq id of the most recent received/read message.
+     *
+     * @param what "read" or "recv" to indicate which action to report
      */
-    public void noteRecv() {
-        mTinode.note(getName(), "recv", mDescription.seq);
+    protected void noteReadRecv(NoteType what) {
+
+        Subscription<?,?> sub = mSubs.get(mTinode.getMyId());
+        if (sub != null) {
+            switch (what) {
+                case RECV:
+                    if (sub.recv < mDescription.seq) {
+                        mTinode.note(getName(), "recv", mDescription.seq);
+                        sub.recv = mDescription.seq;
+                    }
+                    break;
+                case READ:
+                    if (sub.read < mDescription.seq) {
+                        mTinode.note(getName(), "read", mDescription.seq);
+                        sub.read = mDescription.seq;
+                    }
+                    break;
+            }
+        } else {
+            Log.d(TAG, "Subscription not found in topic");
+        }
+
+        // Update locally cached contact with the new count
+        MeTopic me = mTinode.getMeTopic();
+        if (me != null) {
+            boolean updated = false;
+            if (what == NoteType.RECV) {
+                me.setRecv(mName, mDescription.seq);
+            } else {
+                me.setRead(mName, mDescription.seq);
+            }
+        }
     }
 
     public void noteRead() {
-        mTinode.note(getName(), "read", mDescription.seq);
+        noteReadRecv(NoteType.READ);
     }
 
+    public void noteRecv() {
+        noteReadRecv(NoteType.RECV);
+    }
+
+
+    /**
+     * Send a key press notification to server
+     */
     public void noteKeyPress() {
         mTinode.noteKeyPress(getName());
     }
@@ -205,6 +249,8 @@ public class Topic<Pu,Pr,T> {
      * Given a sender UID, return a integer index of the sender within the topic. The index is guaranteed
      * to be a small number (< 16), consistent within a session.
      *
+     * @param sender sender UID to check
+     *
      * @return index of the given sender or -1 if sender is not found;
      *
      */
@@ -214,6 +260,17 @@ public class Topic<Pu,Pr,T> {
             return -1;
         }
         return s.getTopicIndex();
+    }
+
+    /**
+     * Check if UID is equal to the current user UID
+     *
+     * @param sender sender UID to check
+     *
+     * @return true if the sender UID is the same as current user UID
+     */
+    public boolean isMyMessage(String sender) {
+        return sender.equals(mTinode.getMyId());
     }
 
     public MsgServerData<T> getMessageAt(int position) {
@@ -318,26 +375,15 @@ public class Topic<Pu,Pr,T> {
         if (data.seq > mDescription.seq) {
             mDescription.seq = data.seq;
         }
-        int count = mMessages.size();
-        if (count == 0) {
-            data.setDisplay(MsgServerData.DisplayAs.SINGLE);
-        } else {
-            MsgServerData<?> prev = mMessages.get(count - 1);
-            if (prev.from.equals(data.from)) {
-                if (prev.getDisplay() == MsgServerData.DisplayAs.SINGLE) {
-                    prev.setDisplay(MsgServerData.DisplayAs.FIRST);
-                } else if (prev.getDisplay() == MsgServerData.DisplayAs.LAST) {
-                    prev.setDisplay(MsgServerData.DisplayAs.MIDDLE);
-                }
-                data.setDisplay(MsgServerData.DisplayAs.LAST);
-            } else {
-                data.setDisplay(MsgServerData.DisplayAs.SINGLE);
-            }
-        }
         mMessages.add(data);
 
         if (mListener != null) {
             mListener.onData(data);
+        }
+
+        MeTopic me = mTinode.getMeTopic();
+        if (me != null) {
+            me.setMsg(getName(), data.seq);
         }
     }
 
@@ -353,9 +399,25 @@ public class Topic<Pu,Pr,T> {
     }
 
     protected void routeInfo(MsgServerInfo info) {
-        // TODO(gene): if it's online/offline, updated cached sender
+        if (!info.what.equals("kp")) {
+            Subscription sub = mSubs.get(info.from);
+            if (sub != null) {
+                switch (info.what) {
+                    case "recv":
+                        sub.recv = info.seq;
+                        break;
+                    case "read":
+                        sub.read = info.seq;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
-        mListener.onInfo(info);
+        if (mListener != null) {
+            mListener.onInfo(info);
+        }
     }
 
     protected void processMetaDesc(Description<Pu,Pr> desc) {

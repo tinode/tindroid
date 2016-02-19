@@ -40,6 +40,7 @@
             android:id="@+id/editMessage"
             android:inputType="text"
             android:hint="@string/new_message_hint"
+            android:imeOptions="actionSend"
             android:layout_weight="1" />
 
         <android.support.v7.widget.AppCompatImageButton
