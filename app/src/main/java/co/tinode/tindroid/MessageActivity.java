@@ -38,7 +38,7 @@ public class MessageActivity extends AppCompatActivity {
 
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     //private static final int RECEIVED_DELAY = 500;
-    private static final int READ_DELAY = 3000;
+    private static final int READ_DELAY = 1000;
 
     private String mTopicName;
     private Topic<VCard,String,String> mTopic;
