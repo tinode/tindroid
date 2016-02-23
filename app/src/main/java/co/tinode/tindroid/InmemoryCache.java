@@ -1,6 +1,14 @@
 package co.tinode.tindroid;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.support.v7.widget.Toolbar;
+
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 
 /**
  * Created by gsokolov on 2/11/16.
@@ -19,5 +27,37 @@ public class InmemoryCache {
 
     public static Tinode getTinode() {
         return sTinode;
+    }
+
+    public static void setupToolbar(Context context, Toolbar toolbar, VCard pub, Topic.TopicType topicType) {
+        if (pub != null) {
+            toolbar.setTitle(" " + pub.fn);
+
+            pub.constructBitmap();
+            Bitmap bmp = pub.getBitmap();
+            if (bmp != null) {
+                toolbar.setLogo(new RoundedImage(bmp));
+            } else {
+                Drawable drw = null;
+                int res = -1;
+                if (topicType == Topic.TopicType.GRP) {
+                    res = R.drawable.ic_group;
+                } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
+                    res = R.drawable.ic_person;
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    drw = context.getResources().getDrawable(res, context.getTheme());
+                } else {
+                    drw = context.getResources().getDrawable(res);
+                }
+                if (drw != null) {
+                    toolbar.setLogo(new RoundedImage(drw, 0xFFFAFAFA));
+                }
+            }
+            if (bmp != null) {
+                toolbar.setLogo(new RoundedImage(bmp));
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
@@ -26,6 +27,7 @@ public class Subscription<Pu,Pr> {
     public LastSeen seen;
 
     // Locally-assigned value;
+    @JsonIgnore
     protected int mTopicIndex;
 
     public Subscription() {
@@ -77,6 +79,7 @@ public class Subscription<Pu,Pr> {
     public int getTopicIndex() {
         return mTopicIndex;
     }
+
     public void setTopicIndex(int index) {
         mTopicIndex = index;
     }

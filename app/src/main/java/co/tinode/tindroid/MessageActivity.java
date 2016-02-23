@@ -1,7 +1,9 @@
 package co.tinode.tindroid;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -77,8 +79,7 @@ public class MessageActivity extends AppCompatActivity {
 
         mTopic = (Topic<VCard,String,String>) getTinode().getTopic(mTopicName);
         if (mTopic != null) {
-            VCard desc = mTopic.getPublic();
-            toolbar.setTitle(desc.fn);
+            setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
         } else {
             mTopic = new Topic<>(getTinode(), mTopicName,
                     new Topic.Listener<VCard,String,String>() {
@@ -145,23 +146,7 @@ public class MessageActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (desc.pub != null) {
-                                        toolbar.setTitle(" " + desc.pub.fn);
-
-                                        desc.pub.constructBitmap();
-                                        Bitmap bmp = desc.pub.getBitmap();
-                                        if (bmp != null) {
-                                            toolbar.setLogo(new RoundedImage(bmp));
-                                        } else {
-                                            Drawable icon;
-                                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                                                icon = getDrawable(R.drawable.ic_account_circle_white);
-                                            } else {
-                                                icon = getResources().getDrawable(R.drawable.ic_account_circle_white);
-                                            }
-                                            toolbar.setLogo(icon);
-                                        }
-                                    }
+                                    setupToolbar(MessageActivity.this, toolbar, desc.pub, mTopic.getTopicType());
                                 }
                             });
                         }

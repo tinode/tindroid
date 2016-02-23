@@ -16,12 +16,12 @@ import android.graphics.drawable.Drawable;
  *
  */
 public class RoundedImage extends Drawable {
-    private final Paint mPaint;
-    private final RectF mRectF;
-    private final int mBitmapWidth;
-    private final int mBitmapHeight;
+    private Paint mPaint;
+    private RectF mRectF;
+    private int mBitmapWidth;
+    private int mBitmapHeight;
 
-    public RoundedImage(Bitmap bmp) {
+    private void init(Bitmap bmp) {
         mRectF = new RectF();
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
@@ -30,6 +30,23 @@ public class RoundedImage extends Drawable {
 
         mBitmapWidth = bmp.getWidth();
         mBitmapHeight = bmp.getHeight();
+    }
+
+    public RoundedImage(Bitmap bmp) {
+        init(bmp);
+    }
+
+    public RoundedImage(Drawable drw) {
+        this(drw, 0);
+    }
+
+    public RoundedImage(Drawable drw, int color) {
+        Bitmap bmp = Bitmap.createBitmap(drw.getIntrinsicWidth(), drw.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+        drw.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        canvas.drawColor(color);
+        drw.draw(canvas);
+        init(bmp);
     }
 
     @Override

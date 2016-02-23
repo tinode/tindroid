@@ -35,6 +35,8 @@ import java.util.Map;
 public class Topic<Pu,Pr,T> {
     private static final String TAG = "tinodesdk.Topic";
 
+    public enum TopicType {ME, GRP, P2P, UNKNOWN}
+
     protected enum NoteType {READ, RECV}
 
     protected JavaType mTypeOfDataPacket = null;
@@ -247,7 +249,7 @@ public class Topic<Pu,Pr,T> {
 
     /**
      * Given a sender UID, return a integer index of the sender within the topic. The index is guaranteed
-     * to be a small number (< 16), consistent within a session.
+     * to be a small number (< 16), unchanging for the duration of the session.
      *
      * @param sender sender UID to check
      *
@@ -331,6 +333,23 @@ public class Topic<Pu,Pr,T> {
             }
         }
         return count;
+    }
+
+    public static TopicType getTopicTypeByName(String name) {
+        TopicType tp = TopicType.UNKNOWN;
+        if (name != null) {
+            if (name.startsWith("me")) {
+                tp = TopicType.ME;
+            } else if (name.startsWith("grp")) {
+                tp = TopicType.GRP;
+            } else if (name.startsWith("p2p")) {
+                tp = TopicType.P2P;
+            }
+        }
+        return tp;
+    }
+    public TopicType getTopicType() {
+        return getTopicTypeByName(mName);
     }
 
     /**

@@ -1,16 +1,12 @@
 package co.tinode.tindroid;
 
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
-import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import co.tinode.tinodesdk.MeTopic;
@@ -20,7 +16,6 @@ import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
-import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -84,21 +79,7 @@ public class ContactsActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         if (desc.pub != null) {
-                            toolbar.setTitle(" " + desc.pub.fn);
-
-                            desc.pub.constructBitmap();
-                            Bitmap bmp = desc.pub.getBitmap();
-                            if (bmp != null) {
-                                toolbar.setLogo(new RoundedImage(bmp));
-                            } else {
-                                Drawable icon;
-                                if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
-                                    icon = getDrawable(R.drawable.ic_account_circle_white);
-                                } else {
-                                    icon = getResources().getDrawable(R.drawable.ic_account_circle_white);
-                                }
-                                toolbar.setLogo(icon);
-                            }
+                            InmemoryCache.setupToolbar(ContactsActivity.this, toolbar, desc.pub, Topic.TopicType.ME);
                         }
                     }
                 });

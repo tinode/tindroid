@@ -6,7 +6,9 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,10 +17,11 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Created by gsokolov on 2/4/16.
+ * Handling contact list.
  */
 public class ContactsListAdapter extends BaseAdapter {
 
@@ -70,10 +73,29 @@ public class ContactsListAdapter extends BaseAdapter {
         } else {
             unreadBadge.setVisibility(View.INVISIBLE);
         }
+
         Bitmap bmp = s.pub != null ? s.pub.getBitmap() : null;
+        ImageView avatar = (ImageView) convertView.findViewById(R.id.avatar);
         if (bmp != null) {
-            ImageView avatar = (ImageView) convertView.findViewById(R.id.avatar);
             avatar.setImageDrawable(new RoundedImage(bmp));
+        } else {
+            Topic.TopicType topicType = Topic.getTopicTypeByName(s.topic);
+            int res = -1;
+            if (topicType == Topic.TopicType.GRP) {
+                res = R.drawable.ic_group_white;
+            } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
+                res = R.drawable.ic_person_white;
+            }
+
+            Drawable drw;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                drw = mContext.getResources().getDrawable(res, mContext.getTheme());
+            } else {
+                drw = mContext.getResources().getDrawable(res);
+            }
+            if (drw != null) {
+                avatar.setImageDrawable(new RoundedImage(drw, 0xFF757575));
+            }
         }
 
         ((ImageView) convertView.findViewById(R.id.online))
