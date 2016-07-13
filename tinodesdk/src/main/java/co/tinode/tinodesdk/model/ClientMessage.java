@@ -5,6 +5,7 @@ package co.tinode.tinodesdk.model;
  */
 
 public class ClientMessage<T> {
+    public MsgClientHi hi;
     public MsgClientLogin login;
     public MsgClientPub<T> pub;
     public MsgClientSub sub;
@@ -12,6 +13,9 @@ public class ClientMessage<T> {
     public MsgClientNote note;
 
     public ClientMessage() {
+    }
+    public ClientMessage(MsgClientHi hi) {
+        this.hi = hi;
     }
     public ClientMessage(MsgClientLogin login) {
         this.login = login;

@@ -25,7 +25,7 @@ import java.util.Random;
  */
 public class Connection {
     private static final String TAG = "tinodesdk.Connection";
-    private static WebSocketFactory sWSFactory = new WebSocketFactory();;
+    private static WebSocketFactory sWSFactory = new WebSocketFactory();
 
     private WebSocket mWsClient;
     private WsListener mListener;
@@ -171,7 +171,7 @@ public class Connection {
     /**
      * TODO(gene): implement autoreconnect with exponential backoff
      */
-    class ExpBackoff {
+    private class ExpBackoff {
         private int mRetryCount = 0;
         final private long SLEEP_TIME_MILLIS = 500; // 500 ms
         final private long MAX_DELAY = 1800000; // 30 min
@@ -183,7 +183,7 @@ public class Connection {
 
         /**
          *
-         * @return
+         * @return reconnect timeout in milliseconds
          */
         long getSleepTimeMillis() {
             int attempt = mRetryCount;

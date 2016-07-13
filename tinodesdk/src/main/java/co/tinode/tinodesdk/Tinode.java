@@ -34,7 +34,7 @@ public class Tinode {
     protected static final String TOPIC_ME = "me";
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.5";
+    private static final String VERSION = "0.7";
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
@@ -70,6 +70,7 @@ public class Tinode {
         sJsonMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
         sTypeFactory = sJsonMapper.getTypeFactory();
     }
+
     /**
      * Initialize Tinode package
      *
@@ -90,32 +91,34 @@ public class Tinode {
 
     public PromisedReply<ServerMessage> connect() throws Exception {
 
-        final PromisedReply<ServerMessage> connected;
-        final String pktId = getNextId();
-
-        if (mConnection == null || !mConnection.isConnected()) {
-            // Creating a promise which will be resolved when the first packet arrives.
-            connected = new PromisedReply<ServerMessage>().thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                            mServerVersion = (String) pkt.ctrl.params.get("ver");
-                            mServerBuild = (String) pkt.ctrl.params.get("build");
-                            return null;
-                        }
-                    }, null);
-            mFutures.put(pktId, connected);
-        } else {
-            // Creating an already resolved promise.
-            connected = new PromisedReply<ServerMessage>((ServerMessage) null);
-        }
+        final PromisedReply<ServerMessage> connected = new PromisedReply<>();
 
         if (mConnection == null) {
             try {
                 mConnection = new Connection(
-                        new URI("ws://" + mServerHost + "/v" + PROTOVERSION + "/?id=" + pktId),
+                        new URI("ws://" + mServerHost + "/v" + PROTOVERSION + "/"),
                         mApiKey, new Connection.WsListener() {
+
+                    @Override
+                    protected void onConnect() {
+                        try {
+                            // Connection established, send handshake, inform listener on success
+                            hello().thenApply(
+                                    new PromisedReply.SuccessListener<ServerMessage>() {
+                                        @Override
+                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                            connected.resolve(pkt);
+
+                                            if (mListener != null) {
+                                                mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
+                                            }
+                                            return null;
+                                        }
+                                    }, null);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Exception in Connection.onConnect: ", e);
+                        }
+                    }
 
                     @Override
                     protected void onMessage(String message) {
@@ -145,12 +148,15 @@ public class Tinode {
             } catch (URISyntaxException | IOException e) {
                 try {
                     connected.reject(e);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         }
 
         if (!mConnection.isConnected()) {
             mConnection.connect(true);
+        } else {
+            connected.resolve((ServerMessage) null);
         }
 
         return connected;
@@ -170,7 +176,8 @@ public class Tinode {
      * Finds topic for the packet and calls topic's appropriate routeXXX method.
      * This method can be safely called from the UI thread after overriding
      * {@link Connection.WsListener#onMessage(String)}
-     **
+     * *
+     *
      * @param message message to be parsed dispatched
      */
     private void dispatchPacket(String message) throws Exception {
@@ -200,11 +207,7 @@ public class Tinode {
             if (mListener != null) {
                 mListener.onCtrlMessage(pkt.ctrl);
             }
-            if (mPacketCount == 1) {
-                if (mListener != null) {
-                    mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
-                }
-            }
+
             if (pkt.ctrl.id != null) {
                 PromisedReply<ServerMessage> r = mFutures.remove(pkt.ctrl.id);
                 if (r != null) {
@@ -297,10 +300,11 @@ public class Tinode {
         // Del control character
         return (obj instanceof String) && ((String) obj).equals("\u2421");
     }
+
     /**
      * Assign default types of generic parameters. Needed for packet deserialization.
      *
-     * @param typeOfPublic - type of public values
+     * @param typeOfPublic  - type of public values
      * @param typeOfPrivate - type of private values
      * @param typeOfContent - type of content sent in {pub}/{data} messages
      */
@@ -315,7 +319,7 @@ public class Tinode {
     /**
      * Assign default types of generic parameters. Needed for packet deserialization.
      *
-     * @param typeOfPublic - type of public values
+     * @param typeOfPublic  - type of public values
      * @param typeOfPrivate - type of private values
      * @param typeOfContent - type of content sent in {pub}/{data} messages
      */
@@ -355,13 +359,47 @@ public class Tinode {
     }
 
     /**
+     * Send a handshake packet to the server. A connection must be established prior to calling
+     * this method.
+     *
+     * @return PromisedReply of the reply ctrl message.
+     * @throws IOException if there is no connection
+     */
+    public PromisedReply<ServerMessage> hello() throws Exception {
+        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent()));
+        try {
+            PromisedReply<ServerMessage> future = null;
+            if (msg.hi.id != null) {
+                future = new PromisedReply<ServerMessage>();
+                mFutures.put(msg.hi.id, future);
+                future = future.thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                if (pkt.ctrl == null) {
+                                    throw new InvalidObjectException("Unexpected type of reply packet to hello");
+                                }
+                                mServerVersion = (String) pkt.ctrl.params.get("ver");
+                                mServerBuild = (String) pkt.ctrl.params.get("build");
+                                return null;
+                            }
+                        }, null);
+            }
+            send(Tinode.getJsonMapper().writeValueAsString(msg));
+            return future;
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    /**
      * Send a basic login packet to the server. A connection must be established prior to calling
      * this method. Success or failure will be reported through {@link EventListener#onLogin(int, String)}
      *
-     *  @param uname user name
-     *  @param password password
-     *  @return PromisedReply of the reply ctrl message
-     *  @throws IOException if there is no connection
+     * @param uname    user name
+     * @param password password
+     * @return PromisedReply of the reply ctrl message
+     * @throws IOException if there is no connection
      */
     public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws IOException, Exception {
         return login(MsgClientLogin.LOGIN_BASIC, MsgClientLogin.makeBasicToken(uname, password));
@@ -373,7 +411,7 @@ public class Tinode {
             return new PromisedReply<>((ServerMessage) null);
         }
 
-        ClientMessage msg = new ClientMessage(new MsgClientLogin(getNextId(), scheme, secret, makeUserAgent()));
+        ClientMessage msg = new ClientMessage(new MsgClientLogin(getNextId(), scheme, secret));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = null;
@@ -381,16 +419,16 @@ public class Tinode {
                 future = new PromisedReply<ServerMessage>();
                 mFutures.put(msg.login.id, future);
                 future = future.thenApply(
-                                new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                        if (pkt.ctrl == null) {
-                                            throw new InvalidObjectException("Unexpected type of reply packet in login");
-                                        }
-                                        mMyUid = (String) pkt.ctrl.params.get("uid");
-                                        return null;
-                                    }
-                                }, null);
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                if (pkt.ctrl == null) {
+                                    throw new InvalidObjectException("Unexpected type of reply packet in login");
+                                }
+                                mMyUid = (String) pkt.ctrl.params.get("uid");
+                                return null;
+                            }
+                        }, null);
             }
             return future;
         } catch (JsonProcessingException e) {
@@ -448,7 +486,7 @@ public class Tinode {
      * used instead.
      *
      * @param topicName name of the topic to publish to
-     * @param data payload to publish to topic
+     * @param data      payload to publish to topic
      * @return id of the sent packet, if {@link #wantAkn(boolean)} is set to true, null otherwise
      * @throws IOException
      */
@@ -470,12 +508,12 @@ public class Tinode {
      * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
      *
      * @param topicName name of the topic to inform
-     * @param what one or "read", "recv", "kp"
-     * @param seq id of the message being acknowledged
+     * @param what      one or "read", "recv", "kp"
+     * @param seq       id of the message being acknowledged
      */
     public void note(String topicName, String what, int seq) {
         try {
-            send(Tinode.getJsonMapper().writeValueAsString(new ClientMessage(new MsgClientNote(topicName,what, seq))));
+            send(Tinode.getJsonMapper().writeValueAsString(new ClientMessage(new MsgClientNote(topicName, what, seq))));
         } catch (JsonProcessingException ignored) {
         }
     }
@@ -529,7 +567,7 @@ public class Tinode {
      *
      * @return subscribed !me topic or null if !me is not subscribed
      */
-    public MeTopic<?,?,?> getMeTopic() {
+    public MeTopic<?, ?, ?> getMeTopic() {
         return (MeTopic) getTopic(TOPIC_ME);
     }
 
@@ -539,11 +577,11 @@ public class Tinode {
      * @param name name of the topic to find
      * @return subscribed topic or null if no such topic was found
      */
-    public Topic<?,?,?> getTopic(String name) {
+    public Topic<?, ?, ?> getTopic(String name) {
         return mTopics.get(name);
     }
 
-    public void registerTopic(Topic<?,?,?> topic) {
+    public void registerTopic(Topic<?, ?, ?> topic) {
         mTopics.put(topic.getName(), topic);
     }
 
@@ -616,13 +654,12 @@ public class Tinode {
 
     /**
      * Callback interface called by Connection when it receives events from the websocket.
-     *
      */
     public static class EventListener {
         /**
          * Connection was established successfully
          *
-         * @param code should be always 201
+         * @param code   should be always 201
          * @param reason should be always "Created"
          * @param params server parameters, such as protocol version
          */
@@ -634,8 +671,8 @@ public class Tinode {
          * Connection was dropped
          *
          * @param byServer true if connection was closed by server
-         * @param code numeric code of the error which caused connection to drop
-         * @param reason error message
+         * @param code     numeric code of the error which caused connection to drop
+         * @param reason   error message
          */
         @SuppressWarnings("unused")
         public void onDisconnect(boolean byServer, int code, String reason) {
@@ -657,7 +694,7 @@ public class Tinode {
          * @param msg message to be processed
          */
         @SuppressWarnings("unused")
-        public void onMessage(ServerMessage<?,?,?> msg) {
+        public void onMessage(ServerMessage<?, ?, ?> msg) {
         }
 
         /**
@@ -704,7 +741,7 @@ public class Tinode {
          * @param meta meta message to process
          */
         @SuppressWarnings("unused")
-        public void onMetaMessage(MsgServerMeta<?,?> meta) {
+        public void onMetaMessage(MsgServerMeta<?, ?> meta) {
         }
 
         /**
