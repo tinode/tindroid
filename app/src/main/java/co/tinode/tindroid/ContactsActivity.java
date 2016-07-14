@@ -60,6 +60,7 @@ public class ContactsActivity extends AppCompatActivity {
 
             @Override
             public void onInfo(MsgServerInfo info) {
+                Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
             }
 
             @Override

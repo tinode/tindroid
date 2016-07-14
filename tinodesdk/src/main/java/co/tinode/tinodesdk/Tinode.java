@@ -137,11 +137,12 @@ public class Tinode {
                     @Override
                     protected void onError(Exception err) {
                         handleDisconnect(true, 0, err.getMessage());
-
-                        try {
-                            connected.reject(err);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Exception in Connection.onError: ", e);
+                        if (!connected.isDone()) {
+                            try {
+                                connected.reject(err);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Exception in Connection.onError: ", e);
+                            }
                         }
                     }
                 });
@@ -473,7 +474,7 @@ public class Tinode {
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.sub.id, future);
+            mFutures.put(msg.leave.id, future);
             return future;
         } catch (JsonProcessingException e) {
             return null;

@@ -149,13 +149,29 @@ public class Topic<Pu,Pr,T> {
      * Leave topic
      * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      *
-     * @throws IOException
+     * @throws Exception
      */
-    public PromisedReply leave(boolean unsub) throws IOException {
+    public PromisedReply leave(boolean unsub) throws Exception {
         if (mSubscribed) {
-            return mTinode.leave(getName(), unsub);
+            return mTinode.leave(getName(), unsub).thenApply(
+                    new PromisedReply.SuccessListener() {
+                        @Override
+                        public PromisedReply onSuccess(Object result) throws Exception {
+                            topicLeft();
+                            return null;
+                        }
+                    }, null);
         }
         return null;
+    }
+
+    /**
+     * Leave topic without unsubscribing
+     *
+     * @throws IOException
+     */
+    public PromisedReply leave() throws Exception {
+        return leave(false);
     }
 
     /**
@@ -365,7 +381,10 @@ public class Topic<Pu,Pr,T> {
         }
     }
 
-    protected void disconnected() {
+    /**
+     * Called when the topic receives leave() confirmation
+     */
+    protected void topicLeft() {
         if (mSubscribed) {
             mSubscribed = false;
 

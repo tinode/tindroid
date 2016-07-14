@@ -86,6 +86,8 @@ public class MessageActivity extends AppCompatActivity {
 
                         @Override
                         public void onData(MsgServerData data) {
+                            Log.d(TAG, "Topic '" + mTopicName + "' onData");
+
                             runOnUiThread(new Runnable() {
                                               @Override
                                               public void run() {
@@ -108,11 +110,12 @@ public class MessageActivity extends AppCompatActivity {
 
                         @Override
                         public void onPres(MsgServerPres pres) {
-
+                            Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
                         }
 
                         @Override
                         public void onInfo(MsgServerInfo info) {
+                            Log.d(TAG, "Topic '" + mTopicName + "' onInfo what='" + info.what + "'");
                             switch (info.what) {
                                 case "read":
                                 case "recv":
@@ -170,6 +173,20 @@ public class MessageActivity extends AppCompatActivity {
         ListView listViewMessages = (ListView) findViewById(R.id.messages_container);
         mMessagesAdapter.changeTopic(mTopicName);
         listViewMessages.setAdapter(mMessagesAdapter);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // Deactivate current topic
+        if (mTopic.isSubscribed()) {
+            try {
+                mTopic.leave();
+            } catch (Exception ex) {
+                Log.e(TAG, "something went wrong", ex);
+            }
+        }
     }
 
     @Override
