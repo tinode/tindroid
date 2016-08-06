@@ -9,4 +9,20 @@
     <string name="tinode_url">https://github.com/tinode/</string>
     <string name="app_description">Tinode Demo Chat</string>
     <string name="action_signup">Sign Up</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="login_new">Login</string>
+    <string name="password_new">Password</string>
+    <string name="password_repeat">Repeat password</string>
+    <string name="full_name">Full name, e.g. John Doe</string>
+    <string name="tinode_logo">Tinode Logo</string>
+    <string name="upload_avatar">Upload avatar picture</string>
+    <string name="continue_fb">Continue with Facebook</string>
+    <string name="continue_goog">Continue with Google</string>
+    <string name="or">OR</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="transport_default">default</string>
+    <string name="transport_websocket">websocket</string>
+    <string name="transport_long_polling">long polling</string>
+    <string name="settings_host_name">Host name</string>
+    <string name="wire_transport">Wire transport</string>
 </resources>

@@ -10,6 +10,7 @@ import com.neovisionaries.ws.client.WebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketFrame;
+import com.neovisionaries.ws.client.WebSocketState;
 
 import java.io.IOException;
 import java.net.URI;
@@ -26,16 +27,23 @@ import java.util.Random;
 public class Connection {
     private static final String TAG = "tinodesdk.Connection";
     private static WebSocketFactory sWSFactory = new WebSocketFactory();
+    private static int CONNECTION_TIMEOUT = 3000; // in milliseconds
 
     private WebSocket mWsClient;
     private WsListener mListener;
+
+    private URI mEndpoint;
+    private String mApiKey;
 
     // Exponential backoff/reconnecting
     // TODO(gene): implement autoreconnect
     private boolean autoreconnect;
     private ExpBackoff backoff;
 
-    protected Connection(URI endpoint, String apikey, WsListener listener) throws IOException {
+    protected Connection(URI endpoint, String apikey, WsListener listener) {
+
+        mEndpoint = endpoint;
+        mApiKey = apikey;
 
         String path = endpoint.getPath();
         if (path.equals("")) {
@@ -45,9 +53,8 @@ public class Connection {
         }
         path += "channels"; // ws://www.example.com:12345/v0/channels
 
-        URI uri;
         try {
-            uri = new URI(endpoint.getScheme(),
+            mEndpoint = new URI(endpoint.getScheme(),
                     endpoint.getUserInfo(),
                     endpoint.getHost(),
                     endpoint.getPort(),
@@ -60,10 +67,13 @@ public class Connection {
         }
 
         mListener = listener;
+    }
 
-        mWsClient = sWSFactory.createSocket(uri, 3000);
-        mWsClient.addHeader("X-Tinode-APIKey", apikey);
-        mWsClient.addListener(new WebSocketAdapter() {
+    protected WebSocket createSocket() throws IOException {
+
+        WebSocket ws = sWSFactory.createSocket(mEndpoint, CONNECTION_TIMEOUT);
+        ws.addHeader("X-Tinode-APIKey", mApiKey);
+        ws.addListener(new WebSocketAdapter() {
             @Override
             public void onConnected(WebSocket ws, Map<String, List<String>> headers) {
                 Log.d(TAG, "Websocket connected!");
@@ -114,6 +124,8 @@ public class Connection {
                 mListener.onError(error);
             }
         });
+
+        return ws;
     }
 
     /**
@@ -125,10 +137,13 @@ public class Connection {
      * @param autoreconnect not implemented yet
      * @return true if a new attempt to open a connection was performed, false if connection already exists
      */
-    public boolean connect(boolean autoreconnect) {
+    public boolean connect(boolean autoreconnect)  throws IOException {
         // TODO(gene): implement autoreconnect
         this.autoreconnect = autoreconnect;
 
+        if (mWsClient == null || mWsClient.getState() != WebSocketState.CREATED) {
+            mWsClient = createSocket();
+        }
         mWsClient.connectAsynchronously();
         return true;
     }
@@ -147,7 +162,7 @@ public class Connection {
      * @return true if the socket is OPEN, false otherwise;
      */
     public boolean isConnected() {
-        return mWsClient.isOpen();
+        return mWsClient != null && mWsClient.isOpen();
     }
 
     public void send(String message) {

@@ -86,7 +86,6 @@ public class MessageActivity extends AppCompatActivity {
 
                         @Override
                         public void onData(MsgServerData data) {
-                            Log.d(TAG, "Topic '" + mTopicName + "' onData");
 
                             runOnUiThread(new Runnable() {
                                               @Override
@@ -115,7 +114,6 @@ public class MessageActivity extends AppCompatActivity {
 
                         @Override
                         public void onInfo(MsgServerInfo info) {
-                            Log.d(TAG, "Topic '" + mTopicName + "' onInfo what='" + info.what + "'");
                             switch (info.what) {
                                 case "read":
                                 case "recv":

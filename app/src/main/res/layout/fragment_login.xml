@@ -1,3 +1,4 @@
+
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,8 +8,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="co.tinode.tindroid.LoginFragment"
-    tools:showIn="@layout/activity_login">
+    tools:context="co.tinode.tindroid.LoginFragment">
 
     <ImageView
         android:layout_width="match_parent"
@@ -17,7 +17,8 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:id="@+id/imageLogo"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+        android:contentDescription="@string/tinode_logo"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -54,17 +55,6 @@
         android:layout_alignEnd="@+id/editLogin"
         android:hint="@string/password_hint"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/sign_in"
-        android:id="@+id/singnIn"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:onClick="onLogin"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        android:textSize="16sp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -74,5 +64,16 @@
         android:autoLink="web"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sign_in"
+        android:id="@+id/singnIn"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:onClick="onLogin"
+        android:textSize="@dimen/button_text"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>

@@ -17,15 +17,27 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import co.tinode.tinodesdk.model.*;
+import co.tinode.tinodesdk.model.ClientMessage;
+import co.tinode.tinodesdk.model.MsgClientHi;
+import co.tinode.tinodesdk.model.MsgClientLeave;
+import co.tinode.tinodesdk.model.MsgClientLogin;
+import co.tinode.tinodesdk.model.MsgClientNote;
+import co.tinode.tinodesdk.model.MsgClientPub;
+import co.tinode.tinodesdk.model.MsgClientSub;
+import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgServerCtrl;
+import co.tinode.tinodesdk.model.MsgServerData;
+import co.tinode.tinodesdk.model.MsgServerInfo;
+import co.tinode.tinodesdk.model.MsgServerMeta;
+import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -94,64 +106,57 @@ public class Tinode {
         final PromisedReply<ServerMessage> connected = new PromisedReply<>();
 
         if (mConnection == null) {
-            try {
-                mConnection = new Connection(
-                        new URI("ws://" + mServerHost + "/v" + PROTOVERSION + "/"),
-                        mApiKey, new Connection.WsListener() {
+            mConnection = new Connection(
+                    new URI("ws://" + mServerHost + "/v" + PROTOVERSION + "/"),
+                    mApiKey, new Connection.WsListener() {
 
-                    @Override
-                    protected void onConnect() {
-                        try {
-                            // Connection established, send handshake, inform listener on success
-                            hello().thenApply(
-                                    new PromisedReply.SuccessListener<ServerMessage>() {
-                                        @Override
-                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                            connected.resolve(pkt);
+                @Override
+                protected void onConnect() {
+                    try {
+                        // Connection established, send handshake, inform listener on success
+                        hello().thenApply(
+                                new PromisedReply.SuccessListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                        connected.resolve(pkt);
 
-                                            if (mListener != null) {
-                                                mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
-                                            }
-                                            return null;
+                                        if (mListener != null) {
+                                            mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
                                         }
-                                    }, null);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Exception in Connection.onConnect: ", e);
-                        }
+                                        return null;
+                                    }
+                                }, null);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in Connection.onConnect: ", e);
                     }
-
-                    @Override
-                    protected void onMessage(String message) {
-                        try {
-                            dispatchPacket(message);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Exception in dispatchPacket: ", e);
-                        }
-                    }
-
-                    @Override
-                    protected void onDisconnect(boolean byServer, int code, String reason) {
-                        handleDisconnect(byServer, code, reason);
-                    }
-
-                    @Override
-                    protected void onError(Exception err) {
-                        handleDisconnect(true, 0, err.getMessage());
-                        if (!connected.isDone()) {
-                            try {
-                                connected.reject(err);
-                            } catch (Exception e) {
-                                Log.e(TAG, "Exception in Connection.onError: ", e);
-                            }
-                        }
-                    }
-                });
-            } catch (URISyntaxException | IOException e) {
-                try {
-                    connected.reject(e);
-                } catch (Exception ignored) {
                 }
-            }
+
+                @Override
+                protected void onMessage(String message) {
+                    try {
+                        dispatchPacket(message);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in dispatchPacket: ", e);
+                    }
+                }
+
+                @Override
+                protected void onDisconnect(boolean byServer, int code, String reason) {
+                    handleDisconnect(byServer, code, reason);
+                }
+
+                @Override
+                protected void onError(Exception err) {
+                    handleDisconnect(true, 0, err.getMessage());
+                    if (!connected.isDone()) {
+                        try {
+                            connected.reject(err);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Exception in Connection.onError: ", e);
+                        }
+                    }
+                }
+            });
         }
 
         if (!mConnection.isConnected()) {

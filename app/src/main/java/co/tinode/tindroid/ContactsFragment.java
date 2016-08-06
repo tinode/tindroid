@@ -50,14 +50,5 @@ public class ContactsFragment extends Fragment {
                 startActivity(intent);
             }
         });
-
-        FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.addTopic);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "This will open a new topic dialog", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
     }
 }
