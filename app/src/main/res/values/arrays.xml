@@ -1,0 +1,13 @@
+<resources>
+    <string-array name="wire_transport">
+        <item>default</item>
+        <item>websocket</item>
+        <item>long polling</item>
+    </string-array>
+
+    <string-array name="wire_transport_value">
+        <item>def</item>
+        <item>ws</item>
+        <item>lp</item>
+    </string-array>
+</resources>

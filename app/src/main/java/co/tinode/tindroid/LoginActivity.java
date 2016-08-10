@@ -2,9 +2,11 @@ package co.tinode.tindroid;
 
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -32,6 +34,8 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        PreferenceManager.setDefaultValues(this, R.xml.login_preferences, false);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -85,9 +89,12 @@ public class LoginActivity extends AppCompatActivity {
         final Button signIn = (Button) findViewById(R.id.singnIn);
         signIn.setEnabled(false);
 
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String hostName = sharedPref.getString("pref_hostName", "");
+
         try {
             // This is called on websocket thread.
-            InmemoryCache.getTinode().connect()
+            InmemoryCache.getTinode().connect(hostName)
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
