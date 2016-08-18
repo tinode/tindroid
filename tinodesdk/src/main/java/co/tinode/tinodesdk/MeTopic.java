@@ -143,7 +143,6 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
      */
     protected void setRecv(String topicName, int seq) {
         Subscription<Pu,Pr> sub = mSubs.get(topicName);
-        boolean ret = false;
         if (sub != null && sub.recv < seq) {
             sub.recv = seq;
             if (mListener != null) {
@@ -156,17 +155,33 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
      * Set message count for a contact, update listener
      *
      * @param topicName name of the contact to update
-     * @param seq the 'msg' value
+     * @param seq the 'msg' (SeqID -- sequential message ID) value
      */
-    protected void setMsg(String topicName, int seq) {
+    protected void setMsgSeq(String topicName, int seq) {
         Subscription<Pu,Pr> sub = mSubs.get(topicName);
-        boolean ret = false;
-        if (sub != null && sub.recv < seq) {
-            sub.recv = seq;
-            if (mListener != null) {
-                mListener.onContactUpdate("msg", sub);
+        if (sub != null) {
+            if (sub.seq < seq) {
+                sub.seq = seq;
+            }
+            if (sub.recv < seq) {
+                sub.recv = seq;
+                if (mListener != null) {
+                    mListener.onContactUpdate("msg", sub);
+                }
             }
         }
     }
 
+    /**
+     *
+     * @param topicName name of the contact to check
+     * @return The SeqID of the contact
+     */
+    protected int getMsgSeq(String topicName) {
+        Subscription<Pu,Pr> sub = mSubs.get(topicName);
+        if (sub != null) {
+            return sub.seq;
+        }
+        return 0;
+    }
 }

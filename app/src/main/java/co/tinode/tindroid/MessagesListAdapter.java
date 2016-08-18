@@ -65,7 +65,7 @@ public class MessagesListAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return mTopic.getMessageCount();
+        return mTopic.getCachedMsgCount();
     }
 
     @Override
@@ -89,7 +89,7 @@ public class MessagesListAdapter extends BaseAdapter {
         }
 
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
-        int messageCount = mTopic.getMessageCount();
+        int messageCount = mTopic.getCachedMsgCount();
         String prevFrom = (position > 0) ? mTopic.getMessageAt(position-1).from : null;
         String nextFrom = (position + 1 < messageCount) ? mTopic.getMessageAt(position+1).from : null;
         DisplayAs display = DisplayAs.SINGLE;

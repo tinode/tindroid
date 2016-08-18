@@ -48,6 +48,7 @@ public class Topic<Pu,Pr,T> {
 
     protected Tinode mTinode;
 
+    // Cache of topic subscribers indexed by userID
     protected HashMap<String,Subscription<Pu,Pr>> mSubs;
     protected List<MsgServerData<T>> mMessages;
 
@@ -131,6 +132,19 @@ public class Topic<Pu,Pr,T> {
             if (mDescription == null || mDescription.updated == null) {
                 getParams = new MsgGetMeta();
                 getParams.what = "desc sub data";
+            } else {
+                // Check if the last received message has lower ID than the last known message.
+                // If so, fetch missing messages.
+                MeTopic me = mTinode.getMeTopic();
+                if (me != null) {
+                    int seqId = me.getMsgSeq(mName);
+                    if (seqId > mDescription.seq) {
+                        getParams = new MsgGetMeta();
+                        getParams.what = "data";
+                        getParams.data = getParams.new GetData();
+                        getParams.data.since = mDescription.seq;
+                    }
+                }
             }
 
             return mTinode.subscribe(getName(), null, getParams).thenApply(
@@ -189,46 +203,51 @@ public class Topic<Pu,Pr,T> {
      *
      * @param what "read" or "recv" to indicate which action to report
      */
-    protected void noteReadRecv(NoteType what) {
+    protected boolean noteReadRecv(NoteType what) {
 
+        // Save read and received status on subscription.
         Subscription<?,?> sub = mSubs.get(mTinode.getMyId());
+        boolean result = false;
         if (sub != null) {
             switch (what) {
                 case RECV:
                     if (sub.recv < mDescription.seq) {
                         mTinode.note(getName(), "recv", mDescription.seq);
                         sub.recv = mDescription.seq;
+                        result = true;
                     }
                     break;
                 case READ:
                     if (sub.read < mDescription.seq) {
                         mTinode.note(getName(), "read", mDescription.seq);
                         sub.read = mDescription.seq;
+                        result = true;
                     }
                     break;
             }
         } else {
-            Log.d(TAG, "Subscription not found in topic");
+            Log.e(TAG, "Subscription not found in topic");
         }
 
-        // Update locally cached contact with the new count
+        // Update cached contact with the new count.
         MeTopic me = mTinode.getMeTopic();
         if (me != null) {
-            boolean updated = false;
             if (what == NoteType.RECV) {
                 me.setRecv(mName, mDescription.seq);
             } else {
                 me.setRead(mName, mDescription.seq);
             }
         }
+
+        return result;
     }
 
-    public void noteRead() {
-        noteReadRecv(NoteType.READ);
+    public boolean noteRead() {
+        return noteReadRecv(NoteType.READ);
     }
 
-    public void noteRecv() {
-        noteReadRecv(NoteType.RECV);
+    public boolean noteRecv() {
+        return noteReadRecv(NoteType.RECV);
     }
 
 
@@ -259,8 +278,41 @@ public class Topic<Pu,Pr,T> {
         return mDescription.pub;
     }
 
-    public int getMessageCount() {
+    /**
+     * @return The number of messages stored in local cache
+     */
+    public int getCachedMsgCount() {
         return mMessages.size();
+    }
+
+    /**
+     * @return The SeqID of the latest message stored in local cache.
+     */
+    public int lastCachedMsgSeq() {
+        if (mMessages.isEmpty()) {
+            return 0;
+        }
+        return mMessages.get(mMessages.size()-1).seq;
+    }
+
+    /**
+     * @return The SeqID of the earliest message in cache.
+     */
+    public int firstCachedMsgSeq() {
+        if (mMessages.isEmpty()) {
+            return 0;
+        }
+        return mMessages.get(0).seq;
+    }
+
+    /**
+     * @return SeqID of the latest message sent through topic.
+     */
+    public int lastMessageSeq() {
+        if (mDescription != null) {
+            return mDescription.seq;
+        }
+        return 0;
     }
 
     /**
@@ -412,6 +464,8 @@ public class Topic<Pu,Pr,T> {
 
         if (data.seq > mDescription.seq) {
             mDescription.seq = data.seq;
+
+            // TODO(gene): do I need to save it to mSubs too?
         }
         mMessages.add(data);
 
@@ -421,7 +475,7 @@ public class Topic<Pu,Pr,T> {
 
         MeTopic me = mTinode.getMeTopic();
         if (me != null) {
-            me.setMsg(getName(), data.seq);
+            me.setMsgSeq(getName(), data.seq);
         }
     }
 
