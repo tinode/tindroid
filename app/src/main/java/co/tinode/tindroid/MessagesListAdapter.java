@@ -159,16 +159,16 @@ public class MessagesListAdapter extends BaseAdapter {
     }
 
     static class colorizer {
-        public int bg;
-        public int fg;
+        int bg;
+        int fg;
 
-        public colorizer(int bg, int fg) {
+        colorizer(int bg, int fg) {
             this.bg = bg;
             this.fg = fg;
         }
     }
 
-    public static String shortDate(Date date) {
+    static String shortDate(Date date) {
         Calendar now = Calendar.getInstance();
         Calendar then = Calendar.getInstance();
         then.setTime(date);
