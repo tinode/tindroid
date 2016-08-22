@@ -78,6 +78,19 @@ public class MessageActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.editMessage)).setText("");
 
         mTopic = (Topic<VCard,String,String>) getTinode().getTopic(mTopicName);
+
+        // Check periodically if all messages were read;
+        mNoteTimer = new Timer();
+        mNoteTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (mTopic != null) {
+                    // Topic will not send an update if there is no change
+                    mTopic.noteRead();
+                }
+            }
+        }, READ_DELAY, READ_DELAY);
+
         if (mTopic != null) {
             setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
         } else {
@@ -93,18 +106,6 @@ public class MessageActivity extends AppCompatActivity {
                                                   mMessagesAdapter.notifyDataSetChanged();
                                               }
                                           });
-
-                            // Notify other subscribers that some messages were received
-                            if (mNoteTimer == null) {
-                                mNoteTimer = new Timer();
-                                mNoteTimer.schedule(new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        mNoteTimer = null;
-                                        mTopic.noteRead();
-                                    }
-                                }, READ_DELAY);
-                            }
                         }
 
                         @Override
@@ -176,6 +177,10 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
+
+        // Stop reporting read messages
+        mNoteTimer.cancel();
+        mNoteTimer = null;
 
         // Deactivate current topic
         if (mTopic.isSubscribed()) {

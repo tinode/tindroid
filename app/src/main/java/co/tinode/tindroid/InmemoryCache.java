@@ -11,7 +11,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 
 /**
- * Created by gsokolov on 2/11/16.
+ * Shared resources.
  */
 public class InmemoryCache {
     public static Tinode sTinode;
@@ -19,13 +19,12 @@ public class InmemoryCache {
     public static String sHost = "10.0.2.2:6060"; // local
     //public static String sHost = "api.tinode.co"; // remote
 
-    static {
-        sTinode = new Tinode("Tindroid", sHost, "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K");
-        // Public, Private, Content
-        sTinode.setDefaultTypes(VCard.class, String.class, String.class);
-    }
-
     public static Tinode getTinode() {
+        if (sTinode == null) {
+            sTinode = new Tinode("Tindroid", "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K");
+            // Default types for parsing Public, Private, Content fields of messages
+            sTinode.setDefaultTypes(VCard.class, String.class, String.class);
+        }
         return sTinode;
     }
 

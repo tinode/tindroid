@@ -76,6 +76,9 @@ public class Subscription<Pu,Pr> {
         }
     }
 
+    /**
+     * @return "Sender index" - small unique integer value to identify this topic among other topics.
+     */
     public int getTopicIndex() {
         return mTopicIndex;
     }

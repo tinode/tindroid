@@ -11,7 +11,6 @@
 # generated files
 bin/
 build/
-*.iml
 gen/
 target/
 
@@ -37,4 +36,5 @@ tests/proguard-project.txt
 .gradle
 .idea
 *.iml
+app/*.iml
 build

@@ -65,7 +65,7 @@ public class MessagesListAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return mTopic.getMessageCount();
+        return mTopic.getCachedMsgCount();
     }
 
     @Override
@@ -89,7 +89,7 @@ public class MessagesListAdapter extends BaseAdapter {
         }
 
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
-        int messageCount = mTopic.getMessageCount();
+        int messageCount = mTopic.getCachedMsgCount();
         String prevFrom = (position > 0) ? mTopic.getMessageAt(position-1).from : null;
         String nextFrom = (position + 1 < messageCount) ? mTopic.getMessageAt(position+1).from : null;
         DisplayAs display = DisplayAs.SINGLE;
@@ -159,16 +159,16 @@ public class MessagesListAdapter extends BaseAdapter {
     }
 
     static class colorizer {
-        public int bg;
-        public int fg;
+        int bg;
+        int fg;
 
-        public colorizer(int bg, int fg) {
+        colorizer(int bg, int fg) {
             this.bg = bg;
             this.fg = fg;
         }
     }
 
-    public static String shortDate(Date date) {
+    static String shortDate(Date date) {
         Calendar now = Calendar.getInstance();
         Calendar then = Calendar.getInstance();
         then.setTime(date);

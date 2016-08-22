@@ -37,8 +37,9 @@ public class ContactsFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        ListView contactList = (ListView) getActivity().findViewById(R.id.contactsView);
+        final ListView contactList = (ListView) getActivity().findViewById(R.id.contactsView);
         contactList.setAdapter(((ContactsActivity) getActivity()).getContactsAdapter());
+
         contactList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -48,6 +49,15 @@ public class ContactsFragment extends Fragment {
                 intent.putExtra("topic", s.topic);
                 Log.d(TAG, "adding extra '" + s.topic + "'");
                 startActivity(intent);
+            }
+        });
+
+        contactList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                // I want to add something over here to change previous mode of list view to MULTIPLE selection mode
+                contactList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+                return true;
             }
         });
     }
