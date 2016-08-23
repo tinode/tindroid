@@ -37,4 +37,5 @@ tests/proguard-project.txt
 .idea
 *.iml
 app/*.iml
+tinodesdk/*.iml
 build.gradle
