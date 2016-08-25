@@ -10,4 +10,6 @@
     <color name="colorGooglePrimary">#dd4b39</color>
     <color name="colorGoogleDark">#dd4b39</color>
     <color name="colorGoogleLight">#dd4b39</color>
+
+    <color name="colorUserOnline">#98AFC7</color>
 </resources>

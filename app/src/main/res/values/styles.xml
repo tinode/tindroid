@@ -1,27 +1,10 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
-        <item name="android:textColorPrimary">@android:color/primary_text_light</item>
-        <item name="android:colorBackground">@color/background_material_light</item>
-        <item name="android:colorForeground">@color/foreground_material_light</item>
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="android:textColorPrimaryInverse">@android:color/primary_text_light</item>
-        <item name="android:textColorSecondaryInverse">@android:color/secondary_text_light</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
-    </style>
-
-    <style name="AppTheme.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
-    </style>
-
-    <style name="PreferenceTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="windowActionModeOverlay">true</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
     </style>
 

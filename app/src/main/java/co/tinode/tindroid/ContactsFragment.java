@@ -6,10 +6,16 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.util.SparseBooleanArray;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -20,7 +26,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Created by gsokolov on 2/3/16.
  */
-public class ContactsFragment extends Fragment {
+public class ContactsFragment extends Fragment implements AbsListView.MultiChoiceModeListener {
 
     private static final String TAG = "ContactsFragment";
 
@@ -38,7 +44,9 @@ public class ContactsFragment extends Fragment {
         super.onActivityCreated(savedInstance);
 
         final ListView contactList = (ListView) getActivity().findViewById(R.id.contactsView);
-        contactList.setAdapter(((ContactsActivity) getActivity()).getContactsAdapter());
+        final ContactsListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
+        contactList.setAdapter(adapter);
+        contactList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
         contactList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -52,13 +60,59 @@ public class ContactsFragment extends Fragment {
             }
         });
 
-        contactList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                // I want to add something over here to change previous mode of list view to MULTIPLE selection mode
-                contactList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        contactList.setMultiChoiceModeListener(this);
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+        ContactsListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
+        switch (item.getItemId()) {
+            case R.id.action_delete:
+                SparseBooleanArray selected = adapter.getSelectedIds();
+                for (int i = (selected.size() - 1); i >= 0; i--) {
+                    if (selected.valueAt(i)) {
+                        Log.d(TAG, "deleting item at " + i);
+                    }
+                }
+                // Close CAB
+                mode.finish();
                 return true;
+            case R.id.action_mute:
+                Log.d(TAG, "muting item");
+                mode.finish();
+                return true;
+
+            case R.id.action_edit:
+                Log.d(TAG, "editing item");
+                mode.finish();
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+        mode.getMenuInflater().inflate(R.menu.menu_contacts_selected, menu);
+        return true;
+    }
+
+    @Override
+    public void onDestroyActionMode(ActionMode mode) {
+        ContactsListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
+        adapter.removeSelection();
+    }
+
+    @Override
+    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                return false;
             }
-        });
+
+    @Override
+    public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+        ContactsListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
+        mode.setTitle("" + adapter.getSelectedCount());
+        adapter.toggleSelected(position);
     }
 }

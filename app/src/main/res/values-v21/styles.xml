@@ -1,23 +1,8 @@
 <resources>
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="windowNoTitle">true</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
-    </style>
-
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
-        <item name="android:textColorPrimary">@android:color/primary_text_light</item>
-        <item name="android:colorBackground">@color/background_material_light</item>
-        <item name="android:colorForeground">@color/foreground_material_light</item>
-        <item name="colorPrimary">@color/primary_material_light</item>
-        <item name="colorPrimaryDark">@color/primary_dark_material_light</item>
-        <item name="android:textColorPrimaryInverse">@android:color/primary_text_light</item>
-        <item name="android:textColorSecondaryInverse">@android:color/secondary_text_light</item>
-        <item name="android:statusBarColor">?android:attr/colorPrimaryDark</item>
+        <item name="windowActionModeOverlay">true</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
     </style>
 </resources>

@@ -34,7 +34,7 @@ public class ContactsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_contacts);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mContactIndex = new ArrayList<>();

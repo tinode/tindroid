@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.annotation.TargetApi;
@@ -10,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,10 +29,12 @@ public class ContactsListAdapter extends BaseAdapter {
 
     private Context mContext;
     private List<String> mContactItems;
+    private SparseBooleanArray mSelectedItems;
 
     public ContactsListAdapter(Context context, List<String> items) {
         mContext = context;
         mContactItems = items;
+        mSelectedItems = new SparseBooleanArray();
     }
 
     @Override
@@ -104,5 +108,30 @@ public class ContactsListAdapter extends BaseAdapter {
                         Color.argb(255, 192, 192, 192));
 
         return convertView;
+    }
+
+    public void toggleSelected(int position) {
+        selectView(position, !mSelectedItems.get(position));
+    }
+
+    public void removeSelection() {
+        mSelectedItems = new SparseBooleanArray();
+        notifyDataSetChanged();
+    }
+
+    public void selectView(int position, boolean value) {
+        if (value)
+            mSelectedItems.put(position, value);
+        else
+            mSelectedItems.delete(position);
+        notifyDataSetChanged();
+    }
+
+    public int getSelectedCount() {
+        return mSelectedItems.size();
+    }
+
+    public SparseBooleanArray getSelectedIds() {
+        return mSelectedItems;
     }
 }

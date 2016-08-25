@@ -4,7 +4,8 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:paddingTop="2dp"
-    android:paddingBottom="2dp">
+    android:paddingBottom="2dp"
+    android:background="?android:attr/activatedBackgroundIndicator">
 
     <RelativeLayout
         android:layout_marginRight="5dp"

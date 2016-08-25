@@ -28,4 +28,7 @@
     <string name="settings_host_name_summary">Change server address</string>
     <string name="settings_wire_transport_summary">Select wire transport</string>
     <string name="default_host_name">10.0.2.2:6060</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_mute">Mute conversation</string>
+    <string name="action_edit_contact">Edit contact</string>
 </resources>
