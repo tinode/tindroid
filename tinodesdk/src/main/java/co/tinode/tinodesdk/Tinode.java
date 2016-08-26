@@ -576,7 +576,7 @@ public class Tinode {
      *
      * @return subscribed !me topic or null if !me is not subscribed
      */
-    public MeTopic<?, ?, ?> getMeTopic() {
+    public <T,U,V> MeTopic<T, U, V> getMeTopic() {
         return (MeTopic) getTopic(TOPIC_ME);
     }
 
@@ -586,7 +586,7 @@ public class Tinode {
      * @param name name of the topic to find
      * @return subscribed topic or null if no such topic was found
      */
-    public Topic<?, ?, ?> getTopic(String name) {
+    public <T,U,V> Topic<T, U, V> getTopic(String name) {
         return mTopics.get(name);
     }
 

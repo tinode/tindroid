@@ -59,7 +59,7 @@ public class MessagesFragment extends Fragment {
 
     void sendMessage() {
         @SuppressWarnings("unchecked")
-        Topic<?,?,String> topic = (Topic<?,?,String>) InmemoryCache.getTinode()
+        Topic<?,?,String> topic = InmemoryCache.getTinode()
                 .getTopic(((MessageActivity)getActivity()).getTopicName());
         String message = ((TextView) getActivity().findViewById(R.id.editMessage)).getText().toString().trim();
         if (!message.equals("")) {

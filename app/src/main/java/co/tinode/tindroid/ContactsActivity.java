@@ -43,71 +43,76 @@ public class ContactsActivity extends AppCompatActivity {
         mContactIndex = new ArrayList<>();
         mContactsAdapter = new ContactsListAdapter(this, mContactIndex);
 
-        MeTopic<VCard,String,String> me = new MeTopic<>(InmemoryCache.getTinode(),
-                new Topic.Listener<VCard, String, Invitation<String>>() {
+        if (InmemoryCache.getTinode().getMeTopic() == null) {
+            MeTopic<VCard,String,String> me = new MeTopic<>(InmemoryCache.getTinode(),
+                    new Topic.Listener<VCard, String, Invitation<String>>() {
 
-            @Override
-            public void onData(MsgServerData<Invitation<String>> data) {
+                        @Override
+                        public void onData(MsgServerData<Invitation<String>> data) {
 
-            }
-
-            @Override
-            public void onContactUpdate(String what, Subscription<VCard,String> sub) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mContactsAdapter.notifyDataSetChanged();
-                    }
-                });
-            }
-
-            @Override
-            public void onInfo(MsgServerInfo info) {
-                Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
-            }
-
-            @Override
-            public void onMeta(MsgServerMeta<VCard, String> meta) {
-
-            }
-
-            @Override
-            public void onMetaSub(Subscription<VCard, String> sub) {
-                sub.pub.constructBitmap();
-                mContactIndex.add(sub.topic);
-            }
-
-            @Override
-            public void onMetaDesc(final Description<VCard, String> desc) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (desc.pub != null) {
-                            InmemoryCache.setupToolbar(ContactsActivity.this, toolbar, desc.pub, Topic.TopicType.ME);
                         }
-                    }
-                });
-            }
 
-            @Override
-            public void onSubsUpdated() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mContactsAdapter.notifyDataSetChanged();
-                    }
-                });
+                        @Override
+                        public void onContactUpdate(String what, Subscription<VCard, String> sub) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mContactsAdapter.notifyDataSetChanged();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onInfo(MsgServerInfo info) {
+                            Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
+                        }
+
+                        @Override
+                        public void onMeta(MsgServerMeta<VCard, String> meta) {
+
+                        }
+
+                        @Override
+                        public void onMetaSub(Subscription<VCard, String> sub) {
+                            sub.pub.constructBitmap();
+                            mContactIndex.add(sub.topic);
+                        }
+
+                        @Override
+                        public void onMetaDesc(final Description<VCard, String> desc) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (desc.pub != null) {
+                                        InmemoryCache.setupToolbar(ContactsActivity.this, toolbar, desc.pub, Topic.TopicType.ME);
+                                    }
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onSubsUpdated() {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mContactsAdapter.notifyDataSetChanged();
+                                }
+                            });
+                        }
+                    });
+            // Public, Private, Info in Invite<Info>
+            me.setTypes(VCard.class, String.class, String.class);
+            InmemoryCache.getTinode().registerTopic(me);
+            try {
+                me.subscribe();
+            } catch (Exception err) {
+                Log.i(TAG, "connection failed :( " + err.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        "Failed to login", Toast.LENGTH_LONG).show();
             }
-        });
-        // Public, Private, Info in Invite<Info>
-        me.setTypes(VCard.class, String.class, String.class);
-        InmemoryCache.getTinode().registerTopic(me);
-        try {
-            me.subscribe();
-        } catch (Exception err) {
-            Log.i(TAG, "connection failed :( " + err.getMessage());
-            Toast.makeText(getApplicationContext(),
-                    "Failed to login", Toast.LENGTH_LONG).show();
+        } else {
+            // Make mContactsAdapter re-read contacts
+            mContactsAdapter.notifyDataSetChanged();
         }
     }
 
@@ -115,10 +120,9 @@ public class ContactsActivity extends AppCompatActivity {
         return mContactsAdapter;
     }
 
-    @SuppressWarnings("unchecked")
     protected Subscription<VCard,String> getContactByPos(int pos) {
-        return (Subscription<VCard,String>) InmemoryCache.getTinode().getMeTopic()
-                .getSubscription(mContactIndex.get(pos));
+        MeTopic<VCard,String,String> me = InmemoryCache.getTinode().getMeTopic();
+        return me.getSubscription(mContactIndex.get(pos));
     }
 
     @Override

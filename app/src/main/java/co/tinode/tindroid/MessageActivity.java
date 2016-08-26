@@ -77,7 +77,7 @@ public class MessageActivity extends AppCompatActivity {
         mTopicName = getIntent().getStringExtra("topic");
         ((TextView) findViewById(R.id.editMessage)).setText("");
 
-        mTopic = (Topic<VCard,String,String>) getTinode().getTopic(mTopicName);
+        mTopic = getTinode().getTopic(mTopicName);
 
         // Check periodically if all messages were read;
         mNoteTimer = new Timer();
