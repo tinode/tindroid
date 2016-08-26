@@ -32,6 +32,9 @@ public class ContactsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.d(TAG, "Contacts: creating activity");
+
         setContentView(R.layout.activity_contacts);
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -121,7 +124,14 @@ public class ContactsActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_acc_settings, menu);
+        getMenuInflater().inflate(R.menu.menu_contacts, menu);
         return true;
+    }
+
+    @Override
+    public void onResumeFragments() {
+        super.onResumeFragments();
+
+        Log.d(TAG, "Contacts: resuming fragments; count=["  + mContactsAdapter.getCount() + "]");
     }
 }

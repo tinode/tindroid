@@ -31,4 +31,9 @@
     <string name="action_delete">Delete</string>
     <string name="action_mute">Mute conversation</string>
     <string name="action_edit_contact">Edit contact</string>
+    <string name="action_clear_messages">Clear messages</string>
+    <string name="action_view_contact">View contact</string>
+    <string name="action_attach">Attach</string>
+    <string name="action_new_chat">New chat</string>
+    <string name="action_new_group">New group chat</string>
 </resources>

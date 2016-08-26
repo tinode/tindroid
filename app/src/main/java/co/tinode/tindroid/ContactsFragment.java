@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Created by gsokolov on 2/3/16.
+ * View with contacts.
  */
 public class ContactsFragment extends Fragment implements AbsListView.MultiChoiceModeListener {
 
@@ -69,9 +69,9 @@ public class ContactsFragment extends Fragment implements AbsListView.MultiChoic
         switch (item.getItemId()) {
             case R.id.action_delete:
                 SparseBooleanArray selected = adapter.getSelectedIds();
-                for (int i = (selected.size() - 1); i >= 0; i--) {
+                for (int i = 0; i < selected.size(); i++) {
                     if (selected.valueAt(i)) {
-                        Log.d(TAG, "deleting item at " + i);
+                        Log.d(TAG, "deleting item at " + selected.keyAt(i));
                     }
                 }
                 // Close CAB
@@ -112,7 +112,7 @@ public class ContactsFragment extends Fragment implements AbsListView.MultiChoic
     @Override
     public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
         ContactsListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
-        mode.setTitle("" + adapter.getSelectedCount());
         adapter.toggleSelected(position);
+        mode.setTitle("" + adapter.getSelectedCount());
     }
 }

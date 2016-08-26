@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_new_p2p_topic"
+        android:orderInCategory="100"
+        android:title="@string/action_new_chat"
+        android:icon="@drawable/ic_chat"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_new_grp_topic"
+        android:orderInCategory="101"
+        android:title="@string/action_new_group"
+        android:icon="@drawable/ic_group_white"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_edit"
+        android:orderInCategory="103"
+        android:title="@string/action_settings"
+        android:icon="@drawable/ic_settings"
+        app:showAsAction="ifRoom" />
+
+</menu>
