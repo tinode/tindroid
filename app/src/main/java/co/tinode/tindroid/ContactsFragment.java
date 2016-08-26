@@ -53,9 +53,8 @@ public class ContactsFragment extends Fragment implements AbsListView.MultiChoic
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Subscription s = ((ContactsActivity) getActivity()).getContactByPos(position);
                 Intent intent = new Intent(getActivity(), MessageActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 intent.putExtra("topic", s.topic);
-                Log.d(TAG, "adding extra '" + s.topic + "'");
                 startActivity(intent);
             }
         });

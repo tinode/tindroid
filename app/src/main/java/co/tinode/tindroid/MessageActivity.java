@@ -74,7 +74,9 @@ public class MessageActivity extends AppCompatActivity {
         super.onResume();
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        String oldTopicName = mTopicName;
         mTopicName = getIntent().getStringExtra("topic");
+
         ((TextView) findViewById(R.id.editMessage)).setText("");
 
         mTopic = getTinode().getTopic(mTopicName);
@@ -93,6 +95,9 @@ public class MessageActivity extends AppCompatActivity {
 
         if (mTopic != null) {
             setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
+            if (!mTopicName.equals(oldTopicName)) {
+                mMessagesAdapter.notifyDataSetChanged();
+            }
         } else {
             mTopic = new Topic<>(getTinode(), mTopicName,
                     new Topic.Listener<VCard,String,String>() {
@@ -200,7 +205,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onNewIntent (Intent intent) {
+    protected void onNewIntent(Intent intent) {
         setIntent(intent);
     }
 
