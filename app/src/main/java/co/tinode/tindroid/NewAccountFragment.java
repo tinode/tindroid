@@ -45,7 +45,8 @@ public class NewAccountFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        // Send message on button click
+        // Get avatar from the gallery
+        // TODO(gene): add support for taking a picture
         getActivity().findViewById(R.id.upload_avatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
