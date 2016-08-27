@@ -70,7 +70,7 @@
         <TextView android:id="@+id/contactPriv"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:singleLine="true"
+            android:maxLines="1"
             android:ellipsize="end"
             android:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
             android:textColor="@android:color/primary_text_light"

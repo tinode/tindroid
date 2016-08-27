@@ -144,6 +144,11 @@ public class LoginActivity extends AppCompatActivity {
 
 
     public void onSignUp(View v) {
+        /*
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+         */
         Toast.makeText(getApplicationContext(), "Not implemented", Toast.LENGTH_SHORT).show();
     }
 

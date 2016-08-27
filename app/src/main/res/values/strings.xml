@@ -36,4 +36,7 @@
     <string name="action_attach">Attach</string>
     <string name="action_new_chat">New chat</string>
     <string name="action_new_group">New group chat</string>
+    <string name="avatar">Avatar picture</string>
+    <string name="select_image">Select Image</string>
+    <string name="image_is_missing">Image is missing</string>
 </resources>

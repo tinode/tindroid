@@ -3,10 +3,12 @@ package co.tinode.tindroid;
 import android.graphics.Bitmap;
 
 /**
- * Created by gsokolov on 2/4/16.
+ * VCard - contact descriptor.
  */
 public class VCard {
+    // Full name
     public String fn;
+    // Avatar photo
     public AvatarPhoto photo;
 
     public VCard() {

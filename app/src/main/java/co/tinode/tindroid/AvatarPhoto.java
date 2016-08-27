@@ -4,7 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 /**
- * Created by gene on 13/02/16.
+ * Utility class: constructs a Bitmap from a byte stream.
  */
 
 public class AvatarPhoto {

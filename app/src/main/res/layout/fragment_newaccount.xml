@@ -45,14 +45,28 @@
                 android:inputType="textPassword"/>
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/imageBlankAvatar"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:clickable="true"
-            android:alpha="0.35"
-            android:contentDescription="@string/upload_avatar"
-            android:src="@drawable/ic_add_a_photo"/>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="128dp">
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/imageAvatar"
+                android:layout_width="112sp"
+                android:layout_height="112sp"
+                android:clickable="true"
+                android:layout_marginLeft="8sp"
+                android:contentDescription="@string/avatar"
+                android:src="@drawable/ic_person"/>
+            <Button android:id="@+id/upload_avatar"
+                android:layout_width="48sp"
+                android:layout_height="48sp"
+                android:paddingTop="10dp"
+                android:drawableTop="@drawable/ic_add_a_photo"
+                android:background="@drawable/round_shape"
+                android:backgroundTint="?attr/colorButtonNormal"
+                android:layout_margin="2sp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"/>
+        </RelativeLayout>
 
     </LinearLayout>
 
