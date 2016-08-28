@@ -4,8 +4,9 @@ package co.tinode.tinodesdk.model;
  * Created by gene on 31/01/16.
  */
 
-public class ClientMessage<T> {
+public class ClientMessage<Pu,Pr,T> {
     public MsgClientHi hi;
+    public MsgClientAcc<Pu,Pr> acc;
     public MsgClientLogin login;
     public MsgClientPub<T> pub;
     public MsgClientSub sub;
@@ -16,6 +17,9 @@ public class ClientMessage<T> {
     }
     public ClientMessage(MsgClientHi hi) {
         this.hi = hi;
+    }
+    public ClientMessage(MsgClientAcc<Pu,Pr> acc) {
+        this.acc = acc;
     }
     public ClientMessage(MsgClientLogin login) {
         this.login = login;

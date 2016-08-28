@@ -39,4 +39,9 @@
     <string name="avatar">Avatar picture</string>
     <string name="select_image">Select Image</string>
     <string name="image_is_missing">Image is missing</string>
+    <string name="passwords_dont_match">Passwords don\'t match</string>
+    <string name="error_login_failed">Login failed: </string>
+    <string name="error_connection_failed">Connection failed: </string>
+    <string name="login_required">Login required</string>
+    <string name="password_required">Password required</string>
 </resources>

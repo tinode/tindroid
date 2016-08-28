@@ -1,12 +1,10 @@
 package co.tinode.tinodesdk.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Created by gene on 31/01/16.
+ * Subscribe to topic packet.
  *
  */
-
 public class MsgClientSub<Pu,Pr,Inv> {
     public String id;
     public String topic;

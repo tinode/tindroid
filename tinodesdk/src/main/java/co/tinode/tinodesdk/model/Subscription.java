@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
 
 /**
- * Created by gene on 13/02/16.
+ * Subscription to topic.
  */
 public class Subscription<Pu,Pr> {
     public String user;

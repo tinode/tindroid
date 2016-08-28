@@ -22,8 +22,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 
+import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
+import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientHi;
 import co.tinode.tinodesdk.model.MsgClientLeave;
 import co.tinode.tinodesdk.model.MsgClientLogin;
@@ -38,6 +41,7 @@ import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.SetDesc;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -402,6 +406,47 @@ public class Tinode {
     }
 
     /**
+     * Create new account. Connection must be established prior to calling this method.
+     *
+     * @param auth an array of authentication schemes for this account
+     * @param loginWithScheme use this cheme to login immediately
+     * @param desc default access parameters for this account
+     * @return PromisedReply of the reply ctrl message
+     * @throws IOException if there is no connection
+     */
+    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(AuthScheme[] auth,
+                                                         String loginWithScheme,
+                                                         SetDesc<Pu,Pr> desc) throws IOException, Exception {
+        ClientMessage msg = new ClientMessage<Pu,Pr,T>(
+                new MsgClientAcc<Pu,Pr>(getNextId(), auth, loginWithScheme, desc));
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(msg));
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.acc.id, future);
+            return future;
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Create account using a single basic authentication scheme. A connection must be established
+     * prior to calling this method.
+     *
+     * @param uname    user name
+     * @param password password
+     * @return PromisedReply of the reply ctrl message
+     * @throws IOException if there is no connection
+     */
+    public <Pu,Pr,T> PromisedReply<ServerMessage> createAccountBasic(
+            String uname, String password, boolean login, SetDesc<Pu,Pr> desc)
+                throws IOException, Exception {
+        AuthScheme[] auth = new AuthScheme[1];
+        auth[0] = new AuthScheme(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
+        return createAccount(auth, login? AuthScheme.LOGIN_BASIC : null, desc);
+    }
+
+    /**
      * Send a basic login packet to the server. A connection must be established prior to calling
      * this method. Success or failure will be reported through {@link EventListener#onLogin(int, String)}
      *
@@ -411,7 +456,7 @@ public class Tinode {
      * @throws IOException if there is no connection
      */
     public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws IOException, Exception {
-        return login(MsgClientLogin.LOGIN_BASIC, MsgClientLogin.makeBasicToken(uname, password));
+        return login(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
     }
 
     protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {
@@ -761,7 +806,5 @@ public class Tinode {
         @SuppressWarnings("unused")
         public void onPresMessage(MsgServerPres pres) {
         }
-
     }
-
 }

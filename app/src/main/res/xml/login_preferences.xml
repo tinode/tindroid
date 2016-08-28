@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:defaultValue="@string/default_host_name"
         android:key="pref_hostName"
-        android:summary="@string/settings_host_name_summary"
+        android:summary="%s"
         android:title="@string/settings_host_name"/>
     <android.support.v7.preference.ListPreference
         android:layout_width="match_parent"
@@ -18,6 +18,6 @@
         android:entries="@array/wire_transport"
         android:entryValues="@array/wire_transport_value"
         android:key="pref_wireTransport"
-        android:summary="@string/settings_wire_transport_summary"
+        android:summary="%s"
         android:title="@string/settings_wire_transport"/>
 </android.support.v7.preference.PreferenceScreen>

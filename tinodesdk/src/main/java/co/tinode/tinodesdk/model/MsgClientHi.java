@@ -1,7 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gsokolov on 7/13/16.
+ * Handshake packet.
  */
 
 public class MsgClientHi {

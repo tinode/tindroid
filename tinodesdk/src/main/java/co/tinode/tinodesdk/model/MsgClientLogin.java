@@ -1,11 +1,10 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gene on 31/01/16.
+ * Login packet.
  */
 
 public class MsgClientLogin {
-    public static final String LOGIN_BASIC = "basic";
 
     public String id;
     public String scheme; // "basic" or "token"
@@ -26,10 +25,6 @@ public class MsgClientLogin {
     }
 
     public void LoginBasic(String uname, String password) {
-        Login(LOGIN_BASIC, uname + ":" + password);
-    }
-
-    public static String makeBasicToken(String uname, String password) {
-        return uname + ":" + password;
+        Login(AuthScheme.LOGIN_BASIC, uname + ":" + password);
     }
 }

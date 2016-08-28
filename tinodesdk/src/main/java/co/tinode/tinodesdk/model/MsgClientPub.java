@@ -1,7 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gene on 31/01/16.
+ * Publish to topic packet.
  */
 public class MsgClientPub<T> {
     public String id;

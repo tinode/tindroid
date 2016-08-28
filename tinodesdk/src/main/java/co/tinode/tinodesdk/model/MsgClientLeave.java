@@ -1,7 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gene on 31/01/16.
+ * Topic unsubscribe packet.
  */
 public class MsgClientLeave {
     public String id;

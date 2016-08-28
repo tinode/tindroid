@@ -1,7 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gsokolov on 2/2/16.
+ * Typing and read/received notifications packet.
  */
 public class MsgClientNote {
     public String topic; // topic to notify, required

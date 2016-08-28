@@ -14,6 +14,11 @@ public class VCard {
     public VCard() {
     }
 
+    public VCard(String fullName, Bitmap avatar) {
+        this.fn = fullName;
+        this.photo = new AvatarPhoto(avatar);
+    }
+
     public Bitmap getBitmap() {
         return (photo != null) ? photo.getBitmap() : null;
     }

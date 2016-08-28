@@ -3,7 +3,7 @@ package co.tinode.tinodesdk.model;
 import java.util.Date;
 
 /**
- * Created by gsokolov on 2/12/16.
+ * Topic metadata request.
  */
 public class MsgGetMeta {
     public String what;
@@ -12,6 +12,7 @@ public class MsgGetMeta {
     public GetData data;
 
     public class GetDesc {
+        // ims = If modified since...
         public Date ims;
     }
 
