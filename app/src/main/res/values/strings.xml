@@ -44,4 +44,5 @@
     <string name="error_connection_failed">Connection failed: </string>
     <string name="login_required">Login required</string>
     <string name="password_required">Password required</string>
+    <string name="error_new_account_failed">Account registration failed:</string>
 </resources>

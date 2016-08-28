@@ -196,10 +196,16 @@ public class LoginActivity extends AppCompatActivity {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) throws Exception {
                                     // Try to create a new account.
-                                    VCard vcard = new VCard(fullName,
-                                            ((BitmapDrawable)avatar.getDrawable()).getBitmap());
+                                    Bitmap bmp = null;
+                                    try {
+                                        bmp = ((BitmapDrawable)avatar.getDrawable()).getBitmap();
+                                    } catch (ClassCastException ignored) {
+                                        // If image is not loaded, the drawable is a vector.
+                                        // Ignore it.
+                                    }
+                                    VCard vcard = new VCard(fullName, bmp);
                                     return InmemoryCache.getTinode().createAccountBasic(
                                             login, password, true,
                                             new SetDesc<VCard,String>(vcard, null));
@@ -224,7 +230,7 @@ public class LoginActivity extends AppCompatActivity {
                             new PromisedReply.FailureListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                    reportError(err, signUp, R.string.error_connection_failed);
+                                    reportError(err, signUp, R.string.error_new_account_failed);
                                     return null;
                                 }
                             });

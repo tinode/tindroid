@@ -25,6 +25,6 @@ public class MsgClientLogin {
     }
 
     public void LoginBasic(String uname, String password) {
-        Login(AuthScheme.LOGIN_BASIC, uname + ":" + password);
+        Login(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
     }
 }

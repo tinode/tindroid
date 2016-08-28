@@ -408,17 +408,18 @@ public class Tinode {
     /**
      * Create new account. Connection must be established prior to calling this method.
      *
-     * @param auth an array of authentication schemes for this account
-     * @param loginWithScheme use this cheme to login immediately
+     * @param scheme authentication scheme to use
+     * @param secret authentication secret for the chosen scheme
+     * @param loginNow use the new account to login immediately
      * @param desc default access parameters for this account
      * @return PromisedReply of the reply ctrl message
      * @throws IOException if there is no connection
      */
-    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(AuthScheme[] auth,
-                                                         String loginWithScheme,
+    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, String secret,
+                                                         boolean loginNow,
                                                          SetDesc<Pu,Pr> desc) throws IOException, Exception {
         ClientMessage msg = new ClientMessage<Pu,Pr,T>(
-                new MsgClientAcc<Pu,Pr>(getNextId(), auth, loginWithScheme, desc));
+                new MsgClientAcc<Pu,Pr>(getNextId(), scheme, secret, loginNow, desc));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
@@ -441,9 +442,8 @@ public class Tinode {
     public <Pu,Pr,T> PromisedReply<ServerMessage> createAccountBasic(
             String uname, String password, boolean login, SetDesc<Pu,Pr> desc)
                 throws IOException, Exception {
-        AuthScheme[] auth = new AuthScheme[1];
-        auth[0] = new AuthScheme(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
-        return createAccount(auth, login? AuthScheme.LOGIN_BASIC : null, desc);
+        return createAccount(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password),
+                login, desc);
     }
 
     /**
