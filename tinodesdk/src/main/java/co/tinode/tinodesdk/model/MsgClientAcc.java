@@ -9,13 +9,13 @@ public class MsgClientAcc<Pu,Pr> {
     public String id;
     public String user;
     public String scheme;
-    public String secret;
+    public byte[] secret;
     // Use the new account for immediate authentication.
     public boolean login;
     // Account parameters
     public SetDesc<Pu,Pr> desc;
 
-    public MsgClientAcc(String id, String scheme, String secret, boolean login, SetDesc<Pu, Pr> desc) {
+    public MsgClientAcc(String id, String scheme, byte[] secret, boolean login, SetDesc<Pu, Pr> desc) {
         this.id = id;
         this.user = USER_NEW;
         this.scheme = scheme;

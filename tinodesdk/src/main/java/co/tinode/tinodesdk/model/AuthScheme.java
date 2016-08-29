@@ -8,7 +8,8 @@ public class AuthScheme {
 
     public AuthScheme() {}
 
-    public static String makeBasicToken(String uname, String password) {
-        return uname + ":" + password;
+    public static byte[] makeBasicToken(String uname, String password) {
+        // []byte will be base64-encoded by Jackson
+        return (uname + ":" + password).getBytes();
     }
 }

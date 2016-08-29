@@ -50,7 +50,7 @@ public class Tinode {
     protected static final String TOPIC_ME = "me";
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.7";
+    private static final String VERSION = "0.8";
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
@@ -415,7 +415,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      * @throws IOException if there is no connection
      */
-    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, String secret,
+    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, byte[] secret,
                                                          boolean loginNow,
                                                          SetDesc<Pu,Pr> desc) throws IOException, Exception {
         ClientMessage msg = new ClientMessage<Pu,Pr,T>(
@@ -459,7 +459,7 @@ public class Tinode {
         return login(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
     }
 
-    protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {
+    protected PromisedReply<ServerMessage> login(String scheme, byte[] secret) throws Exception {
         if (isAuthenticated()) {
             // Don't try to login again if we are logged in.
             return new PromisedReply<>((ServerMessage) null);
