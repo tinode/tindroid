@@ -1,16 +1,16 @@
 # Demo chat for Android
 
-Work in progress. Somewhat functional:
+Work in progress. What works:
 
-* Loads the list of contacts
-* Sends and receives messages
-* Presence notifications work
-* Message counters work
-* Indicators for messages received/read (little check marks in messages)
+* Registering new account
+* Loading the list of contacts
+* Sending and receiving messages
+* Presence notifications
+* Message counters
+* Indicators of messages received/read (little check marks in messages)
 
 Does not work yet:
 
-* Registering new account
 * Modifying existing account
 * Deleting/muting topics and messages
 * No offline mode
@@ -19,5 +19,9 @@ Does not work yet:
 
 Dependencies: [jackson](https://github.com/FasterXML/jackson), [nv-websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client)
 
-<img src="pic-contacts-20160217.png" alt="App screenshot - contacts" width="260" />
-<img src="pic-messages-20160217.png" alt="App screenshot - contacts" width="260" />
+The `contacts.vcf` contains a list of contacts which can be used for testing. Push it to your emulator using
+
+  `adb push contacts.vcf /sdcard/contacts.vcf`
+
+<img src="android-contacts-20160829.png" alt="App screenshot - contacts" width="260" />
+<img src="android-messages-20160829.png" alt="App screenshot - contacts" width="260" />
