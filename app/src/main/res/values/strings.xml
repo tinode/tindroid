@@ -45,4 +45,8 @@
     <string name="login_required">Login required</string>
     <string name="password_required">Password required</string>
     <string name="error_new_account_failed">Account registration failed:</string>
+    <string name="no_contacts">No contacts found</string>
+    <string name="invite">Invite</string>
+    <string name="contacts">Contacts</string>
+    <string name="chats">Chats</string>
 </resources>

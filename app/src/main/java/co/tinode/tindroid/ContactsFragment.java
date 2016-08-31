@@ -2,9 +2,7 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
@@ -15,18 +13,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
-
-import java.util.ArrayList;
 
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * View with contacts.
  */
-public class ContactsFragment extends Fragment implements AbsListView.MultiChoiceModeListener {
+public class ContactsFragment extends ListFragment implements AbsListView.MultiChoiceModeListener {
 
     private static final String TAG = "ContactsFragment";
 
@@ -43,12 +37,10 @@ public class ContactsFragment extends Fragment implements AbsListView.MultiChoic
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        final ListView contactList = (ListView) getActivity().findViewById(R.id.contactsView);
-        final ContactsListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
-        contactList.setAdapter(adapter);
-        contactList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        setListAdapter(((ContactsActivity) getActivity()).getContactsAdapter());
+        getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
-        contactList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Subscription s = ((ContactsActivity) getActivity()).getContactByPos(position);
@@ -59,7 +51,7 @@ public class ContactsFragment extends Fragment implements AbsListView.MultiChoic
             }
         });
 
-        contactList.setMultiChoiceModeListener(this);
+        getListView().setMultiChoiceModeListener(this);
     }
 
     @Override

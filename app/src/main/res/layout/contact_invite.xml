@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/activatedBackgroundIndicator"
+    android:orientation="horizontal"
+    android:paddingBottom="2dp"
+    android:paddingTop="2dp">
+
+    <android.support.v7.widget.AppCompatImageView
+        android:id="@+id/avatar"
+        android:layout_width="48sp"
+        android:layout_height="48sp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginRight="5dp"/>
+
+    <Button
+        android:id="@+id/buttonInvite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:text="@string/invite"/>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/avatar"
+        android:layout_toLeftOf="@id/buttonInvite"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/contactName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:paddingEnd="16sp"
+            android:paddingRight="16sp"
+            android:text="Test text"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+        <TextView
+            android:id="@+id/contactPriv"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:maxWidth="240sp"
+            android:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

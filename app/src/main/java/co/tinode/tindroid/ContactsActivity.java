@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -8,6 +9,8 @@ import android.view.Menu;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Topic;
@@ -38,16 +41,35 @@ public class ContactsActivity extends AppCompatActivity {
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabsChatContacts);
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int position = tab.getPosition();
+                Log.d(TAG, "Switch tab to " + position);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+
         mContactIndex = new ArrayList<>();
         mContactsAdapter = new ContactsListAdapter(this, mContactIndex);
 
-        if (InmemoryCache.getTinode().getMeTopic() == null) {
-            MeTopic<VCard,String,String> me = new MeTopic<>(InmemoryCache.getTinode(),
+        MeTopic<VCard,String,String> me = InmemoryCache.getTinode().getMeTopic();
+        if (me == null) {
+            me = new MeTopic<>(InmemoryCache.getTinode(),
                     new Topic.Listener<VCard, String, Invitation<String>>() {
 
                         @Override
                         public void onData(MsgServerData<Invitation<String>> data) {
-
+                            // TODO(gene): handle a chat invitation
+                            Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
                         }
 
                         @Override
@@ -109,7 +131,9 @@ public class ContactsActivity extends AppCompatActivity {
                         "Failed to login", Toast.LENGTH_LONG).show();
             }
         } else {
-            // Make mContactsAdapter re-read contacts
+            for (Subscription<VCard, String> s : me.getSubscriptions()) {
+                mContactIndex.add(s.topic);
+            }
             mContactsAdapter.notifyDataSetChanged();
         }
     }

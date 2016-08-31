@@ -1,4 +1,3 @@
-
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -55,6 +54,17 @@
         android:layout_alignEnd="@+id/editLogin"
         android:hint="@string/password_hint"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sign_in"
+        android:id="@+id/singnIn"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_below="@+id/editPassword"
+        android:onClick="onLogin"
+        android:textSize="@dimen/button_text"
+        android:layout_centerHorizontal="true"/>
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -64,16 +74,5 @@
         android:autoLink="web"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/sign_in"
-        android:id="@+id/singnIn"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:onClick="onLogin"
-        android:textSize="@dimen/button_text"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>

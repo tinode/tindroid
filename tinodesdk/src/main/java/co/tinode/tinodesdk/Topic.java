@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JavaType;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -349,6 +350,10 @@ public class Topic<Pu,Pr,T> {
 
     public Subscription<Pu,Pr> getSubscription(String key) {
         return mSubs.get(key);
+    }
+
+    public Collection<Subscription<Pu,Pr>> getSubscriptions() {
+        return mSubs.values();
     }
 
     protected void setListener(Listener<Pu,Pr,T> l) {
