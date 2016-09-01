@@ -1,17 +1,19 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:padding="@dimen/activity_vertical_margin"
+    android:background="@color/white"
+    tools:context="co.tinode.tindroid.ChatListFragment"
+    tools:showIn="@layout/activity_contacts">
 
-    <!-- Use standard android.R class list id instead of app specific id. This is just useful for
-         consistency. -->
-    <ListView android:id="@id/android:list"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent" />
+    <ListView
+        android:id="@+id/android:list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
-    <!-- Use standard android.R class empty id instead of app specific id. This is just useful for
-     consistency. -->
+    <!-- This is a view shown when no contacts are found. -->
     <TextView android:id="@id/android:empty"
               android:gravity="center"
               android:layout_width="match_parent"

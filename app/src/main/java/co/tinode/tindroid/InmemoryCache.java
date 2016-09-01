@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -13,17 +14,21 @@ import co.tinode.tinodesdk.Topic;
  * Shared resources.
  */
 public class InmemoryCache {
-    public static Tinode sTinode;
+    private static final String TAG = "InmemoryCache";
+    private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
 
-    public static String sHost = "10.0.2.2:6060"; // local
+    private static Tinode sTinode;
+
+    //public static String sHost = "10.0.2.2:6060"; // local
     //public static String sHost = "api.tinode.co"; // remote
 
     public static Tinode getTinode() {
         if (sTinode == null) {
-            sTinode = new Tinode("Tindroid", "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K");
+            sTinode = new Tinode("Tindroid", API_KEY);
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
         }
+
         return sTinode;
     }
 

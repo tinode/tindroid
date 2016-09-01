@@ -11,5 +11,9 @@
     <color name="colorGoogleDark">#dd4b39</color>
     <color name="colorGoogleLight">#dd4b39</color>
 
-    <color name="colorUserOnline">#98AFC7</color>
+    <color name="colorPillCounter">#FF98AFC7</color>
+    <color name="colorUserOnline">#FF40C040</color>
+    <color name="colorUserOffline">#FFC0C0C0</color>
+
+    <color name="colorAvatarLight">#66000000</color>
 </resources>

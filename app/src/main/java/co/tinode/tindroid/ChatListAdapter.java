@@ -11,6 +11,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.v4.app.FragmentManager;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,16 +24,18 @@ import android.widget.TextView;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
+import static android.content.ContentValues.TAG;
+
 /**
  * Handling contact list.
  */
-public class ContactsListAdapter extends BaseAdapter {
+public class ChatListAdapter extends BaseAdapter {
 
     private Context mContext;
     private List<String> mContactItems;
     private SparseBooleanArray mSelectedItems;
 
-    public ContactsListAdapter(Context context, List<String> items) {
+    public ChatListAdapter(Context context, List<String> items) {
         mContext = context;
         mContactItems = items;
         mSelectedItems = new SparseBooleanArray();
@@ -86,9 +90,9 @@ public class ContactsListAdapter extends BaseAdapter {
             Topic.TopicType topicType = Topic.getTopicTypeByName(s.topic);
             int res = -1;
             if (topicType == Topic.TopicType.GRP) {
-                res = R.drawable.ic_group_white;
+                res = R.drawable.ic_group_circle;
             } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
-                res = R.drawable.ic_person_white;
+                res = R.drawable.ic_person_circle;
             }
 
             Drawable drw;
@@ -98,14 +102,17 @@ public class ContactsListAdapter extends BaseAdapter {
                 drw = mContext.getResources().getDrawable(res);
             }
             if (drw != null) {
-                avatar.setImageDrawable(new RoundedImage(drw, 0xFF757575));
+                //avatar.setImageDrawable(new RoundedImage(drw, 0xFF757575));
+                avatar.setImageDrawable(drw);
             }
         }
 
         ((ImageView) convertView.findViewById(R.id.online))
                 .setColorFilter(s.online ?
-                        Color.argb(255, 64, 192, 64) :
-                        Color.argb(255, 192, 192, 192));
+                        Color.argb(255, 0x40, 0xC0, 0x40) :
+                        Color.argb(255, 0xC0, 0xC0, 0xC0));
+
+        Log.d(TAG, "Topic '" + s.topic + "' online: " + s.online);
 
         return convertView;
     }

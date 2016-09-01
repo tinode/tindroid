@@ -64,6 +64,9 @@ public class Topic<Pu,Pr,T> {
      * @param l event listener, optional
      */
     public Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
+        if (tinode == null) {
+            throw new IllegalArgumentException("Tinode cannot be null");
+        }
         mTinode = tinode;
         mName = name;
         mListener = l;

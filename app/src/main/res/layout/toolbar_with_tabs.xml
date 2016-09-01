@@ -12,29 +12,30 @@
         android:background="?attr/colorPrimary"
         app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
-    <!--android.support.v4.view.ViewPager
+
+    <android.support.design.widget.TabLayout
+        android:id="@+id/tabsContacts"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"-->
+        android:layout_height="wrap_content">
 
-        <android.support.design.widget.TabLayout
-            android:id="@+id/tabsChatContacts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <android.support.design.widget.TabItem
+            android:id="@+id/tab_chat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/chats"/>
 
-            <android.support.design.widget.TabItem
-                android:id="@+id/tab_chat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/chats"/>
+        <android.support.design.widget.TabItem
+            android:id="@+id/tab_contacts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/contacts"/>
 
-            <android.support.design.widget.TabItem
-                android:id="@+id/tab_contacts"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/contacts"/>
+    </android.support.design.widget.TabLayout>
 
-        </android.support.design.widget.TabLayout>
-
-    <!--/android.support.v4.view.ViewPager-->
+    <android.support.v4.view.ViewPager
+        android:id="@+id/tabPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/tabsContacts"/>
 
 </android.support.design.widget.AppBarLayout>

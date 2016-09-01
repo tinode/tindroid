@@ -2,11 +2,11 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
 
-    <solid android:color="@color/colorUserOnline" />
+    <solid android:color="@color/colorPillCounter" />
 
     <stroke
         android:width="2sp"
-        android:color="@color/colorUserOnline" />
+        android:color="@color/colorPillCounter" />
 
     <size
         android:width="14sp"
