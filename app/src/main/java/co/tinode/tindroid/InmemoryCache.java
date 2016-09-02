@@ -41,7 +41,7 @@ public class InmemoryCache {
             if (bmp != null) {
                 toolbar.setLogo(new RoundedImage(bmp));
             } else {
-                Drawable drw = null;
+                Drawable drw;
                 int res = -1;
                 if (topicType == Topic.TopicType.GRP) {
                     res = R.drawable.ic_group;
@@ -58,9 +58,8 @@ public class InmemoryCache {
                     toolbar.setLogo(drw);
                 }
             }
-            if (bmp != null) {
-                toolbar.setLogo(new RoundedImage(bmp));
-            }
+        } else {
+            toolbar.setTitle(R.string.app_name);
         }
     }
 }

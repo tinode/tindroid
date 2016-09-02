@@ -23,5 +23,5 @@ The `contacts.vcf` contains a list of contacts which can be used for testing. Pu
 
   `adb push contacts.vcf /sdcard/contacts.vcf`
 
-<img src="android-contacts-20160829.png" alt="App screenshot - contacts" width="260" />
-<img src="android-messages-20160829.png" alt="App screenshot - contacts" width="260" />
+<img src="android-contacts.png" alt="App screenshot - contacts" width="270" />
+<img src="android-messages.png" alt="App screenshot - contacts" width="270" />
