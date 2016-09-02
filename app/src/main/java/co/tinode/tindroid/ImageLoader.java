@@ -45,7 +45,6 @@ public abstract class ImageLoader {
     private static final float MEMORY_PERCENT = 0.1f;
 
     private Bitmap mLoadingBitmap;
-    private boolean mFadeInBitmap = true;
     private boolean mPauseWork = false;
     private final Object mPauseWorkLock = new Object();
     private int mImageSize;
@@ -95,15 +94,15 @@ public abstract class ImageLoader {
      */
     public void loadImage(Object data, ImageView imageView) {
         if (data == null) {
-            imageView.setImageBitmap(mLoadingBitmap);
             return;
         }
 
         Bitmap bitmap = getBitmapFromCache(String.valueOf(data));
 
         if (bitmap != null) {
+            Log.d(TAG, "Got bitmap from cache: " + String.valueOf(data));
             // Bitmap found in memory cache
-            imageView.setImageBitmap(bitmap);
+            imageView.setImageDrawable(new RoundedImage(bitmap));
         } else if (cancelPotentialWork(data, imageView)) {
             final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
             final AsyncDrawable asyncDrawable =
@@ -120,13 +119,6 @@ public abstract class ImageLoader {
      */
     public void setLoadingImage(int resId) {
         mLoadingBitmap = BitmapFactory.decodeResource(mResources, resId);
-    }
-
-    /**
-     * If set to true, the image will fade-in once it has been loaded by the background thread.
-     */
-    public void setImageFadeIn(boolean fadeIn) {
-        mFadeInBitmap = fadeIn;
     }
 
     /**
@@ -210,9 +202,6 @@ public abstract class ImageLoader {
          */
         @Override
         protected Bitmap doInBackground(Object... params) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "doInBackground - starting work");
-            }
 
             data = params[0];
             final String dataString = String.valueOf(data);
@@ -223,7 +212,7 @@ public abstract class ImageLoader {
                 while (mPauseWork && !isCancelled()) {
                     try {
                         mPauseWorkLock.wait();
-                    } catch (InterruptedException e) {}
+                    } catch (InterruptedException ignored) {}
                 }
             }
 
@@ -242,9 +231,7 @@ public abstract class ImageLoader {
                 addBitmapToCache(dataString, bitmap);
             }
 
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "doInBackground - finished work");
-            }
+            Log.d(TAG, "BitmapWorkerTask: bitmap[" + dataString + "] is " + (bitmap == null ? "NULL" : "NOT NULL"));
 
             return bitmap;
         }
@@ -261,10 +248,7 @@ public abstract class ImageLoader {
 
             final ImageView imageView = getAttachedImageView();
             if (bitmap != null && imageView != null) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "onPostExecute - setting bitmap");
-                }
-                setImageBitmap(imageView, bitmap);
+                imageView.setImageDrawable(new RoundedImage(bitmap));
             }
         }
 
@@ -309,28 +293,6 @@ public abstract class ImageLoader {
 
         public BitmapWorkerTask getBitmapWorkerTask() {
             return bitmapWorkerTaskReference.get();
-        }
-    }
-
-    /**
-     * Called when the processing is complete and the final bitmap should be set on the ImageView.
-     *
-     * @param imageView The ImageView to set the bitmap to.
-     * @param bitmap The new bitmap to set.
-     */
-    private void setImageBitmap(ImageView imageView, Bitmap bitmap) {
-        if (mFadeInBitmap) {
-            // Transition drawable to fade from loading bitmap to final bitmap
-            final TransitionDrawable td =
-                    new TransitionDrawable(new Drawable[] {
-                            new ColorDrawable(android.R.color.transparent),
-                            new BitmapDrawable(mResources, bitmap)
-                    });
-            imageView.setBackgroundDrawable(imageView.getDrawable());
-            imageView.setImageDrawable(td);
-            td.startTransition(FADE_IN_TIME);
-        } else {
-            imageView.setImageBitmap(bitmap);
         }
     }
 

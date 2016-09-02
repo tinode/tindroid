@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/activity_vertical_margin"
+    android:padding="6dp"
     android:background="@color/white"
     tools:context="co.tinode.tindroid.ChatListFragment"
     tools:showIn="@layout/activity_contacts">

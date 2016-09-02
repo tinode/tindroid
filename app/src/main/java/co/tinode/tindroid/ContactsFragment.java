@@ -159,7 +159,7 @@ public class ContactsFragment extends ListFragment implements
         };
 
         // Set a placeholder loading image for the image loader
-        mImageLoader.setLoadingImage(R.drawable.ic_person);
+        mImageLoader.setLoadingImage(R.drawable.ic_person_circle);
     }
 
     @Override

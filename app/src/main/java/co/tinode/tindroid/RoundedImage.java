@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
@@ -9,13 +10,14 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
 /**
  * Helper class to make avatars round
  *
  */
-public class RoundedImage extends Drawable {
+public class RoundedImage extends BitmapDrawable {
     private Paint mPaint;
     private RectF mRectF;
     private int mBitmapWidth;
@@ -27,19 +29,23 @@ public class RoundedImage extends Drawable {
         mPaint.setAntiAlias(true);
         mPaint.setDither(true);
         mPaint.setShader(new BitmapShader(bmp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-
-        mBitmapWidth = bmp.getWidth();
-        mBitmapHeight = bmp.getHeight();
+        if (bmp != null) {
+            mBitmapWidth = bmp.getWidth();
+            mBitmapHeight = bmp.getHeight();
+        }
     }
 
     public RoundedImage(Bitmap bmp) {
+        super(bmp);
         init(bmp);
     }
 
-    public RoundedImage(Drawable drw) {
-        this(drw, 0);
+    public RoundedImage(Resources res, Bitmap bmp) {
+        super(res, bmp);
+        init(bmp);
     }
 
+    /*
     public RoundedImage(Drawable drw, int color) {
         Bitmap bmp = Bitmap.createBitmap(drw.getIntrinsicWidth(), drw.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
@@ -48,6 +54,7 @@ public class RoundedImage extends Drawable {
         drw.draw(canvas);
         init(bmp);
     }
+    */
 
     @Override
     public void draw(Canvas canvas) {

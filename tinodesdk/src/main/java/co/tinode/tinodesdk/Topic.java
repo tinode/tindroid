@@ -6,8 +6,6 @@ package co.tinode.tinodesdk;
 
 import android.util.Log;
 
-import co.tinode.tinodesdk.model.Acs;
-import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -24,7 +22,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Date;
 import java.util.Map;
 
 

@@ -55,7 +55,7 @@ public class InmemoryCache {
                     drw = context.getResources().getDrawable(res);
                 }
                 if (drw != null) {
-                    toolbar.setLogo(new RoundedImage(drw, 0xFFFAFAFA));
+                    toolbar.setLogo(drw);
                 }
             }
             if (bmp != null) {

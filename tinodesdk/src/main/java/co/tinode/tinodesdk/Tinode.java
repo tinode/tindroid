@@ -22,7 +22,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;

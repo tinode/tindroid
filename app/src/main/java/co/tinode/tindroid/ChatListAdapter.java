@@ -1,18 +1,13 @@
 package co.tinode.tindroid;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.v4.app.FragmentManager;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -111,8 +106,6 @@ public class ChatListAdapter extends BaseAdapter {
                 .setColorFilter(s.online ?
                         Color.argb(255, 0x40, 0xC0, 0x40) :
                         Color.argb(255, 0xC0, 0xC0, 0xC0));
-
-        Log.d(TAG, "Topic '" + s.topic + "' online: " + s.online);
 
         return convertView;
     }
