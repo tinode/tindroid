@@ -2,7 +2,8 @@
 
 Work in progress. Somewhat functional:
 
-* Loads the list of contacts
+* Register new account, login
+* Load the list of contacts
 * Sends and receives messages
 * Presence notifications work
 * Message counters work
@@ -10,8 +11,8 @@ Work in progress. Somewhat functional:
 
 Does not work yet:
 
-* Registering new account
-* Modifying existing account
+* Modifying an existing account
+* Contact discovery - can't find other people
 * Deleting/muting topics and messages
 * No offline mode
 * Can't start new conversations
