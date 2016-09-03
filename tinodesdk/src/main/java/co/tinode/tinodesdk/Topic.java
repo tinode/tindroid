@@ -6,8 +6,6 @@ package co.tinode.tinodesdk;
 
 import android.util.Log;
 
-import co.tinode.tinodesdk.model.Acs;
-import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -20,10 +18,10 @@ import com.fasterxml.jackson.databind.JavaType;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Date;
 import java.util.Map;
 
 
@@ -63,6 +61,9 @@ public class Topic<Pu,Pr,T> {
      * @param l event listener, optional
      */
     public Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
+        if (tinode == null) {
+            throw new IllegalArgumentException("Tinode cannot be null");
+        }
         mTinode = tinode;
         mName = name;
         mListener = l;
@@ -349,6 +350,10 @@ public class Topic<Pu,Pr,T> {
 
     public Subscription<Pu,Pr> getSubscription(String key) {
         return mSubs.get(key);
+    }
+
+    public Collection<Subscription<Pu,Pr>> getSubscriptions() {
+        return mSubs.values();
     }
 
     protected void setListener(Listener<Pu,Pr,T> l) {

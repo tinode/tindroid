@@ -16,6 +16,7 @@
         <android.support.v7.widget.AppCompatImageView
             android:id="@+id/avatar"
             android:layout_width="48sp"
+            android:src="@drawable/ic_person_circle"
             android:layout_height="48sp" />
 
         <android.support.v7.widget.AppCompatImageView
@@ -32,8 +33,6 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:orientation="vertical">
 
         <LinearLayout
@@ -45,10 +44,9 @@
                 android:id="@+id/contactName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="left"
+                android:layout_gravity="start"
                 android:text="Test text"
-                android:textSize="@dimen/abc_text_size_medium_material"
-                android:textColor="@color/primary_material_dark"
+                android:textAppearance="?android:textAppearanceMedium"
                 android:paddingEnd="16sp"
                 android:paddingRight="16sp"/>
 
@@ -59,7 +57,7 @@
                 android:textSize="10sp"
                 android:background="@drawable/round_shape"
                 android:text="9+"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textStyle="bold"
                 android:layout_gravity="end|center_vertical"
                 android:textAlignment="center"
@@ -73,9 +71,8 @@
             android:maxLines="1"
             android:ellipsize="end"
             android:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
-            android:textColor="@android:color/primary_text_light"
             android:maxWidth="240sp"
-            android:textSize="@dimen/abc_text_size_body_1_material"
+            android:textAppearance="?android:textAppearanceSmall"
             android:layout_gravity="top" />
 
     </LinearLayout>

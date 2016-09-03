@@ -3,21 +3,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".ContactsActivity">
 
-    <include layout="@layout/toolbar" />
+    <include layout="@layout/toolbar_with_tabs" />
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/login_view"
-        android:name="co.tinode.tindroid.ContactsFragment"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        tools:layout="@layout/fragment_contacts" />
+        android:id="@+id/contentFragment"
+        android:name="co.tinode.tindroid.ChatListFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout="@layout/fragment_chat_list" />
 
 </LinearLayout>

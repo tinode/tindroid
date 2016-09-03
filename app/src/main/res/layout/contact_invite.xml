@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:background="?android:attr/activatedBackgroundIndicator"
+    android:orientation="horizontal"
+    android:paddingBottom="2dp"
+    android:paddingTop="2dp">
+
+    <android.support.v7.widget.AppCompatImageView
+        android:id="@android:id/icon"
+        android:layout_width="48sp"
+        android:layout_height="48sp"
+        android:src="@drawable/ic_person_circle"
+        android:layout_alignParentLeft="true"
+        android:layout_marginRight="5dp" />
+
+    <Button
+        android:id="@+id/buttonInvite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:text="@string/invite"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        style="@style/Widget.AppCompat.Button.Small"/>
+
+    <TextView
+            android:id="@android:id/text1"
+            android:layout_toRightOf="@android:id/icon"
+            android:layout_toLeftOf="@id/buttonInvite"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:paddingEnd="16sp"
+            android:paddingRight="16sp"
+            android:layout_alignParentTop="true"
+            android:text="Test text"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+    <TextView
+            android:id="@android:id/text2"
+            android:layout_toRightOf="@android:id/icon"
+            android:layout_toLeftOf="@id/buttonInvite"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:maxWidth="240sp"
+            android:layout_below="@android:id/text1"
+            android:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+</RelativeLayout>

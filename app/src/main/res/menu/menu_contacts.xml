@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- The search menu item. Honeycomb and above uses an ActionView or specifically a SearchView
+         which expands within the Action Bar directly. Note the initial collapsed state set using
+         collapseActionView in the showAsAction attribute. -->
     <item
-        android:id="@+id/action_new_p2p_topic"
-        android:orderInCategory="100"
-        android:title="@string/action_new_chat"
-        android:icon="@drawable/ic_chat"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/menu_search"
+        android:title="@string/menu_search"
+        android:icon="@drawable/ic_search"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:actionViewClass="android.widget.SearchView"/>
+
     <item
-        android:id="@+id/action_new_grp_topic"
-        android:orderInCategory="101"
-        android:title="@string/action_new_group"
-        android:icon="@drawable/ic_group_white"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/action_edit"
-        android:orderInCategory="103"
-        android:title="@string/action_settings"
-        android:icon="@drawable/ic_settings"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/menu_add_contact"
+        android:title="@string/menu_add_contact"
+        android:icon="@drawable/ic_person_add"
+        app:showAsAction="ifRoom"/>
 
 </menu>

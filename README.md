@@ -1,6 +1,6 @@
 # Demo chat for Android
 
-Work in progress. Somewhat functional:
+Work in progress. What works:
 
 * Register new account, login
 * Load the list of contacts
@@ -20,5 +20,9 @@ Does not work yet:
 
 Dependencies: [jackson](https://github.com/FasterXML/jackson), [nv-websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client)
 
-<img src="pic-contacts-20160217.png" alt="App screenshot - contacts" width="260" />
-<img src="pic-messages-20160217.png" alt="App screenshot - contacts" width="260" />
+The `contacts.vcf` contains a list of contacts which can be used for testing. Push it to your emulator using
+
+  `adb push contacts.vcf /sdcard/contacts.vcf`
+
+<img src="android-contacts.png" alt="App screenshot - contacts" width="270" />
+<img src="android-messages.png" alt="App screenshot - contacts" width="270" />
