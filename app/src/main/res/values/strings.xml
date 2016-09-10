@@ -57,4 +57,6 @@
     <string name="menu_add_contact">Add contact</string>
     <string name="search_hint">Find contacts</string>
     <string name="contacts_permission_denied">Contacts not loaded: permission denied</string>
+    <string name="tinode">Tinode</string>
+    <string name="account_already_exists">Account already exists</string>
 </resources>

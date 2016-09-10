@@ -4,10 +4,21 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+
+    <!-- Needed for registering new accounts -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <!-- Store tinode IM id as a record in the address book -->
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+    <!-- Creating and storing tinode credentials in the AccountManager -->
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    <!-- Accessing Tinode-authenticated accounts -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
 
     <application
         android:allowBackup="true"
@@ -30,10 +41,11 @@
             android:name=".ContactsActivity"
             android:label="@string/app_name"
             android:launchMode="singleInstance"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme">
-            <meta-data
+            <!--meta-data
                 android:name="android.app.searchable"
-                android:resource="@xml/searchable_contacts"/>
+                android:resource="@xml/searchable_contacts"/-->
         </activity>
 
         <activity
@@ -41,6 +53,18 @@
             android:label="@string/app_name"
             android:theme="@style/AppTheme"/>
 
+        <service android:name="co.tinode.tindroid.TinodeAccountService"
+            android:exported="false">
+            <!-- Required filter used by the system to launch our account service. -->
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <!-- This points to an XMLf ile which describes our account service. -->
+            <meta-data android:name="android.accounts.AccountAuthenticator"
+                       android:resource="@xml/authenticator" />
+        </service>
+
     </application>
 
-</manifest>
+
+    </manifest>

@@ -1,5 +1,6 @@
 package co.tinode.tinodesdk;
 
+import android.annotation.SuppressLint;
 import android.os.Build;
 import android.util.Log;
 
@@ -17,9 +18,13 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.URI;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -60,6 +65,7 @@ public class Tinode {
 
     private String mApiKey;
     private String mServerHost;
+
     private String mAppName;
 
     private Connection mConnection;
@@ -68,8 +74,12 @@ public class Tinode {
     private String mServerBuild = null;
 
     private String mMyUid = null;
-    private int mPacketCount;
+    private String mAuthToken = null;
+    private Date mAuthTokenExpires = null;
+
     private int mMsgId;
+    private int mPacketCount;
+
     private boolean nNoEchoOnPub = false;
 
     private EventListener mListener;
@@ -284,6 +294,14 @@ public class Tinode {
         return mMyUid;
     }
 
+    public String getAuthToken() {
+        return mAuthToken;
+    }
+
+    public Date getAuthTokenExpiration() {
+        return mAuthTokenExpires;
+    }
+
     public boolean isAuthenticated() {
         return (mMyUid != null);
     }
@@ -479,6 +497,12 @@ public class Tinode {
                                     throw new InvalidObjectException("Unexpected type of reply packet in login");
                                 }
                                 mMyUid = (String) pkt.ctrl.params.get("uid");
+                                mAuthToken = (String) pkt.ctrl.params.get("token");
+                                // Format: 2016-09-07T17:29:49.100Z
+                                @SuppressLint("SimpleDateFormat") SimpleDateFormat fmt =
+                                        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                                fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                mAuthTokenExpires = fmt.parse((String) pkt.ctrl.params.get("expires"));
                                 return null;
                             }
                         }, null);

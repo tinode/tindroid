@@ -11,7 +11,10 @@
          consistency. -->
     <ListView android:id="@id/android:list"
               android:layout_width="match_parent"
-              android:layout_height="match_parent" />
+              android:layout_height="match_parent"
+              android:verticalScrollbarPosition="right"
+              android:fastScrollAlwaysVisible="true"
+              android:scrollbarStyle="outsideInset" />
 
     <!-- Use standard android.R class empty id instead of app specific id. This is just useful for
      consistency. -->

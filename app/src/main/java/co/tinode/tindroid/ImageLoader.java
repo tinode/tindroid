@@ -100,7 +100,6 @@ public abstract class ImageLoader {
         Bitmap bitmap = getBitmapFromCache(String.valueOf(data));
 
         if (bitmap != null) {
-            Log.d(TAG, "Got bitmap from cache: " + String.valueOf(data));
             // Bitmap found in memory cache
             imageView.setImageDrawable(new RoundedImage(bitmap));
         } else if (cancelPotentialWork(data, imageView)) {
@@ -230,8 +229,6 @@ public abstract class ImageLoader {
             if (bitmap != null) {
                 addBitmapToCache(dataString, bitmap);
             }
-
-            Log.d(TAG, "BitmapWorkerTask: bitmap[" + dataString + "] is " + (bitmap == null ? "NULL" : "NOT NULL"));
 
             return bitmap;
         }
