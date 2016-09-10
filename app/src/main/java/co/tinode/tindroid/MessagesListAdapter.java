@@ -47,7 +47,7 @@ public class MessagesListAdapter extends BaseAdapter {
 
     private Context mContext;
     private String mTopicName;
-    private Topic mTopic;
+    private Topic<?,?,String> mTopic;
 
     public MessagesListAdapter(Context context) {
         mContext = context;
@@ -55,8 +55,6 @@ public class MessagesListAdapter extends BaseAdapter {
 
     public void changeTopic(String topicName) {
         if (mTopicName == null || !mTopicName.equals(topicName)) {
-            Log.d(TAG, "Topic name has changed from '" + mTopicName + "' to '" + topicName +"'");
-
             mTopicName = topicName;
             mTopic = InmemoryCache.getTinode().getTopic(topicName);
             notifyDataSetChanged();
@@ -80,7 +78,6 @@ public class MessagesListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        @SuppressWarnings("unchecked")
         MsgServerData<String> m = mTopic.getMessageAt(position);
         int senderIdx = mTopic.getSenderIndex(m.from);
         boolean isMine = mTopic.isMyMessage(m.from);
@@ -158,7 +155,7 @@ public class MessagesListAdapter extends BaseAdapter {
         return convertView;
     }
 
-    static class colorizer {
+    private static class colorizer {
         int bg;
         int fg;
 
@@ -168,7 +165,7 @@ public class MessagesListAdapter extends BaseAdapter {
         }
     }
 
-    static String shortDate(Date date) {
+    private static String shortDate(Date date) {
         Calendar now = Calendar.getInstance();
         Calendar then = Calendar.getInstance();
         then.setTime(date);

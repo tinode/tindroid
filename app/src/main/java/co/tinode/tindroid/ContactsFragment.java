@@ -18,6 +18,7 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +29,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
@@ -104,10 +106,6 @@ public class ContactsFragment extends ListFragment implements
 
     // Whether or not this fragment is showing in a two-pane layout
     // private boolean mIsTwoPaneLayout;
-
-    // Whether or not this is a search result view of this fragment, only used on pre-honeycomb
-    // OS versions as search results are shown in-line via Action Bar search from honeycomb onward
-    private boolean mIsSearchResultView = false;
 
     /**
      * Fragments require an empty constructor.
@@ -240,6 +238,22 @@ public class ContactsFragment extends ListFragment implements
             }
         }
     }
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        try {
+            // Assign callback listener which the holding activity must implement. This is used
+            // so that when a contact item is interacted with (selected by the user) the holding
+            // activity will be notified and can take further action such as populating the contact
+            // detail pane (if in multi-pane layout) or starting a new activity with the contact
+            // details (single pane layout).
+            mOnContactSelectedListener = (OnContactsInteractionListener) context;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(context.toString()
+                    + " must implement OnContactsInteractionListener");
+        }
+    }
 
     @Override
     public void onPause() {
@@ -252,6 +266,8 @@ public class ContactsFragment extends ListFragment implements
 
     @Override
     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+        Log.d(TAG, "Item clicked position=" + position + "; id=" + id);
+
         // Gets the Cursor object currently bound to the ListView
         final Cursor cursor = mAdapter.getCursor();
 
@@ -298,9 +314,6 @@ public class ContactsFragment extends ListFragment implements
         // Locate the search item
         MenuItem searchItem = menu.findItem(R.id.menu_search);
 
-        if (mIsSearchResultView) {
-            searchItem.setVisible(false);
-        }
         // Retrieves the system search manager service
         final SearchManager searchManager =
                 (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
@@ -384,7 +397,6 @@ public class ContactsFragment extends ListFragment implements
             // Sets the SearchView to the previous search string
             searchView.setQuery(savedSearchTerm, false);
         }
-
     }
 
     @Override
@@ -678,9 +690,7 @@ public class ContactsFragment extends ListFragment implements
             // Gets handles to individual view resources
             final ViewHolder holder = (ViewHolder) view.getTag();
 
-            // For Android 3.0 and later, gets the thumbnail image Uri from the current Cursor row.
-            // For platforms earlier than 3.0, this isn't necessary, because the thumbnail is
-            // generated from the other fields in the row.
+            // Get the thumbnail image Uri from the current Cursor row.
             final String photoUri = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
 
             final String displayName = cursor.getString(ContactsQuery.DISPLAY_NAME);
@@ -800,6 +810,7 @@ public class ContactsFragment extends ListFragment implements
             TextView text1;
             TextView text2;
             AppCompatImageView icon;
+            boolean knownUser;
         }
     }
 
@@ -843,13 +854,11 @@ public class ContactsFragment extends ListFragment implements
         // Notice that the search on the string provided by the user is implemented by appending
         // the search string to CONTENT_FILTER_URI.
         @SuppressLint("InlinedApi")
-        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY  +
-                "<>''" + " AND " + Contacts.IN_VISIBLE_GROUP + "=1";
+        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
 
         // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
         // sort key allows for localization. In earlier versions. use the display name as the sort
         // key.
-        @SuppressLint("InlinedApi")
         String SORT_ORDER = Contacts.SORT_KEY_PRIMARY;
 
         // The projection for the CursorLoader query. This is a list of columns that the Contacts
@@ -873,9 +882,7 @@ public class ContactsFragment extends ListFragment implements
                 Contacts.DISPLAY_NAME_PRIMARY,
 
                 // In Android 3.0 and later, the thumbnail image is pointed to by
-                // PHOTO_THUMBNAIL_URI. In earlier versions, there is no direct pointer; instead,
-                // you generate the pointer from the contact's ID value and constants defined in
-                // android.provider.ContactsContract.Contacts.
+                // PHOTO_THUMBNAIL_URI.
                 Contacts.PHOTO_THUMBNAIL_URI,
 
                 // The sort order column for the returned Cursor, used by the AlphabetIndexer

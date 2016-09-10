@@ -1,5 +1,7 @@
 package co.tinode.tindroid;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -27,7 +29,8 @@ import co.tinode.tinodesdk.model.Subscription;
  * Display user's list of contacts
  */
 
-public class ContactsActivity extends AppCompatActivity {
+public class ContactsActivity extends AppCompatActivity implements
+        ContactsFragment.OnContactsInteractionListener  {
 
     private static final String TAG = "ContactsActivity";
 
@@ -67,6 +70,29 @@ public class ContactsActivity extends AppCompatActivity {
 
         mContactIndex = new ArrayList<>();
         mContactsAdapter = new ChatListAdapter(this, mContactIndex);
+    }
+
+    /**
+     * This interface callback lets the main contacts list fragment notify
+     * this activity that a contact has been selected.
+     *
+     * @param contactUri The contact Uri to the selected contact.
+     */
+    @Override
+    public void onContactSelected(Uri contactUri) {
+        // Otherwise single pane layout, start a new ContactDetailActivity with
+        // the contact Uri
+        //Intent intent = new Intent(this, ContactDetailActivity.class);
+        //intent.setData(contactUri);
+        //startActivity(intent);
+    }
+
+    /**
+     * This interface callback lets the main contacts list fragment notify
+     * this activity that a contact is no longer selected.
+     */
+    @Override
+    public void onSelectionCleared() {
     }
 
     @Override

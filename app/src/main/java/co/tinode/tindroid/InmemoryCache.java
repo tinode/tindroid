@@ -19,11 +19,13 @@ public class InmemoryCache {
 
     private static Tinode sTinode;
 
-    //public static String sHost = "10.0.2.2:6060"; // local
+    public static final String HOST_NAME = "10.0.2.2:6060"; // local
     //public static String sHost = "api.tinode.co"; // remote
 
     public static Tinode getTinode() {
         if (sTinode == null) {
+            Log.d(TAG, "Tinode instantiated");
+
             sTinode = new Tinode("Tindroid", API_KEY);
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
