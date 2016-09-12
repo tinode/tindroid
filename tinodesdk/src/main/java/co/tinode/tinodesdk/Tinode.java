@@ -2,6 +2,7 @@ package co.tinode.tinodesdk;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
+import android.util.Base64;
 import android.util.Log;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -432,7 +433,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      * @throws IOException if there is no connection
      */
-    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, byte[] secret,
+    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, String secret,
                                                          boolean loginNow,
                                                          SetDesc<Pu,Pr> desc) throws IOException, Exception {
         ClientMessage msg = new ClientMessage<Pu,Pr,T>(
@@ -472,11 +473,23 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      * @throws IOException if there is no connection
      */
-    public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws IOException, Exception {
+    public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws Exception {
         return login(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
     }
 
-    protected PromisedReply<ServerMessage> login(String scheme, byte[] secret) throws Exception {
+    /**
+     * Send a basic login packet to the server. A connection must be established prior to calling
+     * this method. Success or failure will be reported through {@link EventListener#onLogin(int, String)}
+     *
+     * @param token   server-provided security token
+     * @return PromisedReply of the reply ctrl message
+     * @throws IOException if there is no connection
+     */
+    public PromisedReply<ServerMessage> loginToken(String token) throws Exception {
+        return login(AuthScheme.LOGIN_TOKEN, token);
+    }
+
+    protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {
         if (isAuthenticated()) {
             // Don't try to login again if we are logged in.
             return new PromisedReply<>((ServerMessage) null);

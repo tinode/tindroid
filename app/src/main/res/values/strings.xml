@@ -59,4 +59,5 @@
     <string name="contacts_permission_denied">Contacts not loaded: permission denied</string>
     <string name="tinode">Tinode</string>
     <string name="account_already_exists">Account already exists</string>
+    <string name="pick_account">Pick Account</string>
 </resources>
