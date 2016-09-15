@@ -190,6 +190,9 @@ public class Tinode {
         mMyUid = null;
         mServerBuild = null;
         mServerVersion = null;
+        for (Topic topic : mTopics.values()) {
+            topic.topicLeft();
+        }
         if (mListener != null) {
             mListener.onDisconnect(byServer, code, reason);
         }

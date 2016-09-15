@@ -1,4 +1,4 @@
-package co.tinode.tindroid;
+package co.tinode.tindroid.account;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -13,6 +13,8 @@ import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
 
+import co.tinode.tindroid.InmemoryCache;
+import co.tinode.tindroid.LoginActivity;
 import co.tinode.tinodesdk.Tinode;
 
 /**
@@ -26,13 +28,13 @@ public class TinodeAccountService extends Service {
 
     @Override
     public void onCreate() {
-        Log.i(TAG, "Service created");
+        Log.i(TAG, "TinodeAccountService created");
         mAuthenticator = new Authenticator(this);
     }
 
     @Override
     public void onDestroy() {
-        Log.i(TAG, "Service destroyed");
+        Log.i(TAG, "TinodeAccountService destroyed");
     }
 
     @Override
@@ -98,8 +100,8 @@ public class TinodeAccountService extends Service {
                                    Bundle options) throws NetworkErrorException {
             Log.d(TAG, "getAuthToken: " + authTokenType + "/" + account.type);
 
-            if (!authTokenType.equals(LoginActivity.TOKEN_TYPE)) {
-                Log.e(TAG, "Invalid token type " + authTokenType + "; expected " + LoginActivity.TOKEN_TYPE);
+            if (!authTokenType.equals(Utils.TOKEN_TYPE)) {
+                Log.e(TAG, "Invalid token type " + authTokenType + "; expected " + Utils.TOKEN_TYPE);
 
                 final Bundle result = new Bundle();
                 result.putString(AccountManager.KEY_ERROR_MESSAGE, "invalid authTokenType");

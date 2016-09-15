@@ -36,6 +36,7 @@ import android.widget.Toast;
 
 import java.io.IOException;
 
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.SetDesc;
@@ -54,9 +55,6 @@ public class LoginActivity extends AppCompatActivity {
 
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
-
-    public static final String TOKEN_TYPE = "co.tinode.token";
-    public static final String ACCOUNT_TYPE = "co.tinode.account";
 
     public static final String PREFS_ACCOUNT_NAME = "pref_accountName";
     public static final String PREFS_HOST_NAME = "pref_hostName";
@@ -150,7 +148,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             // Have permission to access accounts. Let's find if we already have a suitable account.
-            final Account[] availableAccounts = mAccountManager.getAccountsByType(ACCOUNT_TYPE);
+            final Account[] availableAccounts = mAccountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
             if (availableAccounts.length > 0) {
                 // Found some accounts, let's find the one saved from before or ask user to choose/create one
                 if (!TextUtils.isEmpty(mAccountName)) {
@@ -188,7 +186,7 @@ public class LoginActivity extends AppCompatActivity {
         // Fetch password
         // String password = mAccountManager.getPassword(account);
 
-        mAccountManager.getAuthToken(account, TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
+        mAccountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
             @Override
             public void run(AccountManagerFuture<Bundle> future) {
                 Bundle result = null;
@@ -239,14 +237,14 @@ public class LoginActivity extends AppCompatActivity {
                             }, new PromisedReply.FailureListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                    mAccountManager.invalidateAuthToken(ACCOUNT_TYPE, token);
+                                    mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                                     reportError(err, signIn, R.string.error_login_failed);
                                     return null;
                                 }
                             });
                 } catch (Exception err) {
                     Log.d(TAG, "Failed to login with token");
-                    mAccountManager.invalidateAuthToken(ACCOUNT_TYPE, token);
+                    mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                     reportError(err, signIn, R.string.error_login_failed);
                 }
             }
@@ -477,7 +475,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void addAndroidAccount(final SharedPreferences sharedPref, final String login,
                                    final String password) {
-        final Account acc = new Account(login, ACCOUNT_TYPE);
+        final Account acc = Utils.GetAccount(login);
         sharedPref.edit().putString(PREFS_ACCOUNT_NAME, login).apply();
         mAccountManager.addAccountExplicitly(acc, password, null);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -485,7 +483,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         final String token = InmemoryCache.getTinode().getAuthToken();
         if (!TextUtils.isEmpty(token)) {
-            mAccountManager.setAuthToken(acc, TOKEN_TYPE, token);
+            mAccountManager.setAuthToken(acc, Utils.TOKEN_TYPE, token);
         }
     }
 

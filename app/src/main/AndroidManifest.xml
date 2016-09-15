@@ -53,7 +53,7 @@
             android:label="@string/app_name"
             android:theme="@style/AppTheme"/>
 
-        <service android:name="co.tinode.tindroid.TinodeAccountService"
+        <service android:name="co.tinode.tindroid.account.TinodeAccountService"
             android:exported="false">
             <!-- Required filter used by the system to launch our account service. -->
             <intent-filter>

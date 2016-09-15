@@ -166,7 +166,7 @@ public class MessageActivity extends AppCompatActivity {
             getTinode().registerTopic(mTopic);
         }
 
-        if (!mTopic.isSubscribed()) {
+        if (!mTopic.isAttached()) {
             try {
                 mTopic.subscribe();
             } catch (Exception ex) {
@@ -188,7 +188,7 @@ public class MessageActivity extends AppCompatActivity {
         mNoteTimer = null;
 
         // Deactivate current topic
-        if (mTopic.isSubscribed()) {
+        if (mTopic.isAttached()) {
             try {
                 mTopic.leave();
             } catch (Exception ex) {

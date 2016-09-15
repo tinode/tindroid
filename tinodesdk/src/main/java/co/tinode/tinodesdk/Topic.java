@@ -50,7 +50,7 @@ public class Topic<Pu,Pr,T> {
     protected HashMap<String,Subscription<Pu,Pr>> mSubs;
     protected List<MsgServerData<T>> mMessages;
 
-    protected boolean mSubscribed;
+    protected boolean mAttached;
     protected Listener<Pu,Pr,T> mListener;
 
     /**
@@ -67,7 +67,7 @@ public class Topic<Pu,Pr,T> {
         mTinode = tinode;
         mName = name;
         mListener = l;
-        mSubscribed = false;
+        mAttached = false;
         mSubs = new HashMap<>();
         mMessages = new ArrayList<>();
     }
@@ -128,7 +128,7 @@ public class Topic<Pu,Pr,T> {
      * @throws IOException
      */
     public PromisedReply subscribe() throws Exception {
-        if (!mSubscribed) {
+        if (!mAttached) {
             MsgGetMeta getParams = null;
             if (mDescription == null || mDescription.updated == null) {
                 getParams = new MsgGetMeta();
@@ -167,7 +167,7 @@ public class Topic<Pu,Pr,T> {
      * @throws Exception
      */
     public PromisedReply leave(boolean unsub) throws Exception {
-        if (mSubscribed) {
+        if (mAttached) {
             return mTinode.leave(getName(), unsub).thenApply(
                     new PromisedReply.SuccessListener() {
                         @Override
@@ -205,6 +205,9 @@ public class Topic<Pu,Pr,T> {
      * @param what "read" or "recv" to indicate which action to report
      */
     protected boolean noteReadRecv(NoteType what) {
+        if (mDescription == null) {
+            mDescription = new Description<>();
+        }
 
         // Save read and received status on subscription.
         Subscription<?,?> sub = mSubs.get(mTinode.getMyId());
@@ -276,7 +279,7 @@ public class Topic<Pu,Pr,T> {
     }
 
     public Pu getPublic() {
-        return mDescription.pub;
+        return mDescription != null ? mDescription.pub : null;
     }
 
     /**
@@ -360,8 +363,8 @@ public class Topic<Pu,Pr,T> {
         mListener = l;
     }
 
-    public boolean isSubscribed() {
-        return mSubscribed;
+    public boolean isAttached() {
+        return mAttached;
     }
 
     /**
@@ -429,8 +432,8 @@ public class Topic<Pu,Pr,T> {
      * Called when the topic receives subscription confirmation
      */
     protected void subscribed() {
-        if (!mSubscribed) {
-            mSubscribed = true;
+        if (!mAttached) {
+            mAttached = true;
 
             if (mListener != null) {
                 mListener.onSubscribe(200, "subscribed");
@@ -442,8 +445,8 @@ public class Topic<Pu,Pr,T> {
      * Called when the topic receives leave() confirmation
      */
     protected void topicLeft() {
-        if (mSubscribed) {
-            mSubscribed = false;
+        if (mAttached) {
+            mAttached = false;
 
             if (mListener != null) {
                 mListener.onLeave(503, "connection lost");

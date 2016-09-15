@@ -18,7 +18,6 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -80,8 +79,7 @@ import java.util.Locale;
  * trigger starts a new Activity which loads a fresh instance of this fragment. The resulting UI
  * displays the filtered list and disables the search feature to prevent furthering searching.
  */
-public class ContactsFragment extends ListFragment implements
-        AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class ContactsFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     // Defines a tag for identifying log entries
     private static final String TAG = "ContactsFragment";
@@ -171,11 +169,41 @@ public class ContactsFragment extends ListFragment implements
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        // Set up ListView, assign adapter and set some listeners. The adapter was previously
-        // created in onCreate().
+        // Set up ListView, create and assign adapter and set some listeners.
         assignAdapter();
 
-        getListView().setOnItemClickListener(this);
+        getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.d(TAG, "Item clicked position=" + position + "; id=" + id);
+
+                // Send an SMS with an invitation
+                Uri uri = Uri.parse("smsto:" + "3215551235");
+                Intent it = new Intent(Intent.ACTION_SENDTO, uri);
+                it.putExtra("sms_body", getString(R.string.sms_invite_body));
+                startActivity(it);
+
+                /*
+                // Gets the Cursor object currently bound to the ListView
+                final Cursor cursor = mAdapter.getCursor();
+
+                // Moves to the Cursor row corresponding to the ListView item that was clicked
+                cursor.moveToPosition(position);
+
+                // Creates a contact lookup Uri from contact ID and lookup_key
+                final Uri uri = Contacts.getLookupUri(
+                        cursor.getLong(ContactsQuery.ID),
+                        cursor.getString(ContactsQuery.LOOKUP_KEY));
+
+                // Notifies the parent activity that the user selected a contact. In a two-pane layout, the
+                // parent activity loads a ContactDetailFragment that displays the details for the selected
+                // contact. In a single-pane layout, the parent activity starts a new activity that
+                // displays contact details in its own Fragment.
+                mOnContactSelectedListener.onContactSelected(uri);
+                */
+            }
+        });
+
         getListView().setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView absListView, int scrollState) {
@@ -264,34 +292,6 @@ public class ContactsFragment extends ListFragment implements
         mImageLoader.setPauseWork(false);
     }
 
-    @Override
-    public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-        Log.d(TAG, "Item clicked position=" + position + "; id=" + id);
-
-        // Gets the Cursor object currently bound to the ListView
-        final Cursor cursor = mAdapter.getCursor();
-
-        // Moves to the Cursor row corresponding to the ListView item that was clicked
-        cursor.moveToPosition(position);
-
-        // Creates a contact lookup Uri from contact ID and lookup_key
-        final Uri uri = Contacts.getLookupUri(
-                cursor.getLong(ContactsQuery.ID),
-                cursor.getString(ContactsQuery.LOOKUP_KEY));
-
-        // Notifies the parent activity that the user selected a contact. In a two-pane layout, the
-        // parent activity loads a ContactDetailFragment that displays the details for the selected
-        // contact. In a single-pane layout, the parent activity starts a new activity that
-        // displays contact details in its own Fragment.
-        mOnContactSelectedListener.onContactSelected(uri);
-
-        // If two-pane layout sets the selected item to checked so it remains highlighted. In a
-        // single-pane layout a new activity is started so this is not needed.
-        //if (mIsTwoPaneLayout) {
-        //    getListView().setItemChecked(position, true);
-        //}
-    }
-
     /**
      * Called when ListView selection is cleared, for example
      * when search mode is finished and the currently selected
@@ -320,6 +320,9 @@ public class ContactsFragment extends ListFragment implements
 
         // Retrieves the SearchView from the search menu item
         final SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setIconified(false);
+        searchView.setFocusable(true);
+        searchView.requestFocusFromTouch();
 
         // Assign searchable info to SearchView
         searchView.setSearchableInfo(
@@ -365,6 +368,8 @@ public class ContactsFragment extends ListFragment implements
             @Override
             public boolean onMenuItemActionExpand(MenuItem menuItem) {
                 // Nothing to do when the action item is expanded
+                searchView.setIconified(false);
+                searchView.requestFocusFromTouch();
                 return true;
             }
 
@@ -445,8 +450,7 @@ public class ContactsFragment extends ListFragment implements
             } else {
                 // Since there's a search string, use the special content Uri that searches the
                 // Contacts table. The URI consists of a base Uri and the search string.
-                contentUri =
-                        Uri.withAppendedPath(ContactsQuery.FILTER_URI, Uri.encode(mSearchTerm));
+                contentUri = Uri.withAppendedPath(ContactsQuery.FILTER_URI, Uri.encode(mSearchTerm));
             }
 
             // Returns a new CursorLoader for querying the Contacts table. No arguments are used
@@ -810,7 +814,6 @@ public class ContactsFragment extends ListFragment implements
             TextView text1;
             TextView text2;
             AppCompatImageView icon;
-            boolean knownUser;
         }
     }
 
@@ -844,7 +847,8 @@ public class ContactsFragment extends ListFragment implements
         int QUERY_ID = 1;
 
         // A content URI for the Contacts table
-        Uri CONTENT_URI = Contacts.CONTENT_URI;
+        // Uri CONTENT_URI = Contacts.CONTENT_URI;
+        Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
 
         // The search/filter query Uri
         Uri FILTER_URI = Contacts.CONTENT_FILTER_URI;
@@ -854,7 +858,8 @@ public class ContactsFragment extends ListFragment implements
         // Notice that the search on the string provided by the user is implemented by appending
         // the search string to CONTENT_FILTER_URI.
         @SuppressLint("InlinedApi")
-        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
+        //String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
+        String SELECTION = ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE + "'";
 
         // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
         // sort key allows for localization. In earlier versions. use the display name as the sort
@@ -867,23 +872,23 @@ public class ContactsFragment extends ListFragment implements
         String[] PROJECTION = {
 
                 // The contact's row id
-                Contacts._ID,
+                ContactsContract.Data._ID,
 
                 // A pointer to the contact that is guaranteed to be more permanent than _ID. Given
                 // a contact's current _ID value and LOOKUP_KEY, the Contacts Provider can generate
                 // a "permanent" contact URI.
-                Contacts.LOOKUP_KEY,
+                ContactsContract.Data.LOOKUP_KEY,
 
                 // In platform version 3.0 and later, the Contacts table contains
                 // DISPLAY_NAME_PRIMARY, which either contains the contact's displayable name or
-                // some other useful identifier such as an email address. This column isn't
-                // available in earlier versions of Android, so you must use Contacts.DISPLAY_NAME
-                // instead.
-                Contacts.DISPLAY_NAME_PRIMARY,
+                // some other useful identifier such as an email address.
+                ContactsContract.Data.DISPLAY_NAME_PRIMARY,
 
                 // In Android 3.0 and later, the thumbnail image is pointed to by
                 // PHOTO_THUMBNAIL_URI.
-                Contacts.PHOTO_THUMBNAIL_URI,
+                ContactsContract.Data.PHOTO_THUMBNAIL_URI,
+
+                ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
 
                 // The sort order column for the returned Cursor, used by the AlphabetIndexer
                 SORT_ORDER,
@@ -894,7 +899,8 @@ public class ContactsFragment extends ListFragment implements
         int LOOKUP_KEY = 1;
         int DISPLAY_NAME = 2;
         int PHOTO_THUMBNAIL_DATA = 3;
-        int SORT_KEY = 4;
+        int PHONE_NUMBER = 4;
+        int SORT_KEY = 5;
     }
 }
 
