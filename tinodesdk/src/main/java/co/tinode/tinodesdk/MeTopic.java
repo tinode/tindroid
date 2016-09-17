@@ -16,6 +16,8 @@ import java.util.Map;
  */
 public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
 
+    public static final String NAME = Tinode.TOPIC_ME;
+
     protected Map<String,String> mP2PMap = new HashMap<>();
 
     public MeTopic(Tinode tinode, Listener<Pu,Pr,Invitation<T>> l) {

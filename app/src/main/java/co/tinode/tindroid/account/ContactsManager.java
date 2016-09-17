@@ -3,7 +3,6 @@ package co.tinode.tindroid.account;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.OperationApplicationException;
 import android.net.Uri;
 import android.os.RemoteException;
@@ -12,15 +11,13 @@ import android.provider.ContactsContract;
 import java.util.ArrayList;
 
 public class ContactsManager {
-    private static final String MIMETYPE = "vnd.android.cursor.item/co.tinode.tindroid.contact";
 
-    public static void addContact(ContentResolver resolver, MyContact contact){
-        ArrayList<ContentProviderOperation> ops =
-                new ArrayList<ContentProviderOperation>();
+    public static void addContact(ContentResolver resolver, TinodeAccount contact){
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
 
         ops.add(ContentProviderOperation
                 .newInsert(addCallerIsSyncAdapterParameter(ContactsContract.RawContacts.CONTENT_URI, true))
-                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, login)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, contact.Login)
                 .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, Utils.ACCOUNT_TYPE)
                 .withValue(ContactsContract.RawContacts.AGGREGATION_MODE,
                         ContactsContract.RawContacts.AGGREGATION_MODE_DEFAULT)
@@ -31,16 +28,17 @@ public class ContactsManager {
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
                 .withValue(ContactsContract.Data.MIMETYPE,
                         ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, contact.name)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, contact.Name)
                 .build());
 
         ops.add(ContentProviderOperation
                 .newInsert(addCallerIsSyncAdapterParameter(ContactsContract.Data.CONTENT_URI, true))
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                .withValue(ContactsContract.Data.MIMETYPE, MIMETYPE)
-                .withValue(ContactsContract.Data.DATA1, 12345)
-                .withValue(ContactsContract.Data.DATA2, "user")
-                .withValue(ContactsContract.Data.DATA3, "MyData")
+                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.Im.DATA, contact.Uid)
+                .withValue(ContactsContract.CommonDataKinds.Im.PROTOCOL,
+                        ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
+                .withValue(ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL, Utils.PROTOCOL)
                 .build());
 
         try {

@@ -1,16 +1,21 @@
 package co.tinode.tinodesdk;
 
+import java.util.concurrent.CountDownLatch;
+
 /**
  * A very simple thanable promise. It has no facility for execution. It can only be
  * resolved/rejected externally by calling resolve/reject. Once resolved/rejected it will call
- * a handler onSuccess/onFailure. Depending on results returned or thrown by the handler, it will
+ * listener's onSuccess/onFailure. Depending on results returned or thrown by the handler, it will
  * update the next promise in chain: will either resolve/reject it immediately, or make it
  * resolve/reject together with the promise returned by the handler.
  *
  * Usage:
  *
- * Create a PromisedReply P1, assign onSuccess/onFailure handlers with thenApply. thenApply returns
- * another P2 promise (mNextPromise), which can then be assigned its own handlers.
+ * Create a PromisedReply P1, assign onSuccess/onFailure listeners with thenApply. thenApply returns
+ * another P2 promise (mNextPromise), which can then be assigned its own listeners.
+ *
+ * Alternatively, one can use a blocking call getResult. It will block until the promise is either
+ * resolved or rejected.
  *
  * The promise can be created in either WAITING or RESOLVED state by using appropriate constructor,
  *
@@ -58,34 +63,47 @@ public class PromisedReply<T> {
 
     private PromisedReply<T> mNextPromise = null;
 
+    private CountDownLatch mDoneSignal;
+
     //private final Executor mExecutor;
 
     /**
-     * Create promise in WAITING state.
+     * Create promise in a WAITING state.
      */
     public PromisedReply() {
+        mDoneSignal = new CountDownLatch(1);
     }
 
     /**
-     * Create a promise in RESOLVED state
+     * Create a promise in a RESOLVED state
      *
      * @param result result used for resolution of the promise.
      */
     public PromisedReply(T result) {
         mResult = result;
         mState = State.RESOLVED;
+        mDoneSignal = new CountDownLatch(0);
     }
 
     /**
-     * Create a promise in REJECTED state
+     * Create a promise in a REJECTED state
      *
      * @param err Exception used for rejection of the promise.
      */
     public PromisedReply(Exception err) {
         mException = err;
         mState = State.REJECTED;
+        mDoneSignal = new CountDownLatch(0);
     }
 
+    /**
+     * Call onSuccess or onFailure when the promise is resolved or rejected. The call will happen on the
+     * thread which called resolve() or reject()
+     * @param success called when the promise is resolved
+     * @param failure called when the promise is rejected
+     * @return promise for chaining
+     * @throws Exception
+     */
     public PromisedReply<T> thenApply(SuccessListener<T> success, FailureListener<T> failure)
             throws Exception {
         synchronized (this) {
@@ -183,7 +201,8 @@ public class PromisedReply<T> {
             if (mState == State.WAITING) {
                 mState = State.RESOLVED;
 
-                mResult= result;
+                mResult = result;
+                mDoneSignal.countDown();
                 callOnSuccess(result);
             } else {
                 throw new IllegalStateException("Promise is already completed");
@@ -197,11 +216,33 @@ public class PromisedReply<T> {
                 mState = State.REJECTED;
 
                 mException = err;
+                mDoneSignal.countDown();
                 callOnFailure(err);
             } else {
                 throw new IllegalStateException("Promise is already completed");
             }
         }
+    }
+
+    /**
+     * A blocking call which returns the result of the execution. It will return
+     * <b>before</b> thenApply is called. It can be called multiple times on the same instance.
+     * @return result of the execution (what was passed to {@link#resolve}
+     * @throws Exception if the promise was rejected, throw an exception
+     */
+    public T getResult() throws Exception {
+        // Wait for the promise to resolve
+        mDoneSignal.await();
+
+        switch (mState) {
+            case RESOLVED:
+                return mResult;
+
+            case REJECTED:
+                throw mException;
+        }
+
+        throw new IllegalStateException("Promise cannot be in WAITING state");
     }
 
     private void insertNextPromise(PromisedReply<T> next) {

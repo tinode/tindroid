@@ -64,6 +64,18 @@
                        android:resource="@xml/authenticator" />
         </service>
 
+        <service android:name=".account.SyncService" >
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/syncadapter" />
+            <meta-data
+                android:name="android.provider.CONTACTS_STRUCTURE" />
+        </service>
+
     </application>
 
 

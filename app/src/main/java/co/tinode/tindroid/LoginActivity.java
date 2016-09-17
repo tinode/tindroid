@@ -56,9 +56,6 @@ public class LoginActivity extends AppCompatActivity {
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
 
-    public static final String PREFS_ACCOUNT_NAME = "pref_accountName";
-    public static final String PREFS_HOST_NAME = "pref_hostName";
-
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
     private Bundle mResultBundle = null;
 
@@ -130,7 +127,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Account name is not in the intent, try reading one from preferences.
         if (TextUtils.isEmpty(mAccountName)) {
-            mAccountName = preferences.getString(PREFS_ACCOUNT_NAME, null);
+            mAccountName = preferences.getString(Utils.PREFS_ACCOUNT_NAME, null);
         }
         Log.d(TAG, "accountName from preferences=" + mAccountName);
 
@@ -163,7 +160,7 @@ public class LoginActivity extends AppCompatActivity {
                     if (availableAccounts.length == 1) {
                         // We only have one account to choose from, so use it.
                         account = availableAccounts[0];
-                        preferences.edit().putString(PREFS_ACCOUNT_NAME, mAccountName).apply();
+                        preferences.edit().putString(Utils.PREFS_ACCOUNT_NAME, mAccountName).apply();
                     } else {
                         // Let user choose an account from the list
                         String[] names = new String[availableAccounts.length];
@@ -219,7 +216,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 final SharedPreferences sharedPref
                         = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
-                String hostName = sharedPref.getString(PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
+                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
                 try {
                     InmemoryCache.getTinode().connect(hostName)
                             .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -319,7 +316,7 @@ public class LoginActivity extends AppCompatActivity {
         signIn.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String hostName = sharedPref.getString(PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
 
         try {
             // This is called on the websocket thread.
@@ -411,7 +408,7 @@ public class LoginActivity extends AppCompatActivity {
         signUp.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String hostName = sharedPref.getString(PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
         final String fullName = ((EditText) findViewById(R.id.fullName)).getText().toString().trim();
         final ImageView avatar = (ImageView) findViewById(R.id.imageAvatar);
         try {
@@ -476,7 +473,7 @@ public class LoginActivity extends AppCompatActivity {
     private void addAndroidAccount(final SharedPreferences sharedPref, final String login,
                                    final String password) {
         final Account acc = Utils.GetAccount(login);
-        sharedPref.edit().putString(PREFS_ACCOUNT_NAME, login).apply();
+        sharedPref.edit().putString(Utils.PREFS_ACCOUNT_NAME, login).apply();
         mAccountManager.addAccountExplicitly(acc, password, null);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mAccountManager.notifyAccountAuthenticated(acc);

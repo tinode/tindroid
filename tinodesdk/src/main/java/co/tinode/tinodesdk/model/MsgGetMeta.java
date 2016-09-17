@@ -11,17 +11,17 @@ public class MsgGetMeta {
     public GetSub sub;
     public GetData data;
 
-    public class GetDesc {
+    public static class GetDesc {
         // ims = If modified since...
         public Date ims;
     }
 
-    public class GetSub {
+    public static class GetSub {
         public Date ims;
         public int limit;
     }
 
-    public class GetData {
+    public static class GetData {
         public int since;
         public int before;
         public int limit;
