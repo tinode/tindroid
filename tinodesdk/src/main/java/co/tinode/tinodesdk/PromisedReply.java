@@ -202,8 +202,8 @@ public class PromisedReply<T> {
                 mState = State.RESOLVED;
 
                 mResult = result;
-                mDoneSignal.countDown();
                 callOnSuccess(result);
+                mDoneSignal.countDown();
             } else {
                 throw new IllegalStateException("Promise is already completed");
             }
@@ -216,8 +216,8 @@ public class PromisedReply<T> {
                 mState = State.REJECTED;
 
                 mException = err;
-                mDoneSignal.countDown();
                 callOnFailure(err);
+                mDoneSignal.countDown();
             } else {
                 throw new IllegalStateException("Promise is already completed");
             }
@@ -226,7 +226,9 @@ public class PromisedReply<T> {
 
     /**
      * A blocking call which returns the result of the execution. It will return
-     * <b>before</b> thenApply is called. It can be called multiple times on the same instance.
+     * <b>after</b> thenApply is called. It can be safely called multiple times on
+     * the same instance.
+     *
      * @return result of the execution (what was passed to {@link#resolve}
      * @throws Exception if the promise was rejected, throw an exception
      */

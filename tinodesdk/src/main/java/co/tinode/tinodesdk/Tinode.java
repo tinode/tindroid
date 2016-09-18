@@ -1,8 +1,5 @@
 package co.tinode.tinodesdk;
 
-import android.annotation.SuppressLint;
-import android.os.Build;
-import android.util.Base64;
 import android.util.Log;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,12 +11,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.URI;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,11 +29,14 @@ import java.util.concurrent.ConcurrentMap;
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
 import co.tinode.tinodesdk.model.MsgClientAcc;
+import co.tinode.tinodesdk.model.MsgClientDel;
+import co.tinode.tinodesdk.model.MsgClientGet;
 import co.tinode.tinodesdk.model.MsgClientHi;
 import co.tinode.tinodesdk.model.MsgClientLeave;
 import co.tinode.tinodesdk.model.MsgClientLogin;
 import co.tinode.tinodesdk.model.MsgClientNote;
 import co.tinode.tinodesdk.model.MsgClientPub;
+import co.tinode.tinodesdk.model.MsgClientSet;
 import co.tinode.tinodesdk.model.MsgClientSub;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
@@ -63,6 +63,8 @@ public class Tinode {
 
     protected JavaType mTypeOfDataPacket;
     protected JavaType mTypeOfMetaPacket;
+
+    protected static SimpleDateFormat sDateFormat;
 
     private String mApiKey;
     private String mServerHost;
@@ -94,6 +96,15 @@ public class Tinode {
         sJsonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         // Skip null fields from serialization
         sJsonMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
+        // Serialize dates as RFC3339. The default does not cut it because
+        // it represents the time zone as '+0000' instead of the expected 'Z'
+        sJsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // Format: 2016-09-07T17:29:49.100Z
+        sDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        sDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        sJsonMapper.setDateFormat(sDateFormat);
+
         sTypeFactory = sJsonMapper.getTypeFactory();
     }
 
@@ -254,6 +265,9 @@ public class Tinode {
             if (mListener != null) {
                 mListener.onMetaMessage(pkt.meta);
             }
+
+            resolveWithPacket(pkt.meta.id, pkt);
+
         } else if (pkt.data != null) {
             Topic topic = mTopics.get(pkt.data.topic);
             if (topic != null) {
@@ -263,6 +277,9 @@ public class Tinode {
             if (mListener != null) {
                 mListener.onDataMessage(pkt.data);
             }
+
+            resolveWithPacket(pkt.data.id, pkt);
+
         } else if (pkt.pres != null) {
             Topic topic = mTopics.get(pkt.pres.topic);
             if (topic != null) {
@@ -284,6 +301,15 @@ public class Tinode {
         }
 
         // TODO(gene): decide what to do on unknown message type
+    }
+
+    private void resolveWithPacket(String id, ServerMessage pkt) throws Exception {
+        if (id != null) {
+            PromisedReply<ServerMessage> r = mFutures.remove(id);
+            if (r != null && !r.isDone()) {
+                r.resolve(pkt);
+            }
+        }
     }
 
     public String getApiKey() {
@@ -386,10 +412,9 @@ public class Tinode {
     }
 
     protected String makeUserAgent() {
-        return mAppName + " (Android " + Build.VERSION.RELEASE + "; "
-                + Locale.getDefault().toString() + "; "
-                + Build.MANUFACTURER + " " + Build.MODEL + "/" + Build.PRODUCT +
-                ") " + LIBRARY;
+
+        return mAppName + " (Android " + System.getProperty("os.version") + "; "
+                + Locale.getDefault().toString() + ") " + LIBRARY;
     }
 
     /**
@@ -434,13 +459,13 @@ public class Tinode {
      * @param loginNow use the new account to login immediately
      * @param desc default access parameters for this account
      * @return PromisedReply of the reply ctrl message
-     * @throws IOException if there is no connection
+     * @throws Exception if there is no connection
      */
     protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, String secret,
                                                          boolean loginNow,
-                                                         SetDesc<Pu,Pr> desc) throws IOException, Exception {
+                                                         SetDesc<Pu,Pr> desc) throws Exception {
         ClientMessage msg = new ClientMessage<Pu,Pr,T>(
-                new MsgClientAcc<Pu,Pr>(getNextId(), scheme, secret, loginNow, desc));
+                new MsgClientAcc<>(getNextId(), scheme, secret, loginNow, desc));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
@@ -458,11 +483,11 @@ public class Tinode {
      * @param uname    user name
      * @param password password
      * @return PromisedReply of the reply ctrl message
-     * @throws IOException if there is no connection
+     * @throws Exception if there is no connection
      */
-    public <Pu,Pr,T> PromisedReply<ServerMessage> createAccountBasic(
+    public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
             String uname, String password, boolean login, SetDesc<Pu,Pr> desc)
-                throws IOException, Exception {
+                throws Exception {
         return createAccount(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password),
                 login, desc);
     }
@@ -474,7 +499,7 @@ public class Tinode {
      * @param uname    user name
      * @param password password
      * @return PromisedReply of the reply ctrl message
-     * @throws IOException if there is no connection
+     * @throws Exception if there is no connection
      */
     public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws Exception {
         return login(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
@@ -486,7 +511,7 @@ public class Tinode {
      *
      * @param token   server-provided security token
      * @return PromisedReply of the reply ctrl message
-     * @throws IOException if there is no connection
+     * @throws Exception if there is no connection
      */
     public PromisedReply<ServerMessage> loginToken(String token) throws Exception {
         return login(AuthScheme.LOGIN_TOKEN, token);
@@ -503,7 +528,7 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = null;
             if (msg.login.id != null) {
-                future = new PromisedReply<ServerMessage>();
+                future = new PromisedReply<>();
                 mFutures.put(msg.login.id, future);
                 future = future.thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
@@ -514,11 +539,7 @@ public class Tinode {
                                 }
                                 mMyUid = (String) pkt.ctrl.params.get("uid");
                                 mAuthToken = (String) pkt.ctrl.params.get("token");
-                                // Format: 2016-09-07T17:29:49.100Z
-                                @SuppressLint("SimpleDateFormat") SimpleDateFormat fmt =
-                                        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-                                fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                mAuthTokenExpires = fmt.parse((String) pkt.ctrl.params.get("expires"));
+                                mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
                                 return null;
                             }
                         }, null);
@@ -534,11 +555,13 @@ public class Tinode {
      * be automatically dispatched. A {@link Topic#subscribe()} should be normally used instead.
      *
      * @param topicName name of the topic to subscribe to
-     * @return id of the sent subscription packet, if {@link #wantAkn(boolean)} is set to true, null otherwise
-     * @throws IOException
+     * @return PromisedReply of the reply ctrl message, if {@link #wantAkn(boolean)} is set to true,
+     * null otherwise
      */
-    public PromisedReply subscribe(String topicName, MsgSetMeta set, MsgGetMeta get) throws IOException {
-        ClientMessage msg = new ClientMessage(new MsgClientSub(getNextId(), topicName, set, get));
+    public <Pu,Pr,Inv> PromisedReply<ServerMessage> subscribe(String topicName,
+                                                              MsgSetMeta<Pu,Pr,Inv> set,
+                                                              MsgGetMeta get) {
+        ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
@@ -555,10 +578,10 @@ public class Tinode {
      * used instead.
      *
      * @param topicName name of the topic to subscribe to
-     * @return id of the sent subscription packet, if {@link #wantAkn(boolean)} is set to true, null otherwise
-     * @throws IOException
+     * @return PromisedReply of the reply ctrl message, if {@link #wantAkn(boolean)} is set to true,
+     * null otherwise
      */
-    public PromisedReply leave(String topicName, boolean unsub) throws IOException {
+    public PromisedReply<ServerMessage> leave(String topicName, boolean unsub) {
         ClientMessage msg = new ClientMessage(new MsgClientLeave());
         msg.leave.id = getNextId();
         msg.leave.topic = topicName;
@@ -580,11 +603,11 @@ public class Tinode {
      *
      * @param topicName name of the topic to publish to
      * @param data      payload to publish to topic
-     * @return id of the sent packet, if {@link #wantAkn(boolean)} is set to true, null otherwise
-     * @throws IOException
+     * @return PromisedReply of the reply ctrl message, if {@link #wantAkn(boolean)} is set to true,
+     * null otherwise
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply publish(String topicName, Object data) throws IOException {
+    public PromisedReply<ServerMessage> publish(String topicName, Object data) {
         ClientMessage msg = new ClientMessage(new MsgClientPub<>(getNextId(), topicName, nNoEchoOnPub, data));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
@@ -597,16 +620,103 @@ public class Tinode {
     }
 
     /**
-     * Inform all other topic subscribers of activity, such as receiving/reading a message or a typing notification.
-     * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
+     * Low-level request to query topic for metadata. A {@link Topic#getMeta} should be normally
+     * used instead.
+     *
+     * @param topicName name of the topic to publish to
+     * @param query metadata query
+     * @return PromisedReply of the reply ctrl or meta message, if {@link #wantAkn(boolean)} is
+     * set to true, null otherwise
+     */
+    public PromisedReply<ServerMessage> getMeta(String topicName, MsgGetMeta query) {
+        ClientMessage msg = new ClientMessage(new MsgClientGet(getNextId(), topicName, query));
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(msg));
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.get.id, future);
+            return future;
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Low-level request to query topic for metadata. A {@link Topic#getMeta} should be normally
+     * used instead.
+     *
+     * @param topicName name of the topic to publish to
+     * @param meta metadata to assign
+     * @return PromisedReply of the reply ctrl or meta message, if {@link #wantAkn(boolean)} is
+     * set to true, null otherwise
+     */
+    public <Pu,Pr,Inv> PromisedReply<ServerMessage> setMeta(String topicName,
+                                                            MsgSetMeta<Pu,Pr,Inv> meta) {
+        ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(msg));
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.set.id, future);
+            return future;
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Delete messages from a topic.
+     *
+     * @param topicName name of the topic to inform
+     * @param before delete all massages with ids below this
+     * @return PromisedReply of the reply ctrl or meta message, if {@link #wantAkn(boolean)} is set
+     * to true, null otherwise
+     */
+    public PromisedReply<ServerMessage> delMessage(String topicName, int before, boolean hard) {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
+                MsgClientDel.What.MSG, before, hard));
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(msg));
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.del.id, future);
+            return future;
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Delete messages from a topic.
+     *
+     * @param topicName name of the topic to inform
+     * @return PromisedReply of the reply ctrl or meta message, if {@link #wantAkn(boolean)} is set
+     * to true, null otherwise
+     */
+    public PromisedReply<ServerMessage> delTopic(String topicName) {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
+                MsgClientDel.What.TOPIC, 0));
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(msg));
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.del.id, future);
+            return future;
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Inform all other topic subscribers of activity, such as receiving/reading a message or a
+     * typing notification.
+     * This method does not return a PromisedReply because the server does not acknowledge {note}
+     * packets.
      *
      * @param topicName name of the topic to inform
      * @param what      one or "read", "recv", "kp"
      * @param seq       id of the message being acknowledged
      */
-    public void note(String topicName, String what, int seq) {
+    protected void note(String topicName, String what, int seq) {
         try {
-            send(Tinode.getJsonMapper().writeValueAsString(new ClientMessage(new MsgClientNote(topicName, what, seq))));
+            send(Tinode.getJsonMapper().writeValueAsString(new
+                    ClientMessage(new MsgClientNote(topicName, what, seq))));
         } catch (JsonProcessingException ignored) {
         }
     }
@@ -619,11 +729,41 @@ public class Tinode {
      */
     public void noteKeyPress(String topicName) {
         try {
-            send(Tinode.getJsonMapper().writeValueAsString(new ClientMessage(new MsgClientNote(topicName, "kp", 0))));
+            send(Tinode.getJsonMapper().writeValueAsString(
+                    new ClientMessage(new MsgClientNote(topicName, "kp", 0))));
         } catch (JsonProcessingException ignored) {
         }
     }
 
+    /**
+     * Read receipt.
+     * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
+     *
+     * @param topicName name of the topic to inform
+     * @param seq id of the message being acknowledged
+     */
+    public void noteRead(String topicName, int seq) {
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(
+                    new ClientMessage(new MsgClientNote(topicName, "read", seq))));
+        } catch (JsonProcessingException ignored) {
+        }
+    }
+
+    /**
+     * Received receipt.
+     * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
+     *
+     * @param topicName name of the topic to inform
+     * @param seq id of the message being acknowledged
+     */
+    public void noteRecv(String topicName, int seq) {
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(
+                    new ClientMessage(new MsgClientNote(topicName, "recv", seq))));
+        } catch (JsonProcessingException ignored) {
+        }
+    }
 
     /**
      * Writes a string to websocket.
@@ -660,7 +800,7 @@ public class Tinode {
      *
      * @return subscribed !me topic or null if !me is not subscribed
      */
-    public <T,U,V> MeTopic<T, U, V> getMeTopic() {
+    public MeTopic getMeTopic() {
         return (MeTopic) getTopic(TOPIC_ME);
     }
 
@@ -670,11 +810,11 @@ public class Tinode {
      * @param name name of the topic to find
      * @return subscribed topic or null if no such topic was found
      */
-    public <T,U,V> Topic<T, U, V> getTopic(String name) {
+    public Topic getTopic(String name) {
         return mTopics.get(name);
     }
 
-    public void registerTopic(Topic<?, ?, ?> topic) {
+    public void registerTopic(Topic topic) {
         mTopics.put(topic.getName(), topic);
     }
 

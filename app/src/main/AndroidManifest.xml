@@ -53,7 +53,7 @@
             android:label="@string/app_name"
             android:theme="@style/AppTheme"/>
 
-        <service android:name="co.tinode.tindroid.account.TinodeAccountService"
+        <service android:name=".account.TinodeAccountService"
             android:exported="false">
             <!-- Required filter used by the system to launch our account service. -->
             <intent-filter>
@@ -64,7 +64,8 @@
                        android:resource="@xml/authenticator" />
         </service>
 
-        <service android:name=".account.SyncService" >
+        <service android:name=".account.SyncService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
@@ -72,8 +73,6 @@
             <meta-data
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
-            <meta-data
-                android:name="android.provider.CONTACTS_STRUCTURE" />
         </service>
 
     </application>

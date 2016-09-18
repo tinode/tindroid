@@ -90,10 +90,16 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             String token = tokenBundle.getString(AccountManager.KEY_AUTHTOKEN);
             tinode.connect(hostName).getResult();
             tinode.loginToken(token).getResult();
-            MsgGetMeta subGet = new MsgGetMeta();
-            subGet.sub = new MsgGetMeta.GetSub();
-            subGet.sub.ims = new Date();
-            tinode.subscribe(MeTopic.NAME, null, subGet).getResult();
+
+            MsgGetMeta.GetSub sub = new MsgGetMeta.GetSub();
+            sub.ims = new Date();
+            MsgGetMeta subGet = new MsgGetMeta(null, sub, null);
+            MeTopic me = tinode.getMeTopic();
+            if (me != null && me.isAttached()) {
+                me.getMeta(subGet).getResult();
+            } else {
+                tinode.subscribe(MeTopic.NAME, null, subGet).getResult();
+            }
         } catch (IOException e) {
             syncResult.stats.numIoExceptions++;
         } catch (Exception e) {

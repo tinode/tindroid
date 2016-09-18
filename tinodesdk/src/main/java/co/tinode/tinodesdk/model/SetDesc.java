@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Topic intiation parameters
  */
-
 public class SetDesc<Pu,Pr> {
     public Defacs defacs;
     @JsonProperty("public")

@@ -1,16 +1,30 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gene on 31/01/16.
+ * Client message:
+ *
+ * 	Hi    *MsgClientHi    `json:"hi"`
+ * Acc   *MsgClientAcc   `json:"acc"`
+ * Login *MsgClientLogin `json:"login"`
+ * Sub   *MsgClientSub   `json:"sub"`
+ * Leave *MsgClientLeave `json:"leave"`
+ * Pub   *MsgClientPub   `json:"pub"`
+ * Get   *MsgClientGet   `json:"get"`
+ * Set   *MsgClientSet   `json:"set"`
+ * Del   *MsgClientDel   `json:"del"`
+ * Note  *MsgClientNote  `json:"note"`
  */
 
 public class ClientMessage<Pu,Pr,T> {
     public MsgClientHi hi;
     public MsgClientAcc<Pu,Pr> acc;
     public MsgClientLogin login;
-    public MsgClientPub<T> pub;
     public MsgClientSub sub;
     public MsgClientLeave leave;
+    public MsgClientPub<T> pub;
+    public MsgClientGet get;
+    public MsgClientSet set;
+    public MsgClientDel del;
     public MsgClientNote note;
 
     public ClientMessage() {
@@ -24,14 +38,23 @@ public class ClientMessage<Pu,Pr,T> {
     public ClientMessage(MsgClientLogin login) {
         this.login = login;
     }
-    public ClientMessage(MsgClientPub<T> pub) {
-        this.pub = pub;
-    }
     public ClientMessage(MsgClientSub sub) {
         this.sub = sub;
     }
     public ClientMessage(MsgClientLeave leave) {
         this.leave = leave;
+    }
+    public ClientMessage(MsgClientPub<T> pub) {
+        this.pub = pub;
+    }
+    public ClientMessage(MsgClientGet get) {
+        this.get = get;
+    }
+    public ClientMessage(MsgClientSet set) {
+        this.set = set;
+    }
+    public ClientMessage(MsgClientDel del) {
+        this.del = del;
     }
     public ClientMessage(MsgClientNote note) {
         this.note = note;

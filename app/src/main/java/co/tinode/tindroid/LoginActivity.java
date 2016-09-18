@@ -38,6 +38,7 @@ import java.io.IOException;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.SetDesc;
 
@@ -218,27 +219,11 @@ public class LoginActivity extends AppCompatActivity {
                         = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
                 String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
                 try {
-                    InmemoryCache.getTinode().connect(hostName)
-                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    return InmemoryCache.getTinode().loginToken(token);
-                                }
-                            }, null)
-                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    onLoginSuccess(signIn);
-                                    return null;
-                                }
-                            }, new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                    mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                                    reportError(err, signIn, R.string.error_login_failed);
-                                    return null;
-                                }
-                            });
+                    // Connecting with synchronous calls because this is not the main thread.
+                    final Tinode tinode = InmemoryCache.getTinode();
+                    tinode.connect(hostName).getResult();
+                    tinode.loginToken(token).getResult();
+                    onLoginSuccess(signIn);
                 } catch (Exception err) {
                     Log.d(TAG, "Failed to login with token");
                     mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
@@ -248,6 +233,9 @@ public class LoginActivity extends AppCompatActivity {
         }, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {

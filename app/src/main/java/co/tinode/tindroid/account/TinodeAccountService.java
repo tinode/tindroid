@@ -108,8 +108,6 @@ public class TinodeAccountService extends Service {
                 return result;
             }
 
-            Tinode tinode = InmemoryCache.getTinode();
-
             final Bundle result = new Bundle();
             final AccountManager am = AccountManager.get(mContext);
 
@@ -118,6 +116,8 @@ public class TinodeAccountService extends Service {
             if (TextUtils.isEmpty(authToken)) {
                 final String password = am.getPassword(account);
                 if (!TextUtils.isEmpty(password)) {
+                    // TODO(gene): implement sign in
+                    //Tinode tinode = InmemoryCache.getTinode();
                     //authToken = AuthTokenLoader.signIn(mContext, account.name, password);
                 }
             }
@@ -171,7 +171,6 @@ public class TinodeAccountService extends Service {
             // This call is used to query whether the Authenticator supports
             // specific features. We don't expect to get called, so we always
             // return false (no) for any queries.
-            Log.d(TAG, "hasFeatures()" + features);
             final Bundle result = new Bundle();
             result.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, false);
             return result;

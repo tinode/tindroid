@@ -12,6 +12,8 @@ import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 import com.fasterxml.jackson.databind.JavaType;
@@ -123,16 +125,15 @@ public class Topic<Pu,Pr,T> {
     }
 
     /**
-     * Subscribe topic
+     * Subscribe to topic
      *
-     * @throws IOException
+     * @throws Exception
      */
-    public PromisedReply subscribe() throws Exception {
+    public PromisedReply<ServerMessage> subscribe() throws Exception {
         if (!mAttached) {
             MsgGetMeta getParams = null;
             if (mDescription == null || mDescription.updated == null) {
-                getParams = new MsgGetMeta();
-                getParams.what = "desc sub data";
+                getParams = new MsgGetMeta("desc sub data");
             } else {
                 // Check if the last received message has lower ID than the last known message.
                 // If so, fetch missing messages.
@@ -140,18 +141,31 @@ public class Topic<Pu,Pr,T> {
                 if (me != null) {
                     int seqId = me.getMsgSeq(mName);
                     if (seqId > mDescription.seq) {
-                        getParams = new MsgGetMeta();
-                        getParams.what = "data";
-                        getParams.data = getParams.new GetData();
-                        getParams.data.since = mDescription.seq;
+                        MsgGetMeta.GetData data = new MsgGetMeta.GetData();
+                        data.since = mDescription.seq;
+                        getParams = new MsgGetMeta(null, null, data);
                     }
                 }
             }
 
-            return mTinode.subscribe(getName(), null, getParams).thenApply(
-                    new PromisedReply.SuccessListener() {
+            return subscribe(null, getParams);
+        }
+        return null;
+    }
+
+    /**
+     * Subscribe to topic with parameters
+     *
+     * @throws Exception
+     */
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<Pu,Pr,?> set, MsgGetMeta get)
+            throws Exception {
+        if (!mAttached) {
+            return mTinode.subscribe(getName(), set, get).thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply onSuccess(Object result) throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
+                                throws Exception {
                             subscribed();
                             return null;
                         }
@@ -160,18 +174,20 @@ public class Topic<Pu,Pr,T> {
         return null;
     }
 
+
     /**
      * Leave topic
      * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      *
      * @throws Exception
      */
-    public PromisedReply leave(boolean unsub) throws Exception {
+    public PromisedReply<ServerMessage> leave(boolean unsub) throws Exception {
         if (mAttached) {
             return mTinode.leave(getName(), unsub).thenApply(
-                    new PromisedReply.SuccessListener() {
+                    new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply onSuccess(Object result) throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
+                                throws Exception {
                             topicLeft();
                             return null;
                         }
@@ -183,9 +199,9 @@ public class Topic<Pu,Pr,T> {
     /**
      * Leave topic without unsubscribing
      *
-     * @throws IOException
+     * @throws Exception
      */
-    public PromisedReply leave() throws Exception {
+    public PromisedReply<ServerMessage> leave() throws Exception {
         return leave(false);
     }
 
@@ -193,10 +209,30 @@ public class Topic<Pu,Pr,T> {
      * Publish message to a topic. It will attempt to publish regardless of subscription status.
      *
      * @param content payload
-     * @throws IOException
      */
-    public PromisedReply publish(T content) throws IOException {
+    public PromisedReply<ServerMessage> publish(T content) {
         return mTinode.publish(getName(), content);
+    }
+
+    /**
+     * Query topic for data or metadata
+     */
+    public PromisedReply getMeta(MsgGetMeta query) {
+        return mTinode.getMeta(getName(), query);
+    }
+
+    /**
+     * Update topic metadata
+     */
+    public PromisedReply setMeta(MsgSetMeta meta) {
+        return mTinode.setMeta(getName(), meta);
+    }
+
+    /**
+     * Delete messages
+     */
+    public PromisedReply delete(int before, boolean hard) {
+        return mTinode.delMessage(getName(), before, hard);
     }
 
     /**
@@ -216,14 +252,14 @@ public class Topic<Pu,Pr,T> {
             switch (what) {
                 case RECV:
                     if (sub.recv < mDescription.seq) {
-                        mTinode.note(getName(), "recv", mDescription.seq);
+                        mTinode.noteRecv(getName(), mDescription.seq);
                         sub.recv = mDescription.seq;
                         result = true;
                     }
                     break;
                 case READ:
                     if (sub.read < mDescription.seq) {
-                        mTinode.note(getName(), "read", mDescription.seq);
+                        mTinode.noteRead(getName(), mDescription.seq);
                         sub.read = mDescription.seq;
                         result = true;
                     }
