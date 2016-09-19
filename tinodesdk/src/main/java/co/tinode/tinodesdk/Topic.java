@@ -21,10 +21,12 @@ import com.fasterxml.jackson.databind.JavaType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 
 /**
@@ -35,7 +37,7 @@ import java.util.Map;
 public class Topic<Pu,Pr,T> {
     private static final String TAG = "tinodesdk.Topic";
 
-    public enum TopicType {ME, GRP, P2P, UNKNOWN}
+    public enum TopicType {ME, FND, GRP, P2P, UNKNOWN}
 
     protected enum NoteType {READ, RECV}
 
@@ -150,7 +152,7 @@ public class Topic<Pu,Pr,T> {
 
             return subscribe(null, getParams);
         }
-        return null;
+        throw new IllegalStateException("Already subscribed");
     }
 
     /**
@@ -171,7 +173,7 @@ public class Topic<Pu,Pr,T> {
                         }
                     }, null);
         }
-        return null;
+        throw new IllegalStateException("Already subscribed");
     }
 
 
@@ -193,7 +195,7 @@ public class Topic<Pu,Pr,T> {
                         }
                     }, null);
         }
-        return null;
+        throw new IllegalStateException("Not subscribed");
     }
 
     /**
@@ -395,6 +397,26 @@ public class Topic<Pu,Pr,T> {
         return mSubs.values();
     }
 
+    /**
+     * Extract subscriptions with the update timestamp after the marker
+     *
+     * @param marker timestamp of the last update
+     * @return updated subscriptions
+     */
+    public Collection<Subscription<Pu,Pr>> getUpdatedSubscriptions(Date marker) {
+        if (marker == null) {
+            return getSubscriptions();
+        }
+
+        ArrayList<Subscription<Pu,Pr>> result = new ArrayList<>();
+        for (Subscription<Pu,Pr> sub: mSubs.values()) {
+            if (sub.updated != null && marker.before(sub.updated)) {
+                result.add(sub);
+            }
+        }
+        return result;
+    }
+
     protected void setListener(Listener<Pu,Pr,T> l) {
         mListener = l;
     }
@@ -452,6 +474,8 @@ public class Topic<Pu,Pr,T> {
         if (name != null) {
             if (name.startsWith("me")) {
                 tp = TopicType.ME;
+            } else if (name.startsWith("fnd")) {
+                tp = TopicType.FND;
             } else if (name.startsWith("grp")) {
                 tp = TopicType.GRP;
             } else if (name.startsWith("p2p")) {
@@ -460,6 +484,7 @@ public class Topic<Pu,Pr,T> {
         }
         return tp;
     }
+
     public TopicType getTopicType() {
         return getTopicTypeByName(mName);
     }

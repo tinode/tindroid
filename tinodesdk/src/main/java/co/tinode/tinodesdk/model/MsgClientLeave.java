@@ -10,4 +10,10 @@ public class MsgClientLeave {
 
     public MsgClientLeave() {
     }
+
+    public MsgClientLeave(String id, String topic, boolean unsub) {
+        this.id = id;
+        this.topic = topic;
+        this.unsub = unsub ? true : null;
+    }
 }

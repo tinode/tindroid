@@ -44,12 +44,12 @@ public class MsgGetMeta {
 
     public static class GetSub {
         public Date ims;
-        public int limit;
+        public Integer limit;
     }
 
     public static class GetData {
-        public int since;
-        public int before;
-        public int limit;
+        public Integer since;
+        public Integer before;
+        public Integer limit;
     }
 }

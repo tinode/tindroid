@@ -11,7 +11,7 @@ public class Utils {
     // Account management constants
     public static final String TOKEN_TYPE = "co.tinode.token";
     public static final String ACCOUNT_TYPE = "co.tinode.account";
-    public static final String PROTOCOL = "Tinode";
+    public static final String IM_PROTOCOL = "Tinode";
 
     // Constants for accessing shared preferences
     public static final String PREFS_ACCOUNT_NAME = "pref_accountName";

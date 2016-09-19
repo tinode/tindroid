@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
+import co.tinode.tinodesdk.Topic;
+
 /**
  * Subscription to topic.
  */
@@ -85,5 +87,17 @@ public class Subscription<Pu,Pr> {
 
     public void setTopicIndex(int index) {
         mTopicIndex = index;
+    }
+
+    public String getUniqueId() {
+        if (topic == null) {
+            return user;
+        } else {
+            if (Topic.getTopicTypeByName(topic) == Topic.TopicType.P2P) {
+                return with;
+            } else {
+                return topic;
+            }
+        }
     }
 }

@@ -25,8 +25,8 @@ public class MsgClientDel {
     public String id;
     public String topic;
     public String what;
-    public int before;
-    public boolean hard;
+    public Integer before;
+    public Boolean hard;
 
     public MsgClientDel() {}
 
@@ -34,8 +34,9 @@ public class MsgClientDel {
         this.id = id;
         this.topic = topic;
         this.what = what == TOPIC ? STR_TOPIC : STR_MSG;
-        this.before = what == MSG ? before : 0;
-        this.hard = hard;
+        // null value will cause before to be skipped during serialization instead of sending "0".
+        this.before = (what == MSG && before > 0) ? before : null;
+        this.hard = hard ? true : null;
     }
 
     public MsgClientDel(String id, String topic, What what, int before) {

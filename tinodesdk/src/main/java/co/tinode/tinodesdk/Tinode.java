@@ -582,10 +582,7 @@ public class Tinode {
      * null otherwise
      */
     public PromisedReply<ServerMessage> leave(String topicName, boolean unsub) {
-        ClientMessage msg = new ClientMessage(new MsgClientLeave());
-        msg.leave.id = getNextId();
-        msg.leave.topic = topicName;
-        msg.leave.unsub = unsub;
+        ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();

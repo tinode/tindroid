@@ -11,7 +11,7 @@ public class MsgClientAcc<Pu,Pr> {
     public String scheme;
     public String secret;
     // Use the new account for immediate authentication.
-    public boolean login;
+    public Boolean login;
     // Account parameters
     public SetDesc<Pu,Pr> desc;
 

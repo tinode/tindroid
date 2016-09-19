@@ -57,8 +57,7 @@ public class TinodeAccountService extends Service {
         @Override
         public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType,
                                  String[] features, Bundle options) throws NetworkErrorException {
-            Log.d(TAG, "addAccount, accountType=" + accountType +
-                    "; tokenType=" + authTokenType + "; features=" + features);
+            Log.d(TAG, "addAccount, accountType=" + accountType + "; tokenType=" + authTokenType);
 
             final Intent intent = new Intent(mContext, LoginActivity.class);
             intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, accountType);

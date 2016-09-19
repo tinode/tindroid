@@ -15,7 +15,7 @@ public class MsgClientPub<T> {
     public MsgClientPub(String id, String topic, Boolean noecho, T content) {
         this.id = id;
         this.topic = topic;
-        this.noecho = noecho;
+        this.noecho = noecho ? true : null;
         this.content = content;
     }
 }
