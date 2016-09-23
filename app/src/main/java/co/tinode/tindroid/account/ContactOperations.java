@@ -3,6 +3,7 @@ package co.tinode.tindroid.account;
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -12,6 +13,8 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.text.TextUtils;
+
+import co.tinode.tindroid.R;
 
 /**
  * Helper class for storing data in the platform content providers.
@@ -166,15 +169,12 @@ public class ContactOperations {
         return this;
     }
 
-    public ContactOperations addAvatar(String avatarUrl) {
-        if (avatarUrl != null) {
-            byte[] avatarBuffer = NetworkUtilities.downloadAvatar(avatarUrl);
-            if (avatarBuffer != null) {
-                mValues.clear();
-                mValues.put(Photo.PHOTO, avatarBuffer);
-                mValues.put(Photo.MIMETYPE, Photo.CONTENT_ITEM_TYPE);
-                addInsertOp();
-            }
+    public ContactOperations addAvatar(byte[] avatar) {
+        if (avatar != null) {
+            mValues.clear();
+            mValues.put(Photo.PHOTO, avatar);
+            mValues.put(Photo.MIMETYPE, Photo.CONTENT_ITEM_TYPE);
+            addInsertOp();
         }
         return this;
     }
@@ -182,18 +182,16 @@ public class ContactOperations {
     /**
      * Adds a profile action
      *
-     * @param userId the userId of the sample SyncAdapter user object
+     * @param serverId the uid of the topic object
      * @return instance of ContactOperations
      */
-    public ContactOperations addProfileAction(long userId) {
+    public ContactOperations addProfileAction(String serverId) {
         mValues.clear();
-        if (userId != 0) {
-            mValues.put(SampleSyncAdapterColumns.DATA_PID, userId);
-            mValues.put(SampleSyncAdapterColumns.DATA_SUMMARY, mContext
-                    .getString(R.string.profile_action));
-            mValues.put(SampleSyncAdapterColumns.DATA_DETAIL, mContext
-                    .getString(R.string.view_profile));
-            mValues.put(Data.MIMETYPE, SampleSyncAdapterColumns.MIME_PROFILE);
+        if (!TextUtils.isEmpty(serverId)) {
+            mValues.put(Utils.DATA_PID, serverId);
+            mValues.put(Utils.DATA_SUMMARY, mContext.getString(R.string.profile_action));
+            mValues.put(Utils.DATA_DETAIL, mContext.getString(R.string.view_profile));
+            mValues.put(Data.MIMETYPE, Utils.MIME_PROFILE);
             addInsertOp();
         }
         return this;
@@ -293,15 +291,12 @@ public class ContactOperations {
         return this;
     }
 
-    public ContactOperations updateAvatar(String avatarUrl, Uri uri) {
-        if (avatarUrl != null) {
-            byte[] avatarBuffer = NetworkUtilities.downloadAvatar(avatarUrl);
-            if (avatarBuffer != null) {
-                mValues.clear();
-                mValues.put(Photo.PHOTO, avatarBuffer);
-                mValues.put(Photo.MIMETYPE, Photo.CONTENT_ITEM_TYPE);
-                addUpdateOp(uri);
-            }
+    public ContactOperations updateAvatar(byte[] avatarBuffer, Uri uri) {
+        if (avatarBuffer != null) {
+            mValues.clear();
+            mValues.put(Photo.PHOTO, avatarBuffer);
+            mValues.put(Photo.MIMETYPE, Photo.CONTENT_ITEM_TYPE);
+            addUpdateOp(uri);
         }
         return this;
     }
@@ -315,7 +310,7 @@ public class ContactOperations {
      */
     public ContactOperations updateProfileAction(Integer userId, Uri uri) {
         mValues.clear();
-        mValues.put(SampleSyncAdapterColumns.DATA_PID, userId);
+        mValues.put(Utils.DATA_PID, userId);
         addUpdateOp(uri);
         return this;
     }

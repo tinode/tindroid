@@ -16,6 +16,7 @@ public class AvatarPhoto {
 
     public byte[] data;
     public String type;
+    public String uri;
 
     public AvatarPhoto() {}
 

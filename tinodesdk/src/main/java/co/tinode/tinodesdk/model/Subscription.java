@@ -13,6 +13,7 @@ import co.tinode.tinodesdk.Topic;
 public class Subscription<Pu,Pr> {
     public String user;
     public Date updated;
+    public Date deleted;
     public String mode;
     public int read;
     public int recv;
@@ -42,6 +43,10 @@ public class Subscription<Pu,Pr> {
         if ((sub.updated != null) && (updated == null || updated.before(sub.updated))) {
             updated = sub.updated;
         }
+        if ((sub.deleted != null) && (deleted == null || deleted.after(sub.deleted))) {
+            deleted = sub.deleted;
+        }
+
         if (sub.mode != null) {
             mode = sub.mode;
         }

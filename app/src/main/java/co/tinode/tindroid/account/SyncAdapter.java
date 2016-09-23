@@ -113,8 +113,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 setServerSyncMarker(account, new Date());
             }
         } catch (IOException e) {
+            e.printStackTrace();
             syncResult.stats.numIoExceptions++;
         } catch (Exception e) {
+            e.printStackTrace();
             syncResult.stats.numAuthExceptions++;
         }
         Log.i(TAG, "Network synchronization complete");

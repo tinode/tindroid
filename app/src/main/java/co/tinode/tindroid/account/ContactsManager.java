@@ -24,6 +24,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import co.tinode.tindroid.R;
+import co.tinode.tindroid.VCard;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -53,14 +55,15 @@ public class ContactsManager {
         for (final Subscription rawContact : rawContacts) {
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
-            if (rawContact.updated != null && rawContact.updated.after(currentSyncMarker)) {
+            if (currentSyncMarker == null ||
+                    (rawContact.updated != null && rawContact.updated.after(currentSyncMarker))) {
                 currentSyncMarker = rawContact.updated;
             }
 
             long rawContactId = lookupRawContact(resolver, rawContact.getUniqueId());
             // Contact already exists
             if (rawContactId != 0) {
-                if (!rawContact.isDeleted()) {
+                if (rawContact.deleted != null) {
                     updateContact(context, resolver, rawContact, true, true, rawContactId, batchOperation);
                 } else {
                     deleteContact(context, rawContactId, batchOperation);
@@ -68,7 +71,7 @@ public class ContactsManager {
             } else {
                 // Adding new contact
                 Log.d(TAG, "In addContact");
-                if (!rawContact.isDeleted()) {
+                if (rawContact.deleted == null) {
                     addContact(context, account, rawContact, true, batchOperation);
                 }
             }
@@ -92,9 +95,9 @@ public class ContactsManager {
      * @param context     The context of Authenticator Activity
      * @param rawContacts The list of users we want to update
      */
-    public static void updateStatusMessages(Context context, List<TinodeAccount> rawContacts) {
+    public static void updateStatusMessages(Context context, List<Subscription> rawContacts) {
         final BatchOperation batchOperation = new BatchOperation(context.getContentResolver());
-        for (TinodeAccount rawContact : rawContacts) {
+        for (Subscription rawContact : rawContacts) {
             updateContactStatus(context, rawContact, batchOperation);
         }
         batchOperation.execute();
@@ -115,21 +118,30 @@ public class ContactsManager {
      */
     public static void addContact(Context context, Account account, Subscription rawContact, boolean inSync,
                                   BatchOperation batchOperation) {
-        // Put the data in the contacts provider
+        if (rawContact.pub == null) {
+            return;
+        }
+
+        VCard vc;
+        try {
+            vc = (VCard) rawContact.pub;
+        } catch (ClassCastException e) {
+            return;
+        }
+
+        // Initiate adding data to contacts provider
         final ContactOperations contactOp = ContactOperations.createNewContact(
                 context, rawContact.getUniqueId(), account.name, inSync, batchOperation);
-        contactOp.addName(rawContact.getName())
-                .addEmail(rawContact.getEmail())
-                .addPhone(rawContact.getCellPhone(), Phone.TYPE_MOBILE)
-                .addPhone(rawContact.getHomePhone(), Phone.TYPE_HOME)
-                .addPhone(rawContact.getOfficePhone(), Phone.TYPE_WORK)
-                .addAvatar(rawContact.getAvatarUrl());
-        // If we have a serverId, then go ahead and create our status profile.
-        // Otherwise skip it - and we'll create it after we sync-up to the
-        // server later on.
-        if (rawContact.getServerContactId() > 0) {
-            contactOp.addProfileAction(rawContact.getServerContactId());
-        }
+
+        contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
+                .addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null)
+                .addPhone(vc.getPhoneByType(VCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
+                .addPhone(vc.getPhoneByType(VCard.ContactType.HOME), Phone.TYPE_HOME)
+                .addPhone(vc.getPhoneByType(VCard.ContactType.WORK), Phone.TYPE_WORK)
+                .addAvatar(vc.photo != null ? vc.photo.data : null);
+
+        // Actually create our status profile.
+        contactOp.addProfileAction(rawContact.getUniqueId());
     }
 
     /**
@@ -173,6 +185,13 @@ public class ContactsManager {
             return;
         }
 
+        VCard vc;
+        try {
+            vc = (VCard) rawContact.pub;
+        } catch (ClassCastException e) {
+            return;
+        }
+
         try {
             // Iterate over the existing rows of data, and update each one
             // with the information we received from the server.
@@ -185,31 +204,31 @@ public class ContactsManager {
                             c.getString(DataQuery.COLUMN_GIVEN_NAME),
                             c.getString(DataQuery.COLUMN_FAMILY_NAME),
                             c.getString(DataQuery.COLUMN_FULL_NAME),
-                            rawContact.getFirstName(),
-                            rawContact.getLastName(),
-                            rawContact.getFullName());
+                            vc.n != null ? vc.n.given : null,
+                            vc.n != null ? vc.n.surname : null,
+                            vc.fn);
                 } else if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
                     final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
                     if (type == Phone.TYPE_MOBILE) {
                         existingCellPhone = true;
                         contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                rawContact.getCellPhone(), uri);
+                                vc.getPhoneByType(VCard.TYPE_MOBILE), uri);
                     } else if (type == Phone.TYPE_HOME) {
                         existingHomePhone = true;
                         contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                rawContact.getHomePhone(), uri);
+                                vc.getPhoneByType(VCard.TYPE_HOME), uri);
                     } else if (type == Phone.TYPE_WORK) {
                         existingWorkPhone = true;
                         contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                rawContact.getOfficePhone(), uri);
+                                vc.getPhoneByType(VCard.TYPE_BUSINESS), uri);
                     }
                 } else if (mimeType.equals(Email.CONTENT_ITEM_TYPE)) {
                     existingEmail = true;
-                    contactOp.updateEmail(rawContact.getEmail(),
+                    contactOp.updateEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null,
                             c.getString(DataQuery.COLUMN_EMAIL_ADDRESS), uri);
                 } else if (mimeType.equals(Photo.CONTENT_ITEM_TYPE)) {
                     existingAvatar = true;
-                    contactOp.updateAvatar(rawContact.getAvatarUrl(), uri);
+                    contactOp.updateAvatar(vc.photo != null ? vc.photo.data : null, uri);
                 }
             } // while
         } finally {
@@ -217,29 +236,29 @@ public class ContactsManager {
         }
         // Add the cell phone, if present and not updated above
         if (!existingCellPhone) {
-            contactOp.addPhone(rawContact.getCellPhone(), Phone.TYPE_MOBILE);
+            contactOp.addPhone(vc.getPhoneByType(VCard.TYPE_MOBILE), Phone.TYPE_MOBILE);
         }
         // Add the home phone, if present and not updated above
         if (!existingHomePhone) {
-            contactOp.addPhone(rawContact.getHomePhone(), Phone.TYPE_HOME);
+            contactOp.addPhone(vc.getPhoneByType(VCard.TYPE_HOME), Phone.TYPE_HOME);
         }
         // Add the work phone, if present and not updated above
         if (!existingWorkPhone) {
-            contactOp.addPhone(rawContact.getOfficePhone(), Phone.TYPE_WORK);
+            contactOp.addPhone(vc.getPhoneByType(VCard.TYPE_WORK), Phone.TYPE_WORK);
         }
         // Add the email address, if present and not updated above
         if (!existingEmail) {
-            contactOp.addEmail(rawContact.getEmail());
+            contactOp.addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null);
         }
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
-            contactOp.addAvatar(rawContact.getAvatarUrl());
+            contactOp.addAvatar(vc.photo != null ? vc.photo.data : null);
         }
 
         // If we don't have a status profile, then create one.  This could
         // happen for contacts that were created on the client - we don't
         // create the status profile until after the first sync...
-        final long serverId = rawContact.getServerContactId();
+        final String serverId = rawContact.getUniqueId();
         final long profileId = lookupProfile(resolver, serverId);
         if (profileId <= 0) {
             contactOp.addProfileAction(serverId);
@@ -277,7 +296,7 @@ public class ContactsManager {
      * @param rawContactId the unique ID for the local contact
      * @return a User object containing info on that contact
      */
-    private static TinodeAccount getRawContact(Context context, long rawContactId) {
+    private static Subscription getRawContact(Context context, long rawContactId) {
         String firstName = null;
         String lastName = null;
         String fullName = null;
@@ -329,9 +348,10 @@ public class ContactsManager {
         }
         // Now that we've extracted all the information we care about,
         // create the actual User object.
-        TinodeAccount rawContact = TinodeAccount.create(fullName, firstName, lastName, cellPhone,
-                workPhone, homePhone, email, null, false, rawContactId, serverId);
-        return rawContact;
+        //Subscription rawContact = TinodeAccount.create(fullName, firstName, lastName, cellPhone,
+        //        workPhone, homePhone, email, null, false, rawContactId, serverId);
+
+        return null; // rawContact;
     }
 
     /**
@@ -344,26 +364,31 @@ public class ContactsManager {
      * @param rawContact     the contact whose status we should update
      * @param batchOperation allow us to batch together multiple operations
      */
-    private static void updateContactStatus(Context context, TinodeAccount rawContact,
+    private static void updateContactStatus(Context context, Subscription rawContact,
                                             BatchOperation batchOperation) {
         final ContentValues values = new ContentValues();
         final ContentResolver resolver = context.getContentResolver();
-        final long userId = rawContact.getServerContactId();
-        final String username = rawContact.getUserName();
-        final String status = rawContact.getStatus();
-        // Look up the user's sample SyncAdapter data row
-        final long profileId = lookupProfile(resolver, userId);
+        final String uid = rawContact.getUniqueId();
+        VCard vc;
+        try {
+            vc = (VCard) rawContact.pub;
+        } catch (ClassCastException e) {
+            return;
+        }
+
+        // Look up the user's data row
+        final long profileId = lookupProfile(resolver, uid);
         // Insert the activity into the stream
         if (profileId > 0) {
             values.put(StatusUpdates.DATA_ID, profileId);
-            values.put(StatusUpdates.STATUS, status);
+            // values.put(StatusUpdates.STATUS, status);
             values.put(StatusUpdates.PROTOCOL, Im.PROTOCOL_CUSTOM);
             values.put(StatusUpdates.CUSTOM_PROTOCOL, Utils.IM_PROTOCOL);
-            values.put(StatusUpdates.IM_ACCOUNT, username);
-            values.put(StatusUpdates.IM_HANDLE, userId);
+            values.put(StatusUpdates.IM_ACCOUNT, uid);
+            values.put(StatusUpdates.IM_HANDLE, uid);
             values.put(StatusUpdates.STATUS_RES_PACKAGE, context.getPackageName());
-            values.put(StatusUpdates.STATUS_ICON, R.drawable.icon);
-            values.put(StatusUpdates.STATUS_LABEL, R.string.label);
+            values.put(StatusUpdates.STATUS_ICON, R.mipmap.ic_launcher);
+            //values.put(StatusUpdates.STATUS_LABEL, R.string.label);
             batchOperation.add(ContactOperations.newInsertCpo(StatusUpdates.CONTENT_URI,
                     false, true).withValues(values).build());
         }
@@ -391,13 +416,12 @@ public class ContactsManager {
      * to the server, and for contacts that were deleted on the server and the
      * deletion was synced to the client.
      *
-     * @param context      the Authenticator Activity context
-     * @param uid the unique Id for this rawContact in contacts
-     *                     provider
+     * @param context   the Authenticator Activity context
+     * @param uid   the unique Id for this rawContact in contacts provider, locally issued
      */
-    private static void deleteContact(Context context, long rawContactId, BatchOperation batchOperation) {
+    private static void deleteContact(Context context, long uid, BatchOperation batchOperation) {
         batchOperation.add(ContactOperations.newDeleteCpo(
-                ContentUris.withAppendedId(RawContacts.CONTENT_URI, rawContactId), true, true).build());
+                ContentUris.withAppendedId(RawContacts.CONTENT_URI, uid), true, true).build());
     }
 
     /**
@@ -435,23 +459,26 @@ public class ContactsManager {
      * if the sample SyncAdapter user isn't found.
      *
      * @param resolver a content resolver
-     * @param userId   the sample SyncAdapter user ID to lookup
+     * @param uid  server-issued unique iD of the contact
      * @return the profile Data row id, or 0 if not found
      */
-    private static long lookupProfile(ContentResolver resolver, long userId) {
-        long profileId = 0;
-        final Cursor c =
-                resolver.query(Data.CONTENT_URI, ProfileQuery.PROJECTION, ProfileQuery.SELECTION,
-                        new String[]{String.valueOf(userId)}, null);
-        if (c != null) {
-            try {
-                if (c.moveToFirst()) {
-                    profileId = c.getLong(ProfileQuery.COLUMN_ID);
-                }
-            } finally {
-                c.close();
-            }
+    private static long lookupProfile(ContentResolver resolver, String uid) {
+        final Cursor c = resolver.query(Data.CONTENT_URI, ProfileQuery.PROJECTION, ProfileQuery.SELECTION,
+                new String[]{uid}, null);
+
+        if (c == null) {
+            return 0;
         }
+
+        long profileId = 0;
+        try {
+            if (c.moveToFirst()) {
+                profileId = c.getLong(ProfileQuery.COLUMN_ID);
+            }
+        } finally {
+            c.close();
+        }
+
         return profileId;
     }
 
@@ -502,8 +529,8 @@ public class ContactsManager {
         public final static String[] PROJECTION = new String[]{Data._ID};
         public final static int COLUMN_ID = 0;
         public static final String SELECTION =
-                Data.MIMETYPE + "='" + SampleSyncAdapterColumns.MIME_PROFILE + "' AND "
-                        + SampleSyncAdapterColumns.DATA_PID + "=?";
+                Data.MIMETYPE + "='" + Utils.MIME_PROFILE + "' AND "
+                        + Utils.DATA_PID + "=?";
     }
 
     /**
@@ -530,7 +557,7 @@ public class ContactsManager {
      * Constants for a query to find SampleSyncAdapter contacts that are
      * in need of syncing to the server. This should cover new, edited,
      * and deleted contacts.
-     */
+     *
     final private static class DirtyQuery {
         private DirtyQuery() {
         }
@@ -555,6 +582,7 @@ public class ContactsManager {
                         + RawContacts.ACCOUNT_TYPE + "='" + Utils.ACCOUNT_TYPE + "' AND "
                         + RawContacts.ACCOUNT_NAME + "=?";
     }
+    */
 
     /**
      * Constants for a query to get contact data for a given rawContactId
