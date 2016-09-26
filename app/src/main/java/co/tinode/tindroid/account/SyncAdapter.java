@@ -8,15 +8,23 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
 import co.tinode.tindroid.InmemoryCache;
 import co.tinode.tinodesdk.MeTopic;
@@ -90,6 +98,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             final Tinode tinode = InmemoryCache.getTinode();
 
             Log.i(TAG, "Starting sync for account " + account.name);
+
+            fetchEmailsAndPhones(ContactsContract.Data.CONTENT_URI);
+
+            fetchProfileMe();
+
             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
             String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
             String token = AccountManager.get(mContext)
@@ -109,8 +122,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
                 // Fetch the list of updated contacts
                 Collection<Subscription> updated = me.getUpdatedSubscriptions(sub.ims);
-                ContactsManager.updateContacts(mContext, account, updated, sub.ims);
-                setServerSyncMarker(account, new Date());
+                Date upd = ContactsManager.updateContacts(mContext, account, updated, sub.ims);
+                // FIXME(gene): use timestamp returned by the server
+                setServerSyncMarker(account, upd);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -132,6 +146,65 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     private void setServerSyncMarker(Account account, Date marker) {
         mAccountManager.setUserData(account, SYNC_MARKER_KEY, Long.toString(marker.getTime()));
+    }
+
+    private List<String> fetchEmailsAndPhones(Uri uri) {
+        List<String> list = new LinkedList<>();
+
+        String[] projection = {
+                ContactsContract.Data.MIMETYPE,
+                ContactsContract.CommonDataKinds.Email.DATA,
+                ContactsContract.CommonDataKinds.Email.TYPE
+        };
+        String selection = ContactsContract.Data.MIMETYPE + " in (?, ?)";
+        String[] selectionArgs = {
+                ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
+                ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE
+        };
+
+        // ok, let's work...
+        Cursor cursor = mContentResolver.query(uri, projection, selection, selectionArgs, null);
+        if (cursor == null) {
+            return list;
+        }
+
+        final int mimeTypeIdx = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE);
+        final int dataIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
+        final int typeIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.TYPE);
+        final PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+        final String country = Locale.getDefault().getCountry();
+
+        while (cursor.moveToNext()) {
+            int type = cursor.getInt(typeIdx);
+            String data = cursor.getString(dataIdx);
+            String mimeType = cursor.getString(mimeTypeIdx);
+            if (mimeType.equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
+                // This is an email
+                list.add(Utils.TAG_LABEL_EMAIL + data);
+            } else {
+                // This is a phone number.
+
+                // Use mobile phones only.
+                if (type == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
+                    try {
+                        // Normalize phone number format
+                        data = phoneUtil.format(phoneUtil.parse(data, country),
+                                PhoneNumberUtil.PhoneNumberFormat.E164);
+                        list.add(Utils.TAG_LABEL_PHONE + data);
+                    } catch (NumberParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        cursor.close();
+
+        return list;
+    }
+
+    private List<String> fetchProfileMe() {
+        return fetchEmailsAndPhones(Uri.withAppendedPath(ContactsContract.Profile.CONTENT_URI,
+                ContactsContract.Contacts.Data.CONTENT_DIRECTORY));
     }
 }
 

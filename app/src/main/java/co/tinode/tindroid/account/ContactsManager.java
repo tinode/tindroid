@@ -7,7 +7,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
@@ -392,22 +391,6 @@ public class ContactsManager {
             batchOperation.add(ContactOperations.newInsertCpo(StatusUpdates.CONTENT_URI,
                     false, true).withValues(values).build());
         }
-    }
-
-    /**
-     * Clear the local system 'dirty' flag for a contact.
-     *
-     * @param context        the Authenticator Activity context
-     * @param rawContactId   the id of the contact update
-     * @param batchOperation allow us to batch together multiple operations
-     */
-    private static void clearDirtyFlag(Context context, long rawContactId,
-                                       BatchOperation batchOperation) {
-        final ContactOperations contactOp =
-                ContactOperations.updateExistingContact(context, rawContactId, true,
-                        batchOperation);
-        final Uri uri = ContentUris.withAppendedId(RawContacts.CONTENT_URI, rawContactId);
-        contactOp.updateDirtyFlag(false, uri);
     }
 
     /**

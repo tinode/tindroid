@@ -30,6 +30,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -255,8 +256,8 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
@@ -847,8 +848,8 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
         int QUERY_ID = 1;
 
         // A content URI for the Contacts table
-        // Uri CONTENT_URI = Contacts.CONTENT_URI;
-        Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
+        Uri CONTENT_URI = Contacts.CONTENT_URI;
+        // Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
 
         // The search/filter query Uri
         Uri FILTER_URI = Contacts.CONTENT_FILTER_URI;
@@ -858,8 +859,8 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
         // Notice that the search on the string provided by the user is implemented by appending
         // the search string to CONTENT_FILTER_URI.
         @SuppressLint("InlinedApi")
-        //String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
-        String SELECTION = ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE + "'";
+        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
+        // String SELECTION = ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE + "'";
 
         // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
         // sort key allows for localization. In earlier versions. use the display name as the sort
@@ -872,23 +873,23 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
         String[] PROJECTION = {
 
                 // The contact's row id
-                ContactsContract.Data._ID,
+                Contacts._ID,
 
                 // A pointer to the contact that is guaranteed to be more permanent than _ID. Given
                 // a contact's current _ID value and LOOKUP_KEY, the Contacts Provider can generate
                 // a "permanent" contact URI.
-                ContactsContract.Data.LOOKUP_KEY,
+                Contacts.LOOKUP_KEY,
 
                 // In platform version 3.0 and later, the Contacts table contains
                 // DISPLAY_NAME_PRIMARY, which either contains the contact's displayable name or
                 // some other useful identifier such as an email address.
-                ContactsContract.Data.DISPLAY_NAME_PRIMARY,
+                Contacts.DISPLAY_NAME_PRIMARY,
 
                 // In Android 3.0 and later, the thumbnail image is pointed to by
                 // PHOTO_THUMBNAIL_URI.
-                ContactsContract.Data.PHOTO_THUMBNAIL_URI,
+                Contacts.PHOTO_THUMBNAIL_URI,
 
-                ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
+                // ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
 
                 // The sort order column for the returned Cursor, used by the AlphabetIndexer
                 SORT_ORDER,
@@ -899,8 +900,8 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
         int LOOKUP_KEY = 1;
         int DISPLAY_NAME = 2;
         int PHOTO_THUMBNAIL_DATA = 3;
-        int PHONE_NUMBER = 4;
-        int SORT_KEY = 5;
+        // int PHONE_NUMBER = 4;
+        int SORT_KEY = 4;
     }
 }
 

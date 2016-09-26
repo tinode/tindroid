@@ -19,6 +19,8 @@ public class Utils {
     public static final String PREFS_ACCOUNT_NAME = "pref_accountName";
     public static final String PREFS_HOST_NAME = "pref_hostName";
 
+    public static final String TAG_LABEL_PHONE = "tel:";
+    public static final String TAG_LABEL_EMAIL = "email:";
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */
