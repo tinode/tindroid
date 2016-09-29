@@ -43,6 +43,7 @@ import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -56,11 +57,16 @@ import android.widget.AlphabetIndexer;
 import android.widget.SearchView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Map;
+
+import co.tinode.tindroid.account.PhoneEmailImLoader;
+import co.tinode.tindroid.account.Utils;
 
 /**
  * This fragment displays a list of contacts stored in the Contacts Provider. Each item in the list
@@ -80,7 +86,7 @@ import java.util.Locale;
  * trigger starts a new Activity which loads a fresh instance of this fragment. The resulting UI
  * displays the filtered list and disables the search feature to prevent furthering searching.
  */
-public class ContactsFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ContactsFragment extends ListFragment {
 
     // Defines a tag for identifying log entries
     private static final String TAG = "ContactsFragment";
@@ -98,6 +104,12 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
     // Contact selected listener that allows the activity holding this fragment to be notified of
     // a contact being selected
     private OnContactsInteractionListener mOnContactSelectedListener;
+
+    // Callback which receives notifications of contacts loding status;
+    private ContactsLoaderCallback mContactsLoaderCallback;
+    // Callback for handling notifications of Phone, Email, IM contact loading;
+    private PhEmImLoaderCallback mPhEmImLoaderCallback;
+    private SparseArray<Utils.ContactHolder> mPhEmImData;
 
     // Stores the previously selected search item so that on a configuration change the same item
     // can be reselected again
@@ -133,6 +145,9 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
             mPreviouslySelectedSearchItem =
                     savedInstanceState.getInt(STATE_PREVIOUSLY_SELECTED_KEY, 0);
         }
+
+        mContactsLoaderCallback = new ContactsLoaderCallback();
+        mPhEmImLoaderCallback = new PhEmImLoaderCallback();
 
         /*
          * An ImageLoader object loads and resizes an image in the background and binds it to the
@@ -178,30 +193,41 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(TAG, "Item clicked position=" + position + "; id=" + id);
 
-                // Send an SMS with an invitation
-                Uri uri = Uri.parse("smsto:" + "3215551235");
-                Intent it = new Intent(Intent.ACTION_SENDTO, uri);
-                it.putExtra("sms_body", getString(R.string.sms_invite_body));
-                startActivity(it);
+                final ContactsAdapter.ViewHolder tag = (ContactsAdapter.ViewHolder) view.getTag();
+                boolean done = false;
+                if (mPhEmImData != null) {
+                    Utils.ContactHolder holder = mPhEmImData.get(tag.contact_id);
+                    if (holder != null) {
+                        String address = holder.getIm();
+                        if (address != null) {
+                            Intent it = new Intent(getActivity(), MessageActivity.class);
+                            it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            it.putExtra("topic", address);
+                            startActivity(it);
+                            done = true;
+                        }
 
-                /*
-                // Gets the Cursor object currently bound to the ListView
-                final Cursor cursor = mAdapter.getCursor();
-
-                // Moves to the Cursor row corresponding to the ListView item that was clicked
-                cursor.moveToPosition(position);
-
-                // Creates a contact lookup Uri from contact ID and lookup_key
-                final Uri uri = Contacts.getLookupUri(
-                        cursor.getLong(ContactsQuery.ID),
-                        cursor.getString(ContactsQuery.LOOKUP_KEY));
-
-                // Notifies the parent activity that the user selected a contact. In a two-pane layout, the
-                // parent activity loads a ContactDetailFragment that displays the details for the selected
-                // contact. In a single-pane layout, the parent activity starts a new activity that
-                // displays contact details in its own Fragment.
-                mOnContactSelectedListener.onContactSelected(uri);
-                */
+                        if (!done && ((address = holder.getPhone()) != null)) {
+                            // Send an SMS with an invitation
+                            Uri uri = Uri.fromParts("smsto", address, null);
+                            Intent it = new Intent(Intent.ACTION_SENDTO, uri);
+                            it.putExtra("sms_body", getString(R.string.tinode_invite_body));
+                            startActivity(it);
+                            done = true;
+                        }
+                        if (!done && ((address = holder.getEmail()) != null)) {
+                            Uri uri = Uri.fromParts("mailto", address, null);
+                            Intent it = new Intent(Intent.ACTION_SENDTO, uri);
+                            it.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.tinode_invite_subject));
+                            it.putExtra(Intent.EXTRA_TEXT, getString(R.string.tinode_invite_body));
+                            startActivity(it);
+                            done = true;
+                        }
+                    }
+                }
+                if (!done) {
+                    Toast.makeText(getContext(), R.string.failed_to_invite, Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -239,6 +265,10 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
         } else {
+            final LoaderManager lm = getLoaderManager();
+
+            lm.initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+
             // Create the main contacts adapter
             mAdapter = new ContactsAdapter(getActivity());
             setListAdapter(mAdapter);
@@ -249,7 +279,7 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
             // the action bar search view (see onQueryTextChange() in onCreateOptionsMenu()).
             if (mPreviouslySelectedSearchItem == 0) {
                 //Initialize the loader, and create a loader identified by ContactsQuery.QUERY_ID
-                getLoaderManager().initLoader(ContactsQuery.QUERY_ID, null, this);
+                lm.initLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
             }
 
         }
@@ -359,8 +389,7 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
 
                 // Restarts the loader. This triggers onCreateLoader(), which builds the
                 // necessary content Uri from mSearchTerm.
-                getLoaderManager().restartLoader(
-                        ContactsQuery.QUERY_ID, null, ContactsFragment.this);
+                getLoaderManager().restartLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
                 return true;
             }
         });
@@ -382,7 +411,7 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
                     onSelectionCleared();
                 }
                 mSearchTerm = null;
-                getLoaderManager().restartLoader(ContactsQuery.QUERY_ID, null, ContactsFragment.this);
+                getLoaderManager().restartLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
                 return true;
             }
         });
@@ -430,88 +459,6 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
-        // If this is the loader for finding contacts in the Contacts Provider
-        // (the only one supported)
-        if (id == ContactsQuery.QUERY_ID) {
-            Uri contentUri;
-
-            // There are two types of searches, one which displays all contacts and
-            // one which filters contacts by a search query. If mSearchTerm is set
-            // then a search query has been entered and the latter should be used.
-
-            if (mSearchTerm == null) {
-                // Since there's no search string, use the content URI that searches the entire
-                // Contacts table
-                contentUri = ContactsQuery.CONTENT_URI;
-            } else {
-                // Since there's a search string, use the special content Uri that searches the
-                // Contacts table. The URI consists of a base Uri and the search string.
-                contentUri = Uri.withAppendedPath(ContactsQuery.FILTER_URI, Uri.encode(mSearchTerm));
-            }
-
-            // Returns a new CursorLoader for querying the Contacts table. No arguments are used
-            // for the selection clause. The search string is either encoded onto the content URI,
-            // or no contacts search string is used. The other search criteria are constants. See
-            // the ContactsQuery interface.
-            return new CursorLoader(getActivity(),
-                    contentUri,
-                    ContactsQuery.PROJECTION,
-                    ContactsQuery.SELECTION,
-                    null,
-                    ContactsQuery.SORT_ORDER);
-        }
-
-        Log.e(TAG, "onCreateLoader - incorrect ID provided (" + id + ")");
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        // This swaps the new cursor into the adapter.
-        if (loader.getId() == ContactsQuery.QUERY_ID) {
-            mAdapter.swapCursor(data);
-
-            /*
-            // If this is a two-pane layout and there is a search query then
-            // there is some additional work to do around default selected
-            // search item.
-            if (mIsTwoPaneLayout && !TextUtils.isEmpty(mSearchTerm) && mSearchQueryChanged) {
-                // Selects the first item in results, unless this fragment has
-                // been restored from a saved state (like orientation change)
-                // in which case it selects the previously selected search item.
-                if (data != null && data.moveToPosition(mPreviouslySelectedSearchItem)) {
-                    // Creates the content Uri for the previously selected contact by appending the
-                    // contact's ID to the Contacts table content Uri
-                    final Uri uri = Uri.withAppendedPath(
-                            Contacts.CONTENT_URI, String.valueOf(data.getLong(ContactsQuery.ID)));
-                    mOnContactSelectedListener.onContactSelected(uri);
-                    getListView().setItemChecked(mPreviouslySelectedSearchItem, true);
-                } else {
-                    // No results, clear selection.
-                    onSelectionCleared();
-                }
-                // Only restore from saved state one time. Next time fall back
-                // to selecting first item. If the fragment state is saved again
-                // then the currently selected item will once again be saved.
-                mPreviouslySelectedSearchItem = 0;
-                mSearchQueryChanged = false;
-            }
-            */
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        if (loader.getId() == ContactsQuery.QUERY_ID) {
-            // When the loader is being reset, clear the cursor from the adapter. This allows the
-            // cursor resources to be freed.
-            mAdapter.swapCursor(null);
-        }
     }
 
     /**
@@ -678,6 +625,7 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
             holder.text1 = (TextView) itemLayout.findViewById(android.R.id.text1);
             holder.text2 = (TextView) itemLayout.findViewById(android.R.id.text2);
             holder.icon = (AppCompatImageView) itemLayout.findViewById(android.R.id.icon);
+            holder.inviteButton = itemLayout.findViewById(R.id.buttonInvite);
 
             // Stores the resourceHolder instance in itemLayout. This makes resourceHolder
             // available to bindView and other methods that receive a handle to the item view.
@@ -695,6 +643,9 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
             // Gets handles to individual view resources
             final ViewHolder holder = (ViewHolder) view.getTag();
 
+            // ID of the contact
+            holder.contact_id =  cursor.getInt(ContactsQuery.ID);
+
             // Get the thumbnail image Uri from the current Cursor row.
             final String photoUri = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
 
@@ -702,14 +653,30 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
 
             final int startIndex = indexOfSearchQuery(displayName);
 
+            Utils.ContactHolder extra = mPhEmImData != null ? mPhEmImData.get(holder.contact_id) : null;
+            if (extra != null && extra.getImCount() > 0) {
+                holder.inviteButton.setVisibility(View.GONE);
+            } else {
+                holder.inviteButton.setVisibility(View.VISIBLE);
+            }
+
             if (startIndex == -1) {
                 // If the user didn't do a search, or the search string didn't match a display
                 // name, show the display name without highlighting
                 holder.text1.setText(displayName);
 
                 if (TextUtils.isEmpty(mSearchTerm)) {
-                    // If the search search is empty, hide the second line of text
-                    holder.text2.setVisibility(View.GONE);
+                    String line2 = null;
+                    if (extra != null) {
+                        line2 = extra.toString();
+                    }
+                    if (TextUtils.isEmpty(line2)) {
+                        // If the search search is empty, hide the second line of text
+                        holder.text2.setVisibility(View.GONE);
+                    } else {
+                        holder.text2.setText(line2);
+                        holder.text2.setVisibility(View.VISIBLE);
+                    }
                 } else {
                     // Shows a second line of text that indicates the search string matched
                     // something other than the display name
@@ -733,20 +700,6 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
                 // Since the search string matched the name, this hides the secondary message
                 holder.text2.setVisibility(View.GONE);
             }
-
-            // Processes the QuickContactBadge. A QuickContactBadge first appears as a contact's
-            // thumbnail image with styling that indicates it can be touched for additional
-            // information. When the user clicks the image, the badge expands into a dialog box
-            // containing the contact's details and icons for the built-in apps that can handle
-            // each detail type.
-
-            // Generates the contact lookup Uri
-            final Uri contactUri = Contacts.getLookupUri(
-                    cursor.getLong(ContactsQuery.ID),
-                    cursor.getString(ContactsQuery.LOOKUP_KEY));
-
-            // Binds the contact's lookup Uri to the QuickContactBadge
-            // holder.icon.assignContactUri(contactUri);
 
             // Loads the thumbnail image pointed to by photoUri into the QuickContactBadge in a
             // background worker thread
@@ -812,9 +765,11 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
          * calling findViewById in each iteration of bindView.
          */
         private class ViewHolder {
+            int contact_id;
             TextView text1;
             TextView text2;
             AppCompatImageView icon;
+            View inviteButton;
         }
     }
 
@@ -844,8 +799,10 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
      */
     public interface ContactsQuery {
 
-        // An identifier for the loader
-        int QUERY_ID = 1;
+        // An identifier for the base loader -- just contact names
+        int CORE_QUERY_ID = 1;
+        // ID of the loader for fetching emails, phones, and Tinode IM handles
+        int PHEMIM_QUERY_ID = 2;
 
         // A content URI for the Contacts table
         Uri CONTENT_URI = Contacts.CONTENT_URI;
@@ -889,8 +846,6 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
                 // PHOTO_THUMBNAIL_URI.
                 Contacts.PHOTO_THUMBNAIL_URI,
 
-                // ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
-
                 // The sort order column for the returned Cursor, used by the AlphabetIndexer
                 SORT_ORDER,
         };
@@ -900,8 +855,110 @@ public class ContactsFragment extends ListFragment implements LoaderManager.Load
         int LOOKUP_KEY = 1;
         int DISPLAY_NAME = 2;
         int PHOTO_THUMBNAIL_DATA = 3;
-        // int PHONE_NUMBER = 4;
         int SORT_KEY = 4;
+    }
+
+    class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+            // If this is the loader for finding contacts in the Contacts Provider
+            if (id == ContactsQuery.CORE_QUERY_ID) {
+                Uri contentUri;
+
+                // There are two types of searches, one which displays all contacts and
+                // one which filters contacts by a search query. If mSearchTerm is set
+                // then a search query has been entered and the latter should be used.
+
+                if (mSearchTerm == null) {
+                    // Since there's no search string, use the content URI that searches the entire
+                    // Contacts table
+                    contentUri = ContactsQuery.CONTENT_URI;
+                } else {
+                    // Since there's a search string, use the special content Uri that searches the
+                    // Contacts table. The URI consists of a base Uri and the search string.
+                    contentUri = Uri.withAppendedPath(ContactsQuery.FILTER_URI, Uri.encode(mSearchTerm));
+                }
+
+                // Returns a new CursorLoader for querying the Contacts table. No arguments are used
+                // for the selection clause. The search string is either encoded onto the content URI,
+                // or no contacts search string is used. The other search criteria are constants. See
+                // the ContactsQuery interface.
+                return new CursorLoader(getActivity(),
+                        contentUri,
+                        ContactsQuery.PROJECTION,
+                        ContactsQuery.SELECTION,
+                        null,
+                        ContactsQuery.SORT_ORDER);
+            }
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+            // This swaps the new cursor into the adapter.
+            if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
+                mAdapter.swapCursor(data);
+
+            /*
+            // If this is a two-pane layout and there is a search query then
+            // there is some additional work to do around default selected
+            // search item.
+            if (mIsTwoPaneLayout && !TextUtils.isEmpty(mSearchTerm) && mSearchQueryChanged) {
+                // Selects the first item in results, unless this fragment has
+                // been restored from a saved state (like orientation change)
+                // in which case it selects the previously selected search item.
+                if (data != null && data.moveToPosition(mPreviouslySelectedSearchItem)) {
+                    // Creates the content Uri for the previously selected contact by appending the
+                    // contact's ID to the Contacts table content Uri
+                    final Uri uri = Uri.withAppendedPath(
+                            Contacts.CONTENT_URI, String.valueOf(data.getLong(ContactsQuery.ID)));
+                    mOnContactSelectedListener.onContactSelected(uri);
+                    getListView().setItemChecked(mPreviouslySelectedSearchItem, true);
+                } else {
+                    // No results, clear selection.
+                    onSelectionCleared();
+                }
+                // Only restore from saved state one time. Next time fall back
+                // to selecting first item. If the fragment state is saved again
+                // then the currently selected item will once again be saved.
+                mPreviouslySelectedSearchItem = 0;
+                mSearchQueryChanged = false;
+            }
+            */
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
+                // When the loader is being reset, clear the cursor from the adapter. This allows the
+                // cursor resources to be freed.
+                mAdapter.swapCursor(null);
+            }
+        }
+    }
+
+    class PhEmImLoaderCallback implements LoaderManager.LoaderCallbacks<SparseArray<Utils.ContactHolder>> {
+
+        @Override
+        public Loader<SparseArray<Utils.ContactHolder>> onCreateLoader(int id, Bundle args) {
+            if (id == ContactsQuery.PHEMIM_QUERY_ID) {
+                return new PhoneEmailImLoader(getContext());
+            }
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished(Loader<SparseArray<Utils.ContactHolder>> loader,
+                                   SparseArray<Utils.ContactHolder> data) {
+            mPhEmImData = data;
+        }
+
+        @Override
+        public void onLoaderReset(Loader<SparseArray<Utils.ContactHolder>> loader) {
+            mPhEmImData = null;
+        }
     }
 }
 

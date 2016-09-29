@@ -2,12 +2,15 @@ package co.tinode.tindroid;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -21,6 +24,7 @@ import android.widget.TextView;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -74,10 +78,36 @@ public class MessageActivity extends AppCompatActivity {
         super.onResume();
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        String oldTopicName = mTopicName;
-        mTopicName = getIntent().getStringExtra("topic");
+        final Intent intent = getIntent();
 
-        ((TextView) findViewById(R.id.editMessage)).setText("");
+        // Check if the activity was launched by internally-generated intent
+        String oldTopicName = mTopicName;
+        mTopicName = intent.getStringExtra("topic");
+
+        if (TextUtils.isEmpty(mTopicName)) {
+            // mTopicName is empty, so this is an external intent
+            Uri contactUri = intent.getData();
+            //String contactMimeType = intent.getType();
+
+            Cursor cursor = getContentResolver().query(contactUri,
+                    new String[] {Utils.DATA_EXTRA}, null, null, null);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    mTopicName = cursor.getString(cursor.getColumnIndex(Utils.DATA_EXTRA));
+                }
+                cursor.close();
+            }
+        }
+
+        if (TextUtils.isEmpty(mTopicName)) {
+            // Topic cannot be found, stop the activity;
+            finish();
+            return;
+        }
+
+        String messageToSend = intent.getStringExtra(Intent.EXTRA_TEXT);
+        ((TextView) findViewById(R.id.editMessage)).setText(messageToSend == null ? "" : messageToSend);
+
 
         mTopic = getTinode().getTopic(mTopicName);
 
@@ -95,7 +125,7 @@ public class MessageActivity extends AppCompatActivity {
 
         if (mTopic != null) {
             setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
-            if (!mTopicName.equals(oldTopicName)) {
+            if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
                 mMessagesAdapter.notifyDataSetChanged();
             }
         } else {

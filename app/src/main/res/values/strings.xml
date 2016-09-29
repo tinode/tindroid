@@ -60,8 +60,11 @@
     <string name="tinode">Tinode</string>
     <string name="account_already_exists">Account already exists</string>
     <string name="pick_account">Pick Account</string>
-    <string name="sms_invite_body">Check out Tindroid Messenger. Download it from https://github.com/tinode/</string>
+    <string name="tinode_invite_subject">Check out Tindroid Messenger</string>
+    <string name="tinode_invite_body">Check out Tindroid Messenger. Download it from https://github.com/tinode/</string>
 
     <string name="profile_action">Tinode profile</string>
     <string name="view_profile">View Profile</string>
+    <string name="tinode_message">Send Tinode message</string>
+    <string name="failed_to_invite">Don\'t know how to invite - no contact info</string>
 </resources>

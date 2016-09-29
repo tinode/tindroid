@@ -50,7 +50,9 @@ public class VCard {
     public Name n;
     public String org;
     public String title;
+    // List of phone numbers associated with the contact
     public Contact[] tel;
+    // List of contact's email addresses
     public Contact[] email;
     public Contact[] impp;
 
@@ -125,6 +127,4 @@ public class VCard {
             this.uri = uri;
         }
     }
-
-
 }

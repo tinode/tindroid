@@ -37,7 +37,7 @@ import java.util.function.BiConsumer;
 public class Topic<Pu,Pr,T> {
     private static final String TAG = "tinodesdk.Topic";
 
-    public enum TopicType {ME, FND, GRP, P2P, UNKNOWN}
+    public enum TopicType {ME, FND, GRP, P2P, UNKNOWN, ANY}
 
     protected enum NoteType {READ, RECV}
 
@@ -404,14 +404,27 @@ public class Topic<Pu,Pr,T> {
      * @return updated subscriptions
      */
     public Collection<Subscription<Pu,Pr>> getUpdatedSubscriptions(Date marker) {
-        if (marker == null) {
+        return getFilteredSubscriptions(marker, TopicType.ANY);
+    }
+
+    /**
+     * Extract subscriptions with the update timestamp after the marker
+     *
+     * @param marker timestamp of the last update
+     * @param type type of the topic to filter for
+     * @return updated subscriptions
+     */
+    public Collection<Subscription<Pu,Pr>> getFilteredSubscriptions(Date marker, TopicType type) {
+        if (marker == null && type == TopicType.ANY) {
             return getSubscriptions();
         }
 
         ArrayList<Subscription<Pu,Pr>> result = new ArrayList<>();
         for (Subscription<Pu,Pr> sub: mSubs.values()) {
-            if (sub.updated != null && marker.before(sub.updated)) {
-                result.add(sub);
+            if (type == TopicType.ANY || getTopicTypeByName(sub.topic) == type) {
+                if ((marker == null) || (sub.updated != null && marker.before(sub.updated))) {
+                    result.add(sub);
+                }
             }
         }
         return result;
@@ -472,9 +485,9 @@ public class Topic<Pu,Pr,T> {
     public static TopicType getTopicTypeByName(String name) {
         TopicType tp = TopicType.UNKNOWN;
         if (name != null) {
-            if (name.startsWith("me")) {
+            if (name.equals("me")) {
                 tp = TopicType.ME;
-            } else if (name.startsWith("fnd")) {
+            } else if (name.equals("fnd")) {
                 tp = TopicType.FND;
             } else if (name.startsWith("grp")) {
                 tp = TopicType.GRP;

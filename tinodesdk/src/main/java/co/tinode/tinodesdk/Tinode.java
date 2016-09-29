@@ -190,7 +190,7 @@ public class Tinode {
         if (!mConnection.isConnected()) {
             mConnection.connect(true);
         } else {
-            connected.resolve((ServerMessage) null);
+            connected.resolve(null);
         }
 
         return connected;

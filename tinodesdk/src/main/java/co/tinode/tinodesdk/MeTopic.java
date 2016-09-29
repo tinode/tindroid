@@ -45,17 +45,18 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
             if (cached != null) {
                 cached.merge(sub);
             } else {
-                mSubs.put(sub.topic, sub);
+                cached = sub;
+                mSubs.put(cached.topic, cached);
             }
 
             // TODO(gene): Save the object to global cache.
 
-            if (sub.with != null && !sub.with.equals("")) {
-                mP2PMap.put(sub.with, sub.topic);
+            if (cached.with != null && !cached.with.equals("")) {
+                mP2PMap.put(cached.with, cached.topic);
             }
 
             if (mListener != null) {
-                mListener.onMetaSub(sub);
+                mListener.onMetaSub(cached);
             }
         }
 

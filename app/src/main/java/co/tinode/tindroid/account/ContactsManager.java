@@ -137,10 +137,11 @@ public class ContactsManager {
                 .addPhone(vc.getPhoneByType(VCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.HOME), Phone.TYPE_HOME)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.WORK), Phone.TYPE_WORK)
+                .addIm(rawContact.getUniqueId())
                 .addAvatar(vc.photo != null ? vc.photo.data : null);
 
         // Actually create our status profile.
-        contactOp.addProfileAction(rawContact.getUniqueId());
+        contactOp.addProfileAction(rawContact.getUniqueId(), rawContact.topic);
     }
 
     /**
@@ -174,11 +175,9 @@ public class ContactsManager {
         boolean existingWorkPhone = false;
         boolean existingEmail = false;
         boolean existingAvatar = false;
-        final Cursor c =
-                resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
+        final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                         new String[]{String.valueOf(rawContactId)}, null);
-        final ContactOperations contactOp =
-                ContactOperations.updateExistingContact(context, rawContactId,
+        final ContactOperations contactOp = ContactOperations.updateExistingContact(context, rawContactId,
                         inSync, batchOperation);
         if (c == null) {
             return;
@@ -194,40 +193,46 @@ public class ContactsManager {
         try {
             // Iterate over the existing rows of data, and update each one
             // with the information we received from the server.
+            // IM is not updated because it cannot change.
             while (c.moveToNext()) {
                 final long id = c.getLong(DataQuery.COLUMN_ID);
                 final String mimeType = c.getString(DataQuery.COLUMN_MIMETYPE);
                 final Uri uri = ContentUris.withAppendedId(Data.CONTENT_URI, id);
-                if (mimeType.equals(StructuredName.CONTENT_ITEM_TYPE)) {
-                    contactOp.updateName(uri,
-                            c.getString(DataQuery.COLUMN_GIVEN_NAME),
-                            c.getString(DataQuery.COLUMN_FAMILY_NAME),
-                            c.getString(DataQuery.COLUMN_FULL_NAME),
-                            vc.n != null ? vc.n.given : null,
-                            vc.n != null ? vc.n.surname : null,
-                            vc.fn);
-                } else if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
-                    final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
-                    if (type == Phone.TYPE_MOBILE) {
-                        existingCellPhone = true;
-                        contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                vc.getPhoneByType(VCard.TYPE_MOBILE), uri);
-                    } else if (type == Phone.TYPE_HOME) {
-                        existingHomePhone = true;
-                        contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                vc.getPhoneByType(VCard.TYPE_HOME), uri);
-                    } else if (type == Phone.TYPE_WORK) {
-                        existingWorkPhone = true;
-                        contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                vc.getPhoneByType(VCard.TYPE_BUSINESS), uri);
-                    }
-                } else if (mimeType.equals(Email.CONTENT_ITEM_TYPE)) {
-                    existingEmail = true;
-                    contactOp.updateEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null,
-                            c.getString(DataQuery.COLUMN_EMAIL_ADDRESS), uri);
-                } else if (mimeType.equals(Photo.CONTENT_ITEM_TYPE)) {
-                    existingAvatar = true;
-                    contactOp.updateAvatar(vc.photo != null ? vc.photo.data : null, uri);
+                switch (mimeType) {
+                    case StructuredName.CONTENT_ITEM_TYPE:
+                        contactOp.updateName(uri,
+                                c.getString(DataQuery.COLUMN_GIVEN_NAME),
+                                c.getString(DataQuery.COLUMN_FAMILY_NAME),
+                                c.getString(DataQuery.COLUMN_FULL_NAME),
+                                vc.n != null ? vc.n.given : null,
+                                vc.n != null ? vc.n.surname : null,
+                                vc.fn);
+                        break;
+                    case Phone.CONTENT_ITEM_TYPE:
+                        final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
+                        if (type == Phone.TYPE_MOBILE) {
+                            existingCellPhone = true;
+                            contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
+                                    vc.getPhoneByType(VCard.TYPE_MOBILE), uri);
+                        } else if (type == Phone.TYPE_HOME) {
+                            existingHomePhone = true;
+                            contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
+                                    vc.getPhoneByType(VCard.TYPE_HOME), uri);
+                        } else if (type == Phone.TYPE_WORK) {
+                            existingWorkPhone = true;
+                            contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
+                                    vc.getPhoneByType(VCard.TYPE_BUSINESS), uri);
+                        }
+                        break;
+                    case Email.CONTENT_ITEM_TYPE:
+                        existingEmail = true;
+                        contactOp.updateEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null,
+                                c.getString(DataQuery.COLUMN_EMAIL_ADDRESS), uri);
+                        break;
+                    case Photo.CONTENT_ITEM_TYPE:
+                        existingAvatar = true;
+                        contactOp.updateAvatar(vc.photo != null ? vc.photo.data : null, uri);
+                        break;
                 }
             } // while
         } finally {
@@ -260,7 +265,7 @@ public class ContactsManager {
         final String serverId = rawContact.getUniqueId();
         final long profileId = lookupProfile(resolver, serverId);
         if (profileId <= 0) {
-            contactOp.addProfileAction(serverId);
+            contactOp.addProfileAction(serverId, rawContact.topic);
         }
     }
 
@@ -535,37 +540,6 @@ public class ContactsManager {
                 RawContacts.ACCOUNT_TYPE + "='" + Utils.ACCOUNT_TYPE + "' AND "
                         + RawContacts.SOURCE_ID + "=?";
     }
-
-    /**
-     * Constants for a query to find SampleSyncAdapter contacts that are
-     * in need of syncing to the server. This should cover new, edited,
-     * and deleted contacts.
-     *
-    final private static class DirtyQuery {
-        private DirtyQuery() {
-        }
-
-        public final static String[] PROJECTION = new String[]{
-                RawContacts._ID,
-                RawContacts.SOURCE_ID,
-                RawContacts.DIRTY,
-                RawContacts.DELETED,
-                RawContacts.VERSION
-        };
-        public final static int COLUMN_RAW_CONTACT_ID = 0;
-        public final static int COLUMN_SERVER_ID = 1;
-        public final static int COLUMN_DIRTY = 2;
-        public final static int COLUMN_DELETED = 3;
-        public final static int COLUMN_VERSION = 4;
-        public static final Uri CONTENT_URI = RawContacts.CONTENT_URI.buildUpon()
-                .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
-                .build();
-        public static final String SELECTION =
-                RawContacts.DIRTY + "=1 AND "
-                        + RawContacts.ACCOUNT_TYPE + "='" + Utils.ACCOUNT_TYPE + "' AND "
-                        + RawContacts.ACCOUNT_NAME + "=?";
-    }
-    */
 
     /**
      * Constants for a query to get contact data for a given rawContactId

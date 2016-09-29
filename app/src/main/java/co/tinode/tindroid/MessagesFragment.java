@@ -20,7 +20,7 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
- * Created by gene on 06/02/16.
+ * Fragment handling message display and message sending.
  */
 public class MessagesFragment extends Fragment {
 

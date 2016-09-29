@@ -3,10 +3,10 @@ package co.tinode.tindroid.account;
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
@@ -169,6 +169,25 @@ public class ContactOperations {
         return this;
     }
 
+    /**
+     * Adds a tinode im address
+     *
+     * @param tinode_id address we're adding
+     * @return instance of ContactOperations
+     */
+    public ContactOperations addIm(String tinode_id) {
+        mValues.clear();
+        if (!TextUtils.isEmpty(tinode_id)) {
+            mValues.put(Im.DATA, tinode_id);
+            mValues.put(Im.TYPE, Email.TYPE_OTHER);
+            mValues.put(Im.MIMETYPE, Im.CONTENT_ITEM_TYPE);
+            mValues.put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM);
+            mValues.put(Im.CUSTOM_PROTOCOL, "Tinode");
+            addInsertOp();
+        }
+        return this;
+    }
+
     public ContactOperations addAvatar(byte[] avatar) {
         if (avatar != null) {
             mValues.clear();
@@ -185,13 +204,14 @@ public class ContactOperations {
      * @param serverId the uid of the topic object
      * @return instance of ContactOperations
      */
-    public ContactOperations addProfileAction(String serverId) {
+    public ContactOperations addProfileAction(String serverId, String p2p_topic) {
         mValues.clear();
         if (!TextUtils.isEmpty(serverId)) {
+            mValues.put(Data.MIMETYPE, Utils.MIME_PROFILE);
             mValues.put(Utils.DATA_PID, serverId);
             mValues.put(Utils.DATA_SUMMARY, mContext.getString(R.string.profile_action));
-            mValues.put(Utils.DATA_DETAIL, mContext.getString(R.string.view_profile));
-            mValues.put(Data.MIMETYPE, Utils.MIME_PROFILE);
+            mValues.put(Utils.DATA_DETAIL, mContext.getString(R.string.tinode_message));
+            mValues.put(Utils.DATA_EXTRA, p2p_topic);
             addInsertOp();
         }
         return this;

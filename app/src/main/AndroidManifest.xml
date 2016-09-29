@@ -53,15 +53,21 @@
         <activity
             android:name=".MessageActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme"/>
+            android:theme="@style/AppTheme" >
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.item/vnd.tinode.profile" />
+            </intent-filter>
+        </activity>
 
         <service android:name=".account.TinodeAccountService"
             android:exported="false">
-            <!-- Required filter used by the system to launch our account service. -->
+            <!-- Required filter used by the system to launch the account service. -->
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
-            <!-- This points to an XMLf ile which describes our account service. -->
+            <!-- This points to an XMLf ile which describes the account service. -->
             <meta-data android:name="android.accounts.AccountAuthenticator"
                        android:resource="@xml/authenticator" />
         </service>
@@ -75,9 +81,11 @@
             <meta-data
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
+            <meta-data
+                android:name="android.provider.CONTACTS_STRUCTURE"
+                android:resource="@xml/contacts_source" />
         </service>
 
     </application>
 
-
-    </manifest>
+</manifest>

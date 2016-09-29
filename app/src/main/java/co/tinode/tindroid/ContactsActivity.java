@@ -134,7 +134,9 @@ public class ContactsActivity extends AppCompatActivity implements
 
                         @Override
                         public void onMetaSub(Subscription<VCard, String> sub) {
-                            sub.pub.constructBitmap();
+                            if (sub.pub != null) {
+                                sub.pub.constructBitmap();
+                            }
                             mContactIndex.add(sub.topic);
                         }
 
