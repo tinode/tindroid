@@ -57,6 +57,7 @@ public class MessagesFragment extends Fragment {
         });
     }
 
+    @SuppressWarnings("unchecked")
     void sendMessage() {
         Topic<?,?,String> topic = InmemoryCache.getTinode()
                 .getTopic(((MessageActivity)getActivity()).getTopicName());

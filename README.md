@@ -2,7 +2,7 @@
 
 Work in progress. What works:
 
-* Send and receive message
+* Send and receive messages
 * Presence notifications
 * Unread message counters
 * Indicators for messages received/read (little check marks in messages)

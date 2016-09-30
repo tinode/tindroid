@@ -50,7 +50,6 @@ public class ContactsManager {
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
-        Log.d(TAG, "In SyncContacts");
         for (final Subscription rawContact : rawContacts) {
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
@@ -69,7 +68,6 @@ public class ContactsManager {
                 }
             } else {
                 // Adding new contact
-                Log.d(TAG, "In addContact");
                 if (rawContact.deleted == null) {
                     addContact(context, account, rawContact, true, batchOperation);
                 }

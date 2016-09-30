@@ -189,7 +189,6 @@ public class ContactsFragment extends ListFragment {
         getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(TAG, "Item clicked position=" + position + "; id=" + id);
                 handleItemClick((ContactsAdapter.ViewHolder) view.getTag());
             }
         });
@@ -523,7 +522,6 @@ public class ContactsFragment extends ListFragment {
             // Gets a FileDescriptor from the AssetFileDescriptor. A BitmapFactory object can
             // decode the contents of a file pointed to by a FileDescriptor into a Bitmap.
             FileDescriptor fileDescriptor = afd.getFileDescriptor();
-
             if (fileDescriptor != null) {
                 // Decodes a Bitmap from the image pointed to by the FileDescriptor, and scales it
                 // to the specified width and height
@@ -543,7 +541,7 @@ public class ContactsFragment extends ListFragment {
             if (afd != null) {
                 try {
                     afd.close();
-                } catch (IOException e) {
+                } catch (IOException unused) {
                     // Closing a file descriptor might cause an IOException if the file is
                     // already closed. Nothing extra is needed to handle this.
                 }
@@ -706,8 +704,8 @@ public class ContactsFragment extends ListFragment {
                 holder.text2.setVisibility(View.GONE);
             }
 
-            // Loads the thumbnail image pointed to by photoUri into the QuickContactBadge in a
-            // background worker thread
+            // Clear the icon then load the thumbnail from photoUri in a background worker thread
+            holder.icon.setImageResource(R.drawable.ic_person_circle);
             mImageLoader.loadImage(photoUri, holder.icon);
         }
 

@@ -54,19 +54,8 @@ public class PhoneEmailImLoader extends AsyncTaskLoader<SparseArray<Utils.Contac
 
     @Override
     public SparseArray<Utils.ContactHolder> loadInBackground() {
-        SparseArray<Utils.ContactHolder> map = Utils.fetchEmailsAndPhones(getContext().getContentResolver(),
+        return Utils.fetchEmailsAndPhones(getContext().getContentResolver(),
                 ContactsContract.Data.CONTENT_URI);
-
-        if (map.size() == 0) {
-            Log.i(TAG, "No results :(");
-        } else {
-            for (int i = 0; i < map.size(); i++) {
-                int key = map.keyAt(i);
-                Utils.ContactHolder pair = map.get(key);
-                Log.i(TAG, "'" + key + "' -> '" + pair.toString() + "'");
-            }
-        }
-        return map;
     }
 
     @Override

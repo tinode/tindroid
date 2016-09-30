@@ -72,19 +72,9 @@ public class LoginActivity extends AppCompatActivity {
 
         PreferenceManager.setDefaultValues(this, R.xml.login_preferences, false);
 
-        /*
-        // Retreives the AccountAuthenticatorResponse from either the intent or the savedInstanceState
-        mAccountAuthenticatorResponse =
-                getIntent().getParcelableExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE);
-
-        if (mAccountAuthenticatorResponse != null) {
-            mAccountAuthenticatorResponse.onRequestContinued();
-        }
-        */
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        // Handle clicks on the '<-' arrow
+        // Handle clicks on the '<-' arrow in the toolbar.
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -102,11 +92,6 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Display the login form
-        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, new LoginFragment());
-        trx.commit();
-
         // See if we can get an auth token from a saved account
         mAccountManager = AccountManager.get(getBaseContext());
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -114,8 +99,11 @@ public class LoginActivity extends AppCompatActivity {
         Account account = fetchAccount(preferences);
 
         if (account != null) {
-            // Got account, let's use it to log in
+            // Got account, let's use it to log in (it may fail though).
             loginWithSavedAccount(account);
+        } else {
+            // Display the login form.
+            showLoginForm();
         }
     }
 
@@ -202,12 +190,6 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 }
 
-                LoginActivity.this.runOnUiThread(new Runnable() {
-                    public void run() {
-                        //signIn.setEnabled(true);
-                    }
-                });
-
                 final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
                 Log.d(TAG, "Received authentication token " + token);
                 if (TextUtils.isEmpty(token)) {
@@ -228,6 +210,7 @@ public class LoginActivity extends AppCompatActivity {
                     Log.d(TAG, "Failed to login with token");
                     mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                     reportError(err, signIn, R.string.error_login_failed);
+                    showLoginForm();
                 }
             }
         }, null);
@@ -344,7 +327,7 @@ public class LoginActivity extends AppCompatActivity {
     private void reportError(Exception err, final Button button, final int errId) {
         final String message = err.getMessage();
         Log.i(TAG, "connection failed :( " + message);
-        LoginActivity.this.runOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 if (button != null) {
                     button.setEnabled(true);
@@ -355,9 +338,10 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    /** Login successful. Show contacts activity */
     private void onLoginSuccess(final Button button) {
         if (button != null) {
-            LoginActivity.this.runOnUiThread(new Runnable() {
+            runOnUiThread(new Runnable() {
                 public void run() {
                     button.setEnabled(true);
                 }
@@ -366,6 +350,13 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(new Intent(getApplicationContext(),
                 ContactsActivity.class));
         finish();
+    }
+
+    /** Display the login form */
+    private void showLoginForm() {
+        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+        trx.replace(R.id.contentFragment, new LoginFragment());
+        trx.commit();
     }
 
     /**

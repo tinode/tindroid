@@ -41,7 +41,6 @@ import java.lang.ref.WeakReference;
  */
 public abstract class ImageLoader {
     private static final String TAG = "ImageLoader";
-    private static final int FADE_IN_TIME = 200;
     private static final float MEMORY_PERCENT = 0.1f;
 
     private Bitmap mLoadingBitmap;
@@ -204,6 +203,7 @@ public abstract class ImageLoader {
 
             data = params[0];
             final String dataString = String.valueOf(data);
+
             Bitmap bitmap = null;
 
             // Wait here if work is paused and the task is not cancelled
@@ -284,8 +284,7 @@ public abstract class ImageLoader {
 
         public AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
             super(res, bitmap);
-            bitmapWorkerTaskReference =
-                    new WeakReference<BitmapWorkerTask>(bitmapWorkerTask);
+            bitmapWorkerTaskReference = new WeakReference<>(bitmapWorkerTask);
         }
 
         public BitmapWorkerTask getBitmapWorkerTask() {
