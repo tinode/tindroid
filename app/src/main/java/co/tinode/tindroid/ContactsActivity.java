@@ -164,7 +164,6 @@ public class ContactsActivity extends AppCompatActivity implements
                     });
             // Public, Private, Info in Invite<Info>
             me.setTypes(VCard.class, String.class, String.class);
-            InmemoryCache.getTinode().registerTopic(me);
             try {
                 me.subscribe();
             } catch (Exception err) {

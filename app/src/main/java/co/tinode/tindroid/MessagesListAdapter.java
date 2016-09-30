@@ -63,7 +63,7 @@ public class MessagesListAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return mTopic.getCachedMsgCount();
+        return mTopic != null ? mTopic.getCachedMsgCount() : 0;
     }
 
     @Override

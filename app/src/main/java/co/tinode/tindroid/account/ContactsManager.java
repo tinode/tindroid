@@ -141,7 +141,7 @@ public class ContactsManager {
                 .addAvatar(vc.photo != null ? vc.photo.data : null);
 
         // Actually create our status profile.
-        contactOp.addProfileAction(rawContact.getUniqueId(), rawContact.topic);
+        contactOp.addProfileAction(rawContact.getUniqueId());
     }
 
     /**
@@ -265,7 +265,7 @@ public class ContactsManager {
         final String serverId = rawContact.getUniqueId();
         final long profileId = lookupProfile(resolver, serverId);
         if (profileId <= 0) {
-            contactOp.addProfileAction(serverId, rawContact.topic);
+            contactOp.addProfileAction(serverId);
         }
     }
 
@@ -470,41 +470,6 @@ public class ContactsManager {
         return profileId;
     }
 
-    final public static class EditorQuery {
-        private EditorQuery() {
-        }
-
-        public static final String[] PROJECTION = new String[]{
-                RawContacts.ACCOUNT_NAME,
-                Data._ID,
-                RawContacts.Entity.DATA_ID,
-                Data.MIMETYPE,
-                Data.DATA1,
-                Data.DATA2,
-                Data.DATA3,
-                Data.DATA15,
-                Data.SYNC1
-        };
-        public static final int COLUMN_ACCOUNT_NAME = 0;
-        public static final int COLUMN_RAW_CONTACT_ID = 1;
-        public static final int COLUMN_DATA_ID = 2;
-        public static final int COLUMN_MIMETYPE = 3;
-        public static final int COLUMN_DATA1 = 4;
-        public static final int COLUMN_DATA2 = 5;
-        public static final int COLUMN_DATA3 = 6;
-        public static final int COLUMN_DATA15 = 7;
-        public static final int COLUMN_SYNC1 = 8;
-        public static final int COLUMN_PHONE_NUMBER = COLUMN_DATA1;
-        public static final int COLUMN_PHONE_TYPE = COLUMN_DATA2;
-        public static final int COLUMN_EMAIL_ADDRESS = COLUMN_DATA1;
-        public static final int COLUMN_EMAIL_TYPE = COLUMN_DATA2;
-        public static final int COLUMN_FULL_NAME = COLUMN_DATA1;
-        public static final int COLUMN_GIVEN_NAME = COLUMN_DATA2;
-        public static final int COLUMN_FAMILY_NAME = COLUMN_DATA3;
-        public static final int COLUMN_AVATAR_IMAGE = COLUMN_DATA15;
-        public static final int COLUMN_SYNC_DIRTY = COLUMN_SYNC1;
-        public static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
-    }
 
     /**
      * Constants for a query to find a contact given a sample SyncAdapter user

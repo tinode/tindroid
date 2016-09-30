@@ -6,7 +6,9 @@ package co.tinode.tinodesdk;
 
 import android.util.Log;
 
+import co.tinode.tinodesdk.model.AccessMode;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -16,9 +18,9 @@ import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JavaType;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -26,8 +28,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-
 
 /**
  *
@@ -45,6 +45,16 @@ public class Topic<Pu,Pr,T> {
     protected JavaType mTypeOfMetaPacket = null;
 
     protected String mName;
+    /** the mName could be invalid: "new" or "usrXXX */
+    protected boolean isValidName = false;
+
+    // Server-provided values:
+    protected Date mCreated;
+    protected Date mUpdated;
+    protected AccessMode mMode;
+
+    // For P2P topics the UID of the other party, server-provided
+    protected String mWith;
 
     protected Description<Pu,Pr> mDescription;
 
@@ -69,11 +79,18 @@ public class Topic<Pu,Pr,T> {
             throw new IllegalArgumentException("Tinode cannot be null");
         }
         mTinode = tinode;
+
         mName = name;
+        isValidName = getTopicTypeByName(name) == TopicType.UNKNOWN ? false : true;
+
         mListener = l;
         mAttached = false;
         mSubs = new HashMap<>();
         mMessages = new ArrayList<>();
+
+        if (isValidName) {
+            mTinode.registerTopic(this);
+        }
     }
 
     /**
@@ -166,9 +183,11 @@ public class Topic<Pu,Pr,T> {
             return mTinode.subscribe(getName(), set, get).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage msg)
                                 throws Exception {
-                            subscribed();
+                            if (msg.ctrl != null && msg.ctrl.params != null) {
+                                subscribed(msg.ctrl.topic, (String)msg.ctrl.params.get("mode"));
+                            }
                             return null;
                         }
                     }, null);
@@ -504,15 +523,43 @@ public class Topic<Pu,Pr,T> {
 
     /**
      * Called when the topic receives subscription confirmation
+     * @param name server-provided topic name; could be different from the current name
      */
-    protected void subscribed() {
+    protected void subscribed(String name, String mode) {
         if (!mAttached) {
             mAttached = true;
+
+            mMode = new AccessMode(mode);
+
+            if (!isValidName) {
+                mName = name;
+                mTinode.registerTopic(this);
+            }
 
             if (mListener != null) {
                 mListener.onSubscribe(200, "subscribed");
             }
         }
+    }
+
+    /** Generate a Subscription object from the Topic object */
+    protected Subscription<Pu,Pr> toSubscription() {
+        Subscription<Pu,Pr> sub = new Subscription<>();
+        sub.topic = mName;
+        sub.updated = mUpdated;
+        sub.mode = mMode != null ? mMode.toString() : null;
+        sub.with = mWith;
+        if (mDescription != null) {
+            sub.read = mDescription.read;
+            sub.recv = mDescription.recv;
+            sub.clear = mDescription.clear;
+            sub.priv = mDescription.priv;
+
+            sub.seq = mDescription.seq;
+            sub.pub = mDescription.pub;
+        }
+
+        return sub;
     }
 
     /**

@@ -47,6 +47,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.SetDesc;
+import co.tinode.tinodesdk.model.Subscription;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -808,11 +809,37 @@ public class Tinode {
      * @return subscribed topic or null if no such topic was found
      */
     public Topic getTopic(String name) {
+        if (name == null) {
+            return null;
+        }
+        if (name.startsWith("usr")) {
+            // Someone passed userXX uid instead of a topic name.
+            // Resolve it to p2p topic name before fetching the topic.
+            MeTopic me = (MeTopic) mTopics.get(TOPIC_ME);
+            if (me != null) {
+                name = me.getP2PfromUid(name);
+            }
+        }
         return mTopics.get(name);
     }
 
-    public void registerTopic(Topic topic) {
+    /**
+     * Start tracking topic.
+     */
+    protected void registerTopic(Topic topic) {
         mTopics.put(topic.getName(), topic);
+
+        // Make sure we don't show service topics like me or fnd in the list of contacts
+        Topic.TopicType type = topic.getTopicType();
+        if (type != Topic.TopicType.GRP && type != Topic.TopicType.P2P) {
+            return;
+        }
+
+        // This ensures that the topic is shown in the list of contacts
+        MeTopic me = getMeTopic();
+        if (me != null) {
+            me.processMetaSubs(new Subscription[] {topic.toSubscription()});
+        }
     }
 
     /**

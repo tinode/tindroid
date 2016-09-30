@@ -28,7 +28,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ListFragment;
@@ -63,7 +62,6 @@ import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
-import java.util.Map;
 
 import co.tinode.tindroid.account.PhoneEmailImLoader;
 import co.tinode.tindroid.account.Utils;
@@ -192,42 +190,7 @@ public class ContactsFragment extends ListFragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(TAG, "Item clicked position=" + position + "; id=" + id);
-
-                final ContactsAdapter.ViewHolder tag = (ContactsAdapter.ViewHolder) view.getTag();
-                boolean done = false;
-                if (mPhEmImData != null) {
-                    Utils.ContactHolder holder = mPhEmImData.get(tag.contact_id);
-                    if (holder != null) {
-                        String address = holder.getIm();
-                        if (address != null) {
-                            Intent it = new Intent(getActivity(), MessageActivity.class);
-                            it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                            it.putExtra("topic", address);
-                            startActivity(it);
-                            done = true;
-                        }
-
-                        if (!done && ((address = holder.getPhone()) != null)) {
-                            // Send an SMS with an invitation
-                            Uri uri = Uri.fromParts("smsto", address, null);
-                            Intent it = new Intent(Intent.ACTION_SENDTO, uri);
-                            it.putExtra("sms_body", getString(R.string.tinode_invite_body));
-                            startActivity(it);
-                            done = true;
-                        }
-                        if (!done && ((address = holder.getEmail()) != null)) {
-                            Uri uri = Uri.fromParts("mailto", address, null);
-                            Intent it = new Intent(Intent.ACTION_SENDTO, uri);
-                            it.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.tinode_invite_subject));
-                            it.putExtra(Intent.EXTRA_TEXT, getString(R.string.tinode_invite_body));
-                            startActivity(it);
-                            done = true;
-                        }
-                    }
-                }
-                if (!done) {
-                    Toast.makeText(getContext(), R.string.failed_to_invite, Toast.LENGTH_SHORT).show();
-                }
+                handleItemClick((ContactsAdapter.ViewHolder) view.getTag());
             }
         });
 
@@ -253,6 +216,44 @@ public class ContactsFragment extends ListFragment {
         // the content shows in the second pane.
         //    getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         //}
+    }
+
+    private void handleItemClick(final ContactsAdapter.ViewHolder tag) {
+        boolean done = false;
+        if (mPhEmImData != null) {
+            Utils.ContactHolder holder = mPhEmImData.get(tag.contact_id);
+            if (holder != null) {
+                String address = holder.getIm();
+                if (address != null) {
+                    Intent it = new Intent(getActivity(), MessageActivity.class);
+                    it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    it.putExtra("topic", address);
+                    startActivity(it);
+                    done = true;
+                }
+
+                if (!done && ((address = holder.getPhone()) != null)) {
+                    // Send an SMS with an invitation
+                    Uri uri = Uri.fromParts("smsto", address, null);
+                    Intent it = new Intent(Intent.ACTION_SENDTO, uri);
+                    it.putExtra("sms_body", getString(R.string.tinode_invite_body));
+                    startActivity(it);
+                    done = true;
+                }
+                if (!done && ((address = holder.getEmail()) != null)) {
+                    Uri uri = Uri.fromParts("mailto", address, null);
+                    Intent it = new Intent(Intent.ACTION_SENDTO, uri);
+                    it.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.tinode_invite_subject));
+                    it.putExtra(Intent.EXTRA_TEXT, getString(R.string.tinode_invite_body));
+                    startActivity(it);
+                    done = true;
+                }
+            }
+        }
+
+        if (!done) {
+            Toast.makeText(getContext(), R.string.failed_to_invite, Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -626,7 +627,13 @@ public class ContactsFragment extends ListFragment {
             holder.text2 = (TextView) itemLayout.findViewById(android.R.id.text2);
             holder.icon = (AppCompatImageView) itemLayout.findViewById(android.R.id.icon);
             holder.inviteButton = itemLayout.findViewById(R.id.buttonInvite);
-
+            holder.inviteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    View item = ((View) v.getParent());
+                    handleItemClick((ViewHolder) item.getTag());
+                }
+            });
             // Stores the resourceHolder instance in itemLayout. This makes resourceHolder
             // available to bindView and other methods that receive a handle to the item view.
             itemLayout.setTag(holder);
@@ -666,10 +673,8 @@ public class ContactsFragment extends ListFragment {
                 holder.text1.setText(displayName);
 
                 if (TextUtils.isEmpty(mSearchTerm)) {
-                    String line2 = null;
-                    if (extra != null) {
-                        line2 = extra.toString();
-                    }
+                    String line2 = (extra != null) ? extra.bestContact() : null;
+
                     if (TextUtils.isEmpty(line2)) {
                         // If the search search is empty, hide the second line of text
                         holder.text2.setVisibility(View.GONE);

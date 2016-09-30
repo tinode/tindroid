@@ -71,6 +71,9 @@ public class MessageActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        ListView listViewMessages = (ListView) findViewById(R.id.messages_container);
+        listViewMessages.setAdapter(mMessagesAdapter);
     }
 
     @Override
@@ -90,24 +93,17 @@ public class MessageActivity extends AppCompatActivity {
             //String contactMimeType = intent.getType();
 
             Cursor cursor = getContentResolver().query(contactUri,
-                    new String[] {Utils.DATA_EXTRA}, null, null, null);
+                    new String[] {Utils.DATA_PID}, null, null, null);
             if (cursor != null) {
                 if (cursor.moveToFirst()) {
-                    mTopicName = cursor.getString(cursor.getColumnIndex(Utils.DATA_EXTRA));
+                    mTopicName = cursor.getString(cursor.getColumnIndex(Utils.DATA_PID));
                 }
                 cursor.close();
             }
         }
 
-        if (TextUtils.isEmpty(mTopicName)) {
-            // Topic cannot be found, stop the activity;
-            finish();
-            return;
-        }
-
         String messageToSend = intent.getStringExtra(Intent.EXTRA_TEXT);
         ((TextView) findViewById(R.id.editMessage)).setText(messageToSend == null ? "" : messageToSend);
-
 
         mTopic = getTinode().getTopic(mTopicName);
 
@@ -126,11 +122,18 @@ public class MessageActivity extends AppCompatActivity {
         if (mTopic != null) {
             setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
-                mMessagesAdapter.notifyDataSetChanged();
+                mMessagesAdapter.changeTopic(mTopicName);
             }
         } else {
             mTopic = new Topic<>(getTinode(), mTopicName,
                     new Topic.Listener<VCard,String,String>() {
+
+                        @Override
+                        public void onSubscribe(int code, String text) {
+                            // Topic name may change after subscription, i.e. new -> grpXXX
+                            mTopicName = mTopic.getName();
+                            mMessagesAdapter.changeTopic(mTopic.getName());
+                        }
 
                         @Override
                         public void onData(MsgServerData data) {
@@ -193,7 +196,6 @@ public class MessageActivity extends AppCompatActivity {
 
                         }
                     });
-            getTinode().registerTopic(mTopic);
         }
 
         if (!mTopic.isAttached()) {
@@ -203,10 +205,6 @@ public class MessageActivity extends AppCompatActivity {
                 Log.e(TAG, "something went wrong", ex);
             }
         }
-
-        ListView listViewMessages = (ListView) findViewById(R.id.messages_container);
-        mMessagesAdapter.changeTopic(mTopicName);
-        listViewMessages.setAdapter(mMessagesAdapter);
     }
 
     @Override

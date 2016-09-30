@@ -63,7 +63,10 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
         if (mListener != null) {
             mListener.onSubsUpdated();
         }
+    }
 
+    protected String getP2PfromUid(String uid) {
+        return mP2PMap.get(uid);
     }
 
     @Override

@@ -64,7 +64,7 @@ public class Subscription<Pu,Pr> {
         }
         online = sub.online;
 
-        if (topic == null && sub.topic != null && !sub.topic.equals("")) {
+        if ((topic == null || topic.equals("")) && sub.topic != null && !sub.topic.equals("")) {
             topic = sub.topic;
         }
         if (sub.seq > seq) {

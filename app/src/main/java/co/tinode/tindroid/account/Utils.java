@@ -43,7 +43,6 @@ public class Utils {
     public static final String DATA_PID = Data.DATA1;
     public static final String DATA_SUMMARY = Data.DATA2;
     public static final String DATA_DETAIL = Data.DATA3;
-    public static final String DATA_EXTRA = Data.DATA4;
 
 
     public static Account GetAccount(String accountName) {
@@ -193,6 +192,22 @@ public class Utils {
                     str.append(",");
                 }
             }
+        }
+
+        public String bestContact() {
+            if (ims != null && ims.size() > 0) {
+                return TAG_LABEL_TINODE + ims.get(0);
+            }
+
+            if (phones != null && phones.size() > 0) {
+                return TAG_LABEL_PHONE + phones.get(0);
+            }
+
+            if (emails != null && emails.size() > 0) {
+                return TAG_LABEL_EMAIL + emails.get(0);
+            }
+
+            return "";
         }
     }
 }

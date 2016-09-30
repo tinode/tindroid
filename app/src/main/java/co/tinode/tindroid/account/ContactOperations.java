@@ -204,14 +204,13 @@ public class ContactOperations {
      * @param serverId the uid of the topic object
      * @return instance of ContactOperations
      */
-    public ContactOperations addProfileAction(String serverId, String p2p_topic) {
+    public ContactOperations addProfileAction(String serverId) {
         mValues.clear();
         if (!TextUtils.isEmpty(serverId)) {
             mValues.put(Data.MIMETYPE, Utils.MIME_PROFILE);
             mValues.put(Utils.DATA_PID, serverId);
             mValues.put(Utils.DATA_SUMMARY, mContext.getString(R.string.profile_action));
             mValues.put(Utils.DATA_DETAIL, mContext.getString(R.string.tinode_message));
-            mValues.put(Utils.DATA_EXTRA, p2p_topic);
             addInsertOp();
         }
         return this;

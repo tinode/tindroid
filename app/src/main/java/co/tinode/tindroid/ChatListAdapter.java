@@ -65,7 +65,9 @@ public class ChatListAdapter extends BaseAdapter {
             convertView = inflater.inflate(R.layout.contact, null);
         }
 
-        ((TextView) convertView.findViewById(R.id.contactName)).setText(s.pub.fn);
+        if (s.pub != null) {
+            ((TextView) convertView.findViewById(R.id.contactName)).setText(s.pub.fn);
+        }
         ((TextView) convertView.findViewById(R.id.contactPriv)).setText(s.priv);
 
         int unread = s.seq - s.read;

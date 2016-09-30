@@ -8,25 +8,14 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import co.tinode.tindroid.InmemoryCache;
 import co.tinode.tinodesdk.MeTopic;
@@ -110,6 +99,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             tinode.loginToken(token).getResult();
 
             MsgGetMeta.GetSub sub = new MsgGetMeta.GetSub();
+            // FIXME(gene): The following is commented out for debugging
             // sub.ims = getServerSyncMarker(account);
             MsgGetMeta subGet = new MsgGetMeta(null, sub, null);
             MeTopic me = tinode.getMeTopic();
@@ -123,7 +113,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 // the address book)
                 Collection<Subscription> updated = me.getFilteredSubscriptions(sub.ims, Topic.TopicType.P2P);
                 Date upd = ContactsManager.updateContacts(mContext, account, updated, sub.ims);
-                // FIXME(gene): use timestamp returned by the server
                 setServerSyncMarker(account, upd);
             }
         } catch (IOException e) {
