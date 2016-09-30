@@ -28,6 +28,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ListFragment;
@@ -265,23 +266,12 @@ public class ContactsFragment extends ListFragment {
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
         } else {
-            final LoaderManager lm = getLoaderManager();
-
-            lm.initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+            getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
 
             // Create the main contacts adapter
             mAdapter = new ContactsAdapter(getActivity());
             setListAdapter(mAdapter);
-            mAdapter.notifyDataSetChanged();
-
-            // If there's a previously selected search item from a saved state then don't bother
-            // initializing the loader as it will be restarted later when the query is populated into
-            // the action bar search view (see onQueryTextChange() in onCreateOptionsMenu()).
-            if (mPreviouslySelectedSearchItem == 0) {
-                //Initialize the loader, and create a loader identified by ContactsQuery.QUERY_ID
-                lm.initLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
-            }
-
+            // mAdapter.notifyDataSetChanged();
         }
     }
 
@@ -351,9 +341,7 @@ public class ContactsFragment extends ListFragment {
 
         // Retrieves the SearchView from the search menu item
         final SearchView searchView = (SearchView) searchItem.getActionView();
-        searchView.setIconified(false);
-        searchView.setFocusable(true);
-        searchView.requestFocusFromTouch();
+        // searchView.setFocusable(true);
 
         // Assign searchable info to SearchView
         searchView.setSearchableInfo(
@@ -397,7 +385,7 @@ public class ContactsFragment extends ListFragment {
         MenuItemCompat.setOnActionExpandListener(searchItem, new MenuItemCompat.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionExpand(MenuItem menuItem) {
-                // Nothing to do when the action item is expanded
+                Log.d(TAG, "EXPAND onMenuItemActionCollapse");
                 searchView.setIconified(false);
                 searchView.requestFocusFromTouch();
                 return true;
@@ -405,6 +393,8 @@ public class ContactsFragment extends ListFragment {
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem menuItem) {
+                Log.d(TAG, "COLLAPSE onMenuItemActionCollapse");
+                searchView.clearFocus();
                 // When the user collapses the SearchView the current search string is
                 // cleared and the loader restarted.
                 if (!TextUtils.isEmpty(mSearchTerm)) {
@@ -820,7 +810,6 @@ public class ContactsFragment extends ListFragment {
         // the search string to CONTENT_FILTER_URI.
         @SuppressLint("InlinedApi")
         String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
-        // String SELECTION = ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE + "'";
 
         // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
         // sort key allows for localization. In earlier versions. use the display name as the sort
@@ -899,6 +888,7 @@ public class ContactsFragment extends ListFragment {
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 mAdapter.swapCursor(data);
@@ -956,6 +946,15 @@ public class ContactsFragment extends ListFragment {
         public void onLoadFinished(Loader<SparseArray<Utils.ContactHolder>> loader,
                                    SparseArray<Utils.ContactHolder> data) {
             mPhEmImData = data;
+
+            // If there's a previously selected search item from a saved state then don't bother
+            // initializing the loader as it will be restarted later when the query is populated into
+            // the action bar search view (see onQueryTextChange() in onCreateOptionsMenu()).
+            if (mPreviouslySelectedSearchItem == 0) {
+                //Initialize the loader, and create a loader identified by ContactsQuery.QUERY_ID
+                getLoaderManager().initLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
+            }
+
         }
 
         @Override
