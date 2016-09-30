@@ -2,21 +2,24 @@
 
 Work in progress. What works:
 
-* Register new account, login
-* Load the list of contacts
-* Sends and receives messages
-* Presence notifications work
-* Message counters work
+* Send and receive message
+* Presence notifications
+* Unread message counters
 * Indicators for messages received/read (little check marks in messages)
+* Register new account, login
+* Load the list of contacts and store it offline
+* Access contacts from the Android stock Contacts app
+* Invite contacts to the app by SMS or email
 
 Does not work yet:
 
-* Modifying an existing account
+* Editing an existing account
 * Contact discovery - can't find other people to chat with
 * Deleting/muting topics and messages
-* No offline mode
+* Messages are not stored offline
 * Can't start new conversations
 * No push notifications
+* Typing notifications
 
 Dependencies on the SDK side:
 

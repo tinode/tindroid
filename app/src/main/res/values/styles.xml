@@ -30,4 +30,7 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="contactListTextPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
 </resources>

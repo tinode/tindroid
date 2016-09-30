@@ -37,7 +37,7 @@
             android:paddingRight="16sp"
             android:layout_alignParentTop="true"
             android:text="Test text"
-            android:textAppearance="?android:attr/textAppearanceMedium"/>
+            android:textAppearance="@style/contactListTextPrimary"/>
 
     <TextView
             android:id="@android:id/text2"
