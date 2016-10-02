@@ -2,13 +2,16 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.PorterDuff;
-import android.util.Log;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -17,14 +20,17 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import co.tinode.tindroid.db.Message;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
  * Handle display of a conversation
  */
-public class MessagesListAdapter extends BaseAdapter {
+public class MessagesListAdapter extends CursorAdapter {
     private static final String TAG = "MessagesListAdapter";
+
+    private static final int QUERY_ALL_MESSAGES = 100;
 
     // Vertical padding between two messages from different senders
     private static final int SINGLE_PADDING = 10;
@@ -50,6 +56,7 @@ public class MessagesListAdapter extends BaseAdapter {
     private Topic<?,?,String> mTopic;
 
     public MessagesListAdapter(Context context) {
+        super(context, null, 0);
         mContext = context;
     }
 
@@ -155,6 +162,16 @@ public class MessagesListAdapter extends BaseAdapter {
         return convertView;
     }
 
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        return null;
+    }
+
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+
+    }
+
     private static class colorizer {
         int bg;
         int fg;
@@ -179,5 +196,27 @@ public class MessagesListAdapter extends BaseAdapter {
             }
         }
         return DateFormat.getInstance().format(then.getTime());
+    }
+
+    class MessagesLoader implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            if (id == QUERY_ALL_MESSAGES) {
+                new Message.Loader(mContext, mTopicName, -1, -1);
+            }
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader,
+                                   Cursor cursor) {
+            MessagesListAdapter.this.swapCursor(cursor);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            MessagesListAdapter.this.swapCursor(null);
+        }
     }
 }

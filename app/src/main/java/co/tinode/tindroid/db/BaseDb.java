@@ -1,14 +1,11 @@
 package co.tinode.tindroid.db;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
-import android.provider.BaseColumns;
 
 /**
- * SQLite backend. Persistent store for contacts and messages.
+ * SQLite backend. Persistent store for messages and chats.
  */
 public class BaseDb  extends SQLiteOpenHelper {
     /** Schema version. */
@@ -25,7 +22,7 @@ public class BaseDb  extends SQLiteOpenHelper {
                     Message.COLUMN_NAME_TS + " TEXT," +
                     Message.COLUMN_NAME_SEQ + " INT," +
                     Message.COLUMN_NAME_TS + " TEXT," +
-                    Message.COLUMN_NAME_CONTENT + " TEXT)";
+                    Message.COLUMN_NAME_CONTENT + " BLOB)";
     /** Add index on topic-seq, in descending order */
     private static final String CREATE_MESSAGES_INDEX =
             "CREATE UNIQUE INDEX "+ Message.INDEX_NAME +
@@ -57,73 +54,5 @@ public class BaseDb  extends SQLiteOpenHelper {
         db.execSQL(DROP_MESSAGES_INDEX);
         db.execSQL(DROP_MESSAGES_TABLE);
         onCreate(db);
-    }
-
-    /**
-     * Storage structure for messages:
-     *  public String id -- not stored
-     *  public String topic
-     *  public String from;
-     *  public Date ts;
-     *  public int seq;
-     *  public T content;
-     */
-    public static class Message implements BaseColumns {
-        /**
-         * Content provider authority.
-         */
-        public static final String CONTENT_AUTHORITY = "co.tinode.tindroid";
-
-        /**
-         * Base URI. (content://co.tinode.tindroid)
-         */
-        public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
-
-        /** MIME type for lists of messages */
-        public static final String CONTENT_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.tinode.im-msg";
-        /** MIME type for individual messages */
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.tinode.im-msg";
-        /**
-         * Path component for "message"-type resources..
-         */
-        private static final String PATH_MESSAGES = "messages";
-
-        /**
-         * URI for "messages" resource.
-         */
-        public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
-
-        /**
-         * The name of the main table.
-         */
-        public static final String TABLE_NAME = "message";
-
-        /**
-         * The name of index: messages by topic and sequence.
-         */
-        public static final String INDEX_NAME = "message_topic_seq";
-        /**
-         * Topic name, indexed
-         */
-        public static final String COLUMN_NAME_TOPIC = "topic";
-        /**
-         * UID as string, originator of the message
-         */
-        public static final String COLUMN_NAME_FROM = "from";
-        /**
-         * Message timestamp
-         */
-        public static final String COLUMN_NAME_TS = "ts";
-        /**
-         * Server-issued sequence ID, integer, indexed
-         */
-        public static final String COLUMN_NAME_SEQ = "seq";
-        /**
-         * Serialized message content
-         */
-        public static final String COLUMN_NAME_CONTENT = "content";
     }
 }

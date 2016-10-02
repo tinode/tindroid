@@ -1,25 +1,17 @@
 package co.tinode.tindroid;
 
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -43,7 +35,7 @@ public class MessageActivity extends AppCompatActivity {
     private static final String TAG = "MessageActivity";
 
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
-    //private static final int RECEIVED_DELAY = 500;
+    // private static final int RECV_DELAY = 500;
     private static final int READ_DELAY = 1000;
 
     private String mTopicName;
