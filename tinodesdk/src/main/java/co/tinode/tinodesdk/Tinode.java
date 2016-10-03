@@ -70,6 +70,8 @@ public class Tinode {
     private String mApiKey;
     private String mServerHost;
 
+    private String mDeviceToken;
+
     private String mAppName;
 
     private Connection mConnection;
@@ -419,6 +421,14 @@ public class Tinode {
     }
 
     /**
+     * Set device token for push notifications
+     * @param token
+     */
+    public void setDeviceToken(String token) {
+        mDeviceToken = token;
+    }
+
+    /**
      * Send a handshake packet to the server. A connection must be established prior to calling
      * this method.
      *
@@ -426,7 +436,7 @@ public class Tinode {
      * @throws IOException if there is no connection
      */
     public PromisedReply<ServerMessage> hello() throws Exception {
-        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent()));
+        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent(), mDeviceToken));
         try {
             PromisedReply<ServerMessage> future = null;
             if (msg.hi.id != null) {

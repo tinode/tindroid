@@ -112,6 +112,7 @@ public class LoginActivity extends AppCompatActivity {
             // Display the login form.
             showLoginForm();
         }
+        Log.d("TAG", "DONE onCreate");
     }
 
     private Account fetchAccount(SharedPreferences preferences) {
@@ -210,8 +211,11 @@ public class LoginActivity extends AppCompatActivity {
                 try {
                     // Connecting with synchronous calls because this is not the main thread.
                     final Tinode tinode = InmemoryCache.getTinode();
+                    Log.d(TAG, "Calling connect");
                     tinode.connect(hostName).getResult();
+                    Log.d(TAG, "Calling loginToken");
                     tinode.loginToken(token).getResult();
+                    Log.d(TAG, "Login: done");
                     onLoginSuccess(signIn);
                 } catch (Exception err) {
                     Log.d(TAG, "Failed to login with token");
@@ -221,6 +225,8 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         }, null);
+
+        Log.d(TAG, "EXIT loginWithSavedAccount");
     }
 
     /**

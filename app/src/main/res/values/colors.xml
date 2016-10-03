@@ -16,5 +16,5 @@
     <color name="colorUserOffline">#FFC0C0C0</color>
 
     <color name="colorAvatarLight">#66000000</color>
-    <color name="colorSplashScreenBackground">#993949AB</color>
+    <color name="colorSplashScreenBackground">#FF3949AB</color>
 </resources>

@@ -202,8 +202,11 @@ public class PromisedReply<T> {
                 mState = State.RESOLVED;
 
                 mResult = result;
-                callOnSuccess(result);
-                mDoneSignal.countDown();
+                try {
+                    callOnSuccess(result);
+                } finally {
+                    mDoneSignal.countDown();
+                }
             } else {
                 throw new IllegalStateException("Promise is already completed");
             }
@@ -216,8 +219,11 @@ public class PromisedReply<T> {
                 mState = State.REJECTED;
 
                 mException = err;
-                callOnFailure(err);
-                mDoneSignal.countDown();
+                try {
+                    callOnFailure(err);
+                } finally {
+                    mDoneSignal.countDown();
+                }
             } else {
                 throw new IllegalStateException("Promise is already completed");
             }
