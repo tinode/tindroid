@@ -17,18 +17,24 @@ Does not work yet:
 * Contact discovery - can't find other people to chat with
 * Deleting/muting topics and messages
 * Messages are not stored offline
-* Can't start new conversations
+* Can't start new group conversations
 * No push notifications
-* Typing notifications
+* No typing notifications
 
 Dependencies on the SDK side:
 
 * [jackson](https://github.com/FasterXML/jackson) for json serialization
-* [nv-websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client) for websocket support
+* [nv-websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client) for
+websocket support
 
 Dependencies on the application side:
 
-* [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery, making sure all phone numbers use the same E.164 format
+* [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
+to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
+* [google-services](https://developers.google.com/mobile/add) for push notifications.
+In order to compile the app you need to [generate your own](https://developers.google.com/mobile/add)
+config file `google-services.json`. Once it's created, copy it to the `./app/` folder. The
+config file contains Google-provided passwords and as such cannot be shared.
 
 The `contacts.vcf` contains a list of contacts which can be used for testing. Push it to your emulator using
 

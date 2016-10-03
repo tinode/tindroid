@@ -29,10 +29,14 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:24.2.0'
-    compile 'com.android.support:preference-v7:24.2.0'
-    compile 'com.android.support:design:24.2.0'
     compile project(path: ':tinodesdk')
+    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:preference-v7:24.2.1'
+    compile 'com.android.support:design:24.2.1'
     compile 'com.googlecode.libphonenumber:libphonenumber:7.7.0'
+    compile 'com.google.firebase:firebase-messaging:9.6.1'
+    testCompile 'junit:junit:4.12'
 }
+
+
+apply plugin: 'com.google.gms.google-services'

@@ -34,6 +34,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.firebase.iid.FirebaseInstanceId;
+
 import java.io.IOException;
 
 import co.tinode.tindroid.account.Utils;
@@ -83,6 +85,11 @@ public class LoginActivity extends AppCompatActivity {
                 trx.commit();
             }
         });
+
+        // TODO(gene): this is just for texting, remove it from here
+        //FirebaseApp.initializeApp(this);
+        String token = FirebaseInstanceId.getInstance().getToken();
+        Log.d(TAG, "FCM token: " + token);
 
         if (InmemoryCache.getTinode().isAuthenticated()) {
             // We already have a live connection to the server. All good.
