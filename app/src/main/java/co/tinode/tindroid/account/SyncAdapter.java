@@ -13,6 +13,8 @@ import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.firebase.iid.FirebaseInstanceId;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
@@ -87,9 +89,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                               ContentProviderClient provider, final SyncResult syncResult) {
         Log.i(TAG, "Beginning network synchronization");
         try {
-            final Tinode tinode = InmemoryCache.getTinode();
-
             Log.i(TAG, "Starting sync for account " + account.name);
+
+            final Tinode tinode = InmemoryCache.getTinode();
 
             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
             String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);

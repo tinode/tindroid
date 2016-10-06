@@ -38,7 +38,6 @@ tests/proguard-project.txt
 *.iml
 app/*.iml
 tinodesdk/*.iml
-build.gradle
 
 # Config file for Google services with secret keys
 app/google-services.json

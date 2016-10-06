@@ -7,6 +7,10 @@ import android.os.Build;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
+import com.google.firebase.iid.FirebaseInstanceId;
+
+import java.util.Locale;
+
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 
@@ -29,8 +33,11 @@ public class InmemoryCache {
             sTinode = new Tinode("Tindroid", API_KEY);
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
+            // Set device language
+            sTinode.setLanguage(Locale.getDefault().getLanguage());
         }
 
+        sTinode.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
         return sTinode;
     }
 

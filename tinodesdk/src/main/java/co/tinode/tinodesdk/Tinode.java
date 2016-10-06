@@ -71,6 +71,7 @@ public class Tinode {
     private String mServerHost;
 
     private String mDeviceToken;
+    private String mLanguage;
 
     private String mAppName;
 
@@ -429,6 +430,14 @@ public class Tinode {
     }
 
     /**
+     * Set device langauge
+     * @param lang ISO 639-1 code for language
+     */
+    public void setLanguage(String lang) {
+        mLanguage = lang;
+    }
+
+    /**
      * Send a handshake packet to the server. A connection must be established prior to calling
      * this method.
      *
@@ -436,7 +445,8 @@ public class Tinode {
      * @throws IOException if there is no connection
      */
     public PromisedReply<ServerMessage> hello() throws Exception {
-        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent(), mDeviceToken));
+        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION,
+                makeUserAgent(), mDeviceToken, mLanguage));
         try {
             PromisedReply<ServerMessage> future = null;
             if (msg.hi.id != null) {

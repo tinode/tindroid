@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk;
 
+import android.util.Log;
+
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -50,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
  *
  */
 public class PromisedReply<T> {
+    private static final String TAG = "PromisedReply";
 
     private enum State {WAITING, RESOLVED, REJECTED}
 
@@ -215,6 +218,7 @@ public class PromisedReply<T> {
 
     public void reject(final Exception err) throws Exception {
         synchronized (this) {
+            Log.d(TAG, "Rejecting: " + err);
             if (mState == State.WAITING) {
                 mState = State.REJECTED;
 

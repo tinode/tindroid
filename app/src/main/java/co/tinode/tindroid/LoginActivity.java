@@ -34,8 +34,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-
 import java.io.IOException;
 
 import co.tinode.tindroid.account.Utils;
@@ -85,11 +83,6 @@ public class LoginActivity extends AppCompatActivity {
                 trx.commit();
             }
         });
-
-        // TODO(gene): this is just for texting, remove it from here
-        //FirebaseApp.initializeApp(this);
-        String token = FirebaseInstanceId.getInstance().getToken();
-        Log.d(TAG, "FCM token: " + token);
 
         if (InmemoryCache.getTinode().isAuthenticated()) {
             // We already have a live connection to the server. All good.
@@ -199,9 +192,9 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
-                Log.d(TAG, "Received authentication token " + token);
                 if (TextUtils.isEmpty(token)) {
                     // Empty token, continue to login form
+                    showLoginForm();
                     return;
                 }
 
@@ -211,14 +204,10 @@ public class LoginActivity extends AppCompatActivity {
                 try {
                     // Connecting with synchronous calls because this is not the main thread.
                     final Tinode tinode = InmemoryCache.getTinode();
-                    Log.d(TAG, "Calling connect");
                     tinode.connect(hostName).getResult();
-                    Log.d(TAG, "Calling loginToken");
                     tinode.loginToken(token).getResult();
-                    Log.d(TAG, "Login: done");
                     onLoginSuccess(signIn);
                 } catch (Exception err) {
-                    Log.d(TAG, "Failed to login with token");
                     mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                     reportError(err, signIn, R.string.error_login_failed);
                     showLoginForm();
