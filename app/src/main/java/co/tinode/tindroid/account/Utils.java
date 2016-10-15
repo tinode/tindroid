@@ -2,10 +2,16 @@ package co.tinode.tindroid.account;
 
 import android.accounts.Account;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -15,15 +21,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import co.tinode.tindroid.R;
+import co.tinode.tindroid.RoundedImage;
+import co.tinode.tindroid.VCard;
+import co.tinode.tinodesdk.Topic;
+
 /**
  * Constants and misc utils
  */
 
 public class Utils {
+    private static final String TAG = "Utils";
 
     // Account management constants
     public static final String TOKEN_TYPE = "co.tinode.token";
     public static final String ACCOUNT_TYPE = "co.tinode.account";
+    public static final String SYNC_AUTHORITY = "com.android.contacts";
+
     public static final String IM_PROTOCOL = "Tinode";
 
     // Constants for accessing shared preferences
@@ -43,7 +57,6 @@ public class Utils {
     public static final String DATA_PID = Data.DATA1;
     public static final String DATA_SUMMARY = Data.DATA2;
     public static final String DATA_DETAIL = Data.DATA3;
-
 
     public static Account GetAccount(String accountName) {
         return new Account(accountName, ACCOUNT_TYPE);
@@ -89,36 +102,44 @@ public class Utils {
             String data = cursor.getString(dataIdx);
             String mimeType = cursor.getString(mimeTypeIdx);
 
+            Log.d(TAG, "Got id=" + contact_id + ", mime='" + mimeType +"', val='" + data + "'");
+
             ContactHolder holder = map.get(contact_id);
             if (holder == null) {
                 holder = new ContactHolder();
                 map.put(contact_id, holder);
             }
 
-            if (mimeType.equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
-                // This is an email
-                holder.putEmail(data);
-            } else if (mimeType.equals(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)) {
-                int protocol = cursor.getInt(imProtocolIdx);
-                String protocolName = cursor.getString(imProtocolNameIdx);
-                if (protocol == ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM &&
-                        protocolName.equals(IM_PROTOCOL)) {
-                    holder.putIm(data);
-                }
-            } else {
-                // This is a phone number.
-
-                // Use mobile phones only.
-                if (type == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
-                    try {
-                        // Normalize phone number format
-                        data = phoneUtil.format(phoneUtil.parse(data, country),
-                                PhoneNumberUtil.PhoneNumberFormat.E164);
-                        holder.putPhone(data);
-                    } catch (NumberParseException e) {
-                        e.printStackTrace();
+            switch (mimeType) {
+                case ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE:
+                    // This is an email
+                    Log.d(TAG, "Adding email '" + data + "' to contact=" + contact_id);
+                    holder.putEmail(data);
+                    break;
+                case ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE:
+                    int protocol = cursor.getInt(imProtocolIdx);
+                    String protocolName = cursor.getString(imProtocolNameIdx);
+                    Log.d(TAG, "Possibly adding IM '" + data + "' to contact=" + contact_id);
+                    if (protocol == ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM &&
+                            protocolName.equals(IM_PROTOCOL)) {
+                        holder.putIm(data);
+                        Log.d(TAG, "Added IM '" + data + "' to contact=" + contact_id);
                     }
-                }
+                    break;
+                default:
+                    // This is a phone number. Use mobile phones only.
+                    if (type == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
+                        Log.d(TAG, "Adding mobile phone '" + data + "' to contact=" + contact_id);
+                        try {
+                            // Normalize phone number format
+                            data = phoneUtil.format(phoneUtil.parse(data, country),
+                                    PhoneNumberUtil.PhoneNumberFormat.E164);
+                            holder.putPhone(data);
+                        } catch (NumberParseException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
             }
         }
         cursor.close();
@@ -132,6 +153,9 @@ public class Utils {
         List<String> ims;
 
         public ContactHolder() {
+            emails = null;
+            phones = null;
+            ims = null;
         }
 
         public void putEmail(String email) {
@@ -195,19 +219,50 @@ public class Utils {
         }
 
         public String bestContact() {
-            if (ims != null && ims.size() > 0) {
+            if (ims != null) {
                 return TAG_LABEL_TINODE + ims.get(0);
             }
 
-            if (phones != null && phones.size() > 0) {
+            if (phones != null) {
                 return TAG_LABEL_PHONE + phones.get(0);
             }
 
-            if (emails != null && emails.size() > 0) {
+            if (emails != null) {
                 return TAG_LABEL_EMAIL + emails.get(0);
             }
 
             return "";
+        }
+    }
+
+    public static void setupToolbar(Context context, Toolbar toolbar, VCard pub, Topic.TopicType topicType) {
+        if (pub != null) {
+            toolbar.setTitle(" " + pub.fn);
+
+            pub.constructBitmap();
+            Bitmap bmp = pub.getBitmap();
+            if (bmp != null) {
+                toolbar.setLogo(new RoundedImage(bmp));
+            } else {
+                Drawable drw;
+                int res = -1;
+                if (topicType == Topic.TopicType.GRP) {
+                    res = R.drawable.ic_group;
+                } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
+                    res = R.drawable.ic_person;
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    drw = context.getResources().getDrawable(res, context.getTheme());
+                } else {
+                    drw = context.getResources().getDrawable(res);
+                }
+                if (drw != null) {
+                    toolbar.setLogo(drw);
+                }
+            }
+        } else {
+            toolbar.setTitle(R.string.app_name);
         }
     }
 }

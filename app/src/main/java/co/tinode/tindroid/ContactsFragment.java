@@ -28,9 +28,9 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.support.annotation.NonNull;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -333,7 +333,7 @@ public class ContactsFragment extends ListFragment {
         inflater.inflate(R.menu.menu_contacts, menu);
 
         // Locate the search item
-        MenuItem searchItem = menu.findItem(R.id.menu_search);
+        MenuItem searchItem = menu.findItem(R.id.action_search);
 
         // Retrieves the system search manager service
         final SearchManager searchManager =
@@ -440,15 +440,21 @@ public class ContactsFragment extends ListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             // Sends a request to the People app to display the create contact screen
-            case R.id.menu_add_contact:
+            case R.id.action_add_contact:
                 final Intent intent = new Intent(Intent.ACTION_INSERT, Contacts.CONTENT_URI);
                 startActivity(intent);
-                break;
+                return true;
+
             // For platforms earlier than Android 3.0, triggers the search activity
-            case R.id.menu_search:
-                break;
+            case R.id.action_search:
+                return false;
+
+            case R.id.action_about:
+                DialogFragment about = new AboutDialogFragment();
+                about.show(getFragmentManager(), "about");
+                return true;
         }
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     /**
@@ -648,7 +654,18 @@ public class ContactsFragment extends ListFragment {
 
             final int startIndex = indexOfSearchQuery(displayName);
 
-            Utils.ContactHolder extra = mPhEmImData != null ? mPhEmImData.get(holder.contact_id) : null;
+            Utils.ContactHolder extra = (mPhEmImData != null ? mPhEmImData.get(holder.contact_id) : null);
+
+            /*
+            if (mPhEmImData == null) {
+                Log.d(TAG, "mPhEmImData is NULL while processing " + holder.contact_id);
+            } else if (extra == null) {
+                Log.d(TAG, "Extra is NULL while processing " + holder.contact_id);
+            } else if (extra.getImCount() <= 0) {
+                Log.d(TAG, "extra.getImCount() <= 0 while processing " + holder.contact_id);
+            }
+            */
+
             if (extra != null && extra.getImCount() > 0) {
                 holder.inviteButton.setVisibility(View.GONE);
             } else {
@@ -664,7 +681,7 @@ public class ContactsFragment extends ListFragment {
                     String line2 = (extra != null) ? extra.bestContact() : null;
 
                     if (TextUtils.isEmpty(line2)) {
-                        // If the search search is empty, hide the second line of text
+                        // Search string is empty and we have no contacts to show
                         holder.text2.setVisibility(View.GONE);
                     } else {
                         holder.text2.setText(line2);

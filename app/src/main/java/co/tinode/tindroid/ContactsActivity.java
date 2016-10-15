@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
@@ -100,6 +101,7 @@ public class ContactsActivity extends AppCompatActivity implements
         super.onResume();
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Utils.setupToolbar(ContactsActivity.this, toolbar, null, Topic.TopicType.ME);
 
         MeTopic<VCard,String,String> me = InmemoryCache.getTinode().getMeTopic();
         if (me == null) {
@@ -142,14 +144,6 @@ public class ContactsActivity extends AppCompatActivity implements
 
                         @Override
                         public void onMetaDesc(final Description<VCard, String> desc) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (desc.pub != null) {
-                                        InmemoryCache.setupToolbar(ContactsActivity.this, toolbar, desc.pub, Topic.TopicType.ME);
-                                    }
-                                }
-                            });
                         }
 
                         @Override
@@ -221,5 +215,12 @@ public class ContactsActivity extends AppCompatActivity implements
         public int getCount() {
             return mNumOfTabs;
         }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean focus) {
+        super.onWindowFocusChanged(focus);
+
+        InmemoryCache.activityVisible(focus);
     }
 }

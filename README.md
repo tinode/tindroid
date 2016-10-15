@@ -3,7 +3,8 @@
 Work in progress. What works:
 
 * Send and receive messages
-* Presence notifications
+* In-app presence notifications
+* Push notifications
 * Unread message counters
 * Indicators for messages received/read (little check marks in messages)
 * Register new account, login
@@ -18,8 +19,8 @@ Does not work yet:
 * Deleting/muting topics and messages
 * Messages are not stored offline
 * Can't start new group conversations
-* No push notifications
-* No typing notifications
+* No client support for typing notifications.
+* No encryption
 
 Dependencies on the SDK side:
 
@@ -31,10 +32,12 @@ Dependencies on the application side:
 
 * [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
 to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
-* [google-services](https://developers.google.com/mobile/add) for push notifications.
+* [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications.
 In order to compile the app you need to [generate your own](https://developers.google.com/mobile/add)
-config file `google-services.json`. Once it's created, copy it to the `./app/` folder. The
-config file contains Google-provided passwords and as such cannot be shared.
+config file `google-services.json`. Once downloaded, copy it to the `./app/` folder. The
+config file contains Google-provided passwords and as such cannot be shared. If you don't do it the 
+app will crash with non-obvious exceptions. The Google-provided server key must be copied to `tinode.conf`, see 
+details [here](https://github.com/tinode/chat). 
 
 The `contacts.vcf` contains a list of contacts which can be used for testing. Push it to your emulator using
 

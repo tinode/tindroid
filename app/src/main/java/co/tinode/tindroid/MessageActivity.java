@@ -82,20 +82,26 @@ public class MessageActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(mTopicName)) {
             // mTopicName is empty, so this is an external intent
             Uri contactUri = intent.getData();
-            //String contactMimeType = intent.getType();
-
-            Cursor cursor = getContentResolver().query(contactUri,
-                    new String[] {Utils.DATA_PID}, null, null, null);
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    mTopicName = cursor.getString(cursor.getColumnIndex(Utils.DATA_PID));
+            if (contactUri != null) {
+                Cursor cursor = getContentResolver().query(contactUri,
+                        new String[]{Utils.DATA_PID}, null, null, null);
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        mTopicName = cursor.getString(cursor.getColumnIndex(Utils.DATA_PID));
+                    }
+                    cursor.close();
                 }
-                cursor.close();
             }
         }
 
+        if (TextUtils.isEmpty(mTopicName)) {
+            Log.e(TAG, "Activity started with empty topic name");
+            finish();
+            return;
+        }
+
         String messageToSend = intent.getStringExtra(Intent.EXTRA_TEXT);
-        ((TextView) findViewById(R.id.editMessage)).setText(messageToSend == null ? "" : messageToSend);
+        ((TextView) findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
 
         mTopic = getTinode().getTopic(mTopicName);
 
@@ -112,7 +118,7 @@ public class MessageActivity extends AppCompatActivity {
         }, READ_DELAY, READ_DELAY);
 
         if (mTopic != null) {
-            setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
+            Utils.setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
                 mMessagesAdapter.changeTopic(mTopicName);
             }
@@ -178,7 +184,7 @@ public class MessageActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    setupToolbar(MessageActivity.this, toolbar, desc.pub, mTopic.getTopicType());
+                                    Utils.setupToolbar(MessageActivity.this, toolbar, desc.pub, mTopic.getTopicType());
                                 }
                             });
                         }

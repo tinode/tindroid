@@ -20,12 +20,17 @@ public class AvatarPhoto {
 
     public AvatarPhoto() {}
 
+    public AvatarPhoto(byte[] bits) {
+        data = bits;
+        constructBitmap();
+    }
+
     public AvatarPhoto(Bitmap bmp) {
         this.mImage = bmp;
         serializeBitmap();
     }
 
-    public boolean construct() {
+    public boolean constructBitmap() {
         if (data != null) {
             mImage = BitmapFactory.decodeByteArray(data, 0, data.length);
         }

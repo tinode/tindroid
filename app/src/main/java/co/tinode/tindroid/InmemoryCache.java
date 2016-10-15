@@ -26,6 +26,8 @@ public class InmemoryCache {
     public static final String HOST_NAME = "10.0.2.2:6060"; // local
     //public static String sHost = "api.tinode.co"; // remote
 
+    private static int sVisibleCount = 0;
+
     public static Tinode getTinode() {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
@@ -41,34 +43,21 @@ public class InmemoryCache {
         return sTinode;
     }
 
-    public static void setupToolbar(Context context, Toolbar toolbar, VCard pub, Topic.TopicType topicType) {
-        if (pub != null) {
-            toolbar.setTitle(" " + pub.fn);
+    /**
+     * Keep counter of visible activities
+     * @param visible true if some activity became visible
+     * @return
+     */
+    public static int activityVisible(boolean visible) {
+         sVisibleCount += visible ? 1 : -1;
+        Log.d(TAG, "Visible count: " + sVisibleCount);
+        return sVisibleCount;
+    }
 
-            pub.constructBitmap();
-            Bitmap bmp = pub.getBitmap();
-            if (bmp != null) {
-                toolbar.setLogo(new RoundedImage(bmp));
-            } else {
-                Drawable drw;
-                int res = -1;
-                if (topicType == Topic.TopicType.GRP) {
-                    res = R.drawable.ic_group;
-                } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
-                    res = R.drawable.ic_person;
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    drw = context.getResources().getDrawable(res, context.getTheme());
-                } else {
-                    drw = context.getResources().getDrawable(res);
-                }
-                if (drw != null) {
-                    toolbar.setLogo(drw);
-                }
-            }
-        } else {
-            toolbar.setTitle(R.string.app_name);
-        }
+    /**
+     * @return true if any activity is visible to the user
+     */
+    public static boolean isInForeground() {
+        return sVisibleCount > 0;
     }
 }

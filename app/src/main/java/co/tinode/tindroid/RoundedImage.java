@@ -29,10 +29,8 @@ public class RoundedImage extends BitmapDrawable {
         mPaint.setAntiAlias(true);
         mPaint.setDither(true);
         mPaint.setShader(new BitmapShader(bmp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-        if (bmp != null) {
-            mBitmapWidth = bmp.getWidth();
-            mBitmapHeight = bmp.getHeight();
-        }
+        mBitmapWidth = bmp.getWidth();
+        mBitmapHeight = bmp.getHeight();
     }
 
     public RoundedImage(Bitmap bmp) {
@@ -45,16 +43,14 @@ public class RoundedImage extends BitmapDrawable {
         init(bmp);
     }
 
-    /*
-    public RoundedImage(Drawable drw, int color) {
-        Bitmap bmp = Bitmap.createBitmap(drw.getIntrinsicWidth(), drw.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+
+    public Bitmap getRoundedBitmap() {
+        Bitmap bmp = Bitmap.createBitmap(mBitmapWidth, mBitmapHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
-        drw.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        canvas.drawColor(color);
-        drw.draw(canvas);
-        init(bmp);
+        setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        draw(canvas);
+        return bmp;
     }
-    */
 
     @Override
     public void draw(Canvas canvas) {

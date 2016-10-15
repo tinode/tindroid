@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -68,6 +69,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 // Close CAB
                 mode.finish();
                 return true;
+
             case R.id.action_mute:
                 Log.d(TAG, "muting item");
                 mode.finish();
@@ -76,6 +78,11 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
             case R.id.action_edit:
                 Log.d(TAG, "editing item");
                 mode.finish();
+                return true;
+
+            case R.id.action_about:
+                DialogFragment about = new AboutDialogFragment();
+                about.show(getFragmentManager(), "about");
                 return true;
 
             default:

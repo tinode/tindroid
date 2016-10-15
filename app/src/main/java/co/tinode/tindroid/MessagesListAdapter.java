@@ -37,9 +37,11 @@ public class MessagesListAdapter extends CursorAdapter {
     // Vertical padding between two messages from the same sender
     private static final int TRAIN_PADDING = 2;
 
+    // Grouping messages from the same sender (controls rounding of borders)
     private enum DisplayAs {SINGLE, FIRST, MIDDLE, LAST}
 
-    // Material colors, shade #200
+    // Material colors, shade #200.
+    // TODO(gene): maybe move to resource file
     private static final colorizer[] sColorizer = {
             new colorizer(0xffef9a9a, 0xff212121), new colorizer(0xffc5e1a5, 0xff212121),
             new colorizer(0xff90caf9, 0xff212121), new colorizer(0xfffff59d, 0xff212121),

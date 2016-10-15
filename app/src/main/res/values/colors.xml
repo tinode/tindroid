@@ -17,4 +17,6 @@
 
     <color name="colorAvatarLight">#66000000</color>
     <color name="colorSplashScreenBackground">#FF3949AB</color>
+
+    <color name="colorNotificationBackground">#3949AB</color>
 </resources>

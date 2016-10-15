@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tindroid.InmemoryCache;
+import co.tinode.tindroid.VCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -39,6 +40,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     public static final String TAG = "SyncAdapter";
 
     private static final String SYNC_MARKER_KEY = "co.tinode.tindroid.sync_marker_contacts";
+    private static final String INVISIBLE_GROUP_KEY = "co.tinode.tindroid.invisible_group_id";
+
     // Context for loading preferences
     private final Context mContext;
     private final AccountManager mAccountManager;
@@ -91,6 +94,19 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         try {
             Log.i(TAG, "Starting sync for account " + account.name);
 
+            // See if we already have a sync-state attached to this account.
+            Date lastSyncMarker = getServerSyncMarker(account);
+            long invisibleGroupId = getInvisibleGroupId(account);
+
+            // By default, contacts from a 3rd party provider are hidden in the contacts
+            // list. So let's set the flag that causes them to be visible, so that users
+            // can actually see these contacts.
+            if (lastSyncMarker == null) {
+                ContactsManager.makeAccountContactsVisibile(mContext, account);
+                invisibleGroupId = ContactsManager.createInvisibleTinodeGroup(mContext, account);
+                setInvisibleGroupId(account, invisibleGroupId);
+            }
+
             final Tinode tinode = InmemoryCache.getTinode();
 
             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
@@ -111,10 +127,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
                 me.getMeta(subGet).getResult();
 
-                // Fetch the list of updated contacts (exclude group subscription, they should not be stored in
-                // the address book)
-                Collection<Subscription> updated = me.getFilteredSubscriptions(sub.ims, Topic.TopicType.P2P);
-                Date upd = ContactsManager.updateContacts(mContext, account, updated, sub.ims);
+                // Fetch the list of updated contacts. Group subscriptions will be stored in
+                // the address book but as invisible contacts (members of invisible group)
+                Collection<Subscription<VCard,String>> updated =
+                        me.getFilteredSubscriptions(sub.ims, Topic.TopicType.USER);
+                Date upd = ContactsManager.updateContacts(mContext, account, updated, sub.ims, invisibleGroupId);
                 setServerSyncMarker(account, upd);
             }
         } catch (IOException e) {
@@ -137,6 +154,18 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     private void setServerSyncMarker(Account account, Date marker) {
         mAccountManager.setUserData(account, SYNC_MARKER_KEY, Long.toString(marker.getTime()));
+    }
+
+    private long getInvisibleGroupId(Account account) {
+        String idString = mAccountManager.getUserData(account, INVISIBLE_GROUP_KEY);
+        if (!TextUtils.isEmpty(idString)) {
+            return Long.parseLong(idString);
+        }
+        return -1;
+    }
+
+    private void setInvisibleGroupId(Account account, long id) {
+        mAccountManager.setUserData(account, INVISIBLE_GROUP_KEY, Long.toString(id));
     }
 }
 

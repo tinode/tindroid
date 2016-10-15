@@ -73,7 +73,7 @@ public class VCard {
     }
 
     public boolean constructBitmap() {
-        return photo != null && photo.construct();
+        return photo != null && photo.constructBitmap();
     }
 
 
@@ -89,6 +89,16 @@ public class VCard {
         }
         tel[tel.length-1] = new Contact(phone, type);
     }
+
+    public void addEmail(String addr, String type) {
+        if (email == null) {
+            email = new Contact[1];
+        } else {
+            email = Arrays.copyOf(email, email.length + 1);
+        }
+        email[email.length-1] = new Contact(addr, type);
+    }
+
 
     @JsonIgnore
     public String getPhoneByType(String type) {

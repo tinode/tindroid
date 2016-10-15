@@ -12,7 +12,6 @@
     <FrameLayout
         android:id="@+id/contentFragment"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        tools:layout="@layout/fragment_splash"/>
+        android:layout_height="fill_parent"/>
 
 </LinearLayout>

@@ -6,7 +6,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
 import android.provider.ContactsContract.CommonDataKinds.Im;
+import android.provider.ContactsContract.CommonDataKinds.Note;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
@@ -23,7 +25,6 @@ public class ContactOperations {
     private final ContentValues mValues;
     private final BatchOperation mBatchOperation;
     private final Context mContext;
-    private boolean mIsSyncOperation;
     private long mRawContactId;
     private int mBackReference;
     private boolean mIsNewContact;
@@ -48,13 +49,12 @@ public class ContactOperations {
      * @param context         the Authenticator Activity context
      * @param uid             the unique id of the contact
      * @param accountName     the username for the SyncAdapter account
-     * @param isSyncOperation are we executing this as part of a sync operation?
      * @return instance of ContactOperations
      */
     public static ContactOperations createNewContact(Context context, String uid,
-                                                     String accountName, boolean isSyncOperation,
+                                                     String accountName, boolean aggregate,
                                                      BatchOperation batchOperation) {
-        return new ContactOperations(context, uid, accountName, isSyncOperation, batchOperation);
+        return new ContactOperations(context, uid, accountName, aggregate, batchOperation);
     }
 
     /**
@@ -63,40 +63,38 @@ public class ContactOperations {
      *
      * @param context         the Authenticator Activity context
      * @param rawContactId    the unique Id of the existing rawContact
-     * @param isSyncOperation are we executing this as part of a sync operation?
      * @return instance of ContactOperations
      */
     public static ContactOperations updateExistingContact(Context context, long rawContactId,
-                                                          boolean isSyncOperation,
                                                           BatchOperation batchOperation) {
-        return new ContactOperations(context, rawContactId, isSyncOperation, batchOperation);
+        return new ContactOperations(context, rawContactId, batchOperation);
     }
 
-    public ContactOperations(Context context, boolean isSyncOperation,
-                             BatchOperation batchOperation) {
+    public ContactOperations(Context context, BatchOperation batchOperation) {
         mValues = new ContentValues();
         mIsYieldAllowed = true;
-        mIsSyncOperation = isSyncOperation;
         mContext = context;
         mBatchOperation = batchOperation;
     }
 
-    public ContactOperations(Context context, String uid, String accountName,
-                             boolean isSyncOperation, BatchOperation batchOperation) {
-        this(context, isSyncOperation, batchOperation);
+    public ContactOperations(Context context, String uid, String accountName, boolean aggregate,
+                             BatchOperation batchOperation) {
+        this(context, batchOperation);
         mBackReference = mBatchOperation.size();
         mIsNewContact = true;
         mValues.put(RawContacts.SOURCE_ID, uid);
         mValues.put(RawContacts.ACCOUNT_TYPE, Utils.ACCOUNT_TYPE);
         mValues.put(RawContacts.ACCOUNT_NAME, accountName);
+        if (!aggregate) {
+            mValues.put(RawContacts.AGGREGATION_MODE, RawContacts.AGGREGATION_MODE_DISABLED);
+        }
         ContentProviderOperation.Builder builder =
-                newInsertCpo(RawContacts.CONTENT_URI, mIsSyncOperation, true).withValues(mValues);
+                newInsertCpo(RawContacts.CONTENT_URI, true).withValues(mValues);
         mBatchOperation.add(builder.build());
     }
 
-    public ContactOperations(Context context, long rawContactId, boolean isSyncOperation,
-                             BatchOperation batchOperation) {
-        this(context, isSyncOperation, batchOperation);
+    public ContactOperations(Context context, long rawContactId, BatchOperation batchOperation) {
+        this(context, batchOperation);
         mIsNewContact = false;
         mRawContactId = rawContactId;
     }
@@ -188,6 +186,11 @@ public class ContactOperations {
         return this;
     }
 
+    /**
+     * Add avatar to profile
+     * @param avatar avatar image serialized into byte array
+     * @return instance of ContactOperations
+     */
     public ContactOperations addAvatar(byte[] avatar) {
         if (avatar != null) {
             mValues.clear();
@@ -217,16 +220,28 @@ public class ContactOperations {
     }
 
     /**
-     * Updates contact's serverId
+     * Adds a profile action
      *
-     * @param serverId the serverId for this contact
-     * @param uri      Uri for the existing raw contact to be updated
+     * @param groupId id of the group to add to
      * @return instance of ContactOperations
      */
-    public ContactOperations updateServerId(long serverId, Uri uri) {
+    public ContactOperations addToInvisibleGroup(long groupId) {
         mValues.clear();
-        mValues.put(RawContacts.SOURCE_ID, serverId);
-        addUpdateOp(uri);
+        if (groupId >= 0) {
+            mValues.put(GroupMembership.GROUP_ROW_ID, groupId);
+            mValues.put(GroupMembership.MIMETYPE, GroupMembership.CONTENT_ITEM_TYPE);
+            addInsertOp();
+        }
+        return this;
+    }
+
+    public ContactOperations addNote(String note) {
+        mValues.clear();
+        if (!TextUtils.isEmpty(note)) {
+            mValues.put(Note.NOTE, note);
+            mValues.put(Note.MIMETYPE, Note.CONTENT_ITEM_TYPE);
+            addInsertOp();
+        }
         return this;
     }
 
@@ -285,14 +300,6 @@ public class ContactOperations {
         return this;
     }
 
-    public ContactOperations updateDirtyFlag(boolean isDirty, Uri uri) {
-        int isDirtyValue = isDirty ? 1 : 0;
-        mValues.clear();
-        mValues.put(RawContacts.DIRTY, isDirtyValue);
-        addUpdateOp(uri);
-        return this;
-    }
-
     /**
      * Updates contact's phone
      *
@@ -321,16 +328,18 @@ public class ContactOperations {
     }
 
     /**
-     * Updates contact's profile action
+     * Updates contact's note
      *
-     * @param userId sample SyncAdapter user id
-     * @param uri    Uri for the existing raw contact to be updated
+     * @param note note of the SyncAdapter user
+     * @param uri  Uri for the existing raw contact to be updated
      * @return instance of ContactOperations
      */
-    public ContactOperations updateProfileAction(Integer userId, Uri uri) {
-        mValues.clear();
-        mValues.put(Utils.DATA_PID, userId);
-        addUpdateOp(uri);
+    public ContactOperations updateNote(String note, String oldNote, Uri uri) {
+        if (!TextUtils.equals(note, oldNote)) {
+            mValues.clear();
+            mValues.put(Note.NOTE, note);
+            addUpdateOp(uri);
+        }
         return this;
     }
 
@@ -342,7 +351,7 @@ public class ContactOperations {
             mValues.put(Phone.RAW_CONTACT_ID, mRawContactId);
         }
         ContentProviderOperation.Builder builder =
-                newInsertCpo(Data.CONTENT_URI, mIsSyncOperation, mIsYieldAllowed);
+                newInsertCpo(Data.CONTENT_URI, mIsYieldAllowed);
         builder.withValues(mValues);
         if (mIsNewContact) {
             builder.withValueBackReference(Data.RAW_CONTACT_ID, mBackReference);
@@ -356,47 +365,32 @@ public class ContactOperations {
      */
     private void addUpdateOp(Uri uri) {
         ContentProviderOperation.Builder builder =
-                newUpdateCpo(uri, mIsSyncOperation, mIsYieldAllowed).withValues(mValues);
+                newUpdateCpo(uri, mIsYieldAllowed).withValues(mValues);
         mIsYieldAllowed = false;
         mBatchOperation.add(builder.build());
     }
 
-    public static ContentProviderOperation.Builder newInsertCpo(Uri uri,
-                                                                boolean isSyncOperation, boolean isYieldAllowed) {
+    public static ContentProviderOperation.Builder newInsertCpo(Uri uri, boolean isYieldAllowed) {
         return ContentProviderOperation
-                .newInsert(addCallerIsSyncAdapterParameter(uri, isSyncOperation))
+                .newInsert(addCallerIsSyncAdapterParameter(uri))
                 .withYieldAllowed(isYieldAllowed);
     }
 
-    public static ContentProviderOperation.Builder newUpdateCpo(Uri uri,
-                                                                boolean isSyncOperation, boolean isYieldAllowed) {
+    public static ContentProviderOperation.Builder newUpdateCpo(Uri uri, boolean isYieldAllowed) {
         return ContentProviderOperation
-                .newUpdate(addCallerIsSyncAdapterParameter(uri, isSyncOperation))
+                .newUpdate(addCallerIsSyncAdapterParameter(uri))
                 .withYieldAllowed(isYieldAllowed);
     }
 
-    public static ContentProviderOperation.Builder newDeleteCpo(Uri uri,
-                                                                boolean isSyncOperation, boolean isYieldAllowed) {
+    public static ContentProviderOperation.Builder newDeleteCpo(Uri uri, boolean isYieldAllowed) {
         return ContentProviderOperation
-                .newDelete(addCallerIsSyncAdapterParameter(uri, isSyncOperation))
+                .newDelete(addCallerIsSyncAdapterParameter(uri))
                 .withYieldAllowed(isYieldAllowed);
     }
 
-    private static Uri addCallerIsSyncAdapterParameter(Uri uri, boolean isSyncOperation) {
-        if (isSyncOperation) {
-            // If we're in the middle of a real sync-adapter operation, then go ahead
-            // and tell the Contacts provider that we're the sync adapter.  That
-            // gives us some special permissions - like the ability to really
-            // delete a contact, and the ability to clear the dirty flag.
-            //
-            // If we're not in the middle of a sync operation (for example, we just
-            // locally created/edited a new contact), then we don't want to use
-            // the special permissions, and the system will automagically mark
-            // the contact as 'dirty' for us!
-            return uri.buildUpon()
-                    .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
-                    .build();
-        }
-        return uri;
+    private static Uri addCallerIsSyncAdapterParameter(Uri uri) {
+        return uri.buildUpon()
+                .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+                .build();
     }
 }

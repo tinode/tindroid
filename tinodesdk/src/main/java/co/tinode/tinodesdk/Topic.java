@@ -37,7 +37,16 @@ import java.util.Map;
 public class Topic<Pu,Pr,T> {
     private static final String TAG = "tinodesdk.Topic";
 
-    public enum TopicType {ME, FND, GRP, P2P, UNKNOWN, ANY}
+    public enum TopicType {
+        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08), USER(0x04 | 0x08), UNKNOWN(0x00), ANY(0x01 | 0x02 | 0x04 | 0x08);
+
+        private int val = 0;
+        TopicType(int val) {
+            this.val = val;
+        }
+
+        public int val() {return val;}
+    }
 
     protected enum NoteType {READ, RECV}
 
@@ -81,7 +90,7 @@ public class Topic<Pu,Pr,T> {
         mTinode = tinode;
 
         mName = name;
-        isValidName = getTopicTypeByName(name) == TopicType.UNKNOWN ? false : true;
+        isValidName = getTopicTypeByName(name) != TopicType.UNKNOWN;
 
         mListener = l;
         mAttached = false;
@@ -436,11 +445,13 @@ public class Topic<Pu,Pr,T> {
     public Collection<Subscription<Pu,Pr>> getFilteredSubscriptions(Date marker, TopicType type) {
         if (marker == null && type == TopicType.ANY) {
             return getSubscriptions();
+        } else if (type == TopicType.UNKNOWN) {
+            return null;
         }
 
         ArrayList<Subscription<Pu,Pr>> result = new ArrayList<>();
         for (Subscription<Pu,Pr> sub: mSubs.values()) {
-            if (type == TopicType.ANY || getTopicTypeByName(sub.topic) == type) {
+            if ((getTopicTypeByName(sub.topic).val() & type.val()) != 0) {
                 if ((marker == null) || (sub.updated != null && marker.before(sub.updated))) {
                     result.add(sub);
                 }

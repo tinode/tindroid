@@ -9,6 +9,7 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,8 +18,10 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -119,7 +122,6 @@ public class LoginActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(mAccountName)) {
             mAccountName = preferences.getString(Utils.PREFS_ACCOUNT_NAME, null);
         }
-        Log.d(TAG, "accountName from preferences=" + mAccountName);
 
         // Got account name, Let's try lo load it.
         if (!TextUtils.isEmpty(mAccountName)) {
@@ -258,20 +260,27 @@ public class LoginActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-            trx.replace(R.id.contentFragment, new LoginSettingsFragment());
-            trx.commit();
-            return true;
-        } else if (id == R.id.action_signup) {
-            FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-            trx.replace(R.id.contentFragment, new NewAccountFragment());
-            trx.commit();
-            return true;
-        }
+        switch (id) {
+            case R.id.action_settings: {
+                FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+                trx.replace(R.id.contentFragment, new LoginSettingsFragment());
+                trx.commit();
+                return true;
+            }
+            case R.id.action_signup: {
+                FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+                trx.replace(R.id.contentFragment, new NewAccountFragment());
+                trx.commit();
+                return true;
+            }
+            case R.id.action_about:
+                DialogFragment about = new AboutDialogFragment();
+                about.show(getSupportFragmentManager(), "about");
+                return true;
 
-        return super.onOptionsItemSelected(item);
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public void onLogin(View v) {
@@ -308,7 +317,8 @@ public class LoginActivity extends AppCompatActivity {
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    addAndroidAccount(sharedPref, login, password);
+                                    Account acc = addAndroidAccount(sharedPref, login, password);
+                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, null);
                                     onLoginSuccess(signIn);
                                     return null;
                                 }
@@ -451,7 +461,7 @@ public class LoginActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "Google: Not implemented", Toast.LENGTH_SHORT).show();
     }
 
-    private void addAndroidAccount(final SharedPreferences sharedPref, final String login,
+    private Account addAndroidAccount(final SharedPreferences sharedPref, final String login,
                                    final String password) {
         final Account acc = Utils.GetAccount(login);
         sharedPref.edit().putString(Utils.PREFS_ACCOUNT_NAME, login).apply();
@@ -463,6 +473,7 @@ public class LoginActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(token)) {
             mAccountManager.setAuthToken(acc, Utils.TOKEN_TYPE, token);
         }
+        return acc;
     }
 
     /**

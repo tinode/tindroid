@@ -4,16 +4,28 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.util.Map;
+
+import co.tinode.tindroid.ContactsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
+import co.tinode.tindroid.RoundedImage;
+import co.tinode.tindroid.VCard;
+import co.tinode.tindroid.account.ContactsManager;
+import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Receive and handle (e.g. show) a push notification message.
@@ -21,6 +33,9 @@ import co.tinode.tindroid.R;
 public class FBaseMessagingService  extends FirebaseMessagingService {
 
     private static final String TAG = "FBaseMessagingService";
+
+    // Width and height of the large icon (avatar)
+    private static final int AVATAR_SIZE = 128;
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -32,41 +47,103 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
         // and data payloads are treated as notification messages. The Firebase console always sends notification
         // messages. For more see: https://firebase.google.com/docs/cloud-messaging/concept-options
 
-        // TODO: Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         Log.d(TAG, "From: " + remoteMessage.getFrom());
 
+        String title = null;
+        String body = null;
+        String topicName = null;
+        Bitmap avatar = null;
+
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
+            Map<String,String> data = remoteMessage.getData();
+            Log.d(TAG, "Message data payload: " + data);
+
+            // Fetch locally stored contacts
+            Subscription<VCard,String> sender = ContactsManager.getStoredSubscription(getContentResolver(),
+                    data.get("xfrom"));
+            topicName = data.get("topic");
+            Subscription<VCard,String> topic = ContactsManager.getStoredSubscription(getContentResolver(),
+                    topicName);
+
+            Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
+
+            if (tp == Topic.TopicType.P2P) {
+                // P2P message
+                if (sender != null && sender.pub != null) {
+                    title = sender.pub.fn;
+                    body = data.get("content");
+                    avatar = makeLargeIcon(sender.pub.getBitmap());
+                }
+
+            } else if (tp == Topic.TopicType.GRP) {
+                // Group message
+                if (topic != null && topic.pub != null && sender != null && sender.pub != null) {
+                    title = topic.pub.fn;
+                    body = sender.pub.fn + ": " + data.get("content");
+                    avatar = makeLargeIcon(sender.pub.getBitmap());
+                }
+            } else if (tp == Topic.TopicType.ME) {
+                // TODO(gene): implement invite notification
+                // Invite or a request to approve an application to join
+                title = "User Name";
+                body = "Invite: " + data.get("content");
+            } else if (tp == Topic.TopicType.FND) {
+                // TODO(gene): implement contact found notification
+                // Someone joined Tinode
+                title = "User Name has joined";
+                body = data.get("content");
+            }
+        } else if (remoteMessage.getNotification() != null) {
+            RemoteMessage.Notification data = remoteMessage.getNotification();
+            Log.d(TAG, "Message Notification Body: " + data.getBody());
+
+            topicName = null;
+            title = data.getTitle();
+            body = data.getBody();
         }
 
-        // Check if message contains a notification payload.
-        if (remoteMessage.getNotification() != null) {
-            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
-        }
-
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
+        showNotification(title, body, avatar, topicName);
     }
 
     /**
      * Create and show a simple notification containing the received FCM message.
      *
-     * @param messageBody FCM message body received.
+     * @param title message title.
+     * @param body message body.
+     * @param topic topic handle for action
      */
-    private void sendNotification(String messageBody) {
-        Intent intent = new Intent(this, MessageActivity.class);
+    private void showNotification(String title, String body, Bitmap avatar, String topic) {
+        Intent intent;
+        if (TextUtils.isEmpty(topic)) {
+            // Communication on an unknown topic
+            intent = new Intent(this, ContactsActivity.class);
+        } else {
+            // Communication on a known topic
+            intent = new Intent(this, MessageActivity.class);
+            intent.putExtra("topic", topic);
+        }
+
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        int icon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) ?
+            R.drawable.ic_logo_push : R.mipmap.ic_launcher;
+
+        int background = ContextCompat.getColor(this, R.color.colorNotificationBackground);
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                // TODO(gene): replace with a custom TN icon
-                .setSmallIcon(R.drawable.ic_chat)
-                .setContentTitle("X sent a message")
-                .setContentText(messageBody)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setSmallIcon(icon)
+                .setLargeIcon(avatar)
+                .setColor(background)
+                .setContentTitle(title)
+                .setContentText(body)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
@@ -75,5 +152,13 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+    }
+
+    private static Bitmap makeLargeIcon(Bitmap bmp) {
+        if (bmp != null) {
+            Bitmap scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
+            return new RoundedImage(scaled).getRoundedBitmap();
+        }
+        return null;
     }
 }
