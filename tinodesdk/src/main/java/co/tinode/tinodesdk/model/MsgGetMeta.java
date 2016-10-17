@@ -59,7 +59,7 @@ public class MsgGetMeta {
     public static class GetDesc {
         // ims = If modified since...
         public Date ims;
-        
+
         public GetDesc() {}
     }
 
