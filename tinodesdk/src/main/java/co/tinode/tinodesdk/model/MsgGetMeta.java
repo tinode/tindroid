@@ -1,6 +1,10 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.Date;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Topic metadata request.
@@ -51,19 +55,28 @@ public class MsgGetMeta {
         this.what = sb.toString().trim();
     }
 
+    @JsonInclude(NON_DEFAULT)
     public static class GetDesc {
         // ims = If modified since...
         public Date ims;
+        
+        public GetDesc() {}
     }
 
+    @JsonInclude(NON_DEFAULT)
     public static class GetSub {
         public Date ims;
         public Integer limit;
+
+        public GetSub() {}
     }
 
+    @JsonInclude(NON_DEFAULT)
     public static class GetData {
         public Integer since;
         public Integer before;
         public Integer limit;
+
+        public GetData() {}
     }
 }
