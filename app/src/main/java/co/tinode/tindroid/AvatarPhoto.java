@@ -11,14 +11,15 @@ import java.io.ByteArrayOutputStream;
  * Utility class: constructs a Bitmap from bytes/serializes to bytes
  */
 public class AvatarPhoto {
-    @JsonIgnore
-    protected Bitmap mImage = null;
-
     public byte[] data;
     public String type;
     public String uri;
 
-    public AvatarPhoto() {}
+    @JsonIgnore
+    protected Bitmap mImage = null;
+
+    public AvatarPhoto() {
+    }
 
     public AvatarPhoto(byte[] bits) {
         data = bits;

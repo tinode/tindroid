@@ -1,10 +1,5 @@
 package co.tinode.tindroid;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -12,20 +7,16 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import java.util.Locale;
 
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 
 /**
  * Shared resources.
  */
 public class InmemoryCache {
+    public static final String HOST_NAME = "10.0.2.2:6060"; // local
     private static final String TAG = "InmemoryCache";
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
-
     private static Tinode sTinode;
-
-    public static final String HOST_NAME = "10.0.2.2:6060"; // local
     //public static String sHost = "api.tinode.co"; // remote
-
     private static int sVisibleCount = 0;
 
     public static Tinode getTinode() {
@@ -45,11 +36,12 @@ public class InmemoryCache {
 
     /**
      * Keep counter of visible activities
+     *
      * @param visible true if some activity became visible
      * @return
      */
     public static int activityVisible(boolean visible) {
-         sVisibleCount += visible ? 1 : -1;
+        sVisibleCount += visible ? 1 : -1;
         Log.d(TAG, "Visible count: " + sVisibleCount);
         return sVisibleCount;
     }

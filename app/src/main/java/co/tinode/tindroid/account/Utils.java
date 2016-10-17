@@ -11,7 +11,6 @@ import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
 import android.support.v7.app.ActionBar;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -32,32 +31,26 @@ import co.tinode.tinodesdk.Topic;
  */
 
 public class Utils {
-    private static final String TAG = "Utils";
-
     // Account management constants
     public static final String TOKEN_TYPE = "co.tinode.token";
     public static final String ACCOUNT_TYPE = "co.tinode.account";
     public static final String SYNC_AUTHORITY = "com.android.contacts";
-
     public static final String IM_PROTOCOL = "Tinode";
-
     // Constants for accessing shared preferences
     public static final String PREFS_ACCOUNT_NAME = "pref_accountName";
     public static final String PREFS_HOST_NAME = "pref_hostName";
-
     public static final String TAG_LABEL_PHONE = "tel:";
     public static final String TAG_LABEL_EMAIL = "email:";
     public static final String TAG_LABEL_TINODE = "tinode:";
-
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */
     public static final String MIME_PROFILE =
             "vnd.android.cursor.item/vnd.tinode.profile";
-
     public static final String DATA_PID = Data.DATA1;
     public static final String DATA_SUMMARY = Data.DATA2;
     public static final String DATA_DETAIL = Data.DATA3;
+    private static final String TAG = "Utils";
 
     public static Account GetAccount(String accountName) {
         return new Account(accountName, ACCOUNT_TYPE);
@@ -148,94 +141,6 @@ public class Utils {
         return map;
     }
 
-    public static class ContactHolder {
-        List<String> emails;
-        List<String> phones;
-        List<String> ims;
-
-        public ContactHolder() {
-            emails = null;
-            phones = null;
-            ims = null;
-        }
-
-        public void putEmail(String email) {
-            if (emails == null) {
-                emails = new LinkedList<>();
-            }
-            emails.add(email);
-        }
-
-        public void putPhone(String phone) {
-            if (phones == null) {
-                phones = new LinkedList<>();
-            }
-            phones.add(phone);
-        }
-
-        public void putIm(String im) {
-            if (ims == null) {
-                ims = new LinkedList<>();
-            }
-            ims.add(im);
-        }
-
-        public int getEmailCount() {
-            return emails != null ? emails.size() : 0;
-        }
-        public int getPhoneCount() {
-            return phones != null ? phones.size() : 0;
-        }
-
-        public int getImCount() {
-            return ims != null ? ims.size() : 0;
-        }
-
-        public String getEmail() {
-            return emails != null ? emails.get(0) : null;
-        }
-        public String getPhone() {
-            return phones != null ? phones.get(0) : null;
-        }
-        public String getIm() {
-            return ims != null ? ims.get(0) : null;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder str = new StringBuilder();
-            Stringify(emails, str);
-            Stringify(phones, str);
-            Stringify(ims, str);
-            return str.toString();
-        }
-
-        private static void Stringify(List<String> vals, StringBuilder str) {
-            if (vals != null) {
-                for (String entry : vals) {
-                    str.append(entry);
-                    str.append(",");
-                }
-            }
-        }
-
-        public String bestContact() {
-            if (ims != null) {
-                return TAG_LABEL_TINODE + ims.get(0);
-            }
-
-            if (phones != null) {
-                return TAG_LABEL_PHONE + phones.get(0);
-            }
-
-            if (emails != null) {
-                return TAG_LABEL_EMAIL + emails.get(0);
-            }
-
-            return "";
-        }
-    }
-
     public static void setupToolbar(Context context, ActionBar toolbar, VCard pub, Topic.TopicType topicType) {
         if (pub != null) {
             toolbar.setTitle(" " + pub.fn);
@@ -264,6 +169,97 @@ public class Utils {
             }
         } else {
             toolbar.setTitle(R.string.app_name);
+        }
+    }
+
+    public static class ContactHolder {
+        List<String> emails;
+        List<String> phones;
+        List<String> ims;
+
+        public ContactHolder() {
+            emails = null;
+            phones = null;
+            ims = null;
+        }
+
+        private static void Stringify(List<String> vals, StringBuilder str) {
+            if (vals != null) {
+                for (String entry : vals) {
+                    str.append(entry);
+                    str.append(",");
+                }
+            }
+        }
+
+        public void putEmail(String email) {
+            if (emails == null) {
+                emails = new LinkedList<>();
+            }
+            emails.add(email);
+        }
+
+        public void putPhone(String phone) {
+            if (phones == null) {
+                phones = new LinkedList<>();
+            }
+            phones.add(phone);
+        }
+
+        public void putIm(String im) {
+            if (ims == null) {
+                ims = new LinkedList<>();
+            }
+            ims.add(im);
+        }
+
+        public int getEmailCount() {
+            return emails != null ? emails.size() : 0;
+        }
+
+        public int getPhoneCount() {
+            return phones != null ? phones.size() : 0;
+        }
+
+        public int getImCount() {
+            return ims != null ? ims.size() : 0;
+        }
+
+        public String getEmail() {
+            return emails != null ? emails.get(0) : null;
+        }
+
+        public String getPhone() {
+            return phones != null ? phones.get(0) : null;
+        }
+
+        public String getIm() {
+            return ims != null ? ims.get(0) : null;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder str = new StringBuilder();
+            Stringify(emails, str);
+            Stringify(phones, str);
+            Stringify(ims, str);
+            return str.toString();
+        }
+
+        public String bestContact() {
+            if (ims != null) {
+                return TAG_LABEL_TINODE + ims.get(0);
+            }
+
+            if (phones != null) {
+                return TAG_LABEL_PHONE + phones.get(0);
+            }
+
+            if (emails != null) {
+                return TAG_LABEL_EMAIL + emails.get(0);
+            }
+
+            return "";
         }
     }
 }

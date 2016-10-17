@@ -7,7 +7,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Note;
@@ -50,12 +49,12 @@ public class ContactsManager {
      * sync request.
      */
     public static synchronized Date updateContacts(Context context, Account account,
-                                                   Collection<Subscription<VCard,String>> rawContacts,
+                                                   Collection<Subscription<VCard, String>> rawContacts,
                                                    Date lastSyncMarker, long invisibleGroupId) {
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
-        for (final Subscription<VCard,String> rawContact : rawContacts) {
+        for (final Subscription<VCard, String> rawContact : rawContacts) {
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
             if (currentSyncMarker == null ||
@@ -117,7 +116,7 @@ public class ContactsManager {
      * @param batchOperation allow us to batch together multiple operations
      *                       into a single provider call
      */
-    public static void addContact(Context context, Account account, Subscription<VCard,String> rawContact,
+    public static void addContact(Context context, Account account, Subscription<VCard, String> rawContact,
                                   long invisibleGroupId, BatchOperation batchOperation) {
         if (rawContact.pub == null) {
             return;
@@ -178,7 +177,7 @@ public class ContactsManager {
      * @param batchOperation allow us to batch together multiple operations
      *                       into a single provider call
      */
-    public static void updateContact(Context context, ContentResolver resolver, Subscription<VCard,String> rawContact,
+    public static void updateContact(Context context, ContentResolver resolver, Subscription<VCard, String> rawContact,
                                      long rawContactId, BatchOperation batchOperation) {
         boolean existingCellPhone = false;
         boolean existingHomePhone = false;
@@ -188,7 +187,7 @@ public class ContactsManager {
         boolean existingNote = false;
 
         final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
-                        new String[]{String.valueOf(rawContactId)}, null);
+                new String[]{String.valueOf(rawContactId)}, null);
         final ContactOperations contactOp = ContactOperations.updateExistingContact(context,
                 rawContactId, batchOperation);
         if (c == null) {
@@ -329,11 +328,12 @@ public class ContactsManager {
         return -1;
     }
 
-    public static Subscription<VCard,String> getStoredSubscription(ContentResolver resolver, String uid) {
+    public static Subscription<VCard, String> getStoredSubscription(ContentResolver resolver, String uid) {
         long id = lookupRawContact(resolver, uid);
         Log.d(TAG, "getStoredSubscription for '" + uid + "' lookupRawContact returned " + id);
         return getRawContact(resolver, id);
     }
+
     /**
      * Return a Subscription object with data extracted from a contact stored
      * in the local contacts database.
@@ -347,7 +347,7 @@ public class ContactsManager {
      * @param rawContactId the unique ID for the local contact
      * @return a User object containing info on that contact
      */
-    private static Subscription<VCard,String> getRawContact(ContentResolver resolver, long rawContactId) {
+    private static Subscription<VCard, String> getRawContact(ContentResolver resolver, long rawContactId) {
         if (rawContactId <= 0) {
             return null;
         }
@@ -356,7 +356,7 @@ public class ContactsManager {
         String note = null;
 
         final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
-                        new String[]{String.valueOf(rawContactId)}, null);
+                new String[]{String.valueOf(rawContactId)}, null);
         if (c == null) {
             return null;
         }
@@ -397,7 +397,7 @@ public class ContactsManager {
             c.close();
         }
 
-        Subscription<VCard,String> rawContact = new Subscription<>();
+        Subscription<VCard, String> rawContact = new Subscription<>();
         rawContact.pub = vcard;
         rawContact.priv = note;
 
@@ -450,8 +450,8 @@ public class ContactsManager {
      * to the server, and for contacts that were deleted on the server and the
      * deletion was synced to the client.
      *
-     * @param context   the Authenticator Activity context
-     * @param uid   the unique Id for this rawContact in contacts provider, locally issued
+     * @param context the Authenticator Activity context
+     * @param uid     the unique Id for this rawContact in contacts provider, locally issued
      */
     private static void deleteContact(Context context, long uid, BatchOperation batchOperation) {
         batchOperation.add(ContactOperations.newDeleteCpo(
@@ -462,8 +462,8 @@ public class ContactsManager {
      * Returns the RawContact id for a sample SyncAdapter contact, or 0 if the
      * sample SyncAdapter user isn't found.
      *
-     * @param resolver        the content resolver to use
-     * @param uid the sample SyncAdapter user ID to lookup
+     * @param resolver the content resolver to use
+     * @param uid      the sample SyncAdapter user ID to lookup
      * @return the RawContact id, or 0 if not found
      */
     private static long lookupRawContact(ContentResolver resolver, String uid) {
@@ -493,7 +493,7 @@ public class ContactsManager {
      * if the sample SyncAdapter user isn't found.
      *
      * @param resolver a content resolver
-     * @param uid  server-issued unique iD of the contact
+     * @param uid      server-issued unique iD of the contact
      * @return the profile Data row id, or 0 if not found
      */
     private static long lookupProfile(ContentResolver resolver, String uid) {
@@ -522,14 +522,13 @@ public class ContactsManager {
      * ID.
      */
     final private static class ProfileQuery {
-        private ProfileQuery() {
-        }
-
         public final static String[] PROJECTION = new String[]{Data._ID};
         public final static int COLUMN_ID = 0;
         public static final String SELECTION =
                 Data.MIMETYPE + "='" + Utils.MIME_PROFILE + "' AND "
                         + Utils.DATA_PID + "=?";
+        private ProfileQuery() {
+        }
     }
 
     /**
@@ -537,9 +536,6 @@ public class ContactsManager {
      * ID.
      */
     final private static class UserIdQuery {
-        private UserIdQuery() {
-        }
-
         public final static String[] PROJECTION = new String[]{
                 RawContacts._ID,
                 RawContacts.CONTACT_ID
@@ -549,15 +545,14 @@ public class ContactsManager {
         public final static Uri CONTENT_URI = RawContacts.CONTENT_URI;
         public static final String SELECTION =
                 RawContacts.ACCOUNT_TYPE + "='" + Utils.ACCOUNT_TYPE + "' AND " + RawContacts.SOURCE_ID + "=?";
+        private UserIdQuery() {
+        }
     }
 
     /**
      * Constants for a query to get contact data for a given rawContactId
      */
     final private static class DataQuery {
-        private DataQuery() {
-        }
-
         public static final String[] PROJECTION =
                 new String[]{Data._ID, RawContacts.SOURCE_ID, Data.MIMETYPE, Data.DATA1,
                         Data.DATA2, Data.DATA3, Data.DATA15, Data.SYNC1};
@@ -581,5 +576,7 @@ public class ContactsManager {
         public static final int COLUMN_NOTE = COLUMN_DATA1;
         public static final int COLUMN_SYNC_DIRTY = COLUMN_SYNC1;
         public static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
+        private DataQuery() {
+        }
     }
 }

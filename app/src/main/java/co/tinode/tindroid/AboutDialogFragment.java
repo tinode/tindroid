@@ -21,11 +21,11 @@ public class AboutDialogFragment extends DialogFragment {
 
         builder.setView(inflater.inflate(R.layout.dialog_about, null))
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-                // do nothing
-            }
-        });
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        // do nothing
+                    }
+                });
 
         return builder.create();
     }

@@ -32,7 +32,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-import static co.tinode.tindroid.InmemoryCache.*;
+import static co.tinode.tindroid.InmemoryCache.getTinode;
 
 /**
  * View to display a single conversation
@@ -48,9 +48,20 @@ public class MessageActivity extends AppCompatActivity {
     private String mMessageText = null;
 
     private String mTopicName;
-    private Topic<VCard,String,String> mTopic;
+    private Topic<VCard, String, String> mTopic;
 
     private SQLiteDatabase mDb;
+
+    public static void initLoader(final int loaderId, final Bundle args,
+                                  final LoaderManager.LoaderCallbacks<Cursor> callbacks,
+                                  final LoaderManager loaderManager) {
+        final Loader<Cursor> loader = loaderManager.getLoader(loaderId);
+        if (loader != null && !loader.isReset()) {
+            loaderManager.restartLoader(loaderId, args, callbacks);
+        } else {
+            loaderManager.initLoader(loaderId, args, callbacks);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,85 +140,85 @@ public class MessageActivity extends AppCompatActivity {
                 initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
             }
         } else {
-            mTopic = new Topic<>(getTinode(), mTopicName, new Topic.Listener<VCard,String,String>() {
+            mTopic = new Topic<>(getTinode(), mTopicName, new Topic.Listener<VCard, String, String>() {
 
+                @Override
+                public void onSubscribe(int code, String text) {
+                    // Topic name may change after subscription, i.e. new -> grpXXX
+                    mTopicName = mTopic.getName();
+                    runOnUiThread(new Runnable() {
                         @Override
-                        public void onSubscribe(int code, String text) {
-                            // Topic name may change after subscription, i.e. new -> grpXXX
-                            mTopicName = mTopic.getName();
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // Must run on the UI thread because the adapter calls notifyDataSetChanged()
-                                    mMessagesAdapter.setTopic(mTopicName);
-                                }
-                            });
-                            initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+                        public void run() {
+                            // Must run on the UI thread because the adapter calls notifyDataSetChanged()
+                            mMessagesAdapter.setTopic(mTopicName);
                         }
+                    });
+                    initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+                }
 
+                @Override
+                public void onData(MsgServerData data) {
+                    MessageDb.insert(mDb, data);
+
+                    runOnUiThread(new Runnable() {
                         @Override
-                        public void onData(MsgServerData data) {
-                            MessageDb.insert(mDb, data);
+                        public void run() {
+                            mMessagesAdapter.notifyDataSetChanged();
+                        }
+                    });
+                }
 
+                @Override
+                public void onPres(MsgServerPres pres) {
+                    Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
+                }
+
+                @Override
+                public void onInfo(MsgServerInfo info) {
+                    switch (info.what) {
+                        case "read":
+                        case "recv":
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     mMessagesAdapter.notifyDataSetChanged();
                                 }
                             });
-                        }
+                            break;
+                        case "kp":
+                            // TODO(gene): show typing notification
+                            Log.d(TAG, mTopicName + ": typing...");
+                            break;
+                        default:
+                            break;
+                    }
+                }
 
+                @Override
+                public void onMeta(MsgServerMeta meta) {
+
+                }
+
+                @Override
+                public void onMetaSub(Subscription sub) {
+
+                }
+
+                @Override
+                public void onMetaDesc(final Description<VCard, String> desc) {
+                    runOnUiThread(new Runnable() {
                         @Override
-                        public void onPres(MsgServerPres pres) {
-                            Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
-                        }
-
-                        @Override
-                        public void onInfo(MsgServerInfo info) {
-                            switch (info.what) {
-                                case "read":
-                                case "recv":
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mMessagesAdapter.notifyDataSetChanged();
-                                        }
-                                    });
-                                    break;
-                                case "kp":
-                                    // TODO(gene): show typing notification
-                                    Log.d(TAG, mTopicName + ": typing...");
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-
-                        @Override
-                        public void onMeta(MsgServerMeta meta) {
-
-                        }
-
-                        @Override
-                        public void onMetaSub(Subscription sub) {
-
-                        }
-
-                        @Override
-                        public void onMetaDesc(final Description<VCard,String> desc) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Utils.setupToolbar(MessageActivity.this, toolbar, desc.pub, mTopic.getTopicType());
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onSubsUpdated() {
-
+                        public void run() {
+                            Utils.setupToolbar(MessageActivity.this, toolbar, desc.pub, mTopic.getTopicType());
                         }
                     });
+                }
+
+                @Override
+                public void onSubsUpdated() {
+
+                }
+            });
         }
 
         if (!mTopic.isAttached()) {
@@ -256,7 +267,9 @@ public class MessageActivity extends AppCompatActivity {
         recyclerViewMessages.scrollToPosition(0);
     }
 
-    public String getMessageText() { return mMessageText; }
+    public String getMessageText() {
+        return mMessageText;
+    }
 
     public void sendReadNotification() {
         if (mTopic != null) {
@@ -293,17 +306,6 @@ public class MessageActivity extends AppCompatActivity {
                     // TODO(gene): tell user that the message was not sent or save it for future delivery.
                 }
             }
-        }
-    }
-
-    public static void initLoader(final int loaderId, final Bundle args,
-                                  final LoaderManager.LoaderCallbacks<Cursor> callbacks,
-                                  final LoaderManager loaderManager) {
-        final Loader<Cursor> loader = loaderManager.getLoader(loaderId);
-        if (loader != null && !loader.isReset()) {
-            loaderManager.restartLoader(loaderId, args, callbacks);
-        } else {
-            loaderManager.initLoader(loaderId, args, callbacks);
         }
     }
 

@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
-import android.util.SparseArray;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,17 +21,16 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.util.Date;
 
-import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
  * Storage structure for messages:
- *  public String id -- not stored
- *  public String topic
- *  public String from;
- *  public Date ts;
- *  public int seq;
- *  public T content;
+ * public String id -- not stored
+ * public String topic
+ * public String from;
+ * public Date ts;
+ * public int seq;
+ * public T content;
  */
 public class MessageDb implements BaseColumns {
     /**
@@ -56,21 +54,9 @@ public class MessageDb implements BaseColumns {
     public static final String CONTENT_ITEM_TYPE =
             ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.tinode.im-msg";
     /**
-     * Path component for "message"-type resources..
-     */
-    private static final String PATH_MESSAGES = "messages";
-
-    /**
-     * URI for "messages" resource.
-     */
-    public static final Uri CONTENT_URI =
-            BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
-
-    /**
      * The name of the main table.
      */
     public static final String TABLE_NAME = "message";
-
     /**
      * The name of index: messages by topic and sequence.
      */
@@ -79,26 +65,35 @@ public class MessageDb implements BaseColumns {
      * Topic name, indexed
      */
     public static final String COLUMN_NAME_TOPIC = "topic";
-    private static final int COLUMN_IDX_TOPIC = 1;
     /**
      * UID as string, originator of the message. Cannot be named 'from'.
      */
     public static final String COLUMN_NAME_FROM = "sender";
-    private static final int COLUMN_IDX_FROM = 2;
     /**
      * MessageDb timestamp
      */
     public static final String COLUMN_NAME_TS = "ts";
-    private static final int COLUMN_IDX_TS = 3;
     /**
      * Server-issued sequence ID, integer, indexed
      */
     public static final String COLUMN_NAME_SEQ = "seq";
-    private static final int COLUMN_IDX_SEQ = 4;
     /**
      * Serialized message content
      */
     public static final String COLUMN_NAME_CONTENT = "content";
+    /**
+     * Path component for "message"-type resources..
+     */
+    private static final String PATH_MESSAGES = "messages";
+    /**
+     * URI for "messages" resource.
+     */
+    public static final Uri CONTENT_URI =
+            BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
+    private static final int COLUMN_IDX_TOPIC = 1;
+    private static final int COLUMN_IDX_FROM = 2;
+    private static final int COLUMN_IDX_TS = 3;
+    private static final int COLUMN_IDX_SEQ = 4;
     private static final int COLUMN_IDX_CONTENT = 5;
 
     /**
@@ -120,6 +115,7 @@ public class MessageDb implements BaseColumns {
 
     /**
      * Insert multiple messages into DB in one transaction.
+     *
      * @return number of inserted messages
      */
     public static long insert(SQLiteDatabase db, MsgServerData[] msgs) {
@@ -132,7 +128,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_TS + "," +
                     COLUMN_NAME_SEQ + "," +
                     COLUMN_NAME_CONTENT +
-                ") VALUES (?, ?, ?, ?, ?)";
+                    ") VALUES (?, ?, ?, ?, ?)";
 
             SQLiteStatement stmt = db.compileStatement(insert);
 
@@ -149,7 +145,7 @@ public class MessageDb implements BaseColumns {
                 stmt.bindBlob(5, serialize(msg.content));
                 stmt.executeInsert();
 
-                count ++;
+                count++;
             }
 
             db.setTransactionSuccessful(); // This commits the transaction if there were no exceptions
@@ -256,6 +252,7 @@ public class MessageDb implements BaseColumns {
 
     /**
      * Get locally-unique ID of the message (content of _ID field).
+     *
      * @param cursor Cursor to query
      * @return _id of the message at the current position.
      */
@@ -265,7 +262,8 @@ public class MessageDb implements BaseColumns {
 
     /**
      * Get maximum SeqId for the given table.
-     * @param db Database to use
+     *
+     * @param db    Database to use
      * @param topic Tinode topic to query.
      * @return maximum seq id.
      */

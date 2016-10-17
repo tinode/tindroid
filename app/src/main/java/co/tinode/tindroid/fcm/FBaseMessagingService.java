@@ -5,7 +5,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
@@ -30,12 +29,20 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Receive and handle (e.g. show) a push notification message.
  */
-public class FBaseMessagingService  extends FirebaseMessagingService {
+public class FBaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "FBaseMessagingService";
 
     // Width and height of the large icon (avatar)
     private static final int AVATAR_SIZE = 128;
+
+    private static Bitmap makeLargeIcon(Bitmap bmp) {
+        if (bmp != null) {
+            Bitmap scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
+            return new RoundedImage(scaled).getRoundedBitmap();
+        }
+        return null;
+    }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -57,14 +64,14 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Map<String,String> data = remoteMessage.getData();
+            Map<String, String> data = remoteMessage.getData();
             Log.d(TAG, "MessageDb data payload: " + data);
 
             // Fetch locally stored contacts
-            Subscription<VCard,String> sender = ContactsManager.getStoredSubscription(getContentResolver(),
+            Subscription<VCard, String> sender = ContactsManager.getStoredSubscription(getContentResolver(),
                     data.get("xfrom"));
             topicName = data.get("topic");
-            Subscription<VCard,String> topic = ContactsManager.getStoredSubscription(getContentResolver(),
+            Subscription<VCard, String> topic = ContactsManager.getStoredSubscription(getContentResolver(),
                     topicName);
 
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
@@ -111,7 +118,7 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
      * Create and show a simple notification containing the received FCM message.
      *
      * @param title message title.
-     * @param body message body.
+     * @param body  message body.
      * @param topic topic handle for action
      */
     private void showNotification(String title, String body, Bitmap avatar, String topic) {
@@ -129,9 +136,9 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
-        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         int icon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) ?
-            R.drawable.ic_logo_push : R.mipmap.ic_launcher;
+                R.drawable.ic_logo_push : R.mipmap.ic_launcher;
 
         int background = ContextCompat.getColor(this, R.color.colorNotificationBackground);
 
@@ -152,13 +159,5 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
-    }
-
-    private static Bitmap makeLargeIcon(Bitmap bmp) {
-        if (bmp != null) {
-            Bitmap scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
-            return new RoundedImage(scaled).getRoundedBitmap();
-        }
-        return null;
     }
 }

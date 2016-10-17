@@ -225,7 +225,7 @@ public class ContactsFragment extends ListFragment {
                 String address = holder.getIm();
                 if (address != null) {
                     Intent it = new Intent(getActivity(), MessageActivity.class);
-                    it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     it.putExtra("topic", address);
                     startActivity(it);
                     done = true;
@@ -286,6 +286,7 @@ public class ContactsFragment extends ListFragment {
             }
         }
     }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -548,6 +549,90 @@ public class ContactsFragment extends ListFragment {
     }
 
     /**
+     * This interface must be implemented by any activity that loads this fragment. When an
+     * interaction occurs, such as touching an item from the ListView, these callbacks will
+     * be invoked to communicate the event back to the activity.
+     */
+    public interface OnContactsInteractionListener {
+        /**
+         * Called when a contact is selected from the ListView.
+         *
+         * @param contactUri The contact Uri.
+         */
+        void onContactSelected(Uri contactUri);
+
+        /**
+         * Called when the ListView selection is cleared like when
+         * a contact search is taking place or is finishing.
+         */
+        void onSelectionCleared();
+    }
+
+    /**
+     * This interface defines constants for the Cursor and CursorLoader, based on constants defined
+     * in the {@link android.provider.ContactsContract.Contacts} class.
+     */
+    public interface ContactsQuery {
+
+        // An identifier for the base loader -- just contact names
+        int CORE_QUERY_ID = 1;
+        // ID of the loader for fetching emails, phones, and Tinode IM handles
+        int PHEMIM_QUERY_ID = 2;
+
+        // A content URI for the Contacts table
+        Uri CONTENT_URI = Contacts.CONTENT_URI;
+        // Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
+
+        // The search/filter query Uri
+        Uri FILTER_URI = Contacts.CONTENT_FILTER_URI;
+
+        // The selection clause for the CursorLoader query. The search criteria defined here
+        // restrict results to contacts that have a display name and are linked to visible groups.
+        // Notice that the search on the string provided by the user is implemented by appending
+        // the search string to CONTENT_FILTER_URI.
+        @SuppressLint("InlinedApi")
+        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
+
+        // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
+        // sort key allows for localization. In earlier versions. use the display name as the sort
+        // key.
+        String SORT_ORDER = Contacts.SORT_KEY_PRIMARY;
+
+        // The projection for the CursorLoader query. This is a list of columns that the Contacts
+        // Provider should return in the Cursor.
+        @SuppressLint("InlinedApi")
+        String[] PROJECTION = {
+
+                // The contact's row id
+                Contacts._ID,
+
+                // A pointer to the contact that is guaranteed to be more permanent than _ID. Given
+                // a contact's current _ID value and LOOKUP_KEY, the Contacts Provider can generate
+                // a "permanent" contact URI.
+                Contacts.LOOKUP_KEY,
+
+                // In platform version 3.0 and later, the Contacts table contains
+                // DISPLAY_NAME_PRIMARY, which either contains the contact's displayable name or
+                // some other useful identifier such as an email address.
+                Contacts.DISPLAY_NAME_PRIMARY,
+
+                // In Android 3.0 and later, the thumbnail image is pointed to by
+                // PHOTO_THUMBNAIL_URI.
+                Contacts.PHOTO_THUMBNAIL_URI,
+
+                // The sort order column for the returned Cursor, used by the AlphabetIndexer
+                SORT_ORDER,
+        };
+
+        // The query column numbers which map to each value in the projection
+        int ID = 0;
+        int LOOKUP_KEY = 1;
+        int DISPLAY_NAME = 2;
+        int PHOTO_THUMBNAIL_DATA = 3;
+        int SORT_KEY = 4;
+    }
+
+    /**
      * This is a subclass of CursorAdapter that supports binding Cursor columns to a view layout.
      * If those items are part of search results, the search string is marked by highlighting the
      * query text. An {@link AlphabetIndexer} is used to allow quicker navigation up and down the
@@ -644,7 +729,7 @@ public class ContactsFragment extends ListFragment {
             final ViewHolder holder = (ViewHolder) view.getTag();
 
             // ID of the contact
-            holder.contact_id =  cursor.getInt(ContactsQuery.ID);
+            holder.contact_id = cursor.getInt(ContactsQuery.ID);
 
             // Get the thumbnail image Uri from the current Cursor row.
             final String photoUri = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
@@ -780,90 +865,6 @@ public class ContactsFragment extends ListFragment {
             AppCompatImageView icon;
             View inviteButton;
         }
-    }
-
-    /**
-     * This interface must be implemented by any activity that loads this fragment. When an
-     * interaction occurs, such as touching an item from the ListView, these callbacks will
-     * be invoked to communicate the event back to the activity.
-     */
-    public interface OnContactsInteractionListener {
-        /**
-         * Called when a contact is selected from the ListView.
-         *
-         * @param contactUri The contact Uri.
-         */
-        void onContactSelected(Uri contactUri);
-
-        /**
-         * Called when the ListView selection is cleared like when
-         * a contact search is taking place or is finishing.
-         */
-        void onSelectionCleared();
-    }
-
-    /**
-     * This interface defines constants for the Cursor and CursorLoader, based on constants defined
-     * in the {@link android.provider.ContactsContract.Contacts} class.
-     */
-    public interface ContactsQuery {
-
-        // An identifier for the base loader -- just contact names
-        int CORE_QUERY_ID = 1;
-        // ID of the loader for fetching emails, phones, and Tinode IM handles
-        int PHEMIM_QUERY_ID = 2;
-
-        // A content URI for the Contacts table
-        Uri CONTENT_URI = Contacts.CONTENT_URI;
-        // Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
-
-        // The search/filter query Uri
-        Uri FILTER_URI = Contacts.CONTENT_FILTER_URI;
-
-        // The selection clause for the CursorLoader query. The search criteria defined here
-        // restrict results to contacts that have a display name and are linked to visible groups.
-        // Notice that the search on the string provided by the user is implemented by appending
-        // the search string to CONTENT_FILTER_URI.
-        @SuppressLint("InlinedApi")
-        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
-
-        // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
-        // sort key allows for localization. In earlier versions. use the display name as the sort
-        // key.
-        String SORT_ORDER = Contacts.SORT_KEY_PRIMARY;
-
-        // The projection for the CursorLoader query. This is a list of columns that the Contacts
-        // Provider should return in the Cursor.
-        @SuppressLint("InlinedApi")
-        String[] PROJECTION = {
-
-                // The contact's row id
-                Contacts._ID,
-
-                // A pointer to the contact that is guaranteed to be more permanent than _ID. Given
-                // a contact's current _ID value and LOOKUP_KEY, the Contacts Provider can generate
-                // a "permanent" contact URI.
-                Contacts.LOOKUP_KEY,
-
-                // In platform version 3.0 and later, the Contacts table contains
-                // DISPLAY_NAME_PRIMARY, which either contains the contact's displayable name or
-                // some other useful identifier such as an email address.
-                Contacts.DISPLAY_NAME_PRIMARY,
-
-                // In Android 3.0 and later, the thumbnail image is pointed to by
-                // PHOTO_THUMBNAIL_URI.
-                Contacts.PHOTO_THUMBNAIL_URI,
-
-                // The sort order column for the returned Cursor, used by the AlphabetIndexer
-                SORT_ORDER,
-        };
-
-        // The query column numbers which map to each value in the projection
-        int ID = 0;
-        int LOOKUP_KEY = 1;
-        int DISPLAY_NAME = 2;
-        int PHOTO_THUMBNAIL_DATA = 3;
-        int SORT_KEY = 4;
     }
 
     class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {

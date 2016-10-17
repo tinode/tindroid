@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -31,7 +30,7 @@ import co.tinode.tinodesdk.model.Subscription;
  * Display user's list of contacts
  */
 public class ContactsActivity extends AppCompatActivity implements
-        ContactsFragment.OnContactsInteractionListener  {
+        ContactsFragment.OnContactsInteractionListener {
 
     private static final String TAG = "ContactsActivity";
 
@@ -104,7 +103,7 @@ public class ContactsActivity extends AppCompatActivity implements
         final ActionBar toolbar = getSupportActionBar();
         Utils.setupToolbar(ContactsActivity.this, toolbar, null, Topic.TopicType.ME);
 
-        MeTopic<VCard,String,String> me = InmemoryCache.getTinode().getMeTopic();
+        MeTopic<VCard, String, String> me = InmemoryCache.getTinode().getMeTopic();
         if (me == null) {
             me = new MeTopic<>(InmemoryCache.getTinode(),
                     new Topic.Listener<VCard, String, Invitation<String>>() {
@@ -179,8 +178,8 @@ public class ContactsActivity extends AppCompatActivity implements
         return mContactsAdapter;
     }
 
-    protected Subscription<VCard,String> getContactByPos(int pos) {
-        MeTopic<VCard,String,String> me = InmemoryCache.getTinode().getMeTopic();
+    protected Subscription<VCard, String> getContactByPos(int pos) {
+        MeTopic<VCard, String, String> me = InmemoryCache.getTinode().getMeTopic();
         return me.getSubscription(mContactIndex.get(pos));
     }
 
@@ -188,6 +187,13 @@ public class ContactsActivity extends AppCompatActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         // Enable options menu by returnning true
         return true;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean focus) {
+        super.onWindowFocusChanged(focus);
+
+        InmemoryCache.activityVisible(focus);
     }
 
     public class PagerAdapter extends FragmentStatePagerAdapter {
@@ -222,12 +228,5 @@ public class ContactsActivity extends AppCompatActivity implements
         public int getCount() {
             return mNumOfTabs;
         }
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean focus) {
-        super.onWindowFocusChanged(focus);
-
-        InmemoryCache.activityVisible(focus);
     }
 }

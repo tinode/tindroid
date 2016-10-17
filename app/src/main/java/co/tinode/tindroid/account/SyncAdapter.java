@@ -13,8 +13,6 @@ import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
@@ -129,7 +127,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
                 // Fetch the list of updated contacts. Group subscriptions will be stored in
                 // the address book but as invisible contacts (members of invisible group)
-                Collection<Subscription<VCard,String>> updated =
+                Collection<Subscription<VCard, String>> updated =
                         me.getFilteredSubscriptions(sub.ims, Topic.TopicType.USER);
                 Date upd = ContactsManager.updateContacts(mContext, account, updated, sub.ims, invisibleGroupId);
                 setServerSyncMarker(account, upd);

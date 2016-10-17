@@ -46,9 +46,9 @@ public class ContactOperations {
      * Returns an instance of ContactOperations instance for adding new contact
      * to the platform contacts provider.
      *
-     * @param context         the Authenticator Activity context
-     * @param uid             the unique id of the contact
-     * @param accountName     the username for the SyncAdapter account
+     * @param context     the Authenticator Activity context
+     * @param uid         the unique id of the contact
+     * @param accountName the username for the SyncAdapter account
      * @return instance of ContactOperations
      */
     public static ContactOperations createNewContact(Context context, String uid,
@@ -61,8 +61,8 @@ public class ContactOperations {
      * Returns an instance of ContactOperations for updating existing contact in
      * the platform contacts provider.
      *
-     * @param context         the Authenticator Activity context
-     * @param rawContactId    the unique Id of the existing rawContact
+     * @param context      the Authenticator Activity context
+     * @param rawContactId the unique Id of the existing rawContact
      * @return instance of ContactOperations
      */
     public static ContactOperations updateExistingContact(Context context, long rawContactId,
@@ -188,6 +188,7 @@ public class ContactOperations {
 
     /**
      * Add avatar to profile
+     *
      * @param avatar avatar image serialized into byte array
      * @return instance of ContactOperations
      */

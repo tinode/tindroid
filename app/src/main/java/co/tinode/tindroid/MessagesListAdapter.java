@@ -32,12 +32,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     private static final int SINGLE_PADDING = 10;
     // Vertical padding between two messages from the same sender
     private static final int TRAIN_PADDING = 2;
-
-    // Grouping messages from the same sender (controls rounding of borders)
-    private enum DisplayAs {SINGLE, FIRST, MIDDLE, LAST}
-
-    private Cursor mCursor;
-
     // Material colors, shade #200.
     // TODO(gene): maybe move to resource file
     private static final colorizer[] sColorizer = {
@@ -50,13 +44,32 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             new colorizer(0xffeeeeee, 0xff212121), new colorizer(0xff80deea, 0xff212121),
             new colorizer(0xffe6ee9c, 0xff212121), new colorizer(0xffce93d8, 0xff212121)
     };
-
+    private Cursor mCursor;
     private String mTopicName;
-    private Topic<?,?,String> mTopic;
+    private Topic<?, ?, String> mTopic;
 
     public MessagesListAdapter(Context context) {
         super();
         setHasStableIds(true);
+    }
+
+    private static String shortDate(Date date) {
+        if (date != null) {
+            Calendar now = Calendar.getInstance();
+            Calendar then = Calendar.getInstance();
+            then.setTime(date);
+
+            if (then.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
+                if (then.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
+                        then.get(Calendar.DATE) == now.get(Calendar.DATE)) {
+                    return DateFormat.getTimeInstance(DateFormat.SHORT).format(then.getTime());
+                } else {
+                    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(then.getTime());
+                }
+            }
+            return DateFormat.getInstance().format(then.getTime());
+        }
+        return "null date";
     }
 
     public void setTopic(String topicName) {
@@ -166,30 +179,16 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return mCursor != null ? mCursor.getCount() : 0;
     }
 
-    private static String shortDate(Date date) {
-        if (date != null) {
-            Calendar now = Calendar.getInstance();
-            Calendar then = Calendar.getInstance();
-            then.setTime(date);
-
-            if (then.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
-                if (then.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
-                        then.get(Calendar.DATE) == now.get(Calendar.DATE)) {
-                    return DateFormat.getTimeInstance(DateFormat.SHORT).format(then.getTime());
-                } else {
-                    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(then.getTime());
-                }
-            }
-            return DateFormat.getInstance().format(then.getTime());
-        }
-        return "null date";
-    }
-
     void swapCursor(Cursor cursor) {
         Log.d(TAG, "MessagesListAdapter.swapCursor");
         mCursor = cursor;
 
         notifyDataSetChanged();
+    }
+
+    // Grouping messages from the same sender (controls rounding of borders)
+    private enum DisplayAs {
+        SINGLE, FIRST, MIDDLE, LAST
     }
 
     private static class colorizer {

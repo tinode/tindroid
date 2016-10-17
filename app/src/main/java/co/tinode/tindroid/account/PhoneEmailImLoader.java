@@ -4,10 +4,7 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.provider.ContactsContract;
 import android.support.v4.content.AsyncTaskLoader;
-import android.util.Log;
 import android.util.SparseArray;
-
-import java.util.Map;
 
 /**
  * Loader for phone numbers, emails and tinode im handles.

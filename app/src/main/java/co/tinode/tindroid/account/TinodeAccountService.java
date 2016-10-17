@@ -13,9 +13,7 @@ import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
 
-import co.tinode.tindroid.InmemoryCache;
 import co.tinode.tindroid.LoginActivity;
-import co.tinode.tinodesdk.Tinode;
 
 /**
  * Authenticator service: make Tinode login work nicely with the Android authentication system.
