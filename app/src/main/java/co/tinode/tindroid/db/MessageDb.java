@@ -5,9 +5,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDoneException;
+import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +34,7 @@ import co.tinode.tinodesdk.model.MsgServerData;
  *  public int seq;
  *  public T content;
  */
-public class Message implements BaseColumns {
+public class MessageDb implements BaseColumns {
     /**
      * Content provider authority.
      */
@@ -78,12 +81,12 @@ public class Message implements BaseColumns {
     public static final String COLUMN_NAME_TOPIC = "topic";
     private static final int COLUMN_IDX_TOPIC = 1;
     /**
-     * UID as string, originator of the message
+     * UID as string, originator of the message. Cannot be named 'from'.
      */
-    public static final String COLUMN_NAME_FROM = "from";
+    public static final String COLUMN_NAME_FROM = "sender";
     private static final int COLUMN_IDX_FROM = 2;
     /**
-     * Message timestamp
+     * MessageDb timestamp
      */
     public static final String COLUMN_NAME_TS = "ts";
     private static final int COLUMN_IDX_TS = 3;
@@ -113,6 +116,51 @@ public class Message implements BaseColumns {
         values.put(COLUMN_NAME_CONTENT, serialize(msg.content));
 
         return db.insert(TABLE_NAME, null, values);
+    }
+
+    /**
+     * Insert multiple messages into DB in one transaction.
+     * @return number of inserted messages
+     */
+    public static long insert(SQLiteDatabase db, MsgServerData[] msgs) {
+        int count = 0;
+        try {
+            db.beginTransaction();
+            String insert = "INSERT INTO " + TABLE_NAME + "(" +
+                    COLUMN_NAME_TOPIC + "," +
+                    COLUMN_NAME_FROM + "," +
+                    COLUMN_NAME_TS + "," +
+                    COLUMN_NAME_SEQ + "," +
+                    COLUMN_NAME_CONTENT +
+                ") VALUES (?, ?, ?, ?, ?)";
+
+            SQLiteStatement stmt = db.compileStatement(insert);
+
+            for (MsgServerData msg : msgs) {
+                stmt.clearBindings();
+                stmt.bindString(1, msg.topic);
+                if (msg.from != null) {
+                    stmt.bindString(2, msg.from);
+                } else {
+                    stmt.bindNull(2);
+                }
+                stmt.bindLong(3, msg.ts.getTime());
+                stmt.bindLong(4, msg.seq);
+                stmt.bindBlob(5, serialize(msg.content));
+                stmt.executeInsert();
+
+                count ++;
+            }
+
+            db.setTransactionSuccessful(); // This commits the transaction if there were no exceptions
+
+        } catch (Exception e) {
+            Log.w("Exception:", e);
+            count = -1;
+        } finally {
+            db.endTransaction();
+        }
+        return count;
     }
 
     /**
@@ -149,23 +197,8 @@ public class Message implements BaseColumns {
                 selectionArgs,  // The values for the WHERE clause
                 null,           // no GROUP BY
                 null,           // no HAVING
-                sortOrder       // sort by seq, ASC or DESC
+                sortOrder       // sort by seq, ASC
         );
-    }
-
-    /**
-     * Read a single message from the provided cursor.
-     *
-     * @param c Cursor to read from
-     */
-    public static MsgServerData readMessage(Cursor c) {
-        MsgServerData msg = new MsgServerData();
-        msg.topic = c.getString(COLUMN_IDX_TOPIC);
-        msg.from = c.getString(COLUMN_IDX_FROM);
-        msg.ts = new Date(c.getLong(COLUMN_IDX_TS));
-        msg.seq = c.getInt(COLUMN_IDX_SEQ);
-        msg.content = deserialize(c.getBlob(COLUMN_IDX_CONTENT));
-        return msg;
     }
 
     /**
@@ -209,6 +242,47 @@ public class Message implements BaseColumns {
         return db.delete(TABLE_NAME, selection, selectionArgs);
     }
 
+    public static <T> MsgServerData<T> readMessage(Cursor cursor) {
+        MsgServerData<T> msg = new MsgServerData<>();
+
+        msg.topic = cursor.getString(COLUMN_IDX_TOPIC);
+        msg.from = cursor.getString(COLUMN_IDX_FROM);
+        msg.seq = cursor.getInt(COLUMN_IDX_SEQ);
+        msg.ts = new Date(cursor.getLong(COLUMN_IDX_TS));
+        msg.content = deserialize(cursor.getBlob(COLUMN_IDX_CONTENT));
+
+        return msg;
+    }
+
+    /**
+     * Get locally-unique ID of the message (content of _ID field).
+     * @param cursor Cursor to query
+     * @return _id of the message at the current position.
+     */
+    public static long getLocalId(Cursor cursor) {
+        return cursor.getLong(0);
+    }
+
+    /**
+     * Get maximum SeqId for the given table.
+     * @param db Database to use
+     * @param topic Tinode topic to query.
+     * @return maximum seq id.
+     */
+    public static long getMaxSeq(SQLiteDatabase db, String topic) {
+        SQLiteStatement stmt = db.compileStatement(
+                "SELECT MAX(" + COLUMN_NAME_SEQ + ")" +
+                        " FROM " + TABLE_NAME +
+                        " WHERE " + COLUMN_NAME_TOPIC + "='" + topic + "'");
+        long count;
+        try {
+            count = stmt.simpleQueryForLong();
+        } catch (SQLiteDoneException ignored) {
+            count = 0;
+        }
+        return count;
+    }
+
     private static byte[] serialize(Object obj) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutput objout = null;
@@ -230,13 +304,13 @@ public class Message implements BaseColumns {
         return null;
     }
 
-    private static Object deserialize(byte[] bytes) {
+    private static <T> T deserialize(byte[] bytes) {
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         ObjectInput objin = null;
         try {
             objin = new ObjectInputStream(bais);
-            return objin.readObject();
-        } catch (IOException | ClassNotFoundException ignored) {
+            return (T) objin.readObject();
+        } catch (IOException | ClassNotFoundException | ClassCastException ignored) {
         } finally {
             try {
                 bais.close();
@@ -250,14 +324,14 @@ public class Message implements BaseColumns {
     }
 
     public static class Loader extends AsyncTaskLoader<Cursor> {
-        private SQLiteDatabase db;
+        private Cursor mCursor;
+
         private String topic;
         private int from;
         private int to;
 
         public Loader(Context context, String topic, int from, int to) {
             super(context);
-            this.db = new BaseDb(context).getReadableDatabase();
             this.topic = topic;
             this.from = from;
             this.to = to;
@@ -265,7 +339,76 @@ public class Message implements BaseColumns {
 
         @Override
         public Cursor loadInBackground() {
+            SQLiteDatabase db = BaseDb.getInstance(getContext()).getReadableDatabase();
             return query(db, topic, from, to);
+        }
+
+        /* Runs on the UI thread */
+        @Override
+        public void deliverResult(Cursor cursor) {
+            if (isReset()) {
+                // An async query came in while the loader is stopped
+                if (cursor != null) {
+                    cursor.close();
+                }
+                return;
+            }
+            Cursor oldCursor = mCursor;
+            mCursor = cursor;
+
+            if (isStarted()) {
+                super.deliverResult(cursor);
+            }
+
+            if (oldCursor != null && oldCursor != cursor && !oldCursor.isClosed()) {
+                oldCursor.close();
+            }
+        }
+
+        /**
+         * Starts an asynchronous load of the contacts list data. When the result is ready the callbacks
+         * will be called on the UI thread. If a previous load has been completed and is still valid
+         * the result may be passed to the callbacks immediately.
+         * <p/>
+         * Must be called from the UI thread
+         */
+        @Override
+        protected void onStartLoading() {
+            if (mCursor != null) {
+                deliverResult(mCursor);
+            }
+            if (takeContentChanged() || mCursor == null) {
+                forceLoad();
+            }
+        }
+
+        /**
+         * Must be called from the UI thread
+         */
+        @Override
+        protected void onStopLoading() {
+            // Attempt to cancel the current load task if possible.
+            cancelLoad();
+        }
+
+        @Override
+        public void onCanceled(Cursor cursor) {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+        }
+
+        @Override
+        protected void onReset() {
+            super.onReset();
+
+            // Ensure the loader is stopped
+            onStopLoading();
+
+            if (mCursor != null && !mCursor.isClosed()) {
+                mCursor.close();
+            }
+            mCursor = null;
         }
     }
 }

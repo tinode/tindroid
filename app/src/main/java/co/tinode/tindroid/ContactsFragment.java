@@ -133,9 +133,6 @@ public class ContactsFragment extends ListFragment {
         // corresponding resource size-qualified directory.
         // mIsTwoPaneLayout = getResources().getBoolean(R.bool.has_two_panes);
 
-        // Let this fragment contribute menu items
-        setHasOptionsMenu(true);
-
         if (savedInstanceState != null) {
             // If we're restoring state after this fragment was recreated then
             // retrieve previous search term and previously selected search
@@ -176,6 +173,8 @@ public class ContactsFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        // Let this fragment contribute menu items
+        setHasOptionsMenu(true);
         // Inflate the list fragment layout
         return inflater.inflate(R.layout.fragment_contacts, container, false);
     }

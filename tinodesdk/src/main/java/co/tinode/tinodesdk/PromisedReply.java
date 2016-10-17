@@ -218,7 +218,7 @@ public class PromisedReply<T> {
 
     public void reject(final Exception err) throws Exception {
         synchronized (this) {
-            Log.d(TAG, "Rejecting: " + err);
+            Log.d(TAG, "Rejecting", err);
             if (mState == State.WAITING) {
                 mState = State.REJECTED;
 

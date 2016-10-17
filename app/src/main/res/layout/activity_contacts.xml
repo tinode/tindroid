@@ -9,11 +9,9 @@
 
     <include layout="@layout/toolbar_with_tabs" />
 
-    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    <FrameLayout
         android:id="@+id/contentFragment"
-        android:name="co.tinode.tindroid.ChatListFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:layout="@layout/fragment_chat_list" />
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

@@ -2,27 +2,30 @@ package co.tinode.tindroid;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
-import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.ServerMessage;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Fragment handling message display and message sending.
  */
 public class MessagesFragment extends Fragment {
+    private static final String TAG = "MessageFragment";
+
+    // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
+    // private static final int RECV_DELAY = 500;
+    private static final int READ_DELAY = 1000;
+
+    private Timer mNoteTimer = null;
 
     public MessagesFragment() {
     }
@@ -38,48 +41,70 @@ public class MessagesFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
+        final MessageActivity activity = (MessageActivity) getActivity();
         // Send message on button click
         getActivity().findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMessage();
+                activity.sendMessage();
             }
         });
 
+        EditText editor = (EditText) activity.findViewById(R.id.editMessage);
         // Send message on Enter
-        ((EditText) getActivity().findViewById(R.id.editMessage)).setOnEditorActionListener(
+        editor.setOnEditorActionListener(
                 new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                sendMessage();
+                activity.sendMessage();
                 return true;
             }
         });
+
+        // Send notification on key presses
+        editor.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                activity.sendKeyPress();
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
     }
 
-    @SuppressWarnings("unchecked")
-    void sendMessage() {
-        Topic<?,?,String> topic = InmemoryCache.getTinode()
-                .getTopic(((MessageActivity)getActivity()).getTopicName());
-        String message = ((TextView) getActivity().findViewById(R.id.editMessage)).getText().toString().trim();
-        if (!message.equals("")) {
-            try {
-                topic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // Clear text from the input field
-                                ((TextView) getActivity().findViewById(R.id.editMessage)).setText("");
-                            }
-                        });
-                        return null;
-                    }
-                }, null);
-            } catch (Exception unused) {
-                // TODO(gene): tell user that the message was not sent or save it for future delivery.
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        final MessageActivity activity = (MessageActivity) getActivity();
+
+        String messageToSend = activity.getMessageText();
+        ((TextView) activity.findViewById(R.id.editMessage))
+                .setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+
+        // Check periodically if all messages were read;
+        mNoteTimer = new Timer();
+        mNoteTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                activity.sendReadNotification();
             }
-        }
+        }, READ_DELAY, READ_DELAY);
+
+        //activity.scrollToHead();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // Stop reporting read messages
+        mNoteTimer.cancel();
+        mNoteTimer = null;
     }
 }

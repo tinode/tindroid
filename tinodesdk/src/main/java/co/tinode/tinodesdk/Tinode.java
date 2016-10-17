@@ -55,6 +55,10 @@ public class Tinode {
     protected static final String TOPIC_NEW = "new";
     protected static final String TOPIC_ME = "me";
 
+    // Delay in nanoseconds between sending two key press notifications on the
+    // same topic.
+    protected static final long KEY_PRESS_DELAY = 3000000000L;
+
     private static final String PROTOVERSION = "0";
     private static final String VERSION = "0.8";
     private static final String LIBRARY = "tindroid/" + VERSION;
@@ -828,7 +832,7 @@ public class Tinode {
      * @param name name of the topic to find
      * @return subscribed topic or null if no such topic was found
      */
-    public Topic getTopic(String name) {
+    public <Pu,Pr,T> Topic<Pu,Pr,T> getTopic(String name) {
         if (name == null) {
             return null;
         }

@@ -4,6 +4,9 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
+    <View android:layout_height="@dimen/spacer_text"
+          android:layout_width="match_parent"/>
+
     <TextView
     android:paddingTop="@dimen/activity_vertical_margin"
     android:layout_width="wrap_content"
@@ -18,11 +21,13 @@
         android:layout_gravity="center"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/app_version"/>
+
     <ImageView
         android:layout_width="128sp"
         android:layout_height="128sp"
         android:layout_gravity="center"
-        android:src="@drawable/logo_src"/>
+        android:src="@drawable/logo_src"
+        android:contentDescription="@string/app_name"/>
 
     <TextView
         android:layout_width="wrap_content"

@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -29,7 +30,6 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Display user's list of contacts
  */
-
 public class ContactsActivity extends AppCompatActivity implements
         ContactsFragment.OnContactsInteractionListener  {
 
@@ -42,32 +42,33 @@ public class ContactsActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_contacts);
+        if (savedInstanceState == null) {
+            setContentView(R.layout.activity_contacts);
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+            TabLayout tabLayout = (TabLayout) findViewById(R.id.tabsContacts);
+            tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabsContacts);
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+            final ViewPager viewPager = (ViewPager) findViewById(R.id.tabPager);
+            final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount());
+            viewPager.setAdapter(adapter);
+            viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+            tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                @Override
+                public void onTabSelected(TabLayout.Tab tab) {
+                    viewPager.setCurrentItem(tab.getPosition());
+                }
 
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.tabPager);
-        final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount());
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
-            }
+                @Override
+                public void onTabUnselected(TabLayout.Tab tab) {
+                }
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
+                @Override
+                public void onTabReselected(TabLayout.Tab tab) {
+                }
+            });
+        }
 
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         mContactIndex = new ArrayList<>();
         mContactsAdapter = new ChatListAdapter(this, mContactIndex);
@@ -100,7 +101,7 @@ public class ContactsActivity extends AppCompatActivity implements
     public void onResume() {
         super.onResume();
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final ActionBar toolbar = getSupportActionBar();
         Utils.setupToolbar(ContactsActivity.this, toolbar, null, Topic.TopicType.ME);
 
         MeTopic<VCard,String,String> me = InmemoryCache.getTinode().getMeTopic();
@@ -185,13 +186,14 @@ public class ContactsActivity extends AppCompatActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_chat_list, menu);
+        // Enable options menu by returnning true
         return true;
     }
 
     public class PagerAdapter extends FragmentStatePagerAdapter {
         int mNumOfTabs;
+        Fragment mChatList;
+        Fragment mContacts;
 
         public PagerAdapter(FragmentManager fm, int numTabs) {
             super(fm);
@@ -200,12 +202,17 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public Fragment getItem(int position) {
-
             switch (position) {
                 case 0:
-                    return new ChatListFragment();
+                    if (mChatList == null) {
+                        mChatList = new ChatListFragment();
+                    }
+                    return mChatList;
                 case 1:
-                    return new ContactsFragment();
+                    if (mContacts == null) {
+                        mContacts = new ContactsFragment();
+                    }
+                    return mContacts;
                 default:
                     return null;
             }

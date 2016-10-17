@@ -2,27 +2,34 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 import static co.tinode.tindroid.InmemoryCache.*;
@@ -34,22 +41,21 @@ public class MessageActivity extends AppCompatActivity {
 
     private static final String TAG = "MessageActivity";
 
-    // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
-    // private static final int RECV_DELAY = 500;
-    private static final int READ_DELAY = 1000;
+    private static final int MESSAGES_QUERY_ID = 100;
+
+    private MessagesListAdapter mMessagesAdapter;
+    private MessageLoaderCallbacks mLoaderCallbacks;
+    private String mMessageText = null;
 
     private String mTopicName;
     private Topic<VCard,String,String> mTopic;
-    private MessagesListAdapter mMessagesAdapter;
 
-    private Timer mNoteTimer = null;
+    private SQLiteDatabase mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages);
-
-        mMessagesAdapter = new MessagesListAdapter(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -64,16 +70,27 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-        ListView listViewMessages = (ListView) findViewById(R.id.messages_container);
-        listViewMessages.setAdapter(mMessagesAdapter);
+        mDb = BaseDb.getInstance(this).getWritableDatabase();
+
+        LinearLayoutManager lm = new LinearLayoutManager(this);
+        lm.setReverseLayout(true);
+        lm.setStackFromEnd(true);
+
+        RecyclerView recyclerViewMessages = (RecyclerView) findViewById(R.id.messages_container);
+        recyclerViewMessages.setLayoutManager(lm);
+
+        mLoaderCallbacks = new MessageLoaderCallbacks();
+        mMessagesAdapter = new MessagesListAdapter(this);
+        recyclerViewMessages.setAdapter(mMessagesAdapter);
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final ActionBar toolbar = getSupportActionBar();
         final Intent intent = getIntent();
+        final LoaderManager loaderManager = getSupportLoaderManager();
 
         // Check if the activity was launched by internally-generated intent
         String oldTopicName = mTopicName;
@@ -100,48 +117,44 @@ public class MessageActivity extends AppCompatActivity {
             return;
         }
 
-        String messageToSend = intent.getStringExtra(Intent.EXTRA_TEXT);
-        ((TextView) findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+        mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
         mTopic = getTinode().getTopic(mTopicName);
 
-        // Check periodically if all messages were read;
-        mNoteTimer = new Timer();
-        mNoteTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (mTopic != null) {
-                    // Topic will not send an update if there is no change
-                    mTopic.noteRead();
-                }
-            }
-        }, READ_DELAY, READ_DELAY);
 
         if (mTopic != null) {
             Utils.setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
-                mMessagesAdapter.changeTopic(mTopicName);
+                mMessagesAdapter.setTopic(mTopicName);
+                initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
             }
         } else {
-            mTopic = new Topic<>(getTinode(), mTopicName,
-                    new Topic.Listener<VCard,String,String>() {
+            mTopic = new Topic<>(getTinode(), mTopicName, new Topic.Listener<VCard,String,String>() {
 
                         @Override
                         public void onSubscribe(int code, String text) {
                             // Topic name may change after subscription, i.e. new -> grpXXX
                             mTopicName = mTopic.getName();
-                            mMessagesAdapter.changeTopic(mTopic.getName());
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Must run on the UI thread because the adapter calls notifyDataSetChanged()
+                                    mMessagesAdapter.setTopic(mTopicName);
+                                }
+                            });
+                            initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
                         }
 
                         @Override
                         public void onData(MsgServerData data) {
+                            MessageDb.insert(mDb, data);
 
                             runOnUiThread(new Runnable() {
-                                              @Override
-                                              public void run() {
-                                                  mMessagesAdapter.notifyDataSetChanged();
-                                              }
-                                          });
+                                @Override
+                                public void run() {
+                                    mMessagesAdapter.notifyDataSetChanged();
+                                }
+                            });
                         }
 
                         @Override
@@ -163,6 +176,7 @@ public class MessageActivity extends AppCompatActivity {
                                     break;
                                 case "kp":
                                     // TODO(gene): show typing notification
+                                    Log.d(TAG, mTopicName + ": typing...");
                                     break;
                                 default:
                                     break;
@@ -198,7 +212,13 @@ public class MessageActivity extends AppCompatActivity {
 
         if (!mTopic.isAttached()) {
             try {
-                mTopic.subscribe();
+                MsgGetMeta.GetData getData = new MsgGetMeta.GetData();
+                // GetData.since is inclusive, so adding 1 to skip the item we already have.
+                getData.since = (int) MessageDb.getMaxSeq(mDb, mTopicName) + 1;
+                mTopic.subscribe(null, new MsgGetMeta(
+                        new MsgGetMeta.GetDesc(),
+                        new MsgGetMeta.GetSub(),
+                        getData));
             } catch (Exception ex) {
                 Log.e(TAG, "something went wrong", ex);
             }
@@ -208,10 +228,6 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
-
-        // Stop reporting read messages
-        mNoteTimer.cancel();
-        mNoteTimer = null;
 
         // Deactivate current topic
         if (mTopic.isAttached()) {
@@ -235,11 +251,89 @@ public class MessageActivity extends AppCompatActivity {
         setIntent(intent);
     }
 
-    public String getTopicName() {
-        return mTopicName;
+    public void scrollToHead0() {
+        RecyclerView recyclerViewMessages = (RecyclerView) findViewById(R.id.messages_container);
+        recyclerViewMessages.scrollToPosition(0);
     }
 
-    public MessagesListAdapter getMessagesAdapter() {
-        return mMessagesAdapter;
+    public String getMessageText() { return mMessageText; }
+
+    public void sendReadNotification() {
+        if (mTopic != null) {
+            mTopic.noteRead();
+        }
+    }
+
+    public void sendKeyPress() {
+        if (mTopic != null) {
+            mTopic.noteKeyPress();
+        }
+    }
+
+    public void sendMessage() {
+        if (mTopic != null) {
+            final TextView inputField = (TextView) findViewById(R.id.editMessage);
+            String message = inputField.getText().toString().trim();
+            if (!message.equals("")) {
+                try {
+                    mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Clear text from the input field
+                                    inputField.setText("");
+                                }
+                            });
+                            return null;
+                        }
+                    }, null);
+                } catch (Exception unused) {
+                    // TODO(gene): tell user that the message was not sent or save it for future delivery.
+                }
+            }
+        }
+    }
+
+    public static void initLoader(final int loaderId, final Bundle args,
+                                  final LoaderManager.LoaderCallbacks<Cursor> callbacks,
+                                  final LoaderManager loaderManager) {
+        final Loader<Cursor> loader = loaderManager.getLoader(loaderId);
+        if (loader != null && !loader.isReset()) {
+            loaderManager.restartLoader(loaderId, args, callbacks);
+        } else {
+            loaderManager.initLoader(loaderId, args, callbacks);
+        }
+    }
+
+    class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            if (id == MESSAGES_QUERY_ID) {
+                Log.d(TAG, "MessageLoaderCallbacks.onCreateLoader");
+                return new MessageDb.Loader(MessageActivity.this, mTopicName, -1, -1);
+            }
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader,
+                                   Cursor cursor) {
+            Log.d(TAG, "MessageLoaderCallbacks.onLoadFinished, id=" + loader.getId());
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
+                mMessagesAdapter.swapCursor(cursor);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            Log.d(TAG, "MessageLoaderCallbacks.onLoaderReset, id=" + loader.getId());
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                mMessagesAdapter.swapCursor(null);
+            }
+        }
     }
 }

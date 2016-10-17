@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
+import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
@@ -102,7 +103,7 @@ public class Utils {
             String data = cursor.getString(dataIdx);
             String mimeType = cursor.getString(mimeTypeIdx);
 
-            Log.d(TAG, "Got id=" + contact_id + ", mime='" + mimeType +"', val='" + data + "'");
+            // Log.d(TAG, "Got id=" + contact_id + ", mime='" + mimeType +"', val='" + data + "'");
 
             ContactHolder holder = map.get(contact_id);
             if (holder == null) {
@@ -113,7 +114,7 @@ public class Utils {
             switch (mimeType) {
                 case ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE:
                     // This is an email
-                    Log.d(TAG, "Adding email '" + data + "' to contact=" + contact_id);
+                    //Log.d(TAG, "Adding email '" + data + "' to contact=" + contact_id);
                     holder.putEmail(data);
                     break;
                 case ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE:
@@ -129,7 +130,7 @@ public class Utils {
                 default:
                     // This is a phone number. Use mobile phones only.
                     if (type == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
-                        Log.d(TAG, "Adding mobile phone '" + data + "' to contact=" + contact_id);
+                        // Log.d(TAG, "Adding mobile phone '" + data + "' to contact=" + contact_id);
                         try {
                             // Normalize phone number format
                             data = phoneUtil.format(phoneUtil.parse(data, country),
@@ -235,7 +236,7 @@ public class Utils {
         }
     }
 
-    public static void setupToolbar(Context context, Toolbar toolbar, VCard pub, Topic.TopicType topicType) {
+    public static void setupToolbar(Context context, ActionBar toolbar, VCard pub, Topic.TopicType topicType) {
         if (pub != null) {
             toolbar.setTitle(" " + pub.fn);
 

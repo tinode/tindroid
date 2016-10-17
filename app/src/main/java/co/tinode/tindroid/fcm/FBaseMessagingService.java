@@ -58,7 +58,7 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
             Map<String,String> data = remoteMessage.getData();
-            Log.d(TAG, "Message data payload: " + data);
+            Log.d(TAG, "MessageDb data payload: " + data);
 
             // Fetch locally stored contacts
             Subscription<VCard,String> sender = ContactsManager.getStoredSubscription(getContentResolver(),
@@ -97,7 +97,7 @@ public class FBaseMessagingService  extends FirebaseMessagingService {
             }
         } else if (remoteMessage.getNotification() != null) {
             RemoteMessage.Notification data = remoteMessage.getNotification();
-            Log.d(TAG, "Message Notification Body: " + data.getBody());
+            Log.d(TAG, "MessageDb Notification Body: " + data.getBody());
 
             topicName = null;
             title = data.getTitle();

@@ -14,7 +14,7 @@
         android:icon="@drawable/ic_group_add"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/action_edit"
+        android:id="@+id/action_settings"
         android:orderInCategory="102"
         android:title="@string/action_settings"
         android:icon="@drawable/ic_settings"

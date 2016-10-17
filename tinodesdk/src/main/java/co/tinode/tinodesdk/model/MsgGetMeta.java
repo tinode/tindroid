@@ -15,26 +15,40 @@ public class MsgGetMeta {
     public GetSub sub;
     public GetData data;
 
-    public MsgGetMeta(String what) {
-        this.what = what;
+    /**
+     * Query to get all
+     */
+    public MsgGetMeta() {
+        this(new String[]{DESC, SUB, DATA});
+    }
+
+    public MsgGetMeta(String[] what) {
+        StringBuilder sb = new StringBuilder();
+        if (what.length > 0) {
+            sb.append(what[0]);
+            for(int i=1; i < what.length; i++){
+                sb.append(" ").append(what[i]);
+            }
+        }
+        this.what = sb.toString();
     }
 
     public MsgGetMeta(GetDesc desc, GetSub sub, GetData data) {
-        this.what = "";
+        StringBuilder sb = new StringBuilder();
 
         if (desc != null) {
-            this.what = DESC;
+            sb.append(DESC);
             this.desc = desc;
         }
         if (sub != null) {
-            this.what += " " + SUB;
+            sb.append(" ").append(SUB);
             this.sub = sub;
         }
         if (data != null) {
-            this.what += " " + DATA;
+            sb.append(" ").append(DATA);
             this.data = data;
         }
-        this.what = this.what.trim();
+        this.what = sb.toString().trim();
     }
 
     public static class GetDesc {

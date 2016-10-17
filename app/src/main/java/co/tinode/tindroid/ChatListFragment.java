@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,8 +31,14 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.fragment_chat_list, container, false);
     }
 
@@ -56,6 +64,40 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        super.onCreateOptionsMenu(menu, inflater);
+        menu.clear();
+        inflater.inflate(R.menu.menu_chat_list, menu);
+    }
+
+    /**
+     * This menu is shown when no items are selected
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_new_p2p_topic:
+                Log.d(TAG, "Start new p2p topic");
+                break;
+            case R.id.action_new_grp_topic:
+                Log.d(TAG, "Start new group topic");
+                break;
+            case R.id.action_settings:
+                Log.d(TAG, "Edit user's profile");
+                break;
+            case R.id.action_about:
+                DialogFragment about = new AboutDialogFragment();
+                about.show(getFragmentManager(), "about");
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * This menu is shown when one or more items are selected from the list
+     */
+    @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         ChatListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
         switch (item.getItemId()) {
@@ -80,12 +122,8 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 mode.finish();
                 return true;
 
-            case R.id.action_about:
-                DialogFragment about = new AboutDialogFragment();
-                about.show(getFragmentManager(), "about");
-                return true;
-
             default:
+                Log.d(TAG, "unknown menu action");
                 return false;
         }
     }

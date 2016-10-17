@@ -76,6 +76,8 @@ public class Topic<Pu,Pr,T> {
     protected boolean mAttached;
     protected Listener<Pu,Pr,T> mListener;
 
+    protected long mLastKeyPress = 0;
+
     /**
      * Create a named topic.
      *
@@ -161,7 +163,7 @@ public class Topic<Pu,Pr,T> {
         if (!mAttached) {
             MsgGetMeta getParams = null;
             if (mDescription == null || mDescription.updated == null) {
-                getParams = new MsgGetMeta("desc sub data");
+                getParams = new MsgGetMeta();
             } else {
                 // Check if the last received message has lower ID than the last known message.
                 // If so, fetch missing messages.
@@ -203,7 +205,6 @@ public class Topic<Pu,Pr,T> {
         }
         throw new IllegalStateException("Already subscribed");
     }
-
 
     /**
      * Leave topic
@@ -322,10 +323,14 @@ public class Topic<Pu,Pr,T> {
 
 
     /**
-     * Send a key press notification to server
+     * Send a key press notification to server. Ensure we do not sent too many.
      */
     public void noteKeyPress() {
-        mTinode.noteKeyPress(getName());
+        long now = System.nanoTime();
+        if (now - mLastKeyPress > Tinode.KEY_PRESS_DELAY) {
+            mLastKeyPress = now;
+            mTinode.noteKeyPress(getName());
+        }
     }
 
 
