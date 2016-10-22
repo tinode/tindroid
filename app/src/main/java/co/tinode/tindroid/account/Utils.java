@@ -39,6 +39,7 @@ public class Utils {
     // Constants for accessing shared preferences
     public static final String PREFS_ACCOUNT_NAME = "pref_accountName";
     public static final String PREFS_HOST_NAME = "pref_hostName";
+    // Prefixes for various contacts
     public static final String TAG_LABEL_PHONE = "tel:";
     public static final String TAG_LABEL_EMAIL = "email:";
     public static final String TAG_LABEL_TINODE = "tinode:";
@@ -51,6 +52,11 @@ public class Utils {
     public static final String DATA_SUMMARY = Data.DATA2;
     public static final String DATA_DETAIL = Data.DATA3;
     private static final String TAG = "Utils";
+
+    // If Message activity is visible, this is the current topic in that activity.
+    public static String sVisibleTopic = null;
+
+    private static ActionBar sToolbar;
 
     public static Account GetAccount(String accountName) {
         return new Account(accountName, ACCOUNT_TYPE);
@@ -170,6 +176,19 @@ public class Utils {
         } else {
             toolbar.setTitle(R.string.app_name);
         }
+        sToolbar = toolbar;
+    }
+
+    public static void clearToolbar(Context context) {
+        sToolbar = null;
+    }
+
+    public static String getVisibleTopic() {
+        return sVisibleTopic;
+    }
+
+    public static void setVisibleTopic(String topic) {
+        sVisibleTopic = topic;
     }
 
     public static class ContactHolder {

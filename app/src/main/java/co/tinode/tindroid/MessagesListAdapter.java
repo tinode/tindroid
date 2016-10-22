@@ -90,7 +90,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     @Override
     public void onBindViewHolder(ViewHolder holder, int reversePosition) {
         // Reverse item order
-        int position = getItemCount() - reversePosition - 1;
+        int position = reversePosition; // getItemCount() - reversePosition - 1;
 
         mCursor.moveToPosition(position);
         MsgServerData<String> m = MessageDb.readMessage(mCursor);
@@ -108,7 +108,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             prevFrom = MessageDb.readMessage(mCursor).from;
         }
         String nextFrom = null;
-        if (reversePosition > 0) {
+        if (position < getItemCount() - 1) {
             mCursor.moveToPosition(position + 1);
             nextFrom = MessageDb.readMessage(mCursor).from;
         }
@@ -169,7 +169,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     @Override
     public long getItemId(int reversePosition) {
-        int position = getItemCount() - reversePosition - 1;
+        int position = reversePosition; // getItemCount() - reversePosition - 1;
         mCursor.moveToPosition(position);
         return MessageDb.getLocalId(mCursor);
     }

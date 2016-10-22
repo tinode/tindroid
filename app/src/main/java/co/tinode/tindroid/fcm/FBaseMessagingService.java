@@ -23,6 +23,7 @@ import co.tinode.tindroid.R;
 import co.tinode.tindroid.RoundedImage;
 import co.tinode.tindroid.VCard;
 import co.tinode.tindroid.account.ContactsManager;
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -67,10 +68,16 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             Map<String, String> data = remoteMessage.getData();
             Log.d(TAG, "MessageDb data payload: " + data);
 
+            topicName = data.get("topic");
+            String visibleTopic = Utils.getVisibleTopic();
+            if (visibleTopic != null && visibleTopic.equals(topicName)) {
+                // No need to display a notification if we are in the topic already.
+                return;
+            }
+
             // Fetch locally stored contacts
             Subscription<VCard, String> sender = ContactsManager.getStoredSubscription(getContentResolver(),
                     data.get("xfrom"));
-            topicName = data.get("topic");
             Subscription<VCard, String> topic = ContactsManager.getStoredSubscription(getContentResolver(),
                     topicName);
 

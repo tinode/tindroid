@@ -47,6 +47,7 @@ public class MessagesFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 activity.sendMessage();
+                activity.scrollTo(-1);
             }
         });
 
@@ -96,7 +97,7 @@ public class MessagesFragment extends Fragment {
             }
         }, READ_DELAY, READ_DELAY);
 
-        //activity.scrollToHead();
+        activity.scrollTo(0);
     }
 
     @Override

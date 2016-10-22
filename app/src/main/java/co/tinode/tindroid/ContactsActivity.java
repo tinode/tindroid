@@ -41,33 +41,30 @@ public class ContactsActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (savedInstanceState == null) {
-            setContentView(R.layout.activity_contacts);
-
-            TabLayout tabLayout = (TabLayout) findViewById(R.id.tabsContacts);
-            tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
-            final ViewPager viewPager = (ViewPager) findViewById(R.id.tabPager);
-            final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount());
-            viewPager.setAdapter(adapter);
-            viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-            tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-                @Override
-                public void onTabSelected(TabLayout.Tab tab) {
-                    viewPager.setCurrentItem(tab.getPosition());
-                }
-
-                @Override
-                public void onTabUnselected(TabLayout.Tab tab) {
-                }
-
-                @Override
-                public void onTabReselected(TabLayout.Tab tab) {
-                }
-            });
-        }
+        setContentView(R.layout.activity_contacts);
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabsContacts);
+        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
+        final ViewPager viewPager = (ViewPager) findViewById(R.id.tabPager);
+        final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount());
+        viewPager.setAdapter(adapter);
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPager.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
 
         mContactIndex = new ArrayList<>();
         mContactsAdapter = new ChatListAdapter(this, mContactIndex);
@@ -172,6 +169,12 @@ public class ContactsActivity extends AppCompatActivity implements
             }
             mContactsAdapter.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Utils.clearToolbar(this);
     }
 
     protected ChatListAdapter getContactsAdapter() {

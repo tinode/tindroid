@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.Locale;
+import java.util.Map;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -23,7 +24,18 @@ public class InmemoryCache {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
 
-            sTinode = new Tinode("Tindroid", API_KEY);
+            sTinode = new Tinode("Tindroid", API_KEY, new Tinode.EventListener() {
+                @Override
+                public void onConnect(int code, String reason, Map<String, Object> params) {
+                    // Show that we are connected
+                }
+
+                @Override
+                public void onDisconnect(boolean byServer, int code, String reason) {
+                    // Show that we are disconnected
+                }
+
+            });
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
             // Set device language

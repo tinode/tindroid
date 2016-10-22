@@ -23,6 +23,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -50,6 +51,26 @@ import co.tinode.tinodesdk.model.SetDesc;
  *  - LoginFragment
  *  - NewAccountFragment
  *  - LoginSettingsFragment
+ *
+ *  1. If connection to the server is already established and authenticated, launch ContactsActivity
+ *  2. If no connection to the server, get the last used account:
+ *  2.1 Check intent if account name if provided there
+ *  2.2 If not, check if account name is provided in Preferences
+ *  2.3 If not, choose an account of correct type
+ *  2.3.1 If just one account of correct type found, use it
+ *  2.3.2 If more accounts found, show an account picker form, use selected account
+ *  3. If account found, use it to log in:
+ *  3.1 Connect to server
+ *  3.1.1 If connection is successful, authenticate with the token received from the account
+ *  3.1.1.1 If authentication is successful go to 1.
+ *  3.1.1.2 If not, go to 4.
+ *  3.1.2 If connection is not successful
+ *  3.1.2 Show offline indicator
+ *  3.1.3 Access locally stored account.
+ *  3.1.3.1 If locally stored account is found, launch ContactsActivity
+ *  3.1.3.2 If not found, go to 4.
+ *  4. If account not found, show login form
+ *
  */
 
 public class LoginActivity extends AppCompatActivity {
@@ -75,8 +96,9 @@ public class LoginActivity extends AppCompatActivity {
 
         PreferenceManager.setDefaultValues(this, R.xml.login_preferences, false);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         // Handle clicks on the '<-' arrow in the toolbar.
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,6 +131,20 @@ public class LoginActivity extends AppCompatActivity {
             showLoginForm();
         }
         Log.d("TAG", "DONE onCreate");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Utils.setupToolbar(this, getSupportActionBar(), null, null);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        Utils.clearToolbar(this);
     }
 
     private Account fetchAccount(SharedPreferences preferences) {

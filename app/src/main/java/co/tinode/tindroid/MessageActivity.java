@@ -52,7 +52,7 @@ public class MessageActivity extends AppCompatActivity {
 
     private SQLiteDatabase mDb;
 
-    public static void initLoader(final int loaderId, final Bundle args,
+    public static void runLoader(final int loaderId, final Bundle args,
                                   final LoaderManager.LoaderCallbacks<Cursor> callbacks,
                                   final LoaderManager loaderManager) {
         final Loader<Cursor> loader = loaderManager.getLoader(loaderId);
@@ -81,10 +81,10 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-        mDb = BaseDb.getInstance(this).getWritableDatabase();
+        mDb = BaseDb.getInstance(this, InmemoryCache.getTinode().getMyId()).getWritableDatabase();
 
         LinearLayoutManager lm = new LinearLayoutManager(this);
-        lm.setReverseLayout(true);
+        //lm.setReverseLayout(true);
         lm.setStackFromEnd(true);
 
         RecyclerView recyclerViewMessages = (RecyclerView) findViewById(R.id.messages_container);
@@ -137,7 +137,7 @@ public class MessageActivity extends AppCompatActivity {
             Utils.setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
                 mMessagesAdapter.setTopic(mTopicName);
-                initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+                runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
             }
         } else {
             mTopic = new Topic<>(getTinode(), mTopicName, new Topic.Listener<VCard, String, String>() {
@@ -146,26 +146,21 @@ public class MessageActivity extends AppCompatActivity {
                 public void onSubscribe(int code, String text) {
                     // Topic name may change after subscription, i.e. new -> grpXXX
                     mTopicName = mTopic.getName();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            // Must run on the UI thread because the adapter calls notifyDataSetChanged()
-                            mMessagesAdapter.setTopic(mTopicName);
-                        }
-                    });
-                    initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+                    mMessagesAdapter.setTopic(mTopicName);
+                    runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
                 }
 
                 @Override
                 public void onData(MsgServerData data) {
-                    MessageDb.insert(mDb, data);
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mMessagesAdapter.notifyDataSetChanged();
+                    if (MessageDb.insert(mDb, data) > 0) {
+                        if (mTopic != null) {
+                            // Once message is saved, notify the server
+                            mTopic.noteRecv();
                         }
-                    });
+                    }
+                    // mMessagesAdapter.notifyItemInserted(0);
+                    // Loader will call notifyDataSetChanged
+                    runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
                 }
 
                 @Override
@@ -239,6 +234,7 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
+        Utils.clearToolbar(this);
 
         // Deactivate current topic
         if (mTopic.isAttached()) {
@@ -262,9 +258,15 @@ public class MessageActivity extends AppCompatActivity {
         setIntent(intent);
     }
 
-    public void scrollToHead0() {
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        Utils.setVisibleTopic(hasFocus ? mTopicName : null);
+    }
+
+    public void scrollTo(int position) {
         RecyclerView recyclerViewMessages = (RecyclerView) findViewById(R.id.messages_container);
-        recyclerViewMessages.scrollToPosition(0);
+        position = position == -1 ? mMessagesAdapter.getItemCount() - 1 : position;
+        recyclerViewMessages.scrollToPosition(position);
     }
 
     public String getMessageText() {
@@ -315,6 +317,7 @@ public class MessageActivity extends AppCompatActivity {
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             if (id == MESSAGES_QUERY_ID) {
                 Log.d(TAG, "MessageLoaderCallbacks.onCreateLoader");
+
                 return new MessageDb.Loader(MessageActivity.this, mTopicName, -1, -1);
             }
             return null;
