@@ -2,13 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item
-        android:id="@+id/action_offline"
-        android:orderInCategory="10"
-        android:title="@string/action_offline"
-        android:icon="@drawable/ic_offline"
-        android:visible="false"
-        app:showAsAction="always" />
+    <group
+        android:id="@+id/offline"
+        android:visible="false">
+        <item
+            android:id="@+id/action_offline"
+            android:orderInCategory="10"
+            android:title="@string/action_offline"
+            android:icon="@drawable/ic_offline"
+            app:showAsAction="always" />
+    </group>
 
     <item
         android:id="@+id/action_delete"

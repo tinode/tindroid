@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,6 +21,7 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgGetMeta;
@@ -31,8 +31,6 @@ import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
-
-import static co.tinode.tindroid.InmemoryCache.getTinode;
 
 /**
  * View to display a single conversation
@@ -44,6 +42,7 @@ public class MessageActivity extends AppCompatActivity {
     private static final int MESSAGES_QUERY_ID = 100;
 
     private MessagesListAdapter mMessagesAdapter;
+    private RecyclerView mMessageList;
     private MessageLoaderCallbacks mLoaderCallbacks;
     private String mMessageText = null;
 
@@ -81,25 +80,27 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-        mDb = BaseDb.getInstance(this, InmemoryCache.getTinode().getMyId()).getWritableDatabase();
+        mDb = BaseDb.getInstance(this, Cache.getTinode().getMyId()).getWritableDatabase();
 
         LinearLayoutManager lm = new LinearLayoutManager(this);
         //lm.setReverseLayout(true);
         lm.setStackFromEnd(true);
 
-        RecyclerView recyclerViewMessages = (RecyclerView) findViewById(R.id.messages_container);
-        recyclerViewMessages.setLayoutManager(lm);
+        mMessageList = (RecyclerView) findViewById(R.id.messages_container);
+        mMessageList.setLayoutManager(lm);
 
         mLoaderCallbacks = new MessageLoaderCallbacks();
         mMessagesAdapter = new MessagesListAdapter(this);
-        recyclerViewMessages.setAdapter(mMessagesAdapter);
+        mMessageList.setAdapter(mMessagesAdapter);
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        final ActionBar toolbar = getSupportActionBar();
+        final Tinode tinode = Cache.getTinode();
+        tinode.setListener(new UIUtils.EventListener(this));
+
         final Intent intent = getIntent();
         final LoaderManager loaderManager = getSupportLoaderManager();
 
@@ -130,17 +131,16 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        mTopic = getTinode().getTopic(mTopicName);
-
+        mTopic = tinode.getTopic(mTopicName);
 
         if (mTopic != null) {
-            Utils.setupToolbar(MessageActivity.this, toolbar, mTopic.getPublic(), mTopic.getTopicType());
+            UIUtils.setupToolbar(this, mTopic.getPublic(), mTopic.getTopicType());
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
                 mMessagesAdapter.setTopic(mTopicName);
                 runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
             }
         } else {
-            mTopic = new Topic<>(getTinode(), mTopicName, new Topic.Listener<VCard, String, String>() {
+            mTopic = new Topic<>(tinode, mTopicName, new Topic.Listener<VCard, String, String>() {
 
                 @Override
                 public void onSubscribe(int code, String text) {
@@ -204,7 +204,7 @@ public class MessageActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Utils.setupToolbar(MessageActivity.this, toolbar, desc.pub, mTopic.getTopicType());
+                            UIUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType());
                         }
                     });
                 }
@@ -234,7 +234,7 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
-        Utils.clearToolbar(this);
+        Cache.getTinode().setListener(null);
 
         // Deactivate current topic
         if (mTopic.isAttached()) {
@@ -260,13 +260,12 @@ public class MessageActivity extends AppCompatActivity {
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-        Utils.setVisibleTopic(hasFocus ? mTopicName : null);
+        UIUtils.setVisibleTopic(hasFocus ? mTopicName : null);
     }
 
     public void scrollTo(int position) {
-        RecyclerView recyclerViewMessages = (RecyclerView) findViewById(R.id.messages_container);
         position = position == -1 ? mMessagesAdapter.getItemCount() - 1 : position;
-        recyclerViewMessages.scrollToPosition(position);
+        mMessageList.scrollToPosition(position);
     }
 
     public String getMessageText() {
@@ -316,9 +315,10 @@ public class MessageActivity extends AppCompatActivity {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             if (id == MESSAGES_QUERY_ID) {
-                Log.d(TAG, "MessageLoaderCallbacks.onCreateLoader");
-
-                return new MessageDb.Loader(MessageActivity.this, mTopicName, -1, -1);
+                return new MessageDb.Loader(
+                        MessageActivity.this,
+                        Cache.getTinode().getMyId(),
+                        mTopicName, -1, -1);
             }
             return null;
         }
@@ -326,7 +326,6 @@ public class MessageActivity extends AppCompatActivity {
         @Override
         public void onLoadFinished(Loader<Cursor> loader,
                                    Cursor cursor) {
-            Log.d(TAG, "MessageLoaderCallbacks.onLoadFinished, id=" + loader.getId());
             if (loader.getId() == MESSAGES_QUERY_ID) {
                 Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
                 mMessagesAdapter.swapCursor(cursor);
@@ -335,7 +334,6 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
-            Log.d(TAG, "MessageLoaderCallbacks.onLoaderReset, id=" + loader.getId());
             if (loader.getId() == MESSAGES_QUERY_ID) {
                 mMessagesAdapter.swapCursor(null);
             }

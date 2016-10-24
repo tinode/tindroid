@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Gravity;
@@ -44,12 +45,14 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             new colorizer(0xffeeeeee, 0xff212121), new colorizer(0xff80deea, 0xff212121),
             new colorizer(0xffe6ee9c, 0xff212121), new colorizer(0xffce93d8, 0xff212121)
     };
+    private AppCompatActivity mActivity;
     private Cursor mCursor;
     private String mTopicName;
     private Topic<?, ?, String> mTopic;
 
-    public MessagesListAdapter(Context context) {
+    public MessagesListAdapter(AppCompatActivity context) {
         super();
+        mActivity = context;
         setHasStableIds(true);
     }
 
@@ -75,7 +78,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     public void setTopic(String topicName) {
         if (mTopicName == null || !mTopicName.equals(topicName)) {
             mTopicName = topicName;
-            mTopic = InmemoryCache.getTinode().getTopic(topicName);
+            mTopic = Cache.getTinode().getTopic(topicName);
         }
     }
 
@@ -179,11 +182,18 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return mCursor != null ? mCursor.getCount() : 0;
     }
 
-    void swapCursor(Cursor cursor) {
-        Log.d(TAG, "MessagesListAdapter.swapCursor");
-        mCursor = cursor;
+    void swapCursor(final Cursor cursor) {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "MessagesListAdapter.swapCursor");
 
-        notifyDataSetChanged();
+                mCursor = cursor;
+                notifyDataSetChanged();
+                // -1 means scroll to the bottom
+                ((MessageActivity) mActivity).scrollTo(-1);
+            }
+        });
     }
 
     // Grouping messages from the same sender (controls rounding of borders)

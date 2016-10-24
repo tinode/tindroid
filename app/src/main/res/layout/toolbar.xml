@@ -18,7 +18,9 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
-        android:background="@android:color/transparent"
+        android:background="@color/colorOffline"
+        android:visibility="gone"
         android:id="@+id/offline_indicator" />
+
 
 </android.support.design.widget.AppBarLayout>

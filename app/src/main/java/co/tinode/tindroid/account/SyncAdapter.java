@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 
-import co.tinode.tindroid.InmemoryCache;
+import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.VCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
@@ -37,8 +37,8 @@ import co.tinode.tinodesdk.model.Subscription;
 class SyncAdapter extends AbstractThreadedSyncAdapter {
     public static final String TAG = "SyncAdapter";
 
-    private static final String SYNC_MARKER_KEY = "co.tinode.tindroid.sync_marker_contacts";
-    private static final String INVISIBLE_GROUP_KEY = "co.tinode.tindroid.invisible_group_id";
+    private static final String ACCKEY_SYNC_MARKER = "co.tinode.tindroid.sync_marker_contacts";
+    private static final String ACCKEY_INVISIBLE_GROUP = "co.tinode.tindroid.invisible_group_id";
 
     // Context for loading preferences
     private final Context mContext;
@@ -105,10 +105,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 setInvisibleGroupId(account, invisibleGroupId);
             }
 
-            final Tinode tinode = InmemoryCache.getTinode();
+            final Tinode tinode = Cache.getTinode();
 
             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
-            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
+            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
             String token = AccountManager.get(mContext)
                     .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
             tinode.connect(hostName).getResult();
@@ -143,7 +143,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private Date getServerSyncMarker(Account account) {
-        String markerString = mAccountManager.getUserData(account, SYNC_MARKER_KEY);
+        String markerString = mAccountManager.getUserData(account, ACCKEY_SYNC_MARKER);
         if (!TextUtils.isEmpty(markerString)) {
             return new Date(Long.parseLong(markerString));
         }
@@ -151,11 +151,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void setServerSyncMarker(Account account, Date marker) {
-        mAccountManager.setUserData(account, SYNC_MARKER_KEY, Long.toString(marker.getTime()));
+        mAccountManager.setUserData(account, ACCKEY_SYNC_MARKER, Long.toString(marker.getTime()));
     }
 
     private long getInvisibleGroupId(Account account) {
-        String idString = mAccountManager.getUserData(account, INVISIBLE_GROUP_KEY);
+        String idString = mAccountManager.getUserData(account, ACCKEY_INVISIBLE_GROUP);
         if (!TextUtils.isEmpty(idString)) {
             return Long.parseLong(idString);
         }
@@ -163,7 +163,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void setInvisibleGroupId(Account account, long id) {
-        mAccountManager.setUserData(account, INVISIBLE_GROUP_KEY, Long.toString(id));
+        mAccountManager.setUserData(account, ACCKEY_INVISIBLE_GROUP, Long.toString(id));
     }
 }
 

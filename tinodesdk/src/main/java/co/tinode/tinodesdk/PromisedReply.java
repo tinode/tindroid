@@ -13,13 +13,13 @@ import java.util.concurrent.CountDownLatch;
  *
  * Usage:
  *
- * Create a PromisedReply P1, assign onSuccess/onFailure listeners with thenApply. thenApply returns
+ * Create a PromisedReply P1, assign onSuccess/onFailure listeners by calling thenApply. thenApply returns
  * another P2 promise (mNextPromise), which can then be assigned its own listeners.
  *
  * Alternatively, one can use a blocking call getResult. It will block until the promise is either
  * resolved or rejected.
  *
- * The promise can be created in either WAITING or RESOLVED state by using appropriate constructor,
+ * The promise can be created in either WAITING or RESOLVED state by using an appropriate constructor.
  *
  * The onSuccess/onFailure handlers will be called:
  *
@@ -140,12 +140,15 @@ public class PromisedReply<T> {
     }
 
     private void callOnSuccess(final T result) throws Exception {
+        PromisedReply<T> ret = null;
         try {
-            PromisedReply<T> ret = (mSuccess != null ? mSuccess.onSuccess(result) : null);
-            handleSuccess(ret);
+            ret = (mSuccess != null ? mSuccess.onSuccess(result) : null);
         } catch (Exception e) {
             handleFailure(e);
+            return;
         }
+        // If it throws, let it fly.
+        handleSuccess(ret);
     }
 
     private void callOnFailure(final Exception err) throws Exception {
@@ -199,6 +202,11 @@ public class PromisedReply<T> {
     }
 
 
+    /**
+     * Make this promise resolved.
+     * @param result results of resolution.
+     * @throws Exception
+     */
     public void resolve(final T result) throws Exception {
         synchronized (this) {
             if (mState == State.WAITING) {
@@ -211,14 +219,15 @@ public class PromisedReply<T> {
                     mDoneSignal.countDown();
                 }
             } else {
+                mDoneSignal.countDown();
                 throw new IllegalStateException("Promise is already completed");
             }
         }
     }
 
     public void reject(final Exception err) throws Exception {
+        Log.d(TAG, "REJECTING promise " + this);
         synchronized (this) {
-            Log.d(TAG, "Rejecting", err);
             if (mState == State.WAITING) {
                 mState = State.REJECTED;
 
@@ -229,6 +238,7 @@ public class PromisedReply<T> {
                     mDoneSignal.countDown();
                 }
             } else {
+                mDoneSignal.countDown();
                 throw new IllegalStateException("Promise is already completed");
             }
         }
@@ -239,7 +249,7 @@ public class PromisedReply<T> {
      * <b>after</b> thenApply is called. It can be safely called multiple times on
      * the same instance.
      *
-     * @return result of the execution (what was passed to {@link#resolve}
+     * @return result of the execution (what was passed to {@link #resolve(T)})
      * @throws Exception if the promise was rejected, throw an exception
      */
     public T getResult() throws Exception {
@@ -271,5 +281,25 @@ public class PromisedReply<T> {
     }
     public static abstract class FailureListener<U> {
         public abstract PromisedReply<U> onFailure(Exception err) throws Exception;
+    }
+
+    /**
+     * Class with methods to handle successful and failed resolution of the promise.
+     * @param <R> promise type
+     */
+    public static class Handler<R> {
+        /**
+         * Default do nothing success handler.
+         * @param result value passed to resolve()
+         * @return always null which is treated as "the same result"
+         * @throws Exception
+         */
+        public PromisedReply<R> onSuccess(R result) throws Exception {
+            return null;
+        }
+
+        public PromisedReply<R> onFailure(Exception err) throws Exception {
+            throw err;
+        }
     }
 }

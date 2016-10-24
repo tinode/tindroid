@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -7,35 +8,29 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import java.util.Locale;
 import java.util.Map;
 
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.Tinode;
 
 /**
  * Shared resources.
  */
-public class InmemoryCache {
-    public static final String HOST_NAME = "10.0.2.2:6060"; // local
-    private static final String TAG = "InmemoryCache";
+public class Cache {
+    private static final String TAG = "Cache";
+
+    //public static String sHost = "api.tinode.co"; // remote host
+    public static final String HOST_NAME = "10.0.2.2:6060"; // local host
+
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
+
     private static Tinode sTinode;
-    //public static String sHost = "api.tinode.co"; // remote
+
     private static int sVisibleCount = 0;
 
     public static Tinode getTinode() {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
 
-            sTinode = new Tinode("Tindroid", API_KEY, new Tinode.EventListener() {
-                @Override
-                public void onConnect(int code, String reason, Map<String, Object> params) {
-                    // Show that we are connected
-                }
-
-                @Override
-                public void onDisconnect(boolean byServer, int code, String reason) {
-                    // Show that we are disconnected
-                }
-
-            });
+            sTinode = new Tinode("Tindroid", API_KEY);
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
             // Set device language

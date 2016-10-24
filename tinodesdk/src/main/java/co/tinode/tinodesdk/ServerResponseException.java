@@ -1,7 +1,7 @@
 package co.tinode.tinodesdk;
 
 /**
- * Created by gsokolov on 2/11/16.
+ * Exception generated in response to a packet containing an error code.
  */
 public class ServerResponseException extends Exception {
     private int code;

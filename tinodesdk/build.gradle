@@ -31,5 +31,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.7.8'
     compile 'com.fasterxml.jackson.core:jackson-core:2.7.8'
-    compile 'com.neovisionaries:nv-websocket-client:1.22'
+    compile 'com.neovisionaries:nv-websocket-client:1.30'
 }

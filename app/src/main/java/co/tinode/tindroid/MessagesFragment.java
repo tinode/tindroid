@@ -47,7 +47,7 @@ public class MessagesFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 activity.sendMessage();
-                activity.scrollTo(-1);
+                //activity.scrollTo(0);
             }
         });
 

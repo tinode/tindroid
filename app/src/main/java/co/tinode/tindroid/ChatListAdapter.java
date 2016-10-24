@@ -19,8 +19,6 @@ import android.widget.TextView;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
-import static android.content.ContentValues.TAG;
-
 /**
  * Handling contact list.
  */
@@ -55,7 +53,7 @@ public class ChatListAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         @SuppressWarnings("unchecked")
-        Subscription<VCard,String> s = (Subscription) InmemoryCache.getTinode().getMeTopic()
+        Subscription<VCard,String> s = (Subscription) Cache.getTinode().getMeTopic()
                 .getSubscription(mContactItems.get(position));
 
         LayoutInflater inflater = (LayoutInflater) mContext

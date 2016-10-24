@@ -114,7 +114,7 @@ public class TinodeAccountService extends Service {
                 final String password = am.getPassword(account);
                 if (!TextUtils.isEmpty(password)) {
                     // TODO(gene): implement sign in
-                    //Tinode tinode = InmemoryCache.getTinode();
+                    //Tinode tinode = Cache.getTinode();
                     //authToken = AuthTokenLoader.signIn(mContext, account.name, password);
                 }
             }

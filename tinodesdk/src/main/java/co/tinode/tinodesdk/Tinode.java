@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -132,7 +133,6 @@ public class Tinode {
         mTopics = new HashMap<>();
     }
 
-
     /**
      * Initialize Tinode package
      *
@@ -143,75 +143,85 @@ public class Tinode {
         this(appname, apikey, null);
     }
 
-    //public PromisedReply<ServerMessage> connect() throws Exception {
-    //    return connect(mServerHost, mApiKey);
-    //}
+    public EventListener setListener(EventListener listener) {
+        EventListener oldListener = mListener;
+        mListener = listener;
+        return oldListener;
+    }
+    /**
+     * Open a websocket connection to the server and process handshake exchange.
+     *
+     * @param hostName address of the server to connect to
+     * @return returns promise which will be resolved when the connection sequence is completed.
+     * @throws URISyntaxException if hostName is not a valid internet address
+     * @throws IOException if connection call has failed
+     */
+    public PromisedReply<ServerMessage> connect(String hostName) throws URISyntaxException, IOException {
 
-    public PromisedReply<ServerMessage> connect(String hostName) throws Exception {
-        final PromisedReply<ServerMessage> connected = new PromisedReply<>();
+        if (mConnection != null && mConnection.isConnected()) {
+            // If the connection is live, return a resolved promise
+            return new PromisedReply<>((ServerMessage) null);
+        }
 
+        // Set up a new connection and a new promose
         mServerHost = hostName;
         mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
 
-        if (mConnection == null) {
-            mConnection = new Connection(
-                    new URI("ws://" + mServerHost + "/v" + PROTOVERSION + "/"),
-                    mApiKey, new Connection.WsListener() {
+        final PromisedReply<ServerMessage> connected = new PromisedReply<>();
+        mConnection = new Connection(
+                new URI("ws://" + mServerHost + "/v" + PROTOVERSION + "/"),
+                mApiKey, new Connection.WsListener() {
 
-                @Override
-                protected void onConnect() {
-                    try {
-                        // Connection established, send handshake, inform listener on success
-                        hello().thenApply(
-                                new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                        connected.resolve(pkt);
+            @Override
+            protected void onConnect() {
+                try {
+                    // Connection established, send handshake, inform listener on success
+                    hello().thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                    connected.resolve(pkt);
 
-                                        if (mListener != null) {
-                                            mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
-                                        }
-                                        return null;
+                                    if (mListener != null) {
+                                        mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
                                     }
-                                }, null);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Exception in Connection.onConnect: ", e);
-                    }
+                                    return null;
+                                }
+                            }, null);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception in Connection.onConnect: ", e);
                 }
+            }
 
-                @Override
-                protected void onMessage(String message) {
+            @Override
+            protected void onMessage(String message) {
+                try {
+                    dispatchPacket(message);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception in dispatchPacket: ", e);
+                }
+            }
+
+            @Override
+            protected void onDisconnect(boolean byServer, int code, String reason) {
+                handleDisconnect(byServer, -code, reason);
+            }
+
+            @Override
+            protected void onError(Exception err) {
+                handleDisconnect(true, 0, err.getMessage());
+                // If the promise is waiting, reject. Otherwise it's not our problem.
+                if (!connected.isDone()) {
                     try {
-                        dispatchPacket(message);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Exception in dispatchPacket: ", e);
+                        connected.reject(err);
+                    } catch (Exception ignored) {
+                        // There is no rejection handler ths there should not be an exception
                     }
                 }
+            }
+        });
 
-                @Override
-                protected void onDisconnect(boolean byServer, int code, String reason) {
-                    handleDisconnect(byServer, code, reason);
-                }
-
-                @Override
-                protected void onError(Exception err) {
-                    handleDisconnect(true, 0, err.getMessage());
-                    if (!connected.isDone()) {
-                        try {
-                            connected.reject(err);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Exception in Connection.onError: ", e);
-                        }
-                    }
-                }
-            });
-        }
-
-        if (!mConnection.isConnected()) {
-            mConnection.connect(true);
-        } else {
-            connected.resolve(null);
-        }
+        mConnection.connect(true);
 
         return connected;
     }
@@ -557,6 +567,7 @@ public class Tinode {
     protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {
         if (isAuthenticated()) {
             // Don't try to login again if we are logged in.
+            Log.d(TAG, "Already authenticated");
             return new PromisedReply<>((ServerMessage) null);
         }
 

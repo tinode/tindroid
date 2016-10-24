@@ -7,6 +7,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+
 /**
  * SQLite backend. Persistent store for messages and chats.
  */
@@ -14,71 +22,11 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version.
      */
-    public static final int DATABASE_VERSION = 9;
+    public static final int DATABASE_VERSION = 1;
     /**
      * Filename for SQLite file.
      */
     public static final String DATABASE_NAME = "base.db";
-
-    /**
-     * Statement to create account table - mapping of account UID to long id
-     */
-    private static final String CREATE_ACCOUNTS_TABLE =
-            "CREATE TABLE " + AccountDb.TABLE_NAME + " (" +
-                    AccountDb._ID + " INTEGER PRIMARY KEY," +
-                    AccountDb.COLUMN_NAME_ACCOUNT + " TEXT," +
-                    AccountDb.COLUMN_LAST_USED + " INTEGER," +
-                    AccountDb.COLUMN_NAME_ACTIVE + " INTEGER)";
-
-    /**
-     * Statements to drop accounts table and index
-     */
-    private static final String DROP_ACCOUNTS_TABLE =
-            "DROP TABLE IF EXISTS " + AccountDb.TABLE_NAME;
-
-    private static final String DROP_ACCOUNTS_INDEX =
-            "DROP INDEX IF EXISTS " + AccountDb.INDEX_NAME;
-
-    /**
-     * Add index on account name
-     */
-    private static final String CREATE_ACCOUNTS_INDEX =
-            "CREATE UNIQUE INDEX " + AccountDb.INDEX_NAME +
-                    " ON " + AccountDb.TABLE_NAME + " (" +
-                    AccountDb.COLUMN_NAME_ACCOUNT + ")";
-
-    /**
-     * SQL statement to create Messages table
-     */
-    private static final String CREATE_MESSAGES_TABLE =
-            "CREATE TABLE " + MessageDb.TABLE_NAME + " (" +
-                    MessageDb._ID + " INTEGER PRIMARY KEY," +
-                    MessageDb.COLUMN_NAME_ACCOUNT_ID
-                        + " REFERENCES " + AccountDb.TABLE_NAME + "(" + AccountDb._ID + ")," +
-                    MessageDb.COLUMN_NAME_TOPIC + " TEXT," +
-                    MessageDb.COLUMN_NAME_FROM + " TEXT," +
-                    MessageDb.COLUMN_NAME_TS + " TEXT," +
-                    MessageDb.COLUMN_NAME_SEQ + " INT," +
-                    MessageDb.COLUMN_NAME_CONTENT + " BLOB)";
-    /**
-     * Add index on account_id-topic-seq, in descending order
-     */
-    private static final String CREATE_MESSAGES_INDEX =
-            "CREATE UNIQUE INDEX " + MessageDb.INDEX_NAME +
-                    " ON " + MessageDb.TABLE_NAME + " (" +
-                    MessageDb.COLUMN_NAME_ACCOUNT_ID + "," +
-                    MessageDb.COLUMN_NAME_TOPIC + "," +
-                    MessageDb.COLUMN_NAME_SEQ + " DESC)";
-    /**
-     * SQL statement to drop Messages table.
-     */
-    private static final String DROP_MESSAGES_TABLE =
-            "DROP TABLE IF EXISTS " + MessageDb.TABLE_NAME;
-    /**
-     * Drop the index too
-     */
-    private static final String DROP_MESSAGES_INDEX =
-            "DROP INDEX IF EXISTS " + MessageDb.INDEX_NAME;
 
     private static BaseDb sInstance = null;
 
@@ -102,19 +50,67 @@ public class BaseDb extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(CREATE_ACCOUNTS_TABLE);
-        db.execSQL(CREATE_ACCOUNTS_INDEX);
-        db.execSQL(CREATE_MESSAGES_TABLE);
-        db.execSQL(CREATE_MESSAGES_INDEX);
+        db.execSQL(AccountDb.CREATE_TABLE);
+        db.execSQL(AccountDb.CREATE_INDEX);
+        db.execSQL(TopicDb.CREATE_TABLE);
+        db.execSQL(TopicDb.CREATE_INDEX);
+        db.execSQL(MessageDb.CREATE_TABLE);
+        db.execSQL(MessageDb.CREATE_INDEX);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // This is just a cache. Drop then refetch everything from the server.
-        db.execSQL(DROP_MESSAGES_INDEX);
-        db.execSQL(DROP_MESSAGES_TABLE);
-        db.execSQL(DROP_ACCOUNTS_INDEX);
-        db.execSQL(DROP_ACCOUNTS_TABLE);
+        db.execSQL(MessageDb.DROP_INDEX);
+        db.execSQL(MessageDb.DROP_TABLE);
+        db.execSQL(TopicDb.DROP_INDEX);
+        db.execSQL(TopicDb.DROP_TABLE);
+        db.execSQL(AccountDb.DROP_INDEX);
+        db.execSQL(AccountDb.DROP_TABLE);
         onCreate(db);
+    }
+
+    static byte[] serialize(Object obj) {
+        if (obj != null) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutput objout = null;
+            try {
+                objout = new ObjectOutputStream(baos);
+                objout.writeObject(obj);
+                objout.flush();
+                return baos.toByteArray();
+            } catch (IOException ignored) {
+            } finally {
+                try {
+                    baos.close();
+                    if (objout != null) {
+                        objout.close();
+                    }
+                } catch (IOException ignored) {
+                }
+            }
+        }
+        return null;
+    }
+
+    static <T> T deserialize(byte[] bytes) {
+        if (bytes != null) {
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            ObjectInput objin = null;
+            try {
+                objin = new ObjectInputStream(bais);
+                return (T) objin.readObject();
+            } catch (IOException | ClassNotFoundException | ClassCastException ignored) {
+            } finally {
+                try {
+                    bais.close();
+                    if (objin != null) {
+                        objin.close();
+                    }
+                } catch (IOException ignored) {
+                }
+            }
+        }
+        return null;
     }
 }

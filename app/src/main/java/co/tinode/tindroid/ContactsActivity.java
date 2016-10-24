@@ -7,7 +7,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.MeTopic;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Invitation;
@@ -97,12 +97,14 @@ public class ContactsActivity extends AppCompatActivity implements
     public void onResume() {
         super.onResume();
 
-        final ActionBar toolbar = getSupportActionBar();
-        Utils.setupToolbar(ContactsActivity.this, toolbar, null, Topic.TopicType.ME);
+        final Tinode tinode = Cache.getTinode();
+        tinode.setListener(new UIUtils.EventListener(this));
 
-        MeTopic<VCard, String, String> me = InmemoryCache.getTinode().getMeTopic();
+        UIUtils.setupToolbar(this, null, Topic.TopicType.ME);
+
+        MeTopic<VCard, String, String> me = tinode.getMeTopic();
         if (me == null) {
-            me = new MeTopic<>(InmemoryCache.getTinode(),
+            me = new MeTopic<>(Cache.getTinode(),
                     new Topic.Listener<VCard, String, Invitation<String>>() {
 
                         @Override
@@ -174,7 +176,8 @@ public class ContactsActivity extends AppCompatActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        Utils.clearToolbar(this);
+
+        Cache.getTinode().setListener(null);
     }
 
     protected ChatListAdapter getContactsAdapter() {
@@ -182,7 +185,7 @@ public class ContactsActivity extends AppCompatActivity implements
     }
 
     protected Subscription<VCard, String> getContactByPos(int pos) {
-        MeTopic<VCard, String, String> me = InmemoryCache.getTinode().getMeTopic();
+        MeTopic<VCard, String, String> me = Cache.getTinode().getMeTopic();
         return me.getSubscription(mContactIndex.get(pos));
     }
 
@@ -196,7 +199,7 @@ public class ContactsActivity extends AppCompatActivity implements
     public void onWindowFocusChanged(boolean focus) {
         super.onWindowFocusChanged(focus);
 
-        InmemoryCache.activityVisible(focus);
+        Cache.activityVisible(focus);
     }
 
     public class PagerAdapter extends FragmentStatePagerAdapter {

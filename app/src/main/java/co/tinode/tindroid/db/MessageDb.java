@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -19,6 +20,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Array;
 import java.util.Date;
 
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -33,6 +35,8 @@ import co.tinode.tinodesdk.model.MsgServerData;
  * public T content;
  */
 public class MessageDb implements BaseColumns {
+    private static final String TAG = "MessageDb";
+
     /**
      * Content provider authority.
      */
@@ -103,6 +107,41 @@ public class MessageDb implements BaseColumns {
     private static final int COLUMN_IDX_CONTENT = 6;
 
     /**
+     * SQL statement to create Messages table
+     */
+    static final String CREATE_TABLE =
+            "CREATE TABLE " + TABLE_NAME + " (" +
+                    _ID + " INTEGER PRIMARY KEY," +
+                    COLUMN_NAME_ACCOUNT_ID
+                    + " REFERENCES " + AccountDb.TABLE_NAME + "(" + AccountDb._ID + ")," +
+                    COLUMN_NAME_TOPIC + " TEXT," +
+                    // + " REFERENCES " + TopicDb.TABLE_NAME + "(" + TopicDb._ID + ")," +
+                    COLUMN_NAME_FROM + " TEXT," +
+                    COLUMN_NAME_TS + " TEXT," +
+                    COLUMN_NAME_SEQ + " INT," +
+                    COLUMN_NAME_CONTENT + " BLOB)";
+    /**
+     * Add index on account_id-topic-seq, in descending order
+     */
+    static final String CREATE_INDEX =
+            "CREATE UNIQUE INDEX " + INDEX_NAME +
+                    " ON " + TABLE_NAME + " (" +
+                    COLUMN_NAME_ACCOUNT_ID + "," +
+                    COLUMN_NAME_TOPIC + "," +
+                    COLUMN_NAME_SEQ + " DESC)";
+
+    /**
+     * SQL statement to drop Messages table.
+     */
+    static final String DROP_TABLE =
+            "DROP TABLE IF EXISTS " + TABLE_NAME;
+    /**
+     * Drop the index too
+     */
+    static final String DROP_INDEX =
+            "DROP INDEX IF EXISTS " + INDEX_NAME;
+
+    /**
      * Save message to DB
      *
      * @return ID of the newly added message
@@ -115,7 +154,7 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_FROM, msg.from);
         values.put(COLUMN_NAME_TS, msg.ts.getTime());
         values.put(COLUMN_NAME_SEQ, msg.seq);
-        values.put(COLUMN_NAME_CONTENT, serialize(msg.content));
+        values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
         return db.insert(TABLE_NAME, null, values);
     }
@@ -151,7 +190,7 @@ public class MessageDb implements BaseColumns {
                 }
                 stmt.bindLong(4, msg.ts.getTime());
                 stmt.bindLong(5, msg.seq);
-                stmt.bindBlob(6, serialize(msg.content));
+                stmt.bindBlob(6, BaseDb.serialize(msg.content));
                 stmt.executeInsert();
 
                 count++;
@@ -169,7 +208,7 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Query messages. To select all messages make from and to equal to -1.
+     * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
      *
      * @param db    database to select from;
      * @param topic Tinode topic to select from
@@ -178,34 +217,16 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the messages
      */
     public static Cursor query(SQLiteDatabase db, String topic, int from, int to) {
-
-        to = (to < 0 ? Integer.MAX_VALUE : to);
-
-        // Filter results by topic and sequence
-        String selection =
-                COLUMN_NAME_ACCOUNT_ID + "=? AND " +
-                COLUMN_NAME_TOPIC + "=? AND " +
-                        COLUMN_NAME_SEQ + ">? AND " +
-                        COLUMN_NAME_SEQ + "<=?";
-        String[] selectionArgs = {
-                String.valueOf(BaseDb.getAccountId()),
-                topic,
-                String.valueOf(from),
-                String.valueOf(to)
-        };
-
-        // How you want the results sorted in the resulting Cursor
-        String sortOrder = COLUMN_NAME_SEQ;
-
-        return db.query(
-                TABLE_NAME,     // The table to query
-                null,           // Return all columns
-                selection,      // The columns for the WHERE clause
-                selectionArgs,  // The values for the WHERE clause
-                null,           // no GROUP BY
-                null,           // no HAVING
-                sortOrder       // sort by seq, ASC
-        );
+        String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE " +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
+                " AND " + COLUMN_NAME_TOPIC + "='" + topic + "'" +
+                (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
+                (to > 0 ?  " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
+                " ORDER BY " + COLUMN_NAME_SEQ;
+        Log.d(TAG, "Sql=[" + sql + "]");
+        
+        return db.rawQuery(sql, null);
     }
 
     /**
@@ -216,7 +237,7 @@ public class MessageDb implements BaseColumns {
      * @param seq   seq value to delete.
      * @return number of deleted messages
      */
-    public static int deleteMsg(SQLiteDatabase db, String topic, int seq) {
+    public static int delete(SQLiteDatabase db, String topic, int seq) {
         // Define 'where' part of query.
         String selection =
                 COLUMN_NAME_ACCOUNT_ID + "=? AND " +
@@ -240,7 +261,7 @@ public class MessageDb implements BaseColumns {
      * @param to    maximum seq value to delete, inclusive.
      * @return number of deleted messages
      */
-    public static int deleteMsg(SQLiteDatabase db, String topic, int from, int to) {
+    public static int delete(SQLiteDatabase db, String topic, int from, int to) {
         to = (to < 0 ? Integer.MAX_VALUE : to);
 
         String selection =
@@ -265,7 +286,7 @@ public class MessageDb implements BaseColumns {
         msg.from = cursor.getString(COLUMN_IDX_FROM);
         msg.seq = cursor.getInt(COLUMN_IDX_SEQ);
         msg.ts = new Date(cursor.getLong(COLUMN_IDX_TS));
-        msg.content = deserialize(cursor.getBlob(COLUMN_IDX_CONTENT));
+        msg.content = BaseDb.deserialize(cursor.getBlob(COLUMN_IDX_CONTENT));
 
         return msg;
     }
@@ -305,46 +326,6 @@ public class MessageDb implements BaseColumns {
             count = 0;
         }
         return count;
-    }
-
-    private static byte[] serialize(Object obj) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutput objout = null;
-        try {
-            objout = new ObjectOutputStream(baos);
-            objout.writeObject(obj);
-            objout.flush();
-            return baos.toByteArray();
-        } catch (IOException ignored) {
-        } finally {
-            try {
-                baos.close();
-                if (objout != null) {
-                    objout.close();
-                }
-            } catch (IOException ignored) {
-            }
-        }
-        return null;
-    }
-
-    private static <T> T deserialize(byte[] bytes) {
-        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        ObjectInput objin = null;
-        try {
-            objin = new ObjectInputStream(bais);
-            return (T) objin.readObject();
-        } catch (IOException | ClassNotFoundException | ClassCastException ignored) {
-        } finally {
-            try {
-                bais.close();
-                if (objin != null) {
-                    objin.close();
-                }
-            } catch (IOException ignored) {
-            }
-        }
-        return null;
     }
 
     public static class Loader extends AsyncTaskLoader<Cursor> {

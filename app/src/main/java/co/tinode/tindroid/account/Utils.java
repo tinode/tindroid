@@ -2,15 +2,11 @@ package co.tinode.tindroid.account;
 
 import android.accounts.Account;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
-import android.support.v7.app.ActionBar;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -21,15 +17,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
-import co.tinode.tindroid.R;
-import co.tinode.tindroid.RoundedImage;
-import co.tinode.tindroid.VCard;
-import co.tinode.tinodesdk.Topic;
 
 /**
  * Constants and misc utils
  */
-
 public class Utils {
     // Account management constants
     public static final String TOKEN_TYPE = "co.tinode.token";
@@ -43,6 +34,10 @@ public class Utils {
     public static final String TAG_LABEL_PHONE = "tel:";
     public static final String TAG_LABEL_EMAIL = "email:";
     public static final String TAG_LABEL_TINODE = "tinode:";
+
+    // Key for storing UID in the AccountManager
+    public static final String ACCKEY_UID = "co.tinode.tindroid.uid";
+
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */
@@ -53,10 +48,6 @@ public class Utils {
     public static final String DATA_DETAIL = Data.DATA3;
     private static final String TAG = "Utils";
 
-    // If Message activity is visible, this is the current topic in that activity.
-    public static String sVisibleTopic = null;
-
-    private static ActionBar sToolbar;
 
     public static Account GetAccount(String accountName) {
         return new Account(accountName, ACCOUNT_TYPE);
@@ -145,50 +136,6 @@ public class Utils {
         cursor.close();
 
         return map;
-    }
-
-    public static void setupToolbar(Context context, ActionBar toolbar, VCard pub, Topic.TopicType topicType) {
-        if (pub != null) {
-            toolbar.setTitle(" " + pub.fn);
-
-            pub.constructBitmap();
-            Bitmap bmp = pub.getBitmap();
-            if (bmp != null) {
-                toolbar.setLogo(new RoundedImage(bmp));
-            } else {
-                Drawable drw;
-                int res = -1;
-                if (topicType == Topic.TopicType.GRP) {
-                    res = R.drawable.ic_group;
-                } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
-                    res = R.drawable.ic_person;
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    drw = context.getResources().getDrawable(res, context.getTheme());
-                } else {
-                    drw = context.getResources().getDrawable(res);
-                }
-                if (drw != null) {
-                    toolbar.setLogo(drw);
-                }
-            }
-        } else {
-            toolbar.setTitle(R.string.app_name);
-        }
-        sToolbar = toolbar;
-    }
-
-    public static void clearToolbar(Context context) {
-        sToolbar = null;
-    }
-
-    public static String getVisibleTopic() {
-        return sVisibleTopic;
-    }
-
-    public static void setVisibleTopic(String topic) {
-        sVisibleTopic = topic;
     }
 
     public static class ContactHolder {

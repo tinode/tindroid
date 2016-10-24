@@ -18,12 +18,10 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -41,6 +39,7 @@ import android.widget.Toast;
 import java.io.IOException;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -109,7 +108,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        if (InmemoryCache.getTinode().isAuthenticated()) {
+        if (Cache.getTinode().isAuthenticated()) {
             // We already have a live connection to the server. All good.
             // Launch the contacts activity and stop.
             startActivity(new Intent(getApplicationContext(), ContactsActivity.class));
@@ -136,15 +135,12 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-
-        Utils.setupToolbar(this, getSupportActionBar(), null, null);
+        UIUtils.setupToolbar(this, null, null);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-
-        Utils.clearToolbar(this);
     }
 
     private Account fetchAccount(SharedPreferences preferences) {
@@ -204,7 +200,7 @@ public class LoginActivity extends AppCompatActivity {
         return account;
     }
 
-    private void loginWithSavedAccount(Account account) {
+    private void loginWithSavedAccount(final Account account) {
         Log.d(TAG, "accountName=" + account.name + "; accountType=" + account.type + ";");
         final Button signIn = (Button) findViewById(R.id.singnIn);
         // signIn.setEnabled(false);
@@ -221,9 +217,9 @@ public class LoginActivity extends AppCompatActivity {
                     Log.i(TAG, "Get Existing Account canceled, exiting.");
                     finish();
                 } catch (AuthenticatorException e) {
-                    Log.e(TAG, "AuthenticatorException: " + e);
+                    Log.e(TAG, "AuthenticatorException: ", e);
                 } catch (IOException e) {
-                    Log.e(TAG, "IOException: " + e);
+                    Log.e(TAG, "IOException: ", e);
                 }
                 if (result == null) {
                     return;
@@ -238,13 +234,13 @@ public class LoginActivity extends AppCompatActivity {
 
                 final SharedPreferences sharedPref
                         = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
-                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
+                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
                 try {
                     // Connecting with synchronous calls because this is not the main thread.
-                    final Tinode tinode = InmemoryCache.getTinode();
+                    final Tinode tinode = Cache.getTinode();
                     tinode.connect(hostName).getResult();
                     tinode.loginToken(token).getResult();
-                    onLoginSuccess(signIn);
+                    onLoginSuccess(account, signIn);
                 } catch (Exception err) {
                     mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                     reportError(err, signIn, R.string.error_login_failed);
@@ -320,30 +316,34 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void onLogin(View v) {
-        final String login = ((EditText) findViewById(R.id.editLogin)).getText().toString().trim();
+        EditText loginInput = (EditText) findViewById(R.id.editLogin);
+        EditText passwordInput = (EditText) findViewById(R.id.editPassword);
+
+        final String login = loginInput.getText().toString().trim();
         if (login.isEmpty()) {
-            ((EditText) findViewById(R.id.editLogin)).setError(getText(R.string.login_required));
+            loginInput.setError(getText(R.string.login_required));
             return;
         }
-        final String password = ((EditText) findViewById(R.id.editPassword)).getText().toString().trim();
+        final String password = passwordInput.getText().toString().trim();
         if (password.isEmpty()) {
-            ((EditText) findViewById(R.id.editLogin)).setError(getText(R.string.password_required));
+            passwordInput.setError(getText(R.string.password_required));
             return;
         }
+
         final Button signIn = (Button) findViewById(R.id.singnIn);
         signIn.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
-
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+        final Tinode tinode = Cache.getTinode();
         try {
             // This is called on the websocket thread.
-            InmemoryCache.getTinode().connect(hostName)
+            tinode.connect(hostName)
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    return InmemoryCache.getTinode().loginBasic(
+                                    return tinode.loginBasic(
                                             login,
                                             password);
                                 }
@@ -353,9 +353,9 @@ public class LoginActivity extends AppCompatActivity {
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    Account acc = addAndroidAccount(sharedPref, login, password);
-                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, null);
-                                    onLoginSuccess(signIn);
+                                    final Account acc = addAndroidAccount(sharedPref, login, password);
+                                    onLoginSuccess(acc, signIn);
+                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, new Bundle());
                                     return null;
                                 }
                             },
@@ -372,22 +372,29 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void reportError(Exception err, final Button button, final int errId) {
-        final String message = err.getMessage();
-        Log.i(TAG, "connection failed :( " + message);
+    private void reportError(final Exception err, final Button button, final int errId) {
+        String message = err.getMessage();
+        Log.i(TAG, getText(errId) + " " + message);
+
+        Throwable cause = err;
+        while ((cause = cause.getCause()) != null) {
+            message = cause.getMessage();
+        }
+        final String finalMessage = message;
+
         runOnUiThread(new Runnable() {
             public void run() {
                 if (button != null) {
                     button.setEnabled(true);
                 }
                 Toast.makeText(getApplicationContext(),
-                        getText(errId) + message, Toast.LENGTH_LONG).show();
+                        getText(errId) + " " + finalMessage, Toast.LENGTH_LONG).show();
             }
         });
     }
 
     /** Login successful. Show contacts activity */
-    private void onLoginSuccess(final Button button) {
+    private void onLoginSuccess(Account acc, final Button button) {
         if (button != null) {
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -395,6 +402,11 @@ public class LoginActivity extends AppCompatActivity {
                 }
             });
         }
+
+        // Initialize database
+        String uid = mAccountManager.getUserData(acc, Utils.ACCKEY_UID);
+        BaseDb.getInstance(this, uid);
+
         startActivity(new Intent(getApplicationContext(),
                 ContactsActivity.class));
         finish();
@@ -435,12 +447,13 @@ public class LoginActivity extends AppCompatActivity {
         signUp.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, InmemoryCache.HOST_NAME);
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
         final String fullName = ((EditText) findViewById(R.id.fullName)).getText().toString().trim();
         final ImageView avatar = (ImageView) findViewById(R.id.imageAvatar);
+        final Tinode tinode = Cache.getTinode();
         try {
             // This is called on the websocket thread.
-            InmemoryCache.getTinode().connect(hostName)
+            tinode.connect(hostName)
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
@@ -448,13 +461,13 @@ public class LoginActivity extends AppCompatActivity {
                                     // Try to create a new account.
                                     Bitmap bmp = null;
                                     try {
-                                        bmp = ((BitmapDrawable)avatar.getDrawable()).getBitmap();
+                                        bmp = ((BitmapDrawable) avatar.getDrawable()).getBitmap();
                                     } catch (ClassCastException ignored) {
                                         // If image is not loaded, the drawable is a vector.
                                         // Ignore it.
                                     }
                                     VCard vcard = new VCard(fullName, bmp);
-                                    return InmemoryCache.getTinode().createAccountBasic(
+                                    return tinode.createAccountBasic(
                                             login, password, true,
                                             new SetDesc<VCard,String>(vcard, null));
                                 }
@@ -505,9 +518,13 @@ public class LoginActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mAccountManager.notifyAccountAuthenticated(acc);
         }
-        final String token = InmemoryCache.getTinode().getAuthToken();
+        final String token = Cache.getTinode().getAuthToken();
         if (!TextUtils.isEmpty(token)) {
             mAccountManager.setAuthToken(acc, Utils.TOKEN_TYPE, token);
+        }
+        final String uid = Cache.getTinode().getMyId();
+        if (!TextUtils.isEmpty(uid)) {
+            mAccountManager.setUserData(acc, Utils.ACCKEY_UID, uid);
         }
         return acc;
     }

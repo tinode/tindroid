@@ -6,4 +6,5 @@ package co.tinode.tinodesdk.model;
 public class Acs {
     public String want;
     public String given;
+    public String mode;
 }

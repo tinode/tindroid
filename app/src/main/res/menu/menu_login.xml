@@ -3,13 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".LoginActivity">
 
+    <group
+        android:id="@+id/offline"
+        android:visible="false">
     <item
         android:id="@+id/action_offline"
         android:orderInCategory="10"
         android:title="@string/action_offline"
         android:icon="@drawable/ic_offline"
-        android:visible="false"
         app:showAsAction="always" />
+    </group>
 
     <item
         android:id="@+id/action_signup"

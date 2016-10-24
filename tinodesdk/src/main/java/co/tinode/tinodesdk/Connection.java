@@ -76,7 +76,6 @@ public class Connection {
         ws.addListener(new WebSocketAdapter() {
             @Override
             public void onConnected(WebSocket ws, Map<String, List<String>> headers) {
-                Log.d(TAG, "Websocket connected!");
                 if (backoff != null) {
                     backoff.reset();
                 }
@@ -94,7 +93,7 @@ public class Connection {
             @Override
             public void onBinaryMessage(WebSocket ws, byte[] data) {
                 // do nothing, server does not send binary frames
-                Log.i(TAG, "binary message received (should not happen)");
+                Log.e(TAG, "binary message received (should not happen)");
             }
 
             @Override
@@ -112,15 +111,18 @@ public class Connection {
                     // TODO(gene): add autoreconnect
                 }
             }
+
+            /*
+            // No need to override it. generic onError will be called anyway
             @Override
             public void onConnectError(WebSocket ws, final WebSocketException error) {
                 Log.i(TAG, "Connection error", error);
                 mListener.onError(error);
             }
+            */
 
             @Override
             public void onError(WebSocket ws, final WebSocketException error) {
-                Log.i(TAG, "Generic error", error);
                 mListener.onError(error);
             }
         });
@@ -137,7 +139,7 @@ public class Connection {
      * @param autoreconnect not implemented yet
      * @return true if a new attempt to open a connection was performed, false if connection already exists
      */
-    public boolean connect(boolean autoreconnect)  throws IOException {
+    public boolean connect(boolean autoreconnect) throws IOException {
         // TODO(gene): implement autoreconnect
         this.autoreconnect = autoreconnect;
 
@@ -169,7 +171,9 @@ public class Connection {
         mWsClient.sendText(message);
     }
 
-    public static class WsListener {
+    static class WsListener {
+        WsListener() {}
+
         protected void onConnect() {
         }
 

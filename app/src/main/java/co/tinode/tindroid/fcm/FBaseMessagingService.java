@@ -21,6 +21,7 @@ import co.tinode.tindroid.ContactsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.RoundedImage;
+import co.tinode.tindroid.UIUtils;
 import co.tinode.tindroid.VCard;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
@@ -69,7 +70,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "MessageDb data payload: " + data);
 
             topicName = data.get("topic");
-            String visibleTopic = Utils.getVisibleTopic();
+            String visibleTopic = UIUtils.getVisibleTopic();
             if (visibleTopic != null && visibleTopic.equals(topicName)) {
                 // No need to display a notification if we are in the topic already.
                 return;
