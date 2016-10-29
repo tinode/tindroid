@@ -26,6 +26,7 @@ import co.tinode.tinodesdk.model.Subscription;
 public class ChatListFragment extends ListFragment implements AbsListView.MultiChoiceModeListener {
 
     private static final String TAG = "ChatListFragment";
+    private ChatListAdapter mAdapter = null;
 
     public ChatListFragment() {
     }
@@ -46,16 +47,18 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        setListAdapter(((ContactsActivity) getActivity()).getContactsAdapter());
+        mAdapter = ((ContactsActivity) getActivity()).getChatListAdapter();
+
+        setListAdapter(mAdapter);
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
         getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Subscription s = ((ContactsActivity) getActivity()).getContactByPos(position);
+                String topic = mAdapter.getTopicNameFromView(view);
                 Intent intent = new Intent(getActivity(), MessageActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                intent.putExtra("topic", s.topic);
+                intent.putExtra("topic", topic);
                 startActivity(intent);
             }
         });
@@ -99,10 +102,9 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
      */
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-        ChatListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
         switch (item.getItemId()) {
             case R.id.action_delete:
-                SparseBooleanArray selected = adapter.getSelectedIds();
+                SparseBooleanArray selected = mAdapter.getSelectedIds();
                 for (int i = 0; i < selected.size(); i++) {
                     if (selected.valueAt(i)) {
                         Log.d(TAG, "deleting item at " + selected.keyAt(i));
@@ -136,8 +138,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
     @Override
     public void onDestroyActionMode(ActionMode mode) {
-        ChatListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
-        adapter.removeSelection();
+        mAdapter.removeSelection();
     }
 
     @Override
@@ -147,8 +148,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
     @Override
     public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-        ChatListAdapter adapter = ((ContactsActivity) getActivity()).getContactsAdapter();
-        adapter.toggleSelected(position);
-        mode.setTitle("" + adapter.getSelectedCount());
+        mAdapter.toggleSelected(position);
+        mode.setTitle("" + mAdapter.getSelectedCount());
     }
 }

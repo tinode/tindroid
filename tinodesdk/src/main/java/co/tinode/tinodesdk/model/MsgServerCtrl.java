@@ -3,7 +3,7 @@ package co.tinode.tinodesdk.model;
 import java.util.Map;
 
 /**
- * Created by gsokolov on 2/2/16.
+ * Control packet
  */
 public class MsgServerCtrl {
     public String id;

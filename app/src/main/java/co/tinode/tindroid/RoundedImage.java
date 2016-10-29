@@ -20,6 +20,8 @@ public class RoundedImage extends BitmapDrawable {
     private RectF mRectF;
     private int mBitmapWidth;
     private int mBitmapHeight;
+    private Boolean mOnline;
+    private Paint mPaintOnline;
 
     public RoundedImage(Bitmap bmp) {
         super(bmp);
@@ -31,7 +33,15 @@ public class RoundedImage extends BitmapDrawable {
         init(bmp);
     }
 
+    public RoundedImage(Bitmap bmp, boolean online) {
+        super(bmp);
+        init(bmp);
+        setOnline(online);
+    }
+
+
     private void init(Bitmap bmp) {
+        mOnline = null;
         mRectF = new RectF();
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
@@ -52,6 +62,10 @@ public class RoundedImage extends BitmapDrawable {
     @Override
     public void draw(Canvas canvas) {
         canvas.drawOval(mRectF, mPaint);
+        if (mOnline != null) {
+            float radius = mBitmapWidth / 8.0f;
+            canvas.drawCircle(mRectF.right - radius, mRectF.bottom - radius, radius, mPaintOnline);
+        }
     }
 
     @Override
@@ -93,5 +107,11 @@ public class RoundedImage extends BitmapDrawable {
     public void setFilterBitmap(boolean filter) {
         mPaint.setFilterBitmap(filter);
         invalidateSelf();
+    }
+
+    public void setOnline(boolean online) {
+        mOnline = online;
+        mPaintOnline = new Paint();
+        mPaintOnline.setColor(online ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
     }
 }

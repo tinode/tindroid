@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="6dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
     tools:context="co.tinode.tindroid.ContactsFragment"
     android:background="@color/white">
 

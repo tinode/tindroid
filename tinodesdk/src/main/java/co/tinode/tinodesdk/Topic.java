@@ -271,28 +271,26 @@ public class Topic<Pu,Pr,T> {
      *
      * @param what "read" or "recv" to indicate which action to report
      */
-    protected boolean noteReadRecv(NoteType what) {
+    protected int noteReadRecv(NoteType what) {
         if (mDescription == null) {
             mDescription = new Description<>();
         }
 
         // Save read and received status on subscription.
         Subscription<?,?> sub = mSubs.get(mTinode.getMyId());
-        boolean result = false;
+        int result = 0;
         if (sub != null) {
             switch (what) {
                 case RECV:
                     if (sub.recv < mDescription.seq) {
                         mTinode.noteRecv(getName(), mDescription.seq);
-                        sub.recv = mDescription.seq;
-                        result = true;
+                        result = sub.recv = mDescription.seq;
                     }
                     break;
                 case READ:
                     if (sub.read < mDescription.seq) {
                         mTinode.noteRead(getName(), mDescription.seq);
-                        sub.read = mDescription.seq;
-                        result = true;
+                        result = sub.read = mDescription.seq;
                     }
                     break;
             }
@@ -313,11 +311,11 @@ public class Topic<Pu,Pr,T> {
         return result;
     }
 
-    public boolean noteRead() {
+    public int noteRead() {
         return noteReadRecv(NoteType.READ);
     }
 
-    public boolean noteRecv() {
+    public int noteRecv() {
         return noteReadRecv(NoteType.RECV);
     }
 
@@ -614,8 +612,8 @@ public class Topic<Pu,Pr,T> {
         }
         mMessages.add(data);
 
-        if (mListener != null) {
-            mListener.onData(data);
+        if (mListener != null && mListener.onData(data)) {
+            noteRecv();
         }
 
         MeTopic me = mTinode.getMeTopic();
@@ -699,7 +697,13 @@ public class Topic<Pu,Pr,T> {
     public static class Listener<PPu,PPr,Tt> {
         public void onSubscribe(int code, String text) {}
         public void onLeave(int code, String text) {}
-        public void onData(MsgServerData<Tt> data) {}
+
+        /**
+         * Process {data} message.
+         * @param data data packet
+         * @return true if Tinode should issue a recv notification, false otherwise
+         */
+        public boolean onData(MsgServerData<Tt> data) { return false; }
         public void onPres(MsgServerPres pres) {}
         public void onContactUpdate(String what, Subscription<PPu,PPr> sub) {}
         public void onInfo(MsgServerInfo info) {}

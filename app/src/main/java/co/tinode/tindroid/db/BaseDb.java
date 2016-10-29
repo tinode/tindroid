@@ -1,11 +1,8 @@
 package co.tinode.tindroid.db;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.provider.BaseColumns;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,7 +57,7 @@ public class BaseDb extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // This is just a cache. Drop then refetch everything from the server.
+        // This is just a cache. Drop then re-fetch everything from the server.
         db.execSQL(MessageDb.DROP_INDEX);
         db.execSQL(MessageDb.DROP_TABLE);
         db.execSQL(TopicDb.DROP_INDEX);

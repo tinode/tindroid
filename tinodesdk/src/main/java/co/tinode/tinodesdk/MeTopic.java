@@ -16,8 +16,9 @@ import java.util.Map;
  */
 public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
 
-    public static final String NAME = Tinode.TOPIC_ME;
-
+    /**
+     * Mapping of UID (key) to P2P topic name (value)
+     */
     protected Map<String,String> mP2PMap = new HashMap<>();
 
     public MeTopic(Tinode tinode, Listener<Pu,Pr,Invitation<T>> l) {
@@ -71,7 +72,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
 
     @Override
     protected void routePres(MsgServerPres pres) {
-        // p2p topics are not getting what=on/off/upd updates,
+        // P2P topics are not getting what=on/off/upd updates,
         // such updates are sent with pres.topic set to user ID
         String contactName = mP2PMap.get(pres.src);
         contactName = contactName == null ? pres.src : contactName;

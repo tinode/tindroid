@@ -1,5 +1,7 @@
 package co.tinode.tindroid;
 
+import android.accounts.Account;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -8,22 +10,26 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Invitation;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
+import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -34,12 +40,15 @@ public class ContactsActivity extends AppCompatActivity implements
 
     private static final String TAG = "ContactsActivity";
 
-    protected ChatListAdapter mContactsAdapter;
-    protected ArrayList<String> mContactIndex;
+    protected ChatListAdapter mChatListAdapter;
+    protected Account mAccount;
+    private SQLiteDatabase mDb = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mAccount = Utils.GetAccountFromPrefs(PreferenceManager.getDefaultSharedPreferences(this));
 
         setContentView(R.layout.activity_contacts);
 
@@ -66,8 +75,8 @@ public class ContactsActivity extends AppCompatActivity implements
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        mContactIndex = new ArrayList<>();
-        mContactsAdapter = new ChatListAdapter(this, mContactIndex);
+        mDb = BaseDb.getInstance(this, mAccount.name).getWritableDatabase();
+        mChatListAdapter = new ChatListAdapter(this, mAccount);
     }
 
     /**
@@ -98,9 +107,9 @@ public class ContactsActivity extends AppCompatActivity implements
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
-        tinode.setListener(new UIUtils.EventListener(this));
+        tinode.setListener(new UiUtils.EventListener(this));
 
-        UIUtils.setupToolbar(this, null, Topic.TopicType.ME);
+        UiUtils.setupToolbar(this, null, Topic.TopicType.ME);
 
         MeTopic<VCard, String, String> me = tinode.getMeTopic();
         if (me == null) {
@@ -108,17 +117,19 @@ public class ContactsActivity extends AppCompatActivity implements
                     new Topic.Listener<VCard, String, Invitation<String>>() {
 
                         @Override
-                        public void onData(MsgServerData<Invitation<String>> data) {
+                        public boolean onData(MsgServerData<Invitation<String>> data) {
                             // TODO(gene): handle a chat invitation
                             Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
+                            return MessageDb.insert(mDb, data) > 0;
                         }
 
                         @Override
                         public void onContactUpdate(final String what, final Subscription<VCard, String> sub) {
+                            TopicDb.update(mDb, sub.topic, sub);
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mContactsAdapter.notifyDataSetChanged();
+                                    mChatListAdapter.notifyDataSetChanged();
                                 }
                             });
                         }
@@ -126,6 +137,27 @@ public class ContactsActivity extends AppCompatActivity implements
                         @Override
                         public void onInfo(MsgServerInfo info) {
                             Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
+                        }
+
+                        @Override
+                        public void onPres(MsgServerPres pres) {
+                            if (pres.what.equals("msg")) {
+                                TopicDb.updateSeq(mDb, pres.src, pres.seq);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mChatListAdapter.notifyDataSetChanged();
+                                    }
+                                });
+                            } else if (pres.what.equals("off") || pres.what.equals("on")) {
+                                // Online/offline info is not persisted
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mChatListAdapter.notifyDataSetChanged();
+                                    }
+                                });
+                            }
                         }
 
                         @Override
@@ -138,7 +170,7 @@ public class ContactsActivity extends AppCompatActivity implements
                             if (sub.pub != null) {
                                 sub.pub.constructBitmap();
                             }
-                            mContactIndex.add(sub.topic);
+                            TopicDb.upsert(mDb, sub.topic, sub);
                         }
 
                         @Override
@@ -150,7 +182,7 @@ public class ContactsActivity extends AppCompatActivity implements
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mContactsAdapter.notifyDataSetChanged();
+                                    mChatListAdapter.notifyDataSetChanged();
                                 }
                             });
                         }
@@ -158,18 +190,18 @@ public class ContactsActivity extends AppCompatActivity implements
             // Public, Private, Info in Invite<Info>
             me.setTypes(VCard.class, String.class, String.class);
             try {
-                me.subscribe();
+                MsgGetMeta.GetData getData = new MsgGetMeta.GetData();
+                // GetData.since is inclusive, so adding 1 to skip the item we already have.
+                getData.since = (int) MessageDb.getMaxSeq(mDb, me.getName()) + 1;
+                me.subscribe(null, new MsgGetMeta(
+                        new MsgGetMeta.GetDesc(),
+                        new MsgGetMeta.GetSub(),
+                        getData));
             } catch (Exception err) {
                 Log.i(TAG, "connection failed :( " + err.getMessage());
                 Toast.makeText(getApplicationContext(),
-                        "Failed to login", Toast.LENGTH_LONG).show();
+                        "Failed to attach", Toast.LENGTH_LONG).show();
             }
-        } else {
-            mContactIndex.clear();
-            for (Subscription<VCard, String> s : me.getSubscriptions()) {
-                mContactIndex.add(s.topic);
-            }
-            mContactsAdapter.notifyDataSetChanged();
         }
     }
 
@@ -180,14 +212,16 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.getTinode().setListener(null);
     }
 
-    protected ChatListAdapter getContactsAdapter() {
-        return mContactsAdapter;
+    protected ChatListAdapter getChatListAdapter() {
+        return mChatListAdapter;
     }
 
+    /*
     protected Subscription<VCard, String> getContactByPos(int pos) {
         MeTopic<VCard, String, String> me = Cache.getTinode().getMeTopic();
         return me.getSubscription(mContactIndex.get(pos));
     }
+    */
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

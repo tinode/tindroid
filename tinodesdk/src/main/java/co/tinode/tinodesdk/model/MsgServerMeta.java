@@ -3,7 +3,7 @@ package co.tinode.tinodesdk.model;
 import java.util.Date;
 
 /**
- * Created by gsokolov on 2/2/16.
+ * Metadata packet
  */
 public class MsgServerMeta<Pu, Pr> {
     public String id;

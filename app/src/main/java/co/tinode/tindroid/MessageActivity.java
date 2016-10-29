@@ -20,6 +20,7 @@ import android.widget.TextView;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -99,7 +100,7 @@ public class MessageActivity extends AppCompatActivity {
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
-        tinode.setListener(new UIUtils.EventListener(this));
+        tinode.setListener(new UiUtils.EventListener(this));
 
         final Intent intent = getIntent();
         final LoaderManager loaderManager = getSupportLoaderManager();
@@ -134,7 +135,7 @@ public class MessageActivity extends AppCompatActivity {
         mTopic = tinode.getTopic(mTopicName);
 
         if (mTopic != null) {
-            UIUtils.setupToolbar(this, mTopic.getPublic(), mTopic.getTopicType());
+            UiUtils.setupToolbar(this, mTopic.getPublic(), mTopic.getTopicType());
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
                 mMessagesAdapter.setTopic(mTopicName);
                 runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
@@ -151,21 +152,30 @@ public class MessageActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onData(MsgServerData data) {
+                public boolean onData(MsgServerData data) {
+                    boolean recv = false;
                     if (MessageDb.insert(mDb, data) > 0) {
-                        if (mTopic != null) {
-                            // Once message is saved, notify the server
-                            mTopic.noteRecv();
-                        }
+                        TopicDb.updateRecv(mDb, mTopicName, data.seq);
+                        // mMessagesAdapter.notifyItemInserted(0);
+                        // Loader will call notifyDataSetChanged
+                        runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+                        recv = true;
                     }
-                    // mMessagesAdapter.notifyItemInserted(0);
-                    // Loader will call notifyDataSetChanged
-                    runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+                    return recv;
                 }
 
                 @Override
                 public void onPres(MsgServerPres pres) {
                     Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
+                    if (pres.what.equals("on") || pres.what.equals("off")) {
+                        final boolean online = pres.what.equals("on");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                UiUtils.setOnlineStatus(MessageActivity.this, online);
+                            }
+                        });
+                    }
                 }
 
                 @Override
@@ -204,7 +214,7 @@ public class MessageActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            UIUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType());
+                            UiUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType());
                         }
                     });
                 }
@@ -260,7 +270,7 @@ public class MessageActivity extends AppCompatActivity {
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-        UIUtils.setVisibleTopic(hasFocus ? mTopicName : null);
+        UiUtils.setVisibleTopic(hasFocus ? mTopicName : null);
     }
 
     public void scrollTo(int position) {
@@ -274,7 +284,10 @@ public class MessageActivity extends AppCompatActivity {
 
     public void sendReadNotification() {
         if (mTopic != null) {
-            mTopic.noteRead();
+            int read = mTopic.noteRead();
+            if (read > 0) {
+                TopicDb.updateRead(mDb, mTopicName, read);
+            }
         }
     }
 

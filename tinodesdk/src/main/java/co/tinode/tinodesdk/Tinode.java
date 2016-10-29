@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -98,6 +97,10 @@ public class Tinode {
 
     private ConcurrentMap<String, PromisedReply<ServerMessage>> mFutures;
     private HashMap<String, Topic> mTopics;
+    /**
+     * Mapping of UID (key) to P2P topic name (value)
+     */
+    protected Map<String,String> mP2PMap = new HashMap<>();
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -108,10 +111,9 @@ public class Tinode {
 
         // Serialize dates as RFC3339. The default does not cut it because
         // it represents the time zone as '+0000' instead of the expected 'Z'
+        // Java 7 date parsing is retarded. Format: 2016-09-07T17:29:49.100Z
         sJsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        // Format: 2016-09-07T17:29:49.100Z
-        sDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-        sDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        sDateFormat = new RFC3339Format();
         sJsonMapper.setDateFormat(sDateFormat);
 
         sTypeFactory = sJsonMapper.getTypeFactory();
@@ -314,6 +316,14 @@ public class Tinode {
             Topic topic = mTopics.get(pkt.pres.topic);
             if (topic != null) {
                 topic.routePres(pkt.pres);
+                // For P2P topics presence is addressed to 'me' only. Forward it to the actual topic, if it's found.
+                if (TOPIC_ME.equals(pkt.pres.topic)) {
+                    String p2p = ((MeTopic) topic).getP2PfromUid(pkt.pres.src);
+                    Topic forwardTo;
+                    if ((p2p != null) && ((forwardTo = getTopic(p2p)) != null)) {
+                        forwardTo.routePres(pkt.pres);
+                    }
+                }
             }
 
             if (mListener != null) {

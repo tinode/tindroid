@@ -2,11 +2,13 @@ package co.tinode.tindroid.account;
 
 import android.accounts.Account;
 import android.content.ContentResolver;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -51,6 +53,14 @@ public class Utils {
 
     public static Account GetAccount(String accountName) {
         return new Account(accountName, ACCOUNT_TYPE);
+    }
+
+    public static Account GetAccountFromPrefs(SharedPreferences prefs) {
+        String login = prefs.getString(Utils.PREFS_ACCOUNT_NAME, null);
+        if (!TextUtils.isEmpty(login)) {
+            return GetAccount(login);
+        }
+        return null;
     }
 
     public static SparseArray<ContactHolder> fetchEmailsAndPhones(ContentResolver resolver, Uri uri) {

@@ -1,9 +1,11 @@
 package co.tinode.tinodesdk.model;
 
+import java.io.Serializable;
+
 /**
- * Created by gsokolov on 2/10/16.
+ * Container for a generic invitation.
  */
-public class Invitation<T> {
+public class Invitation<T> implements Serializable {
 
     // Topic that user wants to subscribe to or is invited to
     public String topic;

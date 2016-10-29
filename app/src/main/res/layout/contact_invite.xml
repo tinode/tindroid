@@ -6,7 +6,9 @@
     android:background="?android:attr/activatedBackgroundIndicator"
     android:orientation="horizontal"
     android:paddingBottom="2dp"
-    android:paddingTop="2dp">
+    android:paddingTop="2dp"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp">
 
     <android.support.v7.widget.AppCompatImageView
         android:id="@android:id/icon"

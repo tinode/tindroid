@@ -1,7 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gsokolov on 2/2/16.
+ * Presence notification.
  */
 public class MsgServerPres {
     public String topic;

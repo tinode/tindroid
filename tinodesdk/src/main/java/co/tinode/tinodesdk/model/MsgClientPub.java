@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ public class MsgClientPub<T> {
         this.content = content;
     }
 
+    @JsonIgnore
     public String setHeader(String key, String value) {
         if (this.head == null) {
             this.head = new HashMap<>();

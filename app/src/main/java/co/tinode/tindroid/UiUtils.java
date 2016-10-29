@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.design.widget.AppBarLayout;
@@ -20,10 +21,13 @@ import co.tinode.tinodesdk.Topic;
 /**
  * Static utilities for UI support.
  */
-public class UIUtils {
-    private static final String TAG = "UIUtils";
+public class UiUtils {
+    private static final String TAG = "UiUtils";
     // If Message activity is visible, this is the current topic in that activity.
     public static String sVisibleTopic = null;
+
+    public static int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
+    public static int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
 
     public static void setupToolbar(final AppCompatActivity activity, VCard pub, Topic.TopicType topicType) {
         final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
@@ -37,7 +41,7 @@ public class UIUtils {
             pub.constructBitmap();
             Bitmap bmp = pub.getBitmap();
             if (bmp != null) {
-                toolbar.setLogo(new RoundedImage(bmp));
+                toolbar.setLogo(new RoundedImage(bmp, false));
             } else {
                 Drawable drw;
                 int res = -1;
@@ -58,6 +62,19 @@ public class UIUtils {
             }
         } else {
             toolbar.setTitle(R.string.app_name);
+        }
+    }
+
+    public static void setOnlineStatus(final AppCompatActivity activity, boolean online) {
+        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        if (toolbar == null) {
+            return;
+        }
+
+        Drawable logo = toolbar.getLogo();
+        if (logo != null && logo instanceof RoundedImage) {
+            ((RoundedImage) logo).setOnline(online);
+            toolbar.setLogo(logo);
         }
     }
 

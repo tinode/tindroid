@@ -171,8 +171,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     @Override
-    public long getItemId(int reversePosition) {
-        int position = reversePosition; // getItemCount() - reversePosition - 1;
+    public long getItemId(int position) {
         mCursor.moveToPosition(position);
         return MessageDb.getLocalId(mCursor);
     }

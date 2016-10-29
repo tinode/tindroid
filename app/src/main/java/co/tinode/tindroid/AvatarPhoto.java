@@ -6,17 +6,18 @@ import android.graphics.BitmapFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 
 /**
  * Utility class: constructs a Bitmap from bytes/serializes to bytes
  */
-public class AvatarPhoto {
+public class AvatarPhoto implements Serializable {
     public byte[] data;
     public String type;
     public String uri;
 
     @JsonIgnore
-    protected Bitmap mImage = null;
+    protected transient Bitmap mImage = null;
 
     public AvatarPhoto() {
     }
@@ -33,13 +34,18 @@ public class AvatarPhoto {
 
     public boolean constructBitmap() {
         if (data != null) {
-            mImage = BitmapFactory.decodeByteArray(data, 0, data.length);
+            Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+            mImage = Bitmap.createScaledBitmap(bmp, 128, 128, false);
+            bmp.recycle();
         }
         return mImage != null;
     }
 
     @JsonIgnore
     public Bitmap getBitmap() {
+        if (mImage == null) {
+            constructBitmap();
+        }
         return mImage;
     }
 

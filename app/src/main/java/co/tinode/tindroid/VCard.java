@@ -4,12 +4,14 @@ import android.graphics.Bitmap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * VCard - contact descriptor.
  */
-public class VCard {
+public class VCard implements Serializable {
+
     public final static String TYPE_HOME = "HOME";
     public final static String TYPE_WORK = "WORK";
     public final static String TYPE_MOBILE = "MOBILE";
@@ -114,7 +116,7 @@ public class VCard {
 
     public enum ContactType {HOME, WORK, MOBILE, PERSONAL, BUSINESS, OTHER}
 
-    public static class Name {
+    public static class Name implements Serializable {
         public String surname;
         public String given;
         public String additional;
@@ -122,7 +124,7 @@ public class VCard {
         public String suffix;
     }
 
-    public static class Contact {
+    public static class Contact implements Serializable {
         public String type;
         public String uri;
 

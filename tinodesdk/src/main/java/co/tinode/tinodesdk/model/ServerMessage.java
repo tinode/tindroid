@@ -1,7 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Created by gsokolov on 2/2/16.
+ * Combined server message
  */
 public class ServerMessage<T,Pu,Pr> {
     public MsgServerData<T> data;

@@ -135,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        UIUtils.setupToolbar(this, null, null);
+        UiUtils.setupToolbar(this, null, null);
     }
 
     @Override
@@ -172,14 +172,7 @@ public class LoginActivity extends AppCompatActivity {
             final Account[] availableAccounts = mAccountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
             if (availableAccounts.length > 0) {
                 // Found some accounts, let's find the one saved from before or ask user to choose/create one
-                if (!TextUtils.isEmpty(mAccountName)) {
-                    for (Account acc : availableAccounts) {
-                        if (mAccountName.equals(acc.name)) {
-                            account = acc;
-                            Log.d(TAG, "Account found: " + mAccountName);
-                        }
-                    }
-                }
+                account = pickAccountByName(mAccountName, availableAccounts);
                 if (account == null) {
                     if (availableAccounts.length == 1) {
                         // We only have one account to choose from, so use it.
@@ -191,13 +184,27 @@ public class LoginActivity extends AppCompatActivity {
                         for (int i = 0; i < availableAccounts.length; i++) {
                             names[i] = availableAccounts[i].name;
                         }
-                        displayAccountPicker(names);
+                        // Account picker sets mAccountName
+                        displayAccountPicker(names, preferences);
+                        account = pickAccountByName(mAccountName, availableAccounts);
                     }
                 }
             }
         }
 
         return account;
+    }
+
+    private Account pickAccountByName(String name, Account[] list) {
+        if (!TextUtils.isEmpty(name)) {
+            for (Account acc : list) {
+                if (mAccountName.equals(acc.name)) {
+                    Log.d(TAG, "Account found: " + mAccountName);
+                    return acc;
+                }
+            }
+        }
+        return null;
     }
 
     private void loginWithSavedAccount(final Account account) {
@@ -236,7 +243,7 @@ public class LoginActivity extends AppCompatActivity {
                         = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
                 String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
                 try {
-                    // Connecting with synchronous calls because this is not the main thread.
+                    // Connecting with synchronous calls because this is not the UI thread.
                     final Tinode tinode = Cache.getTinode();
                     tinode.connect(hostName).getResult();
                     tinode.loginToken(token).getResult();
@@ -271,15 +278,15 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * Account picker
      */
-    private void displayAccountPicker(final String[] accountList) {
+    private void displayAccountPicker(final String[] accountList, final SharedPreferences preferences) {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.pick_account)
-                .setAdapter(new ArrayAdapter<>(getBaseContext(),
-                        android.R.layout.simple_list_item_1, accountList),
+                .setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, accountList),
                         new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mAccountName = accountList[which];
+                preferences.edit().putString(Utils.PREFS_ACCOUNT_NAME, mAccountName).apply();
             }
         }).create();
         dialog.show();
@@ -315,6 +322,10 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Login button pressed.
+     * @param v ignored
+     */
     public void onLogin(View v) {
         EditText loginInput = (EditText) findViewById(R.id.editLogin);
         EditText passwordInput = (EditText) findViewById(R.id.editPassword);
@@ -354,8 +365,8 @@ public class LoginActivity extends AppCompatActivity {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
                                     final Account acc = addAndroidAccount(sharedPref, login, password);
-                                    onLoginSuccess(acc, signIn);
                                     ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, new Bundle());
+                                    onLoginSuccess(acc, signIn);
                                     return null;
                                 }
                             },

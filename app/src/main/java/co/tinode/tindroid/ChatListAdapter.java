@@ -1,86 +1,99 @@
 package co.tinode.tindroid;
 
-import java.util.List;
 
-import android.app.Activity;
+import android.accounts.Account;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
+import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Handling contact list.
  */
-public class ChatListAdapter extends BaseAdapter {
+public class ChatListAdapter extends CursorAdapter {
+    private static final int QUERY_ID = 100;
 
     private Context mContext;
-    private List<String> mContactItems;
     private SparseBooleanArray mSelectedItems;
+    private Account mAccount;
 
-    public ChatListAdapter(Context context, List<String> items) {
+    public ChatListAdapter(AppCompatActivity context, Account acc) {
+        super(context, null, 0);
         mContext = context;
-        mContactItems = items;
+        mAccount = acc;
         mSelectedItems = new SparseBooleanArray();
+        context.getSupportLoaderManager().initLoader(QUERY_ID, null, new ChatsLoaderCallback());
     }
 
     @Override
     public int getCount() {
-        return mContactItems.size();
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return mContactItems.get(position);
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-
-        @SuppressWarnings("unchecked")
-        Subscription<VCard,String> s = (Subscription) Cache.getTinode().getMeTopic()
-                .getSubscription(mContactItems.get(position));
-
-        LayoutInflater inflater = (LayoutInflater) mContext
-                .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-
-        if (convertView == null) {
-            convertView = inflater.inflate(R.layout.contact, null);
+        if (getCursor() == null) {
+            return 0;
         }
+        return super.getCount();
+    }
+
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        LayoutInflater inflater = (LayoutInflater) mContext
+                .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
+
+        final View item = inflater.inflate(R.layout.contact, parent, false);
+
+        final ViewHolder holder = new ViewHolder();
+        holder.name = (TextView) item.findViewById(R.id.contactName);
+        holder.unreadCount = (TextView) item.findViewById(R.id.unreadCount);
+        holder.contactPriv = (TextView) item.findViewById(R.id.contactPriv);
+        holder.icon = (AppCompatImageView) item.findViewById(R.id.avatar);
+        holder.online = (AppCompatImageView) item.findViewById(R.id.online);
+
+        item.setTag(holder);
+
+        return item;
+    }
+
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+        final Subscription<VCard,String> s = TopicDb.readOne(cursor);
+        final ViewHolder holder = (ViewHolder) view.getTag();
+
+        holder.topic = s.topic;
 
         if (s.pub != null) {
-            ((TextView) convertView.findViewById(R.id.contactName)).setText(s.pub.fn);
+            holder.name.setText(s.pub.fn);
         }
-        ((TextView) convertView.findViewById(R.id.contactPriv)).setText(s.priv);
+        holder.contactPriv.setText(s.priv);
 
         int unread = s.seq - s.read;
-        TextView unreadBadge = (TextView) convertView.findViewById(R.id.unreadCount);
         if (unread > 0) {
-            unreadBadge.setText(unread > 9 ? "9+" : String.valueOf(unread));
-            unreadBadge.setVisibility(View.VISIBLE);
+            holder.unreadCount.setText(unread > 9 ? "9+" : String.valueOf(unread));
+            holder.unreadCount.setVisibility(View.VISIBLE);
         } else {
-            unreadBadge.setVisibility(View.INVISIBLE);
+            holder.unreadCount.setVisibility(View.INVISIBLE);
         }
 
         Bitmap bmp = s.pub != null ? s.pub.getBitmap() : null;
-        ImageView avatar = (ImageView) convertView.findViewById(R.id.avatar);
         if (bmp != null) {
-            avatar.setImageDrawable(new RoundedImage(bmp));
+            holder.icon.setImageDrawable(new RoundedImage(bmp));
         } else {
             Topic.TopicType topicType = Topic.getTopicTypeByName(s.topic);
             int res = -1;
@@ -97,17 +110,12 @@ public class ChatListAdapter extends BaseAdapter {
                 drw = mContext.getResources().getDrawable(res);
             }
             if (drw != null) {
-                //avatar.setImageDrawable(new RoundedImage(drw, 0xFF757575));
-                avatar.setImageDrawable(drw);
+                holder.icon.setImageDrawable(drw);
             }
         }
 
-        ((ImageView) convertView.findViewById(R.id.online))
-                .setColorFilter(s.online ?
-                        Color.argb(255, 0x40, 0xC0, 0x40) :
-                        Color.argb(255, 0xC0, 0xC0, 0xC0));
-
-        return convertView;
+        Subscription live = Cache.getTinode().getMeTopic().getSubscription(s.topic);
+        holder.online.setColorFilter((live != null && live.online) ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
     }
 
     public void toggleSelected(int position) {
@@ -119,9 +127,14 @@ public class ChatListAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    public String getTopicNameFromView(View view) {
+        final ViewHolder holder = (ViewHolder) view.getTag();
+        return holder != null ? holder.topic : null;
+    }
+
     public void selectView(int position, boolean value) {
         if (value)
-            mSelectedItems.put(position, value);
+            mSelectedItems.put(position, true);
         else
             mSelectedItems.delete(position);
         notifyDataSetChanged();
@@ -133,5 +146,57 @@ public class ChatListAdapter extends BaseAdapter {
 
     public SparseBooleanArray getSelectedIds() {
         return mSelectedItems;
+    }
+
+    private class ViewHolder {
+        String topic;
+        TextView name;
+        TextView unreadCount;
+        TextView contactPriv;
+        AppCompatImageView icon;
+        AppCompatImageView online;
+    }
+
+    private class ChatsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            // If this is the loader for finding contacts in the Contacts Provider
+            if (id == ChatListAdapter.QUERY_ID) {
+                return new ChatListLoader(mContext, mAccount);
+            }
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+            // This swaps the new cursor into the adapter.
+            if (loader.getId() == ChatListAdapter.QUERY_ID) {
+                ChatListAdapter.this.swapCursor(data);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            if (loader.getId() == ChatListAdapter.QUERY_ID) {
+                // When the loader is being reset, clear the cursor from the adapter. This allows the
+                // cursor resources to be freed.
+                ChatListAdapter.this.swapCursor(null);
+            }
+        }
+    }
+
+    private static class ChatListLoader extends CursorLoader {
+        private Account mAccount;
+
+        ChatListLoader(Context context, Account account) {
+            super(context);
+            mAccount = account;
+        }
+
+        @Override
+        public Cursor loadInBackground() {
+            SQLiteDatabase db = BaseDb.getInstance(getContext(), mAccount.name).getReadableDatabase();
+            return TopicDb.query(db);
+        }
     }
 }
