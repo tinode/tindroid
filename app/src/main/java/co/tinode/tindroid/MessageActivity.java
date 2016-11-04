@@ -167,15 +167,16 @@ public class MessageActivity extends AppCompatActivity {
                 @Override
                 public void onPres(MsgServerPres pres) {
                     Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
-                    if (pres.what.equals("on") || pres.what.equals("off")) {
-                        final boolean online = pres.what.equals("on");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                UiUtils.setOnlineStatus(MessageActivity.this, online);
-                            }
-                        });
-                    }
+                }
+
+                @Override
+                public void onPresOnline(final boolean online) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            UiUtils.setOnlineStatus(MessageActivity.this, online);
+                        }
+                    });
                 }
 
                 @Override

@@ -75,12 +75,20 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
         // P2P topics are not getting what=on/off/upd updates,
         // such updates are sent with pres.topic set to user ID
         String contactName = mP2PMap.get(pres.src);
-        contactName = contactName == null ? pres.src : contactName;
+        Topic p2p = null;
+        if (contactName == null) {
+            contactName = pres.src;
+        } else {
+            p2p = mTinode.getTopic(contactName);
+        }
         Subscription<Pu,Pr> sub = mSubs.get(contactName);
         if (sub != null) {
             switch(pres.what) {
                 case "on": // topic came online
                     sub.online = true;
+                    if (p2p != null && p2p.mListener != null) {
+                        p2p.mListener.onPresOnline(true);
+                    }
                     break;
 
                 case "off": // topic went offline
@@ -89,6 +97,9 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
                         sub.seen = new LastSeen();
                     }
                     sub.seen.when = new Date();
+                    if (p2p != null && p2p.mListener != null) {
+                        p2p.mListener.onPresOnline(false);
+                    }
                     break;
 
                 case "msg": // new message received
@@ -97,10 +108,16 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
 
                 case "upd": // desc updated
                     // TODO(gene): request updated description
+                    if (p2p != null && p2p.mListener != null) {
+                        p2p.mListener.onPresUpd();
+                    }
                     break;
 
                 case "ua": // user agent changed
                     sub.seen = new LastSeen(new Date(),pres.ua);
+                    if (p2p != null && p2p.mListener != null) {
+                        p2p.mListener.onPresUa(pres.ua);
+                    }
                     break;
 
                 case "recv": // user's other session marked some messges as received

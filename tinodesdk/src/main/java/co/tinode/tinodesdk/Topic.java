@@ -704,12 +704,15 @@ public class Topic<Pu,Pr,T> {
          * @return true if Tinode should issue a recv notification, false otherwise
          */
         public boolean onData(MsgServerData<Tt> data) { return false; }
-        public void onPres(MsgServerPres pres) {}
         public void onContactUpdate(String what, Subscription<PPu,PPr> sub) {}
         public void onInfo(MsgServerInfo info) {}
         public void onMeta(MsgServerMeta<PPu,PPr> meta) {}
         public void onMetaSub(Subscription<PPu,PPr> sub) {}
         public void onMetaDesc(Description<PPu,PPr> desc) {}
         public void onSubsUpdated() {}
+        public void onPres(MsgServerPres pres) {}
+        public void onPresOnline(boolean online) {}
+        public void onPresUpd() {}
+        public void onPresUa(String ua) {}
     }
 }

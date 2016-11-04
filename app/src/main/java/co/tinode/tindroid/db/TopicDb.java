@@ -146,6 +146,8 @@ public class TopicDb implements BaseColumns {
      * @return ID of the newly added message
      */
     public static long insert(SQLiteDatabase db, String name, Subscription sub) {
+        Log.d(TAG, "Inserting sub for " + name);
+
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getAccountId());
@@ -175,6 +177,7 @@ public class TopicDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     public static boolean update(SQLiteDatabase db, String name, Subscription sub) {
+
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
@@ -187,9 +190,13 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
 
         values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
-        return db.update(TABLE_NAME, values,
+        int updated = db.update(TABLE_NAME, values,
                 COLUMN_NAME_ACCOUNT_ID + "=? AND " + COLUMN_NAME_TOPIC + "=?",
-                new String[] { String.valueOf(BaseDb.getAccountId()), name }) > 0;
+                new String[] { String.valueOf(BaseDb.getAccountId()), name });
+
+        Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + name + " returned " + updated);
+
+        return updated > 0;
     }
 
     /**
@@ -211,6 +218,8 @@ public class TopicDb implements BaseColumns {
      * @return cursor with topics
      */
     public static Cursor query(SQLiteDatabase db) {
+        Log.d(TAG, "Querying");
+
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +

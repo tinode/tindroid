@@ -179,6 +179,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
                         @Override
                         public void onSubsUpdated() {
+                            Log.d(TAG, "Subs Updated");
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
