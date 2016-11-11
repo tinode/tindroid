@@ -294,7 +294,7 @@ public class Topic<Pu,Pr,T> {
                     }
                     break;
             }
-        } else {
+        } else if (mTinode.isConnected()) {
             Log.e(TAG, "Subscription not found in topic");
         }
 
@@ -463,7 +463,7 @@ public class Topic<Pu,Pr,T> {
         return result;
     }
 
-    protected void setListener(Listener<Pu,Pr,T> l) {
+    public void setListener(Listener<Pu,Pr,T> l) {
         mListener = l;
     }
 
@@ -623,10 +623,15 @@ public class Topic<Pu,Pr,T> {
     }
 
     protected void routePres(MsgServerPres pres) {
-        Subscription<Pu,Pr> sub = mSubs.get(pres.topic);
+        Subscription<Pu,Pr> sub = mSubs.get(pres.src);
         if (sub != null) {
             // FIXME(gene): add actual handler
-            sub.online = pres.what.equals("on");
+            MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
+            if (what == MsgServerPres.What.ON) {
+                sub.online = true;
+            } else if (what == MsgServerPres.What.OFF) {
+                sub.online = false;
+            }
         }
         if (mListener != null) {
             mListener.onPres(pres);

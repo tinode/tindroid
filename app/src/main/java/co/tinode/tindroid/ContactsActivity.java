@@ -109,7 +109,7 @@ public class ContactsActivity extends AppCompatActivity implements
         final Tinode tinode = Cache.getTinode();
         tinode.setListener(new UiUtils.EventListener(this));
 
-        UiUtils.setupToolbar(this, null, Topic.TopicType.ME);
+        UiUtils.setupToolbar(this, null, Topic.TopicType.ME, false);
 
         MeTopic<VCard, String, String> me = tinode.getMeTopic();
         if (me == null) {

@@ -191,8 +191,11 @@ public class TopicDb implements BaseColumns {
 
         values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
         int updated = db.update(TABLE_NAME, values,
-                COLUMN_NAME_ACCOUNT_ID + "=? AND " + COLUMN_NAME_TOPIC + "=?",
-                new String[] { String.valueOf(BaseDb.getAccountId()), name });
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
+                        " AND " + COLUMN_NAME_TOPIC + "='" + name + "'",
+                null);
+                //COLUMN_NAME_ACCOUNT_ID + "= ? AND " + COLUMN_NAME_TOPIC + "= ?",
+                //new String[] { String.valueOf(BaseDb.getAccountId()), "'" + name + "'" });
 
         Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + name + " returned " + updated);
 
@@ -250,6 +253,28 @@ public class TopicDb implements BaseColumns {
         sub.pub = BaseDb.deserialize(c.getBlob(COLUMN_IDX_PUBLIC));
         sub.priv = BaseDb.deserialize(c.getBlob(COLUMN_IDX_PRIVATE));
 
+        return sub;
+    }
+
+    /**
+     * Read Subscription given topic name
+     *
+     * @param topic Topic name to read
+     * @return Subscription
+     */
+    public static <Pu,Pr> Subscription<Pu,Pr> readOne(SQLiteDatabase db, String topic) {
+        Subscription<Pu, Pr> sub = null;
+        String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE " +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
+                COLUMN_NAME_TOPIC + "='" + topic + "'";
+        Cursor c = db.rawQuery(sql, null);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                sub = readOne(c);
+            }
+            c.close();
+        }
         return sub;
     }
 

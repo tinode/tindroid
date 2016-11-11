@@ -8,18 +8,12 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * MeTopic handles invites and manages contact list
  */
 public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
-
-    /**
-     * Mapping of UID (key) to P2P topic name (value)
-     */
-    protected Map<String,String> mP2PMap = new HashMap<>();
+    private static final String TAG = "MeTopic";
 
     public MeTopic(Tinode tinode, Listener<Pu,Pr,Invitation<T>> l) {
         super(tinode, Tinode.TOPIC_ME, l);
@@ -40,6 +34,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
     
     @Override
     protected void processMetaSubs(Subscription<Pu,Pr>[] subs) {
+
         for (Subscription<Pu,Pr> sub : subs) {
             // Cache user in the topic as well.
             Subscription<Pu,Pr> cached = mSubs.get(sub.topic);
@@ -51,11 +46,6 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
             }
 
             // TODO(gene): Save the object to global cache.
-
-            if (cached.with != null && !cached.with.equals("")) {
-                mP2PMap.put(cached.with, cached.topic);
-            }
-
             if (mListener != null) {
                 mListener.onMetaSub(cached);
             }
@@ -66,69 +56,45 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
         }
     }
 
-    protected String getP2PfromUid(String uid) {
-        return mP2PMap.get(uid);
-    }
-
     @Override
     protected void routePres(MsgServerPres pres) {
-        // P2P topics are not getting what=on/off/upd updates,
-        // such updates are sent with pres.topic set to user ID
-        String contactName = mP2PMap.get(pres.src);
-        Topic p2p = null;
-        if (contactName == null) {
-            contactName = pres.src;
-        } else {
-            p2p = mTinode.getTopic(contactName);
-        }
-        Subscription<Pu,Pr> sub = mSubs.get(contactName);
+        Subscription<Pu,Pr> sub = mSubs.get(pres.src);
         if (sub != null) {
-            switch(pres.what) {
-                case "on": // topic came online
+            MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
+            switch(what) {
+                case ON: // topic came online
                     sub.online = true;
-                    if (p2p != null && p2p.mListener != null) {
-                        p2p.mListener.onPresOnline(true);
-                    }
                     break;
 
-                case "off": // topic went offline
+                case OFF: // topic went offline
                     sub.online = false;
                     if (sub.seen == null) {
                         sub.seen = new LastSeen();
                     }
                     sub.seen.when = new Date();
-                    if (p2p != null && p2p.mListener != null) {
-                        p2p.mListener.onPresOnline(false);
-                    }
                     break;
 
-                case "msg": // new message received
+                case MSG: // new message received
                     sub.seq = pres.seq;
                     break;
 
-                case "upd": // desc updated
+                case UPD: // desc updated
                     // TODO(gene): request updated description
-                    if (p2p != null && p2p.mListener != null) {
-                        p2p.mListener.onPresUpd();
-                    }
                     break;
 
-                case "ua": // user agent changed
+                case UA: // user agent changed
                     sub.seen = new LastSeen(new Date(),pres.ua);
-                    if (p2p != null && p2p.mListener != null) {
-                        p2p.mListener.onPresUa(pres.ua);
-                    }
                     break;
 
-                case "recv": // user's other session marked some messges as received
+                case RECV: // user's other session marked some messges as received
                     sub.recv = Math.max(sub.recv, pres.seq);
                     break;
 
-                case "read": // user's other session marked some messages as read
+                case READ: // user's other session marked some messages as read
                     sub.read = Math.max(sub.read, pres.seq);
                     break;
 
-                case "del": // messages or topic deleted in other session
+                case DEL: // messages or topic deleted in other session
                     // TODO(gene): add handling for del
             }
 

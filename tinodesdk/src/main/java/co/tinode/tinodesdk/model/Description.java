@@ -5,9 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Date;
 
 /**
- * Topic description as deserialized from server packet.
+ * Topic description as deserialized from the server packet.
  */
-
 public class Description<Pu,Pr> {
     public Date created;
     public Date updated;

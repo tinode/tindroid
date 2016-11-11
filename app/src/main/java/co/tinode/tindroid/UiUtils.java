@@ -3,7 +3,9 @@ package co.tinode.tindroid;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -29,7 +31,8 @@ public class UiUtils {
     public static int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
     public static int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
 
-    public static void setupToolbar(final AppCompatActivity activity, VCard pub, Topic.TopicType topicType) {
+    public static void setupToolbar(final AppCompatActivity activity, VCard pub,
+                                    Topic.TopicType topicType, boolean online) {
         final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
@@ -41,14 +44,18 @@ public class UiUtils {
             pub.constructBitmap();
             Bitmap bmp = pub.getBitmap();
             if (bmp != null) {
-                toolbar.setLogo(new RoundedImage(bmp, false));
+                toolbar.setLogo(
+                        new LayerDrawable(
+                                new Drawable[] {
+                                        new RoundedImage(bmp),
+                                        new OnlineDrawable(online)}));
             } else {
                 Drawable drw;
                 int res = -1;
                 if (topicType == Topic.TopicType.GRP) {
-                    res = R.drawable.ic_group;
+                    res = R.drawable.ic_group_circle;
                 } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
-                    res = R.drawable.ic_person;
+                    res = R.drawable.ic_person_circle;
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -57,10 +64,11 @@ public class UiUtils {
                     drw = activity.getResources().getDrawable(res);
                 }
                 if (drw != null) {
-                    toolbar.setLogo(drw);
+                    toolbar.setLogo(new LayerDrawable(new Drawable[] {drw, new OnlineDrawable(online)}));
                 }
             }
         } else {
+            toolbar.setLogo(null);
             toolbar.setTitle(R.string.app_name);
         }
     }
@@ -71,10 +79,13 @@ public class UiUtils {
             return;
         }
 
-        Drawable logo = toolbar.getLogo();
-        if (logo != null && logo instanceof RoundedImage) {
-            ((RoundedImage) logo).setOnline(online);
-            toolbar.setLogo(logo);
+        LayerDrawable logo = (LayerDrawable) toolbar.getLogo();
+        if (logo != null) {
+            OnlineDrawable indicator = (OnlineDrawable) logo.getDrawable(1);
+            if (indicator != null) {
+                indicator.setOnline(online);
+                toolbar.setLogo(logo);
+            }
         }
     }
 

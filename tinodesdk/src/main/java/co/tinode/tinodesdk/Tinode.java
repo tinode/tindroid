@@ -315,12 +315,13 @@ public class Tinode {
         } else if (pkt.pres != null) {
             Topic topic = mTopics.get(pkt.pres.topic);
             if (topic != null) {
+                Log.d(TAG, "Routing pres to " + topic.getName());
                 topic.routePres(pkt.pres);
                 // For P2P topics presence is addressed to 'me' only. Forward it to the actual topic, if it's found.
-                if (TOPIC_ME.equals(pkt.pres.topic)) {
-                    String p2p = ((MeTopic) topic).getP2PfromUid(pkt.pres.src);
-                    Topic forwardTo;
-                    if ((p2p != null) && ((forwardTo = getTopic(p2p)) != null)) {
+                if (TOPIC_ME.equals(pkt.pres.topic) && Topic.getTopicTypeByName(pkt.pres.src) == Topic.TopicType.P2P) {
+                    Topic forwardTo = getTopic(pkt.pres.src);
+                    if (forwardTo != null) {
+                        Log.d(TAG, "Also forwarding pres to " + forwardTo.getName());
                         forwardTo.routePres(pkt.pres);
                     }
                 }
@@ -869,6 +870,7 @@ public class Tinode {
         if (name == null) {
             return null;
         }
+        /*
         if (name.startsWith("usr")) {
             // Someone passed userXX uid instead of a topic name.
             // Resolve it to p2p topic name before fetching the topic.
@@ -877,6 +879,7 @@ public class Tinode {
                 name = me.getP2PfromUid(name);
             }
         }
+        */
         return mTopics.get(name);
     }
 
@@ -892,11 +895,13 @@ public class Tinode {
             return;
         }
 
+        /*
         // This ensures that the topic is shown in the list of contacts
         MeTopic me = getMeTopic();
         if (me != null) {
             me.processMetaSubs(new Subscription[] {topic.toSubscription()});
         }
+        */
     }
 
     /**

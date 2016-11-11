@@ -3,7 +3,7 @@ package co.tinode.tinodesdk.model;
 import java.util.Date;
 
 /**
- * Created by gsokolov on 2/12/16.
+ * Class to hold last seen date-time and User Agent.
  */
 public class LastSeen {
     public Date when;

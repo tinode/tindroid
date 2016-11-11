@@ -15,6 +15,7 @@ import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatImageView;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +31,8 @@ import co.tinode.tinodesdk.model.Subscription;
  * Handling contact list.
  */
 public class ChatListAdapter extends CursorAdapter {
+    private static final String TAG = "ChatListAdapter";
+
     private static final int QUERY_ID = 100;
 
     private Context mContext;
@@ -114,8 +117,9 @@ public class ChatListAdapter extends CursorAdapter {
             }
         }
 
-        Subscription live = Cache.getTinode().getMeTopic().getSubscription(s.topic);
-        holder.online.setColorFilter((live != null && live.online) ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
+        boolean online = Cache.isUserOnline(s.topic);
+        holder.online.setColorFilter(online ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
+        Log.d(TAG, "User " + s.topic + " is " + (online ? "online" : "offline"));
     }
 
     public void toggleSelected(int position) {

@@ -135,7 +135,8 @@ public class MessageActivity extends AppCompatActivity {
         mTopic = tinode.getTopic(mTopicName);
 
         if (mTopic != null) {
-            UiUtils.setupToolbar(this, mTopic.getPublic(), mTopic.getTopicType());
+            Subscription<VCard, String> sub = TopicDb.readOne(mDb, mTopicName);
+            UiUtils.setupToolbar(this, sub.pub, Topic.getTopicTypeByName(mTopicName), Cache.isUserOnline(mTopicName));
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
                 mMessagesAdapter.setTopic(mTopicName);
                 runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
@@ -193,7 +194,7 @@ public class MessageActivity extends AppCompatActivity {
                             break;
                         case "kp":
                             // TODO(gene): show typing notification
-                            Log.d(TAG, mTopicName + ": typing...");
+                            Log.d(TAG, info.from + ": typing...");
                             break;
                         default:
                             break;
@@ -215,7 +216,8 @@ public class MessageActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            UiUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType());
+                            UiUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType(),
+                                    Cache.isUserOnline(mTopicName));
                         }
                     });
                 }
@@ -247,6 +249,8 @@ public class MessageActivity extends AppCompatActivity {
         super.onPause();
         Cache.getTinode().setListener(null);
 
+        mTopic.setListener(null);
+
         // Deactivate current topic
         if (mTopic.isAttached()) {
             try {
@@ -255,6 +259,7 @@ public class MessageActivity extends AppCompatActivity {
                 Log.e(TAG, "something went wrong", ex);
             }
         }
+        mTopic = null;
     }
 
     @Override
