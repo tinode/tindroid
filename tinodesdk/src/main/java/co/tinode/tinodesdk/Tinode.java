@@ -386,7 +386,7 @@ public class Tinode {
     }
 
     public boolean isConnected() {
-        return mConnection.isConnected();
+        return mConnection != null && mConnection.isConnected();
     }
 
     public static TypeFactory getTypeFactory() {
@@ -827,8 +827,10 @@ public class Tinode {
      * @param message string to write to websocket
      */
     protected void send(String message) {
-
         Log.d(TAG, "out: " + message);
+        if (mConnection == null) {
+            throw new NotConnectedException();
+        }
         mConnection.send(message);
     }
 
@@ -976,7 +978,8 @@ public class Tinode {
      */
     public static class EventListener {
         /**
-         * Connection was established successfully
+         * Connection established successfully, handshakes exchanged. The connection is ready for
+         * login.
          *
          * @param code   should be always 201
          * @param reason should be always "Created"

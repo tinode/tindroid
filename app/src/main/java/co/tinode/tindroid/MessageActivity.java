@@ -132,11 +132,16 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        mTopic = tinode.getTopic(mTopicName);
-
-        if (mTopic != null) {
-            Subscription<VCard, String> sub = TopicDb.readOne(mDb, mTopicName);
+        // Load a previously saved topic.
+        Subscription<VCard, String> sub = TopicDb.readOne(mDb, mTopicName);
+        // sub could be null if this is a new topic.
+        if (sub != null) {
             UiUtils.setupToolbar(this, sub.pub, Topic.getTopicTypeByName(mTopicName), Cache.isUserOnline(mTopicName));
+            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+        }
+
+        mTopic = tinode.getTopic(mTopicName);
+        if (mTopic != null) {
             if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
                 mMessagesAdapter.setTopic(mTopicName);
                 runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);

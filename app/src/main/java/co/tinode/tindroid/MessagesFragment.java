@@ -69,8 +69,10 @@ public class MessagesFragment extends Fragment {
 
             @SuppressWarnings("unchecked")
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                activity.sendKeyPress();
+            public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
+                if (count > 0 || before > 0) {
+                    activity.sendKeyPress();
+                }
             }
 
             @Override

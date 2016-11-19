@@ -108,10 +108,13 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        if (Cache.getTinode().isAuthenticated()) {
+        Tinode tinode = Cache.getTinode();
+        if (tinode.isAuthenticated()) {
             // We already have a live connection to the server. All good.
             // Launch the contacts activity and stop.
-            startActivity(new Intent(getApplicationContext(), ContactsActivity.class));
+            Intent intent = new Intent(this, ContactsActivity.class);
+            intent.putExtra(Utils.ACCKEY_UID, tinode.getMyId());
+            startActivity(intent);
             finish();
             return;
         }
@@ -208,7 +211,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loginWithSavedAccount(final Account account) {
-        Log.d(TAG, "accountName=" + account.name + "; accountType=" + account.type + ";");
         final Button signIn = (Button) findViewById(R.id.singnIn);
         // signIn.setEnabled(false);
         // Fetch password
@@ -255,8 +257,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         }, null);
-
-        Log.d(TAG, "EXIT loginWithSavedAccount");
     }
 
     /**
@@ -416,10 +416,9 @@ public class LoginActivity extends AppCompatActivity {
 
         // Initialize database
         String uid = mAccountManager.getUserData(acc, Utils.ACCKEY_UID);
-        BaseDb.getInstance(this, uid);
-
-        startActivity(new Intent(getApplicationContext(),
-                ContactsActivity.class));
+        Intent intent = new Intent(getApplicationContext(), ContactsActivity.class);
+        intent.putExtra(Utils.ACCKEY_UID, uid);
+        startActivity(intent);
         finish();
     }
 

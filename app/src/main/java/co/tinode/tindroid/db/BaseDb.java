@@ -3,6 +3,7 @@ package co.tinode.tindroid.db;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -65,6 +66,15 @@ public class BaseDb extends SQLiteOpenHelper {
         db.execSQL(AccountDb.DROP_INDEX);
         db.execSQL(AccountDb.DROP_TABLE);
         onCreate(db);
+    }
+
+    @Override
+    public void onConfigure(SQLiteDatabase db){
+        if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            db.setForeignKeyConstraintsEnabled(true);
+        } else {
+            db.execSQL("PRAGMA foreign_keys = ON;");
+        }
     }
 
     static byte[] serialize(Object obj) {

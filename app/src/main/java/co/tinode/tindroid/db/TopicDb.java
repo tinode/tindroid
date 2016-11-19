@@ -228,6 +228,7 @@ public class TopicDb implements BaseColumns {
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
                 " ORDER BY " + COLUMN_NAME_LASTUSED + " DESC";
 
+        Log.d(TAG, sql);
         return db.rawQuery(sql, null);
     }
 
@@ -276,6 +277,20 @@ public class TopicDb implements BaseColumns {
             c.close();
         }
         return sub;
+    }
+
+    /**
+     * Given topic name, get it's database _id
+     *
+     * @param db database
+     * @param topic topic name
+     * @return _id of the topic
+     */
+    public static long getTopicId(SQLiteDatabase db, String topic) {
+        return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
+                " WHERE " +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
+                COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
     }
 
     private static void updateCounter(SQLiteDatabase db, String topic, String column, int counter) {

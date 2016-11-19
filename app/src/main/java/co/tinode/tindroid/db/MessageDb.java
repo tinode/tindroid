@@ -64,19 +64,19 @@ public class MessageDb implements BaseColumns {
     /**
      * The name of index: messages by topic and sequence.
      */
-    public static final String INDEX_NAME = "message_account_topic_seq";
+    public static final String INDEX_NAME = "message_topic_id_seq";
     /**
-     * Account ID, regerences accounts._ID
+     * Topic ID, references topics._ID
      */
-    public static final String COLUMN_NAME_ACCOUNT_ID = "account_id";
+    public static final String COLUMN_NAME_TOPIC_ID = "topic_id";
     /**
-     * Topic name, indexed
-     */
-    public static final String COLUMN_NAME_TOPIC = "topic";
-    /**
-     * UID as string, originator of the message. Cannot be named 'from'.
+     * UID as string, originator of the message. The column cannot be named 'from'.
      */
     public static final String COLUMN_NAME_FROM = "sender";
+    /**
+     * Sequential ID of the sender within the topic. Neede for color selection.
+     */
+    public static final String COLUMN_NAME_FROM_ID = "sender_id";
     /**
      * MessageDb timestamp
      */
@@ -99,9 +99,9 @@ public class MessageDb implements BaseColumns {
     public static final Uri CONTENT_URI =
             BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
 
-    private static final int COLUMN_IDX_ACCOUNT_ID = 1;
-    private static final int COLUMN_IDX_TOPIC = 2;
-    private static final int COLUMN_IDX_FROM = 3;
+    private static final int COLUMN_IDX_TOPIC_ID = 1;
+    private static final int COLUMN_IDX_FROM = 2;
+    private static int COLUMN_IDX_FROM_ID = 3;
     private static final int COLUMN_IDX_TS = 4;
     private static final int COLUMN_IDX_SEQ = 5;
     private static final int COLUMN_IDX_CONTENT = 6;
@@ -112,11 +112,10 @@ public class MessageDb implements BaseColumns {
     static final String CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + " (" +
                     _ID + " INTEGER PRIMARY KEY," +
-                    COLUMN_NAME_ACCOUNT_ID
-                    + " REFERENCES " + AccountDb.TABLE_NAME + "(" + AccountDb._ID + ")," +
-                    COLUMN_NAME_TOPIC + " TEXT," +
-                    // + " REFERENCES " + TopicDb.TABLE_NAME + "(" + TopicDb._ID + ")," +
+                    COLUMN_NAME_TOPIC_ID
+                    + " REFERENCES " + TopicDb.TABLE_NAME + "(" + TopicDb._ID + ")," +
                     COLUMN_NAME_FROM + " TEXT," +
+                    COLUMN_NAME_FROM_ID + " INT," +
                     COLUMN_NAME_TS + " TEXT," +
                     COLUMN_NAME_SEQ + " INT," +
                     COLUMN_NAME_CONTENT + " BLOB)";
@@ -126,8 +125,7 @@ public class MessageDb implements BaseColumns {
     static final String CREATE_INDEX =
             "CREATE UNIQUE INDEX " + INDEX_NAME +
                     " ON " + TABLE_NAME + " (" +
-                    COLUMN_NAME_ACCOUNT_ID + "," +
-                    COLUMN_NAME_TOPIC + "," +
+                    COLUMN_NAME_TOPIC_ID + "," +
                     COLUMN_NAME_SEQ + " DESC)";
 
     /**
@@ -146,12 +144,12 @@ public class MessageDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    public static long insert(SQLiteDatabase db, MsgServerData msg) {
+    public static long insert(SQLiteDatabase db, long topicId, MsgServerData msg) {
         // Convert message to a map of values
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getAccountId());
-        values.put(COLUMN_NAME_TOPIC, msg.topic);
+        values.put(COLUMN_NAME_TOPIC_ID, topicId);
         values.put(COLUMN_NAME_FROM, msg.from);
+        values.put(COLUMN_NAME_FROM_ID, fromId);
         values.put(COLUMN_NAME_TS, msg.ts.getTime());
         values.put(COLUMN_NAME_SEQ, msg.seq);
         values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
@@ -164,13 +162,12 @@ public class MessageDb implements BaseColumns {
      *
      * @return number of inserted messages
      */
-    public static long insert(SQLiteDatabase db, MsgServerData[] msgs) {
+    public static long insert(SQLiteDatabase db, long topicId, MsgServerData[] msgs) {
         int count = 0;
         try {
             db.beginTransaction();
             String insert = "INSERT INTO " + TABLE_NAME + "(" +
-                    COLUMN_NAME_ACCOUNT_ID + "," +
-                    COLUMN_NAME_TOPIC + "," +
+                    COLUMN_NAME_TOPIC_ID + "," +
                     COLUMN_NAME_FROM + "," +
                     COLUMN_NAME_TS + "," +
                     COLUMN_NAME_SEQ + "," +
@@ -181,16 +178,15 @@ public class MessageDb implements BaseColumns {
 
             for (MsgServerData msg : msgs) {
                 stmt.clearBindings();
-                stmt.bindLong(1, BaseDb.getAccountId());
-                stmt.bindString(2, msg.topic);
+                stmt.bindLong(1, topicId);
                 if (msg.from != null) {
-                    stmt.bindString(3, msg.from);
+                    stmt.bindString(2, msg.from);
                 } else {
-                    stmt.bindNull(3);
+                    stmt.bindNull(2);
                 }
-                stmt.bindLong(4, msg.ts.getTime());
-                stmt.bindLong(5, msg.seq);
-                stmt.bindBlob(6, BaseDb.serialize(msg.content));
+                stmt.bindLong(3, msg.ts.getTime());
+                stmt.bindLong(4, msg.seq);
+                stmt.bindBlob(5, BaseDb.serialize(msg.content));
                 stmt.executeInsert();
 
                 count++;
@@ -211,16 +207,15 @@ public class MessageDb implements BaseColumns {
      * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
      *
      * @param db    database to select from;
-     * @param topic Tinode topic to select from
+     * @param topicId Tinode topic ID (topics._id) to select from
      * @param from  minimum seq value to select, exclusive
      * @param to    maximum seq value to select, inclusive
      * @return cursor with the messages
      */
-    public static Cursor query(SQLiteDatabase db, String topic, int from, int to) {
+    public static Cursor query(SQLiteDatabase db, long topicId, int from, int to) {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
-                " AND " + COLUMN_NAME_TOPIC + "='" + topic + "'" +
+                COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
                 (to > 0 ?  " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
                 " ORDER BY " + COLUMN_NAME_SEQ;
@@ -233,19 +228,17 @@ public class MessageDb implements BaseColumns {
      * Delete one message
      *
      * @param db    Database to use.
-     * @param topic Tinode topic to delete message from.
+     * @param topicId Tinode topic ID to delete message from.
      * @param seq   seq value to delete.
      * @return number of deleted messages
      */
-    public static int delete(SQLiteDatabase db, String topic, int seq) {
+    public static int delete(SQLiteDatabase db, long topicId, int seq) {
         // Define 'where' part of query.
         String selection =
-                COLUMN_NAME_ACCOUNT_ID + "=? AND " +
-                COLUMN_NAME_TOPIC + "=? AND " +
+                COLUMN_NAME_TOPIC_ID + "=? AND " +
                 COLUMN_NAME_SEQ + "=?";
         String[] selectionArgs = {
-                String.valueOf(BaseDb.getAccountId()),
-                topic,
+                String.valueOf(topicId),
                 String.valueOf(seq)
         };
 
@@ -256,22 +249,20 @@ public class MessageDb implements BaseColumns {
      * Delete messages between 'from' and 'to'. To delete all messages make from and to equal to -1.
      *
      * @param db    Database to use.
-     * @param topic Tinode topic to delete messages from.
+     * @param topicId Tinode topic ID to delete messages from.
      * @param from  minimum seq value to delete from (exclusive).
      * @param to    maximum seq value to delete, inclusive.
      * @return number of deleted messages
      */
-    public static int delete(SQLiteDatabase db, String topic, int from, int to) {
+    public static int delete(SQLiteDatabase db, long topicId, int from, int to) {
         to = (to < 0 ? Integer.MAX_VALUE : to);
 
         String selection =
-                COLUMN_NAME_ACCOUNT_ID + "=? AND " +
-                COLUMN_NAME_TOPIC + "=? AND " +
+                COLUMN_NAME_TOPIC_ID + "=? AND " +
                 COLUMN_NAME_SEQ + ">? AND " +
                 COLUMN_NAME_SEQ + "<=?";
         String[] selectionArgs = {
-                String.valueOf(BaseDb.getAccountId()),
-                topic,
+                String.valueOf(topicId),
                 String.valueOf(from),
                 String.valueOf(to)
         };
@@ -282,7 +273,6 @@ public class MessageDb implements BaseColumns {
     public static <T> MsgServerData<T> readMessage(Cursor cursor) {
         MsgServerData<T> msg = new MsgServerData<>();
 
-        msg.topic = cursor.getString(COLUMN_IDX_TOPIC);
         msg.from = cursor.getString(COLUMN_IDX_FROM);
         msg.seq = cursor.getInt(COLUMN_IDX_SEQ);
         msg.ts = new Date(cursor.getLong(COLUMN_IDX_TS));
@@ -305,19 +295,17 @@ public class MessageDb implements BaseColumns {
      * Get maximum SeqId for the given table.
      *
      * @param db    Database to use
-     * @param topic Tinode topic to query.
+     * @param topicId ID of the Tinode topic to query.
      * @return maximum seq id.
      */
-    public static long getMaxSeq(SQLiteDatabase db, String topic) {
+    public static long getMaxSeq(SQLiteDatabase db, int topicId) {
         SQLiteStatement stmt = db.compileStatement(
                 "SELECT MAX(" + COLUMN_NAME_SEQ + ") " +
                         "FROM " + TABLE_NAME +
                         " WHERE " +
-                        COLUMN_NAME_ACCOUNT_ID + "=? AND " +
-                        COLUMN_NAME_TOPIC + "=?");
+                        COLUMN_NAME_TOPIC_ID + "=?");
 
-        stmt.bindLong(1, BaseDb.getAccountId());
-        stmt.bindString(2, topic);
+        stmt.bindLong(1, topicId);
 
         long count;
         try {
@@ -329,25 +317,25 @@ public class MessageDb implements BaseColumns {
     }
 
     public static class Loader extends AsyncTaskLoader<Cursor> {
+        SQLiteDatabase mDb;
         private Cursor mCursor;
 
-        private String account;
-        private String topic;
+        private long topicId;
         private int from;
         private int to;
 
         public Loader(Context context, String account, String topic, int from, int to) {
             super(context);
-            this.account = account;
-            this.topic = topic;
+
+            mDb = BaseDb.getInstance(context, account).getReadableDatabase();
+            this.topicId = TopicDb.getTopicId(mDb, topic);
             this.from = from;
             this.to = to;
         }
 
         @Override
         public Cursor loadInBackground() {
-            SQLiteDatabase db = BaseDb.getInstance(getContext(), account).getReadableDatabase();
-            return query(db, topic, from, to);
+            return query(mDb, topicId, from, to);
         }
 
         /* Runs on the UI thread */

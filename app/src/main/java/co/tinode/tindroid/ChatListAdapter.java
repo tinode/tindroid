@@ -37,14 +37,14 @@ public class ChatListAdapter extends CursorAdapter {
 
     private Context mContext;
     private SparseBooleanArray mSelectedItems;
-    private Account mAccount;
 
-    public ChatListAdapter(AppCompatActivity context, Account acc) {
+    public ChatListAdapter(AppCompatActivity context, String uid) {
         super(context, null, 0);
         mContext = context;
-        mAccount = acc;
         mSelectedItems = new SparseBooleanArray();
-        context.getSupportLoaderManager().initLoader(QUERY_ID, null, new ChatsLoaderCallback());
+        Log.d(TAG, "Initialized");
+        context.getSupportLoaderManager().initLoader(QUERY_ID, null, new ChatsLoaderCallback(uid));
+
     }
 
     @Override
@@ -162,17 +162,26 @@ public class ChatListAdapter extends CursorAdapter {
     }
 
     private class ChatsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+        private String mUid;
+
+        ChatsLoaderCallback(String uid) {
+            super();
+            mUid = uid;
+        }
+
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            Log.d(TAG, "ChatsLoaderCallback.onCreateLoader");
             // If this is the loader for finding contacts in the Contacts Provider
             if (id == ChatListAdapter.QUERY_ID) {
-                return new ChatListLoader(mContext, mAccount);
+                return new ChatListLoader(mContext, mUid);
             }
             return null;
         }
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+            Log.d(TAG, "ChatsLoaderCallback.onLoadFinished");
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ChatListAdapter.QUERY_ID) {
                 ChatListAdapter.this.swapCursor(data);
@@ -190,16 +199,16 @@ public class ChatListAdapter extends CursorAdapter {
     }
 
     private static class ChatListLoader extends CursorLoader {
-        private Account mAccount;
+        private String mUid;
 
-        ChatListLoader(Context context, Account account) {
+        ChatListLoader(Context context, String uid) {
             super(context);
-            mAccount = account;
+            mUid = uid;
         }
 
         @Override
         public Cursor loadInBackground() {
-            SQLiteDatabase db = BaseDb.getInstance(getContext(), mAccount.name).getReadableDatabase();
+            SQLiteDatabase db = BaseDb.getInstance(getContext(), mUid).getReadableDatabase();
             return TopicDb.query(db);
         }
     }

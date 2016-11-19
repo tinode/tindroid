@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.accounts.Account;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,7 +9,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -41,14 +39,14 @@ public class ContactsActivity extends AppCompatActivity implements
     private static final String TAG = "ContactsActivity";
 
     protected ChatListAdapter mChatListAdapter;
-    protected Account mAccount;
     private SQLiteDatabase mDb = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mAccount = Utils.GetAccountFromPrefs(PreferenceManager.getDefaultSharedPreferences(this));
+        // Get UID of the current user
+        String uid = getIntent().getStringExtra(Utils.ACCKEY_UID);
 
         setContentView(R.layout.activity_contacts);
 
@@ -75,8 +73,8 @@ public class ContactsActivity extends AppCompatActivity implements
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        mDb = BaseDb.getInstance(this, mAccount.name).getWritableDatabase();
-        mChatListAdapter = new ChatListAdapter(this, mAccount);
+        mDb = BaseDb.getInstance(this, uid).getWritableDatabase();
+        mChatListAdapter = new ChatListAdapter(this, uid);
     }
 
     /**

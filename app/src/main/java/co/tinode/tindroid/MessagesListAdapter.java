@@ -48,7 +48,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     private AppCompatActivity mActivity;
     private Cursor mCursor;
     private String mTopicName;
-    private Topic<?, ?, String> mTopic;
+    //private Topic<?, ?, String> mTopic;
 
     public MessagesListAdapter(AppCompatActivity context) {
         super();
