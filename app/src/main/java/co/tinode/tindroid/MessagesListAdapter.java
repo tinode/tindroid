@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
@@ -19,9 +18,8 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.db.MessageDb;
-import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
  * Handle display of a conversation
@@ -47,7 +45,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     };
     private AppCompatActivity mActivity;
     private Cursor mCursor;
-    private String mTopicName;
+    //private String mTopicName;
     //private Topic<?, ?, String> mTopic;
 
     public MessagesListAdapter(AppCompatActivity context) {
@@ -75,13 +73,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return "null date";
     }
 
-    public void setTopic(String topicName) {
-        if (mTopicName == null || !mTopicName.equals(topicName)) {
-            mTopicName = topicName;
-            mTopic = Cache.getTinode().getTopic(topicName);
-        }
-    }
-
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
@@ -96,72 +87,66 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         int position = reversePosition; // getItemCount() - reversePosition - 1;
 
         mCursor.moveToPosition(position);
-        MsgServerData<String> m = MessageDb.readMessage(mCursor);
-
-        int senderIdx = mTopic.getSenderIndex(m.from);
-        boolean isMine = mTopic.isMyMessage(m.from);
-        if (senderIdx < 0) {
-            senderIdx = 0;
-        }
+        StoredMessage<String> m = MessageDb.readMessage(mCursor);
 
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
-        String prevFrom = null;
+        long prevFrom = -1;
         if (position > 0) {
             mCursor.moveToPrevious();
-            prevFrom = MessageDb.readMessage(mCursor).from;
+            prevFrom = MessageDb.readMessage(mCursor).userId;
         }
-        String nextFrom = null;
+        long nextFrom = -1;
         if (position < getItemCount() - 1) {
             mCursor.moveToPosition(position + 1);
-            nextFrom = MessageDb.readMessage(mCursor).from;
+            nextFrom = MessageDb.readMessage(mCursor).userId;
         }
         DisplayAs display = DisplayAs.SINGLE;
-        if (m.from.equals(prevFrom)) {
-            if (m.from.equals(nextFrom)) {
+        if (m.userId == prevFrom) {
+            if (m.userId == nextFrom) {
                 display = DisplayAs.MIDDLE;
             } else {
                 display = DisplayAs.LAST;
             }
-        } else if (m.from.equals(nextFrom)) {
+        } else if (m.userId == nextFrom) {
             display = DisplayAs.FIRST;
         }
 
-        holder.mContainer.setGravity(isMine ? Gravity.RIGHT : Gravity.LEFT);
+        holder.mContainer.setGravity(m.isMine ? Gravity.RIGHT : Gravity.LEFT);
 
         // To make sure padding is properly set, first set background, then set text.
-        int bg_bubble = isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+        int bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
         switch (display) {
             case SINGLE:
-                bg_bubble = isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+                bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), SINGLE_PADDING,
                         holder.mContainer.getPaddingRight(), SINGLE_PADDING);
                 break;
             case FIRST:
-                bg_bubble = isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
+                bg_bubble = m.isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), SINGLE_PADDING,
                         holder.mContainer.getPaddingRight(), TRAIN_PADDING);
                 break;
             case MIDDLE:
-                bg_bubble = isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
+                bg_bubble = m.isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), TRAIN_PADDING,
                         holder.mContainer.getPaddingRight(), TRAIN_PADDING);
                 break;
             case LAST:
-                bg_bubble = isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+                bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), TRAIN_PADDING,
                         holder.mContainer.getPaddingRight(), SINGLE_PADDING);
                 break;
         }
         holder.mMessageBubble.setBackgroundResource(bg_bubble);
-        if (!isMine) {
+        if (!m.isMine) {
             holder.mMessageBubble.getBackground().mutate()
-                    .setColorFilter(sColorizer[senderIdx].bg, PorterDuff.Mode.MULTIPLY);
+                    .setColorFilter(sColorizer[m.senderIdx].bg, PorterDuff.Mode.MULTIPLY);
         }
         holder.mContent.setText(m.content);
         holder.mMeta.setText(shortDate(m.ts));
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
-        if (isMine) {
+        if (m.isMine) {
             if (mTopic.msgReadCount(m.seq) > 0) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
             } else if (mTopic.msgRecvCount(m.seq) > 0) {

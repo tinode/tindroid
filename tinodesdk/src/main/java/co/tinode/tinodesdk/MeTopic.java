@@ -34,8 +34,12 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
     
     @Override
     protected void processMetaSubs(Subscription<Pu,Pr>[] subs) {
+        String myUid = mTinode.getMyId();
 
         for (Subscription<Pu,Pr> sub : subs) {
+            // Subscriptions to 'me' don't have .user filled. Fill it out now.
+            sub.user = myUid;
+
             // Cache user in the topic as well.
             Subscription<Pu,Pr> cached = mSubs.get(sub.topic);
             if (cached != null) {

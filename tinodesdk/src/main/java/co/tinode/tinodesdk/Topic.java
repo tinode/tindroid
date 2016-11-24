@@ -94,6 +94,9 @@ public class Topic<Pu,Pr,T> {
         mName = name;
         isValidName = getTopicTypeByName(name) != TopicType.UNKNOWN;
 
+        if (l != null) {
+            l.mTopic = this;
+        }
         mListener = l;
         mAttached = false;
         mSubs = new HashMap<>();
@@ -389,23 +392,6 @@ public class Topic<Pu,Pr,T> {
     }
 
     /**
-     * Given a sender UID, return a integer index of the sender within the topic. The index is guaranteed
-     * to be a small number (< 16), unchanging for the duration of the session.
-     *
-     * @param sender sender UID to check
-     *
-     * @return index of the given sender or -1 if sender is not found;
-     *
-     */
-    public int getSenderIndex(String sender) {
-        Subscription s = mSubs.get(sender);
-        if (s == null) {
-            return -1;
-        }
-        return s.getTopicIndex();
-    }
-
-    /**
      * Check if UID is equal to the current user UID
      *
      * @param sender sender UID to check
@@ -464,6 +450,9 @@ public class Topic<Pu,Pr,T> {
     }
 
     public void setListener(Listener<Pu,Pr,T> l) {
+        if (l != null) {
+            l.mTopic = this;
+        }
         mListener = l;
     }
 
@@ -677,16 +666,16 @@ public class Topic<Pu,Pr,T> {
         for (Subscription<Pu,Pr> sub : subs) {
             // Response to get.sub on 'me' topic does not have .user set
             if (sub.user != null && !sub.user.equals("")) {
-                // Cache user in the topic as well.
+                // Fill out topic name
+                sub.topic = getName();
+
+                // Cache user in the topic.
                 Subscription<Pu,Pr> cached = mSubs.get(sub.user);
                 if (cached != null) {
                     cached.merge(sub);
                 } else {
-                    sub.setTopicIndex(mSubs.size());
                     mSubs.put(sub.user, sub);
                 }
-
-                // TODO(gene): Save the object to global cache.
             }
 
             if (mListener != null) {
@@ -700,6 +689,8 @@ public class Topic<Pu,Pr,T> {
     }
 
     public static class Listener<PPu,PPr,Tt> {
+        protected Topic<PPu,PPr,Tt> mTopic;
+
         public void onSubscribe(int code, String text) {}
         public void onLeave(int code, String text) {}
 
@@ -716,8 +707,5 @@ public class Topic<Pu,Pr,T> {
         public void onMetaDesc(Description<PPu,PPr> desc) {}
         public void onSubsUpdated() {}
         public void onPres(MsgServerPres pres) {}
-        public void onPresOnline(boolean online) {}
-        public void onPresUpd() {}
-        public void onPresUa(String ua) {}
     }
 }
