@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
@@ -64,13 +65,27 @@ public class UiUtils {
                     drw = activity.getResources().getDrawable(res);
                 }
                 if (drw != null) {
-                    toolbar.setLogo(new LayerDrawable(new Drawable[] {drw, new OnlineDrawable(online)}));
+                    LayerDrawable ld = new LayerDrawable(
+                            new Drawable[] {drw, new OnlineDrawable(online)});
+                    invertDrawable(drw);
+                    toolbar.setLogo(ld);
                 }
             }
         } else {
             toolbar.setLogo(null);
             toolbar.setTitle(R.string.app_name);
         }
+    }
+
+    private static void invertDrawable(Drawable drw) {
+        final float[] NEGATIVE = {
+                -1.0f, 0, 0, 0, 255, // red
+                0, -1.0f, 0, 0, 255, // green
+                0, 0, -1.0f, 0, 255, // blue
+                0, 0, 0, 1.0f, 0  // alpha
+        };
+
+        drw.setColorFilter(new ColorMatrixColorFilter(NEGATIVE));
     }
 
     public static void setOnlineStatus(final AppCompatActivity activity, boolean online) {
