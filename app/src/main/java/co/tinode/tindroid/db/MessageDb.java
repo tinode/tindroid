@@ -6,21 +6,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Array;
 import java.util.Date;
 
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -70,13 +61,13 @@ public class MessageDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_TOPIC_ID = "topic_id";
     /**
-     * UID as string, originator of the message. The column cannot be named 'from'.
+     * Id of the originator of the message, references users._ID
      */
-    public static final String COLUMN_NAME_FROM = "sender";
+    public static final String COLUMN_NAME_USER_ID = "user_id";
     /**
-     * Sequential ID of the sender within the topic. Neede for color selection.
+     * Sequential ID of the sender within the topic. Needed for assigning colors to message bubbles in UI.
      */
-    public static final String COLUMN_NAME_FROM_ID = "sender_id";
+    public static final String COLUMN_NAME_SENDER_INDEX = "sender_idx";
     /**
      * MessageDb timestamp
      */
@@ -100,8 +91,8 @@ public class MessageDb implements BaseColumns {
             BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
 
     private static final int COLUMN_IDX_TOPIC_ID = 1;
-    private static final int COLUMN_IDX_FROM = 2;
-    private static int COLUMN_IDX_FROM_ID = 3;
+    private static final int COLUMN_IDX_USER_ID = 2;
+    private static final int COLUMN_IDX_SENDER_INDEX = 3;
     private static final int COLUMN_IDX_TS = 4;
     private static final int COLUMN_IDX_SEQ = 5;
     private static final int COLUMN_IDX_CONTENT = 6;
@@ -114,8 +105,9 @@ public class MessageDb implements BaseColumns {
                     _ID + " INTEGER PRIMARY KEY," +
                     COLUMN_NAME_TOPIC_ID
                     + " REFERENCES " + TopicDb.TABLE_NAME + "(" + TopicDb._ID + ")," +
-                    COLUMN_NAME_FROM + " TEXT," +
-                    COLUMN_NAME_FROM_ID + " INT," +
+                    COLUMN_NAME_USER_ID
+                    + " REFERENCES " + UserDb.TABLE_NAME + "(" + UserDb._ID + ")," +
+                    COLUMN_NAME_SENDER_INDEX + " INT," +
                     COLUMN_NAME_TS + " TEXT," +
                     COLUMN_NAME_SEQ + " INT," +
                     COLUMN_NAME_CONTENT + " BLOB)";
@@ -144,63 +136,43 @@ public class MessageDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    public static long insert(SQLiteDatabase db, long topicId, MsgServerData msg) {
-        // Convert message to a map of values
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_TOPIC_ID, topicId);
-        values.put(COLUMN_NAME_FROM, msg.from);
-        values.put(COLUMN_NAME_FROM_ID, fromId);
-        values.put(COLUMN_NAME_TS, msg.ts.getTime());
-        values.put(COLUMN_NAME_SEQ, msg.seq);
-        values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
-
-        return db.insert(TABLE_NAME, null, values);
-    }
-
-    /**
-     * Insert multiple messages into DB in one transaction.
-     *
-     * @return number of inserted messages
-     */
-    public static long insert(SQLiteDatabase db, long topicId, MsgServerData[] msgs) {
-        int count = 0;
+    public static long insert(SQLiteDatabase db, long topicId, long userId, int senderIdx, MsgServerData msg) {
+        long id = -1;
         try {
             db.beginTransaction();
-            String insert = "INSERT INTO " + TABLE_NAME + "(" +
-                    COLUMN_NAME_TOPIC_ID + "," +
-                    COLUMN_NAME_FROM + "," +
-                    COLUMN_NAME_TS + "," +
-                    COLUMN_NAME_SEQ + "," +
-                    COLUMN_NAME_CONTENT +
-                    ") VALUES (?, ?, ?, ?, ?, ?)";
 
-            SQLiteStatement stmt = db.compileStatement(insert);
-
-            for (MsgServerData msg : msgs) {
-                stmt.clearBindings();
-                stmt.bindLong(1, topicId);
-                if (msg.from != null) {
-                    stmt.bindString(2, msg.from);
-                } else {
-                    stmt.bindNull(2);
-                }
-                stmt.bindLong(3, msg.ts.getTime());
-                stmt.bindLong(4, msg.seq);
-                stmt.bindBlob(5, BaseDb.serialize(msg.content));
-                stmt.executeInsert();
-
-                count++;
+            if (topicId <= 0) {
+                topicId = TopicDb.getId(db, msg.topic);
+            }
+            if (userId <= 0) {
+                userId = UserDb.getId(db, msg.from);
             }
 
-            db.setTransactionSuccessful(); // This commits the transaction if there were no exceptions
+            if (userId <=0 || topicId <= 0) {
+                return -1;
+            }
 
-        } catch (Exception e) {
-            Log.w("Exception:", e);
-            count = -1;
-        } finally {
+            if (senderIdx < 0) {
+                senderIdx = SubscriberDb.getSenderIndex(db, topicId, userId);
+            }
+
+            // Convert message to a map of values
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_TOPIC_ID, topicId);
+            values.put(COLUMN_NAME_USER_ID, userId);
+            values.put(COLUMN_NAME_SENDER_INDEX, senderIdx);
+            values.put(COLUMN_NAME_TS, msg.ts.getTime());
+            values.put(COLUMN_NAME_SEQ, msg.seq);
+            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
+
+            id = db.insert(TABLE_NAME, null, values);
+            db.setTransactionSuccessful();
+
+        } catch (Exception ex) {
             db.endTransaction();
         }
-        return count;
+
+        return id;
     }
 
     /**
@@ -270,13 +242,16 @@ public class MessageDb implements BaseColumns {
         return db.delete(TABLE_NAME, selection, selectionArgs);
     }
 
-    public static <T> MsgServerData<T> readMessage(Cursor cursor) {
-        MsgServerData<T> msg = new MsgServerData<>();
+    public static <T> StoredMessage<T> readMessage(Cursor c) {
+        StoredMessage<T> msg = new StoredMessage<>();
 
-        msg.from = cursor.getString(COLUMN_IDX_FROM);
-        msg.seq = cursor.getInt(COLUMN_IDX_SEQ);
-        msg.ts = new Date(cursor.getLong(COLUMN_IDX_TS));
-        msg.content = BaseDb.deserialize(cursor.getBlob(COLUMN_IDX_CONTENT));
+        msg.topicId     = c.getLong(COLUMN_IDX_TOPIC_ID);
+        msg.userId      = c.getLong(COLUMN_IDX_USER_ID);
+        msg.senderIdx   = c.getInt(COLUMN_IDX_SENDER_INDEX);
+        msg.isMine      = msg.senderIdx == 0;
+        msg.seq         = c.getInt(COLUMN_IDX_SEQ);
+        msg.ts          = new Date(c.getLong(COLUMN_IDX_TS));
+        msg.content     = BaseDb.deserialize(c.getBlob(COLUMN_IDX_CONTENT));
 
         return msg;
     }
@@ -298,7 +273,7 @@ public class MessageDb implements BaseColumns {
      * @param topicId ID of the Tinode topic to query.
      * @return maximum seq id.
      */
-    public static long getMaxSeq(SQLiteDatabase db, int topicId) {
+    public static long getMaxSeq(SQLiteDatabase db, long topicId) {
         SQLiteStatement stmt = db.compileStatement(
                 "SELECT MAX(" + COLUMN_NAME_SEQ + ") " +
                         "FROM " + TABLE_NAME +
@@ -321,21 +296,21 @@ public class MessageDb implements BaseColumns {
         private Cursor mCursor;
 
         private long topicId;
-        private int from;
-        private int to;
+        private int fromSeq;
+        private int toSeq;
 
         public Loader(Context context, String account, String topic, int from, int to) {
             super(context);
 
             mDb = BaseDb.getInstance(context, account).getReadableDatabase();
-            this.topicId = TopicDb.getTopicId(mDb, topic);
-            this.from = from;
-            this.to = to;
+            this.topicId = TopicDb.getId(mDb, topic);
+            this.fromSeq = from;
+            this.toSeq = to;
         }
 
         @Override
         public Cursor loadInBackground() {
-            return query(mDb, topicId, from, to);
+            return query(mDb, topicId, fromSeq, toSeq);
         }
 
         /* Runs on the UI thread */

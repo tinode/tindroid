@@ -20,6 +20,7 @@ import android.widget.TextView;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -48,7 +49,8 @@ public class MessageActivity extends AppCompatActivity {
     private String mMessageText = null;
 
     private String mTopicName;
-    private Topic<VCard, String, String> mTopic;
+    //private Topic<VCard, String, String> mTopic;
+    private StoredTopic<VCard, String> mTopic;
 
     private SQLiteDatabase mDb;
 
@@ -125,7 +127,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         if (TextUtils.isEmpty(mTopicName)) {
-            Log.e(TAG, "Activity started with empty topic name");
+            Log.e(TAG, "Activity started with an empty topic name");
             finish();
             return;
         }
@@ -133,35 +135,31 @@ public class MessageActivity extends AppCompatActivity {
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
         // Load a previously saved topic.
-        Subscription<VCard, String> sub = TopicDb.readOne(mDb, mTopicName);
-        // sub could be null if this is a new topic.
-        if (sub != null) {
-            UiUtils.setupToolbar(this, sub.pub, Topic.getTopicTypeByName(mTopicName), Cache.isUserOnline(mTopicName));
-            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
-        }
+        mTopic = TopicDb.readOne(mDb, mTopicName);
+        Topic<VCard,String,String> topic = tinode.getTopic(mTopicName);
 
-        mTopic = tinode.getTopic(mTopicName);
+        // sub could be null if this is a new topic.
         if (mTopic != null) {
-            if (oldTopicName == null || !mTopicName.equals(oldTopicName)) {
-                mMessagesAdapter.setTopic(mTopicName);
-                runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
-            }
+            UiUtils.setupToolbar(this, mTopic.pub, Topic.getTopicTypeByName(mTopicName), Cache.isUserOnline(mTopicName));
+            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
         } else {
-            mTopic = new Topic<>(tinode, mTopicName, new Topic.Listener<VCard, String, String>() {
+            topic = new Topic<>(tinode, mTopicName,
+                    new Topic.Listener<VCard, String, String>() {
 
                 @Override
                 public void onSubscribe(int code, String text) {
                     // Topic name may change after subscription, i.e. new -> grpXXX
                     mTopicName = mTopic.getName();
-                    mMessagesAdapter.setTopic(mTopicName);
                     runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
                 }
 
                 @Override
                 public boolean onData(MsgServerData data) {
                     boolean recv = false;
-                    if (MessageDb.insert(mDb, data) > 0) {
-                        TopicDb.updateRecv(mDb, mTopicName, data.seq);
+                    if (MessageDb.insert(mDb, MessageActivity.this.mTopic.id, -1, , data) > 0) {
+                        if (TopicDb.updateRecv(mDb, mTopicName, data.seq)) {
+                            MessageActivity.this.mTopic.recv = data.seq;
+                        }
                         // mMessagesAdapter.notifyItemInserted(0);
                         // Loader will call notifyDataSetChanged
                         runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
@@ -173,16 +171,6 @@ public class MessageActivity extends AppCompatActivity {
                 @Override
                 public void onPres(MsgServerPres pres) {
                     Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
-                }
-
-                @Override
-                public void onPresOnline(final boolean online) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            UiUtils.setOnlineStatus(MessageActivity.this, online);
-                        }
-                    });
                 }
 
                 @Override
@@ -234,12 +222,12 @@ public class MessageActivity extends AppCompatActivity {
             });
         }
 
-        if (!mTopic.isAttached()) {
+        if (!topic.isAttached()) {
             try {
                 MsgGetMeta.GetData getData = new MsgGetMeta.GetData();
                 // GetData.since is inclusive, so adding 1 to skip the item we already have.
-                getData.since = (int) MessageDb.getMaxSeq(mDb, mTopicName) + 1;
-                mTopic.subscribe(null, new MsgGetMeta(
+                getData.since = (int) MessageDb.getMaxSeq(mDb, mTopic.id) + 1;
+                topic.subscribe(null, new MsgGetMeta(
                         new MsgGetMeta.GetDesc(),
                         new MsgGetMeta.GetSub(),
                         getData));
@@ -252,19 +240,21 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
-        Cache.getTinode().setListener(null);
+        Tinode tinode = Cache.getTinode();
+        tinode.setListener(null);
+        Topic topic = tinode.getTopic(mTopicName);
+        if (topic != null) {
+            topic.setListener(null);
 
-        mTopic.setListener(null);
-
-        // Deactivate current topic
-        if (mTopic.isAttached()) {
-            try {
-                mTopic.leave();
-            } catch (Exception ex) {
-                Log.e(TAG, "something went wrong", ex);
+            // Deactivate current topic
+            if (topic.isAttached()) {
+                try {
+                    topic.leave();
+                } catch (Exception ex) {
+                    Log.e(TAG, "something went wrong", ex);
+                }
             }
         }
-        mTopic = null;
     }
 
     @Override
@@ -294,27 +284,32 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     public void sendReadNotification() {
-        if (mTopic != null) {
-            int read = mTopic.noteRead();
+        Topic topic = Cache.getTinode().getTopic(mTopicName);
+        if (topic != null) {
+            int read = topic.noteRead();
             if (read > 0) {
-                TopicDb.updateRead(mDb, mTopicName, read);
+                if (TopicDb.updateRead(mDb, mTopicName, read)) {
+                    mTopic.read = read;
+                }
             }
         }
     }
 
     public void sendKeyPress() {
-        if (mTopic != null) {
-            mTopic.noteKeyPress();
+        Topic topic = Cache.getTinode().getTopic(mTopicName);
+        if (topic != null) {
+            topic.noteKeyPress();
         }
     }
 
     public void sendMessage() {
-        if (mTopic != null) {
+        Topic topic = Cache.getTinode().getTopic(mTopicName);
+        if (topic != null) {
             final TextView inputField = (TextView) findViewById(R.id.editMessage);
             String message = inputField.getText().toString().trim();
             if (!message.equals("")) {
                 try {
-                    mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    topic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                             runOnUiThread(new Runnable() {

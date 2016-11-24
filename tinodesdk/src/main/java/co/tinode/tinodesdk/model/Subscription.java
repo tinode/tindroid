@@ -29,10 +29,6 @@ public class Subscription<Pu,Pr> {
     public Pu pub;
     public LastSeen seen;
 
-    // Locally-assigned value;
-    @JsonIgnore
-    protected int mTopicIndex;
-
     public Subscription() {
     }
 
@@ -81,17 +77,6 @@ public class Subscription<Pu,Pr> {
         } else {
             seen.merge(sub.seen);
         }
-    }
-
-    /**
-     * @return "Sender index" - small unique integer value to identify this topic among other topics.
-     */
-    public int getTopicIndex() {
-        return mTopicIndex;
-    }
-
-    public void setTopicIndex(int index) {
-        mTopicIndex = index;
     }
 
     public String getUniqueId() {

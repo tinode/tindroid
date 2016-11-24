@@ -26,7 +26,7 @@ import co.tinode.tinodesdk.Topic;
  */
 public class UiUtils {
     private static final String TAG = "UiUtils";
-    // If Message activity is visible, this is the current topic in that activity.
+    // If StoredMessage activity is visible, this is the current topic in that activity.
     public static String sVisibleTopic = null;
 
     public static int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);

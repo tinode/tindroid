@@ -145,14 +145,14 @@ public class TopicDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    public static long insert(SQLiteDatabase db, String name, Subscription sub) {
-        Log.d(TAG, "Inserting sub for " + name);
+    public static long insert(SQLiteDatabase db, Subscription sub) {
+        Log.d(TAG, "Inserting sub for " + sub.topic);
 
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getAccountId());
-        values.put(COLUMN_NAME_TOPIC, name);
-        Topic.TopicType tp = Topic.getTopicTypeByName(name);
+        values.put(COLUMN_NAME_TOPIC, sub.topic);
+        Topic.TopicType tp = Topic.getTopicTypeByName(sub.topic);
         values.put(COLUMN_NAME_TYPE, tp.val());
         if (tp == Topic.TopicType.P2P) {
             values.put(COLUMN_NAME_WITH, sub.with);
@@ -176,7 +176,7 @@ public class TopicDb implements BaseColumns {
      *
      * @return true if the record was updated, false otherwise
      */
-    public static boolean update(SQLiteDatabase db, String name, Subscription sub) {
+    public static boolean update(SQLiteDatabase db, Subscription sub) {
 
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
@@ -192,12 +192,12 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
         int updated = db.update(TABLE_NAME, values,
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
-                        " AND " + COLUMN_NAME_TOPIC + "='" + name + "'",
+                        " AND " + COLUMN_NAME_TOPIC + "='" + sub.topic + "'",
                 null);
                 //COLUMN_NAME_ACCOUNT_ID + "= ? AND " + COLUMN_NAME_TOPIC + "= ?",
                 //new String[] { String.valueOf(BaseDb.getAccountId()), "'" + name + "'" });
 
-        Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + name + " returned " + updated);
+        Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + sub.topic + " returned " + updated);
 
         return updated > 0;
     }
@@ -207,9 +207,9 @@ public class TopicDb implements BaseColumns {
      *
      * @return Id of the newly inserted topic or 0 if the topic was updated
      */
-    public static long upsert(SQLiteDatabase db, String name, Subscription sub) {
-        if (!update(db, name, sub)) {
-            return insert(db, name, sub);
+    public static long upsert(SQLiteDatabase db, Subscription sub) {
+        if (!update(db, sub)) {
+            return insert(db, sub);
         }
         return 0;
     }
@@ -238,21 +238,24 @@ public class TopicDb implements BaseColumns {
      * @param c Cursor to read from
      * @return Subscription
      */
-    public static <Pu,Pr> Subscription<Pu,Pr> readOne(Cursor c) {
-        Subscription<Pu,Pr> sub = new Subscription<>();
+    public static <Pu,Pr> StoredTopic<Pu,Pr> readOne(Cursor c) {
+        StoredTopic<Pu,Pr> sub = new StoredTopic<>();
 
-        sub.topic = c.getString(COLUMN_IDX_TOPIC);
-        if(Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
-            sub.with = c.getString(COLUMN_IDX_WITH);
-        }
+        sub.id = c.getLong(COLUMN_IDX_ID);
+        sub.name = c.getString(COLUMN_IDX_TOPIC);
+        sub.type = Topic.getTopicTypeByName(sub.name);
+        sub.with = c.getString(COLUMN_IDX_WITH);
         sub.updated = new Date(c.getLong(COLUMN_IDX_UPDATED));
         sub.deleted = new Date(c.getLong(COLUMN_IDX_DELETED));
         sub.read = c.getInt(COLUMN_IDX_READ);
         sub.recv = c.getInt(COLUMN_IDX_RECV);
         sub.seq = c.getInt(COLUMN_IDX_SEQ);
         sub.mode = c.getString(COLUMN_IDX_ACCESSMODE);
+
         sub.pub = BaseDb.deserialize(c.getBlob(COLUMN_IDX_PUBLIC));
         sub.priv = BaseDb.deserialize(c.getBlob(COLUMN_IDX_PRIVATE));
+
+        sub.lastUsed = new Date(c.getLong(COLUMN_IDX_LASTUSED));
 
         return sub;
     }
@@ -263,8 +266,8 @@ public class TopicDb implements BaseColumns {
      * @param topic Topic name to read
      * @return Subscription
      */
-    public static <Pu,Pr> Subscription<Pu,Pr> readOne(SQLiteDatabase db, String topic) {
-        Subscription<Pu, Pr> sub = null;
+    public static <Pu,Pr> StoredTopic<Pu,Pr> readOne(SQLiteDatabase db, String topic) {
+        StoredTopic<Pu, Pr> sub = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
@@ -286,30 +289,30 @@ public class TopicDb implements BaseColumns {
      * @param topic topic name
      * @return _id of the topic
      */
-    public static long getTopicId(SQLiteDatabase db, String topic) {
+    public static long getId(SQLiteDatabase db, String topic) {
         return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
                 COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
     }
 
-    private static void updateCounter(SQLiteDatabase db, String topic, String column, int counter) {
+    private static boolean updateCounter(SQLiteDatabase db, String topic, String column, int counter) {
         ContentValues values = new ContentValues();
         values.put(column, counter);
-        db.update(TABLE_NAME, values,
+        return db.update(TABLE_NAME, values,
                 COLUMN_NAME_ACCOUNT_ID + "=? AND " + COLUMN_NAME_TOPIC + "=? AND " + column + "<?",
-                new String[] { String.valueOf(BaseDb.getAccountId()), topic, String.valueOf(counter) });
+                new String[] { String.valueOf(BaseDb.getAccountId()), topic, String.valueOf(counter) }) > 0;
     }
 
-    public static void updateRead(SQLiteDatabase db, String topic, int read) {
-        updateCounter(db, topic, COLUMN_NAME_READ, read);
+    public static boolean updateRead(SQLiteDatabase db, String topic, int read) {
+        return updateCounter(db, topic, COLUMN_NAME_READ, read);
     }
 
-    public static void updateRecv(SQLiteDatabase db, String topic, int read) {
-        updateCounter(db, topic, COLUMN_NAME_RECV, read);
+    public static boolean updateRecv(SQLiteDatabase db, String topic, int read) {
+        return updateCounter(db, topic, COLUMN_NAME_RECV, read);
     }
 
-    public static void updateSeq(SQLiteDatabase db, String topic, int read) {
-        updateCounter(db, topic, COLUMN_NAME_SEQ, read);
+    public static boolean updateSeq(SQLiteDatabase db, String topic, int read) {
+        return updateCounter(db, topic, COLUMN_NAME_SEQ, read);
     }
 }

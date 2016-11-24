@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
+import android.text.TextUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,14 +31,24 @@ public class BaseDb extends SQLiteOpenHelper {
 
     private static long sAccountId = -1;
 
+    private static String sUid = null;
+
     private BaseDb(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    public static BaseDb getInstance(Context context, String accountName) {
+    /**
+     * Get instance of BaseDb for a given UID
+     *
+     * @param context application context
+     * @param uid UID of the current user.
+     * @return BaseDb instance
+     */
+    public static BaseDb getInstance(Context context, String uid) {
         if (sInstance == null) {
             sInstance = new BaseDb(context);
-            sAccountId = AccountDb.getAccountId(sInstance.getWritableDatabase(), accountName);
+            sUid = uid;
+            sAccountId = AccountDb.getAccountId(sInstance.getWritableDatabase(), uid);
         }
         return sInstance;
     }
@@ -52,6 +63,10 @@ public class BaseDb extends SQLiteOpenHelper {
         db.execSQL(AccountDb.CREATE_INDEX);
         db.execSQL(TopicDb.CREATE_TABLE);
         db.execSQL(TopicDb.CREATE_INDEX);
+        db.execSQL(UserDb.CREATE_TABLE);
+        db.execSQL(UserDb.CREATE_INDEX);
+        db.execSQL(SubscriberDb.CREATE_TABLE);
+        db.execSQL(SubscriberDb.CREATE_INDEX);
         db.execSQL(MessageDb.CREATE_TABLE);
         db.execSQL(MessageDb.CREATE_INDEX);
     }
@@ -61,6 +76,10 @@ public class BaseDb extends SQLiteOpenHelper {
         // This is just a cache. Drop then re-fetch everything from the server.
         db.execSQL(MessageDb.DROP_INDEX);
         db.execSQL(MessageDb.DROP_TABLE);
+        db.execSQL(SubscriberDb.DROP_INDEX);
+        db.execSQL(SubscriberDb.DROP_TABLE);
+        db.execSQL(UserDb.DROP_INDEX);
+        db.execSQL(UserDb.DROP_TABLE);
         db.execSQL(TopicDb.DROP_INDEX);
         db.execSQL(TopicDb.DROP_TABLE);
         db.execSQL(AccountDb.DROP_INDEX);
@@ -70,7 +89,7 @@ public class BaseDb extends SQLiteOpenHelper {
 
     @Override
     public void onConfigure(SQLiteDatabase db){
-        if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             db.setForeignKeyConstraintsEnabled(true);
         } else {
             db.execSQL("PRAGMA foreign_keys = ON;");
@@ -119,5 +138,9 @@ public class BaseDb extends SQLiteOpenHelper {
             }
         }
         return null;
+    }
+
+    static boolean isMe(String uid) {
+        return uid != null && uid.equals(sUid);
     }
 }
