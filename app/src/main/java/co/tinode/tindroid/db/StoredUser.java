@@ -11,9 +11,14 @@ public class StoredUser<Pu,Pr> {
 
     public int senderIdx;
 
+    public String mode;
+
+    public int recv;
+    public int read;
+
     public Date updated;
     public Date deleted;
 
     public Pu pub;
-    private Pu priv;
+    public Pu priv;
 }

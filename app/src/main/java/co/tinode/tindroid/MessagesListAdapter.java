@@ -43,12 +43,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             new colorizer(0xffeeeeee, 0xff212121), new colorizer(0xff80deea, 0xff212121),
             new colorizer(0xffe6ee9c, 0xff212121), new colorizer(0xffce93d8, 0xff212121)
     };
-    private AppCompatActivity mActivity;
+    private MessageActivity mActivity;
     private Cursor mCursor;
-    //private String mTopicName;
-    //private Topic<?, ?, String> mTopic;
 
-    public MessagesListAdapter(AppCompatActivity context) {
+    public MessagesListAdapter(MessageActivity context) {
         super();
         mActivity = context;
         setHasStableIds(true);
@@ -147,9 +145,9 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
         if (m.isMine) {
-            if (mTopic.msgReadCount(m.seq) > 0) {
+            if (mActivity.mTopic.msgReadCount(m.seq) > 0) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
-            } else if (mTopic.msgRecvCount(m.seq) > 0) {
+            } else if (mActivity.mTopic.msgRecvCount(m.seq) > 0) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_done);
             }
         }

@@ -4,12 +4,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
+import co.tinode.tinodesdk.Tinode;
+
 /**
  * Topic description as deserialized from the server packet.
  */
 public class Description<Pu,Pr> {
     public Date created;
     public Date updated;
+    public Date deleted;
     public Defacs defacs;
     public Acs acs;
     public int seq;
@@ -20,6 +23,8 @@ public class Description<Pu,Pr> {
     public Pu pub;
     @JsonProperty("private")
     public Pr priv;
+    // P2P only
+    public String with;
 
     public Description() {
     }
@@ -57,8 +62,14 @@ public class Description<Pu,Pr> {
         if (desc.pub != null) {
             pub = desc.pub;
         }
+
         if (desc.priv != null) {
             priv = desc.priv;
         }
+
+        if (desc.with != null) {
+            with = desc.with;
+        }
+
     }
 }

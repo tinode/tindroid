@@ -53,30 +53,50 @@ public class Topic<Pu,Pr,T> {
     protected JavaType mTypeOfDataPacket = null;
     protected JavaType mTypeOfMetaPacket = null;
 
-    protected String mName;
-    /** the mName could be invalid: "new" or "usrXXX */
-    protected boolean isValidName = false;
-
-    // Server-provided values:
-    protected Date mCreated;
-    protected Date mUpdated;
-    protected AccessMode mMode;
-
-    // For P2P topics the UID of the other party, server-provided
-    protected String mWith;
-
-    protected Description<Pu,Pr> mDescription;
-
     protected Tinode mTinode;
 
+    protected String mName;
+    // the mName could be invalid: 'new' or 'usrXXX'
+    protected boolean isValidName = false;
+
+    /** The mStore is set by Tinode when the topic calls {@link Tinode#registerTopic(Topic)} */
+    Storage mStore = null;
+
+    // Server-provided values:
+    protected AccessMode mMode;
+    // The bulk of topic data
+    protected Description<Pu,Pr> mDescription;
     // Cache of topic subscribers indexed by userID
-    protected HashMap<String,Subscription<Pu,Pr>> mSubs;
-    protected List<MsgServerData<T>> mMessages;
+    protected HashMap<String,Subscription<Pu,Pr>> mSubs = null;
+    // Timestamp of the last update to subscriptions. Default: Oct 25, 2014 05:06:02 UTC, incidentally equal
+    // to the first few digits of sqrt(2)
+    protected Date mSubsUpdated = new Date(1414213562);
+
 
     protected boolean mAttached;
     protected Listener<Pu,Pr,T> mListener;
 
     protected long mLastKeyPress = 0;
+
+    /**
+     * Copy constructor
+     *
+     * @param topic Original instance to copy
+     */
+    protected Topic(Topic<Pu,Pr,T> topic) {
+        mTypeOfDataPacket   = topic.mTypeOfDataPacket;
+        mTypeOfMetaPacket   = topic.mTypeOfMetaPacket;
+        mName               = topic.mName;
+        isValidName         = topic.isValidName;
+        mStore              = topic.mStore;
+        mMode               = topic.mMode;
+        mDescription        = topic.mDescription;
+        mSubs               = topic.mSubs;
+        mSubsUpdated        = topic.mSubsUpdated;
+        mAttached           = topic.mAttached;
+        mListener           = topic.mListener;
+        mLastKeyPress       = topic.mLastKeyPress;
+    }
 
     /**
      * Create a named topic.
@@ -91,16 +111,13 @@ public class Topic<Pu,Pr,T> {
         }
         mTinode = tinode;
 
-        mName = name;
-        isValidName = getTopicTypeByName(name) != TopicType.UNKNOWN;
+        setName(name);
 
         if (l != null) {
             l.mTopic = this;
         }
         mListener = l;
         mAttached = false;
-        mSubs = new HashMap<>();
-        mMessages = new ArrayList<>();
 
         if (isValidName) {
             mTinode.registerTopic(this);
@@ -155,6 +172,15 @@ public class Topic<Pu,Pr,T> {
                 .constructParametricType(MsgServerData.class, typeOfContent);
         mTypeOfMetaPacket = Tinode.getTypeFactory()
                 .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
+    }
+
+    /**
+     * Called by Tinode from {@link Tinode#registerTopic(Topic)}
+     *
+     * @param store storage object
+     */
+    void setStorage(Storage store) {
+        mStore = store;
     }
 
     /**
@@ -222,7 +248,7 @@ public class Topic<Pu,Pr,T> {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
                                 throws Exception {
-                            topicLeft();
+                            topicLeft(result.ctrl.code, result.ctrl.text);
                             return null;
                         }
                     }, null);
@@ -280,7 +306,7 @@ public class Topic<Pu,Pr,T> {
         }
 
         // Save read and received status on subscription.
-        Subscription<?,?> sub = mSubs.get(mTinode.getMyId());
+        Subscription<?,?> sub = getSubscription(mTinode.getMyId());
         int result = 0;
         if (sub != null) {
             switch (what) {
@@ -346,39 +372,14 @@ public class Topic<Pu,Pr,T> {
     public String getName() {
         return mName;
     }
+
     protected void setName(String name) {
         mName = name;
+        isValidName = Topic.getTopicTypeByName(name) != TopicType.UNKNOWN;
     }
 
     public Pu getPublic() {
         return mDescription != null ? mDescription.pub : null;
-    }
-
-    /**
-     * @return The number of messages stored in local cache
-     */
-    public int getCachedMsgCount() {
-        return mMessages.size();
-    }
-
-    /**
-     * @return The SeqID of the latest message stored in local cache.
-     */
-    public int lastCachedMsgSeq() {
-        if (mMessages.isEmpty()) {
-            return 0;
-        }
-        return mMessages.get(mMessages.size()-1).seq;
-    }
-
-    /**
-     * @return The SeqID of the earliest message in cache.
-     */
-    public int firstCachedMsgSeq() {
-        if (mMessages.isEmpty()) {
-            return 0;
-        }
-        return mMessages.get(0).seq;
     }
 
     /**
@@ -391,6 +392,35 @@ public class Topic<Pu,Pr,T> {
         return 0;
     }
 
+    private int loadSubs() {
+        Collection<Subscription<Pu,Pr>> subs = mStore.getSubscriptions(getName());
+
+        if (subs == null) {
+            return 0;
+        }
+
+        for (Subscription<Pu,Pr> sub : subs) {
+            if (mSubsUpdated.before(sub.updated)) {
+                mSubsUpdated = sub.updated;
+            }
+            addSubToCache(sub);
+        }
+        return mSubs.size();
+    }
+
+    /**
+     * Add subscription to cache. Needs to be overriden in MeTopic because it keeps subs indexed by topic.
+     *
+     * @param sub subscription to add to cache
+     */
+    protected void addSubToCache(Subscription<Pu,Pr> sub) {
+        if (mSubs == null) {
+            mSubs = new HashMap<>();
+        }
+
+        mSubs.put(sub.user, sub);
+    }
+
     /**
      * Check if UID is equal to the current user UID
      *
@@ -399,19 +429,21 @@ public class Topic<Pu,Pr,T> {
      * @return true if the sender UID is the same as current user UID
      */
     public boolean isMyMessage(String sender) {
-        return sender.equals(mTinode.getMyId());
-    }
-
-    public MsgServerData<T> getMessageAt(int position) {
-        return mMessages.get(position);
+        return sender != null && sender.equals(mTinode.getMyId());
     }
 
     public Subscription<Pu,Pr> getSubscription(String key) {
-        return mSubs.get(key);
+        if (mSubs == null) {
+            loadSubs();
+        }
+        return mSubs != null ? mSubs.get(key) : null;
     }
 
     public Collection<Subscription<Pu,Pr>> getSubscriptions() {
-        return mSubs.values();
+        if (mSubs == null) {
+            loadSubs();
+        }
+        return mSubs != null ? mSubs.values() : null;
     }
 
     /**
@@ -439,7 +471,7 @@ public class Topic<Pu,Pr,T> {
         }
 
         ArrayList<Subscription<Pu,Pr>> result = new ArrayList<>();
-        for (Subscription<Pu,Pr> sub: mSubs.values()) {
+        for (Subscription<Pu,Pr> sub: getSubscriptions()) {
             if ((getTopicTypeByName(sub.topic).val() & type.val()) != 0) {
                 if ((marker == null) || (sub.updated != null && marker.before(sub.updated))) {
                     result.add(sub);
@@ -470,11 +502,9 @@ public class Topic<Pu,Pr,T> {
     public int msgRecvCount(int seq) {
         int count = 0;
         if (seq > 0) {
-            Iterator it = mSubs.entrySet().iterator();
             String me = mTinode.getMyId();
-            while (it.hasNext()) {
-                Subscription s = (Subscription) ((Map.Entry) it.next()).getValue();
-                if (!s.user.equals(me) && s.recv >= seq) {
+            for (Subscription sub: getSubscriptions()) {
+                if (!sub.user.equals(me) && sub.recv >= seq) {
                     count++;
                 }
             }
@@ -492,11 +522,9 @@ public class Topic<Pu,Pr,T> {
     public int msgReadCount(int seq) {
         int count = 0;
         if (seq > 0) {
-            Iterator it = mSubs.entrySet().iterator();
             String me = mTinode.getMyId();
-            while (it.hasNext()) {
-                Subscription s = (Subscription) ((Map.Entry) it.next()).getValue();
-                if (!s.user.equals(me) && s.read >= seq) {
+            for (Subscription sub: getSubscriptions()) {
+                if (!sub.user.equals(me) && sub.read >= seq) {
                     count++;
                 }
             }
@@ -535,7 +563,7 @@ public class Topic<Pu,Pr,T> {
             mMode = new AccessMode(mode);
 
             if (!isValidName) {
-                mName = name;
+                setName(name);
                 mTinode.registerTopic(this);
             }
 
@@ -545,44 +573,31 @@ public class Topic<Pu,Pr,T> {
         }
     }
 
-    /** Generate a Subscription object from the Topic object */
-    protected Subscription<Pu,Pr> toSubscription() {
-        Subscription<Pu,Pr> sub = new Subscription<>();
-        sub.topic = mName;
-        sub.updated = mUpdated;
-        sub.mode = mMode != null ? mMode.toString() : null;
-        sub.with = mWith;
-        if (mDescription != null) {
-            sub.read = mDescription.read;
-            sub.recv = mDescription.recv;
-            sub.clear = mDescription.clear;
-            sub.priv = mDescription.priv;
-
-            sub.seq = mDescription.seq;
-            sub.pub = mDescription.pub;
-        }
-
-        return sub;
-    }
-
     /**
      * Called when the topic receives leave() confirmation
      */
-    protected void topicLeft() {
+    protected void topicLeft(int code, String reason) {
         if (mAttached) {
             mAttached = false;
 
             if (mListener != null) {
-                mListener.onLeave(503, "connection lost");
+                mListener.onLeave(code, reason);
             }
         }
     }
 
     protected void routeMeta(MsgServerMeta<Pu,Pr> meta) {
         if (meta.desc != null) {
+            if (mStore != null) {
+                mStore.topicUpdate(getName(), meta.ts, meta.desc);
+            }
             processMetaDesc(meta.desc);
         }
         if (meta.sub != null) {
+            if (mStore != null) {
+                mStore.topicUpdate(getName(), meta.ts, meta.sub);
+                loadSubs();
+            }
             processMetaSubs(meta.sub);
         }
 
@@ -596,15 +611,17 @@ public class Topic<Pu,Pr,T> {
 
         if (data.seq > mDescription.seq) {
             mDescription.seq = data.seq;
-
-            // TODO(gene): do I need to save it to mSubs too?
         }
-        mMessages.add(data);
 
-        if (mListener != null && mListener.onData(data)) {
+        if (mStore != null && mStore.msgReceived(getSubscription(data.from), data) > 0) {
             noteRecv();
         }
 
+        if (mListener != null) {
+            mListener.onData(data);
+        }
+
+        // Update subscription cache
         MeTopic me = mTinode.getMeTopic();
         if (me != null) {
             me.setMsgSeq(getName(), data.seq);
@@ -612,7 +629,7 @@ public class Topic<Pu,Pr,T> {
     }
 
     protected void routePres(MsgServerPres pres) {
-        Subscription<Pu,Pr> sub = mSubs.get(pres.src);
+        Subscription<Pu,Pr> sub = getSubscription(pres.src);
         if (sub != null) {
             // FIXME(gene): add actual handler
             MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
@@ -629,7 +646,7 @@ public class Topic<Pu,Pr,T> {
 
     protected void routeInfo(MsgServerInfo info) {
         if (!info.what.equals("kp")) {
-            Subscription sub = mSubs.get(info.from);
+            Subscription sub = getSubscription(info.from);
             if (sub != null) {
                 switch (info.what) {
                     case "recv":
@@ -661,23 +678,9 @@ public class Topic<Pu,Pr,T> {
         }
     }
 
-    // Called by Tinode when meta.sub is recived.
-    protected void processMetaSubs(Subscription<Pu,Pr>[] subs) {
-        for (Subscription<Pu,Pr> sub : subs) {
-            // Response to get.sub on 'me' topic does not have .user set
-            if (sub.user != null && !sub.user.equals("")) {
-                // Fill out topic name
-                sub.topic = getName();
-
-                // Cache user in the topic.
-                Subscription<Pu,Pr> cached = mSubs.get(sub.user);
-                if (cached != null) {
-                    cached.merge(sub);
-                } else {
-                    mSubs.put(sub.user, sub);
-                }
-            }
-
+    // Subscriptions updated, notify listeners.
+    protected void processMetaSubs(Subscription<Pu,Pr>[] unused) {
+        for (Subscription<Pu,Pr> sub : getSubscriptions()) {
             if (mListener != null) {
                 mListener.onMetaSub(sub);
             }

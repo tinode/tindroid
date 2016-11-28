@@ -21,6 +21,7 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredTopic;
+import co.tinode.tindroid.db.StoredUser;
 import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -50,7 +51,7 @@ public class MessageActivity extends AppCompatActivity {
 
     private String mTopicName;
     //private Topic<VCard, String, String> mTopic;
-    private StoredTopic<VCard, String> mTopic;
+    protected StoredTopic<VCard, String> mTopic;
 
     private SQLiteDatabase mDb;
 
@@ -156,14 +157,15 @@ public class MessageActivity extends AppCompatActivity {
                 @Override
                 public boolean onData(MsgServerData data) {
                     boolean recv = false;
-                    if (MessageDb.insert(mDb, MessageActivity.this.mTopic.id, -1, , data) > 0) {
-                        if (TopicDb.updateRecv(mDb, mTopicName, data.seq)) {
-                            MessageActivity.this.mTopic.recv = data.seq;
+                    StoredUser u = MessageActivity.this.mTopic.getUser(mDb, data.from);
+                    if (u != null) {
+                        if (MessageDb.insert(mDb, MessageActivity.this.mTopic.id, u.id, u.senderIdx, data) > 0) {
+                            if (TopicDb.updateRecv(mDb, mTopicName, data.seq)) {
+                                MessageActivity.this.mTopic.recv = data.seq;
+                            }
+                            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+                            recv = true;
                         }
-                        // mMessagesAdapter.notifyItemInserted(0);
-                        // Loader will call notifyDataSetChanged
-                        runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
-                        recv = true;
                     }
                     return recv;
                 }
@@ -303,7 +305,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     public void sendMessage() {
-        Topic topic = Cache.getTinode().getTopic(mTopicName);
+        Topic<?,?,String> topic = Cache.getTinode().getTopic(mTopicName);
         if (topic != null) {
             final TextView inputField = (TextView) findViewById(R.id.editMessage);
             String message = inputField.getText().toString().trim();

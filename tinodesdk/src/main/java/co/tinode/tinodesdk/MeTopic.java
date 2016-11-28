@@ -8,6 +8,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * MeTopic handles invites and manages contact list
@@ -33,31 +34,12 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
     }
     
     @Override
-    protected void processMetaSubs(Subscription<Pu,Pr>[] subs) {
-        String myUid = mTinode.getMyId();
-
-        for (Subscription<Pu,Pr> sub : subs) {
-            // Subscriptions to 'me' don't have .user filled. Fill it out now.
-            sub.user = myUid;
-
-            // Cache user in the topic as well.
-            Subscription<Pu,Pr> cached = mSubs.get(sub.topic);
-            if (cached != null) {
-                cached.merge(sub);
-            } else {
-                cached = sub;
-                mSubs.put(cached.topic, cached);
-            }
-
-            // TODO(gene): Save the object to global cache.
-            if (mListener != null) {
-                mListener.onMetaSub(cached);
-            }
+    protected void addSubToCache(Subscription<Pu,Pr> sub) {
+        if (mSubs == null) {
+            mSubs = new HashMap<>();
         }
 
-        if (mListener != null) {
-            mListener.onSubsUpdated();
-        }
+        mSubs.put(sub.topic, sub);
     }
 
     @Override

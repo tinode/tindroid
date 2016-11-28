@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
 
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import co.tinode.tinodesdk.model.Subscription;
@@ -227,8 +229,40 @@ public class SubscriberDb implements BaseColumns {
     }
 
     protected static Map<String,StoredUser> getSenders(SQLiteDatabase db, long topicId) {
-        Cursor c = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId, null);
-
+        Map<String,StoredUser> result = new HashMap<>();
+        Cursor c = db.rawQuery("SELECT " +
+                TABLE_NAME + "." + COLUMN_NAME_USER_ID + "," +
+                TABLE_NAME + "." + COLUMN_NAME_SENDER_INDEX + "," +
+                TABLE_NAME + "." + COLUMN_NAME_MODE + "," +
+                TABLE_NAME + "." + COLUMN_NAME_READ + "," +
+                TABLE_NAME + "." + COLUMN_NAME_RECV + "," +
+                TABLE_NAME + "." + COLUMN_NAME_PRIVATE + "," +
+                UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_UID + "," +
+                UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_UPDATED + "," +
+                UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_DELETED + "," +
+                UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_PUBLIC + "," +
+                " FROM " + TABLE_NAME +
+                " JOIN " + UserDb.TABLE_NAME +
+                " ON " + COLUMN_NAME_USER_ID + "=" + UserDb.TABLE_NAME + "." + UserDb._ID +
+                "  WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId, null);
+        if (c == null) {
+            return null;
+        }
+        while (c.moveToNext()) {
+            StoredUser u = new StoredUser();
+            u.id = c.getLong(0);
+            u.senderIdx = c.getInt(1);
+            u.mode = c.getString(2);
+            u.read = c.getInt(3);
+            u.recv = c.getInt(4);
+            u.priv = BaseDb.deserialize(c.getBlob(5));
+            u.uid = c.getString(6);
+            u.updated = new Date(c.getLong(7));
+            u.deleted = new Date(c.getLong(8));
+            u.pub = BaseDb.deserialize(c.getBlob(9));
+            result.put(u.uid, u);
+        }
         c.close();
+        return result;
     }
 }

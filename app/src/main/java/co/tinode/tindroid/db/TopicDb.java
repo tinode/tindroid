@@ -8,6 +8,7 @@ import android.util.Log;
 
 import java.util.Date;
 
+import co.tinode.tindroid.Cache;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.Subscription;
@@ -67,6 +68,10 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_SEQ = "seq";
     /**
+     * Minimum message id available
+     */
+    public static final String COLUMN_NAME_CLEAR = "clear";
+    /**
      * Access mode, string
      */
     public static final String COLUMN_NAME_ACCESSMODE = "mode";
@@ -84,21 +89,22 @@ public class TopicDb implements BaseColumns {
     public static final String COLUMN_NAME_PRIVATE = "priv";
 
 
-    private static final int COLUMN_IDX_ID = 0;
-    private static final int COLUMN_IDX_ACCOUNT_ID = 1;
-    private static final int COLUMN_IDX_TOPIC = 2;
-    private static final int COLUMN_IDX_TYPE = 3;
-    private static final int COLUMN_IDX_WITH = 4;
-    private static final int COLUMN_IDX_CREATED = 5;
-    private static final int COLUMN_IDX_UPDATED = 6;
-    private static final int COLUMN_IDX_DELETED = 7;
-    private static final int COLUMN_IDX_READ = 8;
-    private static final int COLUMN_IDX_RECV = 9;
-    private static final int COLUMN_IDX_SEQ = 10;
-    private static final int COLUMN_IDX_ACCESSMODE = 11;
-    private static final int COLUMN_IDX_LASTUSED = 12;
-    private static final int COLUMN_IDX_PUBLIC = 13;
-    private static final int COLUMN_IDX_PRIVATE = 14;
+    static final int COLUMN_IDX_ID = 0;
+    static final int COLUMN_IDX_ACCOUNT_ID = 1;
+    static final int COLUMN_IDX_TOPIC = 2;
+    static final int COLUMN_IDX_TYPE = 3;
+    static final int COLUMN_IDX_WITH = 4;
+    static final int COLUMN_IDX_CREATED = 5;
+    static final int COLUMN_IDX_UPDATED = 6;
+    static final int COLUMN_IDX_DELETED = 7;
+    static final int COLUMN_IDX_READ = 8;
+    static final int COLUMN_IDX_RECV = 9;
+    static final int COLUMN_IDX_SEQ = 10;
+    static final int COLUMN_IDX_CLEAR = 11;
+    static final int COLUMN_IDX_ACCESSMODE = 12;
+    static final int COLUMN_IDX_LASTUSED = 13;
+    static final int COLUMN_IDX_PUBLIC = 14;
+    static final int COLUMN_IDX_PRIVATE = 15;
 
     /**
      * SQL statement to create Messages table
@@ -117,6 +123,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_READ + " INT," +
                     COLUMN_NAME_RECV + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
+                    COLUMN_NAME_CLEAR + " INT," +
                     COLUMN_NAME_ACCESSMODE + " TEXT," +
                     COLUMN_NAME_LASTUSED + " INT," +
                     COLUMN_NAME_PUBLIC + " BLOB," +
@@ -145,30 +152,32 @@ public class TopicDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    public static long insert(SQLiteDatabase db, Subscription sub) {
-        Log.d(TAG, "Inserting sub for " + sub.topic);
+    public static long insert(SQLiteDatabase db, StoredTopic topic) {
+        Log.d(TAG, "Inserting sub for " + topic.getName());
 
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getAccountId());
-        values.put(COLUMN_NAME_TOPIC, sub.topic);
-        Topic.TopicType tp = Topic.getTopicTypeByName(sub.topic);
-        values.put(COLUMN_NAME_TYPE, tp.val());
-        if (tp == Topic.TopicType.P2P) {
-            values.put(COLUMN_NAME_WITH, sub.with);
-        }
+        values.put(COLUMN_NAME_TOPIC, topic.getName());
+        values.put(COLUMN_NAME_TYPE, topic.getTopicType().val());
+        values.put(COLUMN_NAME_WITH, topic.getWith());
         // values.put(COLUMN_NAME_CREATED, NULL);
-        values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+        values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
         // values.put(COLUMN_NAME_DELETED, NULL);
-        values.put(COLUMN_NAME_READ, sub.read);
-        values.put(COLUMN_NAME_RECV, sub.recv);
-        values.put(COLUMN_NAME_SEQ, sub.seq);
-        values.put(COLUMN_NAME_ACCESSMODE, sub.mode);
-        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
-        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
+        values.put(COLUMN_NAME_READ, topic.getRead());
+        values.put(COLUMN_NAME_RECV, topic.getRecv());
+        values.put(COLUMN_NAME_SEQ, topic.getSeq());
+        values.put(COLUMN_NAME_CLEAR, topic.getClear());
+        values.put(COLUMN_NAME_ACCESSMODE, topic.getMode().toString());
+        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
+        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
         values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
-        return db.insert(TABLE_NAME, null, values);
+
+        long id = db.insert(TABLE_NAME, null, values);
+        topic.setId(id);
+
+        return id;
     }
 
     /**
@@ -176,28 +185,27 @@ public class TopicDb implements BaseColumns {
      *
      * @return true if the record was updated, false otherwise
      */
-    public static boolean update(SQLiteDatabase db, Subscription sub) {
+    public static boolean update(SQLiteDatabase db, StoredTopic topic) {
 
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+        values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
         // values.put(COLUMN_NAME_DELETED, NULL);
-        values.put(COLUMN_NAME_READ, sub.read);
-        values.put(COLUMN_NAME_RECV, sub.recv);
-        values.put(COLUMN_NAME_SEQ, sub.seq);
-        values.put(COLUMN_NAME_ACCESSMODE, sub.mode);
-        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
-        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
+        values.put(COLUMN_NAME_READ, topic.getRead());
+        values.put(COLUMN_NAME_RECV, topic.getRecv());
+        values.put(COLUMN_NAME_SEQ, topic.getSeq());
+        values.put(COLUMN_NAME_CLEAR, topic.getClear());
+        values.put(COLUMN_NAME_ACCESSMODE, topic.getMode().toString());
+        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
+        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
         values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
         int updated = db.update(TABLE_NAME, values,
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
-                        " AND " + COLUMN_NAME_TOPIC + "='" + sub.topic + "'",
+                        " AND " + COLUMN_NAME_TOPIC + "='" + topic.getName() + "'",
                 null);
-                //COLUMN_NAME_ACCOUNT_ID + "= ? AND " + COLUMN_NAME_TOPIC + "= ?",
-                //new String[] { String.valueOf(BaseDb.getAccountId()), "'" + name + "'" });
 
-        Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + sub.topic + " returned " + updated);
+        Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + topic.getName() + " returned " + updated);
 
         return updated > 0;
     }
@@ -207,9 +215,9 @@ public class TopicDb implements BaseColumns {
      *
      * @return Id of the newly inserted topic or 0 if the topic was updated
      */
-    public static long upsert(SQLiteDatabase db, Subscription sub) {
-        if (!update(db, sub)) {
-            return insert(db, sub);
+    public static long upsert(SQLiteDatabase db, StoredTopic topic) {
+        if (!update(db, topic)) {
+            return insert(db, topic);
         }
         return 0;
     }
@@ -238,48 +246,42 @@ public class TopicDb implements BaseColumns {
      * @param c Cursor to read from
      * @return Subscription
      */
-    public static <Pu,Pr> StoredTopic<Pu,Pr> readOne(Cursor c) {
-        StoredTopic<Pu,Pr> sub = new StoredTopic<>();
+    public static <Pu,Pr,T> StoredTopic<Pu,Pr,T> readOne(Cursor c) {
 
-        sub.id = c.getLong(COLUMN_IDX_ID);
-        sub.name = c.getString(COLUMN_IDX_TOPIC);
-        sub.type = Topic.getTopicTypeByName(sub.name);
-        sub.with = c.getString(COLUMN_IDX_WITH);
-        sub.updated = new Date(c.getLong(COLUMN_IDX_UPDATED));
-        sub.deleted = new Date(c.getLong(COLUMN_IDX_DELETED));
-        sub.read = c.getInt(COLUMN_IDX_READ);
-        sub.recv = c.getInt(COLUMN_IDX_RECV);
-        sub.seq = c.getInt(COLUMN_IDX_SEQ);
-        sub.mode = c.getString(COLUMN_IDX_ACCESSMODE);
+        String name = c.getString(COLUMN_IDX_TOPIC);
+        StoredTopic<Pu,Pr,T> topic = new StoredTopic<>(Cache.getTinode(), name, null);
+        topic.deserialize(c);
 
-        sub.pub = BaseDb.deserialize(c.getBlob(COLUMN_IDX_PUBLIC));
-        sub.priv = BaseDb.deserialize(c.getBlob(COLUMN_IDX_PRIVATE));
-
-        sub.lastUsed = new Date(c.getLong(COLUMN_IDX_LASTUSED));
-
-        return sub;
+        return topic;
     }
 
     /**
      * Read Subscription given topic name
      *
-     * @param topic Topic name to read
+     * @param name Name of the topic to read
      * @return Subscription
      */
-    public static <Pu,Pr> StoredTopic<Pu,Pr> readOne(SQLiteDatabase db, String topic) {
-        StoredTopic<Pu, Pr> sub = null;
+    public static <Pu,Pr,T> StoredTopic<Pu,Pr,T> readOne(SQLiteDatabase db, String name) {
+        StoredTopic<Pu,Pr,T> topic = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
-                COLUMN_NAME_TOPIC + "='" + topic + "'";
+                COLUMN_NAME_TOPIC + "='" + name + "'";
         Cursor c = db.rawQuery(sql, null);
         if (c != null) {
             if (c.moveToFirst()) {
-                sub = readOne(c);
+                topic = readOne(c);
             }
             c.close();
         }
-        return sub;
+        return topic;
+    }
+
+    public static int delete(SQLiteDatabase db, String topic) {
+        String where = "WHERE " +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
+                COLUMN_NAME_TOPIC + "='" + topic + "'";
+        return db.delete(TABLE_NAME, where, null);
     }
 
     /**
