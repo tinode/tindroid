@@ -7,9 +7,9 @@ import java.util.Random;
  */
 public class ExpBackoff {
     // Minimum delay = 1 second
-    private final long BASE_SLEEP_MS = 1000;
+    private static final long BASE_SLEEP_MS = 1000;
     // Maximum delay 2^11 = 2000 seconds
-    private final int MAX_SHIFT = 11;
+    private static final int MAX_SHIFT = 11;
 
     private final Random random = new Random();
     private int attempt;

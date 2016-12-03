@@ -9,6 +9,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.SqlStore;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Subscription;
@@ -32,7 +34,7 @@ public class Cache {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
 
-            sTinode = new Tinode("Tindroid", API_KEY);
+            sTinode = new Tinode("Tindroid", API_KEY, BaseDb.getStore(), null);
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
             // Set device language

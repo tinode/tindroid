@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
@@ -76,17 +77,19 @@ public class ChatListAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        final Subscription<VCard,String> s = TopicDb.readOne(cursor);
+        final StoredTopic<VCard,String,String> s = TopicDb.readOne(cursor);
         final ViewHolder holder = (ViewHolder) view.getTag();
 
-        holder.topic = s.topic;
+        holder.topic = s.getName();
 
-        if (s.pub != null) {
-            holder.name.setText(s.pub.fn);
+        VCard pub = s.getPub();
+
+        if (pub != null) {
+            holder.name.setText(pub.fn);
         }
-        holder.contactPriv.setText(s.priv);
+        holder.contactPriv.setText(s.getPriv());
 
-        int unread = s.seq - s.read;
+        int unread = s.getSeq() - s.getRead();
         if (unread > 0) {
             holder.unreadCount.setText(unread > 9 ? "9+" : String.valueOf(unread));
             holder.unreadCount.setVisibility(View.VISIBLE);
@@ -94,11 +97,11 @@ public class ChatListAdapter extends CursorAdapter {
             holder.unreadCount.setVisibility(View.INVISIBLE);
         }
 
-        Bitmap bmp = s.pub != null ? s.pub.getBitmap() : null;
+        Bitmap bmp = pub != null ? pub.getBitmap() : null;
         if (bmp != null) {
             holder.icon.setImageDrawable(new RoundedImage(bmp));
         } else {
-            Topic.TopicType topicType = Topic.getTopicTypeByName(s.topic);
+            Topic.TopicType topicType = Topic.getTopicTypeByName(s.getName());
             int res = -1;
             if (topicType == Topic.TopicType.GRP) {
                 res = R.drawable.ic_group_circle;
@@ -117,9 +120,9 @@ public class ChatListAdapter extends CursorAdapter {
             }
         }
 
-        boolean online = Cache.isUserOnline(s.topic);
+        boolean online = Cache.isUserOnline(s.getName());
         holder.online.setColorFilter(online ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
-        Log.d(TAG, "User " + s.topic + " is " + (online ? "online" : "offline"));
+        Log.d(TAG, "User " + s.getName() + " is " + (online ? "online" : "offline"));
     }
 
     public void toggleSelected(int position) {

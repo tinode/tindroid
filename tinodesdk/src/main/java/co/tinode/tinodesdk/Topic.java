@@ -392,9 +392,8 @@ public class Topic<Pu,Pr,T> {
         return 0;
     }
 
-    private int loadSubs() {
-        Collection<Subscription<Pu,Pr>> subs = mStore.getSubscriptions(getName());
-
+    protected int loadSubs() {
+        Collection<? extends Subscription<Pu,Pr>> subs = mStore.getSubscriptions(getName());
         if (subs == null) {
             return 0;
         }
@@ -439,8 +438,8 @@ public class Topic<Pu,Pr,T> {
         return mSubs != null ? mSubs.get(key) : null;
     }
 
-    public Collection<Subscription<Pu,Pr>> getSubscriptions() {
-        if (mSubs == null) {
+    public Collection<? extends Subscription<Pu,Pr>> getSubscriptions() {
+        if (mSubs != null) {
             loadSubs();
         }
         return mSubs != null ? mSubs.values() : null;
@@ -452,7 +451,7 @@ public class Topic<Pu,Pr,T> {
      * @param marker timestamp of the last update
      * @return updated subscriptions
      */
-    public Collection<Subscription<Pu,Pr>> getUpdatedSubscriptions(Date marker) {
+    public Collection<? extends Subscription<Pu,Pr>> getUpdatedSubscriptions(Date marker) {
         return getFilteredSubscriptions(marker, TopicType.ANY);
     }
 
@@ -463,7 +462,7 @@ public class Topic<Pu,Pr,T> {
      * @param type type of the topic to filter for
      * @return updated subscriptions
      */
-    public Collection<Subscription<Pu,Pr>> getFilteredSubscriptions(Date marker, TopicType type) {
+    public Collection<? extends Subscription<Pu,Pr>> getFilteredSubscriptions(Date marker, TopicType type) {
         if (marker == null && type == TopicType.ANY) {
             return getSubscriptions();
         } else if (type == TopicType.UNKNOWN) {
@@ -589,13 +588,15 @@ public class Topic<Pu,Pr,T> {
     protected void routeMeta(MsgServerMeta<Pu,Pr> meta) {
         if (meta.desc != null) {
             if (mStore != null) {
-                mStore.topicUpdate(getName(), meta.ts, meta.desc);
+                // General topic description
+                mStore.topicUpsert(getName(), meta.ts, meta.desc);
             }
             processMetaDesc(meta.desc);
         }
         if (meta.sub != null) {
             if (mStore != null) {
-                mStore.topicUpdate(getName(), meta.ts, meta.sub);
+                // In case of a generic (non-'me') topic, sub[] contains topic subscribers.
+                mStore.userUpsert(getName(), meta.ts, meta.sub);
                 loadSubs();
             }
             processMetaSubs(meta.sub);
@@ -650,9 +651,15 @@ public class Topic<Pu,Pr,T> {
             if (sub != null) {
                 switch (info.what) {
                     case "recv":
+                        if (mStore != null) {
+                            mStore.setRecv(sub, info.seq);
+                        }
                         sub.recv = info.seq;
                         break;
                     case "read":
+                        if (mStore != null) {
+                            mStore.setRead(sub, info.seq);
+                        }
                         sub.read = info.seq;
                         break;
                     default:
@@ -700,9 +707,8 @@ public class Topic<Pu,Pr,T> {
         /**
          * Process {data} message.
          * @param data data packet
-         * @return true if Tinode should issue a recv notification, false otherwise
          */
-        public boolean onData(MsgServerData<Tt> data) { return false; }
+        public void onData(MsgServerData<Tt> data) { }
         public void onContactUpdate(String what, Subscription<PPu,PPr> sub) {}
         public void onInfo(MsgServerInfo info) {}
         public void onMeta(MsgServerMeta<PPu,PPr> meta) {}

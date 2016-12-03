@@ -37,6 +37,8 @@ public class BaseDb extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    private static SqlStore sStore = null;
+
     /**
      * Get instance of BaseDb for a given UID
      *
@@ -49,8 +51,13 @@ public class BaseDb extends SQLiteOpenHelper {
             sInstance = new BaseDb(context);
             sUid = uid;
             sAccountId = AccountDb.getAccountId(sInstance.getWritableDatabase(), uid);
+            sStore = new SqlStore(sInstance.getWritableDatabase(), uid);
         }
         return sInstance;
+    }
+
+    public static SqlStore getStore() {
+        return sStore;
     }
 
     public static long getAccountId() {

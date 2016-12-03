@@ -115,15 +115,13 @@ public class ContactsActivity extends AppCompatActivity implements
                     new Topic.Listener<VCard, String, Invitation<String>>() {
 
                         @Override
-                        public boolean onData(MsgServerData<Invitation<String>> data) {
+                        public void onData(MsgServerData<Invitation<String>> data) {
                             // TODO(gene): handle a chat invitation
                             Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
-                            return MessageDb.insert(mDb, data) > 0;
                         }
 
                         @Override
                         public void onContactUpdate(final String what, final Subscription<VCard, String> sub) {
-                            TopicDb.update(mDb, sub.topic, sub);
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -159,16 +157,11 @@ public class ContactsActivity extends AppCompatActivity implements
                         }
 
                         @Override
-                        public void onMeta(MsgServerMeta<VCard, String> meta) {
-
-                        }
-
-                        @Override
                         public void onMetaSub(Subscription<VCard, String> sub) {
                             if (sub.pub != null) {
                                 sub.pub.constructBitmap();
                             }
-                            TopicDb.upsert(mDb, sub.topic, sub);
+                            // TopicDb.upsert(mDb, sub.topic, sub);
                         }
 
                         @Override
@@ -191,7 +184,8 @@ public class ContactsActivity extends AppCompatActivity implements
             try {
                 MsgGetMeta.GetData getData = new MsgGetMeta.GetData();
                 // GetData.since is inclusive, so adding 1 to skip the item we already have.
-                getData.since = (int) MessageDb.getMaxSeq(mDb, me.getName()) + 1;
+                // FIXME(gene): get seq from DB
+                getData.since = 0;
                 me.subscribe(null, new MsgGetMeta(
                         new MsgGetMeta.GetDesc(),
                         new MsgGetMeta.GetSub(),

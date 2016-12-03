@@ -42,7 +42,7 @@ public class UserDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_DELETED = "deleted";
     /**
-     * Public user description, blob
+     * Public user description, (what's shown in 'me' topic) blob
      */
     public static final String COLUMN_NAME_PUBLIC = "pub";
 

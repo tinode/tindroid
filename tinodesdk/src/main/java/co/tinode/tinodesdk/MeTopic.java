@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JavaType;
 
 import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.LastSeen;
+import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -40,6 +41,27 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
         }
 
         mSubs.put(sub.topic, sub);
+    }
+
+    @Override
+    protected void routeMeta(MsgServerMeta<Pu,Pr> meta) {
+        if (meta.desc != null) {
+            if (mStore != null) {
+                mStore.topicUpsert(getName(), meta.ts, meta.desc);
+            }
+            processMetaDesc(meta.desc);
+        }
+        if (meta.sub != null) {
+            if (mStore != null) {
+                mStore.topicUpsert(getName(), meta.ts, meta.sub);
+                loadSubs();
+            }
+            processMetaSubs(meta.sub);
+        }
+
+        if (mListener != null) {
+            mListener.onMeta(meta);
+        }
     }
 
     @Override
@@ -135,15 +157,17 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
      */
     protected void setMsgSeq(String topicName, int seq) {
         Subscription<Pu,Pr> sub = mSubs.get(topicName);
-        if (sub != null) {
-            if (sub.seq < seq) {
-                sub.seq = seq;
-            }
-            if (sub.recv < seq) {
-                sub.recv = seq;
-                if (mListener != null) {
-                    mListener.onContactUpdate("msg", sub);
-                }
+        if (sub == null) {
+            return;
+        }
+
+        if (sub.seq < seq) {
+            sub.seq = seq;
+        }
+        if (sub.recv < seq) {
+            sub.recv = seq;
+            if (mListener != null) {
+                mListener.onContactUpdate("msg", sub);
             }
         }
     }

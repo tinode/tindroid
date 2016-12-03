@@ -64,46 +64,89 @@ public class SqlStore implements Storage {
 
     @Override
     public boolean topicUpdate(String name, Date timestamp, MsgSetMeta meta) {
+        return TopicDb.update(sDb, name, timestamp, meta);
+    }
+
+    @Override
+    public boolean topicUpsert(String name, Date timestamp, Description desc) {
+        return TopicDb.update(sDb, name, timestamp, desc);
+    }
+
+    @Override
+    public <Pu, Pr> boolean topicUpsert(String name, Date timestamp, Subscription<Pu, Pr>[] subs) {
         return false;
     }
 
     @Override
-    public boolean topicUpdate(String name, Date timestamp, Description desc) {
-        return false;
-    }
-
-    @Override
-    public <Pu, Pr> boolean topicUpdate(String name, Date timestamp, Subscription<Pu, Pr>[] subs) {
-        return false;
-    }
-
-    @Override
-    public <Pu, Pr> Collection<Subscription<Pu, Pr>> getSubscriptions(String topic) {
+    public <Pu, Pr> Collection<? extends Subscription<Pu, Pr>> getSubscriptions(String topic) {
+        SubscriberDb.getSenders()
         return null;
     }
 
     @Override
-    public long msgReceived(Subscription sub, MsgServerData msg) {
-        return 0;
+    public <T> long msgReceived(Subscription sub, MsgServerData<T> m) {
+        StoredMessage<T> msg = new StoredMessage<>(m);
+        // FIXME: try reading them from cache
+        msg.topicId = -1;
+        msg.userId = -1;
+        msg.senderIdx = -1;
+
+        msg.deliveryStatus = StoredMessage.STATUS_NONE;
+        return MessageDb.insert(sDb, msg);
     }
 
     @Override
-    public long msgSend(String topicName, Object data) {
-        return 0;
+    public <T> long msgSend(String topicName, T data) {
+        StoredMessage<T> msg = new StoredMessage<>();
+
+        msg.topic = topicName;
+        msg.from = sMyUid;
+        msg.ts = new Date();
+        // Set seq to 0, update it later.
+        msg.seq = 0;
+        msg.content = data;
+
+        // FIXME(gene): try reading them from cache
+        msg.topicId = -1;
+        msg.userId = -1;
+
+        msg.senderIdx = 0;
+        msg.deliveryStatus = StoredMessage.STATUS_NONE;
+        return MessageDb.insert(sDb, msg);
     }
 
     @Override
-    public boolean msgDelivered(long id, Date timestamp) {
-        return false;
+    public boolean msgDelivered(long id, Date timestamp, int seq) {
+        return MessageDb.setStatus(sDb, id, timestamp, seq, StoredMessage.STATUS_SENT);
     }
 
     @Override
     public int msgMarkToDelete(String topicName, int before) {
-        return 0;
+        long topicId = TopicDb.getId(sDb, topicName);
+        return MessageDb.delete(sDb, topicId, 0, before, true);
     }
 
     @Override
     public int msgDelete(String topicName, int before) {
-        return 0;
+        long topicId = TopicDb.getId(sDb, topicName);
+        return MessageDb.delete(sDb, topicId, 0, before, false);
+    }
+
+    @Override
+    public int setRecv(Subscription sub, int recv) {
+
+    }
+
+    @Override
+    public int setRead(StoredSubscription sub, int read) {
+        int result = -1;
+        sDb.beginTransaction();
+        try {
+            TopicDb.updateRead(sDb, , read);
+            MessageDb.setStatus(sDb,...,StoredMessage.STATUS_READ);
+            sDb.setTransactionSuccessful();
+        } catch (Exception ignored) {
+        }
+        sDb.endTransaction();
     }
 }

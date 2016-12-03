@@ -50,8 +50,7 @@ public class MessageActivity extends AppCompatActivity {
     private String mMessageText = null;
 
     private String mTopicName;
-    //private Topic<VCard, String, String> mTopic;
-    protected StoredTopic<VCard, String> mTopic;
+    protected StoredTopic<VCard, String, String> mStoredTopic;
 
     private SQLiteDatabase mDb;
 
@@ -136,12 +135,13 @@ public class MessageActivity extends AppCompatActivity {
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
         // Load a previously saved topic.
-        mTopic = TopicDb.readOne(mDb, mTopicName);
+        mStoredTopic = TopicDb.readOne(mDb, mTopicName);
         Topic<VCard,String,String> topic = tinode.getTopic(mTopicName);
 
         // sub could be null if this is a new topic.
-        if (mTopic != null) {
-            UiUtils.setupToolbar(this, mTopic.pub, Topic.getTopicTypeByName(mTopicName), Cache.isUserOnline(mTopicName));
+        if (mStoredTopic != null) {
+            UiUtils.setupToolbar(this, mStoredTopic.getPub(), Topic.getTopicTypeByName(mTopicName),
+                    Cache.isUserOnline(mTopicName));
             runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
         } else {
             topic = new Topic<>(tinode, mTopicName,
@@ -155,19 +155,8 @@ public class MessageActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public boolean onData(MsgServerData data) {
-                    boolean recv = false;
-                    StoredUser u = MessageActivity.this.mTopic.getUser(mDb, data.from);
-                    if (u != null) {
-                        if (MessageDb.insert(mDb, MessageActivity.this.mTopic.id, u.id, u.senderIdx, data) > 0) {
-                            if (TopicDb.updateRecv(mDb, mTopicName, data.seq)) {
-                                MessageActivity.this.mTopic.recv = data.seq;
-                            }
-                            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
-                            recv = true;
-                        }
-                    }
-                    return recv;
+                public void onData(MsgServerData data) {
+                    runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
                 }
 
                 @Override
@@ -197,11 +186,6 @@ public class MessageActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onMeta(MsgServerMeta meta) {
-
-                }
-
-                @Override
                 public void onMetaSub(Subscription sub) {
 
                 }
@@ -228,7 +212,7 @@ public class MessageActivity extends AppCompatActivity {
             try {
                 MsgGetMeta.GetData getData = new MsgGetMeta.GetData();
                 // GetData.since is inclusive, so adding 1 to skip the item we already have.
-                getData.since = (int) MessageDb.getMaxSeq(mDb, mTopic.id) + 1;
+                getData.since = mStoredTopic.getSeq() + 1;
                 topic.subscribe(null, new MsgGetMeta(
                         new MsgGetMeta.GetDesc(),
                         new MsgGetMeta.GetSub(),
@@ -291,7 +275,7 @@ public class MessageActivity extends AppCompatActivity {
             int read = topic.noteRead();
             if (read > 0) {
                 if (TopicDb.updateRead(mDb, mTopicName, read)) {
-                    mTopic.read = read;
+                    mStoredTopic.setRead(read);
                 }
             }
         }

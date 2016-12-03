@@ -77,6 +77,14 @@ public class MessageDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_SEQ = "seq";
     /**
+     * Delivery status:
+     *   0 - not sent
+     *   1 - delivered to server
+     *   2 - delivered to client
+     *   3 - read
+     */
+    public static final String COLUMN_NAME_STATUS = "status";
+    /**
      * Serialized message content
      */
     public static final String COLUMN_NAME_CONTENT = "content";
@@ -95,7 +103,8 @@ public class MessageDb implements BaseColumns {
     private static final int COLUMN_IDX_SENDER_INDEX = 3;
     private static final int COLUMN_IDX_TS = 4;
     private static final int COLUMN_IDX_SEQ = 5;
-    private static final int COLUMN_IDX_CONTENT = 6;
+    private static final int COLUMN_IDX_STATUS = 6;
+    private static final int COLUMN_IDX_CONTENT = 7;
 
     /**
      * SQL statement to create Messages table
@@ -110,6 +119,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER_INDEX + " INT," +
                     COLUMN_NAME_TS + " TEXT," +
                     COLUMN_NAME_SEQ + " INT," +
+                    COLUMN_NAME_STATUS + " INT," +
                     COLUMN_NAME_CONTENT + " BLOB)";
     /**
      * Add index on account_id-topic-seq, in descending order
@@ -136,33 +146,34 @@ public class MessageDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    public static long insert(SQLiteDatabase db, long topicId, long userId, int senderIdx, MsgServerData msg) {
+    public static long insert(SQLiteDatabase db, StoredMessage msg) {
         long id = -1;
         try {
             db.beginTransaction();
 
-            if (topicId <= 0) {
-                topicId = TopicDb.getId(db, msg.topic);
+            if (msg.topicId <= 0) {
+                msg.topicId = TopicDb.getId(db, msg.topic);
             }
-            if (userId <= 0) {
-                userId = UserDb.getId(db, msg.from);
+            if (msg.userId <= 0) {
+                msg.userId = UserDb.getId(db, msg.from);
             }
 
-            if (userId <=0 || topicId <= 0) {
+            if (msg.userId <=0 || msg.topicId <= 0) {
                 return -1;
             }
 
-            if (senderIdx < 0) {
-                senderIdx = SubscriberDb.getSenderIndex(db, topicId, userId);
+            if (msg.senderIdx < 0) {
+                msg.senderIdx = SubscriberDb.getSenderIndex(db, msg.topicId, msg.userId);
             }
 
             // Convert message to a map of values
             ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_TOPIC_ID, topicId);
-            values.put(COLUMN_NAME_USER_ID, userId);
-            values.put(COLUMN_NAME_SENDER_INDEX, senderIdx);
+            values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
+            values.put(COLUMN_NAME_USER_ID, msg.userId);
+            values.put(COLUMN_NAME_SENDER_INDEX, msg.senderIdx);
             values.put(COLUMN_NAME_TS, msg.ts.getTime());
             values.put(COLUMN_NAME_SEQ, msg.seq);
+            values.put(COLUMN_NAME_STATUS, msg.deliveryStatus);
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
             id = db.insert(TABLE_NAME, null, values);
@@ -173,6 +184,26 @@ public class MessageDb implements BaseColumns {
         }
 
         return id;
+    }
+
+    public static boolean setStatus(SQLiteDatabase db, long id, Date timestamp, int seq, int status) {
+
+        // Convert message to a map of values
+        ContentValues values = new ContentValues();
+        if (timestamp != null) {
+            values.put(COLUMN_NAME_TS, timestamp.getTime());
+        }
+        if (seq > 0) {
+            values.put(COLUMN_NAME_SEQ, seq);
+        }
+        values.put(COLUMN_NAME_STATUS, status);
+
+        return db.update(TABLE_NAME, values, _ID + "=" + id,
+                null) > 0;
+    }
+
+    public static boolean setStatus(SQLiteDatabase db, long id, int status) {
+        return setStatus(db, id, null, -1, status);
     }
 
     /**
@@ -224,22 +255,24 @@ public class MessageDb implements BaseColumns {
      * @param topicId Tinode topic ID to delete messages from.
      * @param from  minimum seq value to delete from (exclusive).
      * @param to    maximum seq value to delete, inclusive.
+     * @param soft  mark messages as deleted but do not actually delete them
      * @return number of deleted messages
      */
-    public static int delete(SQLiteDatabase db, long topicId, int from, int to) {
+    public static int delete(SQLiteDatabase db, long topicId, int from, int to, boolean soft) {
         to = (to < 0 ? Integer.MAX_VALUE : to);
 
         String selection =
-                COLUMN_NAME_TOPIC_ID + "=? AND " +
-                COLUMN_NAME_SEQ + ">? AND " +
-                COLUMN_NAME_SEQ + "<=?";
-        String[] selectionArgs = {
-                String.valueOf(topicId),
-                String.valueOf(from),
-                String.valueOf(to)
-        };
+                COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                        " AND " + COLUMN_NAME_SEQ + ">" + from +
+                        " AND " + COLUMN_NAME_SEQ + "<=" + to;
 
-        return db.delete(TABLE_NAME, selection, selectionArgs);
+        if (soft) {
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_STATUS, StoredMessage.STATUS_DELETE);
+            return db.update(TABLE_NAME, values, selection, null);
+        } else {
+            return db.delete(TABLE_NAME, selection, null);
+        }
     }
 
     public static <T> StoredMessage<T> readMessage(Cursor c) {
@@ -248,7 +281,6 @@ public class MessageDb implements BaseColumns {
         msg.topicId     = c.getLong(COLUMN_IDX_TOPIC_ID);
         msg.userId      = c.getLong(COLUMN_IDX_USER_ID);
         msg.senderIdx   = c.getInt(COLUMN_IDX_SENDER_INDEX);
-        msg.isMine      = msg.senderIdx == 0;
         msg.seq         = c.getInt(COLUMN_IDX_SEQ);
         msg.ts          = new Date(c.getLong(COLUMN_IDX_TS));
         msg.content     = BaseDb.deserialize(c.getBlob(COLUMN_IDX_CONTENT));

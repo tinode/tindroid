@@ -24,20 +24,24 @@ public interface Storage {
     // Outgoing update request
     boolean topicUpdate(String name, Date timestamp, MsgSetMeta meta);
     // Incoming change to topic description
-    boolean topicUpdate(String name, Date timestamp, Description desc);
+    boolean topicUpsert(String name, Date timestamp, Description desc);
     // Incoming change to subscriptions
-    <Pu,Pr> boolean topicUpdate(String name, Date timestamp, Subscription<Pu,Pr>[] subs);
+    <Pu,Pr> boolean topicUpsert(String name, Date timestamp, Subscription<Pu,Pr>[] subs);
     // Read subscriptions
-    <Pu,Pr> Collection<Subscription<Pu,Pr>> getSubscriptions(String topic);
+    <Pu,Pr> Collection<? extends Subscription<Pu,Pr>> getSubscriptions(String topic);
 
     // Message received
-    long msgReceived(Subscription sub, MsgServerData msg);
+    <T> long msgReceived(Subscription sub, MsgServerData<T> msg);
     // Message sent
-    long msgSend(String topicName, Object data);
-    // Message delivered
-    boolean msgDelivered(long id, Date timestamp);
+    <T> long msgSend(String topicName, T data);
+    // Message delivered to server
+    boolean msgDelivered(long id, Date timestamp, int seq);
     // Mark messages for deletion
     int msgMarkToDelete(String topicName, int before);
     // Delete messages
     int msgDelete(String topicName, int before);
+    // Set recv value
+    int setRecv(Subscription sub, int recv);
+    // Set read value
+    int setRead(Subscription sub, int read);
 }

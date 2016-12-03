@@ -6,11 +6,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
-import co.tinode.tinodesdk.model.Subscription;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedList;
+
+import co.tinode.tinodesdk.model.AccessMode;
+import co.tinode.tinodesdk.model.LastSeen;
 
 /**
  * Holds mappings of user IDs to topics
@@ -44,6 +46,14 @@ public class SubscriberDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_MODE = "mode";
     /**
+     * Last update timestamp
+     */
+    public static final String COLUMN_NAME_UPDATED = "updated";
+    /**
+     * Deletion timestamp or null
+     */
+    public static final String COLUMN_NAME_DELETED = "deleted";
+    /**
      * Sequence ID marked as read by this user, integer
      */
     public static final String COLUMN_NAME_READ = "read";
@@ -52,19 +62,21 @@ public class SubscriberDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_RECV = "recv";
     /**
-     * Per-subscription private data
+     * Max sequence ID marked as deleted, integer
      */
-    public static final String COLUMN_NAME_PRIVATE = "private";
-
+    public static final String COLUMN_NAME_CLEAR = "clear";
 
     private static final int COLUMN_IDX_ID = 0;
     private static final int COLUMN_IDX_TOPIC_ID = 1;
     private static final int COLUMN_IDX_USER_ID = 2;
     private static final int COLUMN_IDX_SENDER_INDEX = 3;
     private static final int COLUMN_IDX_MODE = 4;
-    private static final int COLUMN_IDX_READ = 5;
-    private static final int COLUMN_IDX_RECV = 6;
-    private static final int COLUMN_IDX_PRIVATE = 7;
+    private static final int COLUMN_IDX_UPDATED = 5;
+    private static final int COLUMN_IDX_DELETED = 6;
+    private static final int COLUMN_IDX_READ = 7;
+    private static final int COLUMN_IDX_RECV = 8;
+    private static final int COLUMN_IDX_CLEAR = 9;
+
 
     /**
      * SQL statement to create Messages table
@@ -78,9 +90,11 @@ public class SubscriberDb implements BaseColumns {
                     + " REFERENCES " + UserDb.TABLE_NAME + "(" + UserDb._ID + ")," +
                     COLUMN_NAME_SENDER_INDEX + " INT," +
                     COLUMN_NAME_MODE + " TEXT," +
+                    COLUMN_NAME_UPDATED + " INT," +
+                    COLUMN_NAME_DELETED + " INT," +
                     COLUMN_NAME_READ + " INT," +
                     COLUMN_NAME_RECV + " INT," +
-                    COLUMN_NAME_PRIVATE + " BLOB)";
+                    COLUMN_NAME_CLEAR + " INT)";
     /**
      * Add index on account_id-topic name, in descending order
      */
@@ -102,40 +116,43 @@ public class SubscriberDb implements BaseColumns {
     /**
      * Save user's subscription to DB
      * @param db database to insert to
-     * @param topicId database topics._id of the topic. If it's <=0, read it from the database.
-     * @param userId  database users._id of the user. If it's <=0, read it from the database.
      * @param sub Subscription to save
      * @return ID of the newly added user
      */
-    public static long insert(SQLiteDatabase db, long topicId, long userId, Subscription sub) {
+    public static long insert(SQLiteDatabase db, StoredSubscription sub) {
         Log.d(TAG, "Inserting sub for " + sub.topic + "/" + sub.user);
         long id = -1;
         try {
             db.beginTransaction();
-            if (topicId <= 0) {
-                topicId = TopicDb.getId(db, sub.topic);
+            if (sub.topicId <= 0) {
+                sub.topicId = TopicDb.getId(db, sub.topic);
             }
 
-            if (userId <= 0) {
-                userId = UserDb.getId(db, sub.user);
+            if (sub.userId <= 0) {
+                sub.userId = UserDb.getId(db, sub.user);
             }
 
-            if (topicId <= 0 || userId <= 0) {
+            if (sub.topicId <= 0 || sub.userId <= 0) {
                 return -1;
             }
 
             // Convert subscription description to a map of values
             ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_TOPIC_ID, topicId);
-            values.put(COLUMN_NAME_USER_ID, userId);
+            values.put(COLUMN_NAME_TOPIC_ID, sub.topicId);
+            values.put(COLUMN_NAME_USER_ID, sub.userId);
             // User's own sender index is 0.
-            values.put(COLUMN_NAME_SENDER_INDEX, BaseDb.isMe(sub.user) ? 0 : getNextSenderIndex(db, topicId));
-            // values.put(COLUMN_NAME_DELETED, NULL);
+            values.put(COLUMN_NAME_SENDER_INDEX, BaseDb.isMe(sub.user) ? 0 : getNextSenderIndex(db, sub.topicId));
             values.put(COLUMN_NAME_MODE, sub.mode);
+            values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+            // values.put(COLUMN_NAME_DELETED, NULL);
             values.put(COLUMN_NAME_READ, sub.read);
             values.put(COLUMN_NAME_RECV, sub.recv);
-            values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
+            values.put(COLUMN_NAME_CLEAR, sub.clear);
+            id = db.insert(TABLE_NAME, null, values);
 
+            // Possibly Create topic
+            values.clear();
+            values.put(TopicDb.COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
             id = db.insert(TABLE_NAME, null, values);
 
             db.setTransactionSuccessful();
@@ -151,34 +168,44 @@ public class SubscriberDb implements BaseColumns {
      *
      * @return true if the record was updated, false otherwise
      */
-    public static boolean update(SQLiteDatabase db, long topicId, long userId, Subscription sub) {
+    public static boolean update(SQLiteDatabase db, StoredSubscription sub) {
         try {
             db.beginTransaction();
-            if (topicId <= 0) {
-                topicId = TopicDb.getId(db, sub.topic);
+            if (sub.topicId <= 0) {
+                sub.topicId = TopicDb.getId(db, sub.topic);
             }
 
-            if (userId <= 0) {
-                userId = UserDb.getId(db, sub.user);
+            if (sub.userId <= 0) {
+                sub.userId = UserDb.getId(db, sub.user);
             }
 
-            if (topicId <= 0 || userId <= 0) {
+            if (sub.topicId <= 0 || sub.userId <= 0) {
                 return false;
             }
 
             // Convert topic description to a map of values
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_MODE, sub.mode);
+            values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+            if (sub.deleted != null) {
+                values.put(COLUMN_NAME_DELETED, sub.deleted.getTime());
+            }
             values.put(COLUMN_NAME_READ, sub.read);
             values.put(COLUMN_NAME_RECV, sub.recv);
-            values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
+            values.put(COLUMN_NAME_CLEAR, sub.clear);
 
             int updated = db.update(TABLE_NAME, values,
-                    COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
-                    COLUMN_NAME_USER_ID + "=" + userId,
+                    COLUMN_NAME_TOPIC_ID + "=" + sub.topicId + " AND " +
+                    COLUMN_NAME_USER_ID + "=" + sub.userId,
                     null);
 
             Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + sub.user + " returned " + updated);
+
+            // Maybe update topic
+            values.clear();
+            values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
+
+
             db.setTransactionSuccessful();
 
             return updated > 0;
@@ -194,9 +221,9 @@ public class SubscriberDb implements BaseColumns {
      *
      * @return Id of the newly inserted user or 0 if the user was updated
      */
-    public static long upsert(SQLiteDatabase db, long topicId, long userId, Subscription sub) {
-        if (!update(db, topicId, userId, sub)) {
-            return insert(db, topicId, userId, sub);
+    public static long upsert(SQLiteDatabase db, StoredSubscription sub) {
+        if (!update(db, sub)) {
+            return insert(db, sub);
         }
         return 0;
     }
@@ -228,41 +255,83 @@ public class SubscriberDb implements BaseColumns {
                 COLUMN_NAME_USER_ID + "=" + userId).simpleQueryForLong();
     }
 
-    protected static Map<String,StoredUser> getSenders(SQLiteDatabase db, long topicId) {
-        Map<String,StoredUser> result = new HashMap<>();
+    public static <Pu,Pr> StoredSubscription readOne(Cursor c) {
+        StoredSubscription s = new StoredSubscription();
+        // StoredSub part
+        int col = 0;
+        s.id = c.getLong(col++);
+        s.userId = c.getLong(col++);
+        s.topicId = c.getLong(col++);
+        s.senderIdx = c.getInt(col++);
+
+        // Both
+        s.mode = c.getString(col++);
+        s.amode = new AccessMode(s.mode);
+
+        // Subscription part
+        // From subs table
+        s.updated = new Date(c.getLong(col++));
+        s.deleted = new Date(c.getLong(col++));
+        s.read = c.getInt(col++);
+        s.recv = c.getInt(col++);
+        s.clear = c.getInt(col++);
+        s.seen = new LastSeen(new Date(c.getLong(..)), c.getString(..));
+
+        // From user table
+        s.user = c.getString(col++);
+        s.pub = BaseDb.deserialize(c.getBlob(col++));
+
+        // From topic table
+        s.topic = c.getString(col++);
+        s.seq = c.getInt(col++);
+        s.with = c.getString(col++);
+        s.priv = BaseDb.deserialize(c.getBlob(col++));
+    }
+
+    public static Collection<StoredSubscription> query(SQLiteDatabase db, long topicId) {
         Cursor c = db.rawQuery("SELECT " +
+                TABLE_NAME + "." + _ID + "," +
                 TABLE_NAME + "." + COLUMN_NAME_USER_ID + "," +
+                TABLE_NAME + "." + COLUMN_NAME_TOPIC_ID + "," +
                 TABLE_NAME + "." + COLUMN_NAME_SENDER_INDEX + "," +
                 TABLE_NAME + "." + COLUMN_NAME_MODE + "," +
+                TABLE_NAME + "." + COLUMN_NAME_UPDATED + "," +
+                TABLE_NAME + "." + COLUMN_NAME_DELETED + "," +
                 TABLE_NAME + "." + COLUMN_NAME_READ + "," +
                 TABLE_NAME + "." + COLUMN_NAME_RECV + "," +
-                TABLE_NAME + "." + COLUMN_NAME_PRIVATE + "," +
+                TABLE_NAME + "." + COLUMN_NAME_CLEAR + "," +
+
                 UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_UID + "," +
-                UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_UPDATED + "," +
-                UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_DELETED + "," +
                 UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_PUBLIC + "," +
+
+                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_TOPIC + "," +
+                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_SEQ + "," +
+                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_WITH + "," +
+                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_PRIVATE +
                 " FROM " + TABLE_NAME +
-                " JOIN " + UserDb.TABLE_NAME +
+                " LEFT JOIN " + UserDb.TABLE_NAME +
                 " ON " + COLUMN_NAME_USER_ID + "=" + UserDb.TABLE_NAME + "." + UserDb._ID +
+                " LEFT JOIN " + TopicDb.TABLE_NAME +
+                " ON " + COLUMN_NAME_TOPIC_ID + "=" + TopicDb.TABLE_NAME + "." + TopicDb._ID +
                 "  WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId, null);
         if (c == null) {
             return null;
         }
-        while (c.moveToNext()) {
-            StoredUser u = new StoredUser();
-            u.id = c.getLong(0);
-            u.senderIdx = c.getInt(1);
-            u.mode = c.getString(2);
-            u.read = c.getInt(3);
-            u.recv = c.getInt(4);
-            u.priv = BaseDb.deserialize(c.getBlob(5));
-            u.uid = c.getString(6);
-            u.updated = new Date(c.getLong(7));
-            u.deleted = new Date(c.getLong(8));
-            u.pub = BaseDb.deserialize(c.getBlob(9));
-            result.put(u.uid, u);
+
+        if (!c.moveToFirst()) {
+            c.close();
+            return null;
         }
+
+        Collection<StoredSubscription> result = new LinkedList<>();
+        do {
+            StoredSubscription s = readOne(c);
+            if (s != null) {
+                result.add(s);
+            }
+        } while (c.moveToNext());
         c.close();
+
         return result;
     }
 }

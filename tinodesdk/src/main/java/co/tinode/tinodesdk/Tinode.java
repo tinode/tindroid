@@ -709,7 +709,9 @@ public class Tinode {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                         if (result.ctrl != null && result.ctrl.code == 200) {
-                            mStore.msgDelivered(id, result.ctrl.ts);
+
+                            int seq = (Integer) result.ctrl.params.get("seq");
+                            mStore.msgDelivered(id, result.ctrl.ts, seq);
                         }
                         return null;
                     }

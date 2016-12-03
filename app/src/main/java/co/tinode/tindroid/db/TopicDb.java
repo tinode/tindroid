@@ -10,7 +10,9 @@ import java.util.Date;
 
 import co.tinode.tindroid.Cache;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerMeta;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -206,6 +208,81 @@ public class TopicDb implements BaseColumns {
                 null);
 
         Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + topic.getName() + " returned " + updated);
+
+        return updated > 0;
+    }
+
+    /**
+     * Update stored topic on setMeta (local user-initiated update).
+     *
+     * @return true if the record was updated, false otherwise
+     */
+    public static boolean update(SQLiteDatabase db, String topicName, Date timestamp, MsgSetMeta meta) {
+        if (meta.desc == null) {
+            // Nothing to update
+            return true;
+        }
+
+        ContentValues values = new ContentValues();
+
+        values.put(COLUMN_NAME_UPDATED, timestamp.getTime());
+        if (meta.desc.defacs != null) {
+            // do something?
+        }
+        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(meta.desc.pub));
+        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(meta.desc.priv));
+        values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
+        int updated = db.update(TABLE_NAME, values,
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
+                        " AND " + COLUMN_NAME_TOPIC + "='" + topicName + "'",
+                null);
+
+        Log.d(TAG, "Update row by meta.desc, accid=" + BaseDb.getAccountId() + " name=" + topicName + " returned " + updated);
+
+        return updated > 0;
+    }
+
+    /**
+     * Update stored topic on {meta} (remote user-initiated update).
+     *
+     * @return true if the record was updated, false otherwise
+     */
+    public static boolean update(SQLiteDatabase db, String topicName, Date timestamp, Description desc) {
+        ContentValues values = new ContentValues();
+
+        values.put(COLUMN_NAME_UPDATED, desc.updated.getTime());
+        if (desc.created != null) {
+            values.put(COLUMN_NAME_CREATED, desc.created.getTime());
+        }
+        if (desc.deleted != null) {
+            values.put(COLUMN_NAME_DELETED, desc.deleted.getTime());
+        }
+
+        if (desc.defacs != null) {
+            // Maybe do something here
+        }
+
+        // P2P only
+        values.put(COLUMN_NAME_READ, desc.read);
+        values.put(COLUMN_NAME_RECV, desc.recv);
+        values.put(COLUMN_NAME_SEQ, desc.seq);
+        values.put(COLUMN_NAME_CLEAR, desc.clear);
+        if (desc.acs != null) {
+            values.put(COLUMN_NAME_ACCESSMODE, desc.acs.toString());
+        }
+        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(desc.pub));
+        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(desc.priv));
+        if (desc.with != null) {
+            values.put(COLUMN_NAME_WITH, desc.with);
+        }
+        values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
+
+        int updated = db.update(TABLE_NAME, values,
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
+                        " AND " + COLUMN_NAME_TOPIC + "='" + topicName + "'",
+                null);
+
+        Log.d(TAG, "Update row by meta.desc, accid=" + BaseDb.getAccountId() + " name=" + topicName + " returned " + updated);
 
         return updated > 0;
     }

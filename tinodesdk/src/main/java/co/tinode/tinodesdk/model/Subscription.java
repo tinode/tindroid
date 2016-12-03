@@ -17,13 +17,13 @@ public class Subscription<Pu,Pr> {
     public String mode;
     public int read;
     public int recv;
-    public int clear;
     @JsonProperty("private")
     public Pr priv;
     public boolean online;
 
     public String topic;
     public int seq;
+    public int clear;
     public String with;
     @JsonProperty("public")
     public Pu pub;

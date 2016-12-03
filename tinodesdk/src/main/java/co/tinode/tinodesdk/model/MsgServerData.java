@@ -18,10 +18,6 @@ public class MsgServerData<T> {
     public int seq;
     public T content;
 
-    // Local/calculated
-    //public boolean isMine;
-    //protected DisplayAs mDisplay;
-
     public MsgServerData() {
     }
 

@@ -80,9 +80,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     @SuppressLint("RtlHardcoded")
     @Override
-    public void onBindViewHolder(ViewHolder holder, int reversePosition) {
-        // Reverse item order
-        int position = reversePosition; // getItemCount() - reversePosition - 1;
+    public void onBindViewHolder(ViewHolder holder, int position) {
 
         mCursor.moveToPosition(position);
         StoredMessage<String> m = MessageDb.readMessage(mCursor);
@@ -109,34 +107,34 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             display = DisplayAs.FIRST;
         }
 
-        holder.mContainer.setGravity(m.isMine ? Gravity.RIGHT : Gravity.LEFT);
+        holder.mContainer.setGravity(m.isMine() ? Gravity.RIGHT : Gravity.LEFT);
 
         // To make sure padding is properly set, first set background, then set text.
-        int bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+        int bg_bubble = m.isMine() ? R.drawable.bubble_r : R.drawable.bubble_l;
         switch (display) {
             case SINGLE:
-                bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+                bg_bubble = m.isMine() ? R.drawable.bubble_r : R.drawable.bubble_l;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), SINGLE_PADDING,
                         holder.mContainer.getPaddingRight(), SINGLE_PADDING);
                 break;
             case FIRST:
-                bg_bubble = m.isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
+                bg_bubble = m.isMine() ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), SINGLE_PADDING,
                         holder.mContainer.getPaddingRight(), TRAIN_PADDING);
                 break;
             case MIDDLE:
-                bg_bubble = m.isMine ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
+                bg_bubble = m.isMine() ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), TRAIN_PADDING,
                         holder.mContainer.getPaddingRight(), TRAIN_PADDING);
                 break;
             case LAST:
-                bg_bubble = m.isMine ? R.drawable.bubble_r : R.drawable.bubble_l;
+                bg_bubble = m.isMine() ? R.drawable.bubble_r : R.drawable.bubble_l;
                 holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), TRAIN_PADDING,
                         holder.mContainer.getPaddingRight(), SINGLE_PADDING);
                 break;
         }
         holder.mMessageBubble.setBackgroundResource(bg_bubble);
-        if (!m.isMine) {
+        if (!m.isMine()) {
             holder.mMessageBubble.getBackground().mutate()
                     .setColorFilter(sColorizer[m.senderIdx].bg, PorterDuff.Mode.MULTIPLY);
         }
@@ -144,10 +142,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         holder.mMeta.setText(shortDate(m.ts));
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
-        if (m.isMine) {
-            if (mActivity.mTopic.msgReadCount(m.seq) > 0) {
+        if (m.isMine()) {
+            if (m.deliveryStatus == StoredMessage.STATUS_READ) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
-            } else if (mActivity.mTopic.msgRecvCount(m.seq) > 0) {
+            } else if (m.deliveryStatus == StoredMessage.STATUS_RECV) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_done);
             }
         }

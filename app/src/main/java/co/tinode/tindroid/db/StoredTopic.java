@@ -50,6 +50,10 @@ public class StoredTopic<Pu,Pr,T> extends Topic<Pu,Pr,T> {
 
     }
 
+    public long getId() {
+        return mId;
+    }
+
     public void setId(long id) {
         mId = id;
     }
@@ -72,6 +76,10 @@ public class StoredTopic<Pu,Pr,T> extends Topic<Pu,Pr,T> {
 
     public int getRead() {
         return mDescription.read;
+    }
+
+    public void setRead(int read) {
+        mDescription.read = read;
     }
 
     public int getRecv() {
