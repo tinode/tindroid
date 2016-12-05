@@ -34,7 +34,7 @@ import java.util.Map;
  * Class for handling communication on a single topic
  *
  */
-public class Topic<Pu,Pr,T> {
+public class Topic<Pu,Pr,T> implements LocalData {
     private static final String TAG = "tinodesdk.Topic";
 
     public enum TopicType {
@@ -78,6 +78,8 @@ public class Topic<Pu,Pr,T> {
 
     protected long mLastKeyPress = 0;
 
+    private Payload mLocal = null;
+
     /**
      * Copy constructor
      *
@@ -90,7 +92,7 @@ public class Topic<Pu,Pr,T> {
         isValidName         = topic.isValidName;
         mStore              = topic.mStore;
         mMode               = topic.mMode;
-        mDescription        = topic.mDescription;
+        mDescription        = topic.mDescription != null ? topic.mDescription : new Description<Pu,Pr>();
         mSubs               = topic.mSubs;
         mSubsUpdated        = topic.mSubsUpdated;
         mAttached           = topic.mAttached;
@@ -105,13 +107,15 @@ public class Topic<Pu,Pr,T> {
      * @param name name of the topic
      * @param l event listener, optional
      */
-    public Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
+    protected Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
         if (tinode == null) {
             throw new IllegalArgumentException("Tinode cannot be null");
         }
         mTinode = tinode;
 
         setName(name);
+
+        mDescription = new Description<>();
 
         if (l != null) {
             l.mTopic = this;
@@ -136,7 +140,7 @@ public class Topic<Pu,Pr,T> {
      * @param tinode tinode instance
      * @param l event listener, optional
      */
-    public Topic(Tinode tinode, Listener<Pu,Pr,T> l) {
+    protected Topic(Tinode tinode, Listener<Pu,Pr,T> l) {
         this(tinode, Tinode.TOPIC_NEW, l);
     }
 
@@ -181,6 +185,88 @@ public class Topic<Pu,Pr,T> {
      */
     void setStorage(Storage store) {
         mStore = store;
+    }
+
+    public Date getCreated() {
+        return mDescription.created;
+    }
+    public void setCreated(Date created) {
+        mDescription.created = created;
+    }
+
+    public Date getUpdated() {
+        return mDescription.updated;
+    }
+    public void setUpdated(Date updated) {
+        mDescription.updated = updated;
+    }
+
+    public Date getDeleted() {
+        return mDescription.deleted;
+    }
+    public void setDeleted(Date deleted) {
+        mDescription.deleted = deleted;
+    }
+
+    public String getWith() {
+        return getTopicType() == TopicType.P2P ? mDescription.with : null;
+    }
+    public void setWith(String with) {
+        if (getTopicType() == TopicType.P2P) {
+            mDescription.with = with;
+        }
+    }
+
+    public int getSeq() {
+        return mDescription.seq;
+    }
+    public void setSeq(int seq) {
+        mDescription.seq = seq;
+    }
+
+    public int getClear() {
+        return mDescription.clear;
+    }
+    public void setClear(int clear) {
+        mDescription.clear = clear;
+    }
+
+    public int getRead() {
+        return mDescription.read;
+    }
+    public void setRead(int read) {
+        mDescription.read = read;
+    }
+
+    public int getRecv() {
+        return mDescription.recv;
+    }
+    public void setRecv(int recv) {
+        mDescription.recv = recv;
+    }
+
+    public AccessMode getMode() {
+        return mMode;
+    }
+    public void setMode(AccessMode mode) {
+        mMode = mode;
+    }
+    public void setMode(String mode) {
+        mMode = new AccessMode(mode);
+    }
+
+    public Pu getPub() {
+        return mDescription.pub;
+    }
+    public void setPub(Pu pub) {
+        mDescription.pub = pub;
+    }
+
+    public Pr getPriv() {
+        return mDescription.priv;
+    }
+    public void setPriv(Pr priv) {
+        mDescription.priv = priv;
     }
 
     /**
@@ -270,8 +356,29 @@ public class Topic<Pu,Pr,T> {
      *
      * @param content payload
      */
-    public PromisedReply<ServerMessage> publish(T content) {
-        return mTinode.publish(getName(), content);
+    public PromisedReply<ServerMessage> publish(T content) throws Exception {
+        if (mAttached) {
+            final long id;
+            if (mStore != null) {
+                id = mStore.msgSend(getName(), content);
+            } else {
+                id = -1;
+            }
+
+            return mTinode.publish(getName(), content).thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            if (result.ctrl != null && id > 0 && mStore != null) {
+                                int seq = (Integer) result.ctrl.params.get("seq");
+                                mStore.msgDelivered(id, result.ctrl.ts, seq);
+                            }
+                            return null;
+                        }
+                    }, null);
+        }
+
+        throw new IllegalStateException("Not subscribed");
     }
 
     /**
@@ -284,15 +391,43 @@ public class Topic<Pu,Pr,T> {
     /**
      * Update topic metadata
      */
-    public PromisedReply setMeta(MsgSetMeta meta) {
-        return mTinode.setMeta(getName(), meta);
+    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<Pu,Pr,T> meta) throws Exception {
+        if (mAttached) {
+            return mTinode.setMeta(getName(), meta).thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
+                        throws Exception {
+                    if (mStore != null) {
+                        mStore.topicUpdate(Topic.this, result.ctrl.ts, meta);
+                    }
+                    return null;
+                }
+            }, null);
+        }
+        throw new IllegalStateException("Not subscribed");
     }
 
     /**
      * Delete messages
+     *
+     * @param before delete messages with id up to this
+     * @param hard hard-delete messages
      */
-    public PromisedReply delete(int before, boolean hard) {
-        return mTinode.delMessage(getName(), before, hard);
+    public PromisedReply delete(final int before, final boolean hard) throws Exception {
+        if (mStore != null) {
+            mStore.msgMarkToDelete(this, before);
+        }
+        if (mAttached) {
+            return mTinode.delMessage(getName(), before, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    mStore.msgDelete(Topic.this, before);
+                    return null;
+                }
+            }, null);
+        }
+        throw new IllegalStateException("Not subscribed");
     }
 
     /**
@@ -382,18 +517,9 @@ public class Topic<Pu,Pr,T> {
         return mDescription != null ? mDescription.pub : null;
     }
 
-    /**
-     * @return SeqID of the latest message sent through topic.
-     */
-    public int lastMessageSeq() {
-        if (mDescription != null) {
-            return mDescription.seq;
-        }
-        return 0;
-    }
 
     protected int loadSubs() {
-        Collection<? extends Subscription<Pu,Pr>> subs = mStore.getSubscriptions(getName());
+        Collection<Subscription<Pu,Pr>> subs = mStore.getSubscriptions(this);
         if (subs == null) {
             return 0;
         }
@@ -438,7 +564,7 @@ public class Topic<Pu,Pr,T> {
         return mSubs != null ? mSubs.get(key) : null;
     }
 
-    public Collection<? extends Subscription<Pu,Pr>> getSubscriptions() {
+    public Collection<Subscription<Pu,Pr>> getSubscriptions() {
         if (mSubs != null) {
             loadSubs();
         }
@@ -451,7 +577,7 @@ public class Topic<Pu,Pr,T> {
      * @param marker timestamp of the last update
      * @return updated subscriptions
      */
-    public Collection<? extends Subscription<Pu,Pr>> getUpdatedSubscriptions(Date marker) {
+    public Collection<Subscription<Pu,Pr>> getUpdatedSubscriptions(Date marker) {
         return getFilteredSubscriptions(marker, TopicType.ANY);
     }
 
@@ -462,7 +588,7 @@ public class Topic<Pu,Pr,T> {
      * @param type type of the topic to filter for
      * @return updated subscriptions
      */
-    public Collection<? extends Subscription<Pu,Pr>> getFilteredSubscriptions(Date marker, TopicType type) {
+    public Collection<Subscription<Pu,Pr>> getFilteredSubscriptions(Date marker, TopicType type) {
         if (marker == null && type == TopicType.ANY) {
             return getSubscriptions();
         } else if (type == TopicType.UNKNOWN) {
@@ -589,7 +715,7 @@ public class Topic<Pu,Pr,T> {
         if (meta.desc != null) {
             if (mStore != null) {
                 // General topic description
-                mStore.topicUpsert(getName(), meta.ts, meta.desc);
+                mStore.topicUpsert(this, meta.ts, meta.desc);
             }
             processMetaDesc(meta.desc);
         }
@@ -696,6 +822,16 @@ public class Topic<Pu,Pr,T> {
         if (mListener != null) {
             mListener.onSubsUpdated();
         }
+    }
+
+    @Override
+    public void setLocal(Payload value) {
+        mLocal = value;
+    }
+
+    @Override
+    public Payload getLocal() {
+        return mLocal;
     }
 
     public static class Listener<PPu,PPr,Tt> {

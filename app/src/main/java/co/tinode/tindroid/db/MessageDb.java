@@ -186,24 +186,19 @@ public class MessageDb implements BaseColumns {
         return id;
     }
 
-    public static boolean setStatus(SQLiteDatabase db, long id, Date timestamp, int seq, int status) {
+    public static boolean setStatus(SQLiteDatabase db, long topicId, Date timestamp, int before, int status) {
 
         // Convert message to a map of values
         ContentValues values = new ContentValues();
         if (timestamp != null) {
             values.put(COLUMN_NAME_TS, timestamp.getTime());
         }
-        if (seq > 0) {
-            values.put(COLUMN_NAME_SEQ, seq);
-        }
         values.put(COLUMN_NAME_STATUS, status);
 
-        return db.update(TABLE_NAME, values, _ID + "=" + id,
+        return db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_SEQ + "<=" + before +
+                " AND " + COLUMN_NAME_STATUS + "<" + status,
                 null) > 0;
-    }
-
-    public static boolean setStatus(SQLiteDatabase db, long id, int status) {
-        return setStatus(db, id, null, -1, status);
     }
 
     /**

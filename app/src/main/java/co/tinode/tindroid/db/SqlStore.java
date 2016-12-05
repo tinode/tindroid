@@ -40,10 +40,10 @@ public class SqlStore implements Storage {
     public Topic[] topicGetAll() {
         Cursor c = TopicDb.query(sDb);
         if (c != null && c.moveToFirst()) {
-            StoredTopic[] list = new StoredTopic[c.getCount()];
+            Topic[] list = new Topic[c.getCount()];
             int i = 0;
             do {
-                StoredTopic t = TopicDb.readOne(c);
+                Topic t = TopicDb.readOne(c);
                 list[i++] = t;
             } while (c.moveToNext());
             return list;
@@ -54,7 +54,7 @@ public class SqlStore implements Storage {
     @Override
     @SuppressWarnings("unchecked")
     public long topicAdd(Topic topic) {
-        return TopicDb.insert(sDb, new StoredTopic(topic));
+        return TopicDb.insert(sDb, topic);
     }
 
     @Override
@@ -63,13 +63,13 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public boolean topicUpdate(String name, Date timestamp, MsgSetMeta meta) {
-        return TopicDb.update(sDb, name, timestamp, meta);
+    public boolean topicUpdate(Topic topic, Date timestamp, MsgSetMeta meta) {
+        return TopicDb.update(sDb, topic, timestamp, meta);
     }
 
     @Override
-    public boolean topicUpsert(String name, Date timestamp, Description desc) {
-        return TopicDb.update(sDb, name, timestamp, desc);
+    public boolean topicUpsert(Topic topic, Date timestamp, Description desc) {
+        return TopicDb.update(sDb, topic, timestamp, desc);
     }
 
     @Override
@@ -78,9 +78,19 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public <Pu, Pr> Collection<? extends Subscription<Pu, Pr>> getSubscriptions(String topic) {
-        SubscriberDb.getSenders()
-        return null;
+    public <Pu, Pr> boolean userUpsert(String name, Date timestamp, Subscription<Pu, Pr>[] subs) {
+        return false;
+    }
+
+    @Override
+    public Collection<Subscription> getSubscriptions(Topic topic) {
+        Cursor c = SubscriberDb.query(sDb, StoredTopic.getId(topic));
+        if (c == null) {
+            return null;
+        }
+        Collection<Subscription> result = SubscriberDb.readAll(c);
+        c.close();
+        return result;
     }
 
     @Override
@@ -121,15 +131,15 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public int msgMarkToDelete(String topicName, int before) {
-        long topicId = TopicDb.getId(sDb, topicName);
-        return MessageDb.delete(sDb, topicId, 0, before, true);
+    public int msgMarkToDelete(Topic topic, int before) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return MessageDb.delete(sDb, st.mId, 0, before, true);
     }
 
     @Override
-    public int msgDelete(String topicName, int before) {
-        long topicId = TopicDb.getId(sDb, topicName);
-        return MessageDb.delete(sDb, topicId, 0, before, false);
+    public int msgDelete(Topic topic, int before) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return MessageDb.delete(sDb, st.mId, 0, before, false);
     }
 
     @Override
@@ -138,12 +148,13 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public int setRead(StoredSubscription sub, int read) {
+    public int setRead(Subscription sub, int read) {
         int result = -1;
         sDb.beginTransaction();
         try {
-            TopicDb.updateRead(sDb, , read);
-            MessageDb.setStatus(sDb,...,StoredMessage.STATUS_READ);
+            StoredSubscription ss = (StoredSubscription) sub.getLocal();
+            TopicDb.updateRead(sDb, ss.topicId, read);
+            MessageDb.setStatus(sDb, r, StoredMessage.STATUS_READ);
             sDb.setTransactionSuccessful();
         } catch (Exception ignored) {
         }

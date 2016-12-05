@@ -5,12 +5,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
+import co.tinode.tinodesdk.LocalData;
 import co.tinode.tinodesdk.Topic;
 
 /**
  * Subscription to topic.
  */
-public class Subscription<Pu,Pr> {
+public class Subscription<Pu,Pr> implements LocalData {
     public String user;
     public Date updated;
     public Date deleted;
@@ -28,6 +29,10 @@ public class Subscription<Pu,Pr> {
     @JsonProperty("public")
     public Pu pub;
     public LastSeen seen;
+
+    // Local values
+    @JsonIgnore
+    private Payload mLocal;
 
     public Subscription() {
     }
@@ -89,5 +94,17 @@ public class Subscription<Pu,Pr> {
                 return topic;
             }
         }
+    }
+
+    @Override
+    @JsonIgnore
+    public void setLocal(Payload value) {
+        mLocal = value;
+    }
+
+    @Override
+    @JsonIgnore
+    public Payload getLocal() {
+        return mLocal;
     }
 }

@@ -694,29 +694,9 @@ public class Tinode {
     public PromisedReply<ServerMessage> publish(String topicName, Object data) {
         ClientMessage msg = new ClientMessage(new MsgClientPub<>(getNextId(), topicName, true, data));
         try {
-            final long id;
-            if (mStore != null) {
-                id = mStore.msgSend(topicName, data);
-            } else {
-                id = -1;
-            }
-
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.pub.id, future);
-            if (id > 0) {
-                future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                        if (result.ctrl != null && result.ctrl.code == 200) {
-
-                            int seq = (Integer) result.ctrl.params.get("seq");
-                            mStore.msgDelivered(id, result.ctrl.ts, seq);
-                        }
-                        return null;
-                    }
-                }, null);
-            }
             return future;
         } catch (Exception e) {
             return null;
@@ -751,22 +731,13 @@ public class Tinode {
      * @param meta metadata to assign
      * @return PromisedReply of the reply ctrl or meta message
      */
-    public <Pu,Pr,Inv> PromisedReply<ServerMessage> setMeta(final String topicName,
-                                                            final MsgSetMeta<Pu,Pr,Inv> meta) {
+    public <Pu,Pr,T> PromisedReply<ServerMessage> setMeta(final String topicName,
+                                                            final MsgSetMeta<Pu,Pr,T> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.set.id, future);
-            if (mStore != null) {
-                future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                        mStore.topicUpdate(topicName, result.ctrl.ts, meta);
-                        return null;
-                    }
-                }, null);
-            }
             return future;
         } catch (Exception e) {
             return null;
@@ -784,21 +755,9 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
                 MsgClientDel.What.MSG, before, hard));
         try {
-            if (mStore != null) {
-                mStore.msgMarkToDelete(topicName, before);
-            }
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.del.id, future);
-            if (mStore != null) {
-                future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                        mStore.msgDelete(topicName, before);
-                        return null;
-                    }
-                }, null);
-            }
             return future;
         } catch (Exception e) {
             return null;
@@ -918,10 +877,10 @@ public class Tinode {
     }
 
     /**
-     * Obtain a subscribed topic by name
+     * Obtain an existing topic by name
      *
      * @param name name of the topic to find
-     * @return subscribed topic or null if no such topic was found
+     * @return existing topic or null if no such topic was found
      */
     @SuppressWarnings("unchecked")
     public <Pu,Pr,T> Topic<Pu,Pr,T> getTopic(String name) {
@@ -929,6 +888,23 @@ public class Tinode {
             return null;
         }
         return mTopics.get(name);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <Pu,Pr,T> Topic<Pu,Pr,T> initTopic(String name) {
+        if (name == null) {
+            return null;
+        }
+        Topic<Pu,Pr,T> t = (Topic<Pu,Pr,T>) mTopics.get(name);
+        if (t != null) {
+            return t;
+        }
+        return new Topic<>(this, name, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <Pu,Pr,T> Topic<Pu,Pr,T> createTopic(Topic.Listener l) {
+        return new Topic<>(this, l);
     }
 
     /**
