@@ -21,12 +21,15 @@ public class LastSeen {
         this.ua = ua;
     }
 
-    public void merge(LastSeen seen) {
+    public boolean merge(LastSeen seen) {
+        boolean changed = false;
         if (seen != null) {
             if (seen.when != null && (when == null || when.before(seen.when))) {
                 when = seen.when;
                 ua = seen.ua;
+                changed = true;
             }
         }
+        return changed;
     }
 }

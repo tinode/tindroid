@@ -58,29 +58,45 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public boolean topicDelete(String name) {
-        return TopicDb.delete(sDb, name) > 0;
+    public boolean topicUpdate(Topic topic) {
+        return TopicDb.update(sDb, topic);
     }
 
     @Override
-    public boolean topicUpdate(Topic topic, Date timestamp, MsgSetMeta meta) {
-        return TopicDb.update(sDb, topic, timestamp, meta);
+    public boolean topicDelete(Topic topic) {
+        return TopicDb.delete(sDb, topic) > 0;
     }
 
     @Override
-    public boolean topicUpsert(Topic topic, Date timestamp, Description desc) {
-        return TopicDb.update(sDb, topic, timestamp, desc);
+    public boolean setRead(Topic topic, int read) {
+        boolean result = false;
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st != null && st.mId > 0) {
+            result = TopicDb.updateRead(sDb, st.mId, read);
+        }
+        return result;
     }
 
     @Override
-    public <Pu, Pr> boolean topicUpsert(String name, Date timestamp, Subscription<Pu, Pr>[] subs) {
-        return false;
+    public boolean setRecv(Topic topic, int recv) {
+        boolean result = false;
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st != null && st.mId > 0) {
+            result = TopicDb.updateRecv(sDb, st.mId, recv);
+        }
+        return result;
     }
 
     @Override
-    public <Pu, Pr> boolean userUpsert(String name, Date timestamp, Subscription<Pu, Pr>[] subs) {
-        return false;
+    public <Pu, Pr> long subAdd(Topic topic, Subscription<Pu, Pr> sub) {
+        return SubscriberDb.insert(sDb, StoredTopic.getId(topic), sub);
     }
+
+    @Override
+    public <Pu, Pr> boolean subUpdate(Topic topic, Subscription<Pu, Pr> sub) {
+        return SubscriberDb.update(sDb, sub);
+    }
+
 
     @Override
     public Collection<Subscription> getSubscriptions(Topic topic) {
@@ -143,21 +159,22 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public int setRecv(Subscription sub, int recv) {
-
+    public boolean msgRecvByRemote(Subscription sub, int recv) {
+        boolean result = false;
+        StoredSubscription ss = (StoredSubscription) sub.getLocal();
+        if (ss != null && ss.mId > 0) {
+            result = SubscriberDb.updateRecv(sDb, ss.mId, recv);
+        }
+        return result;
     }
 
     @Override
-    public int setRead(Subscription sub, int read) {
-        int result = -1;
-        sDb.beginTransaction();
-        try {
-            StoredSubscription ss = (StoredSubscription) sub.getLocal();
-            TopicDb.updateRead(sDb, ss.topicId, read);
-            MessageDb.setStatus(sDb, r, StoredMessage.STATUS_READ);
-            sDb.setTransactionSuccessful();
-        } catch (Exception ignored) {
+    public boolean msgReadByRemote(Subscription sub, int read) {
+        boolean result = false;
+        StoredSubscription ss = (StoredSubscription) sub.getLocal();
+        if (ss != null && ss.mId > 0) {
+            result = SubscriberDb.updateRead(sDb, ss.mId, read);
         }
-        sDb.endTransaction();
+        return result;
     }
 }

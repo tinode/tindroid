@@ -19,8 +19,11 @@ import java.io.InvalidObjectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -141,6 +144,7 @@ public class Tinode {
             Topic[] topics = mStore.topicGetAll();
             if (topics != null) {
                 for (Topic tt : topics) {
+                    tt.setStorage(mStore);
                     mTopics.put(tt.getName(), tt);
                 }
             }
@@ -261,7 +265,7 @@ public class Tinode {
         mServerVersion = null;
 
         for (Topic topic : mTopics.values()) {
-            topic.topicLeft(503, "disconnected");
+            topic.topicLeft(false, 503, "disconnected");
         }
         if (mListener != null) {
             mListener.onDisconnect(byServer, code, reason);
@@ -745,7 +749,7 @@ public class Tinode {
     }
 
     /**
-     * Low-level request to delete messages from a topic. Use {@link Topic#delete(int, boolean)} instead.
+     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int, boolean)} instead.
      *
      * @param topicName name of the topic to inform
      * @param before delete all massages with ids below this
@@ -765,7 +769,7 @@ public class Tinode {
     }
 
     /**
-     * Delete topic.
+     * Low-level request to delete topic. Use {@link Topic#delete()} instead.
      *
      * @param topicName name of the topic to inform
      * @return PromisedReply of the reply ctrl or meta message
@@ -777,15 +781,6 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.del.id, future);
-            if (mStore != null) {
-                future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                        mStore.topicDelete(topicName);
-                        return null;
-                    }
-                }, null);
-            }
             return future;
         } catch (Exception unused) {
             return null;
@@ -868,9 +863,9 @@ public class Tinode {
     }
 
     /**
-     * Obtain a subscribed !me topic ({@link MeTopic}).
+     * Obtain a 'me' topic ({@link MeTopic}).
      *
-     * @return subscribed !me topic or null if !me is not subscribed
+     * @return 'me' topic or null if 'me' has never been subscribed to
      */
     public MeTopic getMeTopic() {
         return (MeTopic) getTopic(TOPIC_ME);
@@ -878,6 +873,39 @@ public class Tinode {
 
     /**
      * Obtain an existing topic by name
+     *
+     * @return a {@link Collection} of topics
+     */
+    public List<Topic> getTopics() {
+        return new ArrayList<>(mTopics.values());
+    }
+
+    /**
+     * Return a collection of topics which satisfy the filters.
+     *
+     * @param type type of topics to return.
+     * @param updated return topics with update timestamp after this
+     */
+    public List<Topic> getFilteredTopics(Topic.TopicType type, Date updated) {
+        if (type == Topic.TopicType.ANY && updated == null) {
+            return getTopics();
+        }
+        if (type == Topic.TopicType.UNKNOWN) {
+            return null;
+        }
+        ArrayList<Topic> result = new ArrayList<>();
+        int typeVal = type.val();
+        for (Topic t : mTopics.values()) {
+            if (((t.getTopicType().val() & typeVal) != 0) &&
+                    (updated == null || updated.before(t.getUpdated()))) {
+                result.add(t);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Get topic by index.
      *
      * @param name name of the topic to find
      * @return existing topic or null if no such topic was found
@@ -889,6 +917,7 @@ public class Tinode {
         }
         return mTopics.get(name);
     }
+
 
     @SuppressWarnings("unchecked")
     public <Pu,Pr,T> Topic<Pu,Pr,T> initTopic(String name) {
@@ -913,10 +942,20 @@ public class Tinode {
     protected void registerTopic(Topic topic) {
         if (mStore != null) {
             mStore.topicAdd(topic);
+            topic.setStorage(mStore);
         }
         mTopics.put(topic.getName(), topic);
-        // Let topic persist.
-        topic.setStorage(mStore);
+    }
+
+    /**
+     * Stop tracking the topic.
+     */
+    protected void unregisterTopic(Topic topic) {
+        mTopics.remove(topic.getName());
+        if (mStore != null) {
+            topic.setStorage(null);
+            mStore.topicDelete(topic);
+        }
     }
 
     /**

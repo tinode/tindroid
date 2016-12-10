@@ -19,8 +19,9 @@ import co.tinode.tinodesdk.model.MsgServerData;
 /**
  * Storage structure for messages:
  * public String id -- not stored
- * public String topic
- * public String from;
+ * public String topic -> as topic_id
+ * public String from; -> as user_id
+ * public Map head -- not stored yet
  * public Date ts;
  * public int seq;
  * public T content;
@@ -69,21 +70,13 @@ public class MessageDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_SENDER_INDEX = "sender_idx";
     /**
-     * MessageDb timestamp
+     * Message timestamp
      */
     public static final String COLUMN_NAME_TS = "ts";
     /**
      * Server-issued sequence ID, integer, indexed
      */
     public static final String COLUMN_NAME_SEQ = "seq";
-    /**
-     * Delivery status:
-     *   0 - not sent
-     *   1 - delivered to server
-     *   2 - delivered to client
-     *   3 - read
-     */
-    public static final String COLUMN_NAME_STATUS = "status";
     /**
      * Serialized message content
      */
@@ -103,8 +96,7 @@ public class MessageDb implements BaseColumns {
     private static final int COLUMN_IDX_SENDER_INDEX = 3;
     private static final int COLUMN_IDX_TS = 4;
     private static final int COLUMN_IDX_SEQ = 5;
-    private static final int COLUMN_IDX_STATUS = 6;
-    private static final int COLUMN_IDX_CONTENT = 7;
+    private static final int COLUMN_IDX_CONTENT = 6;
 
     /**
      * SQL statement to create Messages table
@@ -119,7 +111,6 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER_INDEX + " INT," +
                     COLUMN_NAME_TS + " TEXT," +
                     COLUMN_NAME_SEQ + " INT," +
-                    COLUMN_NAME_STATUS + " INT," +
                     COLUMN_NAME_CONTENT + " BLOB)";
     /**
      * Add index on account_id-topic-seq, in descending order
@@ -173,7 +164,6 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_SENDER_INDEX, msg.senderIdx);
             values.put(COLUMN_NAME_TS, msg.ts.getTime());
             values.put(COLUMN_NAME_SEQ, msg.seq);
-            values.put(COLUMN_NAME_STATUS, msg.deliveryStatus);
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
             id = db.insert(TABLE_NAME, null, values);
@@ -184,21 +174,6 @@ public class MessageDb implements BaseColumns {
         }
 
         return id;
-    }
-
-    public static boolean setStatus(SQLiteDatabase db, long topicId, Date timestamp, int before, int status) {
-
-        // Convert message to a map of values
-        ContentValues values = new ContentValues();
-        if (timestamp != null) {
-            values.put(COLUMN_NAME_TS, timestamp.getTime());
-        }
-        values.put(COLUMN_NAME_STATUS, status);
-
-        return db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_SEQ + "<=" + before +
-                " AND " + COLUMN_NAME_STATUS + "<" + status,
-                null) > 0;
     }
 
     /**
@@ -216,31 +191,10 @@ public class MessageDb implements BaseColumns {
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
                 (to > 0 ?  " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
-                " ORDER BY " + COLUMN_NAME_SEQ;
+                " ORDER BY " + COLUMN_NAME_TS;
         Log.d(TAG, "Sql=[" + sql + "]");
         
         return db.rawQuery(sql, null);
-    }
-
-    /**
-     * Delete one message
-     *
-     * @param db    Database to use.
-     * @param topicId Tinode topic ID to delete message from.
-     * @param seq   seq value to delete.
-     * @return number of deleted messages
-     */
-    public static int delete(SQLiteDatabase db, long topicId, int seq) {
-        // Define 'where' part of query.
-        String selection =
-                COLUMN_NAME_TOPIC_ID + "=? AND " +
-                COLUMN_NAME_SEQ + "=?";
-        String[] selectionArgs = {
-                String.valueOf(topicId),
-                String.valueOf(seq)
-        };
-
-        return db.delete(TABLE_NAME, selection, selectionArgs);
     }
 
     /**
@@ -248,25 +202,16 @@ public class MessageDb implements BaseColumns {
      *
      * @param db    Database to use.
      * @param topicId Tinode topic ID to delete messages from.
-     * @param from  minimum seq value to delete from (exclusive).
-     * @param to    maximum seq value to delete, inclusive.
+     * @param before maximum seq value to delete, inclusive.
      * @param soft  mark messages as deleted but do not actually delete them
      * @return number of deleted messages
      */
-    public static int delete(SQLiteDatabase db, long topicId, int from, int to, boolean soft) {
-        to = (to < 0 ? Integer.MAX_VALUE : to);
-
-        String selection =
-                COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                        " AND " + COLUMN_NAME_SEQ + ">" + from +
-                        " AND " + COLUMN_NAME_SEQ + "<=" + to;
-
-        if (soft) {
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_STATUS, StoredMessage.STATUS_DELETE);
-            return db.update(TABLE_NAME, values, selection, null);
+    public static boolean delete(SQLiteDatabase db, long topicId, int before, boolean soft) {
+        if (!soft) {
+            return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND " + COLUMN_NAME_SEQ + "<=" + before, null) > 0;
         } else {
-            return db.delete(TABLE_NAME, selection, null);
+            return TopicDb.updateClear(db, topicId, before);
         }
     }
 
@@ -291,31 +236,6 @@ public class MessageDb implements BaseColumns {
      */
     public static long getLocalId(Cursor cursor) {
         return cursor.getLong(0);
-    }
-
-    /**
-     * Get maximum SeqId for the given table.
-     *
-     * @param db    Database to use
-     * @param topicId ID of the Tinode topic to query.
-     * @return maximum seq id.
-     */
-    public static long getMaxSeq(SQLiteDatabase db, long topicId) {
-        SQLiteStatement stmt = db.compileStatement(
-                "SELECT MAX(" + COLUMN_NAME_SEQ + ") " +
-                        "FROM " + TABLE_NAME +
-                        " WHERE " +
-                        COLUMN_NAME_TOPIC_ID + "=?");
-
-        stmt.bindLong(1, topicId);
-
-        long count;
-        try {
-            count = stmt.simpleQueryForLong();
-        } catch (SQLiteDoneException ignored) {
-            count = 0;
-        }
-        return count;
     }
 
     public static class Loader extends AsyncTaskLoader<Cursor> {

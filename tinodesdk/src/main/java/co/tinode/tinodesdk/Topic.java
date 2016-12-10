@@ -18,16 +18,11 @@ import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JavaType;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -38,7 +33,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
     private static final String TAG = "tinodesdk.Topic";
 
     public enum TopicType {
-        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08), USER(0x04 | 0x08), UNKNOWN(0x00), ANY(0x01 | 0x02 | 0x04 | 0x08);
+        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08),
+        USER(0x04 | 0x08), SYSTEM(0x01 | 0x02), UNKNOWN(0x00),
+        ANY(0x01 | 0x02 | 0x04 | 0x08);
 
         private int val = 0;
         TopicType(int val) {
@@ -65,7 +62,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     // Server-provided values:
     protected AccessMode mMode;
     // The bulk of topic data
-    protected Description<Pu,Pr> mDescription;
+    protected Description<Pu,Pr> mDesc;
     // Cache of topic subscribers indexed by userID
     protected HashMap<String,Subscription<Pu,Pr>> mSubs = null;
     // Timestamp of the last update to subscriptions. Default: Oct 25, 2014 05:06:02 UTC, incidentally equal
@@ -80,24 +77,49 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     private Payload mLocal = null;
 
+    protected boolean mOnline = false;
+
+    protected LastSeen mLastSeen = null;
     /**
      * Copy constructor
      *
      * @param topic Original instance to copy
      */
     protected Topic(Topic<Pu,Pr,T> topic) {
+        mTinode             = topic.mTinode;
         mTypeOfDataPacket   = topic.mTypeOfDataPacket;
         mTypeOfMetaPacket   = topic.mTypeOfMetaPacket;
         mName               = topic.mName;
         isValidName         = topic.isValidName;
         mStore              = topic.mStore;
         mMode               = topic.mMode;
-        mDescription        = topic.mDescription != null ? topic.mDescription : new Description<Pu,Pr>();
+        mDesc = topic.mDesc != null ? topic.mDesc : new Description<Pu,Pr>();
         mSubs               = topic.mSubs;
         mSubsUpdated        = topic.mSubsUpdated;
         mAttached           = topic.mAttached;
         mListener           = topic.mListener;
         mLastKeyPress       = topic.mLastKeyPress;
+    }
+
+
+    protected Topic(Tinode tinode, Subscription<Pu,Pr> sub) {
+        if (tinode == null) {
+            throw new IllegalArgumentException("Tinode cannot be null");
+        }
+        mTinode = tinode;
+
+        mTypeOfDataPacket   = tinode.getTypeOfDataPacket();
+        mTypeOfMetaPacket   = tinode.getTypeOfMetaPacket();
+
+        setName(sub.topic);
+
+        mMode   = new AccessMode(sub.mode);
+
+        mDesc   = new Description<>();
+        mDesc.merge(sub);
+
+        mAttached           = false;
+        mListener           = null;
     }
 
     /**
@@ -115,17 +137,13 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         setName(name);
 
-        mDescription = new Description<>();
+        mDesc = new Description<>();
 
         if (l != null) {
             l.mTopic = this;
         }
         mListener = l;
         mAttached = false;
-
-        if (isValidName) {
-            mTinode.registerTopic(this);
-        }
     }
 
     /**
@@ -179,6 +197,52 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
+     * Update topic parameters from a Subscription object. Called by MeTopic.
+     * @param sub updated topic parameters
+     */
+    protected void update(Subscription<Pu,Pr> sub) {
+        int changed = 0;
+
+        if (sub.mode != null && !sub.mode.equals(mMode.toString())) {
+            mMode = new AccessMode(sub.mode);
+            changed ++;
+        }
+
+        if (mDesc.merge(sub)) {
+            changed++;
+        }
+
+        if (changed > 0 && mStore != null) {
+            mStore.topicUpdate(this);
+        }
+    }
+
+    /**
+     * Update topic parameters from a Description object.
+     * @param desc updated topic parameters
+     */
+    protected void update(Description<Pu,Pr> desc) {
+        int changed = 0;
+
+        if (desc.acs != null && desc.acs.mode != null && !desc.acs.mode.equals(mMode.toString())) {
+            mMode = new AccessMode(desc.acs.mode);
+            changed ++;
+        }
+
+        if (mDesc.merge(desc)) {
+            changed++;
+        }
+
+        if (changed > 0 && mStore != null) {
+            mStore.topicUpdate(this);
+        }
+    }
+
+    protected void update(Date updated, MsgSetMeta<Pu,Pr,?> meta) {
+
+    }
+
+    /**
      * Called by Tinode from {@link Tinode#registerTopic(Topic)}
      *
      * @param store storage object
@@ -188,61 +252,69 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public Date getCreated() {
-        return mDescription.created;
+        return mDesc.created;
     }
     public void setCreated(Date created) {
-        mDescription.created = created;
+        mDesc.created = created;
     }
 
     public Date getUpdated() {
-        return mDescription.updated;
+        return mDesc.updated;
     }
     public void setUpdated(Date updated) {
-        mDescription.updated = updated;
+        mDesc.updated = updated;
     }
 
     public Date getDeleted() {
-        return mDescription.deleted;
+        return mDesc.deleted;
     }
     public void setDeleted(Date deleted) {
-        mDescription.deleted = deleted;
+        mDesc.deleted = deleted;
     }
 
     public String getWith() {
-        return getTopicType() == TopicType.P2P ? mDescription.with : null;
+        return getTopicType() == TopicType.P2P ? mDesc.with : null;
     }
     public void setWith(String with) {
         if (getTopicType() == TopicType.P2P) {
-            mDescription.with = with;
+            mDesc.with = with;
         }
     }
 
     public int getSeq() {
-        return mDescription.seq;
+        return mDesc.seq;
     }
     public void setSeq(int seq) {
-        mDescription.seq = seq;
+        if (seq > mDesc.seq) {
+            mDesc.seq = seq;
+        }
     }
 
     public int getClear() {
-        return mDescription.clear;
+        return mDesc.clear;
     }
     public void setClear(int clear) {
-        mDescription.clear = clear;
+        if (clear > mDesc.clear) {
+            mDesc.clear = clear;
+        }
     }
 
     public int getRead() {
-        return mDescription.read;
+        return mDesc.read;
     }
     public void setRead(int read) {
-        mDescription.read = read;
+        if (read > mDesc.read) {
+            mDesc.read = read;
+        }
     }
 
     public int getRecv() {
-        return mDescription.recv;
+        return mDesc.recv;
     }
     public void setRecv(int recv) {
-        mDescription.recv = recv;
+        if (recv > mDesc.recv) {
+            mDesc.recv = recv;
+        }
     }
 
     public AccessMode getMode() {
@@ -256,19 +328,39 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public Pu getPub() {
-        return mDescription.pub;
+        return mDesc.pub;
     }
     public void setPub(Pu pub) {
-        mDescription.pub = pub;
+        mDesc.pub = pub;
     }
 
     public Pr getPriv() {
-        return mDescription.priv;
+        return mDesc.priv;
     }
     public void setPriv(Pr priv) {
-        mDescription.priv = priv;
+        mDesc.priv = priv;
     }
 
+    public int getUnreadCount() {
+        int unread = mDesc.seq - mDesc.read;
+        return unread > 0 ? unread : 0;
+    }
+
+    public boolean getOnline() {
+        return mOnline;
+    }
+    protected void setOnline(boolean online) {
+        if (online != mOnline) {
+            mOnline = online;
+            if (mListener != null) {
+                mListener.onOnline(mOnline);
+            }
+        }
+    }
+
+    protected void setLastSeen(Date when, String ua) {
+        mLastSeen = new LastSeen(when, ua);
+    }
     /**
      * Subscribe to topic
      *
@@ -277,7 +369,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     public PromisedReply<ServerMessage> subscribe() throws Exception {
         if (!mAttached) {
             MsgGetMeta getParams = null;
-            if (mDescription == null || mDescription.updated == null) {
+            if (mDesc == null || mDesc.updated == null) {
                 getParams = new MsgGetMeta();
             } else {
                 // Check if the last received message has lower ID than the last known message.
@@ -285,9 +377,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 MeTopic me = mTinode.getMeTopic();
                 if (me != null) {
                     int seqId = me.getMsgSeq(mName);
-                    if (seqId > mDescription.seq) {
+                    if (seqId > mDesc.seq) {
                         MsgGetMeta.GetData data = new MsgGetMeta.GetData();
-                        data.since = mDescription.seq;
+                        data.since = mDesc.seq;
                         getParams = new MsgGetMeta(null, null, data);
                     }
                 }
@@ -327,14 +419,14 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @throws Exception
      */
-    public PromisedReply<ServerMessage> leave(boolean unsub) throws Exception {
+    public PromisedReply<ServerMessage> leave(final boolean unsub) throws Exception {
         if (mAttached) {
             return mTinode.leave(getName(), unsub).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
                                 throws Exception {
-                            topicLeft(result.ctrl.code, result.ctrl.text);
+                            topicLeft(unsub, result.ctrl.code, result.ctrl.text);
                             return null;
                         }
                     }, null);
@@ -398,9 +490,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
                         throws Exception {
-                    if (mStore != null) {
-                        mStore.topicUpdate(Topic.this, result.ctrl.ts, meta);
-                    }
+                    update(result.ctrl.ts, meta);
                     return null;
                 }
             }, null);
@@ -414,7 +504,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param before delete messages with id up to this
      * @param hard hard-delete messages
      */
-    public PromisedReply delete(final int before, final boolean hard) throws Exception {
+    public PromisedReply delMessages(final int before, final boolean hard) throws Exception {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, before);
         }
@@ -429,6 +519,21 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
         throw new IllegalStateException("Not subscribed");
     }
+    /**
+     * Delete topic
+     */
+    public PromisedReply delete() throws Exception {
+        if (mAttached) {
+            return mTinode.delTopic(getName()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    mTinode.unregisterTopic(Topic.this);
+                    return null;
+                }
+            }, null);
+        }
+        throw new IllegalStateException("Not subscribed");
+    }
 
     /**
      * Let server know the seq id of the most recent received/read message.
@@ -436,8 +541,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param what "read" or "recv" to indicate which action to report
      */
     protected int noteReadRecv(NoteType what) {
-        if (mDescription == null) {
-            mDescription = new Description<>();
+        if (mDesc == null) {
+            mDesc = new Description<>();
         }
 
         // Save read and received status on subscription.
@@ -446,41 +551,50 @@ public class Topic<Pu,Pr,T> implements LocalData {
         if (sub != null) {
             switch (what) {
                 case RECV:
-                    if (sub.recv < mDescription.seq) {
-                        mTinode.noteRecv(getName(), mDescription.seq);
-                        result = sub.recv = mDescription.seq;
+                    if (sub.recv < mDesc.seq) {
+                        mTinode.noteRecv(getName(), mDesc.seq);
+                        result = sub.recv = mDesc.seq;
                     }
                     break;
                 case READ:
-                    if (sub.read < mDescription.seq) {
-                        mTinode.noteRead(getName(), mDescription.seq);
-                        result = sub.read = mDescription.seq;
+                    if (sub.read < mDesc.seq) {
+                        mTinode.noteRead(getName(), mDesc.seq);
+                        result = sub.read = mDesc.seq;
                     }
                     break;
             }
         } else if (mTinode.isConnected()) {
             Log.e(TAG, "Subscription not found in topic");
         }
-
+/*
         // Update cached contact with the new count.
         MeTopic me = mTinode.getMeTopic();
         if (me != null) {
             if (what == NoteType.RECV) {
-                me.setRecv(mName, mDescription.seq);
+                me.setRecv(mName, mDesc.seq);
             } else {
-                me.setRead(mName, mDescription.seq);
+                me.setRead(mName, mDesc.seq);
             }
         }
+*/
 
         return result;
     }
 
     public int noteRead() {
-        return noteReadRecv(NoteType.READ);
+        int result = noteReadRecv(NoteType.READ);
+        if (mStore != null) {
+            mStore.setRead(this, result);
+        }
+        return result;
     }
 
     public int noteRecv() {
-        return noteReadRecv(NoteType.RECV);
+        int result = noteReadRecv(NoteType.RECV);
+        if (mStore != null) {
+            mStore.setRecv(this, result);
+        }
+        return result;
     }
 
 
@@ -514,17 +628,17 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public Pu getPublic() {
-        return mDescription != null ? mDescription.pub : null;
+        return mDesc != null ? mDesc.pub : null;
     }
 
 
     protected int loadSubs() {
-        Collection<Subscription<Pu,Pr>> subs = mStore.getSubscriptions(this);
+        Collection<Subscription> subs = mStore.getSubscriptions(this);
         if (subs == null) {
             return 0;
         }
 
-        for (Subscription<Pu,Pr> sub : subs) {
+        for (Subscription sub : subs) {
             if (mSubsUpdated.before(sub.updated)) {
                 mSubsUpdated = sub.updated;
             }
@@ -546,17 +660,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         mSubs.put(sub.user, sub);
     }
 
-    /**
-     * Check if UID is equal to the current user UID
-     *
-     * @param sender sender UID to check
-     *
-     * @return true if the sender UID is the same as current user UID
-     */
-    public boolean isMyMessage(String sender) {
-        return sender != null && sender.equals(mTinode.getMyId());
-    }
-
     public Subscription<Pu,Pr> getSubscription(String key) {
         if (mSubs == null) {
             loadSubs();
@@ -569,41 +672,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
             loadSubs();
         }
         return mSubs != null ? mSubs.values() : null;
-    }
-
-    /**
-     * Extract subscriptions with the update timestamp after the marker
-     *
-     * @param marker timestamp of the last update
-     * @return updated subscriptions
-     */
-    public Collection<Subscription<Pu,Pr>> getUpdatedSubscriptions(Date marker) {
-        return getFilteredSubscriptions(marker, TopicType.ANY);
-    }
-
-    /**
-     * Extract subscriptions with the update timestamp after the marker
-     *
-     * @param marker timestamp of the last update
-     * @param type type of the topic to filter for
-     * @return updated subscriptions
-     */
-    public Collection<Subscription<Pu,Pr>> getFilteredSubscriptions(Date marker, TopicType type) {
-        if (marker == null && type == TopicType.ANY) {
-            return getSubscriptions();
-        } else if (type == TopicType.UNKNOWN) {
-            return null;
-        }
-
-        ArrayList<Subscription<Pu,Pr>> result = new ArrayList<>();
-        for (Subscription<Pu,Pr> sub: getSubscriptions()) {
-            if ((getTopicTypeByName(sub.topic).val() & type.val()) != 0) {
-                if ((marker == null) || (sub.updated != null && marker.before(sub.updated))) {
-                    result.add(sub);
-                }
-            }
-        }
-        return result;
     }
 
     public void setListener(Listener<Pu,Pr,T> l) {
@@ -700,10 +768,18 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     /**
      * Called when the topic receives leave() confirmation
+     * @param unsub - not just detached but also unsubscribed
+     * @param code result code, always 200
+     * @param reason usually "OK"
      */
-    protected void topicLeft(int code, String reason) {
+    protected void topicLeft(boolean unsub, int code, String reason) {
         if (mAttached) {
             mAttached = false;
+            mOnline = false;
+
+            if (unsub) {
+                mTinode.unregisterTopic(this);
+            }
 
             if (mListener != null) {
                 mListener.onLeave(code, reason);
@@ -713,19 +789,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     protected void routeMeta(MsgServerMeta<Pu,Pr> meta) {
         if (meta.desc != null) {
-            if (mStore != null) {
-                // General topic description
-                mStore.topicUpsert(this, meta.ts, meta.desc);
-            }
-            processMetaDesc(meta.desc);
+            routeMetaDesc(meta);
         }
         if (meta.sub != null) {
-            if (mStore != null) {
-                // In case of a generic (non-'me') topic, sub[] contains topic subscribers.
-                mStore.userUpsert(getName(), meta.ts, meta.sub);
-                loadSubs();
-            }
-            processMetaSubs(meta.sub);
+            routeMetaSub(meta);
         }
 
         if (mListener != null) {
@@ -733,11 +800,49 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
     }
 
+    protected void routeMetaDesc(MsgServerMeta<Pu,Pr> meta) {
+        update(meta.desc);
+
+        if (mListener != null) {
+            mListener.onMetaDesc(meta.desc);
+        }
+    }
+
+    protected void routeMetaSub(MsgServerMeta<Pu,Pr> meta) {
+        // In case of a generic (non-'me') topic, meta.subcontains topic subscribers.
+        // I.e. sub.user is set, but sub.topic is equal to current topic.
+        for (Subscription<Pu,Pr> newsub : meta.sub) {
+            Subscription<Pu,Pr> sub = getSubscription(newsub.user);
+            if (sub != null) {
+                sub.merge(newsub);
+                if (mStore != null) {
+                    mStore.subUpdate(this, sub);
+                }
+            } else {
+                sub = newsub;
+                addSubToCache(sub);
+                if (mStore != null) {
+                    mStore.subAdd(this, sub);
+                }
+            }
+            setOnline(sub.online);
+
+            if (mListener != null) {
+                mListener.onMetaSub(sub);
+            }
+        }
+
+        if (mListener != null) {
+            mListener.onSubsUpdated();
+        }
+    }
+
+
     protected void routeData(MsgServerData<T> data) {
         // TODO(gene): cache/save sender
 
-        if (data.seq > mDescription.seq) {
-            mDescription.seq = data.seq;
+        if (data.seq > mDesc.seq) {
+            mDesc.seq = data.seq;
         }
 
         if (mStore != null && mStore.msgReceived(getSubscription(data.from), data) > 0) {
@@ -777,16 +882,16 @@ public class Topic<Pu,Pr,T> implements LocalData {
             if (sub != null) {
                 switch (info.what) {
                     case "recv":
-                        if (mStore != null) {
-                            mStore.setRecv(sub, info.seq);
-                        }
                         sub.recv = info.seq;
+                        if (mStore != null) {
+                            mStore.msgRecvByRemote(sub, info.seq);
+                        }
                         break;
                     case "read":
-                        if (mStore != null) {
-                            mStore.setRead(sub, info.seq);
-                        }
                         sub.read = info.seq;
+                        if (mStore != null) {
+                            mStore.msgReadByRemote(sub, info.seq);
+                        }
                         break;
                     default:
                         break;
@@ -796,31 +901,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         if (mListener != null) {
             mListener.onInfo(info);
-        }
-    }
-
-    protected void processMetaDesc(Description<Pu,Pr> desc) {
-        if (mDescription != null) {
-            mDescription.merge(desc);
-        } else {
-            mDescription = desc;
-        }
-
-        if (mListener != null) {
-            mListener.onMetaDesc(desc);
-        }
-    }
-
-    // Subscriptions updated, notify listeners.
-    protected void processMetaSubs(Subscription<Pu,Pr>[] unused) {
-        for (Subscription<Pu,Pr> sub : getSubscriptions()) {
-            if (mListener != null) {
-                mListener.onMetaSub(sub);
-            }
-        }
-
-        if (mListener != null) {
-            mListener.onSubsUpdated();
         }
     }
 
@@ -852,5 +932,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         public void onMetaDesc(Description<PPu,PPr> desc) {}
         public void onSubsUpdated() {}
         public void onPres(MsgServerPres pres) {}
+        public void onOnline(boolean online) {}
     }
 }

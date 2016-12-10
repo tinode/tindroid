@@ -110,15 +110,17 @@ public class UserDb implements BaseColumns {
      */
     public static boolean update(SQLiteDatabase db, Subscription sub) {
 
+        StoredSubscription ss = (StoredSubscription) sub.getLocal();
+        if (ss == null || ss.userId <= 0) {
+            return false;
+        }
+
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
         // values.put(COLUMN_NAME_DELETED, NULL);
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
-        int updated = db.update(TABLE_NAME, values,
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
-                        " AND " + COLUMN_NAME_UID + "='" + sub.user + "'",
-                null);
+        int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.userId, null);
 
         Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + sub.user + " returned " + updated);
 

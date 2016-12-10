@@ -37,29 +37,41 @@ public class Subscription<Pu,Pr> implements LocalData {
     public Subscription() {
     }
 
-    public void merge(Subscription<Pu,Pr> sub) {
+    public boolean merge(Subscription<Pu,Pr> sub) {
+        int changed = 0;
+
         if (user == null && sub.user != null && !sub.user.equals("")) {
             user = sub.user;
+            changed ++;
         }
+
         if ((sub.updated != null) && (updated == null || updated.before(sub.updated))) {
             updated = sub.updated;
+            changed ++;
         }
+
         if ((sub.deleted != null) && (deleted == null || deleted.after(sub.deleted))) {
             deleted = sub.deleted;
+            changed ++;
         }
 
         if (sub.mode != null) {
             mode = sub.mode;
+            changed ++;
         }
         if (sub.read > read) {
             read = sub.read;
+            changed ++;
         }
         if (sub.recv > recv) {
             recv = sub.recv;
+            changed ++;
         }
         if (sub.clear > clear) {
             clear = sub.clear;
+            changed ++;
         }
+
         if (sub.priv != null) {
             priv = sub.priv;
         }
@@ -67,33 +79,30 @@ public class Subscription<Pu,Pr> implements LocalData {
 
         if ((topic == null || topic.equals("")) && sub.topic != null && !sub.topic.equals("")) {
             topic = sub.topic;
+            changed ++;
         }
         if (sub.seq > seq) {
             seq = sub.seq;
+            changed ++;
         }
-        if (sub.with != null && !sub.with.equals("")) {
+        if (sub.with != null && !sub.with.equals("") && (with == null || !with.equals(sub.with))) {
             with = sub.with;
+            changed ++;
         }
         if (sub.pub != null) {
             pub = sub.pub;
         }
-        if (seen == null) {
-            seen = sub.seen;
-        } else {
-            seen.merge(sub.seen);
-        }
-    }
 
-    public String getUniqueId() {
-        if (topic == null) {
-            return user;
-        } else {
-            if (Topic.getTopicTypeByName(topic) == Topic.TopicType.P2P) {
-                return with;
+        if (sub.seen != null) {
+            if (seen == null) {
+                seen = sub.seen;
+                changed ++;
             } else {
-                return topic;
+                changed += seen.merge(sub.seen) ? 1 : 0;
             }
         }
+
+        return changed > 0;
     }
 
     @Override

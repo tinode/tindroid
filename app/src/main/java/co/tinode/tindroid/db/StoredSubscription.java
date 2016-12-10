@@ -8,7 +8,7 @@ import co.tinode.tinodesdk.model.Subscription;
  * Subscription record
  */
 public class StoredSubscription implements LocalData.Payload {
-    public long id;
+    public long mId;
     public long topicId;
     public long userId;
     public int senderIdx;

@@ -63,16 +63,4 @@ public class Cache {
     public static boolean isInForeground() {
         return sVisibleCount > 0;
     }
-
-    public static boolean isUserOnline(String topic) {
-        Tinode tinode = getTinode();
-        if (tinode.isConnected()) {
-            MeTopic me = tinode.getMeTopic();
-            if (me != null) {
-                Subscription live = me.getSubscription(topic);
-                return live != null && live.online;
-            }
-        }
-        return false;
-    }
 }

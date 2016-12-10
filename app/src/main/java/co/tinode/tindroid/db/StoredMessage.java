@@ -17,10 +17,8 @@ public class StoredMessage<T> extends MsgServerData<T> {
     public long topicId;
     public long userId;
     public int senderIdx;
-    public int deliveryStatus;
 
     public StoredMessage() {
-
     }
 
     public StoredMessage(MsgServerData<T> m) {

@@ -1,10 +1,11 @@
 package co.tinode.tindroid.db;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
-import android.text.TextUtils;
+import android.provider.BaseColumns;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -150,4 +151,11 @@ public class BaseDb extends SQLiteOpenHelper {
     static boolean isMe(String uid) {
         return uid != null && uid.equals(sUid);
     }
+
+    static boolean updateCounter(SQLiteDatabase db, String table, String column, long id,  int counter) {
+        ContentValues values = new ContentValues();
+        values.put(column, counter);
+        return db.update(table, values, BaseColumns._ID + "=" + id + " AND " + column + "<" + counter, null) > 0;
+    }
+
 }

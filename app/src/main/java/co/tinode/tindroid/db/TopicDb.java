@@ -42,6 +42,10 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_TYPE = "type";
     /**
+     * Should the topic be visible to user, i.e. is it a p2p or grp topic?
+     */
+    public static final String COLUMN_NAME_VISIBLE = "visible";
+    /**
      * For P2P topics UID of the other party
      */
     public static final String COLUMN_NAME_WITH = "with_uid";
@@ -58,11 +62,11 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_DELETED = "deleted";
     /**
-     * Sequence ID marked as read, integer
+     * Sequence ID marked as read by the current user, integer
      */
     public static final String COLUMN_NAME_READ = "read";
     /**
-     * Sequence ID marked as received, integer
+     * Sequence ID marked as received by the current user, integer
      */
     public static final String COLUMN_NAME_RECV = "recv";
     /**
@@ -95,18 +99,19 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_TOPIC = 2;
     static final int COLUMN_IDX_TYPE = 3;
-    static final int COLUMN_IDX_WITH = 4;
-    static final int COLUMN_IDX_CREATED = 5;
-    static final int COLUMN_IDX_UPDATED = 6;
-    static final int COLUMN_IDX_DELETED = 7;
-    static final int COLUMN_IDX_READ = 8;
-    static final int COLUMN_IDX_RECV = 9;
-    static final int COLUMN_IDX_SEQ = 10;
-    static final int COLUMN_IDX_CLEAR = 11;
-    static final int COLUMN_IDX_ACCESSMODE = 12;
-    static final int COLUMN_IDX_LASTUSED = 13;
-    static final int COLUMN_IDX_PUBLIC = 14;
-    static final int COLUMN_IDX_PRIVATE = 15;
+    static final int COLUMN_IDX_VISIBLE = 4;
+    static final int COLUMN_IDX_WITH = 5;
+    static final int COLUMN_IDX_CREATED = 6;
+    static final int COLUMN_IDX_UPDATED = 7;
+    static final int COLUMN_IDX_DELETED = 8;
+    static final int COLUMN_IDX_READ = 9;
+    static final int COLUMN_IDX_RECV = 10;
+    static final int COLUMN_IDX_SEQ = 11;
+    static final int COLUMN_IDX_CLEAR = 12;
+    static final int COLUMN_IDX_ACCESSMODE = 13;
+    static final int COLUMN_IDX_LASTUSED = 14;
+    static final int COLUMN_IDX_PUBLIC = 15;
+    static final int COLUMN_IDX_PRIVATE = 16;
 
     /**
      * SQL statement to create Messages table
@@ -118,6 +123,7 @@ public class TopicDb implements BaseColumns {
                     + " REFERENCES " + AccountDb.TABLE_NAME + "(" + AccountDb._ID + ")," +
                     COLUMN_NAME_TOPIC + " TEXT," +
                     COLUMN_NAME_TYPE + " INT," +
+                    COLUMN_NAME_VISIBLE + " INT," +
                     COLUMN_NAME_WITH + " TEXT," +
                     COLUMN_NAME_CREATED + " INT," +
                     COLUMN_NAME_UPDATED + " INT," +
@@ -155,14 +161,17 @@ public class TopicDb implements BaseColumns {
      * @return ID of the newly added message
      */
     public static <Pu,Pr,T> long insert(SQLiteDatabase db, Topic<Pu,Pr,T> topic) {
-        Log.d(TAG, "Inserting sub for " + topic.getName());
+        Log.d(TAG, "Creating topic " + topic.getName());
 
         // Convert topic description to a map of values
         Date lastUsed = new Date();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getAccountId());
         values.put(COLUMN_NAME_TOPIC, topic.getName());
-        values.put(COLUMN_NAME_TYPE, topic.getTopicType().val());
+        Topic.TopicType tp = topic.getTopicType();
+        values.put(COLUMN_NAME_TYPE, tp.val());
+        values.put(COLUMN_NAME_VISIBLE,
+                tp == Topic.TopicType.GRP || tp == Topic.TopicType.P2P ? 1 : 0);
         values.put(COLUMN_NAME_WITH, topic.getWith());
         values.put(COLUMN_NAME_CREATED, lastUsed.getTime());
         values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
@@ -186,6 +195,7 @@ public class TopicDb implements BaseColumns {
 
         return id;
     }
+
 
     /**
      * Update topic description
@@ -229,91 +239,6 @@ public class TopicDb implements BaseColumns {
         return updated > 0;
     }
 
-    /**
-     * Update stored topic on setMeta (local user-initiated update).
-     *
-     * @return true if the record was updated, false otherwise
-     */
-    public static boolean update(SQLiteDatabase db, Topic topic, Date timestamp, MsgSetMeta meta) {
-        if (meta.desc == null) {
-            // Nothing to update
-            return true;
-        }
-
-        long topicId = ((StoredTopic) topic.getLocal()).mId;
-        ContentValues values = new ContentValues();
-
-        values.put(COLUMN_NAME_UPDATED, timestamp.getTime());
-        if (meta.desc.defacs != null) {
-            // do something?
-        }
-        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(meta.desc.pub));
-        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(meta.desc.priv));
-        values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
-        int updated = db.update(TABLE_NAME, values, _ID + "=" + topicId, null);
-
-        Log.d(TAG, "Update row by meta.desc, accid=" + BaseDb.getAccountId() +
-                " name=" + topic.getName() + " returned " + updated);
-
-        return updated > 0;
-    }
-
-    /**
-     * Update stored topic on {meta} (remote user-initiated update).
-     *
-     * @return true if the record was updated, false otherwise
-     */
-    public static boolean update(SQLiteDatabase db, Topic topic, Date timestamp, Description desc) {
-        long topicId = ((StoredTopic) topic.getLocal()).mId;
-
-        ContentValues values = new ContentValues();
-
-        values.put(COLUMN_NAME_UPDATED, desc.updated.getTime());
-        if (desc.created != null) {
-            values.put(COLUMN_NAME_CREATED, desc.created.getTime());
-        }
-        if (desc.deleted != null) {
-            values.put(COLUMN_NAME_DELETED, desc.deleted.getTime());
-        }
-
-        if (desc.defacs != null) {
-            // Maybe do something here
-        }
-
-        // P2P only
-        values.put(COLUMN_NAME_READ, desc.read);
-        values.put(COLUMN_NAME_RECV, desc.recv);
-        values.put(COLUMN_NAME_SEQ, desc.seq);
-        values.put(COLUMN_NAME_CLEAR, desc.clear);
-        if (desc.acs != null) {
-            values.put(COLUMN_NAME_ACCESSMODE, desc.acs.toString());
-        }
-        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(desc.pub));
-        values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(desc.priv));
-        if (desc.with != null) {
-            values.put(COLUMN_NAME_WITH, desc.with);
-        }
-        values.put(COLUMN_NAME_LASTUSED, new Date().getTime());
-
-        int updated = db.update(TABLE_NAME, values, _ID + "=" + topicId, null);
-
-        Log.d(TAG, "Update row by meta.desc, accid=" + BaseDb.getAccountId() +
-                " name=" + topic.getName() + " returned " + updated);
-
-        return updated > 0;
-    }
-
-    /**
-     * Save or update a topic
-     *
-     * @return Id of the newly inserted topic or 0 if the topic was updated
-     */
-    public static long upsert(SQLiteDatabase db, Topic topic) {
-        if (!update(db, topic)) {
-            return insert(db, topic);
-        }
-        return 0;
-    }
 
     /**
      * Query topics.
@@ -354,7 +279,7 @@ public class TopicDb implements BaseColumns {
      * @param name Name of the topic to read
      * @return Subscription
      */
-    public static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(SQLiteDatabase db, String name) {
+    protected static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(SQLiteDatabase db, String name) {
         Topic<Pu,Pr,T> topic = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
@@ -377,11 +302,13 @@ public class TopicDb implements BaseColumns {
      * @param topic name of the topic to delete
      * @return 1 on success
      */
-    public static int delete(SQLiteDatabase db, String topic) {
-        String where = "WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
-                COLUMN_NAME_TOPIC + "='" + topic + "'";
-        return db.delete(TABLE_NAME, where, null);
+    public static int delete(SQLiteDatabase db, Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return 0;
+        }
+
+        return db.delete(TABLE_NAME, _ID + "=" + st.mId, null);
     }
 
     /**
@@ -398,21 +325,19 @@ public class TopicDb implements BaseColumns {
                 COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
     }
 
-    private static boolean updateCounter(SQLiteDatabase db, long topicId, String column, int counter) {
-        ContentValues values = new ContentValues();
-        values.put(column, counter);
-        return db.update(TABLE_NAME, values, _ID + "=" + topicId + " AND " + column + "<" + counter, null) > 0;
-    }
-
     public static boolean updateRead(SQLiteDatabase db, long topicId, int read) {
-        return updateCounter(db, topicId, COLUMN_NAME_READ, read);
+        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_READ, topicId, read);
     }
 
-    public static boolean updateRecv(SQLiteDatabase db, long topicId, int read) {
-        return updateCounter(db, topicId, COLUMN_NAME_RECV, read);
+    public static boolean updateRecv(SQLiteDatabase db, long topicId, int recv) {
+        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_RECV, topicId, recv);
     }
 
-    public static boolean updateSeq(SQLiteDatabase db, long topicId, int read) {
-        return updateCounter(db, topicId, COLUMN_NAME_SEQ, read);
+    public static boolean updateSeq(SQLiteDatabase db, long topicId, int seq) {
+        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_SEQ, topicId, seq);
+    }
+
+    public static boolean updateClear(SQLiteDatabase db, long topicId, int clear) {
+        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_CLEAR, topicId, clear);
     }
 }

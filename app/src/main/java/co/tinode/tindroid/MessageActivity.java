@@ -50,7 +50,7 @@ public class MessageActivity extends AppCompatActivity {
     private String mMessageText = null;
 
     private String mTopicName;
-    protected StoredTopic<VCard, String, String> mStoredTopic;
+    protected Topic<VCard, String, String> mTopic;
 
     private SQLiteDatabase mDb;
 
@@ -134,13 +134,11 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        // Load a previously saved topic.
-        mStoredTopic = TopicDb.readOne(mDb, mTopicName);
-        Topic<VCard,String,String> topic = tinode.getTopic(mTopicName);
-
+        // Get a known topic.
+        mTopic = Cache.getTinode().getTopic(mTopicName);
         // sub could be null if this is a new topic.
-        if (mStoredTopic != null) {
-            UiUtils.setupToolbar(this, mStoredTopic.getPub(), Topic.getTopicTypeByName(mTopicName),
+        if (mTopic != null) {
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(),
                     Cache.isUserOnline(mTopicName));
             runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
         } else {

@@ -128,12 +128,13 @@ public class SubscriberDb implements BaseColumns {
             "DROP INDEX IF EXISTS " + INDEX_NAME;
 
     /**
-     * Save user's subscription to DB
+     * Save user's subscription to topic.
+     *
      * @param db database to insert to
      * @param sub Subscription to save
      * @return ID of the newly added user
      */
-    public static long insert(SQLiteDatabase db, long topicId, long userId, Subscription sub) {
+    public static long insert(SQLiteDatabase db, long topicId, Subscription sub) {
         Log.d(TAG, "Inserting sub for " + sub.topic + "/" + sub.user);
         long id = -1;
         try {
@@ -141,17 +142,19 @@ public class SubscriberDb implements BaseColumns {
 
             StoredSubscription ss = new StoredSubscription();
 
-            ContentValues values = new ContentValues();
-            // TODO(gene): Create topic or user
-            values.put(TopicDb.COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
-            ss.topicId = db.insert(TABLE_NAME, null, values);
+            ss.userId = UserDb.insert(db, sub);
+            if (ss.userId <= 0) {
+                db.endTransaction();
+                return -1;
+            }
 
+            ContentValues values = new ContentValues();
             // Insert subscription
-            values.clear();
+            ss.topicId = topicId;
             values.put(COLUMN_NAME_TOPIC_ID, ss.topicId);
             values.put(COLUMN_NAME_USER_ID, ss.userId);
             // User's own sender index is 0.
-            ss.senderIdx = BaseDb.isMe(sub.user) ? 0 : getNextSenderIndex(db, topicId);
+            ss.senderIdx = BaseDb.isMe(sub.user) ? 0 : getNextSenderIndex(db, ss.topicId);
             values.put(COLUMN_NAME_SENDER_INDEX, ss.senderIdx);
             values.put(COLUMN_NAME_MODE, sub.mode);
             values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
@@ -159,10 +162,18 @@ public class SubscriberDb implements BaseColumns {
             values.put(COLUMN_NAME_READ, sub.read);
             values.put(COLUMN_NAME_RECV, sub.recv);
             values.put(COLUMN_NAME_CLEAR, sub.clear);
-            id = db.insert(TABLE_NAME, null, values);
+
+            if (sub.seen != null) {
+                if (sub.seen.when != null) {
+                    values.put(COLUMN_NAME_LAST_SEEN, sub.seen.when.getTime());
+                }
+                if (sub.seen.ua != null) {
+                    values.put(COLUMN_NAME_USER_AGENT, sub.seen.ua);
+                }
+            }
+            ss.mId = db.insert(TABLE_NAME, null, values);
 
             db.setTransactionSuccessful();
-            ss.id = id;
 
             sub.setLocal(ss);
 
@@ -180,16 +191,16 @@ public class SubscriberDb implements BaseColumns {
      */
     public static boolean update(SQLiteDatabase db, Subscription sub) {
         try {
+            StoredSubscription ss = (StoredSubscription) sub.getLocal();
+            if (ss == null || ss.mId < 0) {
+                return false;
+            }
+
             db.beginTransaction();
-            if (sub.topicId <= 0) {
-                sub.topicId = TopicDb.getId(db, sub.topic);
-            }
 
-            if (sub.userId <= 0) {
-                sub.userId = UserDb.getId(db, sub.user);
-            }
-
-            if (sub.topicId <= 0 || sub.userId <= 0) {
+            // Update user
+            if (!UserDb.update(db, sub)) {
+                db.endTransaction();
                 return false;
             }
 
@@ -203,18 +214,18 @@ public class SubscriberDb implements BaseColumns {
             values.put(COLUMN_NAME_READ, sub.read);
             values.put(COLUMN_NAME_RECV, sub.recv);
             values.put(COLUMN_NAME_CLEAR, sub.clear);
+            if (sub.seen != null) {
+                if (sub.seen.when != null) {
+                    values.put(COLUMN_NAME_LAST_SEEN, sub.seen.when.getTime());
+                }
+                if (sub.seen.ua != null) {
+                    values.put(COLUMN_NAME_USER_AGENT, sub.seen.ua);
+                }
+            }
 
-            int updated = db.update(TABLE_NAME, values,
-                    COLUMN_NAME_TOPIC_ID + "=" + sub.topicId + " AND " +
-                    COLUMN_NAME_USER_ID + "=" + sub.userId,
-                    null);
+            int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.mId, null);
 
             Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + sub.user + " returned " + updated);
-
-            // Maybe update topic
-            values.clear();
-            values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(sub.priv));
-
 
             db.setTransactionSuccessful();
 
@@ -224,18 +235,6 @@ public class SubscriberDb implements BaseColumns {
         }
 
         return false;
-    }
-
-    /**
-     * Save or update a subscription
-     *
-     * @return Id of the newly inserted user or 0 if the user was updated
-     */
-    public static long upsert(SQLiteDatabase db, Subscription sub) {
-        if (!update(db, sub)) {
-            return insert(db, sub);
-        }
-        return 0;
     }
 
     /**
@@ -269,7 +268,7 @@ public class SubscriberDb implements BaseColumns {
         // StoredSub part
         int col = 0;
         StoredSubscription ss = new StoredSubscription();
-        ss.id = c.getLong(col++);
+        ss.mId = c.getLong(col++);
         ss.userId = c.getLong(col++);
         ss.topicId = c.getLong(col++);
         ss.senderIdx = c.getInt(col++);
@@ -295,10 +294,11 @@ public class SubscriberDb implements BaseColumns {
         // From topic table
         s.topic = c.getString(col++);
         s.seq = c.getInt(col++);
-        s.with = c.getString(col++);
-        s.priv = BaseDb.deserialize(c.getBlob(col));
+        s.with = c.getString(col);
 
         s.setLocal(ss);
+
+        return s;
     }
 
     protected static Cursor query(SQLiteDatabase db, long topicId) {
@@ -322,7 +322,6 @@ public class SubscriberDb implements BaseColumns {
                 TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_TOPIC + "," +
                 TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_SEQ + "," +
                 TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_WITH + "," +
-                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_PRIVATE +
                 " FROM " + TABLE_NAME +
                 " LEFT JOIN " + UserDb.TABLE_NAME +
                 " ON " + COLUMN_NAME_USER_ID + "=" + UserDb.TABLE_NAME + "." + UserDb._ID +
@@ -346,5 +345,13 @@ public class SubscriberDb implements BaseColumns {
         } while (c.moveToNext());
 
         return result;
+    }
+
+    public static boolean updateRead(SQLiteDatabase db, long topicId, int read) {
+        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_READ, topicId, read);
+    }
+
+    public static boolean updateRecv(SQLiteDatabase db, long topicId, int recv) {
+        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_RECV, topicId, recv);
     }
 }

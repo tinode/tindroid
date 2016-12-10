@@ -16,6 +16,7 @@ public class Description<Pu,Pr> {
     public Defacs defacs;
     public Acs acs;
     public int seq;
+    // Values reported by the current user as read and received
     public int read;
     public int recv;
     public int clear;
@@ -34,31 +35,44 @@ public class Description<Pu,Pr> {
      *
      * @param desc object to copy.
      */
-    public void merge(Description<Pu,Pr> desc) {
+    public boolean merge(Description<Pu,Pr> desc) {
+        int changed = 0;
+
         if (created == null && desc.created != null) {
             created = desc.created;
+            changed ++;
         }
         if (desc.updated != null && (updated == null || updated.before(desc.updated))) {
             updated = desc.updated;
+            changed ++;
         }
-        if (desc.defacs != null) {
+
+        if (desc.defacs != null && !desc.defacs.equals(defacs)) {
             defacs = desc.defacs;
+            changed ++;
         }
-        if (desc.acs != null) {
+
+        if (desc.acs != null && !desc.acs.equals(acs)) {
             acs = desc.acs;
+            changed ++;
         }
         if (desc.seq > seq) {
             seq = desc.seq;
+            changed ++;
         }
         if (desc.read > read) {
             read = desc.read;
+            changed ++;
         }
         if (desc.recv > recv) {
             recv = desc.recv;
+            changed ++;
         }
         if (desc.clear > clear) {
             clear = desc.clear;
+            changed ++;
         }
+
         if (desc.pub != null) {
             pub = desc.pub;
         }
@@ -67,9 +81,64 @@ public class Description<Pu,Pr> {
             priv = desc.priv;
         }
 
-        if (desc.with != null) {
+        if (desc.with != null && !desc.with.equals("") && !desc.with.equals(with)) {
             with = desc.with;
+            changed ++;
         }
 
+        return changed > 0;
     }
+
+    /**
+     * Merge subscription into a description
+     */
+    public boolean merge(Subscription<Pu,Pr> sub) {
+        int changed = 0;
+
+        if (sub.updated != null && (updated == null || updated.before(sub.updated))) {
+            updated = sub.updated;
+            changed++;
+        }
+
+        if (sub.deleted != null && (deleted == null || deleted.after(sub.deleted))) {
+            deleted = sub.deleted;
+            changed++;
+        }
+
+        if (sub.seq > seq) {
+            seq = sub.seq;
+            changed++;
+        }
+
+        if (sub.read > read) {
+            read = sub.read;
+            changed++;
+        }
+
+        if (sub.recv > recv) {
+            recv = sub.recv;
+            changed++;
+        }
+
+        if (sub.clear > clear) {
+            clear = sub.clear;
+            changed++;
+        }
+
+        if (sub.pub != null) {
+            pub = sub.pub;
+        }
+
+        if (sub.priv != null) {
+            priv = sub.priv;
+        }
+
+        if (sub.with != null && !sub.with.equals("") && !sub.with.equals(with)) {
+            with = sub.with;
+            changed ++;
+        }
+
+        return changed > 0;
+    }
+
 }

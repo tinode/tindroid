@@ -6,21 +6,21 @@ package co.tinode.tinodesdk.model;
 
 public class AccessMode {
 
-    private long mMode;
+    private Integer mMode;
     // User access to topic
 
-    private static long MODE_SUB = 0x01;    // R
-    private static long MODE_PUB = 0x02;    // W
-    private static long MODE_PRES = 0x04;   // P
-    private static long MODE_SHARE = 0x08;  // S user can invite other people to join (S)
-    private static long MODE_DELETE = 0x10; // D user can hard-delete messages (D), only owner can completely delete
-    private static long MODE_OWNER = 0x20;  // O user is the owner (O) - full access
-    private static long MODE_BANNED = 0x40; // user has no access, requests to share/gain access/{sub} are ignored (X)
+    private static int MODE_SUB = 0x01;    // R
+    private static int MODE_PUB = 0x02;    // W
+    private static int MODE_PRES = 0x04;   // P
+    private static int MODE_SHARE = 0x08;  // S user can invite other people to join (S)
+    private static int MODE_DELETE = 0x10; // D user can hard-delete messages (D), only owner can completely delete
+    private static int MODE_OWNER = 0x20;  // O user is the owner (O) - full access
+    private static int MODE_BANNED = 0x40; // user has no access, requests to share/gain access/{sub} are ignored (X)
 
-    private static long MODE_NONE = 0; // No access, requests to gain access are processed normally (N)
+    private static int MODE_NONE = 0; // No access, requests to gain access are processed normally (N)
 
     // Invalid mode to indicate an error
-    private static long MODE_INVALID = 0x100000;
+    private static int MODE_INVALID = 0x100000;
 
     public AccessMode() {
         mMode = MODE_NONE;
@@ -30,12 +30,12 @@ public class AccessMode {
         mMode = parse(mode);
     }
 
-    private static long parse(String mode) {
+    private static int parse(String mode) {
         if (mode == null || mode.length() == 0) {
             return MODE_NONE;
         }
 
-        long m0 = MODE_NONE;
+        int m0 = MODE_NONE;
 
         for (char c : mode.toCharArray()) {
             switch (c) {
@@ -80,11 +80,12 @@ public class AccessMode {
     @Override
     public String toString() {
         // Need to distinguish between "not set" and "no access"
+        if (mMode == null || mMode == MODE_INVALID) {
+            return null;
+        }
+
         if (mMode == 0) {
             return "N";
-        }
-        if (mMode == MODE_INVALID) {
-            return null;
         }
 
         if ((mMode & MODE_BANNED) != 0) {
