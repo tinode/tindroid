@@ -52,8 +52,6 @@ public class MessageActivity extends AppCompatActivity {
     private String mTopicName;
     protected Topic<VCard, String, String> mTopic;
 
-    private SQLiteDatabase mDb;
-
     public static void runLoader(final int loaderId, final Bundle args,
                                   final LoaderManager.LoaderCallbacks<Cursor> callbacks,
                                   final LoaderManager loaderManager) {
@@ -82,8 +80,6 @@ public class MessageActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-        mDb = BaseDb.getInstance(this, Cache.getTinode().getMyId()).getWritableDatabase();
 
         LinearLayoutManager lm = new LinearLayoutManager(this);
         //lm.setReverseLayout(true);
@@ -135,86 +131,23 @@ public class MessageActivity extends AppCompatActivity {
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
         // Get a known topic.
-        mTopic = Cache.getTinode().getTopic(mTopicName);
-        // sub could be null if this is a new topic.
+        mTopic = tinode.getTopic(mTopicName);
         if (mTopic != null) {
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(),
-                    Cache.isUserOnline(mTopicName));
+            mTopic.setListener(new TListener(loaderManager));
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
             runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
         } else {
-            topic = new Topic<>(tinode, mTopicName,
-                    new Topic.Listener<VCard, String, String>() {
-
-                @Override
-                public void onSubscribe(int code, String text) {
-                    // Topic name may change after subscription, i.e. new -> grpXXX
-                    mTopicName = mTopic.getName();
-                    runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
-                }
-
-                @Override
-                public void onData(MsgServerData data) {
-                    runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
-                }
-
-                @Override
-                public void onPres(MsgServerPres pres) {
-                    Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
-                }
-
-                @Override
-                public void onInfo(MsgServerInfo info) {
-                    switch (info.what) {
-                        case "read":
-                        case "recv":
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mMessagesAdapter.notifyDataSetChanged();
-                                }
-                            });
-                            break;
-                        case "kp":
-                            // TODO(gene): show typing notification
-                            Log.d(TAG, info.from + ": typing...");
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                @Override
-                public void onMetaSub(Subscription sub) {
-
-                }
-
-                @Override
-                public void onMetaDesc(final Description<VCard, String> desc) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            UiUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType(),
-                                    Cache.isUserOnline(mTopicName));
-                        }
-                    });
-                }
-
-                @Override
-                public void onSubsUpdated() {
-
-                }
-            });
+            Log.d(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
         }
 
-        if (!topic.isAttached()) {
+        if (!mTopic.isAttached()) {
             try {
-                MsgGetMeta.GetData getData = new MsgGetMeta.GetData();
-                // GetData.since is inclusive, so adding 1 to skip the item we already have.
-                getData.since = mStoredTopic.getSeq() + 1;
-                topic.subscribe(null, new MsgGetMeta(
-                        new MsgGetMeta.GetDesc(),
-                        new MsgGetMeta.GetSub(),
-                        getData));
+                mTopic.subscribe(null,
+                        mTopic.subscribeParamGetBuilder()
+                        .withGetDesc()
+                        .withGetSub()
+                        .withGetData()
+                        .build());
             } catch (Exception ex) {
                 Log.e(TAG, "something went wrong", ex);
             }
@@ -224,18 +157,17 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
-        Tinode tinode = Cache.getTinode();
-        tinode.setListener(null);
-        Topic topic = tinode.getTopic(mTopicName);
-        if (topic != null) {
-            topic.setListener(null);
+
+        Cache.getTinode().setListener(null);
+        if (mTopic != null) {
+            mTopic.setListener(null);
 
             // Deactivate current topic
-            if (topic.isAttached()) {
+            if (mTopic.isAttached()) {
                 try {
-                    topic.leave();
+                    mTopic.leave();
                 } catch (Exception ex) {
-                    Log.e(TAG, "something went wrong", ex);
+                    Log.e(TAG, "something went wrong in Topic.leave", ex);
                 }
             }
         }
@@ -268,32 +200,24 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     public void sendReadNotification() {
-        Topic topic = Cache.getTinode().getTopic(mTopicName);
-        if (topic != null) {
-            int read = topic.noteRead();
-            if (read > 0) {
-                if (TopicDb.updateRead(mDb, mTopicName, read)) {
-                    mStoredTopic.setRead(read);
-                }
-            }
+        if (mTopic != null) {
+            mTopic.noteRead();
         }
     }
 
     public void sendKeyPress() {
-        Topic topic = Cache.getTinode().getTopic(mTopicName);
-        if (topic != null) {
-            topic.noteKeyPress();
+        if (mTopic != null) {
+            mTopic.noteKeyPress();
         }
     }
 
     public void sendMessage() {
-        Topic<?,?,String> topic = Cache.getTinode().getTopic(mTopicName);
-        if (topic != null) {
+        if (mTopic != null) {
             final TextView inputField = (TextView) findViewById(R.id.editMessage);
             String message = inputField.getText().toString().trim();
             if (!message.equals("")) {
                 try {
-                    topic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                             runOnUiThread(new Runnable() {
@@ -307,9 +231,78 @@ public class MessageActivity extends AppCompatActivity {
                         }
                     }, null);
                 } catch (Exception unused) {
-                    // TODO(gene): tell user that the message was not sent or save it for future delivery.
+                    // TODO(gene): tell user that the message was not sent.
                 }
             }
+        }
+    }
+
+    class TListener extends Topic.Listener<VCard, String, String> {
+        private LoaderManager mLoaderManager;
+
+        TListener(LoaderManager lm) {
+            mLoaderManager = lm;
+        }
+
+        @Override
+        public void onSubscribe(int code, String text) {
+            // Topic name may change after subscription, i.e. new -> grpXXX
+            mTopicName = mTopic.getName();
+            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
+        }
+
+        @Override
+        public void onData(MsgServerData data) {
+            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
+        }
+
+        @Override
+        public void onPres(MsgServerPres pres) {
+            Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
+        }
+
+        @Override
+        public void onInfo(MsgServerInfo info) {
+            switch (info.what) {
+                case "read":
+                case "recv":
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMessagesAdapter.notifyDataSetChanged();
+                        }
+                    });
+                    break;
+                case "kp":
+                    // TODO(gene): show typing notification
+                    Log.d(TAG, info.from + ": typing...");
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        @Override
+        public void onMetaDesc(final Description<VCard, String> desc) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    UiUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType(),
+                            mTopic.getOnline());
+                }
+            });
+        }
+
+        @Override
+        public void onOnline(final boolean online) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getTopicType(),
+                            mTopic.getOnline());
+                }
+            });
+
         }
     }
 
@@ -342,4 +335,6 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
     }
+
+
 }

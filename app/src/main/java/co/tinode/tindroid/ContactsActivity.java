@@ -39,14 +39,10 @@ public class ContactsActivity extends AppCompatActivity implements
     private static final String TAG = "ContactsActivity";
 
     protected ChatListAdapter mChatListAdapter;
-    private SQLiteDatabase mDb = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Get UID of the current user
-        String uid = getIntent().getStringExtra(Utils.ACCKEY_UID);
 
         setContentView(R.layout.activity_contacts);
 
@@ -73,8 +69,7 @@ public class ContactsActivity extends AppCompatActivity implements
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        mDb = BaseDb.getInstance(this, uid).getWritableDatabase();
-        mChatListAdapter = new ChatListAdapter(this, uid);
+        mChatListAdapter = new ChatListAdapter(this);
     }
 
     /**
@@ -111,91 +106,35 @@ public class ContactsActivity extends AppCompatActivity implements
 
         MeTopic<VCard, String, String> me = tinode.getMeTopic();
         if (me == null) {
-            me = new MeTopic<>(Cache.getTinode(),
-                    new Topic.Listener<VCard, String, Invitation<String>>() {
+            // The very first launch of the app.
+            me = new MeTopic<>(tinode, new MeListener());
+        }
 
-                        @Override
-                        public void onData(MsgServerData<Invitation<String>> data) {
-                            // TODO(gene): handle a chat invitation
-                            Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
-                        }
-
-                        @Override
-                        public void onContactUpdate(final String what, final Subscription<VCard, String> sub) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mChatListAdapter.notifyDataSetChanged();
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onInfo(MsgServerInfo info) {
-                            Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
-                        }
-
-                        @Override
-                        public void onPres(MsgServerPres pres) {
-                            if (pres.what.equals("msg")) {
-                                TopicDb.updateSeq(mDb, pres.src, pres.seq);
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mChatListAdapter.notifyDataSetChanged();
-                                    }
-                                });
-                            } else if (pres.what.equals("off") || pres.what.equals("on")) {
-                                // Online/offline info is not persisted
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mChatListAdapter.notifyDataSetChanged();
-                                    }
-                                });
-                            }
-                        }
-
-                        @Override
-                        public void onMetaSub(Subscription<VCard, String> sub) {
-                            if (sub.pub != null) {
-                                sub.pub.constructBitmap();
-                            }
-                            // TopicDb.upsert(mDb, sub.topic, sub);
-                        }
-
-                        @Override
-                        public void onMetaDesc(final Description<VCard, String> desc) {
-                        }
-
-                        @Override
-                        public void onSubsUpdated() {
-                            Log.d(TAG, "Subs Updated");
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mChatListAdapter.notifyDataSetChanged();
-                                }
-                            });
-                        }
-                    });
-            // Public, Private, Info in Invite<Info>
-            me.setTypes(VCard.class, String.class, String.class);
+        // Public, Private, Info in Invite<Info> - does not matter if set more than once.
+        me.setTypes(VCard.class, String.class, String.class);
+        if (!me.isAttached()) {
             try {
-                MsgGetMeta.GetData getData = new MsgGetMeta.GetData();
-                // GetData.since is inclusive, so adding 1 to skip the item we already have.
-                // FIXME(gene): get seq from DB
-                getData.since = 0;
-                me.subscribe(null, new MsgGetMeta(
-                        new MsgGetMeta.GetDesc(),
-                        new MsgGetMeta.GetSub(),
-                        getData));
+                me.subscribe(null, me
+                        .subscribeParamGetBuilder()
+                        .withGetDesc()
+                        .withGetSub()
+                        .withGetData()
+                        .build());
             } catch (Exception err) {
                 Log.i(TAG, "connection failed :( " + err.getMessage());
                 Toast.makeText(getApplicationContext(),
                         "Failed to attach", Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    private void datasetChanged() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mChatListAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
@@ -227,6 +166,51 @@ public class ContactsActivity extends AppCompatActivity implements
         super.onWindowFocusChanged(focus);
 
         Cache.activityVisible(focus);
+    }
+
+    class MeListener extends Topic.Listener<VCard, String, Invitation<String>> {
+
+        @Override
+        public void onData(MsgServerData<Invitation<String>> data) {
+            // TODO(gene): handle a chat invitation
+            Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
+        }
+
+        @Override
+        public void onContactUpdate(final String what, final Subscription<VCard, String> sub) {
+            datasetChanged();
+        }
+
+        @Override
+        public void onInfo(MsgServerInfo info) {
+            Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
+        }
+
+        @Override
+        public void onPres(MsgServerPres pres) {
+            if (pres.what.equals("msg")) {
+                datasetChanged();
+            } else if (pres.what.equals("off") || pres.what.equals("on")) {
+                datasetChanged();
+            }
+        }
+
+        @Override
+        public void onMetaSub(Subscription<VCard, String> sub) {
+            if (sub.pub != null) {
+                sub.pub.constructBitmap();
+            }
+        }
+
+        @Override
+        public void onMetaDesc(final Description<VCard, String> desc) {
+        }
+
+        @Override
+        public void onSubsUpdated() {
+            Log.d(TAG, "Subs Updated");
+            datasetChanged();
+        }
     }
 
     public class PagerAdapter extends FragmentStatePagerAdapter {

@@ -62,7 +62,7 @@ public class ContactsManager {
                 currentSyncMarker = rawContact.updated;
             }
 
-            long rawContactId = lookupRawContact(resolver, rawContact.getUniqueId());
+            long rawContactId = lookupRawContact(resolver, rawContact.with);
             // Contact already exists
             if (rawContactId != 0) {
                 if (rawContact.deleted != null) {
@@ -140,20 +140,20 @@ public class ContactsManager {
 
         // Initiate adding data to contacts provider
         final ContactOperations contactOp = ContactOperations.createNewContact(
-                context, rawContact.getUniqueId(), account.name, aggregate, batchOperation);
+                context, rawContact.with, account.name, aggregate, batchOperation);
 
         contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
                 .addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.HOME), Phone.TYPE_HOME)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.WORK), Phone.TYPE_WORK)
-                .addIm(rawContact.getUniqueId())
+                .addIm(rawContact.with)
                 .addNote(note)
                 .addAvatar(vc.photo != null ? vc.photo.data : null)
                 .addToInvisibleGroup(invisibleGroupId);
 
         // Actually create our status profile.
-        contactOp.addProfileAction(rawContact.getUniqueId());
+        contactOp.addProfileAction(rawContact.with);
     }
 
     /**
@@ -284,7 +284,7 @@ public class ContactsManager {
         // If we don't have a status profile, then create one.  This could
         // happen for contacts that were created on the client - we don't
         // create the status profile until after the first sync...
-        final String serverId = rawContact.getUniqueId();
+        final String serverId = rawContact.with;
         final long profileId = lookupProfile(resolver, serverId);
         if (profileId <= 0) {
             contactOp.addProfileAction(serverId);
@@ -418,7 +418,7 @@ public class ContactsManager {
                                             BatchOperation batchOperation) {
         final ContentValues values = new ContentValues();
         final ContentResolver resolver = context.getContentResolver();
-        final String uid = rawContact.getUniqueId();
+        final String uid = rawContact.with;
         VCard vc;
         try {
             vc = (VCard) rawContact.pub;

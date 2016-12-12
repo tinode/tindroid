@@ -39,13 +39,13 @@ public interface Storage {
     // Message received
     <T> long msgReceived(Subscription sub, MsgServerData<T> msg);
     // Message sent
-    <T> long msgSend(String topicName, T data);
+    <T> long msgSend(Topic topic, T data);
     /** Message delivered to the server and received a real seq ID */
     boolean msgDelivered(long id, Date timestamp, int seq);
     /** Mark messages for deletion */
-    int msgMarkToDelete(Topic topic, int before);
+    boolean msgMarkToDelete(Topic topic, int before);
     /** Delete messages */
-    int msgDelete(Topic topic, int before);
+    boolean msgDelete(Topic topic, int before);
     /** Set recv value for a given subscriber */
     boolean msgRecvByRemote(Subscription sub, int recv);
     /** Set read value for a given subscriber */

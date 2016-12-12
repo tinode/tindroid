@@ -1,8 +1,12 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
@@ -23,36 +27,56 @@ public class MsgGetMeta {
      * Query to get all
      */
     public MsgGetMeta() {
-        this(new String[]{DESC, SUB, DATA});
-    }
-
-    public MsgGetMeta(String[] what) {
-        StringBuilder sb = new StringBuilder();
-        if (what.length > 0) {
-            sb.append(what[0]);
-            for(int i=1; i < what.length; i++){
-                sb.append(" ").append(what[i]);
-            }
-        }
-        this.what = sb.toString();
+        this.what = DESC + " " + SUB + " " + DATA;
     }
 
     public MsgGetMeta(GetDesc desc, GetSub sub, GetData data) {
+        this.desc = desc;
+        this.sub = sub;
+        this.data = data;
+        buildWhat();
+    }
+
+    @JsonIgnore
+    public void setDesc(GetDesc desc) {
+        this.desc = desc;
+        buildWhat();
+    }
+
+    @JsonIgnore
+    public void setDesc(GetSub sub) {
+        this.sub = sub;
+        buildWhat();
+    }
+
+    @JsonIgnore
+    public void setData(GetData data) {
+        this.data = data;
+        buildWhat();
+    }
+
+    @JsonIgnore
+    private void buildWhat() {
+        List<String> parts = new LinkedList<>();
         StringBuilder sb = new StringBuilder();
 
         if (desc != null) {
-            sb.append(DESC);
-            this.desc = desc;
+            parts.add(DESC);
         }
         if (sub != null) {
-            sb.append(" ").append(SUB);
-            this.sub = sub;
+            parts.add(SUB);
         }
         if (data != null) {
-            sb.append(" ").append(DATA);
-            this.data = data;
+            parts.add(DATA);
         }
-        this.what = sb.toString().trim();
+
+        if (!parts.isEmpty()) {
+            sb.append(parts.get(0));
+            for(int i=1; i < parts.size(); i++){
+                sb.append(" ").append(parts.get(i));
+            }
+        }
+        what = sb.toString();
     }
 
     @JsonInclude(NON_DEFAULT)

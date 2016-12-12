@@ -55,8 +55,8 @@ import co.tinode.tinodesdk.model.Subscription;
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
 
-    protected static final String TOPIC_NEW = "new";
-    protected static final String TOPIC_ME = "me";
+    public static final String TOPIC_NEW = "new";
+    public static final String TOPIC_ME = "me";
 
     // Delay in nanoseconds between sending two key press notifications on the
     // same topic.
@@ -918,30 +918,14 @@ public class Tinode {
         return mTopics.get(name);
     }
 
-
-    @SuppressWarnings("unchecked")
-    public <Pu,Pr,T> Topic<Pu,Pr,T> initTopic(String name) {
-        if (name == null) {
-            return null;
-        }
-        Topic<Pu,Pr,T> t = (Topic<Pu,Pr,T>) mTopics.get(name);
-        if (t != null) {
-            return t;
-        }
-        return new Topic<>(this, name, null);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <Pu,Pr,T> Topic<Pu,Pr,T> createTopic(Topic.Listener l) {
-        return new Topic<>(this, l);
-    }
-
     /**
      * Start tracking topic.
      */
     protected void registerTopic(Topic topic) {
         if (mStore != null) {
-            mStore.topicAdd(topic);
+            if (!topic.isPersisted()) {
+                mStore.topicAdd(topic);
+            }
             topic.setStorage(mStore);
         }
         mTopics.put(topic.getName(), topic);

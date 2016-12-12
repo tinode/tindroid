@@ -245,6 +245,18 @@ public class PromisedReply<T> {
     }
 
     /**
+     * Wait for promise resolution.
+     *
+     * @return true if the promise was resolved, false otherwise
+     * @throws Exception
+     */
+    public boolean waitResult() throws Exception {
+        // Wait for the promise to resolve
+        mDoneSignal.await();
+        return isResolved();
+    }
+
+    /**
      * A blocking call which returns the result of the execution. It will return
      * <b>after</b> thenApply is called. It can be safely called multiple times on
      * the same instance.

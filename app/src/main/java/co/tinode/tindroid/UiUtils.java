@@ -116,8 +116,6 @@ public class UiUtils {
         private AppCompatActivity mActivity = null;
         private Boolean mOnline = null;
 
-        private EventListener() {}
-
         public EventListener(AppCompatActivity owner) {
             super();
             mActivity = owner;

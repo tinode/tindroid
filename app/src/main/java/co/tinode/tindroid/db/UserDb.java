@@ -128,25 +128,13 @@ public class UserDb implements BaseColumns {
     }
 
     /**
-     * Save or update a topic
-     *
-     * @return Id of the newly inserted user or 0 if the user was updated
-     */
-    public static long upsert(SQLiteDatabase db, Subscription sub) {
-        if (!update(db, sub)) {
-            return insert(db, sub);
-        }
-        return 0;
-    }
-
-    /**
      * Given UID, get it's database _id
      *
      * @param db database
      * @param uid UID
      * @return _id of the user
      */
-    public static long getId(SQLiteDatabase db, String uid) {
+    static long getId(SQLiteDatabase db, String uid) {
         return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +

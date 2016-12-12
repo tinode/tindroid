@@ -80,27 +80,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected boolean mOnline = false;
 
     protected LastSeen mLastSeen = null;
-    /**
-     * Copy constructor
-     *
-     * @param topic Original instance to copy
-     */
-    protected Topic(Topic<Pu,Pr,T> topic) {
-        mTinode             = topic.mTinode;
-        mTypeOfDataPacket   = topic.mTypeOfDataPacket;
-        mTypeOfMetaPacket   = topic.mTypeOfMetaPacket;
-        mName               = topic.mName;
-        isValidName         = topic.isValidName;
-        mStore              = topic.mStore;
-        mMode               = topic.mMode;
-        mDesc = topic.mDesc != null ? topic.mDesc : new Description<Pu,Pr>();
-        mSubs               = topic.mSubs;
-        mSubsUpdated        = topic.mSubsUpdated;
-        mAttached           = topic.mAttached;
-        mListener           = topic.mListener;
-        mLastKeyPress       = topic.mLastKeyPress;
-    }
-
 
     protected Topic(Tinode tinode, Subscription<Pu,Pr> sub) {
         if (tinode == null) {
@@ -129,7 +108,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param name name of the topic
      * @param l event listener, optional
      */
-    protected Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
+    public Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
         if (tinode == null) {
             throw new IllegalArgumentException("Tinode cannot be null");
         }
@@ -158,7 +137,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param tinode tinode instance
      * @param l event listener, optional
      */
-    protected Topic(Tinode tinode, Listener<Pu,Pr,T> l) {
+    public Topic(Tinode tinode, Listener<Pu,Pr,T> l) {
         this(tinode, Tinode.TOPIC_NEW, l);
     }
 
@@ -358,6 +337,15 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
     }
 
+    /**
+     * Check if the topic is stored.
+     *
+     * @return true if the topic is persisted in local storage, false otherwise
+     */
+    protected boolean isPersisted() {
+        return getLocal() != null;
+    }
+
     protected void setLastSeen(Date when, String ua) {
         mLastSeen = new LastSeen(when, ua);
     }
@@ -369,20 +357,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
     public PromisedReply<ServerMessage> subscribe() throws Exception {
         if (!mAttached) {
             MsgGetMeta getParams = null;
-            if (mDesc == null || mDesc.updated == null) {
+            if (mDesc.updated == null) {
+                // New topic, get everything.
                 getParams = new MsgGetMeta();
             } else {
-                // Check if the last received message has lower ID than the last known message.
-                // If so, fetch missing messages.
-                MeTopic me = mTinode.getMeTopic();
-                if (me != null) {
-                    int seqId = me.getMsgSeq(mName);
-                    if (seqId > mDesc.seq) {
-                        MsgGetMeta.GetData data = new MsgGetMeta.GetData();
-                        data.since = mDesc.seq;
-                        getParams = new MsgGetMeta(null, null, data);
-                    }
-                }
+                // Existing topic with some cached data. Get only fresh data.
+                getParams = subscribeParamGetBuilder().withGetData().build();
             }
 
             return subscribe(null, getParams);
@@ -411,6 +391,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
                     }, null);
         }
         throw new IllegalStateException("Already subscribed");
+    }
+
+    public MetaGetBuilder subscribeParamGetBuilder() {
+        return new MetaGetBuilder(this);
     }
 
     /**
@@ -452,7 +436,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         if (mAttached) {
             final long id;
             if (mStore != null) {
-                id = mStore.msgSend(getName(), content);
+                id = mStore.msgSend(this, content);
             } else {
                 id = -1;
             }
@@ -541,10 +525,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param what "read" or "recv" to indicate which action to report
      */
     protected int noteReadRecv(NoteType what) {
-        if (mDesc == null) {
-            mDesc = new Description<>();
-        }
-
         // Save read and received status on subscription.
         Subscription<?,?> sub = getSubscription(mTinode.getMyId());
         int result = 0;
@@ -566,17 +546,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         } else if (mTinode.isConnected()) {
             Log.e(TAG, "Subscription not found in topic");
         }
-/*
-        // Update cached contact with the new count.
-        MeTopic me = mTinode.getMeTopic();
-        if (me != null) {
-            if (what == NoteType.RECV) {
-                me.setRecv(mName, mDesc.seq);
-            } else {
-                me.setRead(mName, mDesc.seq);
-            }
-        }
-*/
 
         return result;
     }
@@ -628,7 +597,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public Pu getPublic() {
-        return mDesc != null ? mDesc.pub : null;
+        return mDesc.pub;
     }
 
 
@@ -757,8 +726,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
             if (!isValidName) {
                 setName(name);
-                mTinode.registerTopic(this);
             }
+            mTinode.registerTopic(this);
 
             if (mListener != null) {
                 mListener.onSubscribe(200, "subscribed");
@@ -933,5 +902,52 @@ public class Topic<Pu,Pr,T> implements LocalData {
         public void onSubsUpdated() {}
         public void onPres(MsgServerPres pres) {}
         public void onOnline(boolean online) {}
+    }
+
+    public static class MetaGetBuilder {
+        protected Topic topic;
+        protected MsgGetMeta meta;
+
+        MetaGetBuilder(Topic parent) {
+            meta = new MsgGetMeta();
+            topic = parent;
+        }
+
+        public MetaGetBuilder withGetData(Integer since, Integer before, Integer limit) {
+            meta.data = new MsgGetMeta.GetData();
+            // Get messages since the last known message.
+            meta.data.since = since != null ? since : topic.getRecv() + 1;
+            meta.data.before = before;
+            meta.data.limit = limit;
+            return this;
+        }
+        public MetaGetBuilder withGetData() {
+            return withGetData(null, null, null);
+        }
+
+        public MetaGetBuilder withGetDesc(Date ims) {
+            meta.desc = new MsgGetMeta.GetDesc();
+            meta.desc.ims = ims;
+            return this;
+        }
+
+        public MetaGetBuilder withGetDesc() {
+            return withGetDesc(topic.getUpdated());
+        }
+
+        public MetaGetBuilder withGetSub(Date ims, Integer limit) {
+            meta.sub = new MsgGetMeta.GetSub();
+            meta.sub.ims = ims;
+            meta.sub.limit = limit;
+            return this;
+        }
+
+        public MetaGetBuilder withGetSub() {
+            return withGetSub(topic.getUpdated(), null);
+        }
+
+        public MsgGetMeta build() {
+            return meta;
+        }
     }
 }

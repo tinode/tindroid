@@ -19,6 +19,7 @@ import co.tinode.tinodesdk.model.Subscription;
 public class SqlStore implements Storage {
     private static String sMyUid = null;
     private static SQLiteDatabase sDb;
+    private static long sMyId = -1;
 
     SqlStore(SQLiteDatabase db, String uid) {
         sDb = db;
@@ -112,50 +113,54 @@ public class SqlStore implements Storage {
     @Override
     public <T> long msgReceived(Subscription sub, MsgServerData<T> m) {
         StoredMessage<T> msg = new StoredMessage<>(m);
-        // FIXME: try reading them from cache
-        msg.topicId = -1;
-        msg.userId = -1;
-        msg.senderIdx = -1;
+        StoredSubscription ss = (StoredSubscription) sub.getLocal();
+        if (ss == null) {
+           return -1;
+        }
 
-        msg.deliveryStatus = StoredMessage.STATUS_NONE;
+        msg.topicId = ss.topicId;
+        msg.userId = ss.userId;
+        msg.senderIdx = ss.senderIdx;
+
         return MessageDb.insert(sDb, msg);
     }
 
     @Override
-    public <T> long msgSend(String topicName, T data) {
+    public <T> long msgSend(Topic topic, T data) {
         StoredMessage<T> msg = new StoredMessage<>();
 
-        msg.topic = topicName;
+        msg.topic = topic.getName();
         msg.from = sMyUid;
         msg.ts = new Date();
         // Set seq to 0, update it later.
         msg.seq = 0;
         msg.content = data;
 
-        // FIXME(gene): try reading them from cache
-        msg.topicId = -1;
-        msg.userId = -1;
-
+        msg.topicId = StoredTopic.getId(topic);
+        if (sMyId < 0) {
+            sMyId = UserDb.getId(sDb, sMyUid);
+        }
+        msg.userId = sMyId;
         msg.senderIdx = 0;
-        msg.deliveryStatus = StoredMessage.STATUS_NONE;
+
         return MessageDb.insert(sDb, msg);
     }
 
     @Override
     public boolean msgDelivered(long id, Date timestamp, int seq) {
-        return MessageDb.setStatus(sDb, id, timestamp, seq, StoredMessage.STATUS_SENT);
+        return MessageDb.delivered(sDb, id, timestamp, seq);
     }
 
     @Override
-    public int msgMarkToDelete(Topic topic, int before) {
+    public boolean msgMarkToDelete(Topic topic, int before) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(sDb, st.mId, 0, before, true);
+        return MessageDb.delete(sDb, st.mId, before, true);
     }
 
     @Override
-    public int msgDelete(Topic topic, int before) {
+    public boolean msgDelete(Topic topic, int before) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(sDb, st.mId, 0, before, false);
+        return MessageDb.delete(sDb, st.mId, before, false);
     }
 
     @Override

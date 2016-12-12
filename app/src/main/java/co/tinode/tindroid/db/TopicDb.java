@@ -265,9 +265,8 @@ public class TopicDb implements BaseColumns {
      * @return Subscription
      */
     public static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Cursor c) {
-
         String name = c.getString(COLUMN_IDX_TOPIC);
-        Topic<Pu,Pr,T> topic = Cache.getTinode().initTopic(name);
+        Topic<Pu,Pr,T> topic = new Topic<>(Cache.getTinode(), name, null);
         StoredTopic.deserialize(topic, c);
         return topic;
     }

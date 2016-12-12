@@ -14,15 +14,18 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.VCard;
 import co.tinode.tinodesdk.MeTopic;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -114,22 +117,24 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             tinode.connect(hostName).getResult();
             tinode.loginToken(token).getResult();
 
-            MsgGetMeta.GetSub sub = new MsgGetMeta.GetSub();
-            // FIXME(gene): The following is commented out for debugging
-            // sub.ims = getServerSyncMarker(account);
-            MsgGetMeta subGet = new MsgGetMeta(null, sub, null);
-            MeTopic me = tinode.getMeTopic();
-            if (me != null) {
-                if (!me.isAttached()) {
-                    me.subscribe().getResult();
-                }
-                me.getMeta(subGet).getResult();
+            // Don't care if it's resolved or rejected
+            tinode.subscribe(Tinode.TOPIC_ME, null, null).waitResult();
 
+            MsgGetMeta.GetSub getSub = new MsgGetMeta.GetSub();
+            // FIXME(gene): The following is commented out for debugging
+            // getSub.ims = getServerSyncMarker(account);
+            PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_ME, new MsgGetMeta(null, getSub, null));
+            if (future.waitResult()) {
+                ServerMessage<?,VCard,String> pkt = future.getResult();
                 // Fetch the list of updated contacts. Group subscriptions will be stored in
                 // the address book but as invisible contacts (members of invisible group)
-                Collection<Subscription<VCard, String>> updated =
-                        me.getFilteredSubscriptions(sub.ims, Topic.TopicType.USER);
-                Date upd = ContactsManager.updateContacts(mContext, account, updated, sub.ims, invisibleGroupId);
+                Collection<Subscription<VCard, String>> updated = new ArrayList<>();
+                for (Subscription<VCard, String> sub : pkt.meta.sub) {
+                    if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
+                        updated.add(sub);
+                    }
+                }
+                Date upd = ContactsManager.updateContacts(mContext, account, updated, getSub.ims, invisibleGroupId);
                 setServerSyncMarker(account, upd);
             }
         } catch (IOException e) {

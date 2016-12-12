@@ -20,6 +20,7 @@ import java.util.Date;
 
 import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tinodesdk.Topic;
 
 /**
  * Handle display of a conversation
@@ -86,12 +87,12 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         StoredMessage<String> m = MessageDb.readMessage(mCursor);
 
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
-        long prevFrom = -1;
+        long prevFrom = -2;
         if (position > 0) {
             mCursor.moveToPrevious();
             prevFrom = MessageDb.readMessage(mCursor).userId;
         }
-        long nextFrom = -1;
+        long nextFrom = -2;
         if (position < getItemCount() - 1) {
             mCursor.moveToPosition(position + 1);
             nextFrom = MessageDb.readMessage(mCursor).userId;
@@ -143,10 +144,17 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
         if (m.isMine()) {
-            if (m.deliveryStatus == StoredMessage.STATUS_READ) {
-                holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
-            } else if (m.deliveryStatus == StoredMessage.STATUS_RECV) {
-                holder.mDeliveredIcon.setImageResource(R.drawable.ic_done);
+            if (m.seq == 0) {
+                holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
+            } else {
+                Topic topic = Cache.getTinode().getTopic(m.topic);
+                if (topic.msgReadCount(m.seq) > 0) {
+                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
+                } else if (topic.msgRecvCount(m.seq) > 0) {
+                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
+                } else {
+                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_done);
+                }
             }
         }
     }
@@ -171,7 +179,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 mCursor = cursor;
                 notifyDataSetChanged();
                 // -1 means scroll to the bottom
-                ((MessageActivity) mActivity).scrollTo(-1);
+                (mActivity).scrollTo(-1);
             }
         });
     }

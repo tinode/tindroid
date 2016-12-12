@@ -176,6 +176,13 @@ public class MessageDb implements BaseColumns {
         return id;
     }
 
+    public static boolean delivered(SQLiteDatabase db, long id, Date timestamp, int seq) {
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_TS, timestamp.getTime());
+        values.put(COLUMN_NAME_SEQ, seq);
+        return db.update(TABLE_NAME, values, _ID + "=" + id, null) > 0;
+    }
+
     /**
      * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
      *
