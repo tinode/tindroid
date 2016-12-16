@@ -21,9 +21,12 @@ public class SqlStore implements Storage {
     private static SQLiteDatabase sDb;
     private static long sMyId = -1;
 
-    SqlStore(SQLiteDatabase db, String uid) {
+    SqlStore(SQLiteDatabase db) {
         sDb = db;
-        sMyUid = uid;
+    }
+
+    public void setDb(SQLiteDatabase db) {
+        sDb = db;
     }
 
     @Override
@@ -34,6 +37,7 @@ public class SqlStore implements Storage {
     @Override
     public boolean setMyUid(String uid) {
         sMyUid = uid;
+        BaseDb.setAccount(uid);
         return true;
     }
 

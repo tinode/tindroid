@@ -1,12 +1,12 @@
 <resources>
     <string name="app_name">Tindroid</string>
     <string name="app_name_full">Tindroid Messenger</string>
-    <string name="app_version">Version 0.8</string>
+    <string name="app_version">Version 0.8.10</string>
     <string name="copyright">© 2016 Tinode</string>
 
     <string name="action_settings">Settings</string>
     <string name="login_hint">Login: alice, bob, carol, dave, eve, frank</string>
-    <string name="password_hint">Password: alice123, bob123,...</string>
+    <string name="password_hint">Password: alice123, bob123,…</string>
     <string name="new_message_hint">Type a message</string>
     <string name="send_message_button_hint">Send message</string>
     <string name="sign_in">Sign In</string>

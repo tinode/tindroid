@@ -311,10 +311,7 @@ public class MessageActivity extends AppCompatActivity {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             if (id == MESSAGES_QUERY_ID) {
-                return new MessageDb.Loader(
-                        MessageActivity.this,
-                        Cache.getTinode().getMyId(),
-                        mTopicName, -1, -1);
+                return new MessageDb.Loader(MessageActivity.this, mTopicName, -1, -1);
             }
             return null;
         }

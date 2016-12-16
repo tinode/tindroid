@@ -1,6 +1,8 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -15,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 
 import java.util.Map;
 
@@ -110,6 +113,21 @@ public class UiUtils {
 
     public static void setVisibleTopic(String topic) {
         sVisibleTopic = topic;
+    }
+
+    /** Login successful. Show contacts activity */
+    public static void onLoginSuccess(Activity activity, final Button button) {
+        if (button != null) {
+            activity.runOnUiThread(new Runnable() {
+                public void run() {
+                    button.setEnabled(true);
+                }
+            });
+        }
+
+        Intent intent = new Intent(activity, ContactsActivity.class);
+        activity.startActivity(intent);
+        activity.finish();
     }
 
     public static class EventListener extends Tinode.EventListener {

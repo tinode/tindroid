@@ -50,7 +50,6 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.SetDesc;
-import co.tinode.tinodesdk.model.Subscription;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -76,20 +75,23 @@ public class Tinode {
 
     private Storage mStore = null;
 
-    private String mApiKey;
-    private String mServerHost;
+    private String mApiKey = null;
+    private String mServerHost = null;
 
-    private String mDeviceToken;
-    private String mLanguage;
+    private String mDeviceToken = null;
+    private String mLanguage = null;
 
-    private String mAppName;
+    private String mAppName = null;
 
-    private Connection mConnection;
+    private Connection mConnection = null;
     // True is connection is authenticated
     private boolean mConnAuth = false;
 
     private String mServerVersion = null;
     private String mServerBuild = null;
+
+    private boolean mAutologin = false;
+    private LoginCredentials mLoginCredentials = null;
 
     private String mMyUid = null;
     private String mAuthToken = null;
@@ -205,7 +207,7 @@ public class Tinode {
             protected void onConnect() {
                 try {
                     // Connection established, send handshake, inform listener on success
-                    hello().thenApply(
+                    PromisedReply<ServerMessage> future = hello().thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
@@ -217,6 +219,16 @@ public class Tinode {
                                     return null;
                                 }
                             }, null);
+                    if (mAutologin && mLoginCredentials != null) {
+                        future.thenApply(
+                                new PromisedReply.SuccessListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                        login(mLoginCredentials.scheme, mLoginCredentials.secret);
+                                        return null;
+                                    }
+                                }, null);
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "Exception in Connection.onConnect: ", e);
                 }
@@ -607,6 +619,10 @@ public class Tinode {
     }
 
     protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {
+        if (mAutologin) {
+            mLoginCredentials = new LoginCredentials(scheme, secret);
+        }
+
         if (isAuthenticated()) {
             // Don't try to login again if we are logged in.
             Log.d(TAG, "Already authenticated");
@@ -634,6 +650,10 @@ public class Tinode {
                                 mAuthToken = (String) pkt.ctrl.params.get("token");
                                 mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
                                 mConnAuth = true;
+                                if (mListener != null) {
+                                    mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
+                                }
+
                                 return null;
                             }
                         }, null);
@@ -642,6 +662,10 @@ public class Tinode {
         } catch (JsonProcessingException e) {
             return null;
         }
+    }
+
+    public void setAutologin(boolean state) {
+        mAutologin = state;
     }
 
     /**
@@ -857,7 +881,7 @@ public class Tinode {
     protected void send(String message) {
         Log.d(TAG, "out: " + message);
         if (mConnection == null || !mConnection.isConnected()) {
-            throw new NotConnectedException();
+            throw new NotConnectedException("No connection");
         }
         mConnection.send(message);
     }
@@ -1108,6 +1132,16 @@ public class Tinode {
          */
         @SuppressWarnings("unused")
         public void onPresMessage(MsgServerPres pres) {
+        }
+    }
+
+    static class LoginCredentials {
+        String scheme;
+        String secret;
+
+        LoginCredentials(String scheme, String secret) {
+            this.scheme = scheme;
+            this.secret = secret;
         }
     }
 }

@@ -18,6 +18,8 @@ public class ExpBackoff {
         this.attempt = 0;
     }
 
+    private Thread currentThread = null;
+
     /**
      * Increment attempt counter and return time to sleep in milliseconds
      * @return time to sleep in milliseconds
@@ -38,13 +40,19 @@ public class ExpBackoff {
      * @return false if the sleep was interrupted, true otherwise
      */
     public boolean doSleep() {
+        boolean result;
         try {
+            currentThread = Thread.currentThread();
             Thread.sleep(getNextDelay());
+            result = true;
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
+            // Per Java spec calling it here even if it seems to be counterintuitive.
+            currentThread.interrupt();
+            result = false;
+        } finally {
+            currentThread = null;
         }
-        return true;
+        return result;
     }
 
     public void reset() {
@@ -53,5 +61,12 @@ public class ExpBackoff {
 
     public int getAttemptCount() {
         return attempt;
+    }
+
+    public boolean wakeUp() {
+        if (currentThread != null) {
+            currentThread.interrupt();
+        }
+        return currentThread != null;
     }
 }

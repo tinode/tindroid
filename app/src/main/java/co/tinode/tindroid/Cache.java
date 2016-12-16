@@ -1,19 +1,14 @@
 package co.tinode.tindroid;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Context;
 import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.Locale;
-import java.util.Map;
 
-import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.db.SqlStore;
-import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Shared resources.
@@ -30,6 +25,7 @@ public class Cache {
 
     private static int sVisibleCount = 0;
 
+
     public static Tinode getTinode() {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
@@ -39,6 +35,7 @@ public class Cache {
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
             // Set device language
             sTinode.setLanguage(Locale.getDefault().getLanguage());
+            sTinode.setAutologin(true);
         }
 
         sTinode.setDeviceToken(FirebaseInstanceId.getInstance().getToken());

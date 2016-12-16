@@ -29,10 +29,8 @@ public class BaseDb extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "base.db";
 
     private static BaseDb sInstance = null;
-
     private static long sAccountId = -1;
-
-    private static String sUid = null;
+    private static String sMyUid = null;
 
     private BaseDb(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -44,20 +42,36 @@ public class BaseDb extends SQLiteOpenHelper {
      * Get instance of BaseDb for a given UID
      *
      * @param context application context
-     * @param uid UID of the current user.
      * @return BaseDb instance
      */
-    public static BaseDb getInstance(Context context, String uid) {
+    public static BaseDb getInstance(Context context) {
         if (sInstance == null) {
             sInstance = new BaseDb(context);
-            sUid = uid;
-            sAccountId = AccountDb.getAccountId(sInstance.getWritableDatabase(), uid);
-            sStore = new SqlStore(sInstance.getWritableDatabase(), uid);
+            if (sStore == null) {
+                sStore = new SqlStore(sInstance.getWritableDatabase());
+            }
         }
         return sInstance;
     }
 
+    public static void setAccount(String uid) {
+        if(sMyUid != null) {
+            // It won't work if the account is switched on a live DB.
+            throw new IllegalStateException("Account is already assigned");
+        }
+        sMyUid = uid;
+        sAccountId = AccountDb.getAccountId(sInstance.getWritableDatabase(), uid);
+    }
+
+    /**
+     * Get an instance of {@link SqlStore} to use by  Tinode core for persistence.
+     *
+     * @return instance of {@link SqlStore}
+     */
     public static SqlStore getStore() {
+        if (sStore == null) {
+            sStore = new SqlStore(sInstance.getWritableDatabase());
+        }
         return sStore;
     }
 
@@ -148,14 +162,12 @@ public class BaseDb extends SQLiteOpenHelper {
         return null;
     }
 
-    static boolean isMe(String uid) {
-        return uid != null && uid.equals(sUid);
-    }
-
     static boolean updateCounter(SQLiteDatabase db, String table, String column, long id,  int counter) {
         ContentValues values = new ContentValues();
         values.put(column, counter);
         return db.update(table, values, BaseColumns._ID + "=" + id + " AND " + column + "<" + counter, null) > 0;
     }
-
+    static boolean isMe(String uid) {
+        return uid != null && uid.equals(sMyUid);
+    }
 }

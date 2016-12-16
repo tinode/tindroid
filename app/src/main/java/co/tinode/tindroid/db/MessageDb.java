@@ -253,10 +253,10 @@ public class MessageDb implements BaseColumns {
         private int fromSeq;
         private int toSeq;
 
-        public Loader(Context context, String account, String topic, int from, int to) {
+        public Loader(Context context, String topic, int from, int to) {
             super(context);
 
-            mDb = BaseDb.getInstance(context, account).getReadableDatabase();
+            mDb = BaseDb.getInstance(context).getReadableDatabase();
             this.topicId = TopicDb.getId(mDb, topic);
             this.fromSeq = from;
             this.toSeq = to;

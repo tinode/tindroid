@@ -10,4 +10,9 @@ public class ServerResponseException extends Exception {
         super(text);
         this.code = code;
     }
+
+    @Override
+    public String getMessage() {
+        return super.getMessage() + " (" + code + ")";
+    }
 }

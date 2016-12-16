@@ -814,18 +814,13 @@ public class Topic<Pu,Pr,T> implements LocalData {
             mDesc.seq = data.seq;
         }
 
+        // FIXME(gene): Won't work for 'me' invites because 'from' is not subscribed by definition
         if (mStore != null && mStore.msgReceived(getSubscription(data.from), data) > 0) {
             noteRecv();
         }
 
         if (mListener != null) {
             mListener.onData(data);
-        }
-
-        // Update subscription cache
-        MeTopic me = mTinode.getMeTopic();
-        if (me != null) {
-            me.setMsgSeq(getName(), data.seq);
         }
     }
 

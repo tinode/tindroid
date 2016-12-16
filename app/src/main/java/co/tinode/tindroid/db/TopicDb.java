@@ -174,7 +174,10 @@ public class TopicDb implements BaseColumns {
                 tp == Topic.TopicType.GRP || tp == Topic.TopicType.P2P ? 1 : 0);
         values.put(COLUMN_NAME_WITH, topic.getWith());
         values.put(COLUMN_NAME_CREATED, lastUsed.getTime());
-        values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
+        if (topic.getUpdated() != null) {
+            // Updated is null at the topic creation time
+            values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
+        }
         // values.put(COLUMN_NAME_DELETED, NULL);
         values.put(COLUMN_NAME_READ, topic.getRead());
         values.put(COLUMN_NAME_RECV, topic.getRecv());

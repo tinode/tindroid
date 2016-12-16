@@ -79,7 +79,7 @@
         android:inputType="text"/>
 
     <Button
-        android:id="@+id/singnUp"
+        android:id="@+id/signUp"
         style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

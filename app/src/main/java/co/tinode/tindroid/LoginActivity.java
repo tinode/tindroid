@@ -9,7 +9,6 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
-import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -39,7 +38,6 @@ import android.widget.Toast;
 import java.io.IOException;
 
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -48,7 +46,7 @@ import co.tinode.tinodesdk.model.SetDesc;
 /**
  * LoginActivity is a FrameLayout which switches between three fragments:
  *  - LoginFragment
- *  - NewAccountFragment
+ *  - SignUpFragment
  *  - LoginSettingsFragment
  *
  *  1. If connection to the server is already established and authenticated, launch ContactsActivity
@@ -76,16 +74,18 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
     private static final int PERMISSIONS_REQUEST_GET_ACCOUNTS = 100;
+    private static final int ACCOUNT_PICKER_CODE = 101;
 
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
 
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
     private Bundle mResultBundle = null;
-
-    private AccountManager mAccountManager;
-
     public String mAccountName = null;
+
+    private LoginFragment mLoginFragment = null;
+    private SignUpFragment mSignUpFragment = null;
+    private LoginSettingsFragment mSettingsFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,9 +102,7 @@ public class LoginActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-                trx.replace(R.id.contentFragment, new LoginFragment());
-                trx.commit();
+                showLoginFragment();
             }
         });
 
@@ -119,19 +117,9 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // See if we can get an auth token from a saved account
-        mAccountManager = AccountManager.get(getBaseContext());
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        // Display the login form.
+        showLoginFragment();
 
-        Account account = fetchAccount(preferences);
-
-        if (account != null) {
-            // Got account, let's use it to log in (it may fail though).
-            loginWithSavedAccount(account);
-        } else {
-            // Display the login form.
-            showLoginForm();
-        }
         Log.d("TAG", "DONE onCreate");
     }
 
@@ -170,7 +158,7 @@ public class LoginActivity extends AppCompatActivity {
                 requestPermissions(new String[]{Manifest.permission.GET_ACCOUNTS}, PERMISSIONS_REQUEST_GET_ACCOUNTS);
                 return null;
             }
-
+            /*
             // Have permission to access accounts. Let's find if we already have a suitable account.
             final Account[] availableAccounts = mAccountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
             if (availableAccounts.length > 0) {
@@ -193,9 +181,37 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 }
             }
+            */
         }
 
         return account;
+    }
+
+    private void accountPicker() {
+        Intent intent;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            intent = AccountManager.newChooseAccountIntent(null, null,
+                    new String[]{Utils.ACCOUNT_TYPE},
+                    false, null, null, null, null);
+        } else {
+            intent = AccountManager.newChooseAccountIntent(null, null,
+                    new String[]{Utils.ACCOUNT_TYPE},
+                    null, null, null, null);
+        }
+        startActivityForResult(intent, ACCOUNT_PICKER_CODE);
+    }
+
+    @Override
+    public void onActivityResult(int reqCode, int resultCode, Intent data) {
+        super.onActivityResult(reqCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (reqCode == ACCOUNT_PICKER_CODE) {
+                String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+
+            }
+        } else {
+            showLoginFragment();
+        }
     }
 
     private Account pickAccountByName(String name, Account[] list) {
@@ -210,53 +226,25 @@ public class LoginActivity extends AppCompatActivity {
         return null;
     }
 
-    private void loginWithSavedAccount(final Account account) {
-        final Button signIn = (Button) findViewById(R.id.singnIn);
-        // signIn.setEnabled(false);
-        // Fetch password
-        // String password = mAccountManager.getPassword(account);
+    void reportError(final Exception err, final Button button, final int errId) {
+        String message = err.getMessage();
+        Log.i(TAG, getText(errId) + " " + message);
 
-        mAccountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
-            @Override
-            public void run(AccountManagerFuture<Bundle> future) {
-                Bundle result = null;
-                try {
-                    result = future.getResult(); // This blocks until the future is ready.
-                } catch (OperationCanceledException e) {
-                    Log.i(TAG, "Get Existing Account canceled, exiting.");
-                    finish();
-                } catch (AuthenticatorException e) {
-                    Log.e(TAG, "AuthenticatorException: ", e);
-                } catch (IOException e) {
-                    Log.e(TAG, "IOException: ", e);
-                }
-                if (result == null) {
-                    return;
-                }
+        Throwable cause = err;
+        while ((cause = cause.getCause()) != null) {
+            message = cause.getMessage();
+        }
+        final String finalMessage = message;
 
-                final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
-                if (TextUtils.isEmpty(token)) {
-                    // Empty token, continue to login form
-                    showLoginForm();
-                    return;
+        runOnUiThread(new Runnable() {
+            public void run() {
+                if (button != null) {
+                    button.setEnabled(true);
                 }
-
-                final SharedPreferences sharedPref
-                        = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
-                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-                try {
-                    // Connecting with synchronous calls because this is not the UI thread.
-                    final Tinode tinode = Cache.getTinode();
-                    tinode.connect(hostName).getResult();
-                    tinode.loginToken(token).getResult();
-                    onLoginSuccess(account, signIn);
-                } catch (Exception err) {
-                    mAccountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                    reportError(err, signIn, R.string.error_login_failed);
-                    showLoginForm();
-                }
+                Toast.makeText(LoginActivity.this,
+                        getText(errId) + " " + finalMessage, Toast.LENGTH_LONG).show();
             }
-        }, null);
+        });
     }
 
     /**
@@ -301,15 +289,11 @@ public class LoginActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_settings: {
-                FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-                trx.replace(R.id.contentFragment, new LoginSettingsFragment());
-                trx.commit();
+                showSettingsFragment();
                 return true;
             }
             case R.id.action_signup: {
-                FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-                trx.replace(R.id.contentFragment, new NewAccountFragment());
-                trx.commit();
+                showSignUpFragment();
                 return true;
             }
             case R.id.action_about:
@@ -322,223 +306,35 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Login button pressed.
-     * @param v ignored
-     */
-    public void onLogin(View v) {
-        EditText loginInput = (EditText) findViewById(R.id.editLogin);
-        EditText passwordInput = (EditText) findViewById(R.id.editPassword);
-
-        final String login = loginInput.getText().toString().trim();
-        if (login.isEmpty()) {
-            loginInput.setError(getText(R.string.login_required));
-            return;
-        }
-        final String password = passwordInput.getText().toString().trim();
-        if (password.isEmpty()) {
-            passwordInput.setError(getText(R.string.password_required));
-            return;
-        }
-
-        final Button signIn = (Button) findViewById(R.id.singnIn);
-        signIn.setEnabled(false);
-
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-        final Tinode tinode = Cache.getTinode();
-        try {
-            // This is called on the websocket thread.
-            tinode.connect(hostName)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    return tinode.loginBasic(
-                                            login,
-                                            password);
-                                }
-                            },
-                            null)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    final Account acc = addAndroidAccount(sharedPref, login, password);
-                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, new Bundle());
-                                    onLoginSuccess(acc, signIn);
-                                    return null;
-                                }
-                            },
-                            new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                    reportError(err, signIn, R.string.error_login_failed);
-                                    return null;
-                                }
-                            });
-        } catch (Exception err) {
-            Log.e(TAG, "Something went wrong", err);
-            reportError(err, signIn, R.string.error_login_failed);
-        }
-    }
-
-    private void reportError(final Exception err, final Button button, final int errId) {
-        String message = err.getMessage();
-        Log.i(TAG, getText(errId) + " " + message);
-
-        Throwable cause = err;
-        while ((cause = cause.getCause()) != null) {
-            message = cause.getMessage();
-        }
-        final String finalMessage = message;
-
-        runOnUiThread(new Runnable() {
-            public void run() {
-                if (button != null) {
-                    button.setEnabled(true);
-                }
-                Toast.makeText(getApplicationContext(),
-                        getText(errId) + " " + finalMessage, Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    /** Login successful. Show contacts activity */
-    private void onLoginSuccess(Account acc, final Button button) {
-        if (button != null) {
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    button.setEnabled(true);
-                }
-            });
-        }
-
-        // Initialize database
-        String uid = mAccountManager.getUserData(acc, Utils.ACCKEY_UID);
-        Intent intent = new Intent(getApplicationContext(), ContactsActivity.class);
-        intent.putExtra(Utils.ACCKEY_UID, uid);
-        startActivity(intent);
-        finish();
-    }
-
     /** Display the login form */
-    private void showLoginForm() {
+    private void showLoginFragment() {
+        if (mLoginFragment == null) {
+            mLoginFragment = new LoginFragment();
+        }
         FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, new LoginFragment());
+        trx.replace(R.id.contentFragment, mLoginFragment);
         trx.commit();
     }
 
-    /**
-     * Create new account
-     * @param v button pressed
-     */
-    public void onSignUp(View v) {
-        final String login = ((EditText) findViewById(R.id.newLogin)).getText().toString().trim();
-        if (login.isEmpty()) {
-            ((EditText) findViewById(R.id.newLogin)).setError(getText(R.string.login_required));
-            return;
+    /** Display the sign up form */
+    private void showSignUpFragment() {
+        if (mSignUpFragment == null) {
+            mSignUpFragment = new SignUpFragment();
         }
-        final String password = ((EditText) findViewById(R.id.newPassword)).getText().toString().trim();
-        if (password.isEmpty()) {
-            ((EditText) findViewById(R.id.newPassword)).setError(getText(R.string.password_required));
-            return;
-        }
-
-        String password2 = ((EditText) findViewById(R.id.repeatPassword)).getText().toString();
-        // Check if passwords match. If not, report error.
-        if (!password.equals(password2)) {
-            ((EditText) findViewById(R.id.repeatPassword)).setError(getText(R.string.passwords_dont_match));
-            Toast.makeText(this, getText(R.string.passwords_dont_match), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        final Button signUp = (Button) findViewById(R.id.singnUp);
-        signUp.setEnabled(false);
-
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-        final String fullName = ((EditText) findViewById(R.id.fullName)).getText().toString().trim();
-        final ImageView avatar = (ImageView) findViewById(R.id.imageAvatar);
-        final Tinode tinode = Cache.getTinode();
-        try {
-            // This is called on the websocket thread.
-            tinode.connect(hostName)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) throws Exception {
-                                    // Try to create a new account.
-                                    Bitmap bmp = null;
-                                    try {
-                                        bmp = ((BitmapDrawable) avatar.getDrawable()).getBitmap();
-                                    } catch (ClassCastException ignored) {
-                                        // If image is not loaded, the drawable is a vector.
-                                        // Ignore it.
-                                    }
-                                    VCard vcard = new VCard(fullName, bmp);
-                                    return tinode.createAccountBasic(
-                                            login, password, true,
-                                            new SetDesc<VCard,String>(vcard, null));
-                                }
-                            }, null)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    // Flip back to login screen on success;
-                                    LoginActivity.this.runOnUiThread(new Runnable() {
-                                        public void run() {
-                                            signUp.setEnabled(true);
-                                            FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-                                            trx.replace(R.id.contentFragment, new LoginFragment());
-                                            trx.commit();
-                                        }
-                                    });
-                                    return null;
-                                }
-                            },
-                            new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                    reportError(err, signUp, R.string.error_new_account_failed);
-                                    return null;
-                                }
-                            });
-
-        } catch (Exception e) {
-            Log.e(TAG, "Something went wrong", e);
-            signUp.setEnabled(true);
-        }
+        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+        trx.replace(R.id.contentFragment, mSignUpFragment);
+        trx.commit();
     }
 
-    public void onFacebookUp(View v) {
-        Toast.makeText(getApplicationContext(), "Facebook: not implemented", Toast.LENGTH_SHORT).show();
-    }
-
-    public void onGoogleUp(View v) {
-        Toast.makeText(getApplicationContext(), "Google: Not implemented", Toast.LENGTH_SHORT).show();
-    }
-
-    private Account addAndroidAccount(final SharedPreferences sharedPref, final String login,
-                                   final String password) {
-        final Account acc = Utils.GetAccount(login);
-        sharedPref.edit().putString(Utils.PREFS_ACCOUNT_NAME, login).apply();
-        mAccountManager.addAccountExplicitly(acc, password, null);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mAccountManager.notifyAccountAuthenticated(acc);
+    /** Display the sign up form */
+    private void showSettingsFragment() {
+        if (mSettingsFragment == null) {
+            mSettingsFragment = new LoginSettingsFragment();
         }
-        final String token = Cache.getTinode().getAuthToken();
-        if (!TextUtils.isEmpty(token)) {
-            mAccountManager.setAuthToken(acc, Utils.TOKEN_TYPE, token);
-        }
-        final String uid = Cache.getTinode().getMyId();
-        if (!TextUtils.isEmpty(uid)) {
-            mAccountManager.setUserData(acc, Utils.ACCKEY_UID, uid);
-        }
-        return acc;
+        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+        trx.replace(R.id.contentFragment, mSettingsFragment);
+        trx.commit();
     }
-
     /**
      * Called when the account needs to be added
      * @param account account t to be added
@@ -574,6 +370,7 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * Sends the result or a Constants.ERROR_CODE_CANCELED error if a result isn't present.
      */
+    @Override
     public void finish() {
         if (mAccountAuthenticatorResponse != null) {
             // send the result bundle back if set, otherwise send an error.

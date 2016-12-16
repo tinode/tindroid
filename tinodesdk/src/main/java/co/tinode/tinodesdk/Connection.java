@@ -1,6 +1,3 @@
-/**
- * Created by gene on 01/02/16.
- */
 package co.tinode.tinodesdk;
 
 import android.util.Log;
@@ -21,8 +18,6 @@ import java.util.Random;
 
 /**
  * A thinly wrapped websocket connection.
- *
- * Created by gene on 2/12/14.
  */
 public class Connection {
     private static final String TAG = "tinodesdk.Connection";
@@ -35,10 +30,11 @@ public class Connection {
     private URI mEndpoint;
     private String mApiKey;
 
-    // Exponential backoff/reconnecting
-    // TODO(gene): implement autoreconnect
+    private Boolean reconnecting;
     private boolean autoreconnect;
-    private ExpBackoff backoff;
+
+    // Exponential backoff/reconnecting
+    final private ExpBackoff backoff = new ExpBackoff();
 
     protected Connection(URI endpoint, String apikey, WsListener listener) {
 
@@ -67,6 +63,8 @@ public class Connection {
         }
 
         mListener = listener;
+        reconnecting = false;
+        autoreconnect = false;
     }
 
     protected WebSocket createSocket() throws IOException {
@@ -101,14 +99,29 @@ public class Connection {
                                        WebSocketFrame serverCloseFrame,
                                        WebSocketFrame clientCloseFrame,
                                        final boolean closedByServer) {
-                Log.d(TAG, "Disconnected :(");
-                // Reset packet counter
+                Log.d(TAG, "Connection failed :(");
+
+                // Avoid infinite recursion
+                if (reconnecting) {
+                    return;
+                }
 
                 WebSocketFrame frame = closedByServer ? serverCloseFrame : clientCloseFrame;
                 mListener.onDisconnect(closedByServer, frame.getCloseCode(), frame.getCloseReason());
 
-                if (autoreconnect) {
-                    // TODO(gene): add autoreconnect
+                while (autoreconnect) {
+                    reconnecting = true;
+
+                    backoff.doSleep();
+                    Log.d(TAG, "Connection: autoreconnecting " + backoff.getAttemptCount());
+                    try {
+                        mWsClient = createSocket();
+                        mWsClient.connect();
+                    } catch (WebSocketException | IOException e) {
+                        Log.d(TAG, "Autoreconnect failed " + e.getMessage());
+                    }
+
+                    reconnecting = false;
                 }
             }
 
@@ -140,7 +153,6 @@ public class Connection {
      * @return true if a new attempt to open a connection was performed, false if connection already exists
      */
     public boolean connect(boolean autoreconnect) throws IOException {
-        // TODO(gene): implement autoreconnect
         this.autoreconnect = autoreconnect;
 
         if (mWsClient == null || mWsClient.getState() != WebSocketState.CREATED) {
@@ -155,6 +167,13 @@ public class Connection {
      *
      */
     public void disconnect() {
+        if (autoreconnect) {
+            autoreconnect = false;
+            // Make sure we are not waiting to reconnect
+            backoff.wakeUp();
+        }
+
+        // Actually close the socket
         mWsClient.disconnect();
     }
 
@@ -184,30 +203,6 @@ public class Connection {
         }
 
         protected void onError(Exception err) {
-        }
-    }
-
-    /**
-     * TODO(gene): implement autoreconnect with exponential backoff
-     */
-    private class ExpBackoff {
-        private int mRetryCount = 0;
-        final private long SLEEP_TIME_MILLIS = 500; // 500 ms
-        final private long MAX_DELAY = 1800000; // 30 min
-        private Random random = new Random();
-
-        void reset() {
-            mRetryCount = 0;
-        }
-
-        /**
-         *
-         * @return reconnect timeout in milliseconds
-         */
-        long getSleepTimeMillis() {
-            int attempt = mRetryCount;
-            return Math.min(SLEEP_TIME_MILLIS * (random.nextInt(1 << attempt) + (1 << (attempt+1))),
-                    MAX_DELAY);
         }
     }
 }

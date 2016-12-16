@@ -97,22 +97,28 @@ public class ContactsActivity extends AppCompatActivity implements
 
     @Override
     public void onResume() {
+        Log.d(TAG, "Contacts activity onResume");
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
+
         tinode.setListener(new UiUtils.EventListener(this));
 
         UiUtils.setupToolbar(this, null, Topic.TopicType.ME, false);
 
         MeTopic<VCard, String, String> me = tinode.getMeTopic();
         if (me == null) {
+            Log.d(TAG, "Contacts activity: me is null");
             // The very first launch of the app.
             me = new MeTopic<>(tinode, new MeListener());
+        } else {
+            Log.d(TAG, "Contacts activity: me is NOT null");
         }
 
         // Public, Private, Info in Invite<Info> - does not matter if set more than once.
         me.setTypes(VCard.class, String.class, String.class);
         if (!me.isAttached()) {
+            Log.d(TAG, "Contacts activity: me is NOT attached");
             try {
                 me.subscribe(null, me
                         .subscribeParamGetBuilder()

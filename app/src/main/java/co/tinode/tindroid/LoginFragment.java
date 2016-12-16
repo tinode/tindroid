@@ -1,20 +1,40 @@
 package co.tinode.tindroid;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.content.ContentResolver;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import co.tinode.tindroid.account.Utils;
+import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class LoginFragment extends Fragment {
+public class LoginFragment extends Fragment  implements View.OnClickListener {
+
+    private static final String TAG = "LoginFragment";
+    private AccountManager mAccountManager;
 
     public LoginFragment() {
     }
@@ -24,17 +44,25 @@ public class LoginFragment extends Fragment {
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
 
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (bar != null) {
+            bar.setDisplayHomeAsUpEnabled(false);
+        }
 
-        View view = inflater.inflate(R.layout.fragment_login, container, false);
+        mAccountManager = AccountManager.get(getActivity().getBaseContext());
+
+        View fragment = inflater.inflate(R.layout.fragment_login, container, false);
         String login = ((LoginActivity) getActivity()).mAccountName;
         if (!TextUtils.isEmpty(login)) {
-            TextView loginView = (TextView) view.findViewById(R.id.editLogin);
+            TextView loginView = (TextView) fragment.findViewById(R.id.editLogin);
             if (loginView != null) {
                 loginView.setText(login);
             }
         }
-        return view;
+
+        fragment.findViewById(R.id.signIn).setOnClickListener(this);
+
+        return fragment;
     }
 
 
@@ -45,4 +73,86 @@ public class LoginFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
+    /**
+     * Login button pressed.
+     * @param v ignored
+     */
+    public void onClick(View v) {
+        final LoginActivity parent = (LoginActivity) getActivity();
+
+        EditText loginInput = (EditText) parent.findViewById(R.id.editLogin);
+        EditText passwordInput = (EditText) parent.findViewById(R.id.editPassword);
+
+        final String login = loginInput.getText().toString().trim();
+        if (login.isEmpty()) {
+            loginInput.setError(getText(R.string.login_required));
+            return;
+        }
+        final String password = passwordInput.getText().toString().trim();
+        if (password.isEmpty()) {
+            passwordInput.setError(getText(R.string.password_required));
+            return;
+        }
+
+        final Button signIn = (Button) parent.findViewById(R.id.signIn);
+        signIn.setEnabled(false);
+
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+        final Tinode tinode = Cache.getTinode();
+        try {
+            // This is called on the websocket thread.
+            tinode.connect(hostName)
+                    .thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                    return tinode.loginBasic(
+                                            login,
+                                            password);
+                                }
+                            },
+                            null)
+                    .thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                    final Account acc = addAndroidAccount(sharedPref, login, password);
+                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, new Bundle());
+                                    UiUtils.onLoginSuccess(parent, signIn);
+                                    return null;
+                                }
+                            },
+                            new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                    parent.reportError(err, signIn, R.string.error_login_failed);
+                                    return null;
+                                }
+                            });
+        } catch (Exception err) {
+            Log.e(TAG, "Something went wrong", err);
+            parent.reportError(err, signIn, R.string.error_login_failed);
+        }
+    }
+
+
+    private Account addAndroidAccount(final SharedPreferences sharedPref, final String login,
+                                      final String password) {
+        final Account acc = Utils.GetAccount(login);
+        sharedPref.edit().putString(Utils.PREFS_ACCOUNT_NAME, login).apply();
+        mAccountManager.addAccountExplicitly(acc, password, null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mAccountManager.notifyAccountAuthenticated(acc);
+        }
+        final String token = Cache.getTinode().getAuthToken();
+        if (!TextUtils.isEmpty(token)) {
+            mAccountManager.setAuthToken(acc, Utils.TOKEN_TYPE, token);
+        }
+        final String uid = Cache.getTinode().getMyId();
+        if (!TextUtils.isEmpty(uid)) {
+            mAccountManager.setUserData(acc, Utils.ACCKEY_UID, uid);
+        }
+        return acc;
+    }
 }
