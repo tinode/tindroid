@@ -15,6 +15,8 @@ public interface Storage {
     String getMyUid();
     boolean setMyUid(String uid);
 
+    boolean isReady();
+
     // Fetch all topics
     Topic[] topicGetAll();
     // Add new topic

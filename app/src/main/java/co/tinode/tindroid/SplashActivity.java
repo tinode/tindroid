@@ -38,42 +38,26 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize DB
-        BaseDb.getInstance(getApplicationContext());
-        // Init Tinode
-        Tinode tinode = Cache.getTinode();
-
-        Class toLaunch;
-        if (tinode.isAuthenticated()) {
-            // We already have a live connection to the server. All good.
-            // Launch the contacts activity and stop.
-            toLaunch = ContactsActivity.class;
-        } else {
-            AccountManager accountManager = AccountManager.get(this);
-            // Get saved account by name.
-            String accountName = getAccountName();
-
-            if (TextUtils.isEmpty(accountName)) {
-                // No saved account name. Go to Login  screen
-                toLaunch = LoginActivity.class;
-            } else {
-                // Get saved account my name
-                Account account = getSavedAccount(accountManager, accountName);
-                if (account == null) {
-                    // Account not found - go to LoginScreen
-                    toLaunch = LoginActivity.class;
-                } else {
-                    // Account found, try to use it for login
-                    loginWithSavedAccount(this, accountManager, account);
-                    toLaunch = null;
+        AccountManager accountManager = AccountManager.get(this);
+        // Get saved account by name.
+        String accountName = getAccountName();
+        if (!TextUtils.isEmpty(accountName)) {
+            // Get saved account my name
+            Account account = getSavedAccount(accountManager, accountName);
+            if (account != null) {
+                // Account found, try to use it for login
+                String uid = accountManager.getUserData(account, Utils.ACCKEY_UID);
+                if (!TextUtils.isEmpty(uid)) {
+                    BaseDb.setAccount(uid);
                 }
+                UiUtils.loginWithSavedAccount(this, accountManager, account);
+                finish();
+                return;
             }
         }
 
-        if (toLaunch != null) {
-            startActivity(new Intent(this, toLaunch));
-            finish();
-        }
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
     }
 
     private String getAccountName() {
@@ -116,59 +100,5 @@ public class SplashActivity extends AppCompatActivity {
         }
 
         return account;
-    }
-
-    private static void loginWithSavedAccount(final Activity activity,
-                                              final AccountManager accountManager,
-                                              final Account account) {
-        accountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
-            @Override
-            public void run(AccountManagerFuture<Bundle> future) {
-                Bundle result = null;
-                Class toLaunch;
-
-                try {
-                    result = future.getResult(); // This blocks until the future is ready.
-                } catch (OperationCanceledException e) {
-                    Log.i(TAG, "Get Existing Account canceled.");
-                } catch (AuthenticatorException e) {
-                    Log.e(TAG, "AuthenticatorException: ", e);
-                } catch (IOException e) {
-                    Log.e(TAG, "IOException: ", e);
-                }
-
-                if (result == null) {
-                    // No data for account
-                    toLaunch = LoginActivity.class;
-                } else {
-                    final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
-                    if (TextUtils.isEmpty(token)) {
-                        // Empty token, continue to login form
-                        toLaunch = LoginActivity.class;
-                    } else {
-                        final SharedPreferences sharedPref
-                                = PreferenceManager.getDefaultSharedPreferences(activity);
-                        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-                        try {
-                            // Connecting with synchronous calls because this is not the UI thread.
-                            final Tinode tinode = Cache.getTinode();
-                            tinode.connect(hostName).getResult();
-                            tinode.loginToken(token).getResult();
-                            // Logged in successfully, go to Contacts
-                            toLaunch = ContactsActivity.class;
-                        } catch (IOException ex) {
-                            // Login failed due to network error
-                            toLaunch = LoginActivity.class;
-                        }
-                        catch (Exception err) {
-                            // Login failed due to non-network error
-                            accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                            toLaunch = LoginActivity.class;
-                        }
-                    }
-                }
-                activity.startActivity(new Intent(activity, toLaunch));
-            }
-        }, null);
     }
 }

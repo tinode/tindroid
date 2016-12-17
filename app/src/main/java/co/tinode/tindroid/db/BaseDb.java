@@ -29,14 +29,16 @@ public class BaseDb extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "base.db";
 
     private static BaseDb sInstance = null;
-    private static long sAccountId = -1;
-    private static String sMyUid = null;
 
+    private long mAccountId = -1;
+    private String mMyUid = null;
+
+    private SqlStore mStore = null;
+
+    /** Private constructor */
     private BaseDb(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
-
-    private static SqlStore sStore = null;
 
     /**
      * Get instance of BaseDb for a given UID
@@ -47,20 +49,20 @@ public class BaseDb extends SQLiteOpenHelper {
     public static BaseDb getInstance(Context context) {
         if (sInstance == null) {
             sInstance = new BaseDb(context);
-            if (sStore == null) {
-                sStore = new SqlStore(sInstance.getWritableDatabase());
+            if (sInstance.mStore == null) {
+                sInstance.mStore = new SqlStore(sInstance.getWritableDatabase());
             }
         }
         return sInstance;
     }
 
-    public static void setAccount(String uid) {
-        if(sMyUid != null) {
+    public void setAccount(String uid) {
+        if(mMyUid != null) {
             // It won't work if the account is switched on a live DB.
             throw new IllegalStateException("Account is already assigned");
         }
-        sMyUid = uid;
-        sAccountId = AccountDb.getAccountId(sInstance.getWritableDatabase(), uid);
+        mMyUid = uid;
+        mAccountId = AccountDb.getAccountId(sInstance.getWritableDatabase(), uid);
     }
 
     /**
@@ -68,15 +70,15 @@ public class BaseDb extends SQLiteOpenHelper {
      *
      * @return instance of {@link SqlStore}
      */
-    public static SqlStore getStore() {
-        if (sStore == null) {
-            sStore = new SqlStore(sInstance.getWritableDatabase());
+    public SqlStore getStore() {
+        if (mStore == null) {
+            mStore = new SqlStore(getWritableDatabase());
         }
-        return sStore;
+        return mStore;
     }
 
-    public static long getAccountId() {
-        return sAccountId;
+    public long getAccountId() {
+        return mAccountId;
     }
 
     @Override
@@ -167,7 +169,8 @@ public class BaseDb extends SQLiteOpenHelper {
         values.put(column, counter);
         return db.update(table, values, BaseColumns._ID + "=" + id + " AND " + column + "<" + counter, null) > 0;
     }
+
     static boolean isMe(String uid) {
-        return uid != null && uid.equals(sMyUid);
+        return uid != null && uid.equals(sInstance.mMyUid);
     }
 }

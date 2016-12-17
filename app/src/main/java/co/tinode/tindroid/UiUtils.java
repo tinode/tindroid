@@ -1,8 +1,15 @@
 package co.tinode.tindroid;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.accounts.AuthenticatorException;
+import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -10,17 +17,23 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
+import java.io.IOException;
 import java.util.Map;
 
+import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 
@@ -130,6 +143,76 @@ public class UiUtils {
         activity.finish();
     }
 
+    public static void loginWithSavedAccount(final Activity activity,
+                                              final AccountManager accountManager,
+                                              final Account account) {
+        accountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> future) {
+                Bundle result = null;
+
+                try {
+                    result = future.getResult(); // This blocks until the future is ready.
+                } catch (OperationCanceledException e) {
+                    Log.i(TAG, "Get Existing Account canceled.");
+                } catch (AuthenticatorException e) {
+                    Log.e(TAG, "AuthenticatorException: ", e);
+                } catch (IOException e) {
+                    Log.e(TAG, "IOException: ", e);
+                }
+
+                boolean success = false;
+                if (result != null) {
+                    final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
+                    if (!TextUtils.isEmpty(token)) {
+                        final SharedPreferences sharedPref
+                                = PreferenceManager.getDefaultSharedPreferences(activity);
+                        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+                        try {
+                            // Connecting with synchronous calls because this is not the UI thread.
+                            final Tinode tinode = Cache.getTinode();
+                            tinode.connect(hostName).getResult();
+                            tinode.loginToken(token).getResult();
+                            // Logged in successfully, go to Contacts
+                            success = true;
+                        } catch (IOException ignored) {
+                            // Login failed due to network error
+                        }
+                        catch (Exception err) {
+                            // Login failed due to non-network error
+                            accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                        }
+                    }
+                }
+
+                if (success) {
+                    // Initialize DB
+                    BaseDb db = BaseDb.getInstance(activity.getApplicationContext());
+                }
+                activity.startActivity(new Intent(activity, success ? ContactsActivity.class : LoginActivity.class));
+            }
+        }, null);
+    }
+
+    public static void setConnectedStatus(final Activity activity, final boolean online) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+                if (toolbar != null) {
+                    Menu menu = toolbar.getMenu();
+                    if (menu != null) {
+                        menu.setGroupVisible(R.id.offline, !online);
+                    }
+                    View line = activity.findViewById(R.id.offline_indicator);
+                    if (line != null) {
+                        line.setVisibility(online ? View.GONE : View.VISIBLE);
+                    }
+                }
+            }
+        });
+    }
+
     public static class EventListener extends Tinode.EventListener {
         private AppCompatActivity mActivity = null;
         private Boolean mOnline = null;
@@ -157,29 +240,12 @@ public class UiUtils {
         }
 
         private void setOnlineStatus(final boolean online) {
-            if (mActivity == null) {
-                return;
+            if (mActivity != null && (mOnline == null || online != mOnline)) {
+                mOnline = online;
+                UiUtils.setConnectedStatus(mActivity, online);
+            } else {
+                mOnline = null;
             }
-
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    final Toolbar toolbar = (Toolbar) mActivity.findViewById(R.id.toolbar);
-                    if (toolbar != null && (mOnline == null || online != mOnline)) {
-                        mOnline = online;
-                        Menu menu = toolbar.getMenu();
-                        if (menu != null) {
-                            menu.setGroupVisible(R.id.offline, !online);
-                        }
-                        View line = mActivity.findViewById(R.id.offline_indicator);
-                        if (line != null) {
-                            line.setVisibility(online ? View.GONE : View.VISIBLE);
-                        }
-                    } else {
-                        mOnline = null;
-                    }
-                }
-            });
         }
     }
 }

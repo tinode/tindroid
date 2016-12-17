@@ -38,7 +38,7 @@ public class Utils {
     public static final String TAG_LABEL_TINODE = "tinode:";
 
     // Key for storing UID in the AccountManager
-    public static final String ACCKEY_UID = "co.tinode.tindroid.uid";
+    public static final String ACCKEY_UID_ = "co.tinode.tindroid.uid";
 
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.

@@ -111,7 +111,6 @@ public class LoginActivity extends AppCompatActivity {
             // We already have a live connection to the server. All good.
             // Launch the contacts activity and stop.
             Intent intent = new Intent(this, ContactsActivity.class);
-            intent.putExtra(Utils.ACCKEY_UID, tinode.getMyId());
             startActivity(intent);
             finish();
             return;

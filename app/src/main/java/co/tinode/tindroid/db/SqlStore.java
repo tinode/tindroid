@@ -3,6 +3,7 @@ package co.tinode.tindroid.db;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import java.security.InvalidParameterException;
 import java.util.Collection;
 import java.util.Date;
 
@@ -17,33 +18,41 @@ import co.tinode.tinodesdk.model.Subscription;
  * Persistence for Tinode.
  */
 public class SqlStore implements Storage {
-    private static String sMyUid = null;
-    private static SQLiteDatabase sDb;
-    private static long sMyId = -1;
+    private String mMyUid = null;
+    private SQLiteDatabase mDb;
+    private long mMyId = -1;
 
     SqlStore(SQLiteDatabase db) {
-        sDb = db;
+        mDb = db;
     }
 
     public void setDb(SQLiteDatabase db) {
-        sDb = db;
+        mDb = db;
     }
 
     @Override
     public String getMyUid() {
-        return sMyUid;
+        return mMyUid;
     }
 
     @Override
     public boolean setMyUid(String uid) {
-        sMyUid = uid;
-        BaseDb.setAccount(uid);
+        if (mMyUid == null) {
+            mMyUid = uid;
+            BaseDb.setAccount(uid);
+        } else if (!mMyUid.equals(uid)) {
+            throw new IllegalStateException("Illegal attempt to change UID");
+        }
         return true;
+    }
+
+    public boolean isReady() {
+        return mDb != null && mMyUid != null;
     }
 
     @Override
     public Topic[] topicGetAll() {
-        Cursor c = TopicDb.query(sDb);
+        Cursor c = TopicDb.query(mDb);
         if (c != null && c.moveToFirst()) {
             Topic[] list = new Topic[c.getCount()];
             int i = 0;
@@ -59,17 +68,17 @@ public class SqlStore implements Storage {
     @Override
     @SuppressWarnings("unchecked")
     public long topicAdd(Topic topic) {
-        return TopicDb.insert(sDb, topic);
+        return TopicDb.insert(mDb, topic);
     }
 
     @Override
     public boolean topicUpdate(Topic topic) {
-        return TopicDb.update(sDb, topic);
+        return TopicDb.update(mDb, topic);
     }
 
     @Override
     public boolean topicDelete(Topic topic) {
-        return TopicDb.delete(sDb, topic) > 0;
+        return TopicDb.delete(mDb, topic) > 0;
     }
 
     @Override
@@ -77,7 +86,7 @@ public class SqlStore implements Storage {
         boolean result = false;
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null && st.mId > 0) {
-            result = TopicDb.updateRead(sDb, st.mId, read);
+            result = TopicDb.updateRead(mDb, st.mId, read);
         }
         return result;
     }
@@ -87,25 +96,25 @@ public class SqlStore implements Storage {
         boolean result = false;
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null && st.mId > 0) {
-            result = TopicDb.updateRecv(sDb, st.mId, recv);
+            result = TopicDb.updateRecv(mDb, st.mId, recv);
         }
         return result;
     }
 
     @Override
     public <Pu, Pr> long subAdd(Topic topic, Subscription<Pu, Pr> sub) {
-        return SubscriberDb.insert(sDb, StoredTopic.getId(topic), sub);
+        return SubscriberDb.insert(mDb, StoredTopic.getId(topic), sub);
     }
 
     @Override
     public <Pu, Pr> boolean subUpdate(Topic topic, Subscription<Pu, Pr> sub) {
-        return SubscriberDb.update(sDb, sub);
+        return SubscriberDb.update(mDb, sub);
     }
 
 
     @Override
     public Collection<Subscription> getSubscriptions(Topic topic) {
-        Cursor c = SubscriberDb.query(sDb, StoredTopic.getId(topic));
+        Cursor c = SubscriberDb.query(mDb, StoredTopic.getId(topic));
         if (c == null) {
             return null;
         }
@@ -126,7 +135,7 @@ public class SqlStore implements Storage {
         msg.userId = ss.userId;
         msg.senderIdx = ss.senderIdx;
 
-        return MessageDb.insert(sDb, msg);
+        return MessageDb.insert(mDb, msg);
     }
 
     @Override
@@ -134,37 +143,37 @@ public class SqlStore implements Storage {
         StoredMessage<T> msg = new StoredMessage<>();
 
         msg.topic = topic.getName();
-        msg.from = sMyUid;
+        msg.from = mMyUid;
         msg.ts = new Date();
         // Set seq to 0, update it later.
         msg.seq = 0;
         msg.content = data;
 
         msg.topicId = StoredTopic.getId(topic);
-        if (sMyId < 0) {
-            sMyId = UserDb.getId(sDb, sMyUid);
+        if (mMyId < 0) {
+            mMyId = UserDb.getId(mDb, mMyUid);
         }
-        msg.userId = sMyId;
+        msg.userId = mMyId;
         msg.senderIdx = 0;
 
-        return MessageDb.insert(sDb, msg);
+        return MessageDb.insert(mDb, msg);
     }
 
     @Override
     public boolean msgDelivered(long id, Date timestamp, int seq) {
-        return MessageDb.delivered(sDb, id, timestamp, seq);
+        return MessageDb.delivered(mDb, id, timestamp, seq);
     }
 
     @Override
     public boolean msgMarkToDelete(Topic topic, int before) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(sDb, st.mId, before, true);
+        return MessageDb.delete(mDb, st.mId, before, true);
     }
 
     @Override
     public boolean msgDelete(Topic topic, int before) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(sDb, st.mId, before, false);
+        return MessageDb.delete(mDb, st.mId, before, false);
     }
 
     @Override
@@ -172,7 +181,7 @@ public class SqlStore implements Storage {
         boolean result = false;
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss != null && ss.mId > 0) {
-            result = SubscriberDb.updateRecv(sDb, ss.mId, recv);
+            result = SubscriberDb.updateRecv(mDb, ss.mId, recv);
         }
         return result;
     }
@@ -182,7 +191,7 @@ public class SqlStore implements Storage {
         boolean result = false;
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss != null && ss.mId > 0) {
-            result = SubscriberDb.updateRead(sDb, ss.mId, read);
+            result = SubscriberDb.updateRead(mDb, ss.mId, read);
         }
         return result;
     }
