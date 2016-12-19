@@ -225,7 +225,8 @@ public class SubscriberDb implements BaseColumns {
 
             int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.mId, null);
 
-            Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + sub.user + " returned " + updated);
+            Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
+                    " name=" + sub.user + " returned " + updated);
 
             db.setTransactionSuccessful();
 

@@ -13,7 +13,7 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 public interface Storage {
     String getMyUid();
-    boolean setMyUid(String uid);
+    void setMyUid(String uid);
 
     boolean isReady();
 

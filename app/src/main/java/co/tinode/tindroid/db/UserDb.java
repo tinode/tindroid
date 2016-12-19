@@ -95,7 +95,7 @@ public class UserDb implements BaseColumns {
 
         // Convert subscription description to a map of values
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getAccountId());
+        values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
         values.put(COLUMN_NAME_UID, sub.user);
         values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
         // values.put(COLUMN_NAME_DELETED, NULL);
@@ -122,7 +122,7 @@ public class UserDb implements BaseColumns {
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
         int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.userId, null);
 
-        Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + sub.user + " returned " + updated);
+        Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() + " name=" + sub.user + " returned " + updated);
 
         return updated > 0;
     }
@@ -137,7 +137,7 @@ public class UserDb implements BaseColumns {
     static long getId(SQLiteDatabase db, String uid) {
         return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
                 " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
                 COLUMN_NAME_UID + "='" + uid + "'").simpleQueryForLong();
     }
 }

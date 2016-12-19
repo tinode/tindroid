@@ -142,7 +142,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Account name is not in the intent, try reading one from preferences.
         if (TextUtils.isEmpty(mAccountName)) {
-            mAccountName = preferences.getString(Utils.PREFS_ACCOUNT_NAME, null);
+            mAccountName = Utils.getAccountNameFromPrefs(preferences);
         }
 
         // Got account name, Let's try lo load it.
@@ -273,7 +273,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mAccountName = accountList[which];
-                preferences.edit().putString(Utils.PREFS_ACCOUNT_NAME, mAccountName).apply();
+                Utils.saveAccountNameToPrefs(preferences, mAccountName);
             }
         }).create();
         dialog.show();

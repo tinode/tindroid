@@ -38,18 +38,16 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Initialize database helper with global context.
+        BaseDb.init(getApplicationContext());
+        String uid = BaseDb.getInstance().getUid();
+
         AccountManager accountManager = AccountManager.get(this);
-        // Get saved account by name.
-        String accountName = getAccountName();
-        if (!TextUtils.isEmpty(accountName)) {
-            // Get saved account my name
-            Account account = getSavedAccount(accountManager, accountName);
+        if (!TextUtils.isEmpty(uid)) {
+            // If uid is non-null, get account to use it to login by saved token
+            Account account = getSavedAccount(accountManager, uid);
             if (account != null) {
                 // Account found, try to use it for login
-                String uid = accountManager.getUserData(account, Utils.ACCKEY_UID);
-                if (!TextUtils.isEmpty(uid)) {
-                    BaseDb.setAccount(uid);
-                }
                 UiUtils.loginWithSavedAccount(this, accountManager, account);
                 finish();
                 return;
@@ -60,20 +58,6 @@ public class SplashActivity extends AppCompatActivity {
         finish();
     }
 
-    private String getAccountName() {
-        // Check if accountName is provided in the intent which launched this activity
-        String accountName = getIntent().getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-        Log.d(TAG, "accountName from intent=" + accountName);
-
-        // Account name is not in the intent, try reading one from preferences.
-        if (TextUtils.isEmpty(accountName)) {
-            final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            accountName = preferences.getString(Utils.PREFS_ACCOUNT_NAME, null);
-        }
-
-        return accountName;
-    }
-
     private Account getSavedAccount(AccountManager accountManager, String accountName) {
         Account account = null;
 
@@ -82,7 +66,7 @@ public class SplashActivity extends AppCompatActivity {
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.GET_ACCOUNTS) !=
                         PackageManager.PERMISSION_GRANTED) {
             // Don't have permission. Apparently this is the first launch.
-            // Fail and go to full login.
+            // Fail and go to full login. We should not ask for permission on the splash screen.
             Log.d(TAG, "NO permission to get accounts");
             return null;
         }

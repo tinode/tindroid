@@ -166,7 +166,7 @@ public class TopicDb implements BaseColumns {
         // Convert topic description to a map of values
         Date lastUsed = new Date();
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getAccountId());
+        values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
         values.put(COLUMN_NAME_TOPIC, topic.getName());
         Topic.TopicType tp = topic.getTopicType();
         values.put(COLUMN_NAME_TYPE, tp.val());
@@ -237,7 +237,8 @@ public class TopicDb implements BaseColumns {
             st.mLastUsed = lastUsed;
         }
 
-        Log.d(TAG, "Update row, accid=" + BaseDb.getAccountId() + " name=" + topic.getName() + " returned " + updated);
+        Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
+                " name=" + topic.getName() + " returned " + updated);
 
         return updated > 0;
     }
@@ -254,7 +255,7 @@ public class TopicDb implements BaseColumns {
 
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
                 " ORDER BY " + COLUMN_NAME_LASTUSED + " DESC";
 
         Log.d(TAG, sql);
@@ -285,7 +286,7 @@ public class TopicDb implements BaseColumns {
         Topic<Pu,Pr,T> topic = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
                 COLUMN_NAME_TOPIC + "='" + name + "'";
         Cursor c = db.rawQuery(sql, null);
         if (c != null) {
@@ -323,7 +324,7 @@ public class TopicDb implements BaseColumns {
     public static long getId(SQLiteDatabase db, String topic) {
         return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
                 " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() + " AND " +
+                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
                 COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
     }
 

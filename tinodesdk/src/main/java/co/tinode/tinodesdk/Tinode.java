@@ -144,6 +144,7 @@ public class Tinode {
         if (mStore != null) {
             mMyUid = mStore.getMyUid();
         }
+        // If mStore is fully initialized, this will load topics, otherwise noop
         loadTopics();
     }
 
@@ -177,7 +178,7 @@ public class Tinode {
     private boolean loadTopics() {
         if (mStore != null && mStore.isReady() && !mTopicsLoaded) {
             Topic[] topics = mStore.topicGetAll();
-            if (topics!=null) {
+            if (topics != null) {
                 for (Topic tt : topics) {
                     tt.setStorage(mStore);
                     mTopics.put(tt.getName(), tt);
@@ -202,7 +203,7 @@ public class Tinode {
             return new PromisedReply<>((ServerMessage) null);
         }
 
-        // Set up a new connection and a new promose
+        // Set up a new connection and a new promise
         mServerHost = hostName;
         mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
 
@@ -270,6 +271,7 @@ public class Tinode {
             }
         });
 
+        // true means autoreconnect
         mConnection.connect(true);
 
         return connected;
@@ -450,7 +452,7 @@ public class Tinode {
 
     public static boolean isNull(Object obj) {
         // Del control character
-        return (obj instanceof String) && ((String) obj).equals("\u2421");
+        return (obj instanceof String) && obj.equals("\u2421");
     }
 
     /**
@@ -655,6 +657,8 @@ public class Tinode {
                                 if (mStore != null) {
                                     mStore.setMyUid(mMyUid);
                                 }
+                                // If topics were not loaded earlier, load them now.
+                                loadTopics();
                                 mAuthToken = (String) pkt.ctrl.params.get("token");
                                 mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
                                 mConnAuth = true;

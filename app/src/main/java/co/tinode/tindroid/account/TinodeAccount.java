@@ -5,10 +5,8 @@ import java.util.Date;
 /**
  * Account values for synchronization.
  */
-
 public class TinodeAccount {
     private String Uid;
-    private String Login;
     private String Name;
     private String Other;
 
@@ -17,9 +15,8 @@ public class TinodeAccount {
     private Date mSyncState;
     //public Bitmap Photo;
 
-    public TinodeAccount(String uid, String login, String name, String other) {
+    public TinodeAccount(String uid, String name, String other) {
         Uid = uid;
-        Login = login;
         Name = name;
         Other = other;
     }
@@ -29,7 +26,7 @@ public class TinodeAccount {
     }
 
     public String getName() {
-        return Login;
+        return Uid;
     }
 
     public String getUid() {

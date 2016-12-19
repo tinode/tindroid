@@ -173,21 +173,20 @@ public class UiUtils {
                             final Tinode tinode = Cache.getTinode();
                             tinode.connect(hostName).getResult();
                             tinode.loginToken(token).getResult();
-                            // Logged in successfully, go to Contacts
+                            // Logged in successfully. Save refreshed token for future use.
+                            accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+                            // Go to Contacts
                             success = true;
                         } catch (IOException ignored) {
-                            // Login failed due to network error
+                            // Login failed due to network error.
+                            // If we have UID, go to Contacts, otherwise to Login
+                            success = BaseDb.getInstance().isReady();
                         }
-                        catch (Exception err) {
-                            // Login failed due to non-network error
+                        catch (Exception ignored) {
+                            // Login failed due to invalid (expired) token
                             accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                         }
                     }
-                }
-
-                if (success) {
-                    // Initialize DB
-                    BaseDb db = BaseDb.getInstance(activity.getApplicationContext());
                 }
                 activity.startActivity(new Intent(activity, success ? ContactsActivity.class : LoginActivity.class));
             }

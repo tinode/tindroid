@@ -256,7 +256,7 @@ public class MessageDb implements BaseColumns {
         public Loader(Context context, String topic, int from, int to) {
             super(context);
 
-            mDb = BaseDb.getInstance(context).getReadableDatabase();
+            mDb = BaseDb.getInstance().getReadableDatabase();
             this.topicId = TopicDb.getId(mDb, topic);
             this.fromSeq = from;
             this.toSeq = to;

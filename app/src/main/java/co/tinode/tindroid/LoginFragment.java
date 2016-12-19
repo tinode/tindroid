@@ -139,7 +139,7 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
 
     private Account addAndroidAccount(final SharedPreferences sharedPref, final String login,
                                       final String password) {
-        final Account acc = Utils.GetAccount(login);
+        final Account acc = Utils.createAccount(login);
         sharedPref.edit().putString(Utils.PREFS_ACCOUNT_NAME, login).apply();
         mAccountManager.addAccountExplicitly(acc, password, null);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

@@ -25,12 +25,11 @@ public class Cache {
 
     private static int sVisibleCount = 0;
 
-
     public static Tinode getTinode() {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
 
-            sTinode = new Tinode("Tindroid", API_KEY, BaseDb.getStore(), null);
+            sTinode = new Tinode("Tindroid", API_KEY, BaseDb.getInstance().getStore(), null);
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
             // Set device language

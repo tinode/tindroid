@@ -1,6 +1,7 @@
 package co.tinode.tindroid.account;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -24,21 +25,21 @@ import java.util.Locale;
  * Constants and misc utils
  */
 public class Utils {
+    private static final String TAG = "Utils";
+
     // Account management constants
     public static final String TOKEN_TYPE = "co.tinode.token";
     public static final String ACCOUNT_TYPE = "co.tinode.account";
     public static final String SYNC_AUTHORITY = "com.android.contacts";
     public static final String IM_PROTOCOL = "Tinode";
+
     // Constants for accessing shared preferences
-    public static final String PREFS_ACCOUNT_NAME = "pref_accountName";
     public static final String PREFS_HOST_NAME = "pref_hostName";
+
     // Prefixes for various contacts
     public static final String TAG_LABEL_PHONE = "tel:";
     public static final String TAG_LABEL_EMAIL = "email:";
     public static final String TAG_LABEL_TINODE = "tinode:";
-
-    // Key for storing UID in the AccountManager
-    public static final String ACCKEY_UID_ = "co.tinode.tindroid.uid";
 
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
@@ -48,19 +49,9 @@ public class Utils {
     public static final String DATA_PID = Data.DATA1;
     public static final String DATA_SUMMARY = Data.DATA2;
     public static final String DATA_DETAIL = Data.DATA3;
-    private static final String TAG = "Utils";
 
-
-    public static Account GetAccount(String accountName) {
+    public static Account createAccount(String accountName) {
         return new Account(accountName, ACCOUNT_TYPE);
-    }
-
-    public static Account GetAccountFromPrefs(SharedPreferences prefs) {
-        String login = prefs.getString(Utils.PREFS_ACCOUNT_NAME, null);
-        if (!TextUtils.isEmpty(login)) {
-            return GetAccount(login);
-        }
-        return null;
     }
 
     public static SparseArray<ContactHolder> fetchEmailsAndPhones(ContentResolver resolver, Uri uri) {
