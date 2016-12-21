@@ -38,6 +38,7 @@ import android.widget.Toast;
 import java.io.IOException;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -51,12 +52,6 @@ import co.tinode.tinodesdk.model.SetDesc;
  *
  *  1. If connection to the server is already established and authenticated, launch ContactsActivity
  *  2. If no connection to the server, get the last used account:
- *  2.1 Check intent if account name if provided there
- *  2.2 If not, check if account name is provided in Preferences
- *  2.3 If not, choose an account of correct type
- *  2.3.1 If just one account of correct type found, use it
- *  2.3.2 If more accounts found, show an account picker form, use selected account
- *  3. If account found, use it to log in:
  *  3.1 Connect to server
  *  3.1.1 If connection is successful, authenticate with the token received from the account
  *  3.1.1.1 If authentication is successful go to 1.
@@ -74,7 +69,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
     private static final int PERMISSIONS_REQUEST_GET_ACCOUNTS = 100;
-    private static final int ACCOUNT_PICKER_CODE = 101;
 
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
@@ -119,6 +113,11 @@ public class LoginActivity extends AppCompatActivity {
         // Display the login form.
         showLoginFragment();
 
+        // Request permission to access accounts. We need access to acccounts to store the login token.
+        if (!UiUtils.checkAccountAccessPermission(this)) {
+            requestAccountAccessPermission();
+        }
+
         Log.d("TAG", "DONE onCreate");
     }
 
@@ -133,97 +132,34 @@ public class LoginActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    private Account fetchAccount(SharedPreferences preferences) {
-        Account account = null;
-
-        // Check if accountName is provided in the intent which launched this activity
-        mAccountName = getIntent().getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-        Log.d(TAG, "accountName from intent=" + mAccountName);
-
-        // Account name is not in the intent, try reading one from preferences.
-        if (TextUtils.isEmpty(mAccountName)) {
-            mAccountName = Utils.getAccountNameFromPrefs(preferences);
+    // Run-time check for permission to GET_ACCOUNTS
+    private void requestAccountAccessPermission() {
+            // Result will be returned in onRequestPermissionsResult
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.GET_ACCOUNTS},
+                    PERMISSIONS_REQUEST_GET_ACCOUNTS);
         }
-
-        // Got account name, Let's try lo load it.
-        if (!TextUtils.isEmpty(mAccountName)) {
-
-            // Run-time check for permission to GET_ACCOUNTS
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                    ActivityCompat.checkSelfPermission(this, Manifest.permission.GET_ACCOUNTS) !=
-                            PackageManager.PERMISSION_GRANTED) {
-                // Don't have permission, request it
-                Log.d(TAG, "NO permission to get accounts");
-                requestPermissions(new String[]{Manifest.permission.GET_ACCOUNTS}, PERMISSIONS_REQUEST_GET_ACCOUNTS);
-                return null;
-            }
-            /*
-            // Have permission to access accounts. Let's find if we already have a suitable account.
-            final Account[] availableAccounts = mAccountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
-            if (availableAccounts.length > 0) {
-                // Found some accounts, let's find the one saved from before or ask user to choose/create one
-                account = pickAccountByName(mAccountName, availableAccounts);
-                if (account == null) {
-                    if (availableAccounts.length == 1) {
-                        // We only have one account to choose from, so use it.
-                        account = availableAccounts[0];
-                        preferences.edit().putString(Utils.PREFS_ACCOUNT_NAME, mAccountName).apply();
-                    } else {
-                        // Let user choose an account from the list
-                        String[] names = new String[availableAccounts.length];
-                        for (int i = 0; i < availableAccounts.length; i++) {
-                            names[i] = availableAccounts[i].name;
-                        }
-                        // Account picker sets mAccountName
-                        displayAccountPicker(names, preferences);
-                        account = pickAccountByName(mAccountName, availableAccounts);
-                    }
-                }
-            }
-            */
-        }
-
-        return account;
     }
 
-    private void accountPicker() {
-        Intent intent;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            intent = AccountManager.newChooseAccountIntent(null, null,
-                    new String[]{Utils.ACCOUNT_TYPE},
-                    false, null, null, null, null);
-        } else {
-            intent = AccountManager.newChooseAccountIntent(null, null,
-                    new String[]{Utils.ACCOUNT_TYPE},
-                    null, null, null, null);
-        }
-        startActivityForResult(intent, ACCOUNT_PICKER_CODE);
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void onActivityResult(int reqCode, int resultCode, Intent data) {
-        super.onActivityResult(reqCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            if (reqCode == ACCOUNT_PICKER_CODE) {
-                String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+    public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions,
+                                           @NonNull final int[] grantResults) {
+        //
+        if (requestCode == PERMISSIONS_REQUEST_GET_ACCOUNTS) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission is granted
+                Log.d(TAG, "Access granted");
+            } else {
+                // Permission denied, so we won't be able to save login token
 
+                Log.d(TAG, "Access denied");
             }
-        } else {
-            showLoginFragment();
         }
     }
 
-    private Account pickAccountByName(String name, Account[] list) {
-        if (!TextUtils.isEmpty(name)) {
-            for (Account acc : list) {
-                if (mAccountName.equals(acc.name)) {
-                    Log.d(TAG, "Account found: " + mAccountName);
-                    return acc;
-                }
-            }
-        }
-        return null;
-    }
 
     void reportError(final Exception err, final Button button, final int errId) {
         String message = err.getMessage();
@@ -246,38 +182,6 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_GET_ACCOUNTS) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission is granted
-                Log.d(TAG, "Access granted");
-            } else {
-                Log.d(TAG, "Access denied");
-            }
-        }
-    }
-
-    /**
-     * Account picker
-     */
-    private void displayAccountPicker(final String[] accountList, final SharedPreferences preferences) {
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.pick_account)
-                .setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, accountList),
-                        new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                mAccountName = accountList[which];
-                Utils.saveAccountNameToPrefs(preferences, mAccountName);
-            }
-        }).create();
-        dialog.show();
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -334,6 +238,7 @@ public class LoginActivity extends AppCompatActivity {
         trx.replace(R.id.contentFragment, mSettingsFragment);
         trx.commit();
     }
+
     /**
      * Called when the account needs to be added
      * @param account account t to be added

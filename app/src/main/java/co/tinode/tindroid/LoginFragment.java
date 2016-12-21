@@ -24,8 +24,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
@@ -117,7 +119,10 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
-                                    final Account acc = addAndroidAccount(sharedPref, login, password);
+                                    final Account acc = addAndroidAccount(
+                                            tinode.getMyId(),
+                                            AuthScheme.basicInstance(login, password).toString(),
+                                            tinode.getAuthToken());
                                     ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, new Bundle());
                                     UiUtils.onLoginSuccess(parent, signIn);
                                     return null;
@@ -137,21 +142,14 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
     }
 
 
-    private Account addAndroidAccount(final SharedPreferences sharedPref, final String login,
-                                      final String password) {
-        final Account acc = Utils.createAccount(login);
-        sharedPref.edit().putString(Utils.PREFS_ACCOUNT_NAME, login).apply();
-        mAccountManager.addAccountExplicitly(acc, password, null);
+    private Account addAndroidAccount(final String uid, final String secret, final String token) {
+        final Account acc = Utils.createAccount(uid);
+        mAccountManager.addAccountExplicitly(acc, secret, null);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mAccountManager.notifyAccountAuthenticated(acc);
         }
-        final String token = Cache.getTinode().getAuthToken();
         if (!TextUtils.isEmpty(token)) {
             mAccountManager.setAuthToken(acc, Utils.TOKEN_TYPE, token);
-        }
-        final String uid = Cache.getTinode().getMyId();
-        if (!TextUtils.isEmpty(uid)) {
-            mAccountManager.setUserData(acc, Utils.ACCKEY_UID, uid);
         }
         return acc;
     }

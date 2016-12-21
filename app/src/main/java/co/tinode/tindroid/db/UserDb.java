@@ -1,6 +1,7 @@
 package co.tinode.tindroid.db;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
@@ -91,7 +92,7 @@ public class UserDb implements BaseColumns {
      * @return ID of the newly added user
      */
     public static long insert(SQLiteDatabase db, Subscription sub) {
-        Log.d(TAG, "Inserting sub for " + sub.user);
+        Log.d(TAG, "Inserting user " + sub.user);
 
         // Convert subscription description to a map of values
         ContentValues values = new ContentValues();
@@ -102,6 +103,25 @@ public class UserDb implements BaseColumns {
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
         return db.insert(TABLE_NAME, null, values);
     }
+
+    /**
+     * Save user to DB as user generated from invite
+     *
+     * @return ID of the newly added user
+     */
+    public static long insert(SQLiteDatabase db, String uid, Object pub) {
+        Log.d(TAG, "Inserting user " + uid + " from invite");
+
+        // Convert subscription description to a map of values
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
+        values.put(COLUMN_NAME_UID, uid);
+        values.put(COLUMN_NAME_UPDATED, new Date().getTime());
+        // values.put(COLUMN_NAME_DELETED, NULL);
+        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(pub));
+        return db.insert(TABLE_NAME, null, values);
+    }
+
 
     /**
      * Update user record
@@ -135,9 +155,22 @@ public class UserDb implements BaseColumns {
      * @return _id of the user
      */
     static long getId(SQLiteDatabase db, String uid) {
-        return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
-                " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
-                COLUMN_NAME_UID + "='" + uid + "'").simpleQueryForLong();
+        long id = -1;
+        String sql =
+                "SELECT " + _ID +
+                        " FROM " + TABLE_NAME +
+                        " WHERE " +
+                        COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
+                        " AND " +
+                        COLUMN_NAME_UID + "='" + uid + "'";
+        Log.d(TAG, sql);
+        Cursor c = db.rawQuery(sql, null);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                id = c.getLong(0);
+            }
+            c.close();
+        }
+        return id;
     }
 }

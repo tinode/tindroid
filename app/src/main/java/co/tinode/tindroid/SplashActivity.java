@@ -14,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -58,25 +59,24 @@ public class SplashActivity extends AppCompatActivity {
         finish();
     }
 
-    private Account getSavedAccount(AccountManager accountManager, String accountName) {
+    private Account getSavedAccount(final AccountManager accountManager, final @NonNull String uid) {
         Account account = null;
 
         // Run-time check for permission to GET_ACCOUNTS
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                ActivityCompat.checkSelfPermission(this, android.Manifest.permission.GET_ACCOUNTS) !=
-                        PackageManager.PERMISSION_GRANTED) {
-            // Don't have permission. Apparently this is the first launch.
+        if (!UiUtils.checkAccountAccessPermission(this)) {
+            // Don't have permission. It's the first launch or the user denied access.
             // Fail and go to full login. We should not ask for permission on the splash screen.
             Log.d(TAG, "NO permission to get accounts");
             return null;
         }
 
         // Have permission to access accounts. Let's find out if we already have a suitable account.
+        // If one is not found, go to full login. It will create an account with suitable name.
         final Account[] availableAccounts = accountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
         if (availableAccounts.length > 0) {
             // Found some accounts, let's find the one with the right name
             for (Account acc : availableAccounts) {
-                if (accountName.equals(acc.name)) {
+                if (uid.equals(acc.name)) {
                     account = acc;
                     break;
                 }

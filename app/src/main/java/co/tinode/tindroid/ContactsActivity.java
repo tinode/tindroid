@@ -174,16 +174,16 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.activityVisible(focus);
     }
 
-    class MeListener extends Topic.Listener<VCard, String, Invitation<String>> {
+    private class MeListener extends Topic.Listener<VCard, String, Invitation<VCard,String>> {
 
         @Override
-        public void onData(MsgServerData<Invitation<String>> data) {
+        public void onData(MsgServerData<Invitation<VCard,String>> data) {
             // TODO(gene): handle a chat invitation
             Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
         }
 
         @Override
-        public void onContactUpdate(final String what, final Subscription<VCard, String> sub) {
+        public void onContactUpdate(final String what, final Subscription<VCard,String> sub) {
             datasetChanged();
         }
 

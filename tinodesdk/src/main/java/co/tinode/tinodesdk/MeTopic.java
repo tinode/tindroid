@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JavaType;
 
 import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.LastSeen;
+import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
@@ -18,17 +19,17 @@ import java.util.HashMap;
 /**
  * MeTopic handles invites and manages contact list
  */
-public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
+public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<Pu,Pr,Invitation<T>> l) {
+    public MeTopic(Tinode tinode, Listener<Pu,Pr,Invitation<Pu,T>> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
     @Override
     public void setTypes(JavaType typeOfPu, JavaType typeOfPr, JavaType typeOfInviteInfo) {
         super.setTypes(typeOfPu, typeOfPr,
-                Tinode.getTypeFactory().constructParametricType(Invitation.class, typeOfInviteInfo));
+                Tinode.getTypeFactory().constructParametricType(Invitation.class, typeOfPu, typeOfInviteInfo));
     }
 
     @Override
@@ -51,6 +52,22 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<T>> {
     @Override
     public Collection<Subscription<Pu,Pr>> getSubscriptions() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    /* This method has to be overridden because Subscription generally does not exists for invite senders */
+    protected void routeData(MsgServerData<Invitation<Pu,T>> data) {
+        if (data.seq > mDesc.seq) {
+            mDesc.seq = data.seq;
+        }
+
+        if (mStore != null && mStore.inviteReceived(this, data) > 0) {
+            noteRecv();
+        }
+
+        if (mListener != null) {
+            mListener.onData(data);
+        }
     }
 
     @Override

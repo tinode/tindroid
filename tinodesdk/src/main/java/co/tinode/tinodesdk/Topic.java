@@ -808,13 +808,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
 
     protected void routeData(MsgServerData<T> data) {
-        // TODO(gene): cache/save sender
-
         if (data.seq > mDesc.seq) {
             mDesc.seq = data.seq;
         }
 
-        // FIXME(gene): Won't work for 'me' invites because 'from' is not subscribed by definition
         if (mStore != null && mStore.msgReceived(getSubscription(data.from), data) > 0) {
             noteRecv();
         }

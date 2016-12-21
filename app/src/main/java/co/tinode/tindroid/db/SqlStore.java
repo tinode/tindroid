@@ -8,6 +8,7 @@ import java.util.Date;
 
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -125,6 +126,38 @@ class SqlStore implements Storage {
         msg.senderIdx = ss.senderIdx;
 
         return MessageDb.insert(mDbh.getWritableDatabase(), msg);
+    }
+
+    @Override
+    public <Pu,T> long inviteReceived(Topic topic, MsgServerData<Invitation<Pu,T>> m) {
+        StoredMessage<Invitation<Pu,T>> msg = new StoredMessage<>(m);
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return -1;
+        }
+
+        SQLiteDatabase db = mDbh.getWritableDatabase();
+
+        db.beginTransaction();
+        msg.userId = UserDb.getId(db, m.from);
+        if (msg.userId < 0) {
+            msg.userId = UserDb.insert(db, m.from, m.content.pub);
+        }
+        if (msg.userId > 0) {
+            db.setTransactionSuccessful();
+        }
+        db.endTransaction();
+
+        if (msg.userId <= 0) {
+            return -1;
+        }
+
+        msg.topicId = st.mId;
+
+        // Use the same sender index for all invites.
+        msg.senderIdx = 1;
+
+        return MessageDb.insert(db, msg);
     }
 
     @Override

@@ -599,7 +599,7 @@ public class Tinode {
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
             String uname, String password, boolean login, SetDesc<Pu,Pr> desc)
                 throws Exception {
-        return createAccount(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password),
+        return createAccount(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, desc);
     }
 
@@ -613,7 +613,7 @@ public class Tinode {
      * @throws Exception if there is no connection
      */
     public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws Exception {
-        return login(AuthScheme.LOGIN_BASIC, AuthScheme.makeBasicToken(uname, password));
+        return login(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
     }
 
     /**
@@ -626,6 +626,14 @@ public class Tinode {
      */
     public PromisedReply<ServerMessage> loginToken(String token) throws Exception {
         return login(AuthScheme.LOGIN_TOKEN, token);
+    }
+
+    protected PromisedReply<ServerMessage> login(String combined) throws Exception {
+        AuthScheme auth = AuthScheme.parse(combined);
+        if (auth != null) {
+            return login(auth.scheme, auth.secret);
+        }
+        throw new IllegalArgumentException();
     }
 
     protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {

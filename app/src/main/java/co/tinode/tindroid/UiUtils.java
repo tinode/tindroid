@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.*;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
@@ -10,6 +11,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -19,6 +21,8 @@ import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -143,6 +147,12 @@ public class UiUtils {
         activity.finish();
     }
 
+    public static boolean checkAccountAccessPermission(Context context) {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+                ActivityCompat.checkSelfPermission(context, android.Manifest.permission.GET_ACCOUNTS) ==
+                        PackageManager.PERMISSION_GRANTED;
+    }
+
     public static void loginWithSavedAccount(final Activity activity,
                                               final AccountManager accountManager,
                                               final Account account) {
@@ -175,6 +185,7 @@ public class UiUtils {
                             tinode.loginToken(token).getResult();
                             // Logged in successfully. Save refreshed token for future use.
                             accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+
                             // Go to Contacts
                             success = true;
                         } catch (IOException ignored) {

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.Subscription;
@@ -40,6 +41,9 @@ public interface Storage {
 
     // Message received
     <T> long msgReceived(Subscription sub, MsgServerData<T> msg);
+    // Invitation message received
+    <Pu,T> long inviteReceived(Topic me, MsgServerData<Invitation<Pu,T>> msg);
+
     // Message sent
     <T> long msgSend(Topic topic, T data);
     /** Message delivered to the server and received a real seq ID */

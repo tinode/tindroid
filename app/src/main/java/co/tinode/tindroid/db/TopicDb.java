@@ -3,6 +3,7 @@ package co.tinode.tindroid.db;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDoneException;
 import android.provider.BaseColumns;
 import android.util.Log;
 
@@ -322,10 +323,15 @@ public class TopicDb implements BaseColumns {
      * @return _id of the topic
      */
     public static long getId(SQLiteDatabase db, String topic) {
-        return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
-                " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
-                COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
+        try {
+            return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
+                    " WHERE " +
+                    COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
+                    COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
+        } catch (SQLiteDoneException ex) {
+            // topic not round
+            return -1;
+        }
     }
 
     public static boolean updateRead(SQLiteDatabase db, long topicId, int read) {
