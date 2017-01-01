@@ -104,7 +104,6 @@ public class MessageActivity extends AppCompatActivity {
         final LoaderManager loaderManager = getSupportLoaderManager();
 
         // Check if the activity was launched by internally-generated intent
-        String oldTopicName = mTopicName;
         mTopicName = intent.getStringExtra("topic");
 
         if (TextUtils.isEmpty(mTopicName)) {
@@ -321,14 +320,14 @@ public class MessageActivity extends AppCompatActivity {
                                    Cursor cursor) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
                 Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
-                mMessagesAdapter.swapCursor(cursor);
+                mMessagesAdapter.swapCursor(mTopicName, cursor);
             }
         }
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
-                mMessagesAdapter.swapCursor(null);
+                mMessagesAdapter.swapCursor(null, null);
             }
         }
     }

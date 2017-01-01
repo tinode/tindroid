@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -42,13 +43,13 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public Topic[] topicGetAll() {
+    public Topic[] topicGetAll(Tinode tinode) {
         Cursor c = TopicDb.query(mDbh.getReadableDatabase());
         if (c != null && c.moveToFirst()) {
             Topic[] list = new Topic[c.getCount()];
             int i = 0;
             do {
-                Topic t = TopicDb.readOne(c);
+                Topic t = TopicDb.readOne(tinode, c);
                 list[i++] = t;
             } while (c.moveToNext());
             return list;

@@ -28,9 +28,9 @@ public class SubscriberDb implements BaseColumns {
      */
     public static final String TABLE_NAME = "subscriptions";
     /**
-     * The name of index: topic by account id and topic name.
+     * The name of index: topic_id.
      */
-    public static final String INDEX_NAME = "subscription_topic";
+    public static final String INDEX_NAME = "subscription_topic_id";
     /**
      * Topic _ID, references topics._id
      */
@@ -110,10 +110,10 @@ public class SubscriberDb implements BaseColumns {
                     COLUMN_NAME_USER_AGENT + " TEXT)";
 
     /**
-     * Add index on account_id-topic name, in descending order
+     * Add index on topic_id
      */
     static final String CREATE_INDEX =
-            "CREATE UNIQUE INDEX " + INDEX_NAME +
+            "CREATE INDEX " + INDEX_NAME +
                     " ON " + TABLE_NAME + " (" + COLUMN_NAME_TOPIC_ID + ")";
 
     /**
@@ -135,18 +135,23 @@ public class SubscriberDb implements BaseColumns {
      * @return ID of the newly added user
      */
     public static long insert(SQLiteDatabase db, long topicId, Subscription sub) {
-        Log.d(TAG, "Inserting sub for " + sub.topic + "/" + sub.user);
+        Log.d(TAG, "Inserting sub for " + topicId + "/" + sub.user);
         long id = -1;
         try {
             db.beginTransaction();
 
             StoredSubscription ss = new StoredSubscription();
 
-            ss.userId = UserDb.insert(db, sub);
+            ss.userId = UserDb.getId(db, sub.user);
             if (ss.userId <= 0) {
+                ss.userId = UserDb.insert(db, sub);
+            }
+            if (ss.userId <= 0) {
+                Log.d(TAG, "Failed to insert user: " + ss.userId);
                 db.endTransaction();
                 return -1;
             }
+            Log.d(TAG, "User inserted: " + ss.userId);
 
             ContentValues values = new ContentValues();
             // Insert subscription
@@ -157,7 +162,7 @@ public class SubscriberDb implements BaseColumns {
             ss.senderIdx = BaseDb.isMe(sub.user) ? 0 : getNextSenderIndex(db, ss.topicId);
             values.put(COLUMN_NAME_SENDER_INDEX, ss.senderIdx);
             values.put(COLUMN_NAME_MODE, sub.mode);
-            values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+            values.put(COLUMN_NAME_UPDATED, (sub.updated != null ? sub.updated : new Date()).getTime());
             // values.put(COLUMN_NAME_DELETED, NULL);
             values.put(COLUMN_NAME_READ, sub.read);
             values.put(COLUMN_NAME_RECV, sub.recv);
@@ -174,12 +179,13 @@ public class SubscriberDb implements BaseColumns {
             ss.mId = db.insert(TABLE_NAME, null, values);
 
             db.setTransactionSuccessful();
-
             sub.setLocal(ss);
 
         } catch (Exception ex) {
-            db.endTransaction();
+            Log.d(TAG, "Exception while inserting", ex);
         }
+
+        db.endTransaction();
 
         return id;
     }
@@ -190,6 +196,8 @@ public class SubscriberDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     public static boolean update(SQLiteDatabase db, Subscription sub) {
+        int updated = -1;
+
         try {
             StoredSubscription ss = (StoredSubscription) sub.getLocal();
             if (ss == null || ss.mId < 0) {
@@ -199,43 +207,40 @@ public class SubscriberDb implements BaseColumns {
             db.beginTransaction();
 
             // Update user
-            if (!UserDb.update(db, sub)) {
-                db.endTransaction();
-                return false;
-            }
-
-            // Convert topic description to a map of values
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_MODE, sub.mode);
-            values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
-            if (sub.deleted != null) {
-                values.put(COLUMN_NAME_DELETED, sub.deleted.getTime());
-            }
-            values.put(COLUMN_NAME_READ, sub.read);
-            values.put(COLUMN_NAME_RECV, sub.recv);
-            values.put(COLUMN_NAME_CLEAR, sub.clear);
-            if (sub.seen != null) {
-                if (sub.seen.when != null) {
-                    values.put(COLUMN_NAME_LAST_SEEN, sub.seen.when.getTime());
+            if (UserDb.update(db, sub)) {
+                // Convert topic description to a map of values
+                ContentValues values = new ContentValues();
+                values.put(COLUMN_NAME_MODE, sub.mode);
+                values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+                if (sub.deleted != null) {
+                    values.put(COLUMN_NAME_DELETED, sub.deleted.getTime());
                 }
-                if (sub.seen.ua != null) {
-                    values.put(COLUMN_NAME_USER_AGENT, sub.seen.ua);
+                values.put(COLUMN_NAME_READ, sub.read);
+                values.put(COLUMN_NAME_RECV, sub.recv);
+                values.put(COLUMN_NAME_CLEAR, sub.clear);
+                if (sub.seen != null) {
+                    if (sub.seen.when != null) {
+                        values.put(COLUMN_NAME_LAST_SEEN, sub.seen.when.getTime());
+                    }
+                    if (sub.seen.ua != null) {
+                        values.put(COLUMN_NAME_USER_AGENT, sub.seen.ua);
+                    }
                 }
+
+                updated = db.update(TABLE_NAME, values, _ID + "=" + ss.mId, null);
+
+                Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
+                        " name=" + sub.user + " returned " + updated);
+
+                db.setTransactionSuccessful();
             }
-
-            int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.mId, null);
-
-            Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
-                    " name=" + sub.user + " returned " + updated);
-
-            db.setTransactionSuccessful();
-
-            return updated > 0;
         } catch (Exception ex) {
-            db.endTransaction();
+            Log.d(TAG, "Exception while updating subscription", ex);
         }
 
-        return false;
+        db.endTransaction();
+
+        return updated > 0;
     }
 
     /**
@@ -322,7 +327,7 @@ public class SubscriberDb implements BaseColumns {
 
                 TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_TOPIC + "," +
                 TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_SEQ + "," +
-                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_WITH + "," +
+                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_WITH +
                 " FROM " + TABLE_NAME +
                 " LEFT JOIN " + UserDb.TABLE_NAME +
                 " ON " + COLUMN_NAME_USER_ID + "=" + UserDb.TABLE_NAME + "." + UserDb._ID +

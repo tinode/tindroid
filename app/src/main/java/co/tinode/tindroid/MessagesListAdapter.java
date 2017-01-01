@@ -46,6 +46,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     };
     private MessageActivity mActivity;
     private Cursor mCursor;
+    private String mTopicName;
 
     public MessagesListAdapter(MessageActivity context) {
         super();
@@ -147,7 +148,8 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             if (m.seq == 0) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
             } else {
-                Topic topic = Cache.getTinode().getTopic(m.topic);
+                Topic topic = Cache.getTinode().getTopic(mTopicName);
+                // Log.d(TAG, "Message " + m.seq + " topic " + m.topic + " is " + topic);
                 if (topic.msgReadCount(m.seq) > 0) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
                 } else if (topic.msgRecvCount(m.seq) > 0) {
@@ -170,12 +172,13 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return mCursor != null ? mCursor.getCount() : 0;
     }
 
-    void swapCursor(final Cursor cursor) {
+    void swapCursor(final String topicName, final Cursor cursor) {
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Log.d(TAG, "MessagesListAdapter.swapCursor");
 
+                mTopicName = topicName;
                 mCursor = cursor;
                 notifyDataSetChanged();
                 // -1 means scroll to the bottom

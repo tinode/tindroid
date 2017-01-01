@@ -88,6 +88,7 @@ public class AccountDb implements BaseColumns {
         } catch (SQLException ignored) {
             acc = null;
         }
+
         db.endTransaction();
         return acc;
     }

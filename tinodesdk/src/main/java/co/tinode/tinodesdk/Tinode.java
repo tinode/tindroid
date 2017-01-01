@@ -177,7 +177,7 @@ public class Tinode {
 
     private boolean loadTopics() {
         if (mStore != null && mStore.isReady() && !mTopicsLoaded) {
-            Topic[] topics = mStore.topicGetAll();
+            Topic[] topics = mStore.topicGetAll(this);
             if (topics != null) {
                 for (Topic tt : topics) {
                     tt.setStorage(mStore);
@@ -188,6 +188,7 @@ public class Tinode {
         }
         return mTopicsLoaded;
     }
+
     /**
      * Open a websocket connection to the server and process handshake exchange.
      *
@@ -450,6 +451,7 @@ public class Tinode {
         return sJsonMapper;
     }
 
+    // FIXME(gene): this is broken. Figure out how to handle nulls
     public static boolean isNull(Object obj) {
         // Del control character
         return (obj instanceof String) && obj.equals("\u2421");
@@ -479,10 +481,9 @@ public class Tinode {
      */
     public void setDefaultTypes(Class<?> typeOfPublic,
                                 Class<?> typeOfPrivate, Class<?> typeOfContent) {
-        mTypeOfDataPacket = sTypeFactory
-                .constructParametricType(MsgServerData.class, typeOfContent);
-        mTypeOfMetaPacket = sTypeFactory
-                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
+        setDefaultTypes(sTypeFactory.constructType(typeOfPublic),
+                sTypeFactory.constructType(typeOfPrivate),
+                sTypeFactory.constructType(typeOfContent));
     }
 
     protected JavaType getTypeOfDataPacket() {
@@ -506,7 +507,6 @@ public class Tinode {
     }
 
     protected String makeUserAgent() {
-
         return mAppName + " (Android " + System.getProperty("os.version") + "; "
                 + Locale.getDefault().toString() + ") " + LIBRARY;
     }
@@ -906,6 +906,19 @@ public class Tinode {
         mConnection.send(message);
     }
 
+    /**
+     * Create new topic by name.
+     * @param name name of the topic to create
+     * @param l event listener; could be null
+     * @return topic of appropriate class
+     */
+    @SuppressWarnings("unchecked")
+    public Topic newTopic(String name, Topic.Listener l) {
+        if (TOPIC_ME.equals(name)) {
+            return new MeTopic(this, l);
+        }
+        return new Topic(this, name, l);
+    }
     /**
      * Obtain a 'me' topic ({@link MeTopic}).
      *

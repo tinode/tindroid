@@ -10,6 +10,7 @@ import android.util.Log;
 import java.util.Date;
 
 import co.tinode.tindroid.Cache;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerMeta;
@@ -87,6 +88,10 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_LASTUSED = "last_used";
     /**
+     * Serialized types of public, private, and content
+     */
+    public static final String COLUMN_NAME_SERIALIZED_TYPES = "stypes";
+    /**
      * Public topic description, blob
      */
     public static final String COLUMN_NAME_PUBLIC = "pub";
@@ -94,6 +99,7 @@ public class TopicDb implements BaseColumns {
      * Private topic description, blob
      */
     public static final String COLUMN_NAME_PRIVATE = "priv";
+
 
 
     static final int COLUMN_IDX_ID = 0;
@@ -111,8 +117,9 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_CLEAR = 12;
     static final int COLUMN_IDX_ACCESSMODE = 13;
     static final int COLUMN_IDX_LASTUSED = 14;
-    static final int COLUMN_IDX_PUBLIC = 15;
-    static final int COLUMN_IDX_PRIVATE = 16;
+    static final int COLUMN_IDX_SERIALIZED_TYPES = 15;
+    static final int COLUMN_IDX_PUBLIC = 16;
+    static final int COLUMN_IDX_PRIVATE = 17;
 
     /**
      * SQL statement to create Messages table
@@ -135,6 +142,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_CLEAR + " INT," +
                     COLUMN_NAME_ACCESSMODE + " TEXT," +
                     COLUMN_NAME_LASTUSED + " INT," +
+                    COLUMN_NAME_SERIALIZED_TYPES + " TEXT," +
                     COLUMN_NAME_PUBLIC + " BLOB," +
                     COLUMN_NAME_PRIVATE + " BLOB)";
     /**
@@ -185,10 +193,12 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_SEQ, topic.getSeq());
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
         values.put(COLUMN_NAME_ACCESSMODE, topic.getMode().toString());
+        values.put(COLUMN_NAME_SERIALIZED_TYPES, topic.getSerializedTypes());
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
         values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
+
         long id = db.insert(TABLE_NAME, null, values);
         if (id > 0) {
             StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
@@ -269,9 +279,9 @@ public class TopicDb implements BaseColumns {
      * @param c Cursor to read from
      * @return Subscription
      */
-    public static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Cursor c) {
+    public static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Tinode tinode, Cursor c) {
         String name = c.getString(COLUMN_IDX_TOPIC);
-        Topic<Pu,Pr,T> topic = new Topic<>(Cache.getTinode(), name, null);
+        Topic<Pu,Pr,T> topic = tinode.newTopic(name, null);
         StoredTopic.deserialize(topic, c);
         return topic;
     }
@@ -283,7 +293,7 @@ public class TopicDb implements BaseColumns {
      * @param name Name of the topic to read
      * @return Subscription
      */
-    protected static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(SQLiteDatabase db, String name) {
+    protected static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(SQLiteDatabase db, Tinode tinode, String name) {
         Topic<Pu,Pr,T> topic = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
@@ -292,7 +302,7 @@ public class TopicDb implements BaseColumns {
         Cursor c = db.rawQuery(sql, null);
         if (c != null) {
             if (c.moveToFirst()) {
-                topic = readOne(c);
+                topic = readOne(tinode, c);
             }
             c.close();
         }

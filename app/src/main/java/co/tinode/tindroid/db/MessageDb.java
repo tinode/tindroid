@@ -149,7 +149,8 @@ public class MessageDb implements BaseColumns {
                 msg.userId = UserDb.getId(db, msg.from);
             }
 
-            if (msg.userId <=0 || msg.topicId <= 0) {
+            if (msg.userId <= 0 || msg.topicId <= 0) {
+                Log.d(TAG, "Failed to insert message " + msg.seq);
                 return -1;
             }
 
@@ -170,8 +171,10 @@ public class MessageDb implements BaseColumns {
             db.setTransactionSuccessful();
 
         } catch (Exception ex) {
-            db.endTransaction();
+            Log.d(TAG, "Exception while inserting message", ex);
         }
+
+        db.endTransaction();
 
         return id;
     }

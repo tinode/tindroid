@@ -19,7 +19,7 @@ public interface Storage {
     boolean isReady();
 
     // Fetch all topics
-    Topic[] topicGetAll();
+    Topic[] topicGetAll(Tinode tinode);
     // Add new topic
     long topicAdd(Topic topic);
     /** Incoming change to topic description: synchronize already mutated topic from memory to DB */

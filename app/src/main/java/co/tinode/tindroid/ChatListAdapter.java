@@ -38,8 +38,12 @@ public class ChatListAdapter extends BaseAdapter {
         super();
         mContext = context;
         mSelectedItems = new SparseBooleanArray();
-        mTopics = Cache.getTinode().getFilteredTopics(Topic.TopicType.USER, null);
+        resetContent();
         Log.d(TAG, "Initialized");
+    }
+
+    public void resetContent() {
+        mTopics = Cache.getTinode().getFilteredTopics(Topic.TopicType.USER, null);
     }
 
     @Override
@@ -91,8 +95,9 @@ public class ChatListAdapter extends BaseAdapter {
     public void bindView(int position, ViewHolder holder) {
         final Topic<VCard,String,String> topic = mTopics.get(position);
 
-        VCard pub = topic.getPub();
+        holder.topic = topic.getName();
 
+        VCard pub = topic.getPub();
         if (pub != null) {
             holder.name.setText(pub.fn);
         }
@@ -130,7 +135,7 @@ public class ChatListAdapter extends BaseAdapter {
         }
 
         holder.online.setColorFilter(topic.getOnline() ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
-        // Log.d(TAG, "User " + topic.getName() + " is " + (online ? "online" : "offline"));
+        //Log.d(TAG, "User " + topic.getName() + " is " + (topic.getOnline() ? "online" : "offline"));
     }
 
     public void toggleSelected(int position) {
@@ -154,6 +159,7 @@ public class ChatListAdapter extends BaseAdapter {
             mSelectedItems.delete(position);
         notifyDataSetChanged();
     }
+
 
     public int getSelectedCount() {
         return mSelectedItems.size();
