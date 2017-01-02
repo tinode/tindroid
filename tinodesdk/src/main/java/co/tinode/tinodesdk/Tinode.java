@@ -214,15 +214,17 @@ public class Tinode {
                 mApiKey, new Connection.WsListener() {
 
             @Override
-            protected void onConnect() {
+            protected void onConnect(final boolean autoreconncted) {
                 try {
                     // Connection established, send handshake, inform listener on success
                     PromisedReply<ServerMessage> future = hello().thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                    connected.resolve(pkt);
-
+                                    if (!autoreconncted) {
+                                        // If this is an auto-reconnect, the promise is already resolved.
+                                        connected.resolve(pkt);
+                                    }
                                     if (mListener != null) {
                                         mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
                                     }

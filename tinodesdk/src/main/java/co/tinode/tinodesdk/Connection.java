@@ -79,7 +79,7 @@ public class Connection {
                 }
 
                 if (mListener != null) {
-                    mListener.onConnect();
+                    mListener.onConnect(reconnecting);
                 }
             }
 
@@ -193,7 +193,7 @@ public class Connection {
     static class WsListener {
         WsListener() {}
 
-        protected void onConnect() {
+        protected void onConnect(boolean reconnected) {
         }
 
         protected void onMessage(String message) {
