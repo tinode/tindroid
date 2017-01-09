@@ -1,8 +1,6 @@
 package co.tinode.tindroid.db;
 
 import co.tinode.tinodesdk.LocalData;
-import co.tinode.tinodesdk.model.AccessMode;
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Subscription record

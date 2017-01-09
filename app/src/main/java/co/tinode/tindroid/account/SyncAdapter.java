@@ -20,7 +20,6 @@ import java.util.Date;
 
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.VCard;
-import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -120,10 +119,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             // Don't care if it's resolved or rejected
             tinode.subscribe(Tinode.TOPIC_ME, null, null).waitResult();
 
-            MsgGetMeta.GetSub getSub = new MsgGetMeta.GetSub();
+            MsgGetMeta meta = new MsgGetMeta();
             // FIXME(gene): The following is commented out for debugging
-            // getSub.ims = getServerSyncMarker(account);
-            PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_ME, new MsgGetMeta(null, getSub, null));
+            // meta.setSub(getServerSyncMarker(account), null);
+            meta.setSub(null, null);
+            PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_ME, meta);
             if (future.waitResult()) {
                 ServerMessage<?,VCard,String> pkt = future.getResult();
                 // Fetch the list of updated contacts. Group subscriptions will be stored in
@@ -134,7 +134,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                         updated.add(sub);
                     }
                 }
-                Date upd = ContactsManager.updateContacts(mContext, account, updated, getSub.ims, invisibleGroupId);
+                Date upd = ContactsManager.updateContacts(mContext, account, updated, meta.sub.ims, invisibleGroupId);
                 setServerSyncMarker(account, upd);
             }
         } catch (IOException e) {

@@ -3,7 +3,6 @@ package co.tinode.tindroid;
 import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Gravity;
@@ -18,8 +17,8 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tinodesdk.Topic;
 
 /**

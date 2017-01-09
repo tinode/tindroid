@@ -1,14 +1,10 @@
 package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Topic metadata request.
@@ -19,40 +15,48 @@ public class MsgGetMeta {
     public static final String DATA = "data";
 
     public String what;
-    public GetDesc desc;
-    public GetSub sub;
-    public GetData data;
+    public MetaGetDesc desc;
+    public MetaGetSub sub;
+    public MetaGetData data;
 
     /**
-     * Query to get all
+     * Query to get everything
      */
     public MsgGetMeta() {
         this.what = DESC + " " + SUB + " " + DATA;
     }
 
-    public MsgGetMeta(GetDesc desc, GetSub sub, GetData data) {
+    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data) {
         this.desc = desc;
         this.sub = sub;
         this.data = data;
         buildWhat();
     }
 
-    @JsonIgnore
-    public void setDesc(GetDesc desc) {
-        this.desc = desc;
-        buildWhat();
+    @Override
+    public String toString() {
+        return "[" + what + "]" +
+                " desc=[" + (desc != null ? desc.toString() : "null") + "]," +
+                " sub=[" + (sub != null? sub.toString() : "null") + "]," +
+                " data=[" + (data != null ? data.toString() : "null") + "]";
     }
 
-    @JsonIgnore
-    public void setDesc(GetSub sub) {
-        this.sub = sub;
-        buildWhat();
+    public void setDesc(Date ims) {
+        desc = new MetaGetDesc();
+        desc.ims = ims;
     }
 
-    @JsonIgnore
-    public void setData(GetData data) {
-        this.data = data;
-        buildWhat();
+    public void setSub(Date ims, Integer limit) {
+        sub = new MetaGetSub();
+        sub.ims = ims;
+        sub.limit = limit;
+    }
+
+    public void setData(Integer since, Integer before, Integer limit) {
+        data = new MetaGetData();
+        data.since = since;
+        data.before = before;
+        data.limit = limit;
     }
 
     @JsonIgnore
@@ -72,35 +76,10 @@ public class MsgGetMeta {
 
         if (!parts.isEmpty()) {
             sb.append(parts.get(0));
-            for(int i=1; i < parts.size(); i++){
+            for (int i=1; i < parts.size(); i++) {
                 sb.append(" ").append(parts.get(i));
             }
         }
         what = sb.toString();
-    }
-
-    @JsonInclude(NON_DEFAULT)
-    public static class GetDesc {
-        // ims = If modified since...
-        public Date ims;
-
-        public GetDesc() {}
-    }
-
-    @JsonInclude(NON_DEFAULT)
-    public static class GetSub {
-        public Date ims;
-        public Integer limit;
-
-        public GetSub() {}
-    }
-
-    @JsonInclude(NON_DEFAULT)
-    public static class GetData {
-        public Integer since;
-        public Integer before;
-        public Integer limit;
-
-        public GetData() {}
     }
 }

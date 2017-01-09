@@ -13,9 +13,9 @@ public class MsgClientAcc<Pu,Pr> {
     // Use the new account for immediate authentication.
     public Boolean login;
     // Account parameters
-    public SetDesc<Pu,Pr> desc;
+    public MetaSetDesc<Pu,Pr> desc;
 
-    public MsgClientAcc(String id, String scheme, String secret, boolean login, SetDesc<Pu, Pr> desc) {
+    public MsgClientAcc(String id, String scheme, String secret, boolean login, MetaSetDesc<Pu, Pr> desc) {
         this.id = id;
         this.user = USER_NEW;
         this.scheme = scheme;

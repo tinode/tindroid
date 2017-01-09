@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
@@ -17,8 +16,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
-
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * View with contacts.

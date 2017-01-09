@@ -1,33 +1,16 @@
 package co.tinode.tindroid;
 
-import android.*;
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Button;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tinodesdk.Tinode;
 
 /**
  * Splash screen on startup

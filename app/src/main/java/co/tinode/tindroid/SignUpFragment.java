@@ -26,7 +26,7 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.SetDesc;
+import co.tinode.tinodesdk.model.MetaSetDesc;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -142,7 +142,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                     VCard vcard = new VCard(fullName, bmp);
                                     return tinode.createAccountBasic(
                                             login, password, true,
-                                            new SetDesc<VCard,String>(vcard, null));
+                                            new MetaSetDesc<VCard,String>(vcard, null));
                                 }
                             }, null)
                     .thenApply(

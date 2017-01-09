@@ -5,16 +5,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDoneException;
-import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import java.util.Date;
-
-import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
  * Storage structure for messages:
@@ -202,7 +198,7 @@ public class MessageDb implements BaseColumns {
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
                 (to > 0 ?  " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
                 " ORDER BY " + COLUMN_NAME_TS;
-        Log.d(TAG, "Sql=[" + sql + "]");
+        // Log.d(TAG, "Sql=[" + sql + "]");
         
         return db.rawQuery(sql, null);
     }

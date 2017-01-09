@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -14,19 +13,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.widget.Toast;
 
-import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.db.MessageDb;
-import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Invitation;
-import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
-import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 

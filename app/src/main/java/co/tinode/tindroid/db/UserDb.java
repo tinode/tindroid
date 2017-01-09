@@ -8,7 +8,6 @@ import android.util.Log;
 
 import java.util.Date;
 
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -142,7 +141,7 @@ public class UserDb implements BaseColumns {
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
         int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.userId, null);
 
-        Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() + " name=" + sub.user + " returned " + updated);
+        // Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() + " name=" + sub.user + " returned " + updated);
 
         return updated > 0;
     }

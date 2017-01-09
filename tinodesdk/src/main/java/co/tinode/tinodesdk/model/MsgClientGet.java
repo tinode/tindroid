@@ -15,9 +15,9 @@ public class MsgClientGet {
     public String topic;
     public String what;
 
-    public MsgGetMeta.GetDesc desc;
-    public MsgGetMeta.GetSub sub;
-    public MsgGetMeta.GetData data;
+    public MetaGetDesc desc;
+    public MetaGetSub sub;
+    public MetaGetData data;
 
     public MsgClientGet() {}
 
@@ -25,8 +25,8 @@ public class MsgClientGet {
         this(id, topic, query.desc, query.sub, query.data);
     }
 
-    public MsgClientGet(String id, String topic, MsgGetMeta.GetDesc desc,
-                        MsgGetMeta.GetSub sub, MsgGetMeta.GetData data) {
+    public MsgClientGet(String id, String topic, MetaGetDesc desc,
+                        MetaGetSub sub, MetaGetData data) {
         this.id = id;
         this.topic = topic;
         this.what = "";

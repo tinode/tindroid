@@ -49,7 +49,7 @@ import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.SetDesc;
+import co.tinode.tinodesdk.model.MetaSetDesc;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -59,7 +59,7 @@ public class Tinode {
 
     // Delay in nanoseconds between sending two key press notifications on the
     // same topic.
-    protected static final long KEY_PRESS_DELAY = 3000000000L;
+    private static final long KEY_PRESS_DELAY = 3000000000L;
 
     private static final String PROTOVERSION = "0";
     private static final String VERSION = "0.8";
@@ -214,14 +214,15 @@ public class Tinode {
                 mApiKey, new Connection.WsListener() {
 
             @Override
-            protected void onConnect(final boolean autoreconncted) {
+            protected void onConnect(final boolean autoreconnected) {
                 try {
+                    // FIXME: this is broken when autoreconnect = true
                     // Connection established, send handshake, inform listener on success
                     PromisedReply<ServerMessage> future = hello().thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                    if (!autoreconncted) {
+                                    if (!autoreconnected) {
                                         // If this is an auto-reconnect, the promise is already resolved.
                                         connected.resolve(pkt);
                                     }
@@ -576,7 +577,7 @@ public class Tinode {
      */
     protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, String secret,
                                                          boolean loginNow,
-                                                         SetDesc<Pu,Pr> desc) throws Exception {
+                                                         MetaSetDesc<Pu,Pr> desc) throws Exception {
         ClientMessage msg = new ClientMessage<Pu,Pr,T>(
                 new MsgClientAcc<>(getNextId(), scheme, secret, loginNow, desc));
         try {
@@ -599,7 +600,7 @@ public class Tinode {
      * @throws Exception if there is no connection
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, SetDesc<Pu,Pr> desc)
+            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc)
                 throws Exception {
         return createAccount(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, desc);
@@ -697,8 +698,8 @@ public class Tinode {
      * @param topicName name of the topic to subscribe to
      * @return PromisedReply of the reply ctrl message
      */
-    public <Pu,Pr,Inv> PromisedReply<ServerMessage> subscribe(String topicName,
-                                                              MsgSetMeta<Pu,Pr,Inv> set,
+    public <Pu,Pr,T> PromisedReply<ServerMessage> subscribe(String topicName,
+                                                              MsgSetMeta<Pu,Pr,T> set,
                                                               MsgGetMeta get) {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
         try {
@@ -1065,6 +1066,13 @@ public class Tinode {
      */
     synchronized private String getNextId() {
         return String.valueOf(++mMsgId);
+    }
+
+    /**
+     * Get minimum delay between two subsequent key press notifications.
+     */
+    protected static long getKeyPressDelay() {
+        return KEY_PRESS_DELAY;
     }
 
     /**

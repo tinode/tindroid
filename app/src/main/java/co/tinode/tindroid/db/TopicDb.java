@@ -9,13 +9,8 @@ import android.util.Log;
 
 import java.util.Date;
 
-import co.tinode.tindroid.Cache;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.MsgServerMeta;
-import co.tinode.tinodesdk.model.MsgSetMeta;
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Store for topics

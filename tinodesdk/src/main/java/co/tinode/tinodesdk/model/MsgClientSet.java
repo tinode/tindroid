@@ -14,8 +14,8 @@ public class MsgClientSet<Pu,Pr,Inv> {
     public String id;
     public String topic;
 
-    public SetDesc<Pu,Pr> desc;
-    public MsgSetMeta.SetSub<Inv> sub;
+    public MetaSetDesc<Pu,Pr> desc;
+    public MetaSetSub<Inv> sub;
 
     public MsgClientSet() {}
 
@@ -23,8 +23,8 @@ public class MsgClientSet<Pu,Pr,Inv> {
         this(id, topic, meta.desc, meta.sub);
     }
 
-    public MsgClientSet(String id, String topic, SetDesc<Pu, Pr> desc,
-                        MsgSetMeta.SetSub<Inv> sub) {
+    public MsgClientSet(String id, String topic, MetaSetDesc<Pu, Pr> desc,
+                        MetaSetSub<Inv> sub) {
         this.id = id;
         this.topic = topic;
         this.desc = desc;

@@ -6,13 +6,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
 
-
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 
-import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.AccessMode;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -229,8 +226,8 @@ public class SubscriberDb implements BaseColumns {
 
                 updated = db.update(TABLE_NAME, values, _ID + "=" + ss.mId, null);
 
-                Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
-                        " name=" + sub.user + " returned " + updated);
+                //Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
+                //        " name=" + sub.user + " returned " + updated);
 
                 db.setTransactionSuccessful();
             }

@@ -210,14 +210,14 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws IllegalArgumentException
      */
     public void setSerializedTypes(String serialized) throws IllegalArgumentException {
-        Log.d(TAG, "Serialized types: " + serialized);
+        // Log.d(TAG, "Serialized types: " + serialized);
 
         if (serialized == null) {
             return;
         }
 
         String[] parts = serialized.split("\\n");
-        Log.d(TAG, "Serialized types parsed: " + Arrays.toString(parts));
+        // Log.d(TAG, "Serialized types parsed: " + Arrays.toString(parts));
 
         if (parts.length == 3) {
             setTypes(parts[0], parts[1], parts[2]);
@@ -352,9 +352,13 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mDesc.recv;
     }
     public void setRecv(int recv) {
+        // Log.d(TAG, "setRecv(" + recv +"), was: " + mDesc.recv);
+
         if (recv > mDesc.recv) {
             mDesc.recv = recv;
         }
+
+        // Log.d(TAG, "getRecv=" + getRecv());
     }
 
     public AccessMode getMode() {
@@ -416,19 +420,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws Exception
      */
     public PromisedReply<ServerMessage> subscribe() throws Exception {
-        if (!mAttached) {
-            MsgGetMeta getParams = null;
-            if (mDesc.updated == null) {
-                // New topic, get everything.
-                getParams = new MsgGetMeta();
-            } else {
-                // Existing topic with some cached data. Get only fresh data.
-                getParams = subscribeParamGetBuilder().withGetData().build();
-            }
-
-            return subscribe(null, getParams);
-        }
-        throw new IllegalStateException("Already subscribed");
+        return subscribe(null, subscribeParamGetBuilder()
+                .withGetDesc().withGetData().withGetSub().build());
     }
 
     /**
@@ -633,7 +626,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      */
     public void noteKeyPress() {
         long now = System.nanoTime();
-        if (now - mLastKeyPress > Tinode.KEY_PRESS_DELAY) {
+        if (now - mLastKeyPress > Tinode.getKeyPressDelay()) {
             mLastKeyPress = now;
             mTinode.noteKeyPress(getName());
         }
@@ -967,11 +960,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         public MetaGetBuilder withGetData(Integer since, Integer before, Integer limit) {
-            meta.data = new MsgGetMeta.GetData();
-            // Get messages since the last known message.
-            meta.data.since = since != null ? since : topic.getRecv() + 1;
-            meta.data.before = before;
-            meta.data.limit = limit;
+            meta.setData(
+                // Get messages since the last known message.
+                since != null ? since : topic.getRecv() + 1,
+                before, limit);
+
+            Log.d(TAG, "topic.getRecv returned " + topic.getRecv() + ", since = " + meta.data.since);
             return this;
         }
         public MetaGetBuilder withGetData() {
@@ -979,8 +973,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         public MetaGetBuilder withGetDesc(Date ims) {
-            meta.desc = new MsgGetMeta.GetDesc();
-            meta.desc.ims = ims;
+            meta.setDesc(ims);
             return this;
         }
 
@@ -989,9 +982,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         public MetaGetBuilder withGetSub(Date ims, Integer limit) {
-            meta.sub = new MsgGetMeta.GetSub();
-            meta.sub.ims = ims;
-            meta.sub.limit = limit;
+            meta.setSub(ims, limit);
             return this;
         }
 

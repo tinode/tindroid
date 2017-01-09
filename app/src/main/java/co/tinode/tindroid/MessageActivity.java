@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -18,22 +17,15 @@ import android.view.View;
 import android.widget.TextView;
 
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
-import co.tinode.tindroid.db.StoredTopic;
-import co.tinode.tindroid.db.StoredUser;
-import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
-import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * View to display a single conversation

@@ -5,10 +5,7 @@ import android.database.Cursor;
 import java.util.Date;
 
 import co.tinode.tinodesdk.LocalData;
-import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.AccessMode;
-import co.tinode.tinodesdk.model.Description;
 
 /**
  * Representation of a topic stored in a database;
