@@ -11,8 +11,11 @@ import co.tinode.tinodesdk.Topic;
  * Representation of a topic stored in a database;
  */
 public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
-    public long mId;
-    public Date mLastUsed;
+
+    public long id;
+    public Date lastUsed;
+    public int minLocalSeq;
+    public int maxLocalSeq;
 
     public StoredTopic() {
     }
@@ -21,8 +24,10 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
     protected static <Pu,Pr,T> void deserialize(Topic<Pu,Pr,T> topic, Cursor c) {
         StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
 
-        st.mId = c.getLong(TopicDb.COLUMN_IDX_ID);
-        st.mLastUsed = new Date(c.getLong(TopicDb.COLUMN_IDX_LASTUSED));
+        st.id = c.getLong(TopicDb.COLUMN_IDX_ID);
+        st.lastUsed = new Date(c.getLong(TopicDb.COLUMN_IDX_LASTUSED));
+        st.minLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MIN_LOCAL_SEQ);
+        st.maxLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MAX_LOCAL_SEQ);
 
         topic.setUpdated(new Date(c.getLong(TopicDb.COLUMN_IDX_UPDATED)));
         topic.setDeleted(new Date(c.getLong(TopicDb.COLUMN_IDX_DELETED)));
@@ -44,6 +49,6 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
 
     public static long getId(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return st.mId;
+        return st.id;
     }
 }

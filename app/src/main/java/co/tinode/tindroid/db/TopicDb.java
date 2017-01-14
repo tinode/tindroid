@@ -63,7 +63,7 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_READ = "read";
     /**
-     * Sequence ID marked as received by the current user, integer
+     * Sequence ID marked as received by the current user on any device (server-reported), integer
      */
     public static final String COLUMN_NAME_RECV = "recv";
     /**
@@ -82,6 +82,15 @@ public class TopicDb implements BaseColumns {
      * Timestamp of the last message
      */
     public static final String COLUMN_NAME_LASTUSED = "last_used";
+    /**
+     * Minimum sequence ID received by the current device (self/locally-tracked), integer
+     */
+    public static final String COLUMN_NAME_MIN_LOCAL_SEQ = "min_local_seq";
+    /**
+     * Maximum sequence ID received by the current device (self/locally-tracked), integer
+     */
+    public static final String COLUMN_NAME_MAX_LOCAL_SEQ = "max_local_seq";
+
     /**
      * Serialized types of public, private, and content
      */
@@ -112,9 +121,11 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_CLEAR = 12;
     static final int COLUMN_IDX_ACCESSMODE = 13;
     static final int COLUMN_IDX_LASTUSED = 14;
-    static final int COLUMN_IDX_SERIALIZED_TYPES = 15;
-    static final int COLUMN_IDX_PUBLIC = 16;
-    static final int COLUMN_IDX_PRIVATE = 17;
+    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 15;
+    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 16;
+    static final int COLUMN_IDX_SERIALIZED_TYPES = 17;
+    static final int COLUMN_IDX_PUBLIC = 18;
+    static final int COLUMN_IDX_PRIVATE = 19;
 
     /**
      * SQL statement to create Messages table
@@ -137,6 +148,8 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_CLEAR + " INT," +
                     COLUMN_NAME_ACCESSMODE + " TEXT," +
                     COLUMN_NAME_LASTUSED + " INT," +
+                    COLUMN_NAME_MIN_LOCAL_SEQ + " INT," +
+                    COLUMN_NAME_MAX_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_SERIALIZED_TYPES + " TEXT," +
                     COLUMN_NAME_PUBLIC + " BLOB," +
                     COLUMN_NAME_PRIVATE + " BLOB)";
@@ -193,12 +206,14 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
         values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
+        values.put(COLUMN_NAME_MIN_LOCAL_SEQ, 0);
+        values.put(COLUMN_NAME_MAX_LOCAL_SEQ, 0);
 
         long id = db.insert(TABLE_NAME, null, values);
         if (id > 0) {
             StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
-            st.mId = id;
-            st.mLastUsed = lastUsed;
+            st.id = id;
+            st.lastUsed = lastUsed;
             topic.setLocal(st);
         }
 
@@ -238,9 +253,9 @@ public class TopicDb implements BaseColumns {
                             " AND " + COLUMN_NAME_TOPIC + "='" + topic.getName() + "'";
         */
 
-        int updated = db.update(TABLE_NAME, values, _ID + "=" + st.mId, null);
+        int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
         if (updated > 0) {
-            st.mLastUsed = lastUsed;
+            st.lastUsed = lastUsed;
         }
 
         Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
@@ -249,6 +264,41 @@ public class TopicDb implements BaseColumns {
         return updated > 0;
     }
 
+    /**
+     * A message was received and stored. Update topic record with the message info
+     *
+     * @return true on success, false otherwise
+     */
+    public static boolean msgReceived(SQLiteDatabase db, Topic topic, StoredMessage msg) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
+
+        // Convert topic description to a map of values
+        ContentValues values = new ContentValues();
+
+        if (msg.seq > st.maxLocalSeq) {
+            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, msg.seq);
+        } else if (msg.seq < st.minLocalSeq) {
+            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, msg.seq);
+        }
+        if (msg.ts.after(st.lastUsed)) {
+            values.put(COLUMN_NAME_LASTUSED, msg.ts.getTime());
+        }
+
+        if (values.size() > 0) {
+            int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
+            if (updated <= 0) {
+                return false;
+            }
+
+            st.lastUsed = msg.ts.after(st.lastUsed) ? msg.ts : st.lastUsed;
+            st.minLocalSeq = msg.seq < st.minLocalSeq ? msg.seq : st.minLocalSeq;
+            st.maxLocalSeq = msg.seq > st.maxLocalSeq ? msg.seq : st.maxLocalSeq;
+        }
+        return true;
+    }
 
     /**
      * Query topics.
@@ -317,7 +367,7 @@ public class TopicDb implements BaseColumns {
             return 0;
         }
 
-        return db.delete(TABLE_NAME, _ID + "=" + st.mId, null);
+        return db.delete(TABLE_NAME, _ID + "=" + st.id, null);
     }
 
     /**

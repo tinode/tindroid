@@ -73,11 +73,20 @@ class SqlStore implements Storage {
     }
 
     @Override
+    public Range getCachedMessagesRange(Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st != null) {
+
+        }
+        return null;
+    }
+
+    @Override
     public boolean setRead(Topic topic, int read) {
         boolean result = false;
         StoredTopic st = (StoredTopic) topic.getLocal();
-        if (st != null && st.mId > 0) {
-            result = TopicDb.updateRead(mDbh.getWritableDatabase(), st.mId, read);
+        if (st != null && st.id > 0) {
+            result = TopicDb.updateRead(mDbh.getWritableDatabase(), st.id, read);
         }
         return result;
     }
@@ -86,8 +95,8 @@ class SqlStore implements Storage {
     public boolean setRecv(Topic topic, int recv) {
         boolean result = false;
         StoredTopic st = (StoredTopic) topic.getLocal();
-        if (st != null && st.mId > 0) {
-            result = TopicDb.updateRecv(mDbh.getWritableDatabase(), st.mId, recv);
+        if (st != null && st.id > 0) {
+            result = TopicDb.updateRecv(mDbh.getWritableDatabase(), st.id, recv);
         }
         return result;
     }
@@ -115,7 +124,7 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <T> long msgReceived(Subscription sub, MsgServerData<T> m) {
+    public <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> m) {
         StoredMessage<T> msg = new StoredMessage<>(m);
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss == null) {
@@ -126,7 +135,7 @@ class SqlStore implements Storage {
         msg.userId = ss.userId;
         msg.senderIdx = ss.senderIdx;
 
-        return MessageDb.insert(mDbh.getWritableDatabase(), msg);
+        return MessageDb.insert(mDbh.getWritableDatabase(), topic, msg);
     }
 
     @Override
@@ -153,12 +162,12 @@ class SqlStore implements Storage {
             return -1;
         }
 
-        msg.topicId = st.mId;
+        msg.topicId = st.id;
 
         // Use the same sender index for all invites.
         msg.senderIdx = 1;
 
-        return MessageDb.insert(db, msg);
+        return MessageDb.insert(db, topic, msg);
     }
 
     @Override
@@ -180,7 +189,7 @@ class SqlStore implements Storage {
         msg.userId = mMyId;
         msg.senderIdx = 0;
 
-        return MessageDb.insert(db, msg);
+        return MessageDb.insert(db, topic, msg);
     }
 
     @Override
@@ -191,13 +200,13 @@ class SqlStore implements Storage {
     @Override
     public boolean msgMarkToDelete(Topic topic, int before) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.mId, before, true);
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, before, true);
     }
 
     @Override
     public boolean msgDelete(Topic topic, int before) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.mId, before, false);
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, before, false);
     }
 
     @Override

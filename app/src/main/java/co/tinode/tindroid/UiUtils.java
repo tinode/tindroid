@@ -28,6 +28,8 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 
+import com.neovisionaries.ws.client.WebSocketException;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -183,12 +185,14 @@ public class UiUtils {
 
                             // Go to Contacts
                             success = true;
-                        } catch (IOException ignored) {
+                        } catch (WebSocketException | IOException ignored) {
                             // Login failed due to network error.
                             // If we have UID, go to Contacts, otherwise to Login
                             success = BaseDb.getInstance().isReady();
+                            Log.d(TAG, "Network failure/" + (success ? "DB ready" : "DB NOT ready"));
                         }
                         catch (Exception ignored) {
+                            Log.d(TAG, "Other failure", ignored);
                             // Login failed due to invalid (expired) token
                             accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                         }

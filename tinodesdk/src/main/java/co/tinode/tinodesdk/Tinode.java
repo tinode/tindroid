@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -57,9 +60,12 @@ public class Tinode {
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
 
-    // Delay in nanoseconds between sending two key press notifications on the
+    // Delay in milliseconds between sending two key press notifications on the
     // same topic.
-    private static final long KEY_PRESS_DELAY = 3000000000L;
+    private static final long NOTE_KP_DELAY = 3000L;
+
+    // Delay in milliseconds before recv notification is sent
+    private static final long NOTE_RECV_DELAY = 300L;
 
     private static final String PROTOVERSION = "0";
     private static final String VERSION = "0.8";
@@ -1072,7 +1078,7 @@ public class Tinode {
      * Get minimum delay between two subsequent key press notifications.
      */
     protected static long getKeyPressDelay() {
-        return KEY_PRESS_DELAY;
+        return NOTE_KP_DELAY;
     }
 
     /**
@@ -1185,6 +1191,36 @@ public class Tinode {
         LoginCredentials(String scheme, String secret) {
             this.scheme = scheme;
             this.secret = secret;
+        }
+    }
+
+    /**
+     * Scheduler for sending delayed recv notifications.
+     */
+    class HeartBeat extends Timer {
+        public static final String TAG = "HeartBeat";
+
+        private ConcurrentHashMap<String,Integer> recvQueue;
+
+        public HeartBeat() {
+            super(TAG, true);
+
+            recvQueue = new ConcurrentHashMap<>();
+
+            schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Set<String> keyset = recvQueue.keySet();
+                    for (String topic : keyset) {
+                        int recv = recvQueue.remove(topic);
+                        Tinode.this.noteRecv(topic, recv);
+                    }
+                }
+            }, NOTE_RECV_DELAY / 2, NOTE_RECV_DELAY);
+        }
+
+        public void post(String topic, int recv) {
+            recvQueue.put(topic, recv);
         }
     }
 }

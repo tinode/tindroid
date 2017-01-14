@@ -5,12 +5,15 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDoneException;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import java.util.Date;
+
+import co.tinode.tinodesdk.Topic;
 
 /**
  * Storage structure for messages:
@@ -133,7 +136,7 @@ public class MessageDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    public static long insert(SQLiteDatabase db, StoredMessage msg) {
+    public static long insert(SQLiteDatabase db, Topic topic, StoredMessage msg) {
         long id = -1;
         try {
             db.beginTransaction();
@@ -164,7 +167,10 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
             id = db.insert(TABLE_NAME, null, values);
-            db.setTransactionSuccessful();
+
+            if (TopicDb.msgReceived(db, topic, msg)) {
+                db.setTransactionSuccessful();
+            }
 
         } catch (Exception ex) {
             Log.d(TAG, "Exception while inserting message", ex);

@@ -76,10 +76,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
     // to the first few digits of sqrt(2)
     protected Date mSubsUpdated = new Date(1414213562);
 
+    protected boolean mAttached = false;
+    protected Listener<Pu,Pr,T> mListener = null;
 
-    protected boolean mAttached;
-    protected Listener<Pu,Pr,T> mListener;
-
+    // Timestamp of the last key press that the server was notified of, milliseconds
     protected long mLastKeyPress = 0;
 
     private Payload mLocal = null;
@@ -87,6 +87,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected boolean mOnline = false;
 
     protected LastSeen mLastSeen = null;
+
+    // Seq value of the latest message stored locally
+    protected int mMaxMessageSeq = 0;
 
     protected Topic(Tinode tinode, Subscription<Pu,Pr> sub) {
         if (tinode == null) {
@@ -103,9 +106,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         mDesc   = new Description<>();
         mDesc.merge(sub);
-
-        mAttached           = false;
-        mListener           = null;
     }
 
     /**
@@ -128,8 +128,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
         if (l != null) {
             l.mTopic = this;
         }
+
         mListener = l;
-        mAttached = false;
     }
 
     /**
@@ -352,13 +352,20 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mDesc.recv;
     }
     public void setRecv(int recv) {
-        // Log.d(TAG, "setRecv(" + recv +"), was: " + mDesc.recv);
-
         if (recv > mDesc.recv) {
             mDesc.recv = recv;
         }
+    }
 
-        // Log.d(TAG, "getRecv=" + getRecv());
+    /**
+     * Cache max seq of the latest locally stored message
+     *
+     * @param recv - seq of the latest message
+     */
+    public void setRecvLocal(int recv) {
+        if (recv > mMaxMessageSeq) {
+            mMaxMessageSeq = recv;
+        }
     }
 
     public AccessMode getMode() {
@@ -579,31 +586,27 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param what "read" or "recv" to indicate which action to report
      */
     protected int noteReadRecv(NoteType what) {
-        // Save read and received status on subscription.
-        Subscription<?,?> sub = getSubscription(mTinode.getMyId());
         int result = 0;
-        if (sub != null) {
-            switch (what) {
-                case RECV:
-                    if (sub.recv < mDesc.seq) {
-                        mTinode.noteRecv(getName(), mDesc.seq);
-                        result = sub.recv = mDesc.seq;
-                    }
-                    break;
-                case READ:
-                    if (sub.read < mDesc.seq) {
-                        mTinode.noteRead(getName(), mDesc.seq);
-                        result = sub.read = mDesc.seq;
-                    }
-                    break;
-            }
-        } else if (mTinode.isConnected()) {
-            Log.e(TAG, "Subscription not found in topic");
+
+        switch (what) {
+            case RECV:
+                if (mDesc.recv < mDesc.seq) {
+                    mTinode.noteRecv(getName(), mDesc.seq);
+                    result = mDesc.recv = mDesc.seq;
+                }
+                break;
+            case READ:
+                if (mDesc.read < mDesc.seq) {
+                    mTinode.noteRead(getName(), mDesc.seq);
+                    result = mDesc.read = mDesc.seq;
+                }
+                break;
         }
 
         return result;
     }
 
+    /** Notify the server that the client read the message */
     public int noteRead() {
         int result = noteReadRecv(NoteType.READ);
         if (mStore != null) {
@@ -612,6 +615,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return result;
     }
 
+    /** Notify the server that the messages is stored on the client */
     public int noteRecv() {
         int result = noteReadRecv(NoteType.RECV);
         if (mStore != null) {
@@ -625,7 +629,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * Send a key press notification to server. Ensure we do not sent too many.
      */
     public void noteKeyPress() {
-        long now = System.nanoTime();
+        long now = System.currentTimeMillis();
         if (now - mLastKeyPress > Tinode.getKeyPressDelay()) {
             mLastKeyPress = now;
             mTinode.noteKeyPress(getName());
@@ -866,7 +870,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
             mDesc.seq = data.seq;
         }
 
-        if (mStore != null && mStore.msgReceived(getSubscription(data.from), data) > 0) {
+        if (mStore != null && mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
             noteRecv();
         }
 

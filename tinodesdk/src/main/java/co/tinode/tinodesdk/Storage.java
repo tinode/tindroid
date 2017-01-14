@@ -26,6 +26,9 @@ public interface Storage {
     boolean topicUpdate(Topic topic);
     /** Delete topic */
     boolean topicDelete(Topic topic);
+
+    /** Get seq IDs of the stored messages as a Range */
+    Range getCachedMessagesRange(Topic topic);
     /** Local user reported messages as read */
     boolean setRead(Topic topic, int read);
     /** Local user reported messages as received */
@@ -40,7 +43,7 @@ public interface Storage {
     Collection<Subscription> getSubscriptions(Topic topic);
 
     // Message received
-    <T> long msgReceived(Subscription sub, MsgServerData<T> msg);
+    <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> msg);
     // Invitation message received
     <Pu,T> long inviteReceived(Topic me, MsgServerData<Invitation<Pu,T>> msg);
 
@@ -56,4 +59,14 @@ public interface Storage {
     boolean msgRecvByRemote(Subscription sub, int recv);
     /** Set read value for a given subscriber */
     boolean msgReadByRemote(Subscription sub, int read);
+
+    class Range {
+        public int min;
+        public int max;
+
+        public Range(int from, int to) {
+            min = from;
+            max = to;
+        }
+    }
 }
