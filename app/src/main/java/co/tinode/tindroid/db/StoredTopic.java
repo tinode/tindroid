@@ -11,7 +11,6 @@ import co.tinode.tinodesdk.Topic;
  * Representation of a topic stored in a database;
  */
 public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
-
     public long id;
     public Date lastUsed;
     public int minLocalSeq;

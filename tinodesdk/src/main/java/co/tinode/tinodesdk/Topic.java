@@ -88,9 +88,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     protected LastSeen mLastSeen = null;
 
-    // Seq value of the latest message stored locally
-    protected int mMaxMessageSeq = 0;
-
     protected Topic(Tinode tinode, Subscription<Pu,Pr> sub) {
         if (tinode == null) {
             throw new IllegalArgumentException("Tinode cannot be null");
@@ -357,15 +354,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
     }
 
-    /**
-     * Cache max seq of the latest locally stored message
-     *
-     * @param recv - seq of the latest message
-     */
-    public void setRecvLocal(int recv) {
-        if (recv > mMaxMessageSeq) {
-            mMaxMessageSeq = recv;
-        }
+    public Storage.Range getCachedMessageRange() {
+        return mStore == null ? null : mStore.getCachedMessagesRange(this);
     }
 
     public AccessMode getMode() {
@@ -507,8 +497,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                             if (result.ctrl != null && id > 0 && mStore != null) {
-                                int seq = (Integer) result.ctrl.params.get("seq");
-                                mStore.msgDelivered(id, result.ctrl.ts, seq);
+                                int seq = (Integer) result.ctrl.getIntParam("seq");
+                                setSeq(seq);
+                                if (mStore.msgDelivered(id, result.ctrl.ts, seq)) {
+                                    setRecv(seq);
+                                    setRead(seq);
+                                }
                             }
                             return null;
                         }
@@ -896,17 +890,17 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     protected void routeInfo(MsgServerInfo info) {
-        if (!info.what.equals("kp")) {
+        if (!info.what.equals(Tinode.NOTE_KP)) {
             Subscription sub = getSubscription(info.from);
             if (sub != null) {
                 switch (info.what) {
-                    case "recv":
+                    case Tinode.NOTE_RECV:
                         sub.recv = info.seq;
                         if (mStore != null) {
                             mStore.msgRecvByRemote(sub, info.seq);
                         }
                         break;
-                    case "read":
+                    case Tinode.NOTE_READ:
                         sub.read = info.seq;
                         if (mStore != null) {
                             mStore.msgReadByRemote(sub, info.seq);
@@ -944,6 +938,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
          * @param data data packet
          */
         public void onData(MsgServerData<Tt> data) { }
+
         public void onContactUpdate(String what, Subscription<PPu,PPr> sub) {}
         public void onInfo(MsgServerInfo info) {}
         public void onMeta(MsgServerMeta<PPu,PPr> meta) {}
@@ -954,6 +949,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
         public void onOnline(boolean online) {}
     }
 
+    /**
+     * Helper class for generating qury parameters for {sub get} and {meta get} packets.
+     */
     public static class MetaGetBuilder {
         protected Topic topic;
         protected MsgGetMeta meta;
@@ -963,17 +961,50 @@ public class Topic<Pu,Pr,T> implements LocalData {
             topic = parent;
         }
 
+        /**
+         * Add query parameters to fetch messages within explicit limits. Any/all parameters can be null.
+         *
+         * @param since messages newer than this;
+         * @param before older than this
+         * @param limit number of messages to fetch
+         */
         public MetaGetBuilder withGetData(Integer since, Integer before, Integer limit) {
-            meta.setData(
-                // Get messages since the last known message.
-                since != null ? since : topic.getRecv() + 1,
-                before, limit);
-
-            Log.d(TAG, "topic.getRecv returned " + topic.getRecv() + ", since = " + meta.data.since);
+            meta.setData(since, before, limit);
             return this;
         }
+
+        /**
+         * Add query parameters to fetch messages newer than the latest saved message.
+         *
+         * @param limit number of messages to fetch
+         */
+        public MetaGetBuilder withGetLaterData(Integer limit) {
+            Storage.Range r = topic.getCachedMessageRange();
+            if (r == null) {
+                return withGetData(null, null, limit);
+            }
+            return withGetData(r.max > 0 ? r.max + 1 : null, null, limit);
+        }
+
+        /**
+         * Add query parameters to fetch messages older than the earliest saved message.
+         *
+         * @param limit number of messages to fetch
+         */
+        public MetaGetBuilder withGetEarlierData(Integer limit) {
+            Storage.Range r = topic.getCachedMessageRange();
+            if (r == null) {
+                return withGetData(null, null, limit);
+            }
+            return withGetData(null, r.min > 0 ? r.min : null, limit);
+        }
+
+        /**
+         * Default query - same as withGetLaterData with default number of
+         * messages to fetch.
+         */
         public MetaGetBuilder withGetData() {
-            return withGetData(null, null, null);
+            return withGetLaterData(null);
         }
 
         public MetaGetBuilder withGetDesc(Date ims) {

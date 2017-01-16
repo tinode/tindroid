@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Date;
 import java.util.Map;
 
@@ -15,5 +17,10 @@ public class MsgServerCtrl {
     public Map<String, Object> params;
 
     public MsgServerCtrl() {
+    }
+
+    @JsonIgnore
+    public Integer getIntParam(String key) {
+        return params != null ? (Integer) params.get(key) : null;
     }
 }

@@ -104,7 +104,7 @@ public class UiUtils {
 
         drw.setColorFilter(new ColorMatrixColorFilter(NEGATIVE));
     }
-
+    /*
     public static void setOnlineStatus(final AppCompatActivity activity, boolean online) {
         final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
@@ -120,6 +120,7 @@ public class UiUtils {
             }
         }
     }
+    */
 
     public static String getVisibleTopic() {
         return sVisibleTopic;
@@ -226,9 +227,10 @@ public class UiUtils {
         private AppCompatActivity mActivity = null;
         private Boolean mOnline = null;
 
-        public EventListener(AppCompatActivity owner) {
+        public EventListener(AppCompatActivity owner, Boolean online) {
             super();
             mActivity = owner;
+            mOnline = online;
         }
 
         @Override

@@ -17,6 +17,7 @@ import co.tinode.tinodesdk.model.Subscription;
  * Persistence for Tinode.
  */
 class SqlStore implements Storage {
+
     private BaseDb mDbh;
     private long mMyId = -1;
 
@@ -76,7 +77,7 @@ class SqlStore implements Storage {
     public Range getCachedMessagesRange(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
-
+            return new Range(st.maxLocalSeq, st.maxLocalSeq);
         }
         return null;
     }

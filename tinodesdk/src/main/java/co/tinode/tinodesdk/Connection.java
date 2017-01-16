@@ -81,6 +81,8 @@ public class Connection {
                 if (mListener != null) {
                     mListener.onConnect(reconnecting);
                 }
+
+                reconnecting = false;
             }
 
             @Override
@@ -99,29 +101,36 @@ public class Connection {
                                        WebSocketFrame serverCloseFrame,
                                        WebSocketFrame clientCloseFrame,
                                        final boolean closedByServer) {
-                Log.d(TAG, "Connection failed :(");
+                Log.d(TAG, "onDisconnected, reconnecting=" + reconnecting);
 
                 // Avoid infinite recursion
                 if (reconnecting) {
                     return;
+                } else {
+                    reconnecting = autoreconnect;
                 }
 
                 WebSocketFrame frame = closedByServer ? serverCloseFrame : clientCloseFrame;
                 mListener.onDisconnect(closedByServer, frame.getCloseCode(), frame.getCloseReason());
 
-                while (autoreconnect) {
-                    reconnecting = true;
+                if (autoreconnect) {
+                    while (!isConnected()) {
+                        backoff.doSleep();
 
-                    backoff.doSleep();
-                    Log.d(TAG, "Connection: autoreconnecting " + backoff.getAttemptCount());
-                    try {
-                        mWsClient = createSocket();
-                        mWsClient.connect();
-                    } catch (WebSocketException | IOException e) {
-                        Log.d(TAG, "Autoreconnect failed " + e.getMessage());
+                        // Check if an explicit disconnect has been requested.
+                        if (!autoreconnect) {
+                            reconnecting = false;
+                            break;
+                        }
+
+                        Log.d(TAG, "Connection: autoreconnecting " + backoff.getAttemptCount());
+                        try {
+                            mWsClient = createSocket();
+                            mWsClient.connect();
+                        } catch (WebSocketException | IOException e) {
+                            Log.d(TAG, "Autoreconnect failed " + e.getMessage());
+                        }
                     }
-
-                    reconnecting = false;
                 }
             }
 

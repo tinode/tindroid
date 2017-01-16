@@ -279,7 +279,7 @@ public class TopicDb implements BaseColumns {
         ContentValues values = new ContentValues();
 
         if (msg.seq > st.maxLocalSeq) {
-            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, msg.seq);
+            values.put(COLUMN_NAME_MAX_LOCAL_SEQ, msg.seq);
         } else if (msg.seq < st.minLocalSeq) {
             values.put(COLUMN_NAME_MIN_LOCAL_SEQ, msg.seq);
         }

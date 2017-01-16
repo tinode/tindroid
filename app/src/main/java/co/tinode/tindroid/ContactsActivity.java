@@ -95,7 +95,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         final Tinode tinode = Cache.getTinode();
 
-        tinode.setListener(new UiUtils.EventListener(this));
+        tinode.setListener(new UiUtils.EventListener(this, tinode.isConnected()));
 
         UiUtils.setupToolbar(this, null, Topic.TopicType.ME, false);
 

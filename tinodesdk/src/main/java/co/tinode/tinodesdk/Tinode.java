@@ -60,6 +60,10 @@ public class Tinode {
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
 
+    protected static final String NOTE_KP = "kp";
+    protected static final String NOTE_READ = "read";
+    protected static final String NOTE_RECV = "recv";
+
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
@@ -865,11 +869,7 @@ public class Tinode {
      * @param topicName name of the topic to inform
      */
     public void noteKeyPress(String topicName) {
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(
-                    new ClientMessage(new MsgClientNote(topicName, "kp", 0))));
-        } catch (JsonProcessingException ignored) {
-        }
+        note(topicName, NOTE_KP, 0);
     }
 
     /**
@@ -880,11 +880,7 @@ public class Tinode {
      * @param seq id of the message being acknowledged
      */
     public void noteRead(String topicName, int seq) {
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(
-                    new ClientMessage(new MsgClientNote(topicName, "read", seq))));
-        } catch (JsonProcessingException ignored) {
-        }
+        note(topicName, NOTE_READ, seq);
     }
 
     /**
@@ -895,11 +891,7 @@ public class Tinode {
      * @param seq id of the message being acknowledged
      */
     public void noteRecv(String topicName, int seq) {
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(
-                    new ClientMessage(new MsgClientNote(topicName, "recv", seq))));
-        } catch (JsonProcessingException ignored) {
-        }
+        note(topicName, NOTE_RECV, seq);
     }
 
     /**

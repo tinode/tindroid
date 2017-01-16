@@ -90,7 +90,7 @@ public class MessageActivity extends AppCompatActivity {
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
-        tinode.setListener(new UiUtils.EventListener(this));
+        tinode.setListener(new UiUtils.EventListener(this, tinode.isConnected()));
 
         final Intent intent = getIntent();
         final LoaderManager loaderManager = getSupportLoaderManager();
@@ -127,21 +127,21 @@ public class MessageActivity extends AppCompatActivity {
             mTopic.setListener(new TListener(loaderManager));
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
             runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+
+            if (!mTopic.isAttached()) {
+                try {
+                    mTopic.subscribe(null,
+                            mTopic.subscribeParamGetBuilder()
+                                    .withGetDesc()
+                                    .withGetSub()
+                                    .withGetData()
+                                    .build());
+                } catch (Exception ex) {
+                    Log.e(TAG, "something went wrong", ex);
+                }
+            }
         } else {
             Log.d(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
-        }
-
-        if (!mTopic.isAttached()) {
-            try {
-                mTopic.subscribe(null,
-                        mTopic.subscribeParamGetBuilder()
-                        .withGetDesc()
-                        .withGetSub()
-                        .withGetData()
-                        .build());
-            } catch (Exception ex) {
-                Log.e(TAG, "something went wrong", ex);
-            }
         }
     }
 
@@ -206,6 +206,7 @@ public class MessageActivity extends AppCompatActivity {
         if (mTopic != null) {
             final TextView inputField = (TextView) findViewById(R.id.editMessage);
             String message = inputField.getText().toString().trim();
+            mMessagesAdapter.notifyDataSetChanged();
             if (!message.equals("")) {
                 try {
                     mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -214,8 +215,9 @@ public class MessageActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    // Clear text from the input field
+                                    // Clear text from the input field and update message list.
                                     inputField.setText("");
+                                    mMessagesAdapter.notifyDataSetChanged();
                                 }
                             });
                             return null;
