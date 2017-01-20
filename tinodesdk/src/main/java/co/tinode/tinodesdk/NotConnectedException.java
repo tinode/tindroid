@@ -6,10 +6,11 @@ package co.tinode.tinodesdk;
 public class NotConnectedException extends IllegalStateException {
 
     public NotConnectedException() {
+        this((Throwable) null);
     }
 
     public NotConnectedException(String s) {
-        super(s);
+        this(s, null);
     }
 
     public NotConnectedException(String message, Throwable cause) {
@@ -17,6 +18,6 @@ public class NotConnectedException extends IllegalStateException {
     }
 
     public NotConnectedException(Throwable cause) {
-        super(cause);
+        this("Not connected", cause);
     }
 }

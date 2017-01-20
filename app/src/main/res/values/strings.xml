@@ -77,4 +77,5 @@
     <string name="failed_to_invite">Don\'t know how to invite - no contact info</string>
     <string name="about_title">About</string>
     <string name="action_offline">Working offline</string>
+    <string name="failed_to_send_message">Failed to send message</string>
 </resources>

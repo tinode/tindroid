@@ -111,6 +111,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param tinode instance of Tinode object to communicate with the server
      * @param name name of the topic
      * @param l event listener, optional
+     *
+     * @throws IllegalArgumentException if 'tinode' argument is null
      */
     public Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
         if (tinode == null) {
@@ -189,7 +191,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param typeOfPrivate type of {meta.desc.private}
      * @param typeOfContent type of {data.content}
      *
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException if types cannot be parsed
      */
     public void setTypes(String typeOfPublic, String typeOfPrivate, String typeOfContent)
             throws IllegalArgumentException {
@@ -204,7 +206,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param serialized type of {meta.desc.public}
      *
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException if types cannot be parsed
      */
     public void setSerializedTypes(String serialized) throws IllegalArgumentException {
         // Log.d(TAG, "Serialized types: " + serialized);
@@ -424,11 +426,17 @@ public class Topic<Pu,Pr,T> implements LocalData {
     /**
      * Subscribe to topic with parameters
      *
-     * @throws Exception
+     * @throws NotConnectedException if there is no live connection to the server
+     * @throws IllegalStateException if the client is already subscribed to the given topic
      */
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<Pu,Pr,?> set, MsgGetMeta get)
             throws Exception {
         if (!mAttached) {
+
+            if (!mTinode.isConnected()) {
+                throw new NotConnectedException();
+            }
+
             return mTinode.subscribe(getName(), set, get).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
@@ -441,6 +449,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                         }
                     }, null);
         }
+
         throw new IllegalStateException("Already subscribed");
     }
 
@@ -452,7 +461,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * Leave topic
      * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      *
-     * @throws Exception
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to server
      */
     public PromisedReply<ServerMessage> leave(final boolean unsub) throws Exception {
         if (mAttached) {
@@ -466,13 +476,19 @@ public class Topic<Pu,Pr,T> implements LocalData {
                         }
                     }, null);
         }
-        throw new IllegalStateException("Not subscribed");
+
+        if (mTinode.isConnected()) {
+            throw new IllegalStateException("Not subscribed");
+        }
+
+        throw new NotConnectedException();
     }
 
     /**
      * Leave topic without unsubscribing
      *
-     * @throws Exception
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to server
      */
     public PromisedReply<ServerMessage> leave() throws Exception {
         return leave(false);
@@ -482,34 +498,45 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * Publish message to a topic. It will attempt to publish regardless of subscription status.
      *
      * @param content payload
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to server
      */
     public PromisedReply<ServerMessage> publish(T content) throws Exception {
-        if (mAttached) {
-            final long id;
-            if (mStore != null) {
-                id = mStore.msgSend(this, content);
-            } else {
-                id = -1;
-            }
+        final long id;
+        if (mStore != null) {
+            id = mStore.msgSend(this, content);
+        } else {
+            id = -1;
+        }
 
+        if (mAttached) {
             return mTinode.publish(getName(), content).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            if (result.ctrl != null && id > 0 && mStore != null) {
-                                int seq = (Integer) result.ctrl.getIntParam("seq");
+                            if (result.ctrl != null) {
+                                int seq = result.ctrl.getIntParam("seq");
                                 setSeq(seq);
-                                if (mStore.msgDelivered(id, result.ctrl.ts, seq)) {
+                                if (id > 0 && mStore != null) {
+                                    if (mStore.msgDelivered(id, result.ctrl.ts, seq)) {
+                                        setRecv(seq);
+                                    }
+                                } else {
                                     setRecv(seq);
-                                    setRead(seq);
                                 }
+                                setRead(seq);
                             }
                             return null;
                         }
                     }, null);
         }
 
-        throw new IllegalStateException("Not subscribed");
+        if (mTinode.isConnected()) {
+            throw new IllegalStateException("Not subscribed");
+        }
+
+        throw new NotConnectedException();
     }
 
     /**
@@ -521,6 +548,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     /**
      * Update topic metadata
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<Pu,Pr,T> meta) throws Exception {
         if (mAttached) {
@@ -534,7 +564,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 }
             }, null);
         }
-        throw new IllegalStateException("Not subscribed");
+        if (mTinode.isConnected()) {
+            throw new IllegalStateException("Not subscribed");
+        }
+
+        throw new NotConnectedException();
     }
 
     /**
@@ -542,6 +576,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param before delete messages with id up to this
      * @param hard hard-delete messages
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply delMessages(final int before, final boolean hard) throws Exception {
         if (mStore != null) {
@@ -556,10 +593,18 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 }
             }, null);
         }
-        throw new IllegalStateException("Not subscribed");
+
+        if (mTinode.isConnected()) {
+            throw new IllegalStateException("Not subscribed");
+        }
+
+        throw new NotConnectedException();
     }
     /**
      * Delete topic
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply delete() throws Exception {
         if (mAttached) {
@@ -571,7 +616,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 }
             }, null);
         }
-        throw new IllegalStateException("Not subscribed");
+
+        if (mTinode.isConnected()) {
+            throw new IllegalStateException("Not subscribed");
+        }
+
+        throw new NotConnectedException();
     }
 
     /**
@@ -585,14 +635,18 @@ public class Topic<Pu,Pr,T> implements LocalData {
         switch (what) {
             case RECV:
                 if (mDesc.recv < mDesc.seq) {
-                    mTinode.noteRecv(getName(), mDesc.seq);
-                    result = mDesc.recv = mDesc.seq;
+                    try {
+                        mTinode.noteRecv(getName(), mDesc.seq);
+                        result = mDesc.recv = mDesc.seq;
+                    } catch (NotConnectedException ignored) {}
                 }
                 break;
             case READ:
                 if (mDesc.read < mDesc.seq) {
-                    mTinode.noteRead(getName(), mDesc.seq);
-                    result = mDesc.read = mDesc.seq;
+                    try {
+                        mTinode.noteRead(getName(), mDesc.seq);
+                        result = mDesc.read = mDesc.seq;
+                    } catch (NotConnectedException ignored) {}
                 }
                 break;
         }
@@ -625,8 +679,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
     public void noteKeyPress() {
         long now = System.currentTimeMillis();
         if (now - mLastKeyPress > Tinode.getKeyPressDelay()) {
-            mLastKeyPress = now;
-            mTinode.noteKeyPress(getName());
+            try {
+                mTinode.noteKeyPress(getName());
+                mLastKeyPress = now;
+            } catch (NotConnectedException ignored) {}
         }
     }
 

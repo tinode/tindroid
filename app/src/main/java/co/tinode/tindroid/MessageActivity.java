@@ -15,9 +15,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -38,6 +40,7 @@ public class MessageActivity extends AppCompatActivity {
 
     private MessagesListAdapter mMessagesAdapter;
     private RecyclerView mMessageList;
+    private LoaderManager mLoaderManager;
     private MessageLoaderCallbacks mLoaderCallbacks;
     private String mMessageText = null;
 
@@ -80,6 +83,7 @@ public class MessageActivity extends AppCompatActivity {
         mMessageList = (RecyclerView) findViewById(R.id.messages_container);
         mMessageList.setLayoutManager(lm);
 
+        mLoaderManager = getSupportLoaderManager();
         mLoaderCallbacks = new MessageLoaderCallbacks();
         mMessagesAdapter = new MessagesListAdapter(this);
         mMessageList.setAdapter(mMessagesAdapter);
@@ -93,7 +97,6 @@ public class MessageActivity extends AppCompatActivity {
         tinode.setListener(new UiUtils.EventListener(this, tinode.isConnected()));
 
         final Intent intent = getIntent();
-        final LoaderManager loaderManager = getSupportLoaderManager();
 
         // Check if the activity was launched by internally-generated intent
         mTopicName = intent.getStringExtra("topic");
@@ -124,9 +127,9 @@ public class MessageActivity extends AppCompatActivity {
         // Get a known topic.
         mTopic = tinode.getTopic(mTopicName);
         if (mTopic != null) {
-            mTopic.setListener(new TListener(loaderManager));
+            mTopic.setListener(new TListener());
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
-            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, loaderManager);
+            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
 
             if (!mTopic.isAttached()) {
                 try {
@@ -203,39 +206,47 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     public void sendMessage() {
+        Log.d(TAG, "sendMessage");
         if (mTopic != null) {
             final TextView inputField = (TextView) findViewById(R.id.editMessage);
             String message = inputField.getText().toString().trim();
             mMessagesAdapter.notifyDataSetChanged();
             if (!message.equals("")) {
                 try {
+                    Log.d(TAG, "sendMessage -- sending...");
                     mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    // Clear text from the input field and update message list.
-                                    inputField.setText("");
+                                    // Update message list.
                                     mMessagesAdapter.notifyDataSetChanged();
+                                    Log.d(TAG, "sendMessage -- {ctrl} received");
                                 }
                             });
                             return null;
                         }
                     }, null);
-                } catch (Exception unused) {
-                    // TODO(gene): tell user that the message was not sent.
+                } catch (NotConnectedException ignored) {
+                    Log.d(TAG, "sendMessage -- NotConnectedException");
+                } catch (Exception ignored) {
+                    Log.d(TAG, "sendMessage -- Exception");
+                    Toast.makeText(this, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
+                    return;
                 }
+
+                // Message is successfully queued, clear text from the input field and redraw the list.
+                Log.d(TAG, "sendMessage -- clearing text and notifying");
+                inputField.setText("");
+                runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
             }
         }
     }
 
-    class TListener extends Topic.Listener<VCard, String, String> {
-        private LoaderManager mLoaderManager;
+    private class TListener extends Topic.Listener<VCard, String, String> {
 
-        TListener(LoaderManager lm) {
-            mLoaderManager = lm;
-        }
+        TListener() {}
 
         @Override
         public void onSubscribe(int code, String text) {
@@ -299,7 +310,7 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
-    class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
+    private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
 
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
