@@ -6,6 +6,7 @@ Work in progress. What works:
 * In-app presence notifications
 * Push notifications
 * Unread message counters
+* Offline mode is semi-functional
 * Indicators for messages received/read (little check marks in messages)
 * Register new account, login
 * Load the list of contacts and store it offline
@@ -17,7 +18,6 @@ Does not work yet:
 * Editing an existing account
 * Contact discovery - can't find other people to chat with
 * Deleting/muting topics and messages
-* Messages are not stored offline
 * Can't start new group conversations
 * No client support for typing notifications.
 * No encryption
