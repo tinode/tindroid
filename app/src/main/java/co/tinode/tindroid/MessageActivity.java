@@ -128,6 +128,7 @@ public class MessageActivity extends AppCompatActivity {
         mTopic = tinode.getTopic(mTopicName);
         if (mTopic != null) {
             mTopic.setListener(new TListener());
+
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
             runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
 
@@ -139,6 +140,8 @@ public class MessageActivity extends AppCompatActivity {
                                     .withGetSub()
                                     .withGetData()
                                     .build());
+                } catch (NotConnectedException ignored) {
+                    Log.d(TAG, "Offline mode");
                 } catch (Exception ex) {
                     Log.e(TAG, "something went wrong", ex);
                 }
@@ -291,7 +294,7 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    UiUtils.setupToolbar(MessageActivity.this, desc.pub, mTopic.getTopicType(),
+                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getTopicType(),
                             mTopic.getOnline());
                 }
             });

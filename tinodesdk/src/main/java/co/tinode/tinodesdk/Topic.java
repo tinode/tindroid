@@ -385,6 +385,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public int getUnreadCount() {
+        //Log.d(TAG, "getUnreadCount topic=" + mName + ", seq=" + mDesc.seq + ", read=" + mDesc.read);
         int unread = mDesc.seq - mDesc.read;
         return unread > 0 ? unread : 0;
     }
@@ -394,6 +395,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
     protected void setOnline(boolean online) {
         if (online != mOnline) {
+
+            //Log.d(TAG, "Topic[" + mName + "].setOnline(" + online + ");");
+
             mOnline = online;
             if (mListener != null) {
                 mListener.onOnline(mOnline);
@@ -773,9 +777,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
         int count = 0;
         if (seq > 0) {
             String me = mTinode.getMyId();
-            for (Subscription sub: getSubscriptions()) {
-                if (!sub.user.equals(me) && sub.recv >= seq) {
-                    count++;
+            Collection<Subscription<Pu,Pr>> subs = getSubscriptions();
+            if (subs != null) {
+                for (Subscription sub : subs) {
+                    if (!sub.user.equals(me) && sub.recv >= seq) {
+                        count++;
+                    }
                 }
             }
         }
@@ -793,9 +800,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
         int count = 0;
         if (seq > 0) {
             String me = mTinode.getMyId();
-            for (Subscription sub: getSubscriptions()) {
-                if (!sub.user.equals(me) && sub.read >= seq) {
-                    count++;
+            Collection<Subscription<Pu,Pr>> subs = getSubscriptions();
+            if (subs != null) {
+                for (Subscription sub : subs) {
+                    if (!sub.user.equals(me) && sub.read >= seq) {
+                        count++;
+                    }
                 }
             }
         }
@@ -845,6 +855,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     /**
      * Called when the topic receives leave() confirmation
+     *
      * @param unsub - not just detached but also unsubscribed
      * @param code result code, always 200
      * @param reason usually "OK"
@@ -852,7 +863,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected void topicLeft(boolean unsub, int code, String reason) {
         if (mAttached) {
             mAttached = false;
-            mOnline = false;
+
+            // Don't change topic online status here. Change it in the 'me' topic
 
             if (unsub) {
                 mTinode.unregisterTopic(this);
@@ -902,7 +914,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
                     mStore.subAdd(this, sub);
                 }
             }
-            setOnline(sub.online);
 
             if (mListener != null) {
                 mListener.onMetaSub(sub);

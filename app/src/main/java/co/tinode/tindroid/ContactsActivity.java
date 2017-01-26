@@ -33,6 +33,8 @@ public class ContactsActivity extends AppCompatActivity implements
 
     protected ChatListAdapter mChatListAdapter;
 
+    private MeListener mMeTopicListener = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +65,7 @@ public class ContactsActivity extends AppCompatActivity implements
         });
 
         mChatListAdapter = new ChatListAdapter(this);
+        mMeTopicListener = new MeListener();
     }
 
     /**
@@ -90,7 +93,6 @@ public class ContactsActivity extends AppCompatActivity implements
 
     @Override
     public void onResume() {
-        Log.d(TAG, "Contacts activity onResume");
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
@@ -101,16 +103,14 @@ public class ContactsActivity extends AppCompatActivity implements
 
         MeTopic<VCard, String, String> me = tinode.getMeTopic();
         if (me == null) {
-            Log.d(TAG, "Contacts activity: me is null");
             // The very first launch of the app.
-            me = new MeTopic<>(tinode, new MeListener());
+            me = new MeTopic<>(tinode, mMeTopicListener);
             me.setTypes(VCard.class, String.class, String.class);
         } else {
-            Log.d(TAG, "Contacts activity: me is NOT null");
+            me.setListener(mMeTopicListener);
         }
 
         if (!me.isAttached()) {
-            Log.d(TAG, "Contacts activity: me is NOT attached");
             try {
                 me.subscribe(null, me
                         .subscribeParamGetBuilder()
@@ -127,6 +127,7 @@ public class ContactsActivity extends AppCompatActivity implements
     }
 
     private void datasetChanged() {
+        Log.d(TAG, "datasetChanged");
         mChatListAdapter.resetContent();
         runOnUiThread(new Runnable() {
             @Override
@@ -143,6 +144,16 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.getTinode().setListener(null);
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        MeTopic me = Cache.getTinode().getMeTopic();
+        if (me != null) {
+            me.setListener(null);
+        }
+    }
+
     protected ChatListAdapter getChatListAdapter() {
         return mChatListAdapter;
     }
@@ -156,7 +167,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Enable options menu by returnning true
+        // Enable options menu by returning true
         return true;
     }
 
@@ -187,6 +198,8 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onPres(MsgServerPres pres) {
+            Log.d(TAG, "onPres, what=" + pres.what + ", topic=" + pres.topic);
+
             if (pres.what.equals("msg")) {
                 datasetChanged();
             } else if (pres.what.equals("off") || pres.what.equals("on")) {

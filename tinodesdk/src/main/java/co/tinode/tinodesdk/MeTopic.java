@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * MeTopic handles invites and manages contact list
@@ -112,7 +113,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
                     break;
 
                 case UPD: // pub/priv updated
-                    // TODO(gene): request updated description
+                    // TODO(gene): issue a request for an updated description
                     // topic.getMeta(...);
                     break;
 
@@ -142,6 +143,20 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
 
         if (mListener != null) {
             mListener.onPres(pres);
+        } else {
+            Log.d(TAG, "Me.routePres; listener is null");
+        }
+    }
+
+    @Override
+    protected void topicLeft(boolean unsub, int code, String reason) {
+        super.topicLeft(unsub, code, reason);
+
+        List<Topic> topics = mTinode.getTopics();
+        if (topics != null) {
+            for (Topic t : topics) {
+                t.setOnline(false);
+            }
         }
     }
 }

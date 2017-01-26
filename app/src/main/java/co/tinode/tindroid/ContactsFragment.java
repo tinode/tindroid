@@ -54,6 +54,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AlphabetIndexer;
+import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
@@ -479,6 +480,31 @@ public class ContactsFragment extends ListFragment {
 
         // Return theme value based on DisplayMetrics
         return (int) typedValue.getDimension(metrics);
+    }
+
+    /**
+     * Refresh single row in the list view. Row is identieid by the item ID
+     *
+     * @param id id of the row to refresh
+     * @return true if it was refreshed, false otherwise (i.e. the item
+     * with the give ID does not exist or is not visible)
+     */
+    public boolean refreshItemById(long id) {
+        boolean result = false;
+        if (id > 0) {
+            ListView list = getListView();
+
+            int start = list.getFirstVisiblePosition();
+            for (int i = start, j = list.getLastVisiblePosition(); i <= j; i++) {
+                if (id == list.getItemIdAtPosition(i)) {
+                    View view = list.getChildAt(i - start);
+                    list.getAdapter().getView(i, view, list);
+                    result = true;
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     /**
