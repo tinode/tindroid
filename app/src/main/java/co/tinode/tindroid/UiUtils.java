@@ -56,8 +56,6 @@ public class UiUtils {
             return;
         }
 
-        Log.d(TAG, "Topic is " + online);
-
         if (pub != null) {
             toolbar.setTitle(" " + pub.fn);
 
@@ -89,8 +87,6 @@ public class UiUtils {
                 }
             }
         } else {
-            Log.d(TAG, "VCard is null");
-
             toolbar.setLogo(null);
             toolbar.setTitle(R.string.app_name);
         }

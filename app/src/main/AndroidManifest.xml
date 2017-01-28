@@ -21,6 +21,10 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <!-- Make current user discoverable by other users -->
     <uses-permission android:name="android.permission.READ_PROFILE" />
+    <!-- Check if account sync is enabled -->
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <!-- Enable sync if it's disabled -->
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
     <application
         android:allowBackup="true"

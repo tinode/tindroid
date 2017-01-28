@@ -66,12 +66,13 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
             Map<String, String> data = remoteMessage.getData();
-            Log.d(TAG, "MessageDb data payload: " + data);
+            Log.d(TAG, "FCM data payload: " + data);
 
             topicName = data.get("topic");
             String visibleTopic = UiUtils.getVisibleTopic();
             if (visibleTopic != null && visibleTopic.equals(topicName)) {
                 // No need to display a notification if we are in the topic already.
+                Log.d(TAG, "Topic is visible, no need to show a notification");
                 return;
             }
 
@@ -129,6 +130,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      * @param topic topic handle for action
      */
     private void showNotification(String title, String body, Bitmap avatar, String topic) {
+        Log.d(TAG, "Notification title=" + title + ", body=" + body + "topic=" + topic);
+
         Intent intent;
         if (TextUtils.isEmpty(topic)) {
             // Communication on an unknown topic
@@ -165,6 +168,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+        // MessageActivity will cancel all notifications by tag, which is just topic name.
+        // All notifications receive the same id 0 because id is not used.
+        notificationManager.notify(topic, 0, notificationBuilder.build());
     }
 }

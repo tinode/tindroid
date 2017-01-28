@@ -1,5 +1,7 @@
 package co.tinode.tindroid;
 
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -12,7 +14,9 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -81,6 +85,20 @@ public class MessageActivity extends AppCompatActivity {
         lm.setStackFromEnd(true);
 
         mMessageList = (RecyclerView) findViewById(R.id.messages_container);
+        mMessageList.addOnItemTouchListener(
+                new RecyclerItemClickListener(this, mMessageList, new OnItemClickListener() {
+                    @Override
+                    public void onItemClick(View view, int position) {
+                        Log.d(TAG, "Short click on message in position " + position);
+                    }
+
+                    @Override
+                    public void onLongItemClick(View view, int position) {
+                        Log.d(TAG, "Looong click on message in position " + position);
+                    }
+                })
+        );
+
         mMessageList.setLayoutManager(lm);
 
         mLoaderManager = getSupportLoaderManager();
@@ -98,7 +116,7 @@ public class MessageActivity extends AppCompatActivity {
 
         final Intent intent = getIntent();
 
-        // Check if the activity was launched by internally-generated intent
+        // Check if the activity was launched by internally-generated intent.
         mTopicName = intent.getStringExtra("topic");
 
         if (TextUtils.isEmpty(mTopicName)) {
@@ -121,6 +139,9 @@ public class MessageActivity extends AppCompatActivity {
             finish();
             return;
         }
+
+        // Cancel all pending notifications addressed to the current topic
+        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(mTopicName, 0);
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
@@ -340,5 +361,51 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
+    interface OnItemClickListener {
+        public void onItemClick(View view, int position);
 
+        public void onLongItemClick(View view, int position);
+    }
+
+    /**
+     * Handle short and long clicks on messages.
+     */
+    private class RecyclerItemClickListener implements RecyclerView.OnItemTouchListener {
+        private OnItemClickListener mListener;
+        private GestureDetector mGestureDetector;
+
+        public RecyclerItemClickListener(Context context, final RecyclerView recyclerView, OnItemClickListener listener) {
+            mListener = listener;
+            mGestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onSingleTapUp(MotionEvent e) {
+                    return true;
+                }
+
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    View child = recyclerView.findChildViewUnder(e.getX(), e.getY());
+                    if (child != null && mListener != null) {
+                        mListener.onLongItemClick(child, recyclerView.getChildAdapterPosition(child));
+                    }
+                }
+            });
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(RecyclerView view, MotionEvent e) {
+            View childView = view.findChildViewUnder(e.getX(), e.getY());
+            if (childView != null && mListener != null && mGestureDetector.onTouchEvent(e)) {
+                mListener.onItemClick(childView, view.getChildAdapterPosition(childView));
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void onTouchEvent(RecyclerView view, MotionEvent motionEvent) {}
+
+        @Override
+        public void onRequestDisallowInterceptTouchEvent (boolean disallowIntercept) {}
+    }
 }

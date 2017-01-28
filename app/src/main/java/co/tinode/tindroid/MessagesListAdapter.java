@@ -47,6 +47,8 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     private Cursor mCursor;
     private String mTopicName;
 
+    private int mSelectedItem = -1;
+
     public MessagesListAdapter(MessageActivity context) {
         super();
         mActivity = context;
@@ -172,6 +174,9 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     void swapCursor(final String topicName, final Cursor cursor) {
+        // Clear selection
+        mSelectedItem = -1;
+
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {

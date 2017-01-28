@@ -157,6 +157,10 @@ public class MessageDb implements BaseColumns {
                 msg.senderIdx = SubscriberDb.getSenderIndex(db, msg.topicId, msg.userId);
             }
 
+            if (msg.seq == 0) {
+                msg.seq = getNextUnsentId(db, msg.topicId);
+            }
+
             // Convert message to a map of values
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
@@ -210,6 +214,24 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Query messages which has not been sent yet.
+     *
+     * @param db    database to select from;
+     * @param topicId Tinode topic ID (topics._id) to select from
+     *
+     * @return cursor with the messages
+     */
+    public static Cursor queryUnsent(SQLiteDatabase db, long topicId) {
+        String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE " +
+                    COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " + COLUMN_NAME_SEQ + "<=0 " +
+                "ORDER BY " + COLUMN_NAME_TS;
+        // Log.d(TAG, "Sql=[" + sql + "]");
+
+        return db.rawQuery(sql, null);
+    }
+
+    /**
      * Delete messages between 'from' and 'to'. To delete all messages make from and to equal to -1.
      *
      * @param db    Database to use.
@@ -248,6 +270,15 @@ public class MessageDb implements BaseColumns {
      */
     public static long getLocalId(Cursor cursor) {
         return cursor.getLong(0);
+    }
+
+    /**
+     * Get negative ID to be used as seq for unsent messages.
+     */
+    public static int getNextUnsentId(SQLiteDatabase db, long topicId) {
+        int id = (int) db.compileStatement("SELECT MIN(" + COLUMN_NAME_SEQ + ") FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId).simpleQueryForLong();
+        return id < 0 ? id - 1 : -1;
     }
 
     public static class Loader extends AsyncTaskLoader<Cursor> {
