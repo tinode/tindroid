@@ -1,8 +1,13 @@
 package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
+import android.content.res.TypedArray;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Gravity;
@@ -83,7 +88,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     @SuppressLint("RtlHardcoded")
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, int position) {
 
         mCursor.moveToPosition(position);
         StoredMessage<String> m = MessageDb.readMessage(mCursor);
@@ -136,21 +141,26 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                         holder.mContainer.getPaddingRight(), SINGLE_PADDING);
                 break;
         }
+        /*
         holder.mMessageBubble.setBackgroundResource(bg_bubble);
         if (!m.isMine()) {
             holder.mMessageBubble.getBackground().mutate()
                     .setColorFilter(sColorizer[m.senderIdx].bg, PorterDuff.Mode.MULTIPLY);
         }
+        */
+        holder.mMessageBubble.setBackgroundDrawable(
+                colorizeBackground(bg_bubble, m.isMine() ? 0 : sColorizer[m.senderIdx].bg, position == mSelectedItem));
+
         holder.mContent.setText(m.content);
         holder.mMeta.setText(shortDate(m.ts));
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
         if (m.isMine()) {
-            if (m.seq == 0) {
+            if (m.seq <= 0) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
             } else {
                 Topic topic = Cache.getTinode().getTopic(mTopicName);
-                // Log.d(TAG, "Message " + m.seq + " topic " + m.topic + " is " + topic);
+
                 if (topic.msgReadCount(m.seq) > 0) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
                 } else if (topic.msgRecvCount(m.seq) > 0) {
@@ -160,6 +170,50 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 }
             }
         }
+
+        holder.mContainer.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                int pos = holder.getAdapterPosition();
+                Log.d(TAG, "Long click in position " + pos);
+
+                if (pos == mSelectedItem) {
+                    mSelectedItem = -1;
+                } else {
+                    notifyItemChanged(mSelectedItem);
+                    mSelectedItem = pos;
+                }
+                notifyItemChanged(pos);
+                return true;
+            }
+        });
+    }
+
+    // Generate background of a message bubble as a LayerDrawable, with bubble ninepatch overlaid with
+    // the listSelector (or transparent) and selectableItemBackground.
+    private Drawable colorizeBackground(int bubble_id, int color, boolean selected) {
+        Drawable bubble = mActivity.getResources().getDrawable(bubble_id);
+        if (color != 0) {
+            bubble.mutate().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+        }
+
+        int[] attrs = new int[] {
+                android.R.attr.selectableItemBackground,
+                // android.R.attr.listChoiceBackgroundIndicator
+        };
+        TypedArray a = mActivity.getTheme().obtainStyledAttributes(attrs);
+        // Drawable held by attribute 'selectableItemBackground' is at index '0'
+        Drawable clickDrawable = a.getDrawable(0);
+        a.recycle();
+
+        // new ColorDrawable(Color.TRANSPARENT);
+
+        return new LayerDrawable(new Drawable[] {
+                // NinePatch Drawable
+                bubble,
+                // selected ? mItemSelectorDrawable : mTransparentDrawable,
+                // Drawable from the selectableItemBackground attribute
+                clickDrawable });
     }
 
     @Override
