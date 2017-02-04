@@ -576,7 +576,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
-     * Delete messages
+     * Delete messages with seq value up to <b>before</b>.
      *
      * @param before delete messages with id up to this
      * @param hard hard-delete messages
@@ -604,6 +604,37 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         throw new NotConnectedException();
     }
+
+    /**
+     * Delete messages with id in the provided list.
+     *
+     * @param list delete messages with ids in this list
+     * @param hard hard-delete messages
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply delMessages(final int[] list, final boolean hard) throws Exception {
+        if (mStore != null) {
+            mStore.msgMarkToDelete(this, list);
+        }
+        if (mAttached) {
+            return mTinode.delMessage(getName(), list, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    mStore.msgDelete(Topic.this, list);
+                    return null;
+                }
+            }, null);
+        }
+
+        if (mTinode.isConnected()) {
+            throw new IllegalStateException("Not subscribed");
+        }
+
+        throw new NotConnectedException();
+    }
+
     /**
      * Delete topic
      *

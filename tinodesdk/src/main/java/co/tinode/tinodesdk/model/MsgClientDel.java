@@ -26,6 +26,7 @@ public class MsgClientDel {
     public String topic;
     public String what;
     public Integer before;
+    public int[] list;
     public Boolean hard;
 
     public MsgClientDel() {}
@@ -43,5 +44,15 @@ public class MsgClientDel {
         this(id, topic, what, before, false);
     }
 
-
+    /**
+     * Delete messages with seq IDs from the list.
+     */
+    public MsgClientDel(String id, String topic, int[] list, boolean hard) {
+        this.id = id;
+        this.topic = topic;
+        this.what = STR_MSG;
+        this.before = null;
+        this.list = list;
+        this.hard = hard ? true : null;
+    }
 }

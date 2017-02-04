@@ -16,8 +16,6 @@
         android:layout_above="@+id/sendMessagePanel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="6sp"
-        android:paddingRight="6sp"
         android:scrollbars="vertical"
         app:stackFromEnd="true"
         app:reverseLayout="false"/>

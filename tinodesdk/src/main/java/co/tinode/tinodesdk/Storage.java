@@ -53,8 +53,12 @@ public interface Storage {
     boolean msgDelivered(long id, Date timestamp, int seq);
     /** Mark messages for deletion */
     boolean msgMarkToDelete(Topic topic, int before);
+    /** Mark messages for deletion by seq ID list */
+    boolean msgMarkToDelete(Topic topic, int[] list);
     /** Delete messages */
     boolean msgDelete(Topic topic, int before);
+    /** Delete messages */
+    boolean msgDelete(Topic topic, int[] list);
     /** Set recv value for a given subscriber */
     boolean msgRecvByRemote(Subscription sub, int recv);
     /** Set read value for a given subscriber */

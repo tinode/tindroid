@@ -21,4 +21,7 @@
     <color name="colorNotificationBackground">#3949AB</color>
 
     <color name="colorOffline">#FFFFFF66</color>
+
+    <color name="colorMessageSelected">#2f3F51B5</color>
+
 </resources>

@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.app.NotificationManager;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -12,17 +13,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.content.ClipboardManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.Menu;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -251,6 +252,47 @@ public class MessageActivity extends AppCompatActivity {
                 Log.d(TAG, "sendMessage -- clearing text and notifying");
                 inputField.setText("");
                 runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
+            }
+        }
+    }
+
+    private String formatMessageText(StoredMessage<String> msg) {
+        return msg != null ? "[" + msg.from + "]: " + msg.content + "; " + msg.ts.toString() : null;
+    }
+
+    void copyMessageText(int[] positions) {
+        StringBuilder sb = new StringBuilder();
+        for (int position : positions) {
+            StoredMessage<String> msg = mMessagesAdapter.getMessage(position);
+            sb.append("\n").append(formatMessageText(msg));
+        }
+        sb.deleteCharAt(0);
+        String text = sb.toString();
+        if (!TextUtils.isEmpty(text)) {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
+        }
+    }
+
+    public void sendDeleteMessages(int[] positions) {
+        if (mTopic != null) {
+            int[] list = new int[positions.length];
+            int i = 0;
+            while (i < positions.length) {
+                StoredMessage<String> msg = mMessagesAdapter.getMessage(i);
+                if (msg != null) {
+                    list[i] = msg.seq;
+                    i++;
+                }
+            }
+
+            try {
+                mTopic.delMessages(list, true);
+            } catch (NotConnectedException ignored) {
+                Log.d(TAG, "sendMessage -- NotConnectedException");
+            } catch (Exception ignored) {
+                Log.d(TAG, "sendMessage -- Exception", ignored);
+                Toast.makeText(this, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
             }
         }
     }

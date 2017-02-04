@@ -1,19 +1,20 @@
 package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
-import android.content.res.TypedArray;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.support.v7.view.ActionMode;
+import android.util.SparseBooleanArray;
+import android.util.SparseIntArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -48,16 +49,78 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             new colorizer(0xffeeeeee, 0xff212121), new colorizer(0xff80deea, 0xff212121),
             new colorizer(0xffe6ee9c, 0xff212121), new colorizer(0xffce93d8, 0xff212121)
     };
+
     private MessageActivity mActivity;
     private Cursor mCursor;
     private String mTopicName;
+    private ActionMode.Callback mSelectionModeCallback;
+    private ActionMode mSelectionMode;
 
-    private int mSelectedItem = -1;
+    private SparseBooleanArray mSelectedItems = null;
 
     public MessagesListAdapter(MessageActivity context) {
         super();
         mActivity = context;
         setHasStableIds(true);
+
+        // Change
+        mSelectionModeCallback = new ActionMode.Callback() {
+            @Override
+            public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
+                mSelectedItems = new SparseBooleanArray();
+                return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode actionMode) {
+                SparseBooleanArray arr = mSelectedItems;
+                mSelectedItems = null;
+                if (arr.size() < 6) {
+                    for (int i = 0; i < arr.size(); i++) {
+                        notifyItemChanged(arr.keyAt(i));
+                    }
+                } else {
+                    notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
+                mActivity.getMenuInflater().inflate(R.menu.menu_message_selected, menu);
+                return true;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.action_delete:
+                        Log.d(TAG, "Delete selected items");
+                        mActivity.sendDeleteMessages(getSelectedArray());
+                        return true;
+                    case R.id.action_copy:
+                        Log.d(TAG, "Copy selected item to clipboard");
+                        mActivity.copyMessageText(getSelectedArray());
+                        return true;
+                    case R.id.action_send_now:
+                        Log.d(TAG, "Try re-sending selected item");
+                        return true;
+                    case R.id.action_view_details:
+                        Log.d(TAG, "Show message details");
+                        return true;
+                    default:
+                        break;
+                }
+                return false;
+            }
+        };
+    }
+
+    private int[] getSelectedArray() {
+        int[] items = new int[mSelectedItems.size()];
+        for (int i=0; i< items.length; i++) {
+            items[i] = mSelectedItems.keyAt(i);
+        }
+        return items;
     }
 
     private static String shortDate(Date date) {
@@ -115,7 +178,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             display = DisplayAs.FIRST;
         }
 
-        holder.mContainer.setGravity(m.isMine() ? Gravity.RIGHT : Gravity.LEFT);
+        holder.mContent.setGravity(m.isMine() ? Gravity.RIGHT : Gravity.LEFT);
 
         // To make sure padding is properly set, first set background, then set text.
         int bg_bubble = m.isMine() ? R.drawable.bubble_r : R.drawable.bubble_l;
@@ -141,17 +204,21 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                         holder.mContainer.getPaddingRight(), SINGLE_PADDING);
                 break;
         }
-        /*
+
         holder.mMessageBubble.setBackgroundResource(bg_bubble);
         if (!m.isMine()) {
             holder.mMessageBubble.getBackground().mutate()
                     .setColorFilter(sColorizer[m.senderIdx].bg, PorterDuff.Mode.MULTIPLY);
         }
-        */
-        holder.mMessageBubble.setBackgroundDrawable(
-                colorizeBackground(bg_bubble, m.isMine() ? 0 : sColorizer[m.senderIdx].bg, position == mSelectedItem));
 
-        holder.mContent.setText(m.content);
+        if (mSelectedItems != null && mSelectedItems.get(position)) {
+            Log.d(TAG, "Visible item " + position);
+            holder.mSelected.setVisibility(View.VISIBLE);
+        } else {
+            holder.mSelected.setVisibility(View.GONE);
+        }
+
+        holder.mText.setText(m.content);
         holder.mMeta.setText(shortDate(m.ts));
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
@@ -171,49 +238,36 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             }
         }
 
-        holder.mContainer.setOnLongClickListener(new View.OnLongClickListener() {
+        holder.mOverlay.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 int pos = holder.getAdapterPosition();
                 Log.d(TAG, "Long click in position " + pos);
 
-                if (pos == mSelectedItem) {
-                    mSelectedItem = -1;
-                } else {
-                    notifyItemChanged(mSelectedItem);
-                    mSelectedItem = pos;
+                if (mSelectedItems == null) {
+                    mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
                 }
+
+                toggleSelectionAt(pos);
                 notifyItemChanged(pos);
+                updateSelectionMode();
+
                 return true;
             }
         });
-    }
+        holder.mOverlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSelectedItems != null) {
+                    int pos = holder.getAdapterPosition();
+                    Log.d(TAG, "Short click in position " + pos);
 
-    // Generate background of a message bubble as a LayerDrawable, with bubble ninepatch overlaid with
-    // the listSelector (or transparent) and selectableItemBackground.
-    private Drawable colorizeBackground(int bubble_id, int color, boolean selected) {
-        Drawable bubble = mActivity.getResources().getDrawable(bubble_id);
-        if (color != 0) {
-            bubble.mutate().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
-        }
-
-        int[] attrs = new int[] {
-                android.R.attr.selectableItemBackground,
-                // android.R.attr.listChoiceBackgroundIndicator
-        };
-        TypedArray a = mActivity.getTheme().obtainStyledAttributes(attrs);
-        // Drawable held by attribute 'selectableItemBackground' is at index '0'
-        Drawable clickDrawable = a.getDrawable(0);
-        a.recycle();
-
-        // new ColorDrawable(Color.TRANSPARENT);
-
-        return new LayerDrawable(new Drawable[] {
-                // NinePatch Drawable
-                bubble,
-                // selected ? mItemSelectorDrawable : mTransparentDrawable,
-                // Drawable from the selectableItemBackground attribute
-                clickDrawable });
+                    toggleSelectionAt(pos);
+                    notifyItemChanged(pos);
+                    updateSelectionMode();
+                }
+            }
+        });
     }
 
     @Override
@@ -227,9 +281,32 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return mCursor != null ? mCursor.getCount() : 0;
     }
 
+    private void toggleSelectionAt(int pos) {
+        if (mSelectedItems.get(pos)) {
+            mSelectedItems.delete(pos);
+        } else {
+            mSelectedItems.put(pos, true);
+        }
+    }
+
+    private boolean updateSelectionMode() {
+        if (mSelectionMode != null) {
+            if (mSelectedItems.size() == 0) {
+                mSelectionMode.finish();
+                mSelectionMode = null;
+            } else {
+                mSelectionMode.setTitle(String.valueOf(mSelectedItems.size()));
+            }
+        }
+        return mSelectionMode != null;
+    }
+
     void swapCursor(final String topicName, final Cursor cursor) {
         // Clear selection
-        mSelectedItem = -1;
+        if (mSelectionMode != null) {
+            mSelectionMode.finish();
+            mSelectionMode = null;
+        }
 
         mActivity.runOnUiThread(new Runnable() {
             @Override
@@ -243,6 +320,11 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 (mActivity).scrollTo(-1);
             }
         });
+    }
+
+    StoredMessage<String> getMessage(int position) {
+        mCursor.moveToPosition(position);
+        return MessageDb.readMessage(mCursor);
     }
 
     // Grouping messages from the same sender (controls rounding of borders)
@@ -262,20 +344,26 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     class ViewHolder extends RecyclerView.ViewHolder {
         View mItemView;
-        LinearLayout mContainer;
+        FrameLayout mContainer;
+        LinearLayout mContent;
         View mMessageBubble;
         ImageView mDeliveredIcon;
-        TextView mContent;
+        TextView mText;
         TextView mMeta;
+        View mSelected;
+        View mOverlay;
 
         ViewHolder(View itemView) {
             super(itemView);
             mItemView = itemView;
-            mContainer = (LinearLayout) itemView.findViewById(R.id.container);
+            mContainer = (FrameLayout) itemView.findViewById(R.id.container);
+            mContent = (LinearLayout) itemView.findViewById(R.id.content);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = (ImageView) itemView.findViewById(R.id.messageViewedIcon);
-            mContent = (TextView) itemView.findViewById(R.id.messageText);
+            mText = (TextView) itemView.findViewById(R.id.messageText);
             mMeta = (TextView) itemView.findViewById(R.id.messageMeta);
+            mSelected = itemView.findViewById(R.id.selected);
+            mOverlay = itemView.findViewById(R.id.overlay);
         }
     }
 }

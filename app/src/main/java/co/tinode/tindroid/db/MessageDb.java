@@ -11,6 +11,7 @@ import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
+import java.util.Arrays;
 import java.util.Date;
 
 import co.tinode.tinodesdk.Topic;
@@ -27,6 +28,10 @@ import co.tinode.tinodesdk.Topic;
  */
 public class MessageDb implements BaseColumns {
     private static final String TAG = "MessageDb";
+
+    private static final int STATUS_QUEUED = 0;
+    private static final int STATUS_SYNCED = 1;
+    private static final int STATUS_DELETED = 2;
 
     /**
      * Content provider authority.
@@ -65,6 +70,10 @@ public class MessageDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_USER_ID = "user_id";
     /**
+     * Status of the message: unsent, delivered, deleted
+     */
+    public static final String COLUMN_NAME_STATUS = "status";
+    /**
      * Sequential ID of the sender within the topic. Needed for assigning colors to message bubbles in UI.
      */
     public static final String COLUMN_NAME_SENDER_INDEX = "sender_idx";
@@ -92,10 +101,11 @@ public class MessageDb implements BaseColumns {
 
     private static final int COLUMN_IDX_TOPIC_ID = 1;
     private static final int COLUMN_IDX_USER_ID = 2;
-    private static final int COLUMN_IDX_SENDER_INDEX = 3;
-    private static final int COLUMN_IDX_TS = 4;
-    private static final int COLUMN_IDX_SEQ = 5;
-    private static final int COLUMN_IDX_CONTENT = 6;
+    private static final int COLUMN_IDX_STATUS = 3;
+    private static final int COLUMN_IDX_SENDER_INDEX = 4;
+    private static final int COLUMN_IDX_TS = 5;
+    private static final int COLUMN_IDX_SEQ = 6;
+    private static final int COLUMN_IDX_CONTENT = 7;
 
     /**
      * SQL statement to create Messages table
@@ -107,6 +117,7 @@ public class MessageDb implements BaseColumns {
                     + " REFERENCES " + TopicDb.TABLE_NAME + "(" + TopicDb._ID + ")," +
                     COLUMN_NAME_USER_ID
                     + " REFERENCES " + UserDb.TABLE_NAME + "(" + UserDb._ID + ")," +
+                    COLUMN_NAME_STATUS + " INT," +
                     COLUMN_NAME_SENDER_INDEX + " INT," +
                     COLUMN_NAME_TS + " TEXT," +
                     COLUMN_NAME_SEQ + " INT," +
@@ -138,6 +149,8 @@ public class MessageDb implements BaseColumns {
      */
     public static long insert(SQLiteDatabase db, Topic topic, StoredMessage msg) {
         long id = -1;
+        int status;
+
         try {
             db.beginTransaction();
 
@@ -159,12 +172,16 @@ public class MessageDb implements BaseColumns {
 
             if (msg.seq == 0) {
                 msg.seq = getNextUnsentId(db, msg.topicId);
+                status = STATUS_QUEUED;
+            } else {
+                status = STATUS_SYNCED;
             }
 
             // Convert message to a map of values
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
             values.put(COLUMN_NAME_USER_ID, msg.userId);
+            values.put(COLUMN_NAME_STATUS, status);
             values.put(COLUMN_NAME_SENDER_INDEX, msg.senderIdx);
             values.put(COLUMN_NAME_TS, msg.ts.getTime());
             values.put(COLUMN_NAME_SEQ, msg.seq);
@@ -187,6 +204,7 @@ public class MessageDb implements BaseColumns {
 
     public static boolean delivered(SQLiteDatabase db, long id, Date timestamp, int seq) {
         ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_STATUS, STATUS_SYNCED);
         values.put(COLUMN_NAME_TS, timestamp.getTime());
         values.put(COLUMN_NAME_SEQ, seq);
         return db.update(TABLE_NAME, values, _ID + "=" + id, null) > 0;
@@ -246,6 +264,36 @@ public class MessageDb implements BaseColumns {
                     " AND " + COLUMN_NAME_SEQ + "<=" + before, null) > 0;
         } else {
             return TopicDb.updateClear(db, topicId, before);
+        }
+    }
+
+    /**
+     * Delete messages between 'from' and 'to'. To delete all messages make from and to equal to -1.
+     *
+     * @param db    Database to use.
+     * @param topicId Tinode topic ID to delete messages from.
+     * @param list maximum seq value to delete, inclusive.
+     * @param soft  mark messages as deleted but do not actually delete them
+     * @return number of deleted messages
+     */
+    public static boolean delete(SQLiteDatabase db, long topicId, int[] list, boolean soft) {
+        StringBuilder sb = new StringBuilder();
+        for (int i : list) {
+            sb.append(",");
+            sb.append(i);
+        }
+        sb.deleteCharAt(0);
+        String ids = sb.toString();
+
+        if (!soft) {
+            return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
+        } else {
+            ContentValues values = new ContentValues(1);
+            values.put(COLUMN_NAME_STATUS, STATUS_DELETED);
+            return db.update(TABLE_NAME, values,
+                    COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
         }
     }
 

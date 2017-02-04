@@ -206,9 +206,21 @@ class SqlStore implements Storage {
     }
 
     @Override
+    public boolean msgMarkToDelete(Topic topic, int[] list) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, list, true);
+    }
+
+    @Override
     public boolean msgDelete(Topic topic, int before) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         return MessageDb.delete(mDbh.getWritableDatabase(), st.id, before, false);
+    }
+
+    @Override
+    public boolean msgDelete(Topic topic, int[] list) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, list, false);
     }
 
     @Override

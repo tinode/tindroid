@@ -805,16 +805,7 @@ public class Tinode {
         }
     }
 
-    /**
-     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int, boolean)} instead.
-     *
-     * @param topicName name of the topic to inform
-     * @param before delete all massages with ids below this
-     * @return PromisedReply of the reply ctrl or meta message
-     */
-    public PromisedReply<ServerMessage> delMessage(final String topicName, final int before, final boolean hard) {
-        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
-                MsgClientDel.What.MSG, before, hard));
+    private PromisedReply<ServerMessage> sendDeleteMessage(ClientMessage msg) {
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
@@ -823,6 +814,32 @@ public class Tinode {
         } catch (Exception e) {
             return null;
         }
+
+    }
+
+    /**
+     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int, boolean)} instead.
+     *
+     * @param topicName name of the topic to inform
+     * @param before delete all messages with ids below this
+     * @return PromisedReply of the reply ctrl or meta message
+     */
+    public PromisedReply<ServerMessage> delMessage(final String topicName, final int before, final boolean hard) {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
+                MsgClientDel.What.MSG, before, hard));
+        return sendDeleteMessage(msg);
+    }
+
+    /**
+     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int, boolean)} instead.
+     *
+     * @param topicName name of the topic to inform
+     * @param list delete all messages with ids in this list
+     * @return PromisedReply of the reply ctrl or meta message
+     */
+    public PromisedReply<ServerMessage> delMessage(final String topicName, final int[] list, final boolean hard) {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard));
+        return sendDeleteMessage(msg);
     }
 
     /**
