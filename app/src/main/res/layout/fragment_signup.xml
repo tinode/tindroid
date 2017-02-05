@@ -62,7 +62,6 @@
                 android:paddingTop="10dp"
                 android:drawableTop="@drawable/ic_add_a_photo"
                 android:background="@drawable/round_shape"
-                android:backgroundTint="?attr/colorButtonNormal"
                 android:layout_margin="2sp"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentBottom="true"/>
@@ -80,11 +79,9 @@
 
     <Button
         android:id="@+id/signUp"
-        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:onClick="onSignUp"
         android:text="@string/sign_up"
         android:textSize="16sp"/>
 
@@ -130,7 +127,6 @@
         android:layout_margin="8dp"
         android:background="@drawable/button_fb"
         android:text="@string/continue_fb"
-        android:onClick="onFacebookUp"
         android:textColor="@color/white"/>
 
     <Button
@@ -140,7 +136,6 @@
         android:layout_margin="8dp"
         android:background="@drawable/button_goog"
         android:text="@string/continue_goog"
-        android:onClick="onGoogleUp"
         android:textColor="@color/white"/>
 
 </LinearLayout>

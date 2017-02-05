@@ -53,7 +53,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
 
         View fragment = inflater.inflate(R.layout.fragment_signup, container, false);
 
-        fragment.findViewById(R.id.signIn).setOnClickListener(this);
+        fragment.findViewById(R.id.signUp).setOnClickListener(this);
         fragment.findViewById(R.id.continueFb).setOnClickListener(this);
         fragment.findViewById(R.id.continueGoog).setOnClickListener(this);
 
