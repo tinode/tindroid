@@ -10,6 +10,7 @@ public class MsgServerPres {
     public String src;
     public String what;
     public Integer seq;
+    public int[] list;
     public String ua;
 
     public MsgServerPres() {

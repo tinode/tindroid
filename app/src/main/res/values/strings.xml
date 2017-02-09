@@ -81,4 +81,5 @@
     <string name="action_send_now">Send now</string>
     <string name="action_view_details">View details</string>
     <string name="action_copy">Copy</string>
+    <string name="failed_to_delete_messages">Failed to delete messages</string>
 </resources>

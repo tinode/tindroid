@@ -323,6 +323,8 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     StoredMessage<String> getMessage(int position) {
+        Log.d(TAG, "getMessage at position " + position);
+
         mCursor.moveToPosition(position);
         return MessageDb.readMessage(mCursor);
     }

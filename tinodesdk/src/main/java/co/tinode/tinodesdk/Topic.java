@@ -614,7 +614,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws IllegalStateException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply delMessages(final int[] list, final boolean hard) throws Exception {
+    public PromisedReply<ServerMessage> delMessages(final int[] list, final boolean hard) throws Exception {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, list);
         }
@@ -641,7 +641,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws IllegalStateException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply delete() throws Exception {
+    public PromisedReply<ServerMessage> delete() throws Exception {
         if (mAttached) {
             return mTinode.delTopic(getName()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override

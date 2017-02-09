@@ -74,6 +74,10 @@ public class MessageDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_STATUS = "status";
     /**
+     * Uid as string. Deserialized here to avoid a join.
+     */
+    public static final String COLUMN_NAME_SENDER = "sender";
+    /**
      * Sequential ID of the sender within the topic. Needed for assigning colors to message bubbles in UI.
      */
     public static final String COLUMN_NAME_SENDER_INDEX = "sender_idx";
@@ -102,10 +106,11 @@ public class MessageDb implements BaseColumns {
     private static final int COLUMN_IDX_TOPIC_ID = 1;
     private static final int COLUMN_IDX_USER_ID = 2;
     private static final int COLUMN_IDX_STATUS = 3;
-    private static final int COLUMN_IDX_SENDER_INDEX = 4;
-    private static final int COLUMN_IDX_TS = 5;
-    private static final int COLUMN_IDX_SEQ = 6;
-    private static final int COLUMN_IDX_CONTENT = 7;
+    private static final int COLUMN_IDX_SENDER = 4;
+    private static final int COLUMN_IDX_SENDER_INDEX = 5;
+    private static final int COLUMN_IDX_TS = 6;
+    private static final int COLUMN_IDX_SEQ = 7;
+    private static final int COLUMN_IDX_CONTENT = 8;
 
     /**
      * SQL statement to create Messages table
@@ -118,8 +123,9 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_USER_ID
                     + " REFERENCES " + UserDb.TABLE_NAME + "(" + UserDb._ID + ")," +
                     COLUMN_NAME_STATUS + " INT," +
+                    COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_SENDER_INDEX + " INT," +
-                    COLUMN_NAME_TS + " TEXT," +
+                    COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
                     COLUMN_NAME_CONTENT + " BLOB)";
     /**
@@ -182,6 +188,7 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
             values.put(COLUMN_NAME_USER_ID, msg.userId);
             values.put(COLUMN_NAME_STATUS, status);
+            values.put(COLUMN_NAME_SENDER, msg.from);
             values.put(COLUMN_NAME_SENDER_INDEX, msg.senderIdx);
             values.put(COLUMN_NAME_TS, msg.ts.getTime());
             values.put(COLUMN_NAME_SEQ, msg.seq);
@@ -302,6 +309,8 @@ public class MessageDb implements BaseColumns {
 
         msg.topicId     = c.getLong(COLUMN_IDX_TOPIC_ID);
         msg.userId      = c.getLong(COLUMN_IDX_USER_ID);
+        msg.status      = c.getInt(COLUMN_IDX_STATUS);
+        msg.from        = c.getString(COLUMN_IDX_SENDER);
         msg.senderIdx   = c.getInt(COLUMN_IDX_SENDER_INDEX);
         msg.seq         = c.getInt(COLUMN_IDX_SEQ);
         msg.ts          = new Date(c.getLong(COLUMN_IDX_TS));

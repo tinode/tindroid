@@ -33,6 +33,7 @@ import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * View to display a single conversation
@@ -52,14 +53,13 @@ public class MessageActivity extends AppCompatActivity {
     private String mTopicName;
     protected Topic<VCard, String, String> mTopic;
 
-    public static void runLoader(final int loaderId, final Bundle args,
-                                  final LoaderManager.LoaderCallbacks<Cursor> callbacks,
+    public static void runLoader(final Bundle args, final LoaderManager.LoaderCallbacks<Cursor> callbacks,
                                   final LoaderManager loaderManager) {
-        final Loader<Cursor> loader = loaderManager.getLoader(loaderId);
+        final Loader<Cursor> loader = loaderManager.getLoader(MESSAGES_QUERY_ID);
         if (loader != null && !loader.isReset()) {
-            loaderManager.restartLoader(loaderId, args, callbacks);
+            loaderManager.restartLoader(MESSAGES_QUERY_ID, args, callbacks);
         } else {
-            loaderManager.initLoader(loaderId, args, callbacks);
+            loaderManager.initLoader(MESSAGES_QUERY_ID, args, callbacks);
         }
     }
 
@@ -139,7 +139,7 @@ public class MessageActivity extends AppCompatActivity {
             mTopic.setListener(new TListener());
 
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
-            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
+            runLoader(null, mLoaderCallbacks, mLoaderManager);
 
             if (!mTopic.isAttached()) {
                 try {
@@ -251,35 +251,42 @@ public class MessageActivity extends AppCompatActivity {
                 // Message is successfully queued, clear text from the input field and redraw the list.
                 Log.d(TAG, "sendMessage -- clearing text and notifying");
                 inputField.setText("");
-                runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
+                runLoader(null, mLoaderCallbacks, mLoaderManager);
             }
         }
     }
 
     private String formatMessageText(StoredMessage<String> msg) {
-        return msg != null ? "[" + msg.from + "]: " + msg.content + "; " + msg.ts.toString() : null;
+        Subscription<VCard, ?> sub = mTopic.getSubscription(msg.from);
+        String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
+        return "[" + name + "]: " + msg.content + "; " + msg.ts.toString();
     }
 
     void copyMessageText(int[] positions) {
         StringBuilder sb = new StringBuilder();
         for (int position : positions) {
             StoredMessage<String> msg = mMessagesAdapter.getMessage(position);
-            sb.append("\n").append(formatMessageText(msg));
+            if (msg != null) {
+                sb.append("\n").append(formatMessageText(msg));
+            }
         }
-        sb.deleteCharAt(0);
-        String text = sb.toString();
-        if (!TextUtils.isEmpty(text)) {
+
+        if (sb.length() > 1) {
+            sb.deleteCharAt(0);
+            String text = sb.toString();
+
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
             clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
         }
     }
 
-    public void sendDeleteMessages(int[] positions) {
+    public void sendDeleteMessages(final int[] positions) {
         if (mTopic != null) {
             int[] list = new int[positions.length];
             int i = 0;
             while (i < positions.length) {
-                StoredMessage<String> msg = mMessagesAdapter.getMessage(i);
+                int pos = positions[i];
+                StoredMessage<String> msg = mMessagesAdapter.getMessage(pos);
                 if (msg != null) {
                     list[i] = msg.seq;
                     i++;
@@ -287,12 +294,25 @@ public class MessageActivity extends AppCompatActivity {
             }
 
             try {
-                mTopic.delMessages(list, true);
+                mTopic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // Update message list.
+                                runLoader(null, mLoaderCallbacks, mLoaderManager);
+                                Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
+                            }
+                        });
+                        return null;
+                    }
+                }, null);
             } catch (NotConnectedException ignored) {
-                Log.d(TAG, "sendMessage -- NotConnectedException");
+                Log.d(TAG, "sendDeleteMessages -- NotConnectedException");
             } catch (Exception ignored) {
-                Log.d(TAG, "sendMessage -- Exception", ignored);
-                Toast.makeText(this, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "sendDeleteMessages -- Exception", ignored);
+                Toast.makeText(this, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -305,12 +325,12 @@ public class MessageActivity extends AppCompatActivity {
         public void onSubscribe(int code, String text) {
             // Topic name may change after subscription, i.e. new -> grpXXX
             mTopicName = mTopic.getName();
-            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
+            runLoader(null, mLoaderCallbacks, mLoaderManager);
         }
 
         @Override
         public void onData(MsgServerData data) {
-            runLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks, mLoaderManager);
+            runLoader(null, mLoaderCallbacks, mLoaderManager);
         }
 
         @Override
