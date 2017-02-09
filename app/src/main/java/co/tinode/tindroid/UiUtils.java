@@ -31,6 +31,9 @@ import android.widget.Button;
 import com.neovisionaries.ws.client.WebSocketException;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import co.tinode.tindroid.account.Utils;
@@ -219,6 +222,25 @@ public class UiUtils {
                 }
             }
         });
+    }
+
+    public static String shortDate(Date date) {
+        if (date != null) {
+            Calendar now = Calendar.getInstance();
+            Calendar then = Calendar.getInstance();
+            then.setTime(date);
+
+            if (then.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
+                if (then.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
+                        then.get(Calendar.DATE) == now.get(Calendar.DATE)) {
+                    return DateFormat.getTimeInstance(DateFormat.SHORT).format(then.getTime());
+                } else {
+                    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(then.getTime());
+                }
+            }
+            return DateFormat.getInstance().format(then.getTime());
+        }
+        return "null date";
     }
 
     public static class EventListener extends Tinode.EventListener {

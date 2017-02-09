@@ -259,7 +259,7 @@ public class MessageActivity extends AppCompatActivity {
     private String formatMessageText(StoredMessage<String> msg) {
         Subscription<VCard, ?> sub = mTopic.getSubscription(msg.from);
         String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
-        return "[" + name + "]: " + msg.content + "; " + msg.ts.toString();
+        return "[" + name + "]: " + msg.content + "; " + UiUtils.shortDate(msg.ts);
     }
 
     void copyMessageText(int[] positions) {

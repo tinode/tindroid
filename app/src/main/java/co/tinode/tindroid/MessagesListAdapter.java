@@ -123,25 +123,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return items;
     }
 
-    private static String shortDate(Date date) {
-        if (date != null) {
-            Calendar now = Calendar.getInstance();
-            Calendar then = Calendar.getInstance();
-            then.setTime(date);
-
-            if (then.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
-                if (then.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
-                        then.get(Calendar.DATE) == now.get(Calendar.DATE)) {
-                    return DateFormat.getTimeInstance(DateFormat.SHORT).format(then.getTime());
-                } else {
-                    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(then.getTime());
-                }
-            }
-            return DateFormat.getInstance().format(then.getTime());
-        }
-        return "null date";
-    }
-
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
@@ -219,7 +200,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         }
 
         holder.mText.setText(m.content);
-        holder.mMeta.setText(shortDate(m.ts));
+        holder.mMeta.setText(UiUtils.shortDate(m.ts));
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
         if (m.isMine()) {
