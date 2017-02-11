@@ -136,7 +136,9 @@ public class UserDb implements BaseColumns {
 
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+        if (sub.updated != null) {
+            values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+        }
         // values.put(COLUMN_NAME_DELETED, NULL);
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
         int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.userId, null);

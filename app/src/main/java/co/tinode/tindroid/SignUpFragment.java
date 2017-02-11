@@ -35,8 +35,6 @@ import static android.app.Activity.RESULT_OK;
  */
 public class SignUpFragment extends Fragment implements View.OnClickListener {
     private static final String TAG = "SignUpFragment";
-    private static final int SELECT_PICTURE = 1;
-    private static final int BITMAP_SIZE = 128;
 
     public SignUpFragment() {
     }
@@ -69,7 +67,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
         getActivity().findViewById(R.id.upload_avatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uploadAvatar();
+                UiUtils.requestAvatar(SignUpFragment.this);
             }
         });
     }
@@ -183,43 +181,11 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
         Toast.makeText(getActivity(), "Google: Not implemented", Toast.LENGTH_SHORT).show();
     }
 
-    private void uploadAvatar() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, getString(R.string.select_image)),
-                SELECT_PICTURE);
-    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SELECT_PICTURE && resultCode == RESULT_OK) {
-            ImageView avatar = (ImageView) getActivity().findViewById(R.id.imageAvatar);
-            try {
-                Bitmap bmp = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(),
-                        data.getData());
-                int width = bmp.getWidth();
-                int height = bmp.getHeight();
-                if (width > height) {
-                    width = width * BITMAP_SIZE / height;
-                    height = BITMAP_SIZE;
-                    // Sanity check
-                    width = width > 1024 ? 1024 : width;
-                } else {
-                    height = height * BITMAP_SIZE / width;
-                    width = BITMAP_SIZE;
-                    height = height > 1024 ? 1024 : height;
-                }
-                // Scale down.
-                bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
-                // Chop the square from the middle.
-                bmp = Bitmap.createBitmap(bmp, width - BITMAP_SIZE, height - BITMAP_SIZE,
-                        BITMAP_SIZE, BITMAP_SIZE);
-                avatar.setImageBitmap(bmp);
-            } catch (IOException ex) {
-                Toast.makeText(getActivity(), getString(R.string.image_is_missing),
-                        Toast.LENGTH_SHORT).show();
-            }
+        if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
+            UiUtils.acceptAvatar(getActivity(), (ImageView) getActivity().findViewById(R.id.imageAvatar), data);
         }
     }
 }

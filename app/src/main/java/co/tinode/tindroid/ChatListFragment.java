@@ -54,7 +54,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String topic = mAdapter.getTopicNameFromView(view);
                 Intent intent = new Intent(getActivity(), MessageActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("topic", topic);
                 startActivity(intent);
             }
@@ -80,9 +80,14 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
             case R.id.action_new_p2p_topic:
                 Log.d(TAG, "Start new p2p topic");
                 break;
+
             case R.id.action_new_grp_topic:
-                Log.d(TAG, "Start new group topic");
-                break;
+                Log.d(TAG, "Launch new group topic");
+                Intent intent = new Intent(getActivity(), AddGroupActivity.class);
+                // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                return true;
+
             case R.id.action_settings:
                 Log.d(TAG, "Edit user's profile");
                 break;

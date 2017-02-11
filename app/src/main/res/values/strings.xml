@@ -83,4 +83,6 @@
     <string name="action_copy">Copy</string>
     <string name="failed_to_delete_messages">Failed to delete messages</string>
     <string name="topic_title">Name of the group</string>
+    <string name="group_members">Group Members</string>
+    <string name="name_required">Topic name required</string>
 </resources>
