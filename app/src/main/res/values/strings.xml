@@ -85,4 +85,6 @@
     <string name="topic_title">Name of the group</string>
     <string name="group_members">Group Members</string>
     <string name="name_required">Topic name required</string>
+    <string name="no_members">No group members</string>
+    <string name="letter_tile_font_family">sans-serif-medium</string>
 </resources>

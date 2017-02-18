@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_margin="5dp"
+                android:layout_width="48sp"
+                android:layout_height="48sp">
+
+    <android.support.v7.widget.AppCompatImageView
+        android:id="@+id/avatar"
+        android:layout_width="48sp"
+        android:src="@drawable/ic_person_circle"
+        android:layout_height="48sp" />
+
+    <ImageView
+        android:id="@+id/cancel"
+        android:layout_width="16sp"
+        android:layout_height="16sp"
+        android:src="@drawable/ic_cancel"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        />
+
+</RelativeLayout>

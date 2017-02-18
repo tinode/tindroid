@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="@dimen/activity_padding"
     tools:context="co.tinode.tindroid.AddGroupFragment">
 
     <android.support.v7.widget.AppCompatImageView
@@ -39,24 +40,28 @@
         android:layout_toLeftOf="@id/imageAvatar"
         />
 
-    <HorizontalScrollView
-        android:id="@+id/groupMembersContainer"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:layout_gravity="center"
         android:layout_toLeftOf="@id/imageAvatar"
-        android:layout_below="@id/title"
-        android:contentDescription="@string/group_members"
-        android:orientation="horizontal" >
+        android:layout_below="@id/title">
 
-        <LinearLayout
+        <android.support.v7.widget.RecyclerView
             android:id="@+id/groupMembers"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="start"
-            android:orientation="horizontal" />
+            android:layout_gravity="center"
+            android:contentDescription="@string/group_members"
+            android:orientation="horizontal" >
+        </android.support.v7.widget.RecyclerView>
 
-    </HorizontalScrollView>
+        <TextView android:id="@+id/noMembers"
+                  android:gravity="center"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:text="@string/no_members"
+                  android:textAppearance="?android:attr/textAppearanceMedium"/>
+    </FrameLayout>
 
     <FrameLayout
         android:layout_width="match_parent"

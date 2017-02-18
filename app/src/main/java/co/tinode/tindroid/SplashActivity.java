@@ -1,5 +1,7 @@
 package co.tinode.tindroid;
 
+import android.*;
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentResolver;
@@ -24,7 +26,6 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Initialize database helper with global context.
-        BaseDb.init(getApplicationContext());
         String uid = BaseDb.getInstance().getUid();
 
         if (!TextUtils.isEmpty(uid)) {
@@ -54,7 +55,7 @@ public class SplashActivity extends AppCompatActivity {
         Account account = null;
 
         // Run-time check for permission to GET_ACCOUNTS
-        if (!UiUtils.checkAccountAccessPermission(this)) {
+        if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
             // Don't have permission. It's the first launch or the user denied access.
             // Fail and go to full login. We should not ask for permission on the splash screen.
             Log.d(TAG, "NO permission to get accounts");

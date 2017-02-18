@@ -157,13 +157,13 @@ public class ContactsFragment extends ListFragment {
          *
          * http://developer.android.com/training/displaying-bitmaps/
          */
-        mImageLoader = new ImageLoader(getActivity(), getListPreferredItemHeight(),
+        mImageLoader = new ImageLoader(getActivity(), UiUtils.getListPreferredItemHeight(this),
                 getActivity().getSupportFragmentManager()) {
             @Override
             protected Bitmap processBitmap(Object data) {
                 // This gets called in a background thread and passed the data from
                 // ImageLoader.loadImage().
-                return loadContactPhotoThumbnail((String) data, getImageSize());
+                return UiUtils.loadContactPhotoThumbnail(ContactsFragment.this, (String) data, getImageSize());
             }
         };
 
@@ -459,30 +459,6 @@ public class ContactsFragment extends ListFragment {
     }
 
     /**
-     * Gets the preferred height for each item in the ListView, in pixels, after accounting for
-     * screen density. ImageLoader uses this value to resize thumbnail images to match the ListView
-     * item height.
-     *
-     * @return The preferred height in pixels, based on the current theme.
-     */
-    private int getListPreferredItemHeight() {
-        final TypedValue typedValue = new TypedValue();
-
-        // Resolve list item preferred height theme attribute into typedValue
-        getActivity().getTheme().resolveAttribute(
-                android.R.attr.listPreferredItemHeight, typedValue, true);
-
-        // Create a new DisplayMetrics object
-        final DisplayMetrics metrics = new android.util.DisplayMetrics();
-
-        // Populate the DisplayMetrics
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
-
-        // Return theme value based on DisplayMetrics
-        return (int) typedValue.getDimension(metrics);
-    }
-
-    /**
      * Refresh single row in the list view. Row is identieid by the item ID
      *
      * @param id id of the row to refresh
@@ -505,73 +481,6 @@ public class ContactsFragment extends ListFragment {
             }
         }
         return result;
-    }
-
-    /**
-     * Decodes and scales a contact's image from a file pointed to by a Uri in the contact's data,
-     * and returns the result as a Bitmap. The column that contains the Uri varies according to the
-     * platform version.
-     *
-     * @param photoData For platforms prior to Android 3.0, provide the Contact._ID column value.
-     *                  For Android 3.0 and later, provide the Contact.PHOTO_THUMBNAIL_URI value.
-     * @param imageSize The desired target width and height of the output image in pixels.
-     * @return A Bitmap containing the contact's image, resized to fit the provided image size. If
-     * no thumbnail exists, returns null.
-     */
-    private Bitmap loadContactPhotoThumbnail(String photoData, int imageSize) {
-
-        // Ensures the Fragment is still added to an activity. As this method is called in a
-        // background thread, there's the possibility the Fragment is no longer attached and
-        // added to an activity. If so, no need to spend resources loading the contact photo.
-        if (!isAdded() || getActivity() == null) {
-            return null;
-        }
-
-        // Instantiates an AssetFileDescriptor. Given a content Uri pointing to an image file, the
-        // ContentResolver can return an AssetFileDescriptor for the file.
-        AssetFileDescriptor afd = null;
-
-        // This "try" block catches an Exception if the file descriptor returned from the Contacts
-        // Provider doesn't point to an existing file.
-        try {
-            Uri thumbUri = Uri.parse(photoData);
-
-            // Retrieves a file descriptor from the Contacts Provider. To learn more about this
-            // feature, read the reference documentation for
-            // ContentResolver#openAssetFileDescriptor.
-            afd = getActivity().getContentResolver().openAssetFileDescriptor(thumbUri, "r");
-
-            // Gets a FileDescriptor from the AssetFileDescriptor. A BitmapFactory object can
-            // decode the contents of a file pointed to by a FileDescriptor into a Bitmap.
-            FileDescriptor fileDescriptor = afd.getFileDescriptor();
-            if (fileDescriptor != null) {
-                // Decodes a Bitmap from the image pointed to by the FileDescriptor, and scales it
-                // to the specified width and height
-                return ImageLoader.decodeSampledBitmapFromDescriptor(
-                        fileDescriptor, imageSize, imageSize);
-            }
-        } catch (FileNotFoundException e) {
-            // If the file pointed to by the thumbnail URI doesn't exist, or the file can't be
-            // opened in "read" mode, ContentResolver.openAssetFileDescriptor throws a
-            // FileNotFoundException.
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Contact photo thumbnail not found for contact " + photoData
-                        + ": " + e.toString());
-            }
-        } finally {
-            // If an AssetFileDescriptor was returned, try to close it
-            if (afd != null) {
-                try {
-                    afd.close();
-                } catch (IOException unused) {
-                    // Closing a file descriptor might cause an IOException if the file is
-                    // already closed. Nothing extra is needed to handle this.
-                }
-            }
-        }
-
-        // If the decoding failed, returns null
-        return null;
     }
 
     /**
@@ -893,7 +802,7 @@ public class ContactsFragment extends ListFragment {
         }
     }
 
-    class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+    private class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
@@ -935,33 +844,6 @@ public class ContactsFragment extends ListFragment {
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 mAdapter.swapCursor(data);
-
-            /*
-            // If this is a two-pane layout and there is a search query then
-            // there is some additional work to do around default selected
-            // search item.
-            if (mIsTwoPaneLayout && !TextUtils.isEmpty(mSearchTerm) && mSearchQueryChanged) {
-                // Selects the first item in results, unless this fragment has
-                // been restored from a saved state (like orientation change)
-                // in which case it selects the previously selected search item.
-                if (data != null && data.moveToPosition(mPreviouslySelectedSearchItem)) {
-                    // Creates the content Uri for the previously selected contact by appending the
-                    // contact's ID to the Contacts table content Uri
-                    final Uri uri = Uri.withAppendedPath(
-                            Contacts.CONTENT_URI, String.valueOf(data.getLong(ContactsQuery.ID)));
-                    mOnContactSelectedListener.onContactSelected(uri);
-                    getListView().setItemChecked(mPreviouslySelectedSearchItem, true);
-                } else {
-                    // No results, clear selection.
-                    onSelectionCleared();
-                }
-                // Only restore from saved state one time. Next time fall back
-                // to selecting first item. If the fragment state is saved again
-                // then the currently selected item will once again be saved.
-                mPreviouslySelectedSearchItem = 0;
-                mSearchQueryChanged = false;
-            }
-            */
             }
         }
 

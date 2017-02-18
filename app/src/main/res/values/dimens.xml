@@ -5,4 +5,5 @@
     <dimen name="button_text">16sp</dimen>
     <dimen name="spacer_text">18sp</dimen>
     <dimen name="fab_elevation">4dp</dimen>
+    <dimen name="activity_padding">6dp</dimen>
 </resources>

@@ -15,6 +15,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
+import co.tinode.tindroid.TindroidApp;
+
 /**
  * SQLite backend. Persistent store for messages and chats.
  */
@@ -39,20 +41,17 @@ public class BaseDb extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    public static void init(Context context) {
-        if (sInstance == null) {
-            sInstance = new BaseDb(context);
-            sInstance.mAcc = AccountDb.getActiveAccount(sInstance.getReadableDatabase());
-            sInstance.mStore = new SqlStore(sInstance);
-        }
-    }
-
     /**
      * Get instance of BaseDb
      *
      * @return BaseDb instance
      */
     public static BaseDb getInstance() {
+        if (sInstance == null) {
+            sInstance = new BaseDb(TindroidApp.getAppContext());
+            sInstance.mAcc = AccountDb.getActiveAccount(sInstance.getReadableDatabase());
+            sInstance.mStore = new SqlStore(sInstance);
+        }
         return sInstance;
     }
 

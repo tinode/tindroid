@@ -51,6 +51,8 @@ public class ContactsManager {
     public static synchronized Date updateContacts(Context context, Account account,
                                                    Collection<Subscription<VCard, String>> rawContacts,
                                                    Date lastSyncMarker, long invisibleGroupId) {
+        Log.d(TAG, "ContactsManager got batch, count=" + rawContacts.size());
+
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
@@ -65,7 +67,7 @@ public class ContactsManager {
             long rawContactId = lookupRawContact(resolver, rawContact.with);
             // Contact already exists
             if (rawContactId != 0) {
-                if (rawContact.deleted != null) {
+                if (rawContact.deleted == null) {
                     updateContact(context, resolver, rawContact, rawContactId, batchOperation);
                 } else {
                     deleteContact(context, rawContactId, batchOperation);

@@ -6,16 +6,19 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -25,7 +28,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
@@ -34,6 +39,8 @@ import android.widget.Toast;
 
 import com.neovisionaries.ws.client.WebSocketException;
 
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -60,6 +67,8 @@ public class UiUtils {
 
     private static final int BITMAP_SIZE = 128;
 
+    public static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
+
     public static void setupToolbar(final AppCompatActivity activity, VCard pub,
                                     Topic.TopicType topicType, boolean online) {
         final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
@@ -75,7 +84,7 @@ public class UiUtils {
             if (bmp != null) {
                 toolbar.setLogo(
                         new LayerDrawable(
-                                new Drawable[] {new RoundedImage(bmp), new OnlineDrawable(online)}));
+                                new Drawable[] {new RoundImageDrawable(bmp), new OnlineDrawable(online)}));
             } else {
                 Drawable drw;
                 int res = -1;
@@ -154,10 +163,9 @@ public class UiUtils {
         activity.finish();
     }
 
-    public static boolean checkAccountAccessPermission(Context context) {
+    public static boolean checkPermission(Context context, String permission) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                ActivityCompat.checkSelfPermission(context, android.Manifest.permission.GET_ACCOUNTS) ==
-                        PackageManager.PERMISSION_GRANTED;
+                ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     public static void loginWithSavedAccount(final Activity activity,
@@ -251,14 +259,22 @@ public class UiUtils {
         return "null date";
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public static void requestAvatar(Fragment fragment) {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
+        Activity activity = fragment.getActivity();
+        if (!checkPermission(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
+                    READ_EXTERNAL_STORAGE_PERMISSION);
+        } else {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
 
-        fragment.startActivityForResult(Intent.createChooser(intent, fragment.getString(R.string.select_image)),
-                UiUtils.SELECT_PICTURE);
+            fragment.startActivityForResult(Intent.createChooser(intent, fragment.getString(R.string.select_image)),
+                    UiUtils.SELECT_PICTURE);
+        }
     }
+
 
     /*
     private void openImageIntent(Fragment fragment) {
@@ -362,5 +378,146 @@ public class UiUtils {
                 mOnline = null;
             }
         }
+    }
+
+    /**
+     * Decodes and scales a contact's image from a file pointed to by a Uri in the contact's data,
+     * and returns the result as a Bitmap. The column that contains the Uri varies according to the
+     * platform version.
+     *
+     * @param photoData For platforms prior to Android 3.0, provide the Contact._ID column value.
+     *                  For Android 3.0 and later, provide the Contact.PHOTO_THUMBNAIL_URI value.
+     * @param imageSize The desired target width and height of the output image in pixels.
+     * @return A Bitmap containing the contact's image, resized to fit the provided image size. If
+     * no thumbnail exists, returns null.
+     */
+    public static Bitmap loadContactPhotoThumbnail(Fragment fragment, String photoData, int imageSize) {
+
+        // Ensures the Fragment is still added to an activity. As this method is called in a
+        // background thread, there's the possibility the Fragment is no longer attached and
+        // added to an activity. If so, no need to spend resources loading the contact photo.
+        if (!fragment.isAdded() || fragment.getActivity() == null) {
+            return null;
+        }
+
+        // Instantiates an AssetFileDescriptor. Given a content Uri pointing to an image file, the
+        // ContentResolver can return an AssetFileDescriptor for the file.
+        AssetFileDescriptor afd = null;
+
+        // This "try" block catches an Exception if the file descriptor returned from the Contacts
+        // Provider doesn't point to an existing file.
+        try {
+            Uri thumbUri = Uri.parse(photoData);
+
+            // Retrieves a file descriptor from the Contacts Provider. To learn more about this
+            // feature, read the reference documentation for
+            // ContentResolver#openAssetFileDescriptor.
+            afd = fragment.getActivity().getContentResolver().openAssetFileDescriptor(thumbUri, "r");
+
+            // Gets a FileDescriptor from the AssetFileDescriptor. A BitmapFactory object can
+            // decode the contents of a file pointed to by a FileDescriptor into a Bitmap.
+            FileDescriptor fileDescriptor = afd.getFileDescriptor();
+            if (fileDescriptor != null) {
+                // Decodes a Bitmap from the image pointed to by the FileDescriptor, and scales it
+                // to the specified width and height
+                return ImageLoader.decodeSampledBitmapFromDescriptor(
+                        fileDescriptor, imageSize, imageSize);
+            }
+        } catch (FileNotFoundException e) {
+            // If the file pointed to by the thumbnail URI doesn't exist, or the file can't be
+            // opened in "read" mode, ContentResolver.openAssetFileDescriptor throws a
+            // FileNotFoundException.
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Contact photo thumbnail not found for contact " + photoData
+                        + ": " + e.toString());
+            }
+        } finally {
+            // If an AssetFileDescriptor was returned, try to close it
+            if (afd != null) {
+                try {
+                    afd.close();
+                } catch (IOException unused) {
+                    // Closing a file descriptor might cause an IOException if the file is
+                    // already closed. Nothing extra is needed to handle this.
+                }
+            }
+        }
+
+        // If the decoding failed, returns null
+        return null;
+    }
+
+    /**
+     * Gets the preferred height for each item in the ListView, in pixels, after accounting for
+     * screen density. ImageLoader uses this value to resize thumbnail images to match the ListView
+     * item height.
+     *
+     * @return The preferred height in pixels, based on the current theme.
+     */
+    public static int getListPreferredItemHeight(Fragment fragment) {
+        final TypedValue typedValue = new TypedValue();
+
+        // Resolve list item preferred height theme attribute into typedValue
+        fragment.getActivity().getTheme().resolveAttribute(
+                android.R.attr.listPreferredItemHeight, typedValue, true);
+
+        // Create a new DisplayMetrics object
+        final DisplayMetrics metrics = new android.util.DisplayMetrics();
+
+        // Populate the DisplayMetrics
+        fragment.getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+        // Return theme value based on DisplayMetrics
+        return (int) typedValue.getDimension(metrics);
+    }
+
+    // Material colors, shade #200.
+    // TODO(gene): maybe move to resource file
+    private static final Colorizer[] sColorizer = {
+            new Colorizer(0xffffffff, 0xff212121),
+            new Colorizer(0xffef9a9a, 0xff212121), new Colorizer(0xffc5e1a5, 0xff212121),
+            new Colorizer(0xff90caf9, 0xff212121), new Colorizer(0xfffff59d, 0xff212121),
+            new Colorizer(0xffb0bec5, 0xff212121), new Colorizer(0xfff48fb1, 0xff212121),
+            new Colorizer(0xffb39ddb, 0xff212121), new Colorizer(0xff9fa8da, 0xff212121),
+            new Colorizer(0xffffab91, 0xff212121), new Colorizer(0xffffe082, 0xff212121),
+            new Colorizer(0xffa5d6a7, 0xff212121), new Colorizer(0xffbcaaa4, 0xff212121),
+            new Colorizer(0xffeeeeee, 0xff212121), new Colorizer(0xff80deea, 0xff212121),
+            new Colorizer(0xffe6ee9c, 0xff212121), new Colorizer(0xffce93d8, 0xff212121)
+    };
+    private static final Colorizer[] sColorizerDark = {
+            new Colorizer(0xff424242, 0xffdedede),
+            new Colorizer(0xffC62828, 0xffdedede), new Colorizer(0xffAD1457, 0xffdedede),
+            new Colorizer(0xff6A1B9A, 0xffdedede), new Colorizer(0xff4527A0, 0xffdedede),
+            new Colorizer(0xff283593, 0xffdedede), new Colorizer(0xff1565C0, 0xffdedede),
+            new Colorizer(0xff0277BD, 0xffdedede), new Colorizer(0xff00838F, 0xffdedede),
+            new Colorizer(0xff00695C, 0xffdedede), new Colorizer(0xff2E7D32, 0xffdedede),
+            new Colorizer(0xff558B2F, 0xffdedede), new Colorizer(0xff9E9D24, 0xff212121),
+            new Colorizer(0xffF9A825, 0xff212121), new Colorizer(0xffFF8F00, 0xff212121),
+            new Colorizer(0xffEF6C00, 0xffdedede), new Colorizer(0xffD84315, 0xffdedede),
+            new Colorizer(0xff4E342E, 0xffdedede), new Colorizer(0xff37474F, 0xffdedede)
+    };
+
+    public static class Colorizer {
+        int bg;
+        int fg;
+
+        Colorizer(int bg, int fg) {
+            this.bg = bg;
+            this.fg = fg;
+        }
+    }
+
+    public static Colorizer getColorsFor(int index) {
+        if (index >= sColorizer.length) {
+            index = index % sColorizer.length;
+        }
+        return sColorizer[index];
+    }
+
+    public static Colorizer getDarkColorsFor(int index) {
+        if (index >= sColorizerDark.length) {
+            index = index % sColorizerDark.length;
+        }
+        return sColorizerDark[index];
     }
 }

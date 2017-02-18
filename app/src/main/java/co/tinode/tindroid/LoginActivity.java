@@ -94,7 +94,7 @@ public class LoginActivity extends AppCompatActivity {
         showLoginFragment();
 
         // Request permission to access accounts. We need access to acccounts to store the login token.
-        if (!UiUtils.checkAccountAccessPermission(this)) {
+        if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
             requestAccountAccessPermission();
         }
 

@@ -37,18 +37,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     private static final int SINGLE_PADDING = 10;
     // Vertical padding between two messages from the same sender
     private static final int TRAIN_PADDING = 2;
-    // Material colors, shade #200.
-    // TODO(gene): maybe move to resource file
-    private static final colorizer[] sColorizer = {
-            new colorizer(0xffef9a9a, 0xff212121), new colorizer(0xffc5e1a5, 0xff212121),
-            new colorizer(0xff90caf9, 0xff212121), new colorizer(0xfffff59d, 0xff212121),
-            new colorizer(0xffb0bec5, 0xff212121), new colorizer(0xfff48fb1, 0xff212121),
-            new colorizer(0xffb39ddb, 0xff212121), new colorizer(0xff9fa8da, 0xff212121),
-            new colorizer(0xffffab91, 0xff212121), new colorizer(0xffffe082, 0xff212121),
-            new colorizer(0xffa5d6a7, 0xff212121), new colorizer(0xffbcaaa4, 0xff212121),
-            new colorizer(0xffeeeeee, 0xff212121), new colorizer(0xff80deea, 0xff212121),
-            new colorizer(0xffe6ee9c, 0xff212121), new colorizer(0xffce93d8, 0xff212121)
-    };
 
     private MessageActivity mActivity;
     private Cursor mCursor;
@@ -189,7 +177,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         holder.mMessageBubble.setBackgroundResource(bg_bubble);
         if (!m.isMine()) {
             holder.mMessageBubble.getBackground().mutate()
-                    .setColorFilter(sColorizer[m.senderIdx].bg, PorterDuff.Mode.MULTIPLY);
+                    .setColorFilter(UiUtils.getColorsFor(m.senderIdx).bg, PorterDuff.Mode.MULTIPLY);
         }
 
         if (mSelectedItems != null && mSelectedItems.get(position)) {
@@ -315,15 +303,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         SINGLE, FIRST, MIDDLE, LAST
     }
 
-    private static class colorizer {
-        int bg;
-        int fg;
-
-        colorizer(int bg, int fg) {
-            this.bg = bg;
-            this.fg = fg;
-        }
-    }
 
     class ViewHolder extends RecyclerView.ViewHolder {
         View mItemView;

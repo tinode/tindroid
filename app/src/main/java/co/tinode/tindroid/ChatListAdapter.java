@@ -110,7 +110,7 @@ public class ChatListAdapter extends BaseAdapter {
 
         Bitmap bmp = pub != null ? pub.getBitmap() : null;
         if (bmp != null) {
-            holder.icon.setImageDrawable(new RoundedImage(bmp));
+            holder.icon.setImageDrawable(new RoundImageDrawable(bmp));
         } else {
             Topic.TopicType topicType = topic.getTopicType();
             int res = -1;

@@ -213,15 +213,15 @@ public abstract class ImageLoader {
      */
     public static RetainFragment findOrCreateRetainFragment(FragmentManager fm) {
         // Check to see if we have retained the worker fragment.
-        RetainFragment mRetainFragment = (RetainFragment) fm.findFragmentByTag(TAG);
+        RetainFragment retainFragment = (RetainFragment) fm.findFragmentByTag(TAG);
 
         // If not retained (or first time running), we need to create and add it.
-        if (mRetainFragment == null) {
-            mRetainFragment = new RetainFragment();
-            fm.beginTransaction().add(mRetainFragment, TAG).commit();
+        if (retainFragment == null) {
+            retainFragment = new RetainFragment();
+            fm.beginTransaction().add(retainFragment, TAG).commit();
         }
 
-        return mRetainFragment;
+        return retainFragment;
     }
 
     public int getImageSize() {
@@ -246,7 +246,7 @@ public abstract class ImageLoader {
 
         if (bitmap != null) {
             // Bitmap found in memory cache
-            imageView.setImageDrawable(new RoundedImage(bitmap));
+            imageView.setImageDrawable(new RoundImageDrawable(bitmap));
         } else if (cancelPotentialWork(data, imageView)) {
             final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
             final AsyncDrawable asyncDrawable =
@@ -448,7 +448,7 @@ public abstract class ImageLoader {
 
             final ImageView imageView = getAttachedImageView();
             if (bitmap != null && imageView != null) {
-                imageView.setImageDrawable(new RoundedImage(bitmap));
+                imageView.setImageDrawable(new RoundImageDrawable(bitmap));
             }
         }
 

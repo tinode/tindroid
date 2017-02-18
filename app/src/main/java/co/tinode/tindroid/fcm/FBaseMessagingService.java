@@ -20,7 +20,7 @@ import java.util.Map;
 import co.tinode.tindroid.ContactsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.RoundedImage;
+import co.tinode.tindroid.RoundImageDrawable;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.VCard;
 import co.tinode.tindroid.account.ContactsManager;
@@ -40,7 +40,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private static Bitmap makeLargeIcon(Bitmap bmp) {
         if (bmp != null) {
             Bitmap scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
-            return new RoundedImage(scaled).getRoundedBitmap();
+            return new RoundImageDrawable(scaled).getRoundedBitmap();
         }
         return null;
     }
