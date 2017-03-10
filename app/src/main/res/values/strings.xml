@@ -87,4 +87,5 @@
     <string name="name_required">Topic name required</string>
     <string name="no_members">No group members</string>
     <string name="letter_tile_font_family">sans-serif-medium</string>
+    <string name="add_one_member">Add at least one group member</string>
 </resources>

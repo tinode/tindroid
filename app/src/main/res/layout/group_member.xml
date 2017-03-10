@@ -10,13 +10,23 @@
         android:src="@drawable/ic_person_circle"
         android:layout_height="48sp" />
 
-    <ImageView
+    <android.support.v7.widget.AppCompatImageView
+        android:layout_width="20sp"
+        android:layout_height="20sp"
+        android:src="@drawable/ic_circle"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        />
+
+    <android.support.v7.widget.AppCompatImageView
         android:id="@+id/cancel"
         android:layout_width="16sp"
         android:layout_height="16sp"
-        android:src="@drawable/ic_cancel"
+        android:src="@drawable/ic_cancel_grey"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
+        android:contentDescription="X"
+        android:layout_margin="2sp"
         />
 
 </RelativeLayout>
