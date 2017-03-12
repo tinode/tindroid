@@ -25,7 +25,7 @@
             android:id="@+id/online"
             android:layout_width="16sp"
             android:layout_height="16sp"
-            android:src="@drawable/ic_brightness_1"
+            android:src="@drawable/ic_circle"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"
             />

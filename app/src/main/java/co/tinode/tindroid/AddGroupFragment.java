@@ -21,7 +21,6 @@ import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,9 +29,12 @@ import android.widget.AlphabetIndexer;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.TreeSet;
 
 import co.tinode.tindroid.account.Utils;
 
@@ -51,6 +53,7 @@ public class AddGroupFragment extends ListFragment {
 
     private ContactsAdapter mAdapter; // The list of contacts with Tinode handles
     private RecyclerView mMembers;
+    private TextView mNoMembers;
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
     private String mSearchTerm; // Stores the current search query term
 
@@ -58,7 +61,8 @@ public class AddGroupFragment extends ListFragment {
 
     private int mPreviouslySelectedSearchItem = 0;
 
-    private SparseBooleanArray mSelectedContacts;
+    // Sorted set of selected contacts (cursor positions of selected contacts).
+    private TreeSet<Integer> mSelectedContacts;
 
     public AddGroupFragment() {
     }
@@ -90,7 +94,7 @@ public class AddGroupFragment extends ListFragment {
         // Set a placeholder loading image for the image loader
         mImageLoader.setLoadingImage(R.drawable.ic_person_circle);
 
-        mSelectedContacts = new SparseBooleanArray();
+        mSelectedContacts = new TreeSet<>();
     }
 
     @Override
@@ -126,12 +130,20 @@ public class AddGroupFragment extends ListFragment {
                     titleEdit.setError(getString(R.string.name_required));
                     return;
                 }
+
+                if (mMembers.getAdapter().getItemCount() == 0) {
+                    Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 Intent intent = new Intent(activity, MessageActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("topic", topic);
                 startActivity(intent);
             }
         });
+
+        mNoMembers = (TextView) activity.findViewById(R.id.noMembers);
 
         mMembers = (RecyclerView) activity.findViewById(R.id.groupMembers);
         mMembers.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
@@ -143,19 +155,26 @@ public class AddGroupFragment extends ListFragment {
         getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Log.d(TAG, "Click, pos=" + position + ", id=" + id);
                 MembersAdapter ma = (MembersAdapter) mMembers.getAdapter();
-                if (mSelectedContacts.get(position)) {
-                    mSelectedContacts.delete(position);
-                    ma.removeItem(position);
-                } else {
-                    mSelectedContacts.put(position, true);
-                    ma.addItem(mAdapter.getItem(position));
-                }
+                MemberData data = mAdapter.getItem(position);
+                ma.addItem(data);
+                mSelectedContacts.add(data.position);
                 mAdapter.notifyDataSetChanged();
             }
         });
 
         getLoaderManager().initLoader(0, null, mContactsLoaderCallback);
+    }
+
+    // Deselect previously selected item in the contact list.
+    private void deselect(int cursorPosition) {
+        mSelectedContacts.remove(cursorPosition);
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private void createTopic(String title) {
+
     }
 
     @Override
@@ -297,23 +316,39 @@ public class AddGroupFragment extends ListFragment {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            if (mSelectedContacts.get(position)) {
-                final View view = new View(mContext);
-                view.setVisibility(View.GONE);
-                return view;
-            } else {
-                return super.getView(position, convertView, parent);
+            return super.getView(translateListToCursorPosition(position), convertView, parent);
+        }
+
+        /** Convert position in the ListView into cursor position. List omits items contained in the mSelectedContacts.
+         * The cursor position is >= list position.
+         *
+         * @param position list position to translate to cursor position
+         *
+         * @return cursor position
+         */
+        private int translateListToCursorPosition(int position) {
+            for (Integer idx : mSelectedContacts) {
+                if (idx <= position) {
+                    position++;
+                }
             }
+            return position;
         }
 
         @Override
         public MemberData getItem(int position) {
             Cursor cursor = getCursor();
-            cursor.moveToPosition(position);
-            final String photoUri = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
-            final String displayName = cursor.getString(ContactsQuery.DISPLAY_NAME);
+            if (cursor != null) {
+                int cursorPosition = translateListToCursorPosition(position);
+                cursor.moveToPosition(cursorPosition);
+                final String uid = cursor.getString(ContactsQuery.IM_HANDLE);
+                final String photoUri = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
+                final String displayName = cursor.getString(ContactsQuery.DISPLAY_NAME);
 
-            return new MemberData(displayName, photoUri);
+                return new MemberData(cursorPosition, uid, displayName, photoUri);
+            }
+
+            return null;
         }
 
         /**
@@ -325,7 +360,7 @@ public class AddGroupFragment extends ListFragment {
             if (getCursor() == null) {
                 return 0;
             }
-            return super.getCount();
+            return super.getCount() - mSelectedContacts.size();
         }
 
         /**
@@ -437,32 +472,41 @@ public class AddGroupFragment extends ListFragment {
 
         @Override
         public void onBindViewHolder(final MemberViewHolder holder, int position) {
-            MemberData data = mItems.get(position);
+            // MemberData data = mItems.get(position);
+
+            holder.mAvatar.setImageResource(R.drawable.ic_person_circle);
+            mImageLoader.loadImage(mItems.get(position).photoUri, holder.mAvatar);
 
             holder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int pos = holder.getAdapterPosition();
-                    mItems.remove(pos);
-                    notifyItemRemoved(pos);
+                    removeItem(holder.getAdapterPosition());
                 }
             });
         }
 
         @Override
         public int getItemCount() {
-            Log.d(TAG, "MembersAdapter item count" + mItems.size());
+            // Log.d(TAG, "MembersAdapter item count " + mItems.size());
             return mItems.size();
         }
 
         public void addItem(MemberData data) {
+            Log.d(TAG, "Adding member, name=" + data.name + ", cursorPos=" + data.position);
             mItems.add(data);
+            if (mItems.size() == 1) {
+                mNoMembers.setVisibility(View.INVISIBLE);
+            }
             notifyItemInserted(mItems.size() - 1);
         }
 
         public void removeItem(int position) {
-            mItems.remove(position);
+            MemberData data = mItems.remove(position);
+            deselect(data.position);
             notifyItemRemoved(position);
+            if (mItems.size() == 0) {
+                mNoMembers.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -477,11 +521,15 @@ public class AddGroupFragment extends ListFragment {
         }
     }
 
-    class MemberData {
+    private class MemberData {
+        int position;
         String name;
+        String uid;
         String photoUri;
 
-        MemberData(String name, String photoUri) {
+        MemberData(int cursorPosition, String uid, String name, String photoUri) {
+            this.position = cursorPosition;
+            this.uid = uid;
             this.name = name;
             this.photoUri = photoUri;
         }
