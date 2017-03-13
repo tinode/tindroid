@@ -37,6 +37,10 @@ import java.util.Locale;
 import java.util.TreeSet;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -124,9 +128,9 @@ public class AddGroupFragment extends ListFragment {
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EditText titleEdit = ((EditText) activity.findViewById(R.id.title));
-                String topic = titleEdit.getText().toString();
-                if (TextUtils.isEmpty(topic)) {
+                final EditText titleEdit = ((EditText) activity.findViewById(R.id.title));
+                final String topicTitle = titleEdit.getText().toString();
+                if (TextUtils.isEmpty(topicTitle)) {
                     titleEdit.setError(getString(R.string.name_required));
                     return;
                 }
@@ -136,10 +140,24 @@ public class AddGroupFragment extends ListFragment {
                     return;
                 }
 
-                Intent intent = new Intent(activity, MessageActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("topic", topic);
-                startActivity(intent);
+                final Topic topic = Cache.getTinode().newGroupTopic(null);
+                try {
+                    topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            Intent intent = new Intent(activity, MessageActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            intent.putExtra("topic", topic.getName());
+                            startActivity(intent);
+                            return null;
+                        }
+                    }, null);
+                } catch (NotConnectedException ignored) {
+                    Log.d(TAG, "create new topic -- NotConnectedException");
+                } catch (Exception e) {
+                    Toast.makeText(activity, R.string.failed_to_create_topic, Toast.LENGTH_SHORT).show();
+                    return;
+                }
             }
         });
 

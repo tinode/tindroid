@@ -937,6 +937,18 @@ public class Tinode {
         }
         return new Topic(this, name, l);
     }
+
+    /**
+     * Create an instance of a new unsubscribed group topic (TOPIC_NEW).
+     * @param l event listener; could be null
+     * @return topic of appropriate class
+     */
+    @SuppressWarnings("unchecked")
+    public Topic newGroupTopic(Topic.Listener l) {
+        return newTopic(TOPIC_NEW, l);
+    }
+
+
     /**
      * Obtain a 'me' topic ({@link MeTopic}).
      *

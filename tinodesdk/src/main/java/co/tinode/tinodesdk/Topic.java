@@ -417,10 +417,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected void setLastSeen(Date when, String ua) {
         mLastSeen = new LastSeen(when, ua);
     }
+
     /**
      * Subscribe to topic
      *
-     * @throws Exception
+     * @throws Exception when anything goes wrong
      */
     public PromisedReply<ServerMessage> subscribe() throws Exception {
         return subscribe(null, subscribeParamGetBuilder()
