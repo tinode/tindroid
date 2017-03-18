@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -40,6 +41,8 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
@@ -140,24 +143,15 @@ public class AddGroupFragment extends ListFragment {
                     return;
                 }
 
-                final Topic topic = Cache.getTinode().newGroupTopic(null);
+                Bitmap bmp = null;
                 try {
-                    topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            Intent intent = new Intent(activity, MessageActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            intent.putExtra("topic", topic.getName());
-                            startActivity(intent);
-                            return null;
-                        }
-                    }, null);
-                } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "create new topic -- NotConnectedException");
-                } catch (Exception e) {
-                    Toast.makeText(activity, R.string.failed_to_create_topic, Toast.LENGTH_SHORT).show();
-                    return;
+                    bmp = ((BitmapDrawable) ((ImageView) activity.findViewById(R.id.imageAvatar))
+                            .getDrawable()).getBitmap();
+                } catch (ClassCastException ignored) {
+                    // If image is not loaded, the drawable is a vector.
+                    // Ignore it.
                 }
+                createTopic(activity, topicTitle, bmp);
             }
         });
 
@@ -191,8 +185,29 @@ public class AddGroupFragment extends ListFragment {
         mAdapter.notifyDataSetChanged();
     }
 
-    private void createTopic(String title) {
+    private void createTopic(final Activity activity, final String title, final Bitmap avatar) {
+        final Topic<VCard,String,String> topic = Cache.getTinode().newGroupTopic(null);
+        try {
+            MsgSetMeta<VCard,String,String> mset = new MsgSetMeta<>(
+                    new MetaSetDesc<VCard,String>(new VCard(title, avatar), null), null);
 
+            topic.subscribe(mset, null).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    Intent intent = new Intent(activity, MessageActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("topic", topic.getName());
+                    startActivity(intent);
+                    return null;
+                }
+            }, null);
+        } catch (NotConnectedException ignored) {
+            Log.d(TAG, "create new topic -- NotConnectedException");
+            // Go back to contacts
+            startActivity(new Intent(activity, ContactsActivity.class));
+        } catch (Exception e) {
+            Toast.makeText(activity, R.string.failed_to_create_topic, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

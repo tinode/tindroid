@@ -60,8 +60,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected Tinode mTinode;
 
     protected String mName;
-    // the mName could be invalid: 'new' or 'usrXXX'
-    protected boolean isValidName = false;
 
     /** The mStore is set by Tinode when the topic calls {@link Tinode#registerTopic(Topic)} */
     Storage mStore = null;
@@ -436,26 +434,44 @@ public class Topic<Pu,Pr,T> implements LocalData {
      */
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<Pu,Pr,?> set, MsgGetMeta get)
             throws Exception {
-        if (!mAttached) {
 
-            if (!mTinode.isConnected()) {
-                throw new NotConnectedException();
-            }
-
-            return mTinode.subscribe(getName(), set, get).thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage msg)
-                                throws Exception {
-                            if (msg.ctrl != null && msg.ctrl.params != null) {
-                                subscribed(msg.ctrl.topic, (String)msg.ctrl.params.get("mode"));
-                            }
-                            return null;
-                        }
-                    }, null);
+        if (mAttached) {
+            throw new IllegalStateException("Already subscribed");
         }
 
-        throw new IllegalStateException("Already subscribed");
+        if (isNew() && mStore != null) {
+            mStore.topicAdd(this);
+        }
+
+        if (!mTinode.isConnected()) {
+            throw new NotConnectedException();
+        }
+
+        return mTinode.subscribe(getName(), set, get).thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage msg)
+                            throws Exception {
+                        if (msg.ctrl != null && msg.ctrl.params != null && !mAttached) {
+                            mAttached = true;
+                            mMode = new AccessMode((String)msg.ctrl.params.get("mode"));
+
+                            if (isNew()) {
+                                setName(msg.ctrl.topic);
+                                if (mStore != null) {
+                                    mStore.topicUpdate(Topic.this);
+                                }
+                            }
+
+                            mTinode.registerTopic(Topic.this);
+
+                            if (mListener != null) {
+                                mListener.onSubscribe(200, "subscribed");
+                            }
+                        }
+                        return null;
+                    }
+                }, null);
     }
 
     public MetaGetBuilder subscribeParamGetBuilder() {
@@ -737,7 +753,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     protected void setName(String name) {
         mName = name;
-        isValidName = Topic.getTopicTypeByName(name) != TopicType.UNKNOWN;
     }
 
     public Pu getPublic() {
@@ -847,13 +862,13 @@ public class Topic<Pu,Pr,T> implements LocalData {
     public static TopicType getTopicTypeByName(String name) {
         TopicType tp = TopicType.UNKNOWN;
         if (name != null) {
-            if (name.equals("me")) {
+            if (name.equals(Tinode.TOPIC_ME)) {
                 tp = TopicType.ME;
-            } else if (name.equals("fnd")) {
+            } else if (name.equals(Tinode.TOPIC_FND)) {
                 tp = TopicType.FND;
-            } else if (name.startsWith("grp")) {
+            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.equals(Tinode.TOPIC_NEW)) {
                 tp = TopicType.GRP;
-            } else if (name.startsWith("p2p")) {
+            } else if (name.startsWith(Tinode.TOPIC_P2P_PREFIX) || name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
                 tp = TopicType.P2P;
             }
         }
@@ -864,25 +879,17 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return getTopicTypeByName(mName);
     }
 
+    public static boolean getIsNewByName(String name) {
+        return name.equals(Tinode.TOPIC_NEW) || name.startsWith(Tinode.TOPIC_USR_PREFIX);
+    }
+
     /**
-     * Called when the topic receives subscription confirmation
-     * @param name server-provided topic name; could be different from the current name
+     * Check if topic is not yet synchronized to the server.
+     *
+     * @return true is topic is new (i.e. no name is yet assigned by the server)
      */
-    protected void subscribed(String name, String mode) {
-        if (!mAttached) {
-            mAttached = true;
-
-            mMode = new AccessMode(mode);
-
-            if (!isValidName) {
-                setName(name);
-            }
-            mTinode.registerTopic(this);
-
-            if (mListener != null) {
-                mListener.onSubscribe(200, "subscribed");
-            }
-        }
+    public boolean isNew() {
+        return getIsNewByName(mName);
     }
 
     /**

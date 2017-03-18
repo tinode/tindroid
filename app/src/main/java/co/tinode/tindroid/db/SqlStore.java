@@ -60,7 +60,12 @@ class SqlStore implements Storage {
 
     @Override
     public long topicAdd(Topic topic) {
-        return TopicDb.insert(mDbh.getWritableDatabase(), topic);
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return TopicDb.insert(mDbh.getWritableDatabase(), topic);
+        } else {
+            return st.id;
+        }
     }
 
     @Override

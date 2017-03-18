@@ -184,8 +184,12 @@ public class TopicDb implements BaseColumns {
         Date lastUsed = new Date();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
-        values.put(COLUMN_NAME_TOPIC, topic.getName());
         Topic.TopicType tp = topic.getTopicType();
+        if (topic.isNew() && tp == Topic.TopicType.GRP) {
+            values.put(COLUMN_NAME_TOPIC, "new" + uniqueString() );
+        } else {
+            values.put(COLUMN_NAME_TOPIC, topic.getName());
+        }
         values.put(COLUMN_NAME_TYPE, tp.val());
         values.put(COLUMN_NAME_VISIBLE,
                 tp == Topic.TopicType.GRP || tp == Topic.TopicType.P2P ? 1 : 0);
@@ -235,6 +239,9 @@ public class TopicDb implements BaseColumns {
 
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
+        if (st.isNew && !topic.isNew()) {
+            values.put(COLUMN_NAME_TOPIC, topic.getName());
+        }
         values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
         // values.put(COLUMN_NAME_DELETED, NULL);
         values.put(COLUMN_NAME_READ, topic.getRead());
@@ -256,6 +263,7 @@ public class TopicDb implements BaseColumns {
         int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
         if (updated > 0) {
             st.lastUsed = lastUsed;
+            st.isNew = topic.isNew();
         }
 
         Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
@@ -324,6 +332,7 @@ public class TopicDb implements BaseColumns {
      * @param c Cursor to read from
      * @return Subscription
      */
+    @SuppressWarnings("unchecked")
     public static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Tinode tinode, Cursor c) {
         String name = c.getString(COLUMN_IDX_TOPIC);
         Topic<Pu,Pr,T> topic = tinode.newTopic(name, null);
@@ -403,5 +412,13 @@ public class TopicDb implements BaseColumns {
 
     public static boolean updateClear(SQLiteDatabase db, long topicId, int clear) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_CLEAR, topicId, clear);
+    }
+
+    /** Generate a reasonably unique string:
+     * Get milliseconds in a custom epoch (Oct 25, 2014 05:06:02.373 UTC), concatenate with lower
+     * bits of nanoseconds count, convert to Base32
+     */
+    private static String uniqueString() {
+        return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (System.nanoTime() & 0xFFFFL), 32);
     }
 }

@@ -59,6 +59,10 @@ public class Tinode {
 
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
+    public static final String TOPIC_FND = "fnd";
+    public static final String TOPIC_GRP_PREFIX = "grp";
+    public static final String TOPIC_P2P_PREFIX = "p2p";
+    public static final String TOPIC_USR_PREFIX = "usr";
 
     protected static final String NOTE_KP = "kp";
     protected static final String NOTE_READ = "read";
