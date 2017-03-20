@@ -15,6 +15,7 @@ import co.tinode.tinodesdk.Topic;
 /**
  * Store for topics
  */
+@SuppressWarnings("WeakerAccess")
 public class TopicDb implements BaseColumns {
     private static final String TAG = "TopicsDb";
 
@@ -177,6 +178,7 @@ public class TopicDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
+    @SuppressWarnings("WeakerAccess")
     public static <Pu,Pr,T> long insert(SQLiteDatabase db, Topic<Pu,Pr,T> topic) {
         Log.d(TAG, "Creating topic " + topic.getName());
 
@@ -184,15 +186,11 @@ public class TopicDb implements BaseColumns {
         Date lastUsed = new Date();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
+        values.put(COLUMN_NAME_TOPIC, topic.getName());
+
         Topic.TopicType tp = topic.getTopicType();
-        if (topic.isNew() && tp == Topic.TopicType.GRP) {
-            values.put(COLUMN_NAME_TOPIC, "new" + uniqueString() );
-        } else {
-            values.put(COLUMN_NAME_TOPIC, topic.getName());
-        }
         values.put(COLUMN_NAME_TYPE, tp.val());
-        values.put(COLUMN_NAME_VISIBLE,
-                tp == Topic.TopicType.GRP || tp == Topic.TopicType.P2P ? 1 : 0);
+        values.put(COLUMN_NAME_VISIBLE, tp == Topic.TopicType.GRP || tp == Topic.TopicType.P2P ? 1 : 0);
         values.put(COLUMN_NAME_WITH, topic.getWith());
         values.put(COLUMN_NAME_CREATED, lastUsed.getTime());
         if (topic.getUpdated() != null) {
@@ -277,6 +275,7 @@ public class TopicDb implements BaseColumns {
      *
      * @return true on success, false otherwise
      */
+    @SuppressWarnings("WeakerAccess")
     public static boolean msgReceived(SQLiteDatabase db, Topic topic, StoredMessage msg) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
@@ -332,7 +331,7 @@ public class TopicDb implements BaseColumns {
      * @param c Cursor to read from
      * @return Subscription
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked, WeakerAccess")
     public static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Tinode tinode, Cursor c) {
         String name = c.getString(COLUMN_IDX_TOPIC);
         Topic<Pu,Pr,T> topic = tinode.newTopic(name, null);
@@ -370,6 +369,7 @@ public class TopicDb implements BaseColumns {
      * @param topic name of the topic to delete
      * @return 1 on success
      */
+    @SuppressWarnings("WeakerAccess")
     public static int delete(SQLiteDatabase db, Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
@@ -398,10 +398,12 @@ public class TopicDb implements BaseColumns {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean updateRead(SQLiteDatabase db, long topicId, int read) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_READ, topicId, read);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean updateRecv(SQLiteDatabase db, long topicId, int recv) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_RECV, topicId, recv);
     }
@@ -410,15 +412,8 @@ public class TopicDb implements BaseColumns {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_SEQ, topicId, seq);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static boolean updateClear(SQLiteDatabase db, long topicId, int clear) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_CLEAR, topicId, clear);
-    }
-
-    /** Generate a reasonably unique string:
-     * Get milliseconds in a custom epoch (Oct 25, 2014 05:06:02.373 UTC), concatenate with lower
-     * bits of nanoseconds count, convert to Base32
-     */
-    private static String uniqueString() {
-        return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (System.nanoTime() & 0xFFFFL), 32);
     }
 }

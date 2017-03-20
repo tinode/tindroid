@@ -9,6 +9,7 @@ import android.util.Log;
 import co.tinode.tinodesdk.model.AccessMode;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.LastSeen;
+import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -382,6 +383,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
         mDesc.priv = priv;
     }
 
+    public void setDefacs(String auth, String anon) {
+        mDesc.defacs.auth = auth;
+        mDesc.defacs.anon = anon;
+    }
+
     public int getUnreadCount() {
         //Log.d(TAG, "getUnreadCount topic=" + mName + ", seq=" + mDesc.seq + ", read=" + mDesc.read);
         int unread = mDesc.seq - mDesc.read;
@@ -422,7 +428,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws Exception when anything goes wrong
      */
     public PromisedReply<ServerMessage> subscribe() throws Exception {
-        return subscribe(null, subscribeParamGetBuilder()
+        MsgSetMeta<Pu,Pr,?> mset = null;
+        if (isNew() && (mDesc.pub != null || mDesc.priv != null)) {
+            // If this is a new topic, sync topic description
+            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null);
+        }
+        return subscribe(mset, subscribeParamGetBuilder()
                 .withGetDesc().withGetData().withGetSub().build());
     }
 
@@ -437,10 +448,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         if (mAttached) {
             throw new IllegalStateException("Already subscribed");
-        }
-
-        if (isNew() && mStore != null) {
-            mStore.topicAdd(this);
         }
 
         if (!mTinode.isConnected()) {
@@ -462,8 +469,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
                                     mStore.topicUpdate(Topic.this);
                                 }
                             }
-
-                            mTinode.registerTopic(Topic.this);
 
                             if (mListener != null) {
                                 mListener.onSubscribe(200, "subscribed");
@@ -738,11 +743,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
     }
 
-
+    @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfDataPacket() {
         return mTypeOfDataPacket;
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfMetaPacket() {
         return mTypeOfMetaPacket;
     }
@@ -759,7 +765,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mDesc.pub;
     }
 
-
+    @SuppressWarnings("WeakerAccess")
     protected int loadSubs() {
         Collection<Subscription> subs = mStore.getSubscriptions(this);
         if (subs == null) {
@@ -866,7 +872,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 tp = TopicType.ME;
             } else if (name.equals(Tinode.TOPIC_FND)) {
                 tp = TopicType.FND;
-            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.equals(Tinode.TOPIC_NEW)) {
+            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
                 tp = TopicType.GRP;
             } else if (name.startsWith(Tinode.TOPIC_P2P_PREFIX) || name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
                 tp = TopicType.P2P;
@@ -880,7 +886,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public static boolean getIsNewByName(String name) {
-        return name.equals(Tinode.TOPIC_NEW) || name.startsWith(Tinode.TOPIC_USR_PREFIX);
+        return name.startsWith(Tinode.TOPIC_USR_PREFIX) ||
+                name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
+                                                    // synced with the server
     }
 
     /**
@@ -893,7 +901,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
-     * Called when the topic receives leave() confirmation
+     * Called when the topic receives leave() confirmation. Overriden in 'me'.
      *
      * @param unsub - not just detached but also unsubscribed
      * @param code result code, always 200

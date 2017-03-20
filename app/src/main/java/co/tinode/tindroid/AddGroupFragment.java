@@ -187,11 +187,9 @@ public class AddGroupFragment extends ListFragment {
 
     private void createTopic(final Activity activity, final String title, final Bitmap avatar) {
         final Topic<VCard,String,String> topic = Cache.getTinode().newGroupTopic(null);
+        topic.setPub(new VCard(title, avatar));
         try {
-            MsgSetMeta<VCard,String,String> mset = new MsgSetMeta<>(
-                    new MetaSetDesc<VCard,String>(new VCard(title, avatar), null), null);
-
-            topic.subscribe(mset, null).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                     Intent intent = new Intent(activity, MessageActivity.class);

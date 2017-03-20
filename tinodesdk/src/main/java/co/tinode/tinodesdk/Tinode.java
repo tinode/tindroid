@@ -118,6 +118,7 @@ public class Tinode {
 
     private ConcurrentMap<String, PromisedReply<ServerMessage>> mFutures;
     private HashMap<String, Topic> mTopics;
+    private int sNameCounter = 0;
     private boolean mTopicsLoaded = false;
 
     static {
@@ -320,6 +321,7 @@ public class Tinode {
      *
      * @param message message to be parsed dispatched
      */
+    @SuppressWarnings("unchecked")
     private void dispatchPacket(String message) throws Exception {
         if (message == null || message.equals(""))
             return;
@@ -460,10 +462,12 @@ public class Tinode {
         return mConnection != null && mConnection.isConnected();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static TypeFactory getTypeFactory() {
         return sTypeFactory;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static ObjectMapper getJsonMapper() {
         return sJsonMapper;
     }
@@ -481,6 +485,7 @@ public class Tinode {
      * @param typeOfPrivate - type of private values
      * @param typeOfContent - type of content sent in {pub}/{data} messages
      */
+    @SuppressWarnings("WeakerAccess")
     public void setDefaultTypes(JavaType typeOfPublic,
                                 JavaType typeOfPrivate, JavaType typeOfContent) {
         mTypeOfDataPacket = sTypeFactory
@@ -503,26 +508,31 @@ public class Tinode {
                 sTypeFactory.constructType(typeOfContent));
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfDataPacket() {
         return mTypeOfDataPacket;
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfDataPacket(String topicName) {
         Topic topic = getTopic(topicName);
         JavaType result = (topic != null) ? topic.getTypeOfDataPacket() : null;
         return result != null ? result : mTypeOfDataPacket;
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfMetaPacket() {
         return mTypeOfMetaPacket;
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfMetaPacket(String topicName) {
         Topic topic = getTopic(topicName);
         JavaType result = (topic != null) ? topic.getTypeOfMetaPacket() : null;
         return result != null ? result : mTypeOfMetaPacket;
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected String makeUserAgent() {
         return mAppName + " (Android " + System.getProperty("os.version") + "; "
                 + Locale.getDefault().toString() + ") " + LIBRARY;
@@ -530,14 +540,15 @@ public class Tinode {
 
     /**
      * Set device token for push notifications
-     * @param token
+     * @param token device token
      */
     public void setDeviceToken(String token) {
         mDeviceToken = token;
     }
 
     /**
-     * Set device langauge
+     * Set device language
+     *
      * @param lang ISO 639-1 code for language
      */
     public void setLanguage(String lang) {
@@ -551,13 +562,14 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message.
      * @throws IOException if there is no connection
      */
+    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> hello() throws Exception {
         ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION,
                 makeUserAgent(), mDeviceToken, mLanguage));
         try {
             PromisedReply<ServerMessage> future = null;
             if (msg.hi.id != null) {
-                future = new PromisedReply<ServerMessage>();
+                future = new PromisedReply<>();
                 mFutures.put(msg.hi.id, future);
                 future = future.thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
@@ -589,6 +601,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      * @throws Exception if there is no connection
      */
+    @SuppressWarnings("WeakerAccess")
     protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, String secret,
                                                          boolean loginNow,
                                                          MetaSetDesc<Pu,Pr> desc) throws Exception {
@@ -734,6 +747,7 @@ public class Tinode {
      * @param topicName name of the topic to subscribe to
      * @return PromisedReply of the reply ctrl message
      */
+    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> leave(String topicName, boolean unsub) {
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         try {
@@ -755,7 +769,7 @@ public class Tinode {
      * @param data      payload to publish to topic
      * @return PromisedReply of the reply ctrl message
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked, WeakerAccess")
     public PromisedReply<ServerMessage> publish(String topicName, Object data) {
         ClientMessage msg = new ClientMessage(new MsgClientPub<>(getNextId(), topicName, true, data));
         try {
@@ -796,6 +810,7 @@ public class Tinode {
      * @param meta metadata to assign
      * @return PromisedReply of the reply ctrl or meta message
      */
+    @SuppressWarnings("WeakerAccess")
     public <Pu,Pr,T> PromisedReply<ServerMessage> setMeta(final String topicName,
                                                             final MsgSetMeta<Pu,Pr,T> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
@@ -828,6 +843,7 @@ public class Tinode {
      * @param before delete all messages with ids below this
      * @return PromisedReply of the reply ctrl or meta message
      */
+    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delMessage(final String topicName, final int before, final boolean hard) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
                 MsgClientDel.What.MSG, before, hard));
@@ -841,6 +857,7 @@ public class Tinode {
      * @param list delete all messages with ids in this list
      * @return PromisedReply of the reply ctrl or meta message
      */
+    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delMessage(final String topicName, final int[] list, final boolean hard) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard));
         return sendDeleteMessage(msg);
@@ -852,6 +869,7 @@ public class Tinode {
      * @param topicName name of the topic to inform
      * @return PromisedReply of the reply ctrl or meta message
      */
+    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delTopic(final String topicName) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
                 MsgClientDel.What.TOPIC, 0));
@@ -875,6 +893,7 @@ public class Tinode {
      * @param what      one or "read", "recv", "kp"
      * @param seq       id of the message being acknowledged
      */
+    @SuppressWarnings("WeakerAccess")
     protected void note(String topicName, String what, int seq) {
         try {
             send(Tinode.getJsonMapper().writeValueAsString(new
@@ -889,6 +908,7 @@ public class Tinode {
      *
      * @param topicName name of the topic to inform
      */
+    @SuppressWarnings("WeakerAccess")
     public void noteKeyPress(String topicName) {
         note(topicName, NOTE_KP, 0);
     }
@@ -900,6 +920,7 @@ public class Tinode {
      * @param topicName name of the topic to inform
      * @param seq id of the message being acknowledged
      */
+    @SuppressWarnings("WeakerAccess")
     public void noteRead(String topicName, int seq) {
         note(topicName, NOTE_READ, seq);
     }
@@ -911,6 +932,7 @@ public class Tinode {
      * @param topicName name of the topic to inform
      * @param seq id of the message being acknowledged
      */
+    @SuppressWarnings("WeakerAccess")
     public void noteRecv(String topicName, int seq) {
         note(topicName, NOTE_RECV, seq);
     }
@@ -920,6 +942,7 @@ public class Tinode {
      *
      * @param message string to write to websocket
      */
+    @SuppressWarnings("WeakerAccess")
     protected void send(String message) {
         Log.d(TAG, "out: " + message);
         if (mConnection == null || !mConnection.isConnected()) {
@@ -936,10 +959,13 @@ public class Tinode {
      */
     @SuppressWarnings("unchecked")
     public Topic newTopic(String name, Topic.Listener l) {
+        Topic topic;
         if (TOPIC_ME.equals(name)) {
-            return new MeTopic(this, l);
+            topic = new MeTopic(this, l);
         }
-        return new Topic(this, name, l);
+        topic = new Topic(this, name, l);
+        registerTopic(topic);
+        return topic;
     }
 
     /**
@@ -949,7 +975,7 @@ public class Tinode {
      */
     @SuppressWarnings("unchecked")
     public Topic newGroupTopic(Topic.Listener l) {
-        return newTopic(TOPIC_NEW, l);
+        return newTopic(TOPIC_NEW + nextUniqueString(), l);
     }
 
 
@@ -967,6 +993,7 @@ public class Tinode {
      *
      * @return a {@link Collection} of topics
      */
+    @SuppressWarnings("WeakerAccess")
     public List<Topic> getTopics() {
         return new ArrayList<>(mTopics.values());
     }
@@ -1012,7 +1039,7 @@ public class Tinode {
     /**
      * Start tracking topic.
      */
-    protected void registerTopic(Topic topic) {
+    private void registerTopic(Topic topic) {
         if (mStore != null) {
             if (!topic.isPersisted()) {
                 mStore.topicAdd(topic);
@@ -1025,7 +1052,7 @@ public class Tinode {
     /**
      * Stop tracking the topic.
      */
-    protected void unregisterTopic(Topic topic) {
+    private void unregisterTopic(Topic topic) {
         mTopics.remove(topic.getName());
         if (mStore != null) {
             topic.setStorage(null);
@@ -1034,11 +1061,25 @@ public class Tinode {
     }
 
     /**
+     * Topic is cached by name, update the name used to cache the topic.
+     *
+     * @param topic topic being updated
+     * @param oldName old name of the topic (e.g. "newXYZ" or "usrZYX")
+     * @return true if topic was found by the old name
+     */
+    synchronized private boolean changeTopicName(Topic topic, String oldName) {
+        boolean found = mTopics.remove(oldName) != null;
+        mTopics.put(topic.getName(), topic);
+        return found;
+    }
+
+    /**
      * Parse JSON received from the server into {@link ServerMessage}
      *
      * @param jsonMessage message to parse
      * @return ServerMessage or null
      */
+    @SuppressWarnings("WeakerAccess")
     protected ServerMessage parseServerMessageFromJson(String jsonMessage) {
         ServerMessage msg = new ServerMessage();
         try {
@@ -1102,8 +1143,14 @@ public class Tinode {
     /**
      * Get minimum delay between two subsequent key press notifications.
      */
+    @SuppressWarnings("WeakerAccess")
     protected static long getKeyPressDelay() {
         return NOTE_KP_DELAY;
+    }
+
+    synchronized private String nextUniqueString() {
+        ++ sNameCounter;
+        return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (sNameCounter & 0xFFFF), 32);
     }
 
     /**
@@ -1118,7 +1165,6 @@ public class Tinode {
          * @param reason should be always "Created"
          * @param params server parameters, such as protocol version
          */
-        @SuppressWarnings("unused")
         public void onConnect(int code, String reason, Map<String, Object> params) {
         }
 
@@ -1129,7 +1175,6 @@ public class Tinode {
          * @param code     numeric code of the error which caused connection to drop
          * @param reason   error message
          */
-        @SuppressWarnings("unused")
         public void onDisconnect(boolean byServer, int code, String reason) {
         }
 
@@ -1139,7 +1184,7 @@ public class Tinode {
          * @param code a numeric value between 200 and 2999 on success, 400 or higher on failure
          * @param text "OK" on success or error message
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onLogin(int code, String text) {
         }
 
@@ -1148,7 +1193,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onMessage(ServerMessage<?, ?, ?> msg) {
         }
 
@@ -1159,7 +1204,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onRawMessage(String msg) {
         }
 
@@ -1168,7 +1213,7 @@ public class Tinode {
          *
          * @param ctrl control message to process
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onCtrlMessage(MsgServerCtrl ctrl) {
         }
 
@@ -1177,7 +1222,7 @@ public class Tinode {
          *
          * @param data control message to process
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onDataMessage(MsgServerData<?> data) {
         }
 
@@ -1186,7 +1231,7 @@ public class Tinode {
          *
          * @param info info message to process
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onInfoMessage(MsgServerInfo info) {
         }
 
@@ -1195,7 +1240,7 @@ public class Tinode {
          *
          * @param meta meta message to process
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onMetaMessage(MsgServerMeta<?, ?> meta) {
         }
 
@@ -1204,12 +1249,12 @@ public class Tinode {
          *
          * @param pres control message to process
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings("unused, WeakerAccess")
         public void onPresMessage(MsgServerPres pres) {
         }
     }
 
-    static class LoginCredentials {
+    private static class LoginCredentials {
         String scheme;
         String secret;
 

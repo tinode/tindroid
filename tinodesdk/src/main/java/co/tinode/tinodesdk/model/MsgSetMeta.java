@@ -1,7 +1,8 @@
 package co.tinode.tinodesdk.model;
 
 /**
- * Playload for setting meta params.
+ * Playload for setting meta params, a combination of
+ * MetaSetDesc and MetaSetSub.
  */
 public class MsgSetMeta<Pu,Pr,Inv> {
 
