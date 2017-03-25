@@ -53,6 +53,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.Subscription;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -567,23 +568,20 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION,
                 makeUserAgent(), mDeviceToken, mLanguage));
         try {
-            PromisedReply<ServerMessage> future = null;
-            if (msg.hi.id != null) {
-                future = new PromisedReply<>();
-                mFutures.put(msg.hi.id, future);
-                future = future.thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                if (pkt.ctrl == null) {
-                                    throw new InvalidObjectException("Unexpected type of reply packet to hello");
-                                }
-                                mServerVersion = (String) pkt.ctrl.params.get("ver");
-                                mServerBuild = (String) pkt.ctrl.params.get("build");
-                                return null;
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.hi.id, future);
+            future = future.thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                            if (pkt.ctrl == null) {
+                                throw new InvalidObjectException("Unexpected type of reply packet to hello");
                             }
-                        }, null);
-            }
+                            mServerVersion = (String) pkt.ctrl.params.get("ver");
+                            mServerBuild = (String) pkt.ctrl.params.get("build");
+                            return null;
+                        }
+                    }, null);
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             return future;
         } catch (JsonProcessingException e) {
@@ -680,34 +678,31 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientLogin(getNextId(), scheme, secret));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = null;
-            if (msg.login.id != null) {
-                future = new PromisedReply<>();
-                mFutures.put(msg.login.id, future);
-                future = future.thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                if (pkt.ctrl == null) {
-                                    throw new InvalidObjectException("Unexpected type of reply packet in login");
-                                }
-                                mMyUid = (String) pkt.ctrl.params.get("uid");
-                                if (mStore != null) {
-                                    mStore.setMyUid(mMyUid);
-                                }
-                                // If topics were not loaded earlier, load them now.
-                                loadTopics();
-                                mAuthToken = (String) pkt.ctrl.params.get("token");
-                                mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
-                                mConnAuth = true;
-                                if (mListener != null) {
-                                    mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
-                                }
-
-                                return null;
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.login.id, future);
+            future = future.thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                            if (pkt.ctrl == null) {
+                                throw new InvalidObjectException("Unexpected type of reply packet in login");
                             }
-                        }, null);
-            }
+                            mMyUid = (String) pkt.ctrl.params.get("uid");
+                            if (mStore != null) {
+                                mStore.setMyUid(mMyUid);
+                            }
+                            // If topics were not loaded earlier, load them now.
+                            loadTopics();
+                            mAuthToken = (String) pkt.ctrl.params.get("token");
+                            mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
+                            mConnAuth = true;
+                            if (mListener != null) {
+                                mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
+                            }
+
+                            return null;
+                        }
+                    }, null);
             return future;
         } catch (JsonProcessingException e) {
             return null;
@@ -748,12 +743,23 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
-    public PromisedReply<ServerMessage> leave(String topicName, boolean unsub) {
+    public PromisedReply<ServerMessage> leave(final String topicName, boolean unsub) {
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.leave.id, future);
+            if (unsub) {
+                try {
+                    future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            unregisterTopic(topicName);
+                            return null;
+                        }
+                    }, null);
+                } catch (Exception ignored) { /* ignored */ }
+            }
             return future;
         } catch (JsonProcessingException e) {
             return null;
@@ -877,6 +883,13 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.del.id, future);
+            future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    unregisterTopic(topicName);
+                    return null;
+                }
+            }, null);
             return future;
         } catch (Exception unused) {
             return null;
@@ -969,6 +982,20 @@ public class Tinode {
     }
 
     /**
+     * Create new topic from subscription.
+     *
+     * @param sub subscription to be used asa template for the topic.
+     *
+     * @return created topic
+     */
+    @SuppressWarnings("unchecked")
+    public <Pu,Pr> Topic newTopic(Subscription<Pu,Pr> sub) {
+        Topic topic = new Topic(this, sub);
+        registerTopic(topic);
+        return topic;
+    }
+
+    /**
      * Create an instance of a new unsubscribed group topic (TOPIC_NEW).
      * @param l event listener; could be null
      * @return topic of appropriate class
@@ -1052,9 +1079,9 @@ public class Tinode {
     /**
      * Stop tracking the topic.
      */
-    private void unregisterTopic(Topic topic) {
-        mTopics.remove(topic.getName());
-        if (mStore != null) {
+    private void unregisterTopic(String topicName) {
+        Topic topic = mTopics.remove(topicName);
+        if (topic != null && mStore != null) {
             topic.setStorage(null);
             mStore.topicDelete(topic);
         }

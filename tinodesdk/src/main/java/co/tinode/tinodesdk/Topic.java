@@ -10,6 +10,7 @@ import co.tinode.tinodesdk.model.AccessMode;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -22,11 +23,9 @@ import co.tinode.tinodesdk.model.Subscription;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.StringTokenizer;
 
 /**
  *
@@ -236,6 +235,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     /**
      * Update topic parameters from a Subscription object. Called by MeTopic.
+     *
      * @param sub updated topic parameters
      */
     protected void update(Subscription<Pu,Pr> sub) {
@@ -256,7 +256,38 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
+     * Topic sent an update to subscription, update got a confirmation.
+     *
+     * @param sub updated topic parameters
+     */
+    protected void update(MetaSetSub<?> sub) {
+        if (sub.user == null) {
+            // This is an update to user's own subscription to topic.
+            if (sub.mode != null && !sub.mode.equals(mMode.toString())) {
+                mMode = new AccessMode(sub.mode);
+                if (mStore != null) {
+                    mStore.topicUpdate(this);
+                }
+            }
+        } else {
+            // This is an update to someon else's subscription to topic
+            
+            Subscription<Pu,Pr> s = mSubs.get(sub.user);
+            if (s == null) {
+                s = new Subscription<>();
+                s.user = sub.user;
+                s.mode = sub.mode;
+                addSubToCache(s);
+            } else {
+                s.mode = sub.mode;
+            }
+        }
+
+    }
+
+    /**
      * Update topic parameters from a Description object.
+     *
      * @param desc updated topic parameters
      */
     protected void update(Description<Pu,Pr> desc) {
@@ -276,8 +307,27 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
     }
 
-    protected void update(Date updated, MsgSetMeta<Pu,Pr,?> meta) {
+    /**
+     * Topic sent an update to topic parameters, got a confirmation, now copy
+     * these parameters to topic description.
+     *
+     * @param desc updated topic parameters
+     */
+    protected void update(MetaSetDesc<Pu,Pr> desc) {
+        if (mDesc.merge(desc) && mStore != null) {
+            mStore.topicUpdate(this);
+        }
+    }
 
+    protected void update(Date updated, MsgSetMeta<Pu,Pr,?> meta) {
+        // FIXME(gene): actually update subscription
+
+        if (meta.desc != null) {
+            update(meta.desc);
+        }
+        if (meta.sub != null) {
+            update(meta.sub);
+        }
     }
 
     /**
@@ -399,9 +449,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
     protected void setOnline(boolean online) {
         if (online != mOnline) {
-
             //Log.d(TAG, "Topic[" + mName + "].setOnline(" + online + ");");
-
             mOnline = online;
             if (mListener != null) {
                 mListener.onOnline(mOnline);
@@ -598,6 +646,52 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
+     * Update topic description. Calls {@link #setMeta}.
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<Pu,Pr> desc) throws Exception {
+        return setMeta(new MsgSetMeta<Pu,Pr,T>(desc, null));
+    }
+
+    /**
+     * Update subscription. Calls {@link #setMeta}.
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub<T> sub) throws Exception {
+        return setMeta(new MsgSetMeta<Pu,Pr,T>(null, sub));
+    }
+
+    /**
+     * Update user's own subscription to topic
+     *
+     * @param mode access mode
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply<ServerMessage> updateSelfSub(String mode)  throws Exception {
+        return setSubscription(new MetaSetSub<T>(null, mode, null));
+    }
+
+    /**
+     * Send an invite to topic.
+     *
+     * @param uid ID of the user to invite to topic
+     * @param mode access mode granted to user
+     * @param invite content opf the invite message
+     *
+     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply<ServerMessage> invite(String uid, String mode, T invite)  throws Exception {
+        return setSubscription(new MetaSetSub<T>(uid, mode, invite));
+    }
+
+    /**
      * Delete messages with seq value up to <b>before</b>.
      *
      * @param before delete messages with id up to this
@@ -665,13 +759,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      */
     public PromisedReply<ServerMessage> delete() throws Exception {
         if (mAttached) {
-            return mTinode.delTopic(getName()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    mTinode.unregisterTopic(Topic.this);
-                    return null;
-                }
-            }, null);
+            return mTinode.delTopic(getName());
         }
 
         if (mTinode.isConnected()) {
@@ -912,10 +1000,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
             mAttached = false;
 
             // Don't change topic online status here. Change it in the 'me' topic
-
-            if (unsub) {
-                mTinode.unregisterTopic(this);
-            }
 
             if (mListener != null) {
                 mListener.onLeave(code, reason);

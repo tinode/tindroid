@@ -80,7 +80,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
                 topic.update(sub);
             } else {
                 // This is a new topic. Register it and write to DB.
-                mTinode.registerTopic(new Topic<>(mTinode, sub));
+                mTinode.newTopic(sub);
             }
 
             if (mListener != null) {

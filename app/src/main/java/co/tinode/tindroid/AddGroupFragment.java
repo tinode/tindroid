@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
 
@@ -192,6 +193,12 @@ public class AddGroupFragment extends ListFragment {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    MembersAdapter adapter = (MembersAdapter) mMembers.getAdapter();
+                    for (Iterator<MemberData> iter = adapter.getMembers(); iter.hasNext();) {
+                        MemberData data = iter.next();
+                        topic.invite(data.uid, null /* use default mode */,
+                                "Invite text" /* FIXME: either let user enter the text or move it to resource */);
+                    }
                     Intent intent = new Intent(activity, MessageActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     intent.putExtra("topic", topic.getName());
@@ -538,6 +545,10 @@ public class AddGroupFragment extends ListFragment {
             if (mItems.size() == 0) {
                 mNoMembers.setVisibility(View.VISIBLE);
             }
+        }
+
+        Iterator<MemberData> getMembers() {
+           return mItems.iterator();
         }
     }
 

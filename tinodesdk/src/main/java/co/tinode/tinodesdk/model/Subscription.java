@@ -105,6 +105,23 @@ public class Subscription<Pu,Pr> implements LocalData {
         return changed > 0;
     }
 
+    public boolean merge(MetaSetSub<?> sub) {
+        int changed = 0;
+
+        if (user == null && sub.user != null && !sub.user.equals("")) {
+            user = sub.user;
+            changed ++;
+        }
+
+        if (sub.mode != null) {
+            mode = sub.mode;
+            changed ++;
+        }
+
+        return changed > 0;
+    }
+
+
     @Override
     @JsonIgnore
     public void setLocal(Payload value) {

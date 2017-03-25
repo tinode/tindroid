@@ -141,4 +141,23 @@ public class Description<Pu,Pr> {
         return changed > 0;
     }
 
+    public boolean merge(MetaSetDesc<Pu,Pr> desc) {
+        int changed = 0;
+
+        if (desc.defacs != null && !desc.defacs.equals(defacs)) {
+            defacs = desc.defacs;
+            changed ++;
+        }
+
+        if (desc.pub != null) {
+            pub = desc.pub;
+        }
+
+        if (desc.priv != null) {
+            priv = desc.priv;
+        }
+
+        return changed > 0;
+    }
+
 }
