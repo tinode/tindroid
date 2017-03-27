@@ -120,6 +120,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         setName(name);
 
+        mMode = new AccessMode(); // Default access mode "N" == "not set";
         mDesc = new Description<>();
 
         if (l != null) {
@@ -142,7 +143,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param l event listener, optional
      */
     public Topic(Tinode tinode, Listener<Pu,Pr,T> l) {
-        this(tinode, Tinode.TOPIC_NEW, l);
+        this(tinode, Tinode.TOPIC_NEW + tinode.nextUniqueString(), l);
     }
 
     /**
@@ -498,6 +499,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
             throw new IllegalStateException("Already subscribed");
         }
 
+        if (mTinode.getTopic(getName()) == null) {
+            mTinode.registerTopic(this);
+        }
+
         if (!mTinode.isConnected()) {
             throw new NotConnectedException();
         }
@@ -512,6 +517,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                             mMode = new AccessMode((String)msg.ctrl.params.get("mode"));
 
                             if (isNew()) {
+                                setUpdated(msg.ctrl.ts);
                                 setName(msg.ctrl.topic);
                                 if (mStore != null) {
                                     mStore.topicUpdate(Topic.this);
@@ -1008,6 +1014,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     protected void routeMeta(MsgServerMeta<Pu,Pr> meta) {
+        Log.d(TAG, "Generic.routeMeta");
         if (meta.desc != null) {
             routeMetaDesc(meta);
         }
@@ -1029,7 +1036,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     protected void routeMetaSub(MsgServerMeta<Pu,Pr> meta) {
-        // In case of a generic (non-'me') topic, meta.subcontains topic subscribers.
+        Log.d(TAG, "Generic.routeMetaSub");
+        // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
         for (Subscription<Pu,Pr> newsub : meta.sub) {
             Subscription<Pu,Pr> sub = getSubscription(newsub.user);

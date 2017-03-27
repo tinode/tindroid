@@ -50,8 +50,7 @@ class SqlStore implements Storage {
             Topic[] list = new Topic[c.getCount()];
             int i = 0;
             do {
-                Topic t = TopicDb.readOne(tinode, c);
-                list[i++] = t;
+                list[i++] = TopicDb.readOne(tinode, c);
             } while (c.moveToNext());
             return list;
         }

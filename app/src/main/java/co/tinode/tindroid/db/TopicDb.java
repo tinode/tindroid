@@ -326,15 +326,15 @@ public class TopicDb implements BaseColumns {
     }
 
     /**
-     * Read Subscription at the current cursor position
+     * Read Topic at the current cursor position.
      *
      * @param c Cursor to read from
      * @return Subscription
      */
     @SuppressWarnings("unchecked, WeakerAccess")
-    public static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Tinode tinode, Cursor c) {
-        String name = c.getString(COLUMN_IDX_TOPIC);
-        Topic<Pu,Pr,T> topic = tinode.newTopic(name, null);
+    protected static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Tinode tinode, Cursor c) {
+        // Instantiate topic of an appropriate class ('me' or group)
+        Topic<Pu,Pr,T> topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
         StoredTopic.deserialize(topic, c);
         return topic;
     }

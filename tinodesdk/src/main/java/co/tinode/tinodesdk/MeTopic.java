@@ -73,6 +73,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
 
     @Override
     protected void routeMetaSub(MsgServerMeta<Pu,Pr> meta) {
+        Log.d(TAG, "Me:routeMetaSub");
         for (Subscription<Pu,Pr> sub : meta.sub) {
             Topic <Pu,Pr,?> topic = mTinode.getTopic(sub.topic);
             if (topic != null) {
@@ -80,7 +81,8 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
                 topic.update(sub);
             } else {
                 // This is a new topic. Register it and write to DB.
-                mTinode.newTopic(sub);
+                Log.d(TAG, "Adding new topic " + sub.topic);
+                mTinode.registerTopic(new Topic<>(mTinode, sub));
             }
 
             if (mListener != null) {

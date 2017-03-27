@@ -107,11 +107,11 @@ public class Utils {
                 case ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE:
                     int protocol = cursor.getInt(imProtocolIdx);
                     String protocolName = cursor.getString(imProtocolNameIdx);
-                    Log.d(TAG, "Possibly adding IM '" + data + "' to contact=" + contact_id);
+                    // Log.d(TAG, "Possibly adding IM '" + data + "' to contact=" + contact_id);
                     if (protocol == ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM &&
                             protocolName.equals(IM_PROTOCOL)) {
                         holder.putIm(data);
-                        Log.d(TAG, "Added IM '" + data + "' to contact=" + contact_id);
+                        // Log.d(TAG, "Added IM '" + data + "' to contact=" + contact_id);
                     }
                     break;
                 default:

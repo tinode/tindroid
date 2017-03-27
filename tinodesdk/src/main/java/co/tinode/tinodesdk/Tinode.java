@@ -346,7 +346,6 @@ public class Tinode {
         }
 
         if (pkt.ctrl != null) {
-
             if (mListener != null) {
                 mListener.onCtrlMessage(pkt.ctrl);
             }
@@ -965,46 +964,19 @@ public class Tinode {
     }
 
     /**
-     * Create new topic by name.
+     * Instantiate topic of an appropriate class given the name.
+     *
      * @param name name of the topic to create
      * @param l event listener; could be null
-     * @return topic of appropriate class
+     * @return topic of an appropriate class
      */
     @SuppressWarnings("unchecked")
     public Topic newTopic(String name, Topic.Listener l) {
-        Topic topic;
         if (TOPIC_ME.equals(name)) {
-            topic = new MeTopic(this, l);
+            return new MeTopic(this, l);
         }
-        topic = new Topic(this, name, l);
-        registerTopic(topic);
-        return topic;
+        return new Topic(this, name, l);
     }
-
-    /**
-     * Create new topic from subscription.
-     *
-     * @param sub subscription to be used asa template for the topic.
-     *
-     * @return created topic
-     */
-    @SuppressWarnings("unchecked")
-    public <Pu,Pr> Topic newTopic(Subscription<Pu,Pr> sub) {
-        Topic topic = new Topic(this, sub);
-        registerTopic(topic);
-        return topic;
-    }
-
-    /**
-     * Create an instance of a new unsubscribed group topic (TOPIC_NEW).
-     * @param l event listener; could be null
-     * @return topic of appropriate class
-     */
-    @SuppressWarnings("unchecked")
-    public Topic newGroupTopic(Topic.Listener l) {
-        return newTopic(TOPIC_NEW + nextUniqueString(), l);
-    }
-
 
     /**
      * Obtain a 'me' topic ({@link MeTopic}).
@@ -1066,7 +1038,7 @@ public class Tinode {
     /**
      * Start tracking topic.
      */
-    private void registerTopic(Topic topic) {
+    void registerTopic(Topic topic) {
         if (mStore != null) {
             if (!topic.isPersisted()) {
                 mStore.topicAdd(topic);
@@ -1175,7 +1147,7 @@ public class Tinode {
         return NOTE_KP_DELAY;
     }
 
-    synchronized private String nextUniqueString() {
+    synchronized String nextUniqueString() {
         ++ sNameCounter;
         return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (sNameCounter & 0xFFFF), 32);
     }

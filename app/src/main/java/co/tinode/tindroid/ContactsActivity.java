@@ -107,12 +107,15 @@ public class ContactsActivity extends AppCompatActivity implements
             // The very first launch of the app.
             me = new MeTopic<>(tinode, mMeTopicListener);
             me.setTypes(VCard.class, String.class, String.class);
+            Log.d(TAG, "Initialized NEW 'me' topic");
         } else {
             me.setListener(mMeTopicListener);
+            Log.d(TAG, "Loaded existing 'me' topic");
         }
 
         if (!me.isAttached()) {
             try {
+                Log.d(TAG, "Trying to subscribe to me");
                 me.subscribe(null, me
                         .subscribeParamGetBuilder()
                         .withGetDesc()

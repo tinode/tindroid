@@ -90,7 +90,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(final Account account, final Bundle extras, String authority,
                               ContentProviderClient provider, final SyncResult syncResult) {
-        Log.i(TAG, "Beginning network synchronization");
+        //Log.i(TAG, "Beginning network synchronization");
         try {
             Log.i(TAG, "Starting sync for account " + account.name);
 
@@ -130,9 +130,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 // the address book but as invisible contacts (members of invisible group)
                 Collection<Subscription<VCard, String>> updated = new ArrayList<>();
                 for (Subscription<VCard, String> sub : pkt.meta.sub) {
-                    Log.d(TAG, "updating contact " + sub.topic);
+                    //Log.d(TAG, "updating contact " + sub.topic);
                     if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
-                        Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
+                        //Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
                         updated.add(sub);
                     }
                 }

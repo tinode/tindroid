@@ -41,6 +41,7 @@ import java.util.TreeSet;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -187,7 +188,8 @@ public class AddGroupFragment extends ListFragment {
     }
 
     private void createTopic(final Activity activity, final String title, final Bitmap avatar) {
-        final Topic<VCard,String,String> topic = Cache.getTinode().newGroupTopic(null);
+        final Tinode tinode = Cache.getTinode();
+        final Topic<VCard,String,String> topic = new Topic<>(tinode, null);
         topic.setPub(new VCard(title, avatar));
         try {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {

@@ -158,16 +158,23 @@ public class Connection {
      *
      * This is a non-blocking call.
      *
-     * @param autoreconnect not implemented yet
+     * @param autoreconnect if connection is dropped, reconnect automatically
      * @return true if a new attempt to open a connection was performed, false if connection already exists
      */
     public boolean connect(boolean autoreconnect) throws IOException {
         this.autoreconnect = autoreconnect;
 
-        if (mWsClient == null || mWsClient.getState() != WebSocketState.CREATED) {
-            mWsClient = createSocket();
+        if (autoreconnect && reconnecting) {
+            // If we are waiting to reconnect, do it now.
+            backoff.wakeUp();
+        } else {
+            // Create new socket and try to connect it.
+            if (mWsClient == null || mWsClient.getState() != WebSocketState.CREATED) {
+                mWsClient = createSocket();
+            }
+            mWsClient.connectAsynchronously();
         }
-        mWsClient.connectAsynchronously();
+
         return true;
     }
 
