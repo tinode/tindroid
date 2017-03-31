@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.widget.Toast;
 
 import co.tinode.tinodesdk.MeTopic;
+import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
@@ -122,6 +123,8 @@ public class ContactsActivity extends AppCompatActivity implements
                         .withGetSub()
                         .withGetData()
                         .build());
+            } catch (NotConnectedException ignored) {
+                /* offline - ignored */
             } catch (Exception err) {
                 Log.i(TAG, "connection failed :( " + err.getMessage());
                 Toast.makeText(getApplicationContext(),

@@ -9,8 +9,8 @@
 
     <android.support.v7.widget.AppCompatImageView
         android:id="@+id/imageAvatar"
-        android:layout_width="112sp"
-        android:layout_height="112sp"
+        android:layout_width="@dimen/avatar_size_large"
+        android:layout_height="@dimen/avatar_size_large"
         android:clickable="true"
         android:layout_marginLeft="8sp"
         android:contentDescription="@string/avatar"
@@ -60,7 +60,7 @@
                   android:layout_width="match_parent"
                   android:layout_height="match_parent"
                   android:text="@string/no_members"
-                  android:textAppearance="?android:attr/textAppearanceMedium"/>
+                  android:textAppearance="?android:attr/textAppearanceLarge"/>
     </FrameLayout>
 
     <FrameLayout

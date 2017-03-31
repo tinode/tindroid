@@ -6,4 +6,6 @@
     <dimen name="spacer_text">18sp</dimen>
     <dimen name="fab_elevation">4dp</dimen>
     <dimen name="activity_padding">6dp</dimen>
+    <dimen name="dialog_item_padding">6dp</dimen>
+    <dimen name="avatar_size_large">112dp</dimen>
 </resources>

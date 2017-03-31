@@ -6,6 +6,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowActionModeOverlay">true</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="dialogTheme">@style/DialogTheme</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
@@ -29,7 +30,7 @@
         <item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
 
-    <style name="searchTextHiglight">
+    <style name="searchTextHighlight">
         <item name="android:textColor">?attr/colorAccent</item>
         <item name="android:textStyle">bold</item>
     </style>
@@ -37,4 +38,20 @@
     <style name="contactListTextPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
         <item name="android:textColor">?attr/colorPrimary</item>
     </style>
+
+    <style name="DialogTheme">
+        <item name="android:textAppearance">@style/DialogTextAppearance</item>
+    </style>
+
+    <style name="DialogTextAppearance">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">#990000</item>
+    </style>
+
+    <style name="DialogTextAppearance.SectionTitle">
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
 </resources>

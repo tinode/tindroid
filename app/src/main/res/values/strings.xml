@@ -89,4 +89,9 @@
     <string name="letter_tile_font_family">sans-serif-medium</string>
     <string name="add_one_member">Add at least one group member</string>
     <string name="failed_to_create_topic">Failed to create topic</string>
+    <string name="add_member">Add member</string>
+    <string name="leave_group">Leave group</string>
+    <string name="address">Address</string>
+    <string name="topic_muted">Muted</string>
+    <string name="permissions">Permissions</string>
 </resources>

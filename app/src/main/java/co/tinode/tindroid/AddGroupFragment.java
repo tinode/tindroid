@@ -256,7 +256,7 @@ public class AddGroupFragment extends ListFragment {
 
             // Defines a span for highlighting the part of a display name that matches the search
             // string
-            highlightTextSpan = new TextAppearanceSpan(getActivity(), R.style.searchTextHiglight);
+            highlightTextSpan = new TextAppearanceSpan(getActivity(), R.style.searchTextHighlight);
         }
 
         /**
