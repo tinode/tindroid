@@ -48,6 +48,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
                 android:text="Test text"
+                android:maxLines="1"
                 android:textAppearance="@style/contactListTextPrimary"
                 android:paddingEnd="16sp"
                 android:paddingRight="16sp"/>

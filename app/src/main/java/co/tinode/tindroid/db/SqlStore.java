@@ -231,8 +231,8 @@ class SqlStore implements Storage {
     public boolean msgRecvByRemote(Subscription sub, int recv) {
         boolean result = false;
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
-        if (ss != null && ss.mId > 0) {
-            result = SubscriberDb.updateRecv(mDbh.getWritableDatabase(), ss.mId, recv);
+        if (ss != null && ss.id > 0) {
+            result = SubscriberDb.updateRecv(mDbh.getWritableDatabase(), ss.id, recv);
         }
         return result;
     }
@@ -241,8 +241,8 @@ class SqlStore implements Storage {
     public boolean msgReadByRemote(Subscription sub, int read) {
         boolean result = false;
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
-        if (ss != null && ss.mId > 0) {
-            result = SubscriberDb.updateRead(mDbh.getWritableDatabase(), ss.mId, read);
+        if (ss != null && ss.id > 0) {
+            result = SubscriberDb.updateRead(mDbh.getWritableDatabase(), ss.id, read);
         }
         return result;
     }

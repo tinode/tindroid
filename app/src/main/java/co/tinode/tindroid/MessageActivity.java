@@ -7,16 +7,16 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.content.ClipboardManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,14 +44,15 @@ public class MessageActivity extends AppCompatActivity {
 
     private static final int MESSAGES_QUERY_ID = 100;
 
-    private MessagesListAdapter mMessagesAdapter;
-    private RecyclerView mMessageList;
     private LoaderManager mLoaderManager;
     private MessageLoaderCallbacks mLoaderCallbacks;
     private String mMessageText = null;
 
     private String mTopicName;
     protected Topic<VCard, String, String> mTopic;
+
+    private MessagesFragment mMsgFragment = null;
+    private TopicInfoFragment mInfoFragment = null;
 
     public static void runLoader(final Bundle args, final LoaderManager.LoaderCallbacks<Cursor> callbacks,
                                   final LoaderManager loaderManager) {
@@ -81,18 +82,10 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-        LinearLayoutManager lm = new LinearLayoutManager(this);
-        //lm.setReverseLayout(true);
-        lm.setStackFromEnd(true);
-
-        mMessageList = (RecyclerView) findViewById(R.id.messages_container);
-
-        mMessageList.setLayoutManager(lm);
+        showMsgFragment();
 
         mLoaderManager = getSupportLoaderManager();
         mLoaderCallbacks = new MessageLoaderCallbacks();
-        mMessagesAdapter = new MessagesListAdapter(this);
-        mMessageList.setAdapter(mMessagesAdapter);
     }
 
     @Override
@@ -196,9 +189,53 @@ public class MessageActivity extends AppCompatActivity {
         UiUtils.setVisibleTopic(hasFocus ? mTopicName : null);
     }
 
-    public void scrollTo(int position) {
-        position = position == -1 ? mMessagesAdapter.getItemCount() - 1 : position;
-        mMessageList.scrollToPosition(position);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.action_attach: {
+                // TODO: implement
+                return true;
+            }
+            case R.id.action_view_contact: {
+                showInfoFragment();
+                return true;
+            }
+            case R.id.action_delete: {
+                // TODO: implement
+                return true;
+            }
+            case R.id.action_mute: {
+                // TODO: implement
+                return true;
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    /** Display chat */
+    private void showMsgFragment() {
+        if (mMsgFragment == null) {
+            mMsgFragment = new MessagesFragment();
+        }
+        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+        trx.replace(R.id.contentFragment, mMsgFragment);
+        trx.commit();
+    }
+
+    /** Display topic info form */
+    private void showInfoFragment() {
+        if (mInfoFragment == null) {
+            mInfoFragment = new TopicInfoFragment();
+        }
+        Bundle args = new Bundle();
+        args.putString("topic", mTopicName);
+        mInfoFragment.setArguments(args);
+        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+        trx.replace(R.id.contentFragment, mInfoFragment);
+        trx.commit();
     }
 
     public String getMessageText() {
@@ -222,7 +259,7 @@ public class MessageActivity extends AppCompatActivity {
         if (mTopic != null) {
             final TextView inputField = (TextView) findViewById(R.id.editMessage);
             String message = inputField.getText().toString().trim();
-            mMessagesAdapter.notifyDataSetChanged();
+            mMsgFragment.notifyDataSetChanged();
             if (!message.equals("")) {
                 try {
                     Log.d(TAG, "sendMessage -- sending...");
@@ -233,7 +270,7 @@ public class MessageActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     // Update message list.
-                                    mMessagesAdapter.notifyDataSetChanged();
+                                    mMsgFragment.notifyDataSetChanged();
                                     Log.d(TAG, "sendMessage -- {ctrl} received");
                                 }
                             });
@@ -256,37 +293,13 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
-    private String formatMessageText(StoredMessage<String> msg) {
-        Subscription<VCard, ?> sub = mTopic.getSubscription(msg.from);
-        String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
-        return "[" + name + "]: " + msg.content + "; " + UiUtils.shortDate(msg.ts);
-    }
-
-    void copyMessageText(int[] positions) {
-        StringBuilder sb = new StringBuilder();
-        for (int position : positions) {
-            StoredMessage<String> msg = mMessagesAdapter.getMessage(position);
-            if (msg != null) {
-                sb.append("\n").append(formatMessageText(msg));
-            }
-        }
-
-        if (sb.length() > 1) {
-            sb.deleteCharAt(0);
-            String text = sb.toString();
-
-            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
-        }
-    }
-
     public void sendDeleteMessages(final int[] positions) {
         if (mTopic != null) {
             int[] list = new int[positions.length];
             int i = 0;
             while (i < positions.length) {
                 int pos = positions[i];
-                StoredMessage<String> msg = mMessagesAdapter.getMessage(pos);
+                StoredMessage<String> msg = mMsgFragment.getMessage(pos);
                 if (msg != null) {
                     list[i] = msg.seq;
                     i++;
@@ -315,6 +328,30 @@ public class MessageActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    void copyMessageText(int[] positions) {
+        StringBuilder sb = new StringBuilder();
+        for (int position : positions) {
+            StoredMessage<String> msg = mMsgFragment.getMessage(position);
+            if (msg != null) {
+                sb.append("\n").append(formatMessageText(msg));
+            }
+        }
+
+        if (sb.length() > 1) {
+            sb.deleteCharAt(0);
+            String text = sb.toString();
+
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
+        }
+    }
+
+    private String formatMessageText(StoredMessage<String> msg) {
+        Subscription<VCard, ?> sub = mTopic.getSubscription(msg.from);
+        String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
+        return "[" + name + "]: " + msg.content + "; " + UiUtils.shortDate(msg.ts);
     }
 
     private class TListener extends Topic.Listener<VCard, String, String> {
@@ -346,7 +383,7 @@ public class MessageActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mMessagesAdapter.notifyDataSetChanged();
+                            mMsgFragment.notifyDataSetChanged();
                         }
                     });
                     break;
@@ -398,14 +435,14 @@ public class MessageActivity extends AppCompatActivity {
                                    Cursor cursor) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
                 Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
-                mMessagesAdapter.swapCursor(mTopicName, cursor);
+                mMsgFragment.swapCursor(mTopicName, cursor);
             }
         }
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
-                mMessagesAdapter.swapCursor(null, null);
+                mMsgFragment.swapCursor(null, null);
             }
         }
     }

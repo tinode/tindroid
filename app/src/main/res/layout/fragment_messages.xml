@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/message_view_bkg"
-    tools:context="co.tinode.tindroid.MessagesFragment"
-    tools:showIn="@layout/activity_messages">
+    tools:context="co.tinode.tindroid.MessagesFragment">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/messages_container"

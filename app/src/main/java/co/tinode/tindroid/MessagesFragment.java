@@ -1,20 +1,26 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
+import co.tinode.tindroid.db.StoredMessage;
 
 /**
  * Fragment handling message display and message sending.
@@ -25,6 +31,9 @@ public class MessagesFragment extends Fragment {
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     // private static final int RECV_DELAY = 500;
     private static final int READ_DELAY = 1000;
+
+    private MessagesListAdapter mMessagesAdapter;
+    private RecyclerView mMessageList;
 
     private Timer mNoteTimer = null;
 
@@ -43,6 +52,17 @@ public class MessagesFragment extends Fragment {
         super.onActivityCreated(savedInstance);
 
         final MessageActivity activity = (MessageActivity) getActivity();
+
+        LinearLayoutManager lm = new LinearLayoutManager(activity);
+        //lm.setReverseLayout(true);
+        lm.setStackFromEnd(true);
+
+        mMessageList = (RecyclerView) activity.findViewById(R.id.messages_container);
+        mMessageList.setLayoutManager(lm);
+
+        mMessagesAdapter = new MessagesListAdapter(activity);
+        mMessageList.setAdapter(mMessagesAdapter);
+
         // Send message on button click
         getActivity().findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,7 +120,7 @@ public class MessagesFragment extends Fragment {
             }
         }, READ_DELAY, READ_DELAY);
 
-        activity.scrollTo(0);
+        scrollTo(0);
     }
 
     @Override
@@ -110,5 +130,36 @@ public class MessagesFragment extends Fragment {
         // Stop reporting read messages
         mNoteTimer.cancel();
         mNoteTimer = null;
+    }
+
+    public void scrollTo(int position) {
+        position = position == -1 ? mMessagesAdapter.getItemCount() - 1 : position;
+        mMessageList.scrollToPosition(position);
+    }
+
+    public void notifyDataSetChanged() {
+        mMessagesAdapter.notifyDataSetChanged();
+    }
+
+    public void swapCursor(String topicName, Cursor cursor) {
+        mMessagesAdapter.swapCursor(topicName, cursor);
+
+        Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "MessagesListAdapter.swapCursor");
+
+                    notifyDataSetChanged();
+                    // -1 means scroll to the bottom
+                    scrollTo(-1);
+                }
+            });
+        }
+    }
+
+    public StoredMessage<String> getMessage(int pos) {
+        return mMessagesAdapter.getMessage(pos);
     }
 }

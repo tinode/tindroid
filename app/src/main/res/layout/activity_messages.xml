@@ -9,11 +9,9 @@
 
     <include layout="@layout/toolbar" />
 
-    <fragment
-        android:id="@+id/messages_view"
-        android:name="co.tinode.tindroid.MessagesFragment"
+    <FrameLayout
+        android:id="@+id/contentFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:layout="@layout/fragment_messages" />
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

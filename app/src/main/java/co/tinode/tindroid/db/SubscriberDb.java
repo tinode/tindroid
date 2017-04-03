@@ -173,7 +173,7 @@ public class SubscriberDb implements BaseColumns {
                     values.put(COLUMN_NAME_USER_AGENT, sub.seen.ua);
                 }
             }
-            ss.mId = db.insert(TABLE_NAME, null, values);
+            ss.id = db.insert(TABLE_NAME, null, values);
 
             db.setTransactionSuccessful();
             sub.setLocal(ss);
@@ -197,7 +197,7 @@ public class SubscriberDb implements BaseColumns {
 
         try {
             StoredSubscription ss = (StoredSubscription) sub.getLocal();
-            if (ss == null || ss.mId < 0) {
+            if (ss == null || ss.id < 0) {
                 return false;
             }
 
@@ -224,7 +224,7 @@ public class SubscriberDb implements BaseColumns {
                     }
                 }
 
-                updated = db.update(TABLE_NAME, values, _ID + "=" + ss.mId, null);
+                updated = db.update(TABLE_NAME, values, _ID + "=" + ss.id, null);
 
                 //Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
                 //        " name=" + sub.user + " returned " + updated);
@@ -271,7 +271,7 @@ public class SubscriberDb implements BaseColumns {
         // StoredSub part
         int col = 0;
         StoredSubscription ss = new StoredSubscription();
-        ss.mId = c.getLong(col++);
+        ss.id = c.getLong(col++);
         ss.userId = c.getLong(col++);
         ss.topicId = c.getLong(col++);
         ss.senderIdx = c.getInt(col++);

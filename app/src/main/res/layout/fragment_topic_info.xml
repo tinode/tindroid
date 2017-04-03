@@ -1,9 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:padding="@dimen/activity_padding"
+    android:orientation="vertical"
+    tools:context="co.tinode.tindroid.TopicInfoFragment">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -45,7 +47,7 @@
 
     </RelativeLayout>
 
-    <View
+    <!--View
         android:layout_width="match_parent"
         android:layout_height="1dip"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
@@ -114,7 +116,7 @@
             android:textIsSelectable="true"
             android:typeface="monospace"/>
 
-    </LinearLayout>
+    </LinearLayout-->
 
     <View
         android:layout_width="match_parent"
@@ -125,10 +127,9 @@
 
     <TextView
         android:id="@+id/membersTitle"
-        style="@style/DialogTextAppearance.SectionTitle"
+        style="@style/sectionTitleStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="4dp"
         android:layout_marginTop="@dimen/dialog_item_padding"
         android:text="@string/group_members"
         />
@@ -136,37 +137,42 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="?android:attr/buttonBarStyle"
         >
 
-        <Button
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/buttonAddMember"
+            android:contentDescription="@string/add_member"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableLeft="@drawable/ic_person_add"
             android:drawableStart="@drawable/ic_person_add"
-            android:drawablePadding="4sp"
-            style="?android:attr/buttonBarButtonStyle"
-            android:textColor="@color/colorText"
             android:text="@string/add_member"
+            android:drawablePadding="4sp"
+            android:textColor="@color/colorText"
             />
 
-        <Button
+        <!--android.support.v7.widget.AppCompatButton
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableLeft="@drawable/ic_exit"
             android:drawableStart="@drawable/ic_exit"
-            android:drawablePadding="4sp"
-            style="?android:attr/buttonBarButtonStyle"
-            android:textColor="@color/colorDangerDark"
             android:text="@string/leave_group"
-            />
+            android:drawablePadding="4sp"
+            android:textColor="@color/colorDangerDark"
+            /-->
 
     </LinearLayout>
 
+
+    <!-- Use standard android.R class list id instead of app specific id. This is just useful for
+         consistency. -->
     <ListView
-        android:id="@+id/memberList"
+        android:id="@id/android:list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dialog_item_padding"/>
+        android:layout_height="match_parent"
+        android:fastScrollAlwaysVisible="true"
+        android:scrollbarStyle="outsideInset"
+        android:verticalScrollbarPosition="right"/>
 
 </LinearLayout>

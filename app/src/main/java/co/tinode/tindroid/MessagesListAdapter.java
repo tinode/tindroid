@@ -276,19 +276,8 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             mSelectionMode.finish();
             mSelectionMode = null;
         }
-
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "MessagesListAdapter.swapCursor");
-
-                mTopicName = topicName;
-                mCursor = cursor;
-                notifyDataSetChanged();
-                // -1 means scroll to the bottom
-                (mActivity).scrollTo(-1);
-            }
-        });
+        mTopicName = topicName;
+        mCursor = cursor;
     }
 
     StoredMessage<String> getMessage(int position) {

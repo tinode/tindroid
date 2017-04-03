@@ -89,7 +89,7 @@ public class ChatListAdapter extends BaseAdapter {
         return item;
     }
 
-    public void bindView(int position, ViewHolder holder) {
+    void bindView(int position, ViewHolder holder) {
         final Topic<VCard,String,String> topic = mTopics.get(position);
 
         holder.topic = topic.getName();

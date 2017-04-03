@@ -1,32 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_margin="5dp"
-                android:layout_width="48sp"
-                android:layout_height="48sp">
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:background="?android:attr/activatedBackgroundIndicator"
+    android:orientation="horizontal"
+    android:paddingBottom="2dp"
+    android:paddingTop="2dp"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp">
 
     <android.support.v7.widget.AppCompatImageView
-        android:id="@+id/avatar"
+        android:id="@android:id/icon"
         android:layout_width="48sp"
+        android:layout_height="48sp"
         android:src="@drawable/ic_person_circle"
-        android:layout_height="48sp" />
+        android:layout_alignParentLeft="true"
+        android:layout_marginRight="5dp" />
 
-    <android.support.v7.widget.AppCompatImageView
-        android:layout_width="20sp"
-        android:layout_height="20sp"
-        android:src="@drawable/ic_circle"
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        />
+        android:focusable="false"
+        android:maxLines="1"
+        android:text="ORWD"
+        android:typeface="monospace"
+        android:layout_margin="6dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"/>
 
-    <android.support.v7.widget.AppCompatImageView
-        android:id="@+id/cancel"
-        android:layout_width="16sp"
-        android:layout_height="16sp"
-        android:src="@drawable/ic_cancel_grey"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:contentDescription="X"
-        android:layout_margin="2sp"
-        />
+    <TextView
+        android:id="@android:id/text1"
+        android:layout_toRightOf="@android:id/icon"
+        android:layout_toLeftOf="@id/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:paddingEnd="16sp"
+        android:paddingRight="16sp"
+        android:layout_alignParentTop="true"
+        android:maxLines="1"
+        android:text="Test text"
+        android:textAppearance="@style/contactListTextPrimary"/>
+
+    <TextView
+        android:id="@android:id/text2"
+        android:layout_toRightOf="@android:id/icon"
+        android:layout_toLeftOf="@id/status"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:maxWidth="240sp"
+        android:layout_below="@android:id/text1"
+        android:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
+        android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 </RelativeLayout>

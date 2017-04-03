@@ -38,6 +38,7 @@
             android:paddingEnd="16sp"
             android:paddingRight="16sp"
             android:layout_alignParentTop="true"
+            android:maxLines="1"
             android:text="Test text"
             android:textAppearance="@style/contactListTextPrimary"/>
 

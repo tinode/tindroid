@@ -34,7 +34,6 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
 
@@ -43,8 +42,6 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.MetaSetDesc;
-import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
@@ -506,7 +503,7 @@ public class AddGroupFragment extends ListFragment {
         @Override
         public MemberViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             // create a new view
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.group_member, parent, false);
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.edit_group_member, parent, false);
             return new MemberViewHolder(v);
         }
 
