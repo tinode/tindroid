@@ -783,24 +783,23 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected int noteReadRecv(NoteType what) {
         int result = 0;
 
-        switch (what) {
-            case RECV:
-                if (mDesc.recv < mDesc.seq) {
-                    try {
+        try {
+            switch (what) {
+                case RECV:
+                    if (mDesc.recv < mDesc.seq) {
                         mTinode.noteRecv(getName(), mDesc.seq);
                         result = mDesc.recv = mDesc.seq;
-                    } catch (NotConnectedException ignored) {}
-                }
-                break;
-            case READ:
-                if (mDesc.read < mDesc.seq) {
-                    try {
+                    }
+                    break;
+
+                case READ:
+                    if (mDesc.read < mDesc.seq) {
                         mTinode.noteRead(getName(), mDesc.seq);
                         result = mDesc.read = mDesc.seq;
-                    } catch (NotConnectedException ignored) {}
-                }
-                break;
-        }
+                    }
+                    break;
+            }
+        } catch (NotConnectedException ignored) {}
 
         return result;
     }
@@ -896,7 +895,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public Collection<Subscription<Pu,Pr>> getSubscriptions() {
-        if (mSubs != null) {
+        if (mSubs == null) {
             loadSubs();
         }
         return mSubs != null ? mSubs.values() : null;

@@ -11,6 +11,8 @@ import android.support.v7.widget.AppCompatImageView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -45,10 +47,7 @@ public class TopicInfoFragment extends ListFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Bundle bundle = getArguments();
-        String name = bundle.getString("topic");
-        mTopic = Cache.getTinode().getTopic(name);
+        setHasOptionsMenu(true);
 
         mAdapter = new MembersAdapter(getActivity());
         setListAdapter(mAdapter);
@@ -58,6 +57,10 @@ public class TopicInfoFragment extends ListFragment {
     public void onResume() {
         super.onResume();
 
+        Bundle bundle = getArguments();
+        String name = bundle.getString("topic");
+        mTopic = Cache.getTinode().getTopic(name);
+        
         mTopic.setListener(new Topic.Listener<VCard, String, String>() {
             @Override
             public void onSubsUpdated() {
@@ -90,6 +93,8 @@ public class TopicInfoFragment extends ListFragment {
             TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
             subtitle.setText(priv);
         }
+
+        mAdapter.resetContent();
     }
 
     @Override
@@ -122,7 +127,6 @@ public class TopicInfoFragment extends ListFragment {
 
         MembersAdapter(Activity context) {
             mContext = context;
-            resetContent();
             mItems = new Subscription[8];
         }
 
@@ -134,6 +138,7 @@ public class TopicInfoFragment extends ListFragment {
             } else {
                 mItemCount = 0;
             }
+            Log.d(TAG, "resetContent got " + mItemCount + " items");
         }
 
         @Override
@@ -164,7 +169,7 @@ public class TopicInfoFragment extends ListFragment {
                 LayoutInflater inflater = (LayoutInflater) mContext
                         .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
 
-                item = inflater.inflate(R.layout.contact, parent, false);
+                item = inflater.inflate(R.layout.group_member, parent, false);
                 holder = new ViewHolder();
                 holder.name = (TextView) item.findViewById(android.R.id.text1);
                 holder.contactPriv = (TextView) item.findViewById(android.R.id.text2);
@@ -185,12 +190,15 @@ public class TopicInfoFragment extends ListFragment {
             final Subscription<VCard, String> sub = mItems[position];
 
             VCard pub = sub.pub;
+            Bitmap bmp = null;
             if (pub != null) {
                 holder.name.setText(pub.fn);
+                bmp = pub.getBitmap();
             }
-            holder.contactPriv.setText(sub.priv);
 
-            Bitmap bmp = pub != null ? pub.getBitmap() : null;
+            holder.contactPriv.setText(sub.priv);
+            holder.status.setText(sub.mode);
+
             if (bmp != null) {
                 holder.icon.setImageDrawable(new RoundImageDrawable(bmp));
             } else {
@@ -205,6 +213,13 @@ public class TopicInfoFragment extends ListFragment {
                 }
             }
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.menu_topic_info, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     private class ViewHolder {

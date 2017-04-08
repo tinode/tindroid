@@ -44,6 +44,9 @@ public class MessageActivity extends AppCompatActivity {
 
     private static final int MESSAGES_QUERY_ID = 100;
 
+    private static final String FRAGMENT_MESSAGES = "msg";
+    private static final String FRAGMENT_INFO = "info";
+
     private LoaderManager mLoaderManager;
     private MessageLoaderCallbacks mLoaderCallbacks;
     private String mMessageText = null;
@@ -76,9 +79,13 @@ public class MessageActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                startActivity(intent);
+                if (mInfoFragment != null && mInfoFragment.isVisible()) {
+                    showMsgFragment();
+                } else {
+                    Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -173,13 +180,6 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_topic_settings, menu);
-        return true;
-    }
-
-    @Override
     protected void onNewIntent(Intent intent) {
         setIntent(intent);
     }
@@ -221,7 +221,7 @@ public class MessageActivity extends AppCompatActivity {
             mMsgFragment = new MessagesFragment();
         }
         FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, mMsgFragment);
+        trx.replace(R.id.contentFragment, mMsgFragment, FRAGMENT_MESSAGES);
         trx.commit();
     }
 
@@ -234,7 +234,7 @@ public class MessageActivity extends AppCompatActivity {
         args.putString("topic", mTopicName);
         mInfoFragment.setArguments(args);
         FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, mInfoFragment);
+        trx.replace(R.id.contentFragment, mInfoFragment, FRAGMENT_INFO);
         trx.commit();
     }
 
