@@ -35,13 +35,27 @@
     </style>
 
     <style name="contactListTextPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
-        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
     </style>
+
+    <style name="textPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+        <item name="android:textColor">@color/colorTextPrimary</item>
+    </style>
+
+    <style name="textPrimaryLarge" parent="@android:style/TextAppearance.DeviceDefault.Large">
+        <item name="android:textColor">@color/colorTextPrimary</item>
+    </style>
+
+    <style name="textSecondary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+        <item name="android:textColor">@color/colorTextSecondary</item>
+    </style>
+
 
     <style name="sectionTitleStyle">
         <item name="android:textColor">@color/colorPrimaryDark</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
     </style>
 
 </resources>

@@ -956,10 +956,10 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     protected void send(String message) {
-        Log.d(TAG, "out: " + message);
         if (mConnection == null || !mConnection.isConnected()) {
             throw new NotConnectedException("No connection");
         }
+        Log.d(TAG, "out: " + message);
         mConnection.send(message);
     }
 

@@ -3,8 +3,8 @@
     <string name="app_name_full">Tindroid Messenger</string>
     <string name="app_version">Version 0.8.10</string>
     <string name="copyright">© 2016 Tinode</string>
+    <string name="tinode">Tinode</string>
 
-    <string name="action_settings">Settings</string>
     <string name="login_hint">Login: alice, bob, carol, dave, eve, frank</string>
     <string name="password_hint">Password: alice123, bob123,…</string>
     <string name="new_message_hint">Type a message</string>
@@ -33,7 +33,19 @@
     <string name="settings_wire_transport_summary">Select wire transport</string>
     <string name="default_host_name">10.0.2.2:6060</string>
 
+    <!-- access mode definitions -->
+    <string name="mode_R">read</string>
+    <string name="mode_W">write</string>
+    <string name="mode_W_x">read-only</string>
+    <string name="mode_P">notifications on</string>
+    <string name="mode_P_x">muted</string>
+    <string name="mode_S">admin</string>
+    <string name="mode_D">delete</string>
+    <string name="mode_O">owner</string>
+    <string name="mode_X">banned</string>
+
     <!-- Menu actions -->
+    <string name="action_settings">Settings</string>
     <string name="action_delete">Delete</string>
     <string name="action_mute">Mute conversation</string>
     <string name="action_edit_contact">Edit contact</string>
@@ -45,6 +57,11 @@
     <string name="action_about">About</string>
     <string name="action_search">Search</string>
     <string name="action_add_contact">Add contact</string>
+    <string name="action_edit_topic">Edit topic</string>
+    <string name="action_send_now">Send now</string>
+    <string name="action_view_details">View details</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_offline">Working offline</string>
 
     <string name="avatar">Avatar picture</string>
     <string name="select_image">Select Image</string>
@@ -63,9 +80,9 @@
     <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
      alphabet using ListView fast scroll. -->
     <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+
     <string name="search_hint">Find contacts</string>
     <string name="contacts_permission_denied">Contacts not loaded: permission denied</string>
-    <string name="tinode">Tinode</string>
     <string name="account_already_exists">Account already exists</string>
     <string name="pick_account">Pick Account</string>
     <string name="tinode_invite_subject">Check out Tindroid Messenger</string>
@@ -76,11 +93,7 @@
     <string name="tinode_message">Send Tinode message</string>
     <string name="failed_to_invite">Don\'t know how to invite - no contact info</string>
     <string name="about_title">About</string>
-    <string name="action_offline">Working offline</string>
     <string name="failed_to_send_message">Failed to send message</string>
-    <string name="action_send_now">Send now</string>
-    <string name="action_view_details">View details</string>
-    <string name="action_copy">Copy</string>
     <string name="failed_to_delete_messages">Failed to delete messages</string>
     <string name="topic_title">Name of the group</string>
     <string name="group_members">Group Members</string>

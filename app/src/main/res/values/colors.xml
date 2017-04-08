@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="white">#FFFFFF</color>
-    <color name="grey">#999999</color>
+    <color name="grey">#9e9e9e</color>
 
-    <color name="colorText">?android:attr/colorPrimary</color>
+    <color name="colorTextPrimary">#212121</color>
+    <color name="colorTextSecondary">#616161</color>
 
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
@@ -33,5 +34,10 @@
     <color name="colorMessageSelected">#2f3F51B5</color>
 
     <color name="colorDivider">#66000000</color>
+
+    <color name="borderGreen">#4CAF50</color>
+    <color name="borderGray">#9E9E9E</color>
+    <color name="borderBlue">#2196F3</color>
+    <color name="borderRed">#E57373</color>
 
 </resources>

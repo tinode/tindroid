@@ -26,33 +26,34 @@
 
         <TextView
             android:id="@+id/topicTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/dialog_item_padding"
             android:layout_toLeftOf="@id/imageAvatar"
             android:layout_toStartOf="@id/imageAvatar"
             android:maxLines="2"
-            android:textAppearance="?android:attr/textAppearanceMedium"
+            style="@style/textPrimaryLarge"
             android:textIsSelectable="true"/>
 
         <TextView
             android:id="@+id/topicSubtitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/topicTitle"
             android:layout_marginTop="@dimen/dialog_item_padding"
             android:ellipsize="end"
             android:maxLines="1"
+            style="@style/textSecondary"
             android:textIsSelectable="true"/>
 
     </RelativeLayout>
 
-    <!--View
+    <View
         android:layout_width="match_parent"
-        android:layout_height="1dip"
+        android:layout_height="@dimen/divider_height"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:background="#66000000"/>
+        android:background="@color/colorDivider"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -64,6 +65,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            style="@style/textPrimary"
             android:text="@string/address"/>
 
         <TextView
@@ -71,6 +73,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textIsSelectable="true"
+            style="@style/textPrimary"
             android:typeface="monospace"/>
 
     </LinearLayout>
@@ -85,16 +88,16 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
+            style="@style/textPrimary"
             android:layout_weight="1"
-            android:text="@string/topic_muted"
-            />
+            android:text="@string/topic_muted"/>
 
         <Switch
             android:id="@+id/switchMuted"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            />
+            android:layout_margin="4dp"/>
+
     </LinearLayout>
 
     <LinearLayout
@@ -107,6 +110,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            style="@style/textPrimary"
             android:text="@string/permissions"/>
 
         <TextView
@@ -114,16 +118,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textIsSelectable="true"
+            style="@style/textPrimary"
             android:typeface="monospace"/>
 
-    </LinearLayout-->
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dip"
+        android:layout_height="@dimen/divider_height"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:background="#66000000"/>
+        android:background="@color/colorDivider"/>
 
     <TextView
         android:id="@+id/membersTitle"
@@ -141,6 +146,7 @@
 
         <android.support.v7.widget.AppCompatButton
             android:id="@+id/buttonAddMember"
+            style="?attr/buttonBarButtonStyle"
             android:contentDescription="@string/add_member"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -148,25 +154,27 @@
             android:drawableStart="@drawable/ic_person_add"
             android:text="@string/add_member"
             android:drawablePadding="4sp"
-            android:textColor="@color/colorText"
-            />
+            android:textColor="@color/colorTextPrimary"/>
 
-        <!--android.support.v7.widget.AppCompatButton
-            style="?android:attr/buttonBarButtonStyle"
+        <android.support.v7.widget.AppCompatButton
+            style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawableLeft="@drawable/ic_exit"
             android:drawableStart="@drawable/ic_exit"
             android:text="@string/leave_group"
             android:drawablePadding="4sp"
-            android:textColor="@color/colorDangerDark"
-            /-->
+            android:textColor="@color/colorDangerDark"/>
 
     </LinearLayout>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:background="@color/colorDivider"/>
 
-    <!-- Use standard android.R class list id instead of app specific id. This is just useful for
-         consistency. -->
     <ListView
         android:id="@id/android:list"
         android:layout_width="match_parent"

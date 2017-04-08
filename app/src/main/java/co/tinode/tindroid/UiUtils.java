@@ -520,4 +520,10 @@ public class UiUtils {
         }
         return sColorizerDark[index];
     }
+
+    public static String[] accessModeNames(String mode) {
+        String[] result = new String[4];
+        CharSequence m = mode;
+        return result;
+    }
 }
