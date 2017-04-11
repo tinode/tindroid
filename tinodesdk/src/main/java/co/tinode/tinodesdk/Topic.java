@@ -694,7 +694,20 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> invite(String uid, String mode, T invite)  throws Exception {
-        return setSubscription(new MetaSetSub<T>(uid, mode, invite));
+        long id;
+        if (mStore != null) {
+            id = mStore.subAdd(this, sub);
+        } else {
+            id = -1;
+        }
+
+        return setSubscription(new MetaSetSub<>(uid, mode, invite)).thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        return null;
+                    }
+                }, null);
     }
 
     /**

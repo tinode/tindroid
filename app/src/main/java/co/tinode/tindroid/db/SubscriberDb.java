@@ -187,6 +187,48 @@ public class SubscriberDb implements BaseColumns {
         return id;
     }
 
+    public static long insert(SQLiteDatabase db, long topicId, String uid) {
+        Log.d(TAG, "Inserting sub for " + topicId + "/" + uid);
+        long id = -1;
+        try {
+            db.beginTransaction();
+
+            StoredSubscription ss = new StoredSubscription();
+            ss.userId = UserDb.insert(db, uid, null);
+
+            if (ss.userId <= 0) {
+                Log.d(TAG, "Failed to insert user: " + ss.userId);
+                db.endTransaction();
+                return -1;
+            }
+
+            Log.d(TAG, "User inserted: " + ss.userId);
+
+            ContentValues values = new ContentValues();
+            // Insert subscription
+            ss.topicId = topicId;
+            values.put(COLUMN_NAME_TOPIC_ID, ss.topicId);
+            values.put(COLUMN_NAME_USER_ID, ss.userId);
+            // User's own sender index is 0.
+            ss.senderIdx = BaseDb.isMe(uid) ? 0 : getNextSenderIndex(db, ss.topicId);
+            values.put(COLUMN_NAME_SENDER_INDEX, ss.senderIdx);
+            values.put(COLUMN_NAME_MODE, sub.mode);
+            values.put(COLUMN_NAME_UPDATED, new Date().getTime());
+            // values.put(COLUMN_NAME_DELETED, NULL);
+
+            ss.id = db.insert(TABLE_NAME, null, values);
+
+            db.setTransactionSuccessful();
+
+        } catch (Exception ex) {
+            Log.d(TAG, "Exception while inserting", ex);
+        }
+
+        db.endTransaction();
+
+        return id;
+    }
+
     /**
      * Update user record
      *

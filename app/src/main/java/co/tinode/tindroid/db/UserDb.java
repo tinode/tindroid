@@ -99,7 +99,9 @@ public class UserDb implements BaseColumns {
         values.put(COLUMN_NAME_UID, sub.user);
         values.put(COLUMN_NAME_UPDATED, (sub.updated != null ? sub.updated : new Date()).getTime());
         // values.put(COLUMN_NAME_DELETED, NULL);
-        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
+        if (sub.pub != null) {
+            values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
+        }
         return db.insert(TABLE_NAME, null, values);
     }
 
@@ -117,7 +119,9 @@ public class UserDb implements BaseColumns {
         values.put(COLUMN_NAME_UID, uid);
         values.put(COLUMN_NAME_UPDATED, new Date().getTime());
         // values.put(COLUMN_NAME_DELETED, NULL);
-        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(pub));
+        if (pub != null) {
+            values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(pub));
+        }
         return db.insert(TABLE_NAME, null, values);
     }
 

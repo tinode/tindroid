@@ -38,6 +38,7 @@ public interface Storage {
     <Pu,Pr> long subAdd(Topic topic, Subscription<Pu,Pr> sub);
     /** Update subscription in a generic topic */
     <Pu,Pr> boolean subUpdate(Topic topic, Subscription<Pu,Pr> sub);
+    /** Add new subscriber to topic */
 
     /** Get a list o topic subscriptions from DB. */
     Collection<Subscription> getSubscriptions(Topic topic);
