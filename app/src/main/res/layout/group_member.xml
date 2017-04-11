@@ -17,26 +17,56 @@
         android:src="@drawable/ic_person_circle"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginRight="5dp" />
+        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp" />
 
-    <TextView
-        android:id="@+id/status"
+    <LinearLayout
+        android:id="@+id/statusContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:focusable="false"
-        android:maxLines="1"
-        android:typeface="monospace"
-        android:layout_margin="6dp"
-        android:textAppearance="?android:attr/textAppearanceSmall"/>
+        android:layout_marginTop="3.5dp"
+        android:orientation="horizontal"
+        android:focusable="false">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="admin"
+            android:paddingLeft="@dimen/label_h_padding"
+            android:paddingRight="@dimen/label_h_padding"
+            android:background="@drawable/border_green"
+            android:layout_marginLeft="@dimen/label_margin"
+            android:layout_marginRight="@dimen/label_margin"
+            android:typeface="monospace"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/label_h_padding"
+            android:paddingRight="@dimen/label_h_padding"
+            android:background="@drawable/border_green"
+            android:layout_marginLeft="@dimen/label_margin"
+            android:layout_marginRight="@dimen/label_margin"
+            android:text="owner"
+            android:typeface="monospace"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/label_h_padding"
+            android:paddingRight="@dimen/label_h_padding"
+            android:background="@drawable/border_green"
+            android:text="muted"
+            android:layout_marginLeft="@dimen/label_margin"
+            android:layout_marginRight="@dimen/label_margin"
+            android:typeface="monospace"/>
+    </LinearLayout>
 
     <TextView
         android:id="@android:id/text1"
         android:layout_toRightOf="@android:id/icon"
         android:layout_toEndOf="@android:id/icon"
-        android:layout_toLeftOf="@id/status"
-        android:layout_toStartOf="@id/status"
+        android:layout_toLeftOf="@id/statusContainer"
+        android:layout_toStartOf="@id/statusContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
@@ -50,7 +80,6 @@
     <TextView
         android:id="@android:id/text2"
         android:layout_toRightOf="@android:id/icon"
-        android:layout_toLeftOf="@id/status"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"

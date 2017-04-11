@@ -34,15 +34,15 @@
     <string name="default_host_name">10.0.2.2:6060</string>
 
     <!-- access mode definitions -->
-    <string name="mode_R">read</string>
-    <string name="mode_W">write</string>
-    <string name="mode_W_x">read-only</string>
-    <string name="mode_P">notifications on</string>
-    <string name="mode_P_x">muted</string>
-    <string name="mode_S">admin</string>
-    <string name="mode_D">delete</string>
-    <string name="mode_O">owner</string>
-    <string name="mode_X">banned</string>
+    <string name="modeReadable">can read</string>
+    <string name="modeWritable">can publish</string>
+    <string name="modeReadOnly">read-only</string>
+    <string name="modeNotificationsEnabled">notifications on</string>
+    <string name="modeMuted">muted</string>
+    <string name="modeAdmin">admin</string>
+    <string name="modeCanDelete">can delete</string>
+    <string name="modeOwner">owner</string>
+    <string name="modeBanned">banned</string>
 
     <!-- Menu actions -->
     <string name="action_settings">Settings</string>

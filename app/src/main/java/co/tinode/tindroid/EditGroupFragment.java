@@ -49,9 +49,9 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment for adding/editing a group topic
  */
-public class AddGroupFragment extends ListFragment {
+public class EditGroupFragment extends ListFragment {
 
-    private static final String TAG = "AddGroupFragment";
+    private static final String TAG = "EditGroupFragment";
 
     // Bundle key for saving previously selected search result item
     private static final String STATE_PREVIOUSLY_SELECTED_KEY =
@@ -70,7 +70,7 @@ public class AddGroupFragment extends ListFragment {
     // Sorted set of selected contacts (cursor positions of selected contacts).
     private TreeSet<Integer> mSelectedContacts;
 
-    public AddGroupFragment() {
+    public EditGroupFragment() {
     }
 
     @Override
@@ -94,7 +94,7 @@ public class AddGroupFragment extends ListFragment {
             protected Bitmap processBitmap(Object data) {
                 // This gets called in a background thread and passed the data from
                 // ImageLoader.loadImage().
-                return UiUtils.loadContactPhotoThumbnail(AddGroupFragment.this, (String) data, getImageSize());
+                return UiUtils.loadContactPhotoThumbnail(EditGroupFragment.this, (String) data, getImageSize());
             }
         };
         // Set a placeholder loading image for the image loader
@@ -123,7 +123,7 @@ public class AddGroupFragment extends ListFragment {
         activity.findViewById(R.id.upload_avatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UiUtils.requestAvatar(AddGroupFragment.this);
+                UiUtils.requestAvatar(EditGroupFragment.this);
             }
         });
 

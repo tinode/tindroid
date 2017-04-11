@@ -35,9 +35,10 @@
 
     <color name="colorDivider">#66000000</color>
 
-    <color name="borderGreen">#4CAF50</color>
-    <color name="borderGray">#9E9E9E</color>
-    <color name="borderBlue">#2196F3</color>
-    <color name="borderRed">#E57373</color>
+    <color name="colorBorderGreen">#4CAF50</color>
+    <color name="colorBorderGray">#9E9E9E</color>
+    <color name="colorBorderBlue">#2196F3</color>
+    <color name="colorBorderRed">#E57373</color>
+    <color name="colorBorderYellow">#FFCA28</color>
 
 </resources>

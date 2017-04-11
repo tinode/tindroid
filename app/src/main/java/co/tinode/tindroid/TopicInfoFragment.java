@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v7.widget.AppCompatImageView;
+import android.support.v7.widget.SwitchCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,12 +19,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.CompoundButton;
+import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Collection;
 
 import co.tinode.tindroid.db.StoredSubscription;
+import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -73,7 +82,7 @@ public class TopicInfoFragment extends ListFragment {
                 });
             }
         });
-        Activity activity = getActivity();
+        final Activity activity = getActivity();
 
         VCard pub = mTopic.getPub();
         if (pub != null) {
@@ -93,6 +102,23 @@ public class TopicInfoFragment extends ListFragment {
             TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
             subtitle.setText(priv);
         }
+
+        final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
+        muted.setChecked(mTopic.isMuted());
+        muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+                if (mTopic.isMuted() != isChecked) {
+                    try {
+                        mTopic.updateMuted(isChecked);
+                    } catch (NotConnectedException ignored) {
+                        muted.setChecked(!isChecked);
+                        Toast.makeText(activity, R.string.error_connection_failed, Toast.LENGTH_SHORT).show();
+                    } catch(Exception ignored){
+                        muted.setChecked(!isChecked);
+                    }
+                }
+            }
+        });
 
         mAdapter.resetContent();
     }
@@ -173,7 +199,11 @@ public class TopicInfoFragment extends ListFragment {
                 holder = new ViewHolder();
                 holder.name = (TextView) item.findViewById(android.R.id.text1);
                 holder.contactPriv = (TextView) item.findViewById(android.R.id.text2);
-                holder.status = (TextView) item.findViewById(R.id.status);
+                holder.statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
+                holder.status = new TextView[holder.statusContainer.getChildCount()];
+                for (int i=0; i < holder.status.length; i++) {
+                    holder.status[i] = (TextView) holder.statusContainer.getChildAt(i);
+                }
                 holder.icon = (AppCompatImageView) item.findViewById(android.R.id.icon);
 
                 item.setTag(holder);
@@ -197,7 +227,20 @@ public class TopicInfoFragment extends ListFragment {
             }
 
             holder.contactPriv.setText(sub.priv);
-            holder.status.setText(sub.mode);
+
+            int i = 0;
+            UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.mode);
+            if (labels != null) {
+                for (UiUtils.AccessModeLabel l : labels) {
+                    holder.status[i].setText(l.nameId);
+                    holder.status[i].setTextColor(l.color);
+                    ((GradientDrawable) holder.status[i].getBackground()).setStroke(2, l.color);
+                    holder.status[i++].setVisibility(View.VISIBLE);
+                }
+            }
+            for (; i<holder.status.length; i++) {
+                holder.status[i].setVisibility(View.GONE);
+            }
 
             if (bmp != null) {
                 holder.icon.setImageDrawable(new RoundImageDrawable(bmp));
@@ -222,10 +265,11 @@ public class TopicInfoFragment extends ListFragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    private class ViewHolder {
+    private static class ViewHolder {
         TextView name;
         TextView contactPriv;
-        TextView status;
+        LinearLayout statusContainer;
+        TextView[] status;
         AppCompatImageView icon;
     }
 }
