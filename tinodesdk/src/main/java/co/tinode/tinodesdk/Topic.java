@@ -406,20 +406,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
     }
 
-    public Storage.Range getCachedMessageRange() {
-        return mStore == null ? null : mStore.getCachedMessagesRange(this);
-    }
-
-    public AccessMode getMode() {
-        return mMode;
-    }
-    public void setMode(AccessMode mode) {
-        mMode = mode;
-    }
-    public void setMode(String mode) {
-        mMode = new AccessMode(mode);
-    }
-
     public Pu getPub() {
         return mDesc.pub;
     }
@@ -433,6 +419,56 @@ public class Topic<Pu,Pr,T> implements LocalData {
     public void setPriv(Pr priv) {
         mDesc.priv = priv;
     }
+
+    public Storage.Range getCachedMessageRange() {
+        return mStore == null ? null : mStore.getCachedMessagesRange(this);
+    }
+
+    /* Access mode management */
+    public AccessMode getMode() {
+        return mMode;
+    }
+    public void setMode(AccessMode mode) {
+        mMode = mode;
+    }
+    public void setMode(String mode) {
+        mMode = new AccessMode(mode);
+    }
+
+    protected PromisedReply<ServerMessage> updateAccessMode(final String update) throws Exception {
+        final AccessMode mode = new AccessMode(mMode);
+        mode.update(update);
+        if (!mMode.equals(mode)) {
+            return updateSelfSub(mode.toString()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    mMode = mode;
+                    return null;
+                }
+            }, null);
+        }
+        // The state is unchanged, return resolved promise.
+        return new PromisedReply<>((ServerMessage) null);
+    }
+
+    public boolean isAdmin() {
+        return mMode != null && mMode.isAdmin();
+    }
+    public PromisedReply<ServerMessage> updateAdmin(final boolean isAdmin) throws Exception {
+        return updateAccessMode(isAdmin ? "+S" : "-S");
+    }
+
+    public boolean isMuted() {
+        return mMode != null && mMode.isMuted();
+    }
+    public PromisedReply<ServerMessage> updateMuted(final boolean muted) throws Exception {
+        return updateAccessMode(muted ? "-P" : "+P");
+    }
+
+    public boolean isOwner() {
+        return mMode != null && mMode.isOwner();
+    }
+
 
     public void setDefacs(String auth, String anon) {
         mDesc.defacs.auth = auth;

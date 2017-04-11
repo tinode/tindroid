@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/activity_padding"
-    tools:context="co.tinode.tindroid.AddGroupFragment">
+    tools:context="co.tinode.tindroid.EditGroupFragment">
 
     <android.support.v7.widget.AppCompatImageView
         android:id="@+id/imageAvatar"

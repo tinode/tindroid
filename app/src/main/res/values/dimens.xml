@@ -9,4 +9,7 @@
     <dimen name="dialog_item_padding">4dp</dimen>
     <dimen name="avatar_size_large">112dp</dimen>
     <dimen name="divider_height">1dp</dimen>
+    <dimen name="label_h_padding">4dp</dimen>
+    <dimen name="label_v_padding">2dp</dimen>
+    <dimen name="label_margin">1.5dp</dimen>
 </resources>

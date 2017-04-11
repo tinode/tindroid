@@ -30,6 +30,14 @@ public class AccessMode {
         mMode = parse(mode);
     }
 
+    public AccessMode(AccessMode mode) {
+        if (mode != null) {
+            mMode = mode.mMode;
+        } else {
+            mMode = MODE_NONE;
+        }
+    }
+
     private static int parse(String mode) {
         if (mode == null || mode.length() == 0) {
             return MODE_NONE;
@@ -77,6 +85,45 @@ public class AccessMode {
         return m0;
     }
 
+    /**
+     * Change current mode.
+     * @param umode change to the current mode, '+' or '-' followed by the letter being set or unset.
+     * @return new mode
+     */
+    public AccessMode update(String umode) {
+        if (umode == null || umode.length() == 0) {
+            return this;
+        }
+        char sign = umode.charAt(0);
+        if (umode.length() < 2 || (sign != '+' && sign != '-')) {
+            throw new IllegalArgumentException();
+        }
+        int mode = parse(umode.substring(1));
+        if (mode == MODE_INVALID) {
+            throw new IllegalArgumentException();
+        }
+        if (mode == MODE_NONE) {
+            return this;
+        }
+        if (sign == '+') {
+            if (mode == MODE_BANNED) {
+                mMode = MODE_BANNED;
+            } else {
+                mMode |= mode;
+            }
+        } else {
+            if (mode == MODE_BANNED) {
+                if ((mMode & MODE_BANNED) != 0) {
+                    mMode = MODE_NONE;
+                }
+            } else {
+                mMode &= ~mode;
+            }
+        }
+
+        return this;
+    }
+
     @Override
     public String toString() {
         // Need to distinguish between "not set" and "no access"
@@ -100,5 +147,49 @@ public class AccessMode {
             }
         }
         return res.toString();
+    }
+
+    public boolean equals(AccessMode am) {
+        return am != null && mMode.equals(am.mMode);
+    }
+
+    public boolean canRead() {
+        return (mMode & MODE_SUB) != 0;
+    }
+
+    public boolean canWrite() {
+        return (mMode & MODE_PUB) != 0;
+    }
+
+    public boolean isMuted() {
+        return (mMode & MODE_PRES) == 0;
+    }
+    public AccessMode setMuted(boolean v) {
+        mMode = !v ? mMode | MODE_PRES : (mMode & ~MODE_PRES);
+        return this;
+    }
+
+    public boolean isAdmin() {
+        return (mMode & MODE_SHARE) != 0;
+    }
+
+    public boolean canDelete() {
+        return (mMode & MODE_DELETE) != 0;
+    }
+
+    public boolean isOwner() {
+        return (mMode & MODE_OWNER) != 0;
+    }
+
+    public boolean isBanned() {
+        return (mMode & MODE_BANNED) != 0;
+    }
+
+    public boolean isDefined() {
+        return mMode != MODE_NONE && mMode != MODE_INVALID;
+    }
+
+    public boolean isInvalid() {
+        return mMode == MODE_INVALID;
     }
 }

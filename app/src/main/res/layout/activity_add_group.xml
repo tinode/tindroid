@@ -11,7 +11,7 @@
 
     <fragment
         android:id="@+id/add_group_view"
-        android:name="co.tinode.tindroid.AddGroupFragment"
+        android:name="co.tinode.tindroid.EditGroupFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:layout="@layout/fragment_edit_topic" />

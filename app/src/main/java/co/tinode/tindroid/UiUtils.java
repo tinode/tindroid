@@ -43,6 +43,7 @@ import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
@@ -51,6 +52,7 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.AccessMode;
 
 /**
  * Static utilities for UI support.
@@ -521,9 +523,46 @@ public class UiUtils {
         return sColorizerDark[index];
     }
 
-    public static String[] accessModeNames(String mode) {
-        String[] result = new String[4];
-        CharSequence m = mode;
-        return result;
+    public static class AccessModeLabel {
+        public int nameId;
+        public int color;
+
+        public AccessModeLabel(int nameId, int color) {
+            this.nameId = nameId;
+            this.color = color;
+        }
+    }
+
+    private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
+    private static final int COLOR_RED_BORDER = 0xFFE57373;
+    private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
+    private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
+    private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
+
+    public static AccessModeLabel[] accessModeLabels(final String modestr) {
+        AccessMode mode = new AccessMode(modestr);
+        ArrayList<AccessModeLabel> result = null;
+        if (mode.isDefined()) {
+            result = new ArrayList<>(3);
+            if (mode.isBanned()) {
+                result.add(new AccessModeLabel(R.string.modeBanned, COLOR_RED_BORDER));
+            } else {
+                if (mode.isOwner()) {
+                    result.add(new AccessModeLabel(R.string.modeOwner, COLOR_GREEN_BORDER));
+                } else {
+                    if (mode.isAdmin()) {
+                        result.add(new AccessModeLabel(R.string.modeAdmin, COLOR_GREEN_BORDER));
+                    }
+                    if (!mode.canWrite()) {
+                        result.add(new AccessModeLabel(R.string.modeReadOnly, COLOR_YELLOW_BORDER));
+                    }
+                }
+                if (mode.isMuted()) {
+                    result.add(new AccessModeLabel(R.string.modeMuted, COLOR_GRAY_BORDER));
+                }
+            }
+        }
+        return result != null && !result.isEmpty() ?
+                result.toArray(new AccessModeLabel[result.size()]) : null;
     }
 }
