@@ -7,6 +7,7 @@ package co.tinode.tinodesdk;
 import android.util.Log;
 
 import co.tinode.tinodesdk.model.AccessMode;
+import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
@@ -97,7 +98,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         setName(sub.topic);
 
-        mMode   = new AccessMode(sub.mode);
+        mMode   = new AccessMode(sub.acs);
 
         mDesc   = new Description<>();
         mDesc.merge(sub);
@@ -242,8 +243,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected void update(Subscription<Pu,Pr> sub) {
         int changed = 0;
 
-        if (sub.mode != null && !sub.mode.equals(mMode.toString())) {
-            mMode = new AccessMode(sub.mode);
+        if (sub.acs != null && !mMode.toString().equals(sub.acs.mode)) {
+            mMode = new AccessMode(sub.acs);
             changed ++;
         }
 
@@ -277,10 +278,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
             if (s == null) {
                 s = new Subscription<>();
                 s.user = sub.user;
-                s.mode = sub.mode;
+                s.acs = new Acs();
+                s.acs.mode = sub.mode;
                 addSubToCache(s);
             } else {
-                s.mode = sub.mode;
+                s.acs.mode = sub.mode;
             }
         }
 
@@ -741,7 +743,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
             Subscription sub = new Subscription();
             sub.topic = getName();
             sub.user = uid;
-            sub.mode = mode;
+            sub.acs = new Acs();
+            sub.acs.want = mode;
             id = mStore.subAdd(this, sub);
         } else {
             id = -1;

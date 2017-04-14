@@ -30,6 +30,10 @@ public class AccessMode {
         mMode = parse(mode);
     }
 
+    public AccessMode(Acs acs) {
+        this(acs != null ? acs.mode : null);
+    }
+
     public AccessMode(AccessMode mode) {
         if (mode != null) {
             mMode = mode.mMode;

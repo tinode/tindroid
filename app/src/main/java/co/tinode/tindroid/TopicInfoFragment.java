@@ -229,7 +229,7 @@ public class TopicInfoFragment extends ListFragment {
             holder.contactPriv.setText(sub.priv);
 
             int i = 0;
-            UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.mode);
+            UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.acs);
             if (labels != null) {
                 for (UiUtils.AccessModeLabel l : labels) {
                     holder.status[i].setText(l.nameId);

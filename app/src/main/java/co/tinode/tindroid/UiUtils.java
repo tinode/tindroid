@@ -53,6 +53,7 @@ import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.AccessMode;
+import co.tinode.tinodesdk.model.Acs;
 
 /**
  * Static utilities for UI support.
@@ -539,11 +540,10 @@ public class UiUtils {
     private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
 
-    public static AccessModeLabel[] accessModeLabels(final String modestr) {
-        AccessMode mode = new AccessMode(modestr);
-        ArrayList<AccessModeLabel> result = null;
+    public static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
+        AccessMode mode = new AccessMode(acs);
+        ArrayList<AccessModeLabel> result = new ArrayList<>(3);
         if (mode.isDefined()) {
-            result = new ArrayList<>(3);
             if (mode.isBanned()) {
                 result.add(new AccessModeLabel(R.string.modeBanned, COLOR_RED_BORDER));
             } else {
@@ -561,8 +561,22 @@ public class UiUtils {
                     result.add(new AccessModeLabel(R.string.modeMuted, COLOR_GRAY_BORDER));
                 }
             }
+        } else if (!mode.isInvalid()){
+            // The mode is undefined (NONE)
+            if (acs != null) {
+                AccessMode given = new AccessMode(acs.given);
+                AccessMode want = new AccessMode(acs.want);
+                if (given.isDefined() && !want.isDefined()) {
+                    result.add(new AccessModeLabel(R.string.modeInvited, COLOR_GRAY_BORDER));
+                } else if (!given.isDefined() && want.isDefined()) {
+                    result.add(new AccessModeLabel(R.string.modeRequested, COLOR_GRAY_BORDER));
+                } else {
+                    // FIXME(gene): it's either an indefined state or invalid
+                }
+            }
         }
-        return result != null && !result.isEmpty() ?
+
+        return !result.isEmpty() ?
                 result.toArray(new AccessModeLabel[result.size()]) : null;
     }
 }

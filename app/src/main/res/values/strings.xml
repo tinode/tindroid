@@ -108,4 +108,6 @@
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
     <string name="close">Close</string>
+    <string name="modeInvited">invited</string>
+    <string name="modeRequested">requested</string>
 </resources>
