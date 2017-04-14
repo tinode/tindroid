@@ -526,13 +526,13 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * Subscribe to topic with parameters
      *
      * @throws NotConnectedException if there is no live connection to the server
-     * @throws IllegalStateException if the client is already subscribed to the given topic
+     * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<Pu,Pr,?> set, MsgGetMeta get)
             throws Exception {
 
         if (mAttached) {
-            throw new IllegalStateException("Already subscribed");
+            throw new AlreadySubscribedException();
         }
 
         if (mTinode.getTopic(getName()) == null) {
@@ -577,7 +577,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * Leave topic
      * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
     public PromisedReply<ServerMessage> leave(final boolean unsub) throws Exception {
@@ -594,7 +594,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         if (mTinode.isConnected()) {
-            throw new IllegalStateException("Not subscribed");
+            throw new NotSubscribedException();
         }
 
         throw new NotConnectedException();
@@ -603,7 +603,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     /**
      * Leave topic without unsubscribing
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
     public PromisedReply<ServerMessage> leave() throws Exception {
@@ -615,7 +615,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param content payload
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
     public PromisedReply<ServerMessage> publish(T content) throws Exception {
@@ -649,7 +649,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         if (mTinode.isConnected()) {
-            throw new IllegalStateException("Not subscribed");
+            throw new NotSubscribedException();
         }
 
         throw new NotConnectedException();
@@ -665,7 +665,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     /**
      * Update topic metadata
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<Pu,Pr,T> meta) throws Exception {
@@ -681,7 +681,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
             }, null);
         }
         if (mTinode.isConnected()) {
-            throw new IllegalStateException("Not subscribed");
+            throw new NotSubscribedException();
         }
 
         throw new NotConnectedException();
@@ -690,7 +690,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     /**
      * Update topic description. Calls {@link #setMeta}.
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<Pu,Pr> desc) throws Exception {
@@ -700,7 +700,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     /**
      * Update subscription. Calls {@link #setMeta}.
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub<T> sub) throws Exception {
@@ -712,7 +712,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param mode access mode
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> updateSelfSub(String mode)  throws Exception {
@@ -726,12 +726,22 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param mode access mode granted to user
      * @param invite content opf the invite message
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws AlreadySubscribedException if it's an attempt to invite an existing subscriber
+     * @throws NotSubscribedException if the requester is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> invite(String uid, String mode, T invite)  throws Exception {
+
+        if (getSubscription(uid) != null) {
+            throw new AlreadySubscribedException();
+        }
+
         long id;
         if (mStore != null) {
+            Subscription sub = new Subscription();
+            sub.topic = getName();
+            sub.user = uid;
+            sub.mode = mode;
             id = mStore.subAdd(this, sub);
         } else {
             id = -1;
@@ -752,7 +762,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param before delete messages with id up to this
      * @param hard hard-delete messages
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply delMessages(final int before, final boolean hard) throws Exception {
@@ -770,7 +780,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         if (mTinode.isConnected()) {
-            throw new IllegalStateException("Not subscribed");
+            throw new NotSubscribedException();
         }
 
         throw new NotConnectedException();
@@ -782,7 +792,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param list delete messages with ids in this list
      * @param hard hard-delete messages
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> delMessages(final int[] list, final boolean hard) throws Exception {
@@ -800,7 +810,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         if (mTinode.isConnected()) {
-            throw new IllegalStateException("Not subscribed");
+            throw new NotSubscribedException();
         }
 
         throw new NotConnectedException();
@@ -809,7 +819,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     /**
      * Delete topic
      *
-     * @throws IllegalStateException if the client is not subscribed to the topic
+     * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> delete() throws Exception {
@@ -818,7 +828,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         if (mTinode.isConnected()) {
-            throw new IllegalStateException("Not subscribed");
+            throw new NotSubscribedException();
         }
 
         throw new NotConnectedException();

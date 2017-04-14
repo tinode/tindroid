@@ -34,11 +34,12 @@ public interface Storage {
     /** Local user reported messages as received */
     boolean setRecv(Topic topic, int recv);
 
-    /** New subscription in a generic topic */
+    /** Add subscription in a generic topic. The subscription is received from the server. */
     <Pu,Pr> long subAdd(Topic topic, Subscription<Pu,Pr> sub);
     /** Update subscription in a generic topic */
     <Pu,Pr> boolean subUpdate(Topic topic, Subscription<Pu,Pr> sub);
-    /** Add new subscriber to topic */
+    /** Add a new subscriber to topic. The new subscriber is being added locally. */
+    <Pu,Pr> long subNew(Topic topic, Subscription<Pu,Pr> sub);
 
     /** Get a list o topic subscriptions from DB. */
     Collection<Subscription> getSubscriptions(Topic topic);

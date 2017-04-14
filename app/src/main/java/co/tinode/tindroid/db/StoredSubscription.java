@@ -10,6 +10,7 @@ public class StoredSubscription implements LocalData.Payload {
     public long id;
     public long topicId;
     public long userId;
+    public int status;
     public int senderIdx;
 
     public static long getId(Subscription sub) {

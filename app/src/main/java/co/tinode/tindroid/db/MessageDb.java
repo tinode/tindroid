@@ -29,10 +29,6 @@ import co.tinode.tinodesdk.Topic;
 public class MessageDb implements BaseColumns {
     private static final String TAG = "MessageDb";
 
-    private static final int STATUS_QUEUED = 0;
-    private static final int STATUS_SYNCED = 1;
-    private static final int STATUS_DELETED = 2;
-
     /**
      * Content provider authority.
      */
@@ -178,9 +174,9 @@ public class MessageDb implements BaseColumns {
 
             if (msg.seq == 0) {
                 msg.seq = getNextUnsentId(db, msg.topicId);
-                status = STATUS_QUEUED;
+                status = BaseDb.STATUS_QUEUED;
             } else {
-                status = STATUS_SYNCED;
+                status = BaseDb.STATUS_SYNCED;
             }
 
             // Convert message to a map of values
@@ -211,7 +207,7 @@ public class MessageDb implements BaseColumns {
 
     public static boolean delivered(SQLiteDatabase db, long id, Date timestamp, int seq) {
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_STATUS, STATUS_SYNCED);
+        values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
         values.put(COLUMN_NAME_TS, timestamp.getTime());
         values.put(COLUMN_NAME_SEQ, seq);
         return db.update(TABLE_NAME, values, _ID + "=" + id, null) > 0;
@@ -297,7 +293,7 @@ public class MessageDb implements BaseColumns {
                     " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
         } else {
             ContentValues values = new ContentValues(1);
-            values.put(COLUMN_NAME_STATUS, STATUS_DELETED);
+            values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED);
             return db.update(TABLE_NAME, values,
                     COLUMN_NAME_TOPIC_ID + "=" + topicId +
                     " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;

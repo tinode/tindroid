@@ -15,7 +15,7 @@ public class Subscription<Pu,Pr> implements LocalData {
     public String user;
     public Date updated;
     public Date deleted;
-    public String mode;
+    public Acs acs;
     public int read;
     public int recv;
     @JsonProperty("private")
@@ -55,10 +55,15 @@ public class Subscription<Pu,Pr> implements LocalData {
             changed ++;
         }
 
-        if (sub.mode != null) {
-            mode = sub.mode;
-            changed ++;
+        if (sub.acs != null) {
+            if (acs == null) {
+                acs = sub.acs;
+                changed++;
+            } else {
+                changed += acs.merge(sub.acs) ? 1 : 0;
+            }
         }
+
         if (sub.read > read) {
             read = sub.read;
             changed ++;
@@ -114,8 +119,16 @@ public class Subscription<Pu,Pr> implements LocalData {
         }
 
         if (sub.mode != null) {
-            mode = sub.mode;
-            changed ++;
+            if (acs != null) {
+                if (acs.mode == null || !acs.mode.equals(sub.mode)) {
+                    acs.mode = sub.mode;
+                    changed++;
+                }
+            } else {
+                acs = new Acs();
+                acs.mode = sub.mode;
+                changed++;
+            }
         }
 
         return changed > 0;

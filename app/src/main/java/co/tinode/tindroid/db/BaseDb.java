@@ -21,6 +21,11 @@ import co.tinode.tindroid.TindroidApp;
  * SQLite backend. Persistent store for messages and chats.
  */
 public class BaseDb extends SQLiteOpenHelper {
+
+    static final int STATUS_QUEUED = 0;
+    static final int STATUS_SYNCED = 1;
+    static final int STATUS_DELETED = 2;
+
     /**
      * Schema version.
      */

@@ -108,14 +108,26 @@ class SqlStore implements Storage {
 
     @Override
     public <Pu, Pr> long subAdd(Topic topic, Subscription<Pu, Pr> sub) {
-        return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), sub);
+        return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.STATUS_SYNCED, sub);
+    }
+
+    @Override
+    public <Pu, Pr> long subNew(Topic topic, Subscription<Pu, Pr> sub) {
+        return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.STATUS_QUEUED, sub);
     }
 
     @Override
     public <Pu, Pr> boolean subUpdate(Topic topic, Subscription<Pu, Pr> sub) {
-        return SubscriberDb.update(mDbh.getWritableDatabase(), sub);
+        boolean result = false;
+        StoredSubscription ss = (StoredSubscription) sub.getLocal();
+        if (ss != null && ss.id > 0) {
+            result = SubscriberDb.update(mDbh.getWritableDatabase(), sub);
+            if (result) {
+                ss.status = BaseDb.STATUS_SYNCED;
+            }
+        }
+        return result;
     }
-
 
     @Override
     public Collection<Subscription> getSubscriptions(Topic topic) {
