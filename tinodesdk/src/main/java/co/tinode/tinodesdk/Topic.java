@@ -6,7 +6,6 @@ package co.tinode.tinodesdk;
 
 import android.util.Log;
 
-import co.tinode.tinodesdk.model.AccessMode;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.LastSeen;
@@ -27,6 +26,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -66,7 +66,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     Storage mStore = null;
 
     // Server-provided values:
-    protected AccessMode mMode;
+
     // The bulk of topic data
     protected Description<Pu,Pr> mDesc;
     // Cache of topic subscribers indexed by userID
@@ -98,8 +98,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         setName(sub.topic);
 
-        mMode   = new AccessMode(sub.acs);
-
         mDesc   = new Description<>();
         mDesc.merge(sub);
     }
@@ -121,7 +119,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         setName(name);
 
-        mMode = new AccessMode(); // Default access mode "N" == "not set";
         mDesc = new Description<>();
 
         if (l != null) {
@@ -241,48 +238,40 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param sub updated topic parameters
      */
     protected void update(Subscription<Pu,Pr> sub) {
-        int changed = 0;
-
-        if (sub.acs != null && !mMode.toString().equals(sub.acs.mode)) {
-            mMode = new AccessMode(sub.acs);
-            changed ++;
-        }
-
-        if (mDesc.merge(sub)) {
-            changed++;
-        }
-
-        if (changed > 0 && mStore != null) {
+        if (mDesc.merge(sub) && mStore != null) {
             mStore.topicUpdate(this);
         }
     }
 
     /**
-     * Topic sent an update to subscription, update got a confirmation.
+     * Topic sent an update to subscription, got a confirmation.
      *
      * @param sub updated topic parameters
      */
     protected void update(MetaSetSub<?> sub) {
         if (sub.user == null) {
-            // This is an update to user's own subscription to topic.
-            if (sub.mode != null && !sub.mode.equals(mMode.toString())) {
-                mMode = new AccessMode(sub.mode);
+            if (mDesc.acs == null) {
+                mDesc.acs = new Acs();
+            }
+
+            // This is an update to user's own subscription to topic (want)
+            if (sub.mode != null && !mDesc.acs.wantEquals(sub.mode)) {
+                mDesc.acs.setWant(sub.mode);
                 if (mStore != null) {
                     mStore.topicUpdate(this);
                 }
             }
         } else {
-            // This is an update to someon else's subscription to topic
-            
+            // This is an update to someone else's subscription to topic (given)
             Subscription<Pu,Pr> s = mSubs.get(sub.user);
             if (s == null) {
                 s = new Subscription<>();
                 s.user = sub.user;
                 s.acs = new Acs();
-                s.acs.mode = sub.mode;
+                s.acs.setGiven(sub.mode);
                 addSubToCache(s);
             } else {
-                s.acs.mode = sub.mode;
+                s.acs.setMode(sub.mode);
             }
         }
 
@@ -294,18 +283,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param desc updated topic parameters
      */
     protected void update(Description<Pu,Pr> desc) {
-        int changed = 0;
-
-        if (desc.acs != null && desc.acs.mode != null && !desc.acs.mode.equals(mMode.toString())) {
-            mMode = new AccessMode(desc.acs.mode);
-            changed ++;
-        }
-
-        if (mDesc.merge(desc)) {
-            changed++;
-        }
-
-        if (changed > 0 && mStore != null) {
+        if (mDesc.merge(desc) && mStore != null) {
             mStore.topicUpdate(this);
         }
     }
@@ -427,24 +405,28 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /* Access mode management */
-    public AccessMode getMode() {
-        return mMode;
+    public Acs getAccessMode() {
+        return mDesc.acs;
     }
-    public void setMode(AccessMode mode) {
-        mMode = mode;
+    public void setAccessMode(Acs mode) {
+        mDesc.acs = mode;
     }
-    public void setMode(String mode) {
-        mMode = new AccessMode(mode);
-    }
+    //public void setAccessMode(String mode) {
+    //    mDesc = new Acs(mode);
+    //}
 
     protected PromisedReply<ServerMessage> updateAccessMode(final String update) throws Exception {
-        final AccessMode mode = new AccessMode(mMode);
-        mode.update(update);
-        if (!mMode.equals(mode)) {
-            return updateSelfSub(mode.toString()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        if (mDesc.acs == null) {
+            mDesc.acs = new Acs();
+        }
+
+        final Acs mode = new Acs(mDesc.acs);
+        mode.updateWant(update);
+        if (!mode.wantEquals(mDesc.acs)) {
+            return updateSelfSub(mode.getWant()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    mMode = mode;
+                    mDesc.acs.updateWant(update);
                     return null;
                 }
             }, null);
@@ -454,21 +436,21 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public boolean isAdmin() {
-        return mMode != null && mMode.isAdmin();
+        return mDesc.acs != null && mDesc.acs.isAdmin();
     }
     public PromisedReply<ServerMessage> updateAdmin(final boolean isAdmin) throws Exception {
         return updateAccessMode(isAdmin ? "+S" : "-S");
     }
 
     public boolean isMuted() {
-        return mMode != null && mMode.isMuted();
+        return mDesc.acs != null && mDesc.acs.isMuted();
     }
     public PromisedReply<ServerMessage> updateMuted(final boolean muted) throws Exception {
         return updateAccessMode(muted ? "-P" : "+P");
     }
 
     public boolean isOwner() {
-        return mMode != null && mMode.isOwner();
+        return mDesc.acs != null && mDesc.acs.isOwner();
     }
 
 
@@ -552,14 +534,14 @@ public class Topic<Pu,Pr,T> implements LocalData {
                             throws Exception {
                         if (msg.ctrl != null && msg.ctrl.params != null && !mAttached) {
                             mAttached = true;
-                            mMode = new AccessMode((String)msg.ctrl.params.get("mode"));
-
+                            mDesc.acs = new Acs((Map<String,String>) msg.ctrl.params.get("acs"));
                             if (isNew()) {
                                 setUpdated(msg.ctrl.ts);
                                 setName(msg.ctrl.topic);
-                                if (mStore != null) {
-                                    mStore.topicUpdate(Topic.this);
-                                }
+                            }
+
+                            if (mStore != null) {
+                                mStore.topicUpdate(Topic.this);
                             }
 
                             if (mListener != null) {
@@ -738,22 +720,27 @@ public class Topic<Pu,Pr,T> implements LocalData {
             throw new AlreadySubscribedException();
         }
 
-        long id;
+        final long id;
+        final Subscription sub;
         if (mStore != null) {
-            Subscription sub = new Subscription();
+            sub = new Subscription();
             sub.topic = getName();
             sub.user = uid;
             sub.acs = new Acs();
-            sub.acs.want = mode;
-            id = mStore.subAdd(this, sub);
+            sub.acs.setWant(mode);
+            id = mStore.subNew(this, sub);
         } else {
             id = -1;
+            sub = null;
         }
 
         return setSubscription(new MetaSetSub<>(uid, mode, invite)).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        if (id > 0) {
+                            mStore.subUpdate(Topic.this, sub);
+                        }
                         return null;
                     }
                 }, null);

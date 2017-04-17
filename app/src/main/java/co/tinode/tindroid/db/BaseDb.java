@@ -16,17 +16,18 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
 import co.tinode.tindroid.TindroidApp;
+import co.tinode.tinodesdk.model.Acs;
 
 /**
  * SQLite backend. Persistent store for messages and chats.
  */
 public class BaseDb extends SQLiteOpenHelper {
     // Object not yet sent to the server
-    static final int STATUS_QUEUED = 0;
+    public static final int STATUS_QUEUED = 0;
     // Object received by the server
-    static final int STATUS_SYNCED = 1;
+    public static final int STATUS_SYNCED = 1;
     // Object deleted
-    static final int STATUS_DELETED = 2;
+    public static final int STATUS_DELETED = 2;
 
     /**
      * Schema version.
@@ -175,6 +176,34 @@ public class BaseDb extends SQLiteOpenHelper {
             }
         }
         return null;
+    }
+
+    static String serializeMode(Acs acs) {
+        String result = "";
+        if (acs != null) {
+            String val = acs.getMode();
+            result = val != null ? val + "," : ",";
+
+            val = acs.getWant();
+            result += val != null ? val + "," : ",";
+
+            val = acs.getGiven();
+            result += val != null ? val : "";
+        }
+        return result;
+    }
+
+    static Acs deserializeMode(String m) {
+        Acs result = new Acs();
+        if (m != null) {
+            String[] parts = m.split(",");
+            if (parts.length == 3) {
+                result.setMode(parts[0]);
+                result.setWant(parts[1]);
+                result.setGiven(parts[2]);
+            }
+        }
+        return result;
     }
 
     static boolean updateCounter(SQLiteDatabase db, String table, String column, long id,  int counter) {

@@ -103,10 +103,17 @@ public class TopicInfoFragment extends ListFragment {
             subtitle.setText(priv);
         }
 
+        final TextView address = (TextView) activity.findViewById(R.id.topicAddress);
+        address.setText(mTopic.getName());
+
+        final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
+        permissions.setText(mTopic.getAccessMode().getMode());
+
         final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
         muted.setChecked(mTopic.isMuted());
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+                Log.d(TAG, "isChecke=" + isChecked + ", muted=" + mTopic.isMuted());
                 if (mTopic.isMuted() != isChecked) {
                     try {
                         mTopic.updateMuted(isChecked);
@@ -164,6 +171,7 @@ public class TopicInfoFragment extends ListFragment {
             } else {
                 mItemCount = 0;
             }
+            notifyDataSetChanged();
             Log.d(TAG, "resetContent got " + mItemCount + " items");
         }
 
@@ -218,18 +226,20 @@ public class TopicInfoFragment extends ListFragment {
 
         void bindView(int position, ViewHolder holder) {
             final Subscription<VCard, String> sub = mItems[position];
+            final StoredSubscription ss = (StoredSubscription) sub.getLocal();
 
-            VCard pub = sub.pub;
             Bitmap bmp = null;
-            if (pub != null) {
-                holder.name.setText(pub.fn);
-                bmp = pub.getBitmap();
+            if (sub.pub != null) {
+                holder.name.setText(sub.pub.fn);
+                bmp = sub.pub.getBitmap();
+            } else {
+                Log.d(TAG, "Pub is null for " + sub.user);
             }
 
             holder.contactPriv.setText(sub.priv);
 
             int i = 0;
-            UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.acs);
+            UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.acs, ss.status);
             if (labels != null) {
                 for (UiUtils.AccessModeLabel l : labels) {
                     holder.status[i].setText(l.nameId);

@@ -110,4 +110,6 @@
     <string name="close">Close</string>
     <string name="modeInvited">invited</string>
     <string name="modeRequested">requested</string>
+    <string name="modeUndefined">undefined</string>
+    <string name="modePending">pending</string>
 </resources>

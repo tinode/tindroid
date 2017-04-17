@@ -57,7 +57,7 @@ public class Subscription<Pu,Pr> implements LocalData {
 
         if (sub.acs != null) {
             if (acs == null) {
-                acs = sub.acs;
+                acs = new Acs(sub.acs);
                 changed++;
             } else {
                 changed += acs.merge(sub.acs) ? 1 : 0;
@@ -110,30 +110,34 @@ public class Subscription<Pu,Pr> implements LocalData {
         return changed > 0;
     }
 
+    /**
+     * Merge changes from {meta set} packet with the subscription.
+     */
     public boolean merge(MetaSetSub<?> sub) {
         int changed = 0;
 
-        if (user == null && sub.user != null && !sub.user.equals("")) {
-            user = sub.user;
-            changed ++;
+        if (sub.mode != null && acs == null) {
+            acs = new Acs();
         }
 
-        if (sub.mode != null) {
-            if (acs != null) {
-                if (acs.mode == null || !acs.mode.equals(sub.mode)) {
-                    acs.mode = sub.mode;
-                    changed++;
-                }
-            } else {
-                acs = new Acs();
-                acs.mode = sub.mode;
+        if (sub.user != null && !sub.user.equals("")) {
+            if (user == null) {
+                user = sub.user;
+                changed++;
+            }
+            if (sub.mode != null) {
+                acs.setGiven(sub.mode);
+                changed++;
+            }
+        } else {
+            if (sub.mode != null) {
+                acs.setWant(sub.mode);
                 changed++;
             }
         }
 
         return changed > 0;
     }
-
 
     @Override
     @JsonIgnore

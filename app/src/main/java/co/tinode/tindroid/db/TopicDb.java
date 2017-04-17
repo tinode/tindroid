@@ -202,7 +202,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_RECV, topic.getRecv());
         values.put(COLUMN_NAME_SEQ, topic.getSeq());
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
-        values.put(COLUMN_NAME_ACCESSMODE, topic.getMode().toString());
+        values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_SERIALIZED_TYPES, topic.getSerializedTypes());
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
@@ -246,7 +246,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_RECV, topic.getRecv());
         values.put(COLUMN_NAME_SEQ, topic.getSeq());
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
-        values.put(COLUMN_NAME_ACCESSMODE, topic.getMode().toString());
+        values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 

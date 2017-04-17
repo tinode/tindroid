@@ -43,7 +43,7 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
         topic.setPub((Pu) BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PUBLIC)));
         topic.setPriv((Pr) BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PRIVATE)));
 
-        topic.setMode(c.getString(TopicDb.COLUMN_IDX_ACCESSMODE));
+        topic.setAccessMode(BaseDb.deserializeMode(c.getString(TopicDb.COLUMN_IDX_ACCESSMODE)));
 
         topic.setLocal(st);
     }

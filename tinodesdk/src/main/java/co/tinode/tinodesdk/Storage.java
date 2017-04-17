@@ -41,6 +41,7 @@ public interface Storage {
     /** Add a new subscriber to topic. The new subscriber is being added locally. */
     <Pu,Pr> long subNew(Topic topic, Subscription<Pu,Pr> sub);
 
+
     /** Get a list o topic subscriptions from DB. */
     Collection<Subscription> getSubscriptions(Topic topic);
 

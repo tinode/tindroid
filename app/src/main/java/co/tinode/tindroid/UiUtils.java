@@ -52,7 +52,6 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.AccessMode;
 import co.tinode.tinodesdk.model.Acs;
 
 /**
@@ -541,39 +540,40 @@ public class UiUtils {
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
 
     public static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
-        AccessMode mode = new AccessMode(acs);
-        ArrayList<AccessModeLabel> result = new ArrayList<>(3);
-        if (mode.isDefined()) {
-            if (mode.isBanned()) {
-                result.add(new AccessModeLabel(R.string.modeBanned, COLOR_RED_BORDER));
-            } else {
-                if (mode.isOwner()) {
-                    result.add(new AccessModeLabel(R.string.modeOwner, COLOR_GREEN_BORDER));
+        ArrayList<AccessModeLabel> result = new ArrayList<>(4);
+        if (acs != null) {
+            if (acs.isModeDefined()) {
+                if (acs.isBanned()) {
+                    result.add(new AccessModeLabel(R.string.modeBanned, COLOR_RED_BORDER));
                 } else {
-                    if (mode.isAdmin()) {
-                        result.add(new AccessModeLabel(R.string.modeAdmin, COLOR_GREEN_BORDER));
+                    if (acs.isOwner()) {
+                        result.add(new AccessModeLabel(R.string.modeOwner, COLOR_GREEN_BORDER));
+                    } else {
+                        if (acs.isAdmin()) {
+                            result.add(new AccessModeLabel(R.string.modeAdmin, COLOR_GREEN_BORDER));
+                        }
+                        if (!acs.canWrite()) {
+                            result.add(new AccessModeLabel(R.string.modeReadOnly, COLOR_YELLOW_BORDER));
+                        }
                     }
-                    if (!mode.canWrite()) {
-                        result.add(new AccessModeLabel(R.string.modeReadOnly, COLOR_YELLOW_BORDER));
+                    if (acs.isMuted()) {
+                        result.add(new AccessModeLabel(R.string.modeMuted, COLOR_GRAY_BORDER));
                     }
                 }
-                if (mode.isMuted()) {
-                    result.add(new AccessModeLabel(R.string.modeMuted, COLOR_GRAY_BORDER));
-                }
-            }
-        } else if (!mode.isInvalid()){
-            // The mode is undefined (NONE)
-            if (acs != null) {
-                AccessMode given = new AccessMode(acs.given);
-                AccessMode want = new AccessMode(acs.want);
-                if (given.isDefined() && !want.isDefined()) {
+            } else if (!acs.isInvalid()) {
+                // The mode is undefined (NONE)
+                if (acs.isGivenDefined() && !acs.isWantDefined()) {
                     result.add(new AccessModeLabel(R.string.modeInvited, COLOR_GRAY_BORDER));
-                } else if (!given.isDefined() && want.isDefined()) {
+                } else if (!acs.isGivenDefined() && acs.isWantDefined()) {
                     result.add(new AccessModeLabel(R.string.modeRequested, COLOR_GRAY_BORDER));
                 } else {
-                    // FIXME(gene): it's either an indefined state or invalid
+                    // It's either an undefined state or invalid
+                    result.add(new AccessModeLabel(R.string.modeUndefined, COLOR_GRAY_BORDER));
                 }
             }
+        }
+        if (status == BaseDb.STATUS_QUEUED) {
+            result.add(new AccessModeLabel(R.string.modePending, COLOR_GRAY_BORDER));
         }
 
         return !result.isEmpty() ?

@@ -153,7 +153,7 @@ public class SubscriberDb implements BaseColumns {
             // User's own sender index is 0.
             ss.senderIdx = BaseDb.isMe(sub.user) ? 0 : getNextSenderIndex(db, ss.topicId);
             values.put(COLUMN_NAME_SENDER_INDEX, ss.senderIdx);
-            values.put(COLUMN_NAME_MODE, serializeMode(sub.acs));
+            values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
             values.put(COLUMN_NAME_UPDATED, (sub.updated != null ? sub.updated : new Date()).getTime());
             // values.put(COLUMN_NAME_DELETED, NULL);
             values.put(COLUMN_NAME_READ, sub.read);
@@ -200,15 +200,19 @@ public class SubscriberDb implements BaseColumns {
 
             // Update user
             if (UserDb.update(db, sub)) {
+                int status = ss.status;
+
                 // Convert topic description to a map of values
                 ContentValues values = new ContentValues();
-                values.put(COLUMN_NAME_MODE, serializeMode(sub.acs));
+                values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
                 values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
                 if (sub.deleted != null) {
                     values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED);
                     values.put(COLUMN_NAME_DELETED, sub.deleted.getTime());
+                    status = BaseDb.STATUS_DELETED;
                 } else if (ss.status != BaseDb.STATUS_SYNCED) {
                     values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
+                    status = BaseDb.STATUS_SYNCED;
                 }
                 values.put(COLUMN_NAME_READ, sub.read);
                 values.put(COLUMN_NAME_RECV, sub.recv);
@@ -228,6 +232,8 @@ public class SubscriberDb implements BaseColumns {
                 //        " name=" + sub.user + " returned " + updated);
 
                 db.setTransactionSuccessful();
+
+                ss.status = status;
             }
         } catch (Exception ex) {
             Log.d(TAG, "Exception while updating subscription", ex);
@@ -313,9 +319,9 @@ public class SubscriberDb implements BaseColumns {
     private static final int JOIN_USER_COLUMN_IDX_UID = 13;
     private static final int JOIN_USER_COLUMN_IDX_PUBLIC = 14;
 
-    private static final int JOIN_TOPIC_COLUMN_IDX_TOPIC = 13;
-    private static final int JOIN_TOPIC_COLUMN_IDX_SEQ = 14;
-    private static final int JOIN_TOPIC_COLUMN_IDX_WITH = 14;
+    private static final int JOIN_TOPIC_COLUMN_IDX_TOPIC = 15;
+    private static final int JOIN_TOPIC_COLUMN_IDX_SEQ = 16;
+    private static final int JOIN_TOPIC_COLUMN_IDX_WITH = 17;
 
     public static Subscription readOne(Cursor c) {
         // StoredSub part
@@ -329,7 +335,7 @@ public class SubscriberDb implements BaseColumns {
         // Subscription part
         Subscription s = new Subscription();
         // From subs table
-        s.acs = deserializeMode(c.getString(COLUMN_IDX_MODE));
+        s.acs = BaseDb.deserializeMode(c.getString(COLUMN_IDX_MODE));
         s.updated = new Date(c.getLong(COLUMN_IDX_UPDATED));
         s.deleted = new Date(c.getLong(COLUMN_IDX_DELETED));
         s.read = c.getInt(COLUMN_IDX_READ);
@@ -376,39 +382,5 @@ public class SubscriberDb implements BaseColumns {
 
     public static boolean updateRecv(SQLiteDatabase db, long topicId, int recv) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_RECV, topicId, recv);
-    }
-
-    private static String serializeMode(Acs acs) {
-        String result = "";
-        if (acs != null) {
-            if (acs.mode != null) {
-                result = acs.mode;
-            }
-            if (acs.want != null) {
-                result = result + "," + acs.want;
-            }
-            if (acs.given != null) {
-                result = result + "," + acs.given;
-            }
-        }
-        return result;
-    }
-
-    private static Acs deserializeMode(String m) {
-        Acs result = null;
-        if (m != null) {
-            String[] parts = m.split(",");
-            if (parts.length > 0) {
-                result = new Acs();
-                result.mode = parts[0];
-                if (parts.length > 1) {
-                    result.want = parts[1];
-                    if (parts.length > 2) {
-                        result.given = parts[2];
-                    }
-                }
-            }
-        }
-        return result;
     }
 }

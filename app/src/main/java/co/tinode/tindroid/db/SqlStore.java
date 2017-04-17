@@ -122,9 +122,6 @@ class SqlStore implements Storage {
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss != null && ss.id > 0) {
             result = SubscriberDb.update(mDbh.getWritableDatabase(), sub);
-            if (result) {
-                ss.status = BaseDb.STATUS_SYNCED;
-            }
         }
         return result;
     }
