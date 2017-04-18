@@ -31,6 +31,7 @@ import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -69,44 +70,54 @@ public class TopicInfoFragment extends ListFragment {
         Bundle bundle = getArguments();
         String name = bundle.getString("topic");
         mTopic = Cache.getTinode().getTopic(name);
-        
+
+
+        final Activity activity = getActivity();
+        AppCompatImageView avatar = (AppCompatImageView) activity.findViewById(R.id.imageAvatar);
+        final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
+        final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
+        final TextView address = (TextView) activity.findViewById(R.id.topicAddress);
+        final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
+
         mTopic.setListener(new Topic.Listener<VCard, String, String>() {
             @Override
             public void onSubsUpdated() {
-                mAdapter.resetContent();
-                getActivity().runOnUiThread(new Runnable() {
+                activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mAdapter.notifyDataSetChanged();
+                        mAdapter.resetContent();
+                    }
+                });
+            }
+
+            @Override
+            public void onMetaDesc(Description ignored) {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        permissions.setText(mTopic.getAccessMode().getMode());
                     }
                 });
             }
         });
-        final Activity activity = getActivity();
+
 
         VCard pub = mTopic.getPub();
         if (pub != null) {
             if (!TextUtils.isEmpty(pub.fn)) {
-                TextView title = (TextView) activity.findViewById(R.id.topicTitle);
                 title.setText(pub.fn);
             }
-
-            Bitmap bmp = pub.getBitmap();
+            final Bitmap bmp = pub.getBitmap();
             if (bmp != null) {
-                AppCompatImageView avatar = (AppCompatImageView) activity.findViewById(R.id.imageAvatar);
                 avatar.setImageBitmap(bmp);
             }
         }
         String priv = mTopic.getPriv();
         if (!TextUtils.isEmpty(priv)) {
-            TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
             subtitle.setText(priv);
         }
 
-        final TextView address = (TextView) activity.findViewById(R.id.topicAddress);
         address.setText(mTopic.getName());
-
-        final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
         permissions.setText(mTopic.getAccessMode().getMode());
 
         final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
@@ -141,7 +152,7 @@ public class TopicInfoFragment extends ListFragment {
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        Log.d(TAG, "onActivityCreated");
+        // Log.d(TAG, "onActivityCreated");
 
         getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -163,6 +174,7 @@ public class TopicInfoFragment extends ListFragment {
             mItems = new Subscription[8];
         }
 
+        /** Must be run on UI thread */
         void resetContent() {
             Collection<Subscription<VCard,String>> c = mTopic.getSubscriptions();
             if (c != null) {
@@ -171,8 +183,8 @@ public class TopicInfoFragment extends ListFragment {
             } else {
                 mItemCount = 0;
             }
+            // Log.d(TAG, "resetContent got " + mItemCount + " items");
             notifyDataSetChanged();
-            Log.d(TAG, "resetContent got " + mItemCount + " items");
         }
 
         @Override

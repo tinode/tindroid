@@ -12,6 +12,7 @@ import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
@@ -244,40 +245,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
-     * Topic sent an update to subscription, got a confirmation.
-     *
-     * @param sub updated topic parameters
-     */
-    protected void update(MetaSetSub<?> sub) {
-        if (sub.user == null) {
-            if (mDesc.acs == null) {
-                mDesc.acs = new Acs();
-            }
-
-            // This is an update to user's own subscription to topic (want)
-            if (sub.mode != null && !mDesc.acs.wantEquals(sub.mode)) {
-                mDesc.acs.setWant(sub.mode);
-                if (mStore != null) {
-                    mStore.topicUpdate(this);
-                }
-            }
-        } else {
-            // This is an update to someone else's subscription to topic (given)
-            Subscription<Pu,Pr> s = mSubs.get(sub.user);
-            if (s == null) {
-                s = new Subscription<>();
-                s.user = sub.user;
-                s.acs = new Acs();
-                s.acs.setGiven(sub.mode);
-                addSubToCache(s);
-            } else {
-                s.acs.setMode(sub.mode);
-            }
-        }
-
-    }
-
-    /**
      * Update topic parameters from a Description object.
      *
      * @param desc updated topic parameters
@@ -286,6 +253,52 @@ public class Topic<Pu,Pr,T> implements LocalData {
         if (mDesc.merge(desc) && mStore != null) {
             mStore.topicUpdate(this);
         }
+    }
+
+    /**
+     * Topic sent an update to subscription, got a confirmation.
+     *
+     * @param sub updated topic parameters
+     */
+    protected void update(Map<String,Object> params, MetaSetSub<?> sub) {
+        String user = sub.user;
+
+        Map<String,String> acsMap = params != null ? (Map<String,String>) params.get("acs") : null;
+        Acs acs;
+        if (acsMap != null) {
+            acs = new Acs(acsMap);
+        } else {
+            acs = new Acs();
+            if (user == null) {
+                acs.setWant(sub.mode);
+            } else {
+                acs.setGiven(sub.mode);
+            }
+        }
+
+        if (user == null) {
+            user = mTinode.getMyId();
+
+            // This is an update to user's own subscription to topic (want)
+            if (!acs.equals(mDesc.acs)) {
+                mDesc.acs = acs;
+                if (mStore != null) {
+                    mStore.topicUpdate(this);
+                }
+            }
+        }
+
+        // This is an update to someone else's subscription to topic (given)
+        Subscription<Pu,Pr> s = mSubs.get(user);
+        if (s == null) {
+            s = new Subscription<>();
+            s.user = user;
+            s.acs = acs;
+            addSubToCache(s);
+        } else {
+            s.acs.merge(acs);
+        }
+
     }
 
     /**
@@ -300,14 +313,30 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
     }
 
-    protected void update(Date updated, MsgSetMeta<Pu,Pr,?> meta) {
+    /**
+     * Topic sent an update to description or subscription, got a confirmation, now
+     * update local data with the new info.
+     *
+     * @param ctrl {ctrl} packet sent by the server
+     * @param meta original {meta} packet updated topic parameters
+     */
+    protected void update(MsgServerCtrl ctrl, MsgSetMeta<Pu,Pr,?> meta) {
         // FIXME(gene): actually update subscription
 
         if (meta.desc != null) {
             update(meta.desc);
+
+            if (mListener != null) {
+                mListener.onMetaDesc(mDesc);
+            }
         }
+
         if (meta.sub != null) {
-            update(meta.sub);
+            update(ctrl.params, meta.sub);
+
+            if (mListener != null) {
+                mListener.onSubsUpdated();
+            }
         }
     }
 
@@ -332,6 +361,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
     public void setUpdated(Date updated) {
         mDesc.updated = updated;
+    }
+
+    public Date getSubsUpdated() {
+        return mSubsUpdated;
     }
 
     public Date getDeleted() {
@@ -470,7 +503,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
     protected void setOnline(boolean online) {
         if (online != mOnline) {
-            //Log.d(TAG, "Topic[" + mName + "].setOnline(" + online + ");");
+            //(TAG, "Topic[" + mName + "].setOnline(" + online + ");");
             mOnline = online;
             if (mListener != null) {
                 mListener.onOnline(mOnline);
@@ -659,7 +692,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
                         throws Exception {
-                    update(result.ctrl.ts, meta);
+                    update(result.ctrl, meta);
                     return null;
                 }
             }, null);
@@ -1062,7 +1095,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     protected void routeMeta(MsgServerMeta<Pu,Pr> meta) {
-        Log.d(TAG, "Generic.routeMeta");
+        //Log.d(TAG, "Generic.routeMeta");
         if (meta.desc != null) {
             routeMetaDesc(meta);
         }
@@ -1084,7 +1117,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     protected void routeMetaSub(MsgServerMeta<Pu,Pr> meta) {
-        Log.d(TAG, "Generic.routeMetaSub");
+        //Log.d(TAG, "Generic.routeMetaSub");
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
         for (Subscription<Pu,Pr> newsub : meta.sub) {
@@ -1276,7 +1309,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         public MetaGetBuilder withGetSub() {
-            return withGetSub(topic.getUpdated(), null);
+            return withGetSub(topic.getSubsUpdated(), null);
         }
 
         public MsgGetMeta build() {

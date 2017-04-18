@@ -125,7 +125,7 @@ public class SubscriberDb implements BaseColumns {
      * @return database ID of the newly added subscription
      */
     public static long insert(SQLiteDatabase db, long topicId, int status, Subscription sub) {
-        Log.d(TAG, "Inserting sub for " + topicId + "/" + sub.user);
+        // Log.d(TAG, "Inserting sub for " + topicId + "/" + sub.user);
         long id = -1;
         try {
             db.beginTransaction();
@@ -137,11 +137,11 @@ public class SubscriberDb implements BaseColumns {
                 ss.userId = UserDb.insert(db, sub);
             }
             if (ss.userId <= 0) {
-                Log.d(TAG, "Failed to insert user: " + ss.userId);
+                Log.e(TAG, "Failed to insert user: " + ss.userId);
                 db.endTransaction();
                 return -1;
             }
-            Log.d(TAG, "User inserted: " + ss.userId);
+            // Log.d(TAG, "User inserted: " + ss.userId);
 
             ContentValues values = new ContentValues();
             // Insert subscription
@@ -174,7 +174,7 @@ public class SubscriberDb implements BaseColumns {
             sub.setLocal(ss);
 
         } catch (Exception ex) {
-            Log.d(TAG, "Exception while inserting", ex);
+            Log.e(TAG, "Exception while inserting", ex);
         }
 
         db.endTransaction();
@@ -236,7 +236,7 @@ public class SubscriberDb implements BaseColumns {
                 ss.status = status;
             }
         } catch (Exception ex) {
-            Log.d(TAG, "Exception while updating subscription", ex);
+            Log.e(TAG, "Exception while updating subscription", ex);
         }
 
         db.endTransaction();

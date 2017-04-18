@@ -91,7 +91,7 @@ public class UserDb implements BaseColumns {
      * @return ID of the newly added user
      */
     public static long insert(SQLiteDatabase db, Subscription sub) {
-        Log.d(TAG, "Inserting user " + sub.user);
+        // Log.d(TAG, "Inserting user " + sub.user);
 
         // Convert subscription description to a map of values
         ContentValues values = new ContentValues();
@@ -111,7 +111,7 @@ public class UserDb implements BaseColumns {
      * @return ID of the newly added user
      */
     public static long insert(SQLiteDatabase db, String uid, Object pub) {
-        Log.d(TAG, "Inserting user " + uid + " from invite");
+        // Log.d(TAG, "Inserting user " + uid + " from invite");
 
         // Convert subscription description to a map of values
         ContentValues values = new ContentValues();
