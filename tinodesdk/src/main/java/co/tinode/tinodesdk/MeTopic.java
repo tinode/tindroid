@@ -145,8 +145,6 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
 
         if (mListener != null) {
             mListener.onPres(pres);
-        } else {
-            Log.d(TAG, "Me.routePres; listener is null");
         }
     }
 

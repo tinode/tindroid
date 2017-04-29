@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 
 /**
  *
@@ -126,7 +127,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
             l.mTopic = this;
         }
 
-        mListener = l;
+        setListener(l);
     }
 
     /**
@@ -325,7 +326,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         if (meta.desc != null) {
             update(meta.desc);
-
             if (mListener != null) {
                 mListener.onMetaDesc(mDesc);
             }
@@ -333,7 +333,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         if (meta.sub != null) {
             update(ctrl.params, meta.sub);
-
             if (mListener != null) {
                 mListener.onSubsUpdated();
             }
@@ -508,6 +507,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
             if (mListener != null) {
                 mListener.onOnline(mOnline);
             }
+
         }
     }
 
@@ -565,20 +565,24 @@ public class Topic<Pu,Pr,T> implements LocalData {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg)
                             throws Exception {
-                        if (msg.ctrl != null && msg.ctrl.params != null && !mAttached) {
+                        if (!mAttached) {
                             mAttached = true;
-                            mDesc.acs = new Acs((Map<String,String>) msg.ctrl.params.get("acs"));
-                            if (isNew()) {
-                                setUpdated(msg.ctrl.ts);
-                                setName(msg.ctrl.topic);
-                            }
+                            if (msg.ctrl != null) {
+                                if (msg.ctrl.params != null) {
+                                    mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
+                                    if (isNew()) {
+                                        setUpdated(msg.ctrl.ts);
+                                        setName(msg.ctrl.topic);
+                                    }
 
-                            if (mStore != null) {
-                                mStore.topicUpdate(Topic.this);
-                            }
+                                    if (mStore != null) {
+                                        mStore.topicUpdate(Topic.this);
+                                    }
+                                }
 
-                            if (mListener != null) {
-                                mListener.onSubscribe(200, "subscribed");
+                                if (mListener != null) {
+                                    mListener.onSubscribe(msg.ctrl.code, msg.ctrl.text);
+                                }
                             }
                         }
                         return null;
@@ -983,13 +987,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mSubs != null ? mSubs.values() : null;
     }
 
-    public void setListener(Listener<Pu,Pr,T> l) {
-        if (l != null) {
-            l.mTopic = this;
-        }
-        mListener = l;
-    }
-
     public boolean isAttached() {
         return mAttached;
     }
@@ -1171,6 +1168,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 sub.online = false;
             }
         }
+
         if (mListener != null) {
             mListener.onPres(pres);
         }
@@ -1212,6 +1210,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
     @Override
     public Payload getLocal() {
         return mLocal;
+    }
+
+    public synchronized void setListener(Listener <Pu,Pr,T> l) {
+        mListener = l;
     }
 
     public static class Listener<PPu,PPr,Tt> {

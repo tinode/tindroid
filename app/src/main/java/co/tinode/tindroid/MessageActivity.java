@@ -1,39 +1,30 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.app.NotificationManager;
-import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.content.ClipboardManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.db.MessageDb;
-import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
-import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * View to display a single conversation
@@ -42,30 +33,18 @@ public class MessageActivity extends AppCompatActivity {
 
     private static final String TAG = "MessageActivity";
 
-    private static final int MESSAGES_QUERY_ID = 100;
-
     private static final String FRAGMENT_MESSAGES = "msg";
     private static final String FRAGMENT_INFO = "info";
+    private static final String FRAGMENT_EDIT_TOPIC = "edit_topic";
 
-    private LoaderManager mLoaderManager;
-    private MessageLoaderCallbacks mLoaderCallbacks;
     private String mMessageText = null;
 
     private String mTopicName;
     protected Topic<VCard, String, String> mTopic;
 
-    private MessagesFragment mMsgFragment = null;
-    private TopicInfoFragment mInfoFragment = null;
-
-    public static void runLoader(final Bundle args, final LoaderManager.LoaderCallbacks<Cursor> callbacks,
-                                  final LoaderManager loaderManager) {
-        final Loader<Cursor> loader = loaderManager.getLoader(MESSAGES_QUERY_ID);
-        if (loader != null && !loader.isReset()) {
-            loaderManager.restartLoader(MESSAGES_QUERY_ID, args, callbacks);
-        } else {
-            loaderManager.initLoader(MESSAGES_QUERY_ID, args, callbacks);
-        }
-    }
+    // private MessagesFragment mMsgFragment = null;
+    // private TopicInfoFragment mInfoFragment = null;
+    // private EditGroupFragment mEditTopicFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,8 +58,8 @@ public class MessageActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mInfoFragment != null && mInfoFragment.isVisible()) {
-                    showMsgFragment();
+                if (!isFragmentVisible(FRAGMENT_MESSAGES)) {
+                    showFragment(FRAGMENT_MESSAGES);
                 } else {
                     Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -89,10 +68,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-        showMsgFragment();
-
-        mLoaderManager = getSupportLoaderManager();
-        mLoaderCallbacks = new MessageLoaderCallbacks();
+        showFragment(FRAGMENT_MESSAGES);
     }
 
     @Override
@@ -136,10 +112,8 @@ public class MessageActivity extends AppCompatActivity {
         // Get a known topic.
         mTopic = tinode.getTopic(mTopicName);
         if (mTopic != null) {
-            mTopic.setListener(new TListener());
-
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
-            runLoader(null, mLoaderCallbacks, mLoaderManager);
+            mTopic.setListener(new TListener());
 
             if (!mTopic.isAttached()) {
                 try {
@@ -158,6 +132,8 @@ public class MessageActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
         }
+
+        showFragment(FRAGMENT_MESSAGES);
     }
 
     @Override
@@ -194,20 +170,12 @@ public class MessageActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_attach: {
-                // TODO: implement
-                return true;
-            }
             case R.id.action_view_contact: {
-                showInfoFragment();
+                showFragment(FRAGMENT_INFO);
                 return true;
             }
-            case R.id.action_delete: {
-                // TODO: implement
-                return true;
-            }
-            case R.id.action_mute: {
-                // TODO: implement
+            case R.id.action_topic_edit: {
+                showFragment(FRAGMENT_EDIT_TOPIC);
                 return true;
             }
             default:
@@ -215,36 +183,39 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
-    /** Display chat */
-    private void showMsgFragment() {
-        if (mMsgFragment == null) {
-            mMsgFragment = new MessagesFragment();
+    private boolean isFragmentVisible(String tag) {
+        Fragment fragment = getSupportFragmentManager().findFragmentByTag(tag);
+        return fragment != null && fragment.isVisible();
+    }
+
+    private void showFragment(String tag) {
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentByTag(tag);
+        if (fragment == null) {
+            switch (tag) {
+                case FRAGMENT_MESSAGES:
+                    fragment = new MessagesFragment();
+                    break;
+                case FRAGMENT_INFO:
+                    fragment = new TopicInfoFragment();
+                    break;
+                case FRAGMENT_EDIT_TOPIC:
+                    fragment = new EditGroupFragment();
+                    break;
+            }
         }
-        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, mMsgFragment, FRAGMENT_MESSAGES);
-        trx.commit();
-    }
-
-    /** Display topic info form */
-    private void showInfoFragment() {
-        if (mInfoFragment == null) {
-            mInfoFragment = new TopicInfoFragment();
+        if (fragment == null) {
+            throw new NullPointerException();
         }
-        Bundle args = new Bundle();
-        args.putString("topic", mTopicName);
-        mInfoFragment.setArguments(args);
-        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, mInfoFragment, FRAGMENT_INFO);
-        trx.commit();
-    }
 
-    public String getMessageText() {
-        return mMessageText;
-    }
-
-    public void sendReadNotification() {
-        if (mTopic != null) {
-            mTopic.noteRead();
+        if (!fragment.isVisible()) {
+            Bundle args = new Bundle();
+            args.putString("topic", mTopicName);
+            args.putString("messageText", mMessageText);
+            fragment.setArguments(args);
+            FragmentTransaction trx = fm.beginTransaction();
+            trx.replace(R.id.contentFragment, fragment, tag);
+            trx.commit();
         }
     }
 
@@ -252,106 +223,6 @@ public class MessageActivity extends AppCompatActivity {
         if (mTopic != null) {
             mTopic.noteKeyPress();
         }
-    }
-
-    public void sendMessage() {
-        Log.d(TAG, "sendMessage");
-        if (mTopic != null) {
-            final TextView inputField = (TextView) findViewById(R.id.editMessage);
-            String message = inputField.getText().toString().trim();
-            mMsgFragment.notifyDataSetChanged();
-            if (!message.equals("")) {
-                try {
-                    Log.d(TAG, "sendMessage -- sending...");
-                    mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // Update message list.
-                                    mMsgFragment.notifyDataSetChanged();
-                                    Log.d(TAG, "sendMessage -- {ctrl} received");
-                                }
-                            });
-                            return null;
-                        }
-                    }, null);
-                } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "sendMessage -- NotConnectedException");
-                } catch (Exception ignored) {
-                    Log.d(TAG, "sendMessage -- Exception");
-                    Toast.makeText(this, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Message is successfully queued, clear text from the input field and redraw the list.
-                Log.d(TAG, "sendMessage -- clearing text and notifying");
-                inputField.setText("");
-                runLoader(null, mLoaderCallbacks, mLoaderManager);
-            }
-        }
-    }
-
-    public void sendDeleteMessages(final int[] positions) {
-        if (mTopic != null) {
-            int[] list = new int[positions.length];
-            int i = 0;
-            while (i < positions.length) {
-                int pos = positions[i];
-                StoredMessage<String> msg = mMsgFragment.getMessage(pos);
-                if (msg != null) {
-                    list[i] = msg.seq;
-                    i++;
-                }
-            }
-
-            try {
-                mTopic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // Update message list.
-                                runLoader(null, mLoaderCallbacks, mLoaderManager);
-                                Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
-                            }
-                        });
-                        return null;
-                    }
-                }, null);
-            } catch (NotConnectedException ignored) {
-                Log.d(TAG, "sendDeleteMessages -- NotConnectedException");
-            } catch (Exception ignored) {
-                Log.d(TAG, "sendDeleteMessages -- Exception", ignored);
-                Toast.makeText(this, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    void copyMessageText(int[] positions) {
-        StringBuilder sb = new StringBuilder();
-        for (int position : positions) {
-            StoredMessage<String> msg = mMsgFragment.getMessage(position);
-            if (msg != null) {
-                sb.append("\n").append(formatMessageText(msg));
-            }
-        }
-
-        if (sb.length() > 1) {
-            sb.deleteCharAt(0);
-            String text = sb.toString();
-
-            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
-        }
-    }
-
-    private String formatMessageText(StoredMessage<String> msg) {
-        Subscription<VCard, ?> sub = mTopic.getSubscription(msg.from);
-        String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
-        return "[" + name + "]: " + msg.content + "; " + UiUtils.shortDate(msg.ts);
     }
 
     private class TListener extends Topic.Listener<VCard, String, String> {
@@ -362,13 +233,20 @@ public class MessageActivity extends AppCompatActivity {
         public void onSubscribe(int code, String text) {
             // Topic name may change after subscription, i.e. new -> grpXXX
             mTopicName = mTopic.getName();
-            runLoader(null, mLoaderCallbacks, mLoaderManager);
+            MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+                    findFragmentByTag(FRAGMENT_MESSAGES);
+            if (fragment != null && fragment.isVisible()) {
+                fragment.runLoader();
+            }
         }
 
         @Override
         public void onData(MsgServerData data) {
-            runLoader(null, mLoaderCallbacks, mLoaderManager);
-        }
+            MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+                    findFragmentByTag(FRAGMENT_MESSAGES);
+            if (fragment != null && fragment.isVisible()) {
+                fragment.runLoader();
+            }        }
 
         @Override
         public void onPres(MsgServerPres pres) {
@@ -383,7 +261,11 @@ public class MessageActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mMsgFragment.notifyDataSetChanged();
+                            MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+                                    findFragmentByTag(FRAGMENT_MESSAGES);
+                            if (fragment != null && fragment.isVisible()) {
+                                fragment.notifyDataSetChanged();
+                            }
                         }
                     });
                     break;
@@ -420,30 +302,4 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
-    private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
-
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            if (id == MESSAGES_QUERY_ID) {
-                return new MessageDb.Loader(MessageActivity.this, mTopicName, -1, -1);
-            }
-            return null;
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Cursor> loader,
-                                   Cursor cursor) {
-            if (loader.getId() == MESSAGES_QUERY_ID) {
-                Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
-                mMsgFragment.swapCursor(mTopicName, cursor);
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
-            if (loader.getId() == MESSAGES_QUERY_ID) {
-                mMsgFragment.swapCursor(null, null);
-            }
-        }
-    }
 }

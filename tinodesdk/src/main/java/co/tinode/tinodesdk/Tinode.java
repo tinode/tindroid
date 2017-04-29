@@ -258,6 +258,9 @@ public class Tinode {
                                     }
                                 }, null);
                     }
+                } catch (NotConnectedException ignored) {
+                    Log.d(TAG, "NotConnectedException in autoreconnect");
+                    // Do nothing
                 } catch (Exception e) {
                     Log.e(TAG, "Exception in Connection.onConnect: ", e);
                 }

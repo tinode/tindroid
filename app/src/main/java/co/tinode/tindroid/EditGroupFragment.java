@@ -5,6 +5,7 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -66,6 +67,8 @@ public class EditGroupFragment extends ListFragment {
     private ContactsLoaderCallback mContactsLoaderCallback;
 
     private int mPreviouslySelectedSearchItem = 0;
+
+    private String mTopicName = null;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
     private TreeSet<Integer> mSelectedContacts;
@@ -184,6 +187,32 @@ public class EditGroupFragment extends ListFragment {
         mAdapter.notifyDataSetChanged();
     }
 
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Bundle args = getArguments();
+        if (args != null) {
+            mTopicName = args.getString("topic");
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // In the case onPause() is called during a fling the image loader is
+        // un-paused to let any remaining background work complete.
+        mImageLoader.setPauseWork(false);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
+            UiUtils.acceptAvatar(getActivity(), (ImageView) getActivity().findViewById(R.id.imageAvatar), data);
+        }
+    }
+
     private void createTopic(final Activity activity, final String title, final Bitmap avatar) {
         final Tinode tinode = Cache.getTinode();
         final Topic<VCard,String,String> topic = new Topic<>(tinode, null);
@@ -214,20 +243,25 @@ public class EditGroupFragment extends ListFragment {
         }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        // In the case onPause() is called during a fling the image loader is
-        // un-paused to let any remaining background work complete.
-        mImageLoader.setPauseWork(false);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.acceptAvatar(getActivity(), (ImageView) getActivity().findViewById(R.id.imageAvatar), data);
+    private void populateForm(final Activity activity) {
+        final Tinode tinode = Cache.getTinode();
+        final Topic<VCard,String,String> topic = tinode.getTopic(mTopicName);
+        if (topic == null) {
+            return;
         }
+
+        final VCard vcard = topic.getPub();
+        if (vcard != null) {
+            final EditText titleEdit = ((EditText) activity.findViewById(R.id.title));
+            titleEdit.setText(vcard.fn);
+
+            Bitmap bmp = vcard.getBitmap();
+            if (bmp != null) {
+                UiUtils.acceptAvatar((ImageView) activity.findViewById(R.id.imageAvatar), bmp);
+            }
+        }
+
+        ((MembersAdapter) mMembers.getAdapter()).populate(topic);
     }
 
     /**
@@ -494,10 +528,24 @@ public class EditGroupFragment extends ListFragment {
 
     private class MembersAdapter extends RecyclerView.Adapter<MemberViewHolder> {
 
-        private ArrayList<MemberData> mItems;
+        private Cursor mCursor = null;
+        private DataSetObserver mDataSetObserver = null;
 
-        public MembersAdapter() {
-            mItems = new ArrayList<>();
+        public MembersAdapter(Cursor cursor) {
+            mDataSetObserver = new DataSetObserver() {
+                @Override
+                public void onChanged() {
+                    super.onChanged();
+                    notifyDataSetChanged();
+                }
+
+                @Override
+                public void onInvalidated() {
+                    super.onInvalidated();
+                    notifyDataSetChanged();
+                }
+            };
+            swapCursor(cursor);
         }
 
         @Override
@@ -548,6 +596,32 @@ public class EditGroupFragment extends ListFragment {
 
         Iterator<MemberData> getMembers() {
            return mItems.iterator();
+        }
+
+        public void populate(Topic topic) {
+            // TODO(gene): populate adapter with topic subscribers
+        }
+
+        /**
+         * Swap in a new Cursor, returning the old Cursor.  Unlike
+         * {@link #changeCursor(Cursor)}, the returned old Cursor is <em>not</em>
+         * closed.
+         */
+        public Cursor swapCursor(Cursor newCursor) {
+            if (newCursor == mCursor) {
+                return null;
+            }
+
+            final Cursor oldCursor = mCursor;
+            if (oldCursor != null && mDataSetObserver != null) {
+                oldCursor.unregisterDataSetObserver(mDataSetObserver);
+            }
+            mCursor = newCursor;
+            if (mCursor != null && mDataSetObserver != null) {
+                mCursor.registerDataSetObserver(mDataSetObserver);
+            }
+            notifyDataSetChanged();
+            return oldCursor;
         }
     }
 

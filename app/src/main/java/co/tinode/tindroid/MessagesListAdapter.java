@@ -1,13 +1,17 @@
 package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.support.v7.view.ActionMode;
 import android.util.SparseBooleanArray;
-import android.util.SparseIntArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -18,14 +22,15 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
-import java.text.DateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import android.widget.Toast;
 
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Handle display of a conversation
@@ -38,7 +43,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     // Vertical padding between two messages from the same sender
     private static final int TRAIN_PADDING = 2;
 
-    private MessageActivity mActivity;
+    private AppCompatActivity mActivity;
     private Cursor mCursor;
     private String mTopicName;
     private ActionMode.Callback mSelectionModeCallback;
@@ -46,7 +51,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     private SparseBooleanArray mSelectedItems = null;
 
-    public MessagesListAdapter(MessageActivity context) {
+    public MessagesListAdapter(AppCompatActivity context) {
         super();
         mActivity = context;
         setHasStableIds(true);
@@ -83,11 +88,11 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 switch (menuItem.getItemId()) {
                     case R.id.action_delete:
                         Log.d(TAG, "Delete selected items");
-                        mActivity.sendDeleteMessages(getSelectedArray());
+                        sendDeleteMessages(getSelectedArray());
                         return true;
                     case R.id.action_copy:
                         Log.d(TAG, "Copy selected item to clipboard");
-                        mActivity.copyMessageText(getSelectedArray());
+                        copyMessageText(getSelectedArray());
                         return true;
                     case R.id.action_send_now:
                         Log.d(TAG, "Try re-sending selected item");
@@ -109,6 +114,71 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             items[i] = mSelectedItems.keyAt(i);
         }
         return items;
+    }
+
+    private void copyMessageText(int[] positions) {
+        StringBuilder sb = new StringBuilder();
+        final Topic topic = Cache.getTinode().getTopic(mTopicName);
+        if (topic == null) {
+            return;
+        }
+
+        for (int position : positions) {
+            StoredMessage<String> msg = getMessage(position);
+            if (msg != null) {
+                Subscription<VCard, ?> sub = (Subscription<VCard, ?>) topic.getSubscription(msg.from);
+                String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
+                sb.append("\n[").append(name).append("]: ").append(msg.content).append("; ")
+                        .append(UiUtils.shortDate(msg.ts));
+            }
+        }
+
+        if (sb.length() > 1) {
+            sb.deleteCharAt(0);
+            String text = sb.toString();
+
+            ClipboardManager clipboard = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
+        }
+    }
+
+    private void sendDeleteMessages(final int[] positions) {
+        final Topic topic = Cache.getTinode().getTopic(mTopicName);
+
+        if (topic != null) {
+            int[] list = new int[positions.length];
+            int i = 0;
+            while (i < positions.length) {
+                int pos = positions[i];
+                StoredMessage<String> msg = getMessage(pos);
+                if (msg != null) {
+                    list[i] = msg.seq;
+                    i++;
+                }
+            }
+
+            try {
+                topic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // Update message list.
+                                notifyDataSetChanged();
+                                Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
+                            }
+                        });
+                        return null;
+                    }
+                }, null);
+            } catch (NotConnectedException ignored) {
+                Log.d(TAG, "sendDeleteMessages -- NotConnectedException");
+            } catch (Exception ignored) {
+                Log.d(TAG, "sendDeleteMessages -- Exception", ignored);
+                Toast.makeText(mActivity, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
@@ -247,7 +317,9 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     @Override
     public int getItemCount() {
-        return mCursor != null ? mCursor.getCount() : 0;
+        int count = mCursor != null ? mCursor.getCount() : 0;
+        Log.d(TAG, "getItemCount = " + count + ", Cursor is " + (mCursor == null ? "NULL" : "not null"));
+        return count;
     }
 
     private void toggleSelectionAt(int pos) {

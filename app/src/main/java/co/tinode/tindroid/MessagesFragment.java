@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -14,15 +16,21 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * Fragment handling message display and message sending.
@@ -30,12 +38,18 @@ import co.tinode.tindroid.db.StoredMessage;
 public class MessagesFragment extends Fragment {
     private static final String TAG = "MessageFragment";
 
+    private static final int MESSAGES_QUERY_ID = 100;
+
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     // private static final int RECV_DELAY = 500;
     private static final int READ_DELAY = 1000;
 
     private MessagesListAdapter mMessagesAdapter;
     private RecyclerView mMessageList;
+    private MessageLoaderCallbacks mLoaderCallbacks;
+
+    private String mTopicName = null;
+    protected Topic<VCard, String, String> mTopic;
 
     private Timer mNoteTimer = null;
 
@@ -70,12 +84,14 @@ public class MessagesFragment extends Fragment {
         mMessagesAdapter = new MessagesListAdapter(activity);
         mMessageList.setAdapter(mMessagesAdapter);
 
+        mLoaderCallbacks = new MessageLoaderCallbacks();
+
         // Send message on button click
         getActivity().findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activity.sendMessage();
-                //activity.scrollTo(0);
+                sendMessage();
+                runLoader();
             }
         });
 
@@ -85,7 +101,7 @@ public class MessagesFragment extends Fragment {
                 new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                activity.sendMessage();
+                sendMessage();
                 return true;
             }
         });
@@ -112,10 +128,13 @@ public class MessagesFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final MessageActivity activity = (MessageActivity) getActivity();
+        Bundle bundle = getArguments();
+        mTopicName = bundle.getString("topic");
+        String messageToSend = bundle.getString("messageText");
 
-        String messageToSend = activity.getMessageText();
-        ((TextView) activity.findViewById(R.id.editMessage))
+        mTopic = Cache.getTinode().getTopic(mTopicName);
+
+        ((TextView) getActivity().findViewById(R.id.editMessage))
                 .setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
 
         // Check periodically if all messages were read;
@@ -123,10 +142,11 @@ public class MessagesFragment extends Fragment {
         mNoteTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                activity.sendReadNotification();
+                sendReadNotification();
             }
         }, READ_DELAY, READ_DELAY);
 
+        runLoader();
         scrollTo(0);
     }
 
@@ -144,6 +164,28 @@ public class MessagesFragment extends Fragment {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_topic, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.action_attach: {
+                // TODO: implement
+                return true;
+            }
+            case R.id.action_delete: {
+                // TODO: implement
+                return true;
+            }
+            case R.id.action_mute: {
+                // TODO: implement
+                return true;
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public void scrollTo(int position) {
@@ -173,7 +215,88 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    public StoredMessage<String> getMessage(int pos) {
-        return mMessagesAdapter.getMessage(pos);
+    public void sendMessage() {
+        if (mTopic != null) {
+            final Activity activity = getActivity();
+            final TextView inputField = (TextView) activity.findViewById(R.id.editMessage);
+            String message = inputField.getText().toString().trim();
+            notifyDataSetChanged();
+            if (!message.equals("")) {
+                try {
+                    Log.d(TAG, "sendMessage -- sending...");
+                    mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Update message list.
+                                    notifyDataSetChanged();
+                                    Log.d(TAG, "sendMessage -- {ctrl} received");
+                                }
+                            });
+                            return null;
+                        }
+                    }, null);
+                } catch (NotConnectedException ignored) {
+                    Log.d(TAG, "sendMessage -- NotConnectedException");
+                } catch (Exception ignored) {
+                    Log.d(TAG, "sendMessage -- Exception");
+                    Toast.makeText(activity, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Message is successfully queued, clear text from the input field and redraw the list.
+                Log.d(TAG, "sendMessage -- clearing text and notifying");
+                inputField.setText("");
+            }
+        }
+    }
+
+    public void sendReadNotification() {
+        if (mTopic != null) {
+            mTopic.noteRead();
+        }
+    }
+
+    // public StoredMessage<String> getMessage(int pos) {
+    //    return mMessagesAdapter.getMessage(pos);
+    // }
+
+    void runLoader() {
+        LoaderManager lm = getActivity().getSupportLoaderManager();
+        final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
+        if (loader != null && !loader.isReset()) {
+            lm.restartLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
+        } else {
+            lm.initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
+        }
+    }
+
+    private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            if (id == MESSAGES_QUERY_ID) {
+                return new MessageDb.Loader(getActivity(), mTopicName, -1, -1);
+            }
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader,
+                                   Cursor cursor) {
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
+                swapCursor(mTopicName, cursor);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                swapCursor(null, null);
+            }
+        }
     }
 }

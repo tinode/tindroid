@@ -71,7 +71,7 @@ public class UiUtils {
 
     public static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
 
-    public static void setupToolbar(final AppCompatActivity activity, VCard pub,
+    public static void setupToolbar(final Activity activity, VCard pub,
                                     Topic.TopicType topicType, boolean online) {
         final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
@@ -276,69 +276,33 @@ public class UiUtils {
                     UiUtils.SELECT_PICTURE);
         }
     }
-
-
-    /*
-    private void openImageIntent(Fragment fragment) {
-
-// Determine Uri of camera image to save.
-        final File root = new File(Environment.getExternalStorageDirectory() + File.separator + "MyDir" + File.separator);
-        root.mkdirs();
-        final String fname = Utils.getUniqueImageFilename();
-        final File sdImageMainDirectory = new File(root, fname);
-        outputFileUri = Uri.fromFile(sdImageMainDirectory);
-
-        // Camera.
-        final List<Intent> cameraIntents = new ArrayList<Intent>();
-        final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        final PackageManager packageManager = getPackageManager();
-        final List<ResolveInfo> listCam = packageManager.queryIntentActivities(captureIntent, 0);
-        for(ResolveInfo res : listCam) {
-            final String packageName = res.activityInfo.packageName;
-            final Intent intent = new Intent(captureIntent);
-            intent.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
-            intent.setPackage(packageName);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-            cameraIntents.add(intent);
+    public static boolean acceptAvatar(ImageView avatar, Bitmap bmp) {
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        if (width > height) {
+            width = width * BITMAP_SIZE / height;
+            height = BITMAP_SIZE;
+            // Sanity check
+            width = width > 1024 ? 1024 : width;
+        } else {
+            height = height * BITMAP_SIZE / width;
+            width = BITMAP_SIZE;
+            height = height > 1024 ? 1024 : height;
         }
-
-        // Filesystem.
-        final Intent galleryIntent = new Intent();
-        galleryIntent.setType("image/*");
-        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
-
-        // Chooser of filesystem options.
-        final Intent chooserIntent = Intent.createChooser(galleryIntent, "Select Source");
-
-        // Add the camera options.
-        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[cameraIntents.size()]));
-
-        startActivityForResult(chooserIntent, YOUR_SELECT_PICTURE_REQUEST_CODE);
+        // Scale up or down.
+        bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
+        // Chop the square from the middle.
+        bmp = Bitmap.createBitmap(bmp, width - BITMAP_SIZE, height - BITMAP_SIZE,
+                BITMAP_SIZE, BITMAP_SIZE);
+        avatar.setImageBitmap(bmp);
+        return true;
     }
-    */
+
     public static boolean acceptAvatar(Activity activity, ImageView avatar, Intent data) {
         try {
             Bitmap bmp = MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
                     data.getData());
-            int width = bmp.getWidth();
-            int height = bmp.getHeight();
-            if (width > height) {
-                width = width * BITMAP_SIZE / height;
-                height = BITMAP_SIZE;
-                // Sanity check
-                width = width > 1024 ? 1024 : width;
-            } else {
-                height = height * BITMAP_SIZE / width;
-                width = BITMAP_SIZE;
-                height = height > 1024 ? 1024 : height;
-            }
-            // Scale up or down.
-            bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
-            // Chop the square from the middle.
-            bmp = Bitmap.createBitmap(bmp, width - BITMAP_SIZE, height - BITMAP_SIZE,
-                    BITMAP_SIZE, BITMAP_SIZE);
-            avatar.setImageBitmap(bmp);
-            return true;
+            return acceptAvatar(avatar, bmp);
         } catch (IOException ex) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
             return false;
