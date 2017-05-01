@@ -12,7 +12,6 @@ import co.tinode.tinodesdk.Tinode;
 public class Description<Pu,Pr> {
     public Date created;
     public Date updated;
-    public Date deleted;
     public Defacs defacs;
     public Acs acs;
     public int seq;
@@ -97,11 +96,6 @@ public class Description<Pu,Pr> {
 
         if (sub.updated != null && (updated == null || updated.before(sub.updated))) {
             updated = sub.updated;
-            changed++;
-        }
-
-        if (sub.deleted != null && (deleted == null || deleted.after(sub.deleted))) {
-            deleted = sub.deleted;
             changed++;
         }
 

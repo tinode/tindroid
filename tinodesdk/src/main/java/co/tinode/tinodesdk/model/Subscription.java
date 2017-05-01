@@ -14,7 +14,6 @@ import co.tinode.tinodesdk.Topic;
 public class Subscription<Pu,Pr> implements LocalData {
     public String user;
     public Date updated;
-    public Date deleted;
     public Acs acs;
     public int read;
     public int recv;
@@ -47,11 +46,6 @@ public class Subscription<Pu,Pr> implements LocalData {
 
         if ((sub.updated != null) && (updated == null || updated.before(sub.updated))) {
             updated = sub.updated;
-            changed ++;
-        }
-
-        if ((sub.deleted != null) && (deleted == null || deleted.after(sub.deleted))) {
-            deleted = sub.deleted;
             changed ++;
         }
 

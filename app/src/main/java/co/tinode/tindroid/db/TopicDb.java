@@ -32,6 +32,10 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_ACCOUNT_ID = "account_id";
     /**
+     * Topic sync status: queued, synced, deleted
+     */
+    public static final String COLUMN_NAME_STATUS = "status";
+    /**
      * Topic name, indexed
      */
     public static final String COLUMN_NAME_TOPIC = "name";
@@ -52,11 +56,11 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_CREATED = "created";
     /**
-     * When the topic was created
+     * When the topic was last updated
      */
     public static final String COLUMN_NAME_UPDATED = "updated";
     /**
-     * When the topic was created
+     * When the topic was deleted
      */
     public static final String COLUMN_NAME_DELETED = "deleted";
     /**
@@ -109,24 +113,25 @@ public class TopicDb implements BaseColumns {
 
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_ACCOUNT_ID = 1;
-    static final int COLUMN_IDX_TOPIC = 2;
-    static final int COLUMN_IDX_TYPE = 3;
-    static final int COLUMN_IDX_VISIBLE = 4;
-    static final int COLUMN_IDX_WITH = 5;
-    static final int COLUMN_IDX_CREATED = 6;
-    static final int COLUMN_IDX_UPDATED = 7;
-    static final int COLUMN_IDX_DELETED = 8;
-    static final int COLUMN_IDX_READ = 9;
-    static final int COLUMN_IDX_RECV = 10;
-    static final int COLUMN_IDX_SEQ = 11;
-    static final int COLUMN_IDX_CLEAR = 12;
-    static final int COLUMN_IDX_ACCESSMODE = 13;
-    static final int COLUMN_IDX_LASTUSED = 14;
-    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 15;
-    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 16;
-    static final int COLUMN_IDX_SERIALIZED_TYPES = 17;
-    static final int COLUMN_IDX_PUBLIC = 18;
-    static final int COLUMN_IDX_PRIVATE = 19;
+    static final int COLUMN_IDX_STATUS = 2;
+    static final int COLUMN_IDX_TOPIC = 3;
+    static final int COLUMN_IDX_TYPE = 4;
+    static final int COLUMN_IDX_VISIBLE = 5;
+    static final int COLUMN_IDX_WITH = 6;
+    static final int COLUMN_IDX_CREATED = 7;
+    static final int COLUMN_IDX_UPDATED = 8;
+    static final int COLUMN_IDX_DELETED = 9;
+    static final int COLUMN_IDX_READ = 10;
+    static final int COLUMN_IDX_RECV = 11;
+    static final int COLUMN_IDX_SEQ = 12;
+    static final int COLUMN_IDX_CLEAR = 13;
+    static final int COLUMN_IDX_ACCESSMODE = 14;
+    static final int COLUMN_IDX_LASTUSED = 15;
+    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
+    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
+    static final int COLUMN_IDX_SERIALIZED_TYPES = 18;
+    static final int COLUMN_IDX_PUBLIC = 19;
+    static final int COLUMN_IDX_PRIVATE = 20;
 
     /**
      * SQL statement to create Messages table
@@ -136,6 +141,7 @@ public class TopicDb implements BaseColumns {
                     _ID + " INTEGER PRIMARY KEY," +
                     COLUMN_NAME_ACCOUNT_ID
                     + " REFERENCES " + AccountDb.TABLE_NAME + "(" + AccountDb._ID + ")," +
+                    COLUMN_NAME_STATUS + " INT," +
                     COLUMN_NAME_TOPIC + " TEXT," +
                     COLUMN_NAME_TYPE + " INT," +
                     COLUMN_NAME_VISIBLE + " INT," +

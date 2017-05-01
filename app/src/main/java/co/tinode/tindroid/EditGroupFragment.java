@@ -572,8 +572,7 @@ public class EditGroupFragment extends ListFragment {
 
         @Override
         public int getItemCount() {
-            // Log.d(TAG, "MembersAdapter item count " + mItems.size());
-            return mItems.size();
+            return mCursor != null ? mCursor.getCount() : 0;
         }
 
         public void addItem(MemberData data) {
@@ -603,25 +602,23 @@ public class EditGroupFragment extends ListFragment {
         }
 
         /**
-         * Swap in a new Cursor, returning the old Cursor.  Unlike
-         * {@link #changeCursor(Cursor)}, the returned old Cursor is <em>not</em>
-         * closed.
+         * Swap in a new Cursor.
          */
-        public Cursor swapCursor(Cursor newCursor) {
+        public void swapCursor(Cursor newCursor) {
             if (newCursor == mCursor) {
-                return null;
+                return;
             }
 
             final Cursor oldCursor = mCursor;
             if (oldCursor != null && mDataSetObserver != null) {
                 oldCursor.unregisterDataSetObserver(mDataSetObserver);
+                oldCursor.close();
             }
             mCursor = newCursor;
             if (mCursor != null && mDataSetObserver != null) {
                 mCursor.registerDataSetObserver(mDataSetObserver);
             }
             notifyDataSetChanged();
-            return oldCursor;
         }
     }
 

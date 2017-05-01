@@ -141,7 +141,6 @@ public class SubscriberDb implements BaseColumns {
                 db.endTransaction();
                 return -1;
             }
-            // Log.d(TAG, "User inserted: " + ss.userId);
 
             ContentValues values = new ContentValues();
             // Insert subscription
@@ -337,7 +336,6 @@ public class SubscriberDb implements BaseColumns {
         // From subs table
         s.acs = BaseDb.deserializeMode(c.getString(COLUMN_IDX_MODE));
         s.updated = new Date(c.getLong(COLUMN_IDX_UPDATED));
-        s.deleted = new Date(c.getLong(COLUMN_IDX_DELETED));
         s.read = c.getInt(COLUMN_IDX_READ);
         s.recv = c.getInt(COLUMN_IDX_RECV);
         s.clear = c.getInt(COLUMN_IDX_CLEAR);

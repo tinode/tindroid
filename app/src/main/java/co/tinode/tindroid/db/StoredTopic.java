@@ -31,7 +31,6 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
         st.isNew = topic.isNew();
 
         topic.setUpdated(new Date(c.getLong(TopicDb.COLUMN_IDX_UPDATED)));
-        topic.setDeleted(new Date(c.getLong(TopicDb.COLUMN_IDX_DELETED)));
 
         topic.setRead(c.getInt(TopicDb.COLUMN_IDX_READ));
         topic.setRecv(c.getInt(TopicDb.COLUMN_IDX_RECV));

@@ -343,13 +343,22 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     void swapCursor(final String topicName, final Cursor cursor) {
+        if (mCursor == cursor) {
+            return;
+        }
+
         // Clear selection
         if (mSelectionMode != null) {
             mSelectionMode.finish();
             mSelectionMode = null;
         }
+
         mTopicName = topicName;
+        Cursor oldCursor = mCursor;
         mCursor = cursor;
+        if (oldCursor != null) {
+            oldCursor.close();
+        }
     }
 
     StoredMessage<String> getMessage(int position) {

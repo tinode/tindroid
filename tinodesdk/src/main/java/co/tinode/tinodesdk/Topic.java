@@ -366,13 +366,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mSubsUpdated;
     }
 
-    public Date getDeleted() {
-        return mDesc.deleted;
-    }
-    public void setDeleted(Date deleted) {
-        mDesc.deleted = deleted;
-    }
-
     public String getWith() {
         return getTopicType() == TopicType.P2P ? mDesc.with : null;
     }

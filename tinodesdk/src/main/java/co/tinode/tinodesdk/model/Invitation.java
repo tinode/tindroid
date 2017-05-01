@@ -9,6 +9,11 @@ import java.io.Serializable;
  */
 public class Invitation<Pu,T> implements Serializable {
 
+    private static final String INVITE = "inv";
+    private static final String APPROVE = "appr";
+    private static final String JOINED = "joined";
+    private static final String LEFT = "left";
+
     // Topic that user wants to subscribe to or is invited to
     public String topic;
     // User being subscribed
