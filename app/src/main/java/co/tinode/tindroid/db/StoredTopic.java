@@ -15,7 +15,7 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
     public Date lastUsed;
     public int minLocalSeq;
     public int maxLocalSeq;
-    public boolean isNew;
+    public int status;
 
     public StoredTopic() {
     }
@@ -25,10 +25,10 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
         StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
 
         st.id = c.getLong(TopicDb.COLUMN_IDX_ID);
+        st.status = c.getInt(TopicDb.COLUMN_IDX_STATUS);
         st.lastUsed = new Date(c.getLong(TopicDb.COLUMN_IDX_LASTUSED));
         st.minLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MIN_LOCAL_SEQ);
         st.maxLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MAX_LOCAL_SEQ);
-        st.isNew = topic.isNew();
 
         topic.setUpdated(new Date(c.getLong(TopicDb.COLUMN_IDX_UPDATED)));
 

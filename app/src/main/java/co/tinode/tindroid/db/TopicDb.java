@@ -60,10 +60,6 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_UPDATED = "updated";
     /**
-     * When the topic was deleted
-     */
-    public static final String COLUMN_NAME_DELETED = "deleted";
-    /**
      * Sequence ID marked as read by the current user, integer
      */
     public static final String COLUMN_NAME_READ = "read";
@@ -120,18 +116,17 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_WITH = 6;
     static final int COLUMN_IDX_CREATED = 7;
     static final int COLUMN_IDX_UPDATED = 8;
-    static final int COLUMN_IDX_DELETED = 9;
-    static final int COLUMN_IDX_READ = 10;
-    static final int COLUMN_IDX_RECV = 11;
-    static final int COLUMN_IDX_SEQ = 12;
-    static final int COLUMN_IDX_CLEAR = 13;
-    static final int COLUMN_IDX_ACCESSMODE = 14;
-    static final int COLUMN_IDX_LASTUSED = 15;
-    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
-    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
-    static final int COLUMN_IDX_SERIALIZED_TYPES = 18;
-    static final int COLUMN_IDX_PUBLIC = 19;
-    static final int COLUMN_IDX_PRIVATE = 20;
+    static final int COLUMN_IDX_READ = 9;
+    static final int COLUMN_IDX_RECV = 10;
+    static final int COLUMN_IDX_SEQ = 11;
+    static final int COLUMN_IDX_CLEAR = 12;
+    static final int COLUMN_IDX_ACCESSMODE = 13;
+    static final int COLUMN_IDX_LASTUSED = 14;
+    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 15;
+    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 16;
+    static final int COLUMN_IDX_SERIALIZED_TYPES = 17;
+    static final int COLUMN_IDX_PUBLIC = 18;
+    static final int COLUMN_IDX_PRIVATE = 19;
 
     /**
      * SQL statement to create Messages table
@@ -148,7 +143,6 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_WITH + " TEXT," +
                     COLUMN_NAME_CREATED + " INT," +
                     COLUMN_NAME_UPDATED + " INT," +
-                    COLUMN_NAME_DELETED + " INT," +
                     COLUMN_NAME_READ + " INT," +
                     COLUMN_NAME_RECV + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
@@ -192,6 +186,7 @@ public class TopicDb implements BaseColumns {
         Date lastUsed = new Date();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
+        values.put(COLUMN_NAME_STATUS, topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED);
         values.put(COLUMN_NAME_TOPIC, topic.getName());
 
         Topic.TopicType tp = topic.getTopicType();
@@ -241,13 +236,15 @@ public class TopicDb implements BaseColumns {
             return false;
         }
 
+        int status = st.status;
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
-        if (st.isNew && !topic.isNew()) {
+        if (st.status == BaseDb.STATUS_QUEUED && !topic.isNew()) {
+            status = BaseDb.STATUS_SYNCED;
+            values.put(COLUMN_NAME_STATUS, status);
             values.put(COLUMN_NAME_TOPIC, topic.getName());
         }
         values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
-        // values.put(COLUMN_NAME_DELETED, NULL);
         values.put(COLUMN_NAME_READ, topic.getRead());
         values.put(COLUMN_NAME_RECV, topic.getRecv());
         values.put(COLUMN_NAME_SEQ, topic.getSeq());
@@ -267,7 +264,7 @@ public class TopicDb implements BaseColumns {
         int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
         if (updated > 0) {
             st.lastUsed = lastUsed;
-            st.isNew = topic.isNew();
+            st.status = status;
         }
 
         // Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +

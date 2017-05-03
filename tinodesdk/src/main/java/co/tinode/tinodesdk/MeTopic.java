@@ -77,7 +77,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
         for (Subscription<Pu,Pr> sub : meta.sub) {
             Topic <Pu,Pr,?> topic = mTinode.getTopic(sub.topic);
             if (topic != null) {
-                // This is an existing topic. Update its record in memory an din the database.
+                // This is an existing topic. Update its record in memory and in the database.
                 topic.update(sub);
             } else {
                 // This is a new topic. Register it and write to DB.

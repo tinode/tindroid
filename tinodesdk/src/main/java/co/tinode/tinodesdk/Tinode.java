@@ -119,7 +119,7 @@ public class Tinode {
 
     private ConcurrentMap<String, PromisedReply<ServerMessage>> mFutures;
     private HashMap<String, Topic> mTopics;
-    private int sNameCounter = 0;
+    private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
 
     static {
@@ -1151,8 +1151,8 @@ public class Tinode {
     }
 
     synchronized String nextUniqueString() {
-        ++ sNameCounter;
-        return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (sNameCounter & 0xFFFF), 32);
+        ++ mNameCounter;
+        return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (mNameCounter & 0xFFFF), 32);
     }
 
     /**

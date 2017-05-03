@@ -22,7 +22,7 @@ public interface Storage {
     Topic[] topicGetAll(Tinode tinode);
     // Add new topic
     long topicAdd(Topic topic);
-    /** Incoming change to topic description: synchronize already mutated topic from memory to DB */
+    /** Incoming change to topic description: the already mutated topic in memory is synchronized to DB */
     boolean topicUpdate(Topic topic);
     /** Delete topic */
     boolean topicDelete(Topic topic);
@@ -67,6 +67,9 @@ public interface Storage {
     /** Set read value for a given subscriber */
     boolean msgReadByRemote(Subscription sub, int read);
 
+    /**
+     * Min and max values.
+     */
     class Range {
         public int min;
         public int max;

@@ -734,6 +734,18 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
+     * Update user's subscription to topic
+     *
+     * @param mode access mode
+     *
+     * @throws NotSubscribedException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply<ServerMessage> updateSub(String uid, String mode)  throws Exception {
+        return setSubscription(new MetaSetSub<T>(uid, mode, null));
+    }
+
+    /**
      * Send an invite to topic.
      *
      * @param uid ID of the user to invite to topic
@@ -743,6 +755,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws AlreadySubscribedException if it's an attempt to invite an existing subscriber
      * @throws NotSubscribedException if the requester is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
+     * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     public PromisedReply<ServerMessage> invite(String uid, String mode, T invite)  throws Exception {
 
@@ -751,17 +764,27 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         final long id;
-        final Subscription sub;
+        final Subscription<Pu,Pr> sub = new Subscription<>();
+        sub.topic = getName();
+        sub.user = uid;
+        sub.acs = new Acs();
+        sub.acs.setWant(mode);
+
         if (mStore != null) {
-            sub = new Subscription();
-            sub.topic = getName();
-            sub.user = uid;
-            sub.acs = new Acs();
-            sub.acs.setWant(mode);
             id = mStore.subNew(this, sub);
         } else {
             id = -1;
-            sub = null;
+        }
+
+        addSubToCache(sub);
+        if (mListener != null) {
+            mListener.onMetaSub(sub);
+            mListener.onSubsUpdated();
+        }
+
+        // Check if topic is already synchronized. If not, don't send the request, it will fail anyway.
+        if (isNew()) {
+            throw new NotSynchronizedException();
         }
 
         return setSubscription(new MetaSetSub<>(uid, mode, invite)).thenApply(
@@ -771,9 +794,44 @@ public class Topic<Pu,Pr,T> implements LocalData {
                         if (id > 0) {
                             mStore.subUpdate(Topic.this, sub);
                         }
+                        if (mListener != null) {
+                            mListener.onMetaSub(sub);
+                            mListener.onSubsUpdated();
+                        }
                         return null;
                     }
                 }, null);
+    }
+
+    /**
+     * Eject subscriber from topic.
+     *
+     * @param uid id of the user to unsubscribe from the topic
+     * @param ban
+     * @return
+     * @throws Exception
+     */
+    public PromisedReply<ServerMessage> eject(String uid, boolean ban)  throws Exception {
+        final Subscription<Pu,Pr> sub = getSubscription(uid);
+
+        if (sub == null) {
+            throw new NotSubscribedException();
+        }
+
+        if (isNew()) {
+            // This topic is not yet synced.
+            if (mStore != null) {
+                mStore.subDelete(this, sub);
+            }
+
+            if (mListener != null) {
+                mListener.onSubsUpdated();
+            }
+
+            throw new NotSynchronizedException();
+        }
+        
+        return updateSub(uid, ban ? "X" : "N");
     }
 
     /**
