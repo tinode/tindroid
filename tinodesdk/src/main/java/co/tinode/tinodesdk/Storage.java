@@ -40,6 +40,8 @@ public interface Storage {
     <Pu,Pr> boolean subUpdate(Topic topic, Subscription<Pu,Pr> sub);
     /** Add a new subscriber to topic. The new subscriber is being added locally. */
     <Pu,Pr> long subNew(Topic topic, Subscription<Pu,Pr> sub);
+    /** Delete existing subscription */
+    boolean subDelete(Topic topic, Subscription sub);
 
 
     /** Get a list o topic subscriptions from DB. */

@@ -89,7 +89,7 @@ public class ChatListAdapter extends BaseAdapter {
         return item;
     }
 
-    void bindView(int position, ViewHolder holder) {
+    private void bindView(int position, ViewHolder holder) {
         final Topic<VCard,String,String> topic = mTopics.get(position);
 
         holder.topic = topic.getName();
@@ -109,27 +109,15 @@ public class ChatListAdapter extends BaseAdapter {
         }
 
         Bitmap bmp = pub != null ? pub.getBitmap() : null;
-        if (bmp != null) {
-            holder.icon.setImageDrawable(new RoundImageDrawable(bmp));
-        } else {
-            Topic.TopicType topicType = topic.getTopicType();
-            int res = -1;
-            if (topicType == Topic.TopicType.GRP) {
-                res = R.drawable.ic_group_circle;
-            } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
-                res = R.drawable.ic_person_circle;
-            }
-
-            Drawable drw;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                drw = mContext.getResources().getDrawable(res, mContext.getTheme());
-            } else {
-                drw = mContext.getResources().getDrawable(res);
-            }
-            if (drw != null) {
-                holder.icon.setImageDrawable(drw);
-            }
+        int res = -1;
+        Topic.TopicType topicType = topic.getTopicType();
+        if (topicType == Topic.TopicType.GRP) {
+            res = R.drawable.ic_group_circle;
+        } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
+            res = R.drawable.ic_person_circle;
         }
+
+        UiUtils.assignBitmap(mContext, holder.icon, bmp, res);
 
         holder.online.setColorFilter(topic.getOnline() ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
         //Log.d(TAG, "User " + topic.getName() + " is " + (topic.getOnline() ? "online" : "offline"));

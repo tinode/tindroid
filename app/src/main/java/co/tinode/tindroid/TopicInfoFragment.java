@@ -25,6 +25,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Array;
 import java.util.Collection;
 
 import co.tinode.tindroid.db.StoredSubscription;
@@ -164,27 +165,29 @@ public class TopicInfoFragment extends ListFragment {
 
     private class MembersAdapter extends BaseAdapter {
 
-        Subscription<VCard,String>[] mItems;
+        private Subscription<VCard,String>[] mItems;
+        private int mItemCount;
+        private Context mContext;
 
-        int mItemCount;
-        Context mContext;
-
+        @SuppressWarnings("unchecked")
         MembersAdapter(Activity context) {
             mContext = context;
-            mItems = new Subscription[8];
+            mItems = (Subscription<VCard,String>[]) new Subscription[8];
         }
 
         /** Must be run on UI thread */
         void resetContent() {
-            Collection<Subscription<VCard,String>> c = mTopic.getSubscriptions();
-            if (c != null) {
-                mItemCount = c.size();
-                mItems = c.toArray(mItems);
-            } else {
-                mItemCount = 0;
+            if (mTopic != null) {
+                Collection<Subscription<VCard, String>> c = mTopic.getSubscriptions();
+                if (c != null) {
+                    mItemCount = c.size();
+                    mItems = c.toArray(mItems);
+                } else {
+                    mItemCount = 0;
+                }
+                // Log.d(TAG, "resetContent got " + mItemCount + " items");
+                notifyDataSetChanged();
             }
-            // Log.d(TAG, "resetContent got " + mItemCount + " items");
-            notifyDataSetChanged();
         }
 
         @Override
@@ -264,19 +267,7 @@ public class TopicInfoFragment extends ListFragment {
                 holder.status[i].setVisibility(View.GONE);
             }
 
-            if (bmp != null) {
-                holder.icon.setImageDrawable(new RoundImageDrawable(bmp));
-            } else {
-                Drawable drw;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    drw = mContext.getResources().getDrawable(R.drawable.ic_person_circle, mContext.getTheme());
-                } else {
-                    drw = mContext.getResources().getDrawable(R.drawable.ic_person_circle);
-                }
-                if (drw != null) {
-                    holder.icon.setImageDrawable(drw);
-                }
-            }
+            UiUtils.assignBitmap(mContext, holder.icon, bmp, R.drawable.ic_person_circle);
         }
     }
 

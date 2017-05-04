@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.TreeSet;
@@ -44,6 +45,7 @@ import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.Subscription;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -225,7 +227,7 @@ public class EditGroupFragment extends ListFragment {
                     for (Iterator<MemberData> iter = adapter.getMembers(); iter.hasNext();) {
                         MemberData data = iter.next();
                         topic.invite(data.uid, null /* use default mode */,
-                                "Invite text" /* FIXME: either let user enter the text or move it to resource */);
+                                "Invite text" /* FIXME: either let user provide the text or move it to resource */);
                     }
                     Intent intent = new Intent(activity, MessageActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -261,7 +263,7 @@ public class EditGroupFragment extends ListFragment {
             }
         }
 
-        ((MembersAdapter) mMembers.getAdapter()).populate(topic);
+        ((MembersAdapter) mMembers.getAdapter()).resetContent(topic);
     }
 
     /**
@@ -528,24 +530,28 @@ public class EditGroupFragment extends ListFragment {
 
     private class MembersAdapter extends RecyclerView.Adapter<MemberViewHolder> {
 
-        private Cursor mCursor = null;
-        private DataSetObserver mDataSetObserver = null;
+        private Subscription<VCard,String>[] mItems;
+        private int mItemCount;
 
-        public MembersAdapter(Cursor cursor) {
-            mDataSetObserver = new DataSetObserver() {
-                @Override
-                public void onChanged() {
-                    super.onChanged();
-                    notifyDataSetChanged();
-                }
+        @SuppressWarnings("unchecked")
+        public MembersAdapter() {
+            mItems = (Subscription<VCard,String>[]) new Subscription[8];
+            mItemCount = 0;
+        }
 
-                @Override
-                public void onInvalidated() {
-                    super.onInvalidated();
-                    notifyDataSetChanged();
+        /** Must be run on UI thread */
+        void resetContent() {
+            if (mTopic != null) {
+                Collection<Subscription<VCard, String>> c = mTopic.getSubscriptions();
+                if (c != null) {
+                    mItemCount = c.size();
+                    mItems = c.toArray(mItems);
+                } else {
+                    mItemCount = 0;
                 }
-            };
-            swapCursor(cursor);
+                // Log.d(TAG, "resetContent got " + mItemCount + " items");
+                notifyDataSetChanged();
+            }
         }
 
         @Override
@@ -557,12 +563,18 @@ public class EditGroupFragment extends ListFragment {
 
         @Override
         public void onBindViewHolder(final MemberViewHolder holder, int position) {
-            // MemberData data = mItems.get(position);
+            final Subscription<VCard, String> sub = mItems[position];
 
-            holder.mAvatar.setImageResource(R.drawable.ic_person_circle);
-            mImageLoader.loadImage(mItems.get(position).photoUri, holder.mAvatar);
+            Bitmap bmp = null;
+            if (sub.pub != null) {
+                bmp = sub.pub.getBitmap();
+            } else {
+                Log.d(TAG, "Pub is null for " + sub.user);
+            }
 
-            holder.mContainer.setOnClickListener(new View.OnClickListener() {
+            UiUtils.assignBitmap(getContext(), holder.icon, bmp, R.drawable.ic_person_circle);
+
+            holder.container.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     removeItem(holder.getAdapterPosition());
@@ -572,64 +584,40 @@ public class EditGroupFragment extends ListFragment {
 
         @Override
         public int getItemCount() {
-            return mCursor != null ? mCursor.getCount() : 0;
+            return mItemCount;
         }
 
         public void addItem(MemberData data) {
             Log.d(TAG, "Adding member, name=" + data.name + ", cursorPos=" + data.position);
             mItems.add(data);
-            if (mItems.size() == 1) {
+            if (mItemCount == 1) {
                 mNoMembers.setVisibility(View.INVISIBLE);
             }
-            notifyItemInserted(mItems.size() - 1);
+            notifyItemInserted(mItemCount - 1);
         }
 
         public void removeItem(int position) {
             MemberData data = mItems.remove(position);
             deselect(data.position);
             notifyItemRemoved(position);
-            if (mItems.size() == 0) {
+            if (mItemCount == 0) {
                 mNoMembers.setVisibility(View.VISIBLE);
             }
         }
 
-        Iterator<MemberData> getMembers() {
+        Iterator<Subscription> getMembers() {
            return mItems.iterator();
-        }
-
-        public void populate(Topic topic) {
-            // TODO(gene): populate adapter with topic subscribers
-        }
-
-        /**
-         * Swap in a new Cursor.
-         */
-        public void swapCursor(Cursor newCursor) {
-            if (newCursor == mCursor) {
-                return;
-            }
-
-            final Cursor oldCursor = mCursor;
-            if (oldCursor != null && mDataSetObserver != null) {
-                oldCursor.unregisterDataSetObserver(mDataSetObserver);
-                oldCursor.close();
-            }
-            mCursor = newCursor;
-            if (mCursor != null && mDataSetObserver != null) {
-                mCursor.registerDataSetObserver(mDataSetObserver);
-            }
-            notifyDataSetChanged();
         }
     }
 
-    class MemberViewHolder extends RecyclerView.ViewHolder {
-        View mContainer;
-        ImageView mAvatar;
+    private class MemberViewHolder extends RecyclerView.ViewHolder {
+        View container;
+        ImageView icon;
 
         MemberViewHolder(View itemView) {
             super(itemView);
-            mContainer = itemView;
-            mAvatar = (ImageView) itemView.findViewById(R.id.avatar);
+            container = itemView;
+            icon = (ImageView) itemView.findViewById(R.id.avatar);
         }
     }
 

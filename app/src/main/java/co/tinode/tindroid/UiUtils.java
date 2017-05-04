@@ -26,6 +26,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
+import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -306,6 +307,22 @@ public class UiUtils {
         } catch (IOException ex) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
             return false;
+        }
+    }
+
+    public static void assignBitmap(Context context, ImageView icon, Bitmap bmp, int defaultDrawable) {
+        if (bmp != null) {
+            icon.setImageDrawable(new RoundImageDrawable(bmp));
+        } else {
+            Drawable drw;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                drw = context.getResources().getDrawable(defaultDrawable, context.getTheme());
+            } else {
+                drw = context.getResources().getDrawable(defaultDrawable);
+            }
+            if (drw != null) {
+                icon.setImageDrawable(drw);
+            }
         }
     }
 

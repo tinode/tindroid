@@ -60,11 +60,7 @@ class SqlStore implements Storage {
     @Override
     public long topicAdd(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        if (st == null) {
-            return TopicDb.insert(mDbh.getWritableDatabase(), topic);
-        } else {
-            return st.id;
-        }
+        return (st == null) ? TopicDb.insert(mDbh.getWritableDatabase(), topic) : st.id;
     }
 
     @Override
@@ -74,7 +70,8 @@ class SqlStore implements Storage {
 
     @Override
     public boolean topicDelete(Topic topic) {
-        return TopicDb.delete(mDbh.getWritableDatabase(), topic) > 0;
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return st != null && TopicDb.delete(mDbh.getWritableDatabase(), st.id);
     }
 
     @Override
@@ -122,6 +119,16 @@ class SqlStore implements Storage {
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss != null && ss.id > 0) {
             result = SubscriberDb.update(mDbh.getWritableDatabase(), sub);
+        }
+        return result;
+    }
+
+    @Override
+    public boolean subDelete(Topic topic, Subscription sub) {
+        boolean result = false;
+        StoredSubscription ss = (StoredSubscription) sub.getLocal();
+        if (ss != null && ss.id > 0) {
+            result = SubscriberDb.delete(mDbh.getWritableDatabase(), ss.id);
         }
         return result;
     }

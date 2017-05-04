@@ -830,7 +830,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
             throw new NotSynchronizedException();
         }
-        
+
         return updateSub(uid, ban ? "X" : "N");
     }
 

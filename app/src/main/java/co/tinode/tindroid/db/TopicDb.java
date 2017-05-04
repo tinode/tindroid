@@ -369,17 +369,12 @@ public class TopicDb implements BaseColumns {
      * Delete topic by name
      *
      * @param db writable database
-     * @param topic name of the topic to delete
+     * @param id of the topic to delete
      * @return 1 on success
      */
     @SuppressWarnings("WeakerAccess")
-    public static int delete(SQLiteDatabase db, Topic topic) {
-        StoredTopic st = (StoredTopic) topic.getLocal();
-        if (st == null) {
-            return 0;
-        }
-
-        return db.delete(TABLE_NAME, _ID + "=" + st.id, null);
+    public static boolean delete(SQLiteDatabase db, long id) {
+        return db.delete(TABLE_NAME, _ID + "=" + id, null) > 0;
     }
 
     /**

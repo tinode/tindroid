@@ -205,11 +205,7 @@ public class SubscriberDb implements BaseColumns {
                 ContentValues values = new ContentValues();
                 values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
                 values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
-                if (sub.deleted != null) {
-                    values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED);
-                    values.put(COLUMN_NAME_DELETED, sub.deleted.getTime());
-                    status = BaseDb.STATUS_DELETED;
-                } else if (ss.status != BaseDb.STATUS_SYNCED) {
+                if (ss.status != BaseDb.STATUS_SYNCED) {
                     values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
                     status = BaseDb.STATUS_SYNCED;
                 }
@@ -241,6 +237,10 @@ public class SubscriberDb implements BaseColumns {
         db.endTransaction();
 
         return updated > 0;
+    }
+
+    public static boolean delete(SQLiteDatabase db, long id) {
+        return db.delete(TABLE_NAME, _ID + "=" + id, null) > 0;
     }
 
     /**
