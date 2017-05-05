@@ -112,4 +112,7 @@
     <string name="modeRequested">requested</string>
     <string name="modeUndefined">undefined</string>
     <string name="modePending">pending</string>
+    <string name="invitation_text">Join my group!</string>
+    <string name="no_connection">You are offline</string>
+    <string name="action_failed">Action failed</string>
 </resources>

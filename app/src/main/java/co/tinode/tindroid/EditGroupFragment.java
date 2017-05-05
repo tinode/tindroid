@@ -5,7 +5,6 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -33,14 +32,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.TreeSet;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -60,9 +59,11 @@ public class EditGroupFragment extends ListFragment {
     private static final String STATE_PREVIOUSLY_SELECTED_KEY =
             "co.tinode.tindroid.SELECTED_ITEM";
 
-    private ContactsAdapter mAdapter; // The list of contacts with Tinode handles
-    private RecyclerView mMembers;
-    private TextView mNoMembers;
+    private ContactsAdapter mContactsAdapter; // The list of contacts with Tinode handles
+    private RecyclerView mMembersView;
+    private MembersAdapter mMembersAdapter;
+
+    private TextView mNoMembersView;
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
     private String mSearchTerm; // Stores the current search query term
 
@@ -71,6 +72,7 @@ public class EditGroupFragment extends ListFragment {
     private int mPreviouslySelectedSearchItem = 0;
 
     private String mTopicName = null;
+    private Topic<VCard,String,String> mTopic = null;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
     private TreeSet<Integer> mSelectedContacts;
@@ -132,6 +134,36 @@ public class EditGroupFragment extends ListFragment {
             }
         });
 
+        mNoMembersView = (TextView) activity.findViewById(R.id.noMembers);
+
+        mMembersView = (RecyclerView) activity.findViewById(R.id.groupMembers);
+        mMembersView.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+        mMembersAdapter = new MembersAdapter();
+        mMembersView.setAdapter(mMembersAdapter);
+
+        mContactsAdapter = new ContactsAdapter(getActivity());
+        setListAdapter(mContactsAdapter);
+
+        getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Log.d(TAG, "Click, pos=" + position + ", id=" + id);
+                MemberData data = mContactsAdapter.getItem(position);
+                try {
+                    mTopic.invite(data.uid, null, activity.getString(R.string.invitation_text));
+                } catch (NotSynchronizedException ignored) {
+                    // Do nothing
+                } catch (NotConnectedException ignored) {
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Log.d(TAG, "Failed to send invite", e);
+                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                }
+                mSelectedContacts.add(data.position);
+                mContactsAdapter.notifyDataSetChanged();
+            }
+        });
+
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -142,7 +174,7 @@ public class EditGroupFragment extends ListFragment {
                     return;
                 }
 
-                if (mMembers.getAdapter().getItemCount() == 0) {
+                if (mMembersView.getAdapter().getItemCount() == 0) {
                     Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -159,53 +191,56 @@ public class EditGroupFragment extends ListFragment {
             }
         });
 
-        mNoMembers = (TextView) activity.findViewById(R.id.noMembers);
-
-        mMembers = (RecyclerView) activity.findViewById(R.id.groupMembers);
-        mMembers.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
-        mMembers.setAdapter(new MembersAdapter());
-
-        mAdapter = new ContactsAdapter(getActivity());
-        setListAdapter(mAdapter);
-
-        getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Log.d(TAG, "Click, pos=" + position + ", id=" + id);
-                MembersAdapter ma = (MembersAdapter) mMembers.getAdapter();
-                MemberData data = mAdapter.getItem(position);
-                ma.addItem(data);
-                mSelectedContacts.add(data.position);
-                mAdapter.notifyDataSetChanged();
-            }
-        });
-
         getLoaderManager().initLoader(0, null, mContactsLoaderCallback);
     }
 
     // Deselect previously selected item in the contact list.
     private void deselect(int cursorPosition) {
         mSelectedContacts.remove(cursorPosition);
-        mAdapter.notifyDataSetChanged();
+        mContactsAdapter.notifyDataSetChanged();
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
+        final Tinode tinode = Cache.getTinode();
+
         Bundle args = getArguments();
         if (args != null) {
+            // Editing an existing topic
             mTopicName = args.getString("topic");
+            if (!TextUtils.isEmpty(mTopicName)) {
+                mTopic = tinode.getTopic(mTopicName);
+            }
         }
+
+        // Creating a new topic
+        if (mTopic == null) {
+            mTopic = new Topic<>(tinode, null);
+        }
+
+        mTopic.setListener(new Topic.Listener<VCard, String, String>(){
+            @Override
+            public void onSubsUpdated() {
+                mMembersAdapter.resetContent();
+            }
+        });
+        mMembersAdapter.resetContent();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-
+        if (mTopic != null) {
+            mTopic.setListener(null);
+        }
         // In the case onPause() is called during a fling the image loader is
         // un-paused to let any remaining background work complete.
         mImageLoader.setPauseWork(false);
+
+        mTopic = null;
+        mTopicName = null;
     }
 
     @Override
@@ -216,28 +251,24 @@ public class EditGroupFragment extends ListFragment {
     }
 
     private void createTopic(final Activity activity, final String title, final Bitmap avatar) {
-        final Tinode tinode = Cache.getTinode();
-        final Topic<VCard,String,String> topic = new Topic<>(tinode, null);
-        topic.setPub(new VCard(title, avatar));
+        mTopic.setPub(new VCard(title, avatar));
         try {
-            topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            mTopic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    MembersAdapter adapter = (MembersAdapter) mMembers.getAdapter();
-                    for (Iterator<MemberData> iter = adapter.getMembers(); iter.hasNext();) {
-                        MemberData data = iter.next();
-                        topic.invite(data.uid, null /* use default mode */,
-                                "Invite text" /* FIXME: either let user provide the text or move it to resource */);
+                    String inviteText = getActivity().getString(R.string.invitation_text);
+                    for (Subscription<VCard, String> sub : mTopic.getSubscriptions()) {
+                        mTopic.invite(sub.user, null /* use default mode */, inviteText);
                     }
                     Intent intent = new Intent(activity, MessageActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    intent.putExtra("topic", topic.getName());
+                    intent.putExtra("topic", mTopic.getName());
                     startActivity(intent);
                     return null;
                 }
             }, null);
         } catch (NotConnectedException ignored) {
-            Log.d(TAG, "create new topic -- NotConnectedException");
+            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
             // Go back to contacts
             startActivity(new Intent(activity, ContactsActivity.class));
         } catch (Exception e) {
@@ -263,7 +294,7 @@ public class EditGroupFragment extends ListFragment {
             }
         }
 
-        ((MembersAdapter) mMembers.getAdapter()).resetContent(topic);
+        mMembersAdapter.resetContent();
     }
 
     /**
@@ -517,14 +548,14 @@ public class EditGroupFragment extends ListFragment {
         public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
             // This swaps the new cursor into the adapter.
             Log.d(TAG, "delivered cursor with items: " + data.getCount());
-            mAdapter.swapCursor(data);
+            mContactsAdapter.swapCursor(data);
         }
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
             // When the loader is being reset, clear the cursor from the adapter. This allows the
             // cursor resources to be freed.
-            mAdapter.swapCursor(null);
+            mContactsAdapter.swapCursor(null);
         }
     }
 
@@ -534,7 +565,7 @@ public class EditGroupFragment extends ListFragment {
         private int mItemCount;
 
         @SuppressWarnings("unchecked")
-        public MembersAdapter() {
+        MembersAdapter() {
             mItems = (Subscription<VCard,String>[]) new Subscription[8];
             mItemCount = 0;
         }
@@ -552,6 +583,19 @@ public class EditGroupFragment extends ListFragment {
                 // Log.d(TAG, "resetContent got " + mItemCount + " items");
                 notifyDataSetChanged();
             }
+
+            mNoMembersView.setVisibility(mItemCount == 0 ? View.VISIBLE : View.GONE);
+        }
+
+        @Override
+        public int getItemCount() {
+            return mItemCount;
+        }
+
+        @Override
+        public long getItemId(int i) {
+            long id = StoredSubscription.getId(mItems[i]);
+            return id > 0 ? id : View.NO_ID;
         }
 
         @Override
@@ -582,32 +626,18 @@ public class EditGroupFragment extends ListFragment {
             });
         }
 
-        @Override
-        public int getItemCount() {
-            return mItemCount;
-        }
-
-        public void addItem(MemberData data) {
-            Log.d(TAG, "Adding member, name=" + data.name + ", cursorPos=" + data.position);
-            mItems.add(data);
-            if (mItemCount == 1) {
-                mNoMembers.setVisibility(View.INVISIBLE);
-            }
-            notifyItemInserted(mItemCount - 1);
-        }
-
         public void removeItem(int position) {
-            MemberData data = mItems.remove(position);
+            Subscription sub = mItems[position];
             deselect(data.position);
             notifyItemRemoved(position);
             if (mItemCount == 0) {
-                mNoMembers.setVisibility(View.VISIBLE);
+                mNoMembersView.setVisibility(View.VISIBLE);
             }
         }
 
-        Iterator<Subscription> getMembers() {
-           return mItems.iterator();
-        }
+        // Iterator<Subscription> getMembers() {
+        //   return mItems.iterator();
+        // }
     }
 
     private class MemberViewHolder extends RecyclerView.ViewHolder {

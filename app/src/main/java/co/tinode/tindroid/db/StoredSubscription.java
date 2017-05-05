@@ -15,6 +15,6 @@ public class StoredSubscription implements LocalData.Payload {
 
     public static long getId(Subscription sub) {
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
-        return ss.id;
+        return ss == null ? -1 : ss.id;
     }
 }

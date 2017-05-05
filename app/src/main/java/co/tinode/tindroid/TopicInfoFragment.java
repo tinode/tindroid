@@ -173,6 +173,7 @@ public class TopicInfoFragment extends ListFragment {
         MembersAdapter(Activity context) {
             mContext = context;
             mItems = (Subscription<VCard,String>[]) new Subscription[8];
+            mItemCount = 0;
         }
 
         /** Must be run on UI thread */
