@@ -67,8 +67,6 @@ public class MessageActivity extends AppCompatActivity {
                 }
             }
         });
-
-        showFragment(FRAGMENT_MESSAGES);
     }
 
     @Override

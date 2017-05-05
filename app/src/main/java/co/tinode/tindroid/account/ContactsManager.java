@@ -67,16 +67,9 @@ public class ContactsManager {
             long rawContactId = lookupRawContact(resolver, rawContact.with);
             // Contact already exists
             if (rawContactId != 0) {
-                if (rawContact.deleted == null) {
-                    updateContact(context, resolver, rawContact, rawContactId, batchOperation);
-                } else {
-                    deleteContact(context, rawContactId, batchOperation);
-                }
+                updateContact(context, resolver, rawContact, rawContactId, batchOperation);
             } else {
-                // Adding new contact
-                if (rawContact.deleted == null) {
-                    addContact(context, account, rawContact, invisibleGroupId, batchOperation);
-                }
+                addContact(context, account, rawContact, invisibleGroupId, batchOperation);
             }
             // A sync adapter should batch operations on multiple contacts,
             // because it will make a dramatic performance difference.

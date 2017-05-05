@@ -75,7 +75,7 @@ public class EditGroupFragment extends ListFragment {
     private Topic<VCard,String,String> mTopic = null;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
-    private TreeSet<Integer> mSelectedContacts;
+    // private TreeSet<Integer> mSelectedContacts;
 
     public EditGroupFragment() {
     }
@@ -106,8 +106,6 @@ public class EditGroupFragment extends ListFragment {
         };
         // Set a placeholder loading image for the image loader
         mImageLoader.setLoadingImage(R.drawable.ic_person_circle);
-
-        mSelectedContacts = new TreeSet<>();
     }
 
     @Override
@@ -148,6 +146,10 @@ public class EditGroupFragment extends ListFragment {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 Log.d(TAG, "Click, pos=" + position + ", id=" + id);
+                if (mTopic == null) {
+                    return;
+                }
+
                 MemberData data = mContactsAdapter.getItem(position);
                 try {
                     mTopic.invite(data.uid, null, activity.getString(R.string.invitation_text));
@@ -155,11 +157,12 @@ public class EditGroupFragment extends ListFragment {
                     // Do nothing
                 } catch (NotConnectedException ignored) {
                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                    return;
                 } catch (Exception e) {
                     Log.d(TAG, "Failed to send invite", e);
                     Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    return;
                 }
-                mSelectedContacts.add(data.position);
                 mContactsAdapter.notifyDataSetChanged();
             }
         });
@@ -194,12 +197,6 @@ public class EditGroupFragment extends ListFragment {
         getLoaderManager().initLoader(0, null, mContactsLoaderCallback);
     }
 
-    // Deselect previously selected item in the contact list.
-    private void deselect(int cursorPosition) {
-        mSelectedContacts.remove(cursorPosition);
-        mContactsAdapter.notifyDataSetChanged();
-    }
-
 
     @Override
     public void onResume() {
@@ -223,7 +220,13 @@ public class EditGroupFragment extends ListFragment {
         mTopic.setListener(new Topic.Listener<VCard, String, String>(){
             @Override
             public void onSubsUpdated() {
-                mMembersAdapter.resetContent();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mContactsAdapter.notifyDataSetChanged();
+                        mMembersAdapter.resetContent();
+                    }
+                });
             }
         });
         mMembersAdapter.resetContent();
@@ -374,6 +377,8 @@ public class EditGroupFragment extends ListFragment {
             // Gets handles to individual view resources
             final ViewHolder holder = (ViewHolder) view.getTag();
 
+            final String uid = cursor.getString(ContactsQuery.IM_HANDLE);
+
             // Get the thumbnail image Uri from the current Cursor row.
             final String photoUri = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
 
@@ -412,44 +417,27 @@ public class EditGroupFragment extends ListFragment {
                 holder.text2.setVisibility(View.GONE);
             }
 
-            // Clear the icon then load the thumbnail from photoUri in a background worker thread
-            holder.icon.setImageResource(R.drawable.ic_person_circle);
-            mImageLoader.loadImage(photoUri, holder.icon);
-        }
-
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return super.getView(translateListToCursorPosition(position), convertView, parent);
-        }
-
-        /** Convert position in the ListView into cursor position. List omits items contained in the mSelectedContacts.
-         * The cursor position is >= list position.
-         *
-         * @param position list position to translate to cursor position
-         *
-         * @return cursor position
-         */
-        private int translateListToCursorPosition(int position) {
-            for (Integer idx : mSelectedContacts) {
-                if (idx <= position) {
-                    position++;
-                }
+            boolean selected = mTopic != null && mTopic.getSubscription(uid) != null;
+            if (selected) {
+                holder.icon.setImageResource(R.drawable.ic_checkbox_circle);
+            } else {
+                // Clear the icon then load the thumbnail from photoUri in a background worker thread
+                holder.icon.setImageResource(R.drawable.ic_person_circle);
+                mImageLoader.loadImage(photoUri, holder.icon);
             }
-            return position;
         }
+
 
         @Override
         public MemberData getItem(int position) {
             Cursor cursor = getCursor();
             if (cursor != null) {
-                int cursorPosition = translateListToCursorPosition(position);
-                cursor.moveToPosition(cursorPosition);
+                cursor.moveToPosition(position);
                 final String uid = cursor.getString(ContactsQuery.IM_HANDLE);
                 final String photoUri = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
                 final String displayName = cursor.getString(ContactsQuery.DISPLAY_NAME);
 
-                return new MemberData(cursorPosition, uid, displayName, photoUri);
+                return new MemberData(position, uid, displayName, photoUri);
             }
 
             return null;
@@ -464,7 +452,7 @@ public class EditGroupFragment extends ListFragment {
             if (getCursor() == null) {
                 return 0;
             }
-            return super.getCount() - mSelectedContacts.size();
+            return super.getCount();
         }
 
         /**
@@ -621,23 +609,24 @@ public class EditGroupFragment extends ListFragment {
             holder.container.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    removeItem(holder.getAdapterPosition());
+                    if (mTopic == null) {
+                        return;
+                    }
+
+                    final int position = holder.getAdapterPosition();
+                    Subscription sub = mItems[position];
+                    try {
+                        mTopic.eject(sub.user, false);
+                    } catch (NotSynchronizedException ignored) {
+                        // do nothing;
+                    } catch (NotConnectedException ignored) {
+                        Toast.makeText(getActivity(), R.string.no_connection, Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(), R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
-
-        public void removeItem(int position) {
-            Subscription sub = mItems[position];
-            deselect(data.position);
-            notifyItemRemoved(position);
-            if (mItemCount == 0) {
-                mNoMembersView.setVisibility(View.VISIBLE);
-            }
-        }
-
-        // Iterator<Subscription> getMembers() {
-        //   return mItems.iterator();
-        // }
     }
 
     private class MemberViewHolder extends RecyclerView.ViewHolder {
