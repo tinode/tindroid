@@ -16,7 +16,7 @@
         android:contentDescription="@string/avatar"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:src="@drawable/ic_group" />
+        android:src="@drawable/ic_group_circle" />
 
     <Button android:id="@+id/upload_avatar"
             android:layout_width="48sp"
@@ -28,23 +28,27 @@
             android:layout_alignParentRight="true"
             android:layout_alignBottom="@id/imageAvatar"/>
 
-    <EditText
-        android:id="@+id/title"
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/editTitleWrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/topic_title"
-        android:inputType="text"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_marginTop="6dp"
-        android:layout_toLeftOf="@id/imageAvatar"
-        />
+        android:layout_toLeftOf="@id/imageAvatar">
+        <android.support.design.widget.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/editTitle"
+            android:inputType="text"
+            android:hint="@string/topic_title" />
+    </android.support.design.widget.TextInputLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_toLeftOf="@id/imageAvatar"
-        android:layout_below="@id/title">
+        android:layout_below="@id/editTitleWrapper">
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/groupMembers"

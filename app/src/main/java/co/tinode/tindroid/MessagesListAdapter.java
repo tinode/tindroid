@@ -317,9 +317,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     @Override
     public int getItemCount() {
-        int count = mCursor != null ? mCursor.getCount() : 0;
-        Log.d(TAG, "getItemCount = " + count + ", Cursor is " + (mCursor == null ? "NULL" : "not null"));
-        return count;
+        return mCursor != null ? mCursor.getCount() : 0;
     }
 
     private void toggleSelectionAt(int pos) {

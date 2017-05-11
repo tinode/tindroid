@@ -46,6 +46,11 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
     }
 
     @Override
+    protected void removeSubFromCache(Subscription<Pu,Pr> sub) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Subscription<Pu,Pr> getSubscription(String key) {
         throw new UnsupportedOperationException();
     }

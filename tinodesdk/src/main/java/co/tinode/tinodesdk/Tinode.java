@@ -77,7 +77,7 @@ public class Tinode {
     private static final long NOTE_RECV_DELAY = 300L;
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.10";
+    private static final String VERSION = "0.11";
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
@@ -689,7 +689,7 @@ public class Tinode {
                             if (pkt.ctrl == null) {
                                 throw new InvalidObjectException("Unexpected type of reply packet in login");
                             }
-                            mMyUid = (String) pkt.ctrl.params.get("uid");
+                            mMyUid = (String) pkt.ctrl.params.get("user");
                             if (mStore != null) {
                                 mStore.setMyUid(mMyUid);
                             }
@@ -853,8 +853,7 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delMessage(final String topicName, final int before, final boolean hard) {
-        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
-                MsgClientDel.What.MSG, before, hard));
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, before, hard));
         return sendDeleteMessage(msg);
     }
 
@@ -879,8 +878,34 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delTopic(final String topicName) {
-        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName,
-                MsgClientDel.What.TOPIC, 0));
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName));
+        try {
+            send(Tinode.getJsonMapper().writeValueAsString(msg));
+            PromisedReply<ServerMessage> future = new PromisedReply<>();
+            mFutures.put(msg.del.id, future);
+            future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    unregisterTopic(topicName);
+                    return null;
+                }
+            }, null);
+            return future;
+        } catch (Exception unused) {
+            return null;
+        }
+    }
+
+    /**
+     * Low-level request to delete a subscription. Use {@link Topic#eject(String, boolean)} ()} instead.
+     *
+     * @param topicName name of the topic
+     * @param user user ID to unsubscribe
+     * @return PromisedReply of the reply ctrl or meta message
+     */
+    @SuppressWarnings("WeakerAccess")
+    public PromisedReply<ServerMessage> delSubscription(final String topicName, final String user) {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, user));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();

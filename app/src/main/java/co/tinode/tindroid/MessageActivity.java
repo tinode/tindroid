@@ -39,8 +39,8 @@ public class MessageActivity extends AppCompatActivity {
 
     private String mMessageText = null;
 
-    private String mTopicName;
-    protected Topic<VCard, String, String> mTopic;
+    private String mTopicName = null;
+    private Topic<VCard, String, String> mTopic = null;
 
     // private MessagesFragment mMsgFragment = null;
     // private TopicInfoFragment mInfoFragment = null;
@@ -136,6 +136,7 @@ public class MessageActivity extends AppCompatActivity {
 
     @Override
     public void onPause() {
+        Log.d(TAG, "onPause");
         super.onPause();
 
         Cache.getTinode().setListener(null);
@@ -215,6 +216,8 @@ public class MessageActivity extends AppCompatActivity {
             trx.replace(R.id.contentFragment, fragment, tag);
             trx.commit();
         }
+
+        Log.d(TAG, "showFragment mTopic is " + (mTopic == null ? "NULL" : "not null"));
     }
 
     public void sendKeyPress() {
@@ -278,6 +281,7 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onMetaDesc(final Description<VCard, String> desc) {
+            Log.d(TAG, "onMetaDesc, mTopic is " + (mTopic == null ? "NULL" : "not null"));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -289,6 +293,7 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onOnline(final boolean online) {
+            Log.d(TAG, "onOnline, mTopic is " + (mTopic == null ? "NULL" : "not null"));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

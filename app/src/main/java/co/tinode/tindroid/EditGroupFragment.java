@@ -152,7 +152,11 @@ public class EditGroupFragment extends ListFragment {
 
                 MemberData data = mContactsAdapter.getItem(position);
                 try {
-                    mTopic.invite(data.uid, null, activity.getString(R.string.invitation_text));
+                    if (mTopic != null && mTopic.getSubscription(data.uid) != null) {
+                        mTopic.eject(data.uid, false);
+                    } else {
+                        mTopic.invite(data.uid, null, activity.getString(R.string.invitation_text));
+                    }
                 } catch (NotSynchronizedException ignored) {
                     // Do nothing
                 } catch (NotConnectedException ignored) {
@@ -170,7 +174,7 @@ public class EditGroupFragment extends ListFragment {
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final EditText titleEdit = ((EditText) activity.findViewById(R.id.title));
+                final EditText titleEdit = ((EditText) activity.findViewById(R.id.editTitle));
                 final String topicTitle = titleEdit.getText().toString();
                 if (TextUtils.isEmpty(topicTitle)) {
                     titleEdit.setError(getString(R.string.name_required));
@@ -229,7 +233,8 @@ public class EditGroupFragment extends ListFragment {
                 });
             }
         });
-        mMembersAdapter.resetContent();
+
+        populateForm();
     }
 
     @Override
@@ -279,24 +284,21 @@ public class EditGroupFragment extends ListFragment {
         }
     }
 
-    private void populateForm(final Activity activity) {
-        final Tinode tinode = Cache.getTinode();
-        final Topic<VCard,String,String> topic = tinode.getTopic(mTopicName);
-        if (topic == null) {
-            return;
-        }
+    private void populateForm() {
+        if (mTopic != null) {
+            final Activity activity = getActivity();
 
-        final VCard vcard = topic.getPub();
-        if (vcard != null) {
-            final EditText titleEdit = ((EditText) activity.findViewById(R.id.title));
-            titleEdit.setText(vcard.fn);
+            final VCard vcard = mTopic.getPub();
+            if (vcard != null) {
+                final EditText titleEdit = ((EditText) activity.findViewById(R.id.editTitle));
+                titleEdit.setText(vcard.fn);
 
-            Bitmap bmp = vcard.getBitmap();
-            if (bmp != null) {
-                UiUtils.acceptAvatar((ImageView) activity.findViewById(R.id.imageAvatar), bmp);
+                Bitmap bmp = vcard.getBitmap();
+                if (bmp != null) {
+                    UiUtils.acceptAvatar((ImageView) activity.findViewById(R.id.imageAvatar), bmp);
+                }
             }
         }
-
         mMembersAdapter.resetContent();
     }
 

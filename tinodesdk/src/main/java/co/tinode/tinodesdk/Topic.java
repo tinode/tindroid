@@ -123,10 +123,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         mDesc = new Description<>();
 
-        if (l != null) {
-            l.mTopic = this;
-        }
-
         setListener(l);
     }
 
@@ -811,7 +807,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @return
      * @throws Exception
      */
-    public PromisedReply<ServerMessage> eject(String uid, boolean ban)  throws Exception {
+    public PromisedReply<ServerMessage> eject(String uid, boolean ban) throws Exception {
         final Subscription<Pu,Pr> sub = getSubscription(uid);
 
         if (sub == null) {
@@ -831,7 +827,19 @@ public class Topic<Pu,Pr,T> implements LocalData {
             throw new NotSynchronizedException();
         }
 
-        return updateSub(uid, ban ? "X" : "N");
+        return mTinode.delSubscription(getName(), uid).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                if (mStore != null) {
+                    mStore.subDelete(Topic.this, sub);
+                }
+
+                removeSubFromCache(sub);
+                if (mListener != null) {
+                    mListener.onSubsUpdated();
+                }
+                return null;            }
+        }, null);
     }
 
     /**
@@ -1023,6 +1031,18 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         mSubs.put(sub.user, sub);
     }
+
+    /**
+     * Remove subscription to cache. Needs to be overriden in MeTopic because it keeps subs indexed by topic.
+     *
+     * @param sub subscription to remove from cache
+     */
+    protected void removeSubFromCache(Subscription<Pu,Pr> sub) {
+        if (mSubs != null) {
+            mSubs.remove(sub.user);
+        }
+    }
+
 
     public Subscription<Pu,Pr> getSubscription(String key) {
         if (mSubs == null) {
@@ -1268,7 +1288,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public static class Listener<PPu,PPr,Tt> {
-        protected Topic<PPu,PPr,Tt> mTopic;
 
         public void onSubscribe(int code, String text) {}
         public void onLeave(int code, String text) {}

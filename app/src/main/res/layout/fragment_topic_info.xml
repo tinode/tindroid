@@ -22,7 +22,7 @@
             android:layout_marginStart="8sp"
             android:clickable="true"
             android:contentDescription="@string/avatar"
-            android:src="@drawable/ic_group"/>
+            android:src="@drawable/ic_group_circle"/>
 
         <TextView
             android:id="@+id/topicTitle"
