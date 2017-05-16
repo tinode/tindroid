@@ -132,6 +132,8 @@ public class MessagesFragment extends Fragment {
         mTopicName = bundle.getString("topic");
         String messageToSend = bundle.getString("messageText");
 
+        Log.d(TAG, "Resumed with topic=" + mTopicName);
+
         mTopic = Cache.getTinode().getTopic(mTopicName);
 
         ((TextView) getActivity().findViewById(R.id.editMessage))
@@ -197,24 +199,6 @@ public class MessagesFragment extends Fragment {
         mMessagesAdapter.notifyDataSetChanged();
     }
 
-    public void swapCursor(String topicName, Cursor cursor) {
-        mMessagesAdapter.swapCursor(topicName, cursor);
-
-        Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(TAG, "MessagesListAdapter.swapCursor");
-
-                    notifyDataSetChanged();
-                    // -1 means scroll to the bottom
-                    scrollTo(-1);
-                }
-            });
-        }
-    }
-
     public void sendMessage() {
         if (mTopic != null) {
             final Activity activity = getActivity();
@@ -273,6 +257,22 @@ public class MessagesFragment extends Fragment {
         }
     }
 
+    private void swapCursor(final String topicName, final Cursor cursor) {
+        Log.d(TAG, "MessagesListAdapter.swapCursor, topic=" + topicName);
+        mMessagesAdapter.swapCursor(topicName, cursor);
+
+        Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    notifyDataSetChanged();
+                    // -1 means scroll to the bottom
+                    scrollTo(-1);
+                }
+            });
+        }
+    }
     private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
 
         @Override

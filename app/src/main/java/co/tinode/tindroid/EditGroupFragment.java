@@ -618,7 +618,31 @@ public class EditGroupFragment extends ListFragment {
                     final int position = holder.getAdapterPosition();
                     Subscription sub = mItems[position];
                     try {
-                        mTopic.eject(sub.user, false);
+                        mTopic.eject(sub.user, false).thenApply(
+                                new PromisedReply.SuccessListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                                        getActivity().runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                notifyDataSetChanged();
+                                            }
+                                        });
+                                        return null;
+                                    }
+                                },
+                                new PromisedReply.FailureListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                        getActivity().runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(getActivity(), R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                        return null;
+                                    }
+                                });
                     } catch (NotSynchronizedException ignored) {
                         // do nothing;
                     } catch (NotConnectedException ignored) {

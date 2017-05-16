@@ -1,15 +1,14 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.AppCompatImageView;
-import android.support.v7.widget.SwitchCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,29 +16,24 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Topic Info fragment.
  */
-public class TopicInfoFragment extends ListFragment {
+public class TopicInfoFragment extends Fragment {
 
     private static final String TAG = "TopicInfoFragment";
 
@@ -59,9 +53,22 @@ public class TopicInfoFragment extends ListFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+    }
 
-        mAdapter = new MembersAdapter(getActivity());
-        setListAdapter(mAdapter);
+    @Override
+    public void onActivityCreated(Bundle savedInstance) {
+        super.onActivityCreated(savedInstance);
+
+        mAdapter = new MembersAdapter();
+
+        final Activity activity = getActivity();
+
+        RecyclerView rv = (RecyclerView) activity.findViewById(R.id.groupMembers);
+        rv.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        rv.setAdapter(mAdapter);
+        rv.setNestedScrollingEnabled(false);
+
+        // Log.d(TAG, "onActivityCreated");
     }
 
     @Override
@@ -107,6 +114,12 @@ public class TopicInfoFragment extends ListFragment {
         if (pub != null) {
             if (!TextUtils.isEmpty(pub.fn)) {
                 title.setText(pub.fn);
+                title.setTypeface(null, Typeface.NORMAL);
+                title.setTextIsSelectable(true);
+            } else {
+                title.setText(R.string.placeholder_contact_title);
+                title.setTypeface(null, Typeface.ITALIC);
+                title.setTextIsSelectable(false);
             }
             final Bitmap bmp = pub.getBitmap();
             if (bmp != null) {
@@ -116,6 +129,12 @@ public class TopicInfoFragment extends ListFragment {
         String priv = mTopic.getPriv();
         if (!TextUtils.isEmpty(priv)) {
             subtitle.setText(priv);
+            subtitle.setTypeface(null, Typeface.NORMAL);
+            subtitle.setTextIsSelectable(true);
+        } else {
+            subtitle.setText(R.string.placeholder_private);
+            subtitle.setTypeface(null, Typeface.ITALIC);
+            subtitle.setTextIsSelectable(false);
         }
 
         address.setText(mTopic.getName());
@@ -149,29 +168,13 @@ public class TopicInfoFragment extends ListFragment {
         mTopic.setListener(null);
     }
 
-    @Override
-    public void onActivityCreated(Bundle savedInstance) {
-        super.onActivityCreated(savedInstance);
-
-        // Log.d(TAG, "onActivityCreated");
-
-        getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Log.d(TAG, "Click, pos=" + position + ", id=" + id);
-            }
-        });
-    }
-
-    private class MembersAdapter extends BaseAdapter {
+    private class MembersAdapter extends RecyclerView.Adapter<MemberViewHolder> {
 
         private Subscription<VCard,String>[] mItems;
         private int mItemCount;
-        private Context mContext;
 
         @SuppressWarnings("unchecked")
-        MembersAdapter(Activity context) {
-            mContext = context;
+        MembersAdapter() {
             mItems = (Subscription<VCard,String>[]) new Subscription[8];
             mItemCount = 0;
         }
@@ -192,18 +195,8 @@ public class TopicInfoFragment extends ListFragment {
         }
 
         @Override
-        public boolean hasStableIds() {
-            return true;
-        }
-
-        @Override
-        public int getCount() {
+        public int getItemCount() {
             return mItemCount;
-        }
-
-        @Override
-        public Object getItem(int i) {
-            return mItems[i];
         }
 
         @Override
@@ -212,41 +205,24 @@ public class TopicInfoFragment extends ListFragment {
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View item = convertView;
-            ViewHolder holder;
-            if (item == null) {
-                LayoutInflater inflater = (LayoutInflater) mContext
-                        .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-
-                item = inflater.inflate(R.layout.group_member, parent, false);
-                holder = new ViewHolder();
-                holder.name = (TextView) item.findViewById(android.R.id.text1);
-                holder.contactPriv = (TextView) item.findViewById(android.R.id.text2);
-                holder.statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
-                holder.status = new TextView[holder.statusContainer.getChildCount()];
-                for (int i=0; i < holder.status.length; i++) {
-                    holder.status[i] = (TextView) holder.statusContainer.getChildAt(i);
-                }
-                holder.icon = (AppCompatImageView) item.findViewById(android.R.id.icon);
-
-                item.setTag(holder);
-            } else {
-                holder = (ViewHolder) item.getTag();
-            }
-
-            bindView(position, holder);
-
-            return item;
+        public MemberViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            // create a new view
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.group_member, parent, false);
+            return new MemberViewHolder(v);
         }
 
-        void bindView(int position, ViewHolder holder) {
+        @Override
+        public void onBindViewHolder(final MemberViewHolder holder, int position) {
             final Subscription<VCard, String> sub = mItems[position];
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
 
             Bitmap bmp = null;
             if (sub.pub != null) {
-                holder.name.setText(sub.pub.fn);
+                if (!TextUtils.isEmpty(sub.pub.fn)) {
+                    holder.name.setText(sub.pub.fn);
+                } else {
+                    holder.name.setText(R.string.placeholder_contact_title);
+                }
                 bmp = sub.pub.getBitmap();
             } else {
                 Log.d(TAG, "Pub is null for " + sub.user);
@@ -268,7 +244,14 @@ public class TopicInfoFragment extends ListFragment {
                 holder.status[i].setVisibility(View.GONE);
             }
 
-            UiUtils.assignBitmap(mContext, holder.icon, bmp, R.drawable.ic_person_circle);
+            UiUtils.assignBitmap(getActivity(), holder.icon, bmp, R.drawable.ic_person_circle);
+
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(TAG, "Click, pos=" + holder.getAdapterPosition());
+                }
+            });
         }
     }
 
@@ -279,11 +262,24 @@ public class TopicInfoFragment extends ListFragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    private static class ViewHolder {
+    private static class MemberViewHolder extends RecyclerView.ViewHolder {
         TextView name;
         TextView contactPriv;
         LinearLayout statusContainer;
         TextView[] status;
         AppCompatImageView icon;
+
+        MemberViewHolder(View item) {
+            super(item);
+
+            name = (TextView) item.findViewById(android.R.id.text1);
+            contactPriv = (TextView) item.findViewById(android.R.id.text2);
+            statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
+            status = new TextView[statusContainer.getChildCount()];
+            for (int i=0; i < status.length; i++) {
+                status[i] = (TextView) statusContainer.getChildAt(i);
+            }
+            icon = (AppCompatImageView) item.findViewById(android.R.id.icon);
+        }
     }
 }

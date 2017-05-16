@@ -45,9 +45,7 @@
                     android:layout_height="11sp"
                     android:layout_gravity="center_vertical"
                     android:paddingLeft="5sp"
-                    android:paddingRight="3sp"
-                    android:tint="?android:attr/textColorSecondary">
-                </android.support.v7.widget.AppCompatImageView>
+                    android:paddingRight="3sp" />
 
             </LinearLayout>
 

@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
@@ -123,18 +124,20 @@ public class ContactsActivity extends AppCompatActivity implements
                         .withGetSub()
                         .withGetData()
                         .build());
+            } catch (NotSynchronizedException ignored) {
+                /* */
             } catch (NotConnectedException ignored) {
                 /* offline - ignored */
+                Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
             } catch (Exception err) {
-                Log.i(TAG, "connection failed :( " + err.getMessage());
-                Toast.makeText(getApplicationContext(),
+                Log.i(TAG, "Subscription failed " + err.getMessage());
+                Toast.makeText(this,
                         "Failed to attach", Toast.LENGTH_LONG).show();
             }
         }
     }
 
     private void datasetChanged() {
-        Log.d(TAG, "datasetChanged");
         mChatListAdapter.resetContent();
         runOnUiThread(new Runnable() {
             @Override
@@ -227,17 +230,16 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onSubsUpdated() {
-            Log.d(TAG, "Subs Updated");
             datasetChanged();
         }
     }
 
-    public class PagerAdapter extends FragmentStatePagerAdapter {
+    private class PagerAdapter extends FragmentStatePagerAdapter {
         int mNumOfTabs;
         Fragment mChatList;
         Fragment mContacts;
 
-        public PagerAdapter(FragmentManager fm, int numTabs) {
+        PagerAdapter(FragmentManager fm, int numTabs) {
             super(fm);
             mNumOfTabs = numTabs;
         }

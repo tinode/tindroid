@@ -48,7 +48,7 @@ public class Cache {
      */
     public static int activityVisible(boolean visible) {
         sVisibleCount += visible ? 1 : -1;
-        Log.d(TAG, "Visible count: " + sVisibleCount);
+        // Log.d(TAG, "Visible count: " + sVisibleCount);
         return sVisibleCount;
     }
 

@@ -97,9 +97,11 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         if (TextUtils.isEmpty(mTopicName)) {
-            Log.e(TAG, "Activity started with an empty topic name");
+            Log.e(TAG, "Activity resumed with an empty topic name");
             finish();
             return;
+        } else {
+            Log.d(TAG, "Activity resumed with topic=" + mTopicName);
         }
 
         // Cancel all pending notifications addressed to the current topic
@@ -128,7 +130,7 @@ public class MessageActivity extends AppCompatActivity {
                 }
             }
         } else {
-            Log.d(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+            Log.e(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
         }
 
         showFragment(FRAGMENT_MESSAGES);
@@ -207,17 +209,20 @@ public class MessageActivity extends AppCompatActivity {
             throw new NullPointerException();
         }
 
-        if (!fragment.isVisible()) {
-            Bundle args = new Bundle();
-            args.putString("topic", mTopicName);
-            args.putString("messageText", mMessageText);
+        Bundle args = new Bundle();
+        args.putString("topic", mTopicName);
+        args.putString("messageText", mMessageText);
+        if (fragment.getArguments() != null) {
+            fragment.getArguments().putAll(args);
+        } else {
             fragment.setArguments(args);
+        }
+
+        if (!fragment.isVisible()) {
             FragmentTransaction trx = fm.beginTransaction();
             trx.replace(R.id.contentFragment, fragment, tag);
             trx.commit();
         }
-
-        Log.d(TAG, "showFragment mTopic is " + (mTopic == null ? "NULL" : "not null"));
     }
 
     public void sendKeyPress() {
@@ -234,11 +239,13 @@ public class MessageActivity extends AppCompatActivity {
         public void onSubscribe(int code, String text) {
             // Topic name may change after subscription, i.e. new -> grpXXX
             mTopicName = mTopic.getName();
+            /*
             MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                     findFragmentByTag(FRAGMENT_MESSAGES);
             if (fragment != null && fragment.isVisible()) {
                 fragment.runLoader();
             }
+            */
         }
 
         @Override
@@ -247,7 +254,8 @@ public class MessageActivity extends AppCompatActivity {
                     findFragmentByTag(FRAGMENT_MESSAGES);
             if (fragment != null && fragment.isVisible()) {
                 fragment.runLoader();
-            }        }
+            }
+        }
 
         @Override
         public void onPres(MsgServerPres pres) {
@@ -281,7 +289,6 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onMetaDesc(final Description<VCard, String> desc) {
-            Log.d(TAG, "onMetaDesc, mTopic is " + (mTopic == null ? "NULL" : "not null"));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -293,7 +300,6 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onOnline(final boolean online) {
-            Log.d(TAG, "onOnline, mTopic is " + (mTopic == null ? "NULL" : "not null"));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

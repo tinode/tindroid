@@ -204,7 +204,9 @@ public class SubscriberDb implements BaseColumns {
                 // Convert topic description to a map of values
                 ContentValues values = new ContentValues();
                 values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
-                values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+                if (sub.updated != null) {
+                    values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+                }
                 if (ss.status != BaseDb.STATUS_SYNCED) {
                     values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
                     status = BaseDb.STATUS_SYNCED;

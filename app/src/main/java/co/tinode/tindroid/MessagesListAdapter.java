@@ -357,6 +357,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         if (oldCursor != null) {
             oldCursor.close();
         }
+        Log.d(TAG, "swapped cursor, topic=" + mTopicName);
     }
 
     StoredMessage<String> getMessage(int position) {

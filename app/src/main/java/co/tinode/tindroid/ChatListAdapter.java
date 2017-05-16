@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
@@ -97,6 +98,10 @@ public class ChatListAdapter extends BaseAdapter {
         VCard pub = topic.getPub();
         if (pub != null) {
             holder.name.setText(pub.fn);
+            holder.name.setTypeface(null, Typeface.NORMAL);
+        } else {
+            holder.name.setText(R.string.placeholder_contact_title);
+            holder.name.setTypeface(null, Typeface.ITALIC);
         }
         holder.contactPriv.setText(topic.getPriv());
 
