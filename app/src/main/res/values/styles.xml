@@ -36,6 +36,10 @@
         <item name="android:textColor">@color/colorTextPrimary</item>
     </style>
 
+    <style name="textPrimarySmall" parent="@android:style/TextAppearance.DeviceDefault.Small">
+        <item name="android:textColor">@color/colorTextPrimary</item>
+    </style>
+
     <style name="textPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
         <item name="android:textColor">@color/colorTextPrimary</item>
     </style>
@@ -49,9 +53,8 @@
     </style>
 
 
-    <style name="sectionTitleStyle">
+    <style name="sectionTitleStyle" parent="@android:style/TextAppearance.DeviceDefault.Small">
         <item name="android:textColor">@color/colorPrimaryDark</item>
-        <item name="android:textSize">10sp</item>
         <item name="android:textAllCaps">true</item>
     </style>
 

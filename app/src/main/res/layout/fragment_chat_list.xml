@@ -3,9 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp"
     android:background="@color/white"
+    android:paddingBottom="6dp"
+    android:paddingTop="6dp"
     tools:context="co.tinode.tindroid.ChatListFragment"
     tools:showIn="@layout/activity_contacts">
 
@@ -15,11 +15,12 @@
         android:layout_height="match_parent"/>
 
     <!-- This is a view shown when no contacts are found. -->
-    <TextView android:id="@id/android:empty"
-              android:gravity="center"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:text="@string/no_contacts"
-              android:textAppearance="?android:attr/textAppearanceLarge"/>
+    <TextView
+        android:id="@id/android:empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/no_contacts"
+        android:textAppearance="?android:attr/textAppearanceLarge"/>
 
 </FrameLayout>

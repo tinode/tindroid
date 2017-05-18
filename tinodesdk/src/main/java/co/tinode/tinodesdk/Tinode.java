@@ -440,6 +440,9 @@ public class Tinode {
     public String getMyId() {
          return mMyUid;
     }
+    public boolean isMe(String uid) {
+        return mMyUid != null && mMyUid.equals(uid);
+    }
 
     public String getAuthToken() {
         return mAuthToken;

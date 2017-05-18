@@ -3,6 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:orientation="horizontal"
     android:paddingBottom="2dp"
@@ -14,25 +16,37 @@
         android:id="@android:id/icon"
         android:layout_width="48sp"
         android:layout_height="48sp"
-        android:src="@drawable/ic_person_circle"
+        app:srcCompat="@drawable/ic_person_circle"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginRight="5dp"
         android:layout_marginEnd="5dp" />
 
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/optionsMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        app:srcCompat="@drawable/ic_more_vert"
+        android:tint="@color/colorTextSecondary"
+        android:focusable="false"
+        android:gravity="center"
+        android:contentDescription="@string/options_menu"
+        android:background="?attr/selectableItemBackgroundBorderless" />
+
     <LinearLayout
         android:id="@+id/statusContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
+        android:layout_toLeftOf="@id/optionsMenu"
         android:layout_marginTop="3.5dp"
         android:orientation="horizontal"
         android:focusable="false">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="admin"
+            android:text="@string/permission_admin"
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
             android:background="@drawable/border_green"
@@ -47,7 +61,7 @@
             android:background="@drawable/border_green"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
-            android:text="owner"
+            android:text="@string/permission_owner"
             android:typeface="monospace"/>
         <TextView
             android:layout_width="wrap_content"
@@ -55,7 +69,7 @@
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
             android:background="@drawable/border_green"
-            android:text="muted"
+            android:text="@string/permission_muted"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
             android:typeface="monospace"/>
@@ -74,7 +88,7 @@
         android:paddingRight="16sp"
         android:layout_alignParentTop="true"
         android:maxLines="1"
-        android:text="Test text"
+        tools:text="Test text"
         android:textAppearance="@style/contactListTextPrimary"/>
 
     <TextView
@@ -87,7 +101,8 @@
         android:maxLines="1"
         android:maxWidth="240sp"
         android:layout_below="@android:id/text1"
-        android:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
+        android:layout_toLeftOf="@id/optionsMenu"
+        tools:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
         android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 </RelativeLayout>

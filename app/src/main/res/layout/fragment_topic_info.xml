@@ -1,6 +1,8 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="co.tinode.tindroid.TopicInfoFragment">
@@ -11,11 +13,10 @@
         android:orientation="vertical">
 
         <android.support.v7.widget.CardView
-            xmlns:card_view="http://schemas.android.com/apk/res-auto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_default_margin"
             android:layout_marginBottom="@dimen/activity_default_margin"
+            android:layout_marginTop="@dimen/activity_default_margin"
             card_view:cardElevation="@dimen/cardview_default_elevation"
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPaddingLeft="@dimen/activity_horizontal_margin">
@@ -34,7 +35,7 @@
                     android:layout_marginStart="8sp"
                     android:clickable="true"
                     android:contentDescription="@string/avatar"
-                    android:src="@drawable/ic_group_circle"/>
+                    app:srcCompat="@drawable/ic_group_circle"/>
 
                 <TextView
                     android:id="@+id/topicTitle"
@@ -63,7 +64,99 @@
         </android.support.v7.widget.CardView>
 
         <android.support.v7.widget.CardView
-            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/activity_default_margin"
+            android:layout_marginTop="@dimen/activity_default_margin"
+            card_view:cardElevation="@dimen/cardview_default_elevation"
+            card_view:cardPreventCornerOverlap="true"
+            card_view:contentPadding="@dimen/activity_horizontal_margin">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        style="@style/textPrimary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:text="@string/topic_muted"/>
+
+                    <Switch
+                        android:id="@+id/switchMuted"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="4dp"/>
+
+                </LinearLayout>
+            </LinearLayout>
+        </android.support.v7.widget.CardView>
+
+        <android.support.v7.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/activity_default_margin"
+            android:layout_marginTop="@dimen/activity_default_margin"
+            card_view:cardElevation="@dimen/cardview_default_elevation"
+            card_view:cardPreventCornerOverlap="true"
+            card_view:contentPadding="@dimen/activity_horizontal_margin">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/membersTitle"
+                    style="@style/sectionTitleStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/group_members"
+                    />
+
+                <android.support.v7.widget.AppCompatButton
+                    android:id="@+id/buttonAddMembers"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/membersTitle"
+                    android:contentDescription="@string/add_members"
+                    android:drawableLeft="@drawable/ic_person_add"
+                    android:drawablePadding="4sp"
+                    android:drawableStart="@drawable/ic_person_add"
+                    android:text="@string/add_members"
+                    android:textColor="@color/colorTextPrimary"/>
+
+                <android.support.v7.widget.AppCompatButton
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/membersTitle"
+                    android:layout_toEndOf="@id/buttonAddMembers"
+                    android:layout_toRightOf="@id/buttonAddMembers"
+                    android:drawableLeft="@drawable/ic_exit"
+                    android:drawablePadding="4sp"
+                    android:drawableStart="@drawable/ic_exit"
+                    android:text="@string/leave_group"
+                    android:textColor="@color/colorDangerDark"/>
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/groupMembers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/buttonAddMembers"/>
+
+            </RelativeLayout>
+
+        </android.support.v7.widget.CardView>
+
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_default_margin"
@@ -107,26 +200,6 @@
                         style="@style/textPrimary"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="1"
-                        android:text="@string/topic_muted"/>
-
-                    <Switch
-                        android:id="@+id/switchMuted"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"/>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        style="@style/textPrimary"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/permissions"/>
 
@@ -143,7 +216,7 @@
         </android.support.v7.widget.CardView>
 
         <android.support.v7.widget.CardView
-            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/defaultPermissions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_default_margin"
@@ -152,51 +225,61 @@
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPadding="@dimen/activity_horizontal_margin">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/membersTitle"
                     style="@style/sectionTitleStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/group_members"
+                    android:text="@string/default_permissions"
                     />
 
-                <android.support.v7.widget.AppCompatButton
-                    android:id="@+id/buttonAddMember"
-                    style="?attr/buttonBarButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/membersTitle"
-                    android:contentDescription="@string/add_members"
-                    android:drawableLeft="@drawable/ic_person_add"
-                    android:drawablePadding="4sp"
-                    android:drawableStart="@drawable/ic_person_add"
-                    android:text="@string/add_members"
-                    android:textColor="@color/colorTextPrimary"/>
-
-                <android.support.v7.widget.AppCompatButton
-                    style="?attr/buttonBarButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/membersTitle"
-                    android:layout_toEndOf="@id/buttonAddMember"
-                    android:layout_toRightOf="@id/buttonAddMember"
-                    android:drawableLeft="@drawable/ic_exit"
-                    android:drawablePadding="4sp"
-                    android:drawableStart="@drawable/ic_exit"
-                    android:text="@string/leave_group"
-                    android:textColor="@color/colorDangerDark"/>
-
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/groupMembers"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/buttonAddMember"/>
+                    android:layout_height="wrap_content">
 
-            </RelativeLayout>
+                    <TextView
+                        style="@style/textPrimary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/auth_permissions"/>
+
+                    <TextView
+                        android:id="@+id/authPermissions"
+                        style="@style/textPrimary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textIsSelectable="true"
+                        android:typeface="monospace"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        style="@style/textPrimary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/anon_permissions"/>
+
+                    <TextView
+                        android:id="@+id/anonPermissions"
+                        style="@style/textPrimary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textIsSelectable="true"
+                        android:typeface="monospace"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </android.support.v7.widget.CardView>
 

@@ -27,6 +27,7 @@ import java.util.Collection;
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -86,6 +87,7 @@ public class TopicInfoFragment extends Fragment {
         final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
         final TextView address = (TextView) activity.findViewById(R.id.topicAddress);
         final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
+        final View defaultPermissions = activity.findViewById(R.id.defaultPermissions);
 
         mTopic.setListener(new Topic.Listener<VCard, String, String>() {
             @Override
@@ -137,9 +139,6 @@ public class TopicInfoFragment extends Fragment {
             subtitle.setTextIsSelectable(false);
         }
 
-        address.setText(mTopic.getName());
-        permissions.setText(mTopic.getAccessMode().getMode());
-
         final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
         muted.setChecked(mTopic.isMuted());
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -157,6 +156,24 @@ public class TopicInfoFragment extends Fragment {
                 }
             }
         });
+
+        if (!mTopic.isAdmin()) {
+            activity.findViewById(R.id.buttonAddMembers).setEnabled(false);
+        }
+
+        address.setText(mTopic.getName());
+        Acs am = mTopic.getAccessMode();
+        permissions.setText(am.getMode());
+
+        if (am.isAdmin()) {
+            defaultPermissions.setVisibility(View.VISIBLE);
+            final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
+            final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
+            auth.setText(mTopic.getAuthAcs().toString());
+            anon.setText(mTopic.getAnonAcs().toString());
+        } else {
+            defaultPermissions.setVisibility(View.GONE);
+        }
 
         mAdapter.resetContent();
     }
@@ -215,19 +232,20 @@ public class TopicInfoFragment extends Fragment {
         public void onBindViewHolder(final MemberViewHolder holder, int position) {
             final Subscription<VCard, String> sub = mItems[position];
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
+            final Activity activity = getActivity();
 
             Bitmap bmp = null;
+            String title = Cache.getTinode().isMe(sub.user) ? activity.getString(R.string.current_user) : null;
             if (sub.pub != null) {
-                if (!TextUtils.isEmpty(sub.pub.fn)) {
-                    holder.name.setText(sub.pub.fn);
-                } else {
-                    holder.name.setText(R.string.placeholder_contact_title);
+                if (title == null) {
+                    title = !TextUtils.isEmpty(sub.pub.fn) ? sub.pub.fn :
+                            activity.getString(R.string.placeholder_contact_title);
                 }
                 bmp = sub.pub.getBitmap();
             } else {
                 Log.d(TAG, "Pub is null for " + sub.user);
             }
-
+            holder.name.setText(title);
             holder.contactPriv.setText(sub.priv);
 
             int i = 0;

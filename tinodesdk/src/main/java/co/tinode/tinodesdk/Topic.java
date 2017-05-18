@@ -7,6 +7,7 @@ package co.tinode.tinodesdk;
 import android.util.Log;
 
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
@@ -476,8 +477,14 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
 
     public void setDefacs(String auth, String anon) {
-        mDesc.defacs.auth = auth;
-        mDesc.defacs.anon = anon;
+        mDesc.defacs.setAuth(auth);
+        mDesc.defacs.setAnon(anon);
+    }
+    public AcsHelper getAuthAcs() {
+        return mDesc.defacs.auth;
+    }
+    public AcsHelper getAnonAcs() {
+        return mDesc.defacs.anon;
     }
 
     public int getUnreadCount() {

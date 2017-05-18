@@ -118,4 +118,12 @@
 
     <string name="placeholder_contact_title">Unnamed or unknown</string>
     <string name="placeholder_private">Private info: not set</string>
+    <string name="options_menu">Options menu</string>
+    <string name="permission_admin">admin</string>
+    <string name="permission_owner">owner</string>
+    <string name="permission_muted">muted</string>
+    <string name="current_user">You</string>
+    <string name="default_permissions">Default permissions</string>
+    <string name="auth_permissions">Authenticated users</string>
+    <string name="anon_permissions">Anonymous users</string>
 </resources>

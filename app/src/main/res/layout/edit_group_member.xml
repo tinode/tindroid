@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_margin="5dp"
                 android:layout_width="48sp"
                 android:layout_height="48sp">
@@ -7,13 +8,13 @@
     <android.support.v7.widget.AppCompatImageView
         android:id="@+id/avatar"
         android:layout_width="48sp"
-        android:src="@drawable/ic_person_circle"
+        app:srcCompat="@drawable/ic_person_circle"
         android:layout_height="48sp" />
 
     <android.support.v7.widget.AppCompatImageView
         android:layout_width="20sp"
         android:layout_height="20sp"
-        android:src="@drawable/ic_circle"
+        app:srcCompat="@drawable/ic_circle"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         />
@@ -22,7 +23,7 @@
         android:id="@+id/cancel"
         android:layout_width="16sp"
         android:layout_height="16sp"
-        android:src="@drawable/ic_cancel_grey"
+        app:srcCompat="@drawable/ic_cancel_grey"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:contentDescription="@string/close"

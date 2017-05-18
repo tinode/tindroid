@@ -3,27 +3,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="6dp"
+    android:background="@color/white"
     android:paddingBottom="6dp"
-    tools:context="co.tinode.tindroid.ContactsFragment"
-    android:background="@color/white">
+    android:paddingTop="6dp"
+    tools:context="co.tinode.tindroid.ContactsFragment">
 
     <!-- Use standard android.R class list id instead of app specific id. This is just useful for
          consistency. -->
-    <ListView android:id="@id/android:list"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:verticalScrollbarPosition="right"
-              android:fastScrollAlwaysVisible="true"
-              android:scrollbarStyle="outsideInset" />
+    <ListView
+        android:id="@id/android:list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fastScrollAlwaysVisible="true"
+        android:scrollbarStyle="outsideInset"
+        android:verticalScrollbarPosition="right"/>
 
     <!-- Use standard android.R class empty id instead of app specific id. This is just useful for
      consistency. -->
-    <TextView android:id="@id/android:empty"
-              android:gravity="center"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:text="@string/no_contacts"
-              android:textAppearance="?android:attr/textAppearanceLarge"/>
+    <TextView
+        android:id="@id/android:empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/no_contacts"
+        android:textAppearance="?android:attr/textAppearanceLarge"/>
 
 </FrameLayout>

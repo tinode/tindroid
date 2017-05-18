@@ -3,6 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:orientation="horizontal"
     android:paddingBottom="2dp"
@@ -14,7 +16,7 @@
         android:id="@android:id/icon"
         android:layout_width="48sp"
         android:layout_height="48sp"
-        android:src="@drawable/ic_person_circle"
+        app:srcCompat="@drawable/ic_person_circle"
         android:layout_alignParentLeft="true"
         android:layout_marginRight="5dp" />
 
@@ -39,7 +41,7 @@
             android:paddingRight="16sp"
             android:layout_alignParentTop="true"
             android:maxLines="1"
-            android:text="Test text"
+            tools:text="Contact title"
             android:textAppearance="@style/contactListTextPrimary"/>
 
     <TextView
@@ -53,7 +55,7 @@
             android:maxLines="1"
             android:maxWidth="240sp"
             android:layout_below="@android:id/text1"
-            android:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
+            tools:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
             android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 </RelativeLayout>
