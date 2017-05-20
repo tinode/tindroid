@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
+import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -378,7 +379,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         FrameLayout mContainer;
         LinearLayout mContent;
         View mMessageBubble;
-        ImageView mDeliveredIcon;
+        AppCompatImageView mDeliveredIcon;
         TextView mText;
         TextView mMeta;
         View mSelected;
@@ -390,7 +391,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             mContainer = (FrameLayout) itemView.findViewById(R.id.container);
             mContent = (LinearLayout) itemView.findViewById(R.id.content);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
-            mDeliveredIcon = (ImageView) itemView.findViewById(R.id.messageViewedIcon);
+            mDeliveredIcon = (AppCompatImageView) itemView.findViewById(R.id.messageViewedIcon);
             mText = (TextView) itemView.findViewById(R.id.messageText);
             mMeta = (TextView) itemView.findViewById(R.id.messageMeta);
             mSelected = itemView.findViewById(R.id.selected);

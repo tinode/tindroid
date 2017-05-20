@@ -107,10 +107,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_gravity="bottom|right|end"
+        android:layout_alignParentEnd="true"
         android:layout_margin="16dp"
         android:clickable="true"
-        app:srcCompat="@drawable/ic_arrow_forward"
+        app:srcCompat="@drawable/ic_check"
         app:elevation="@dimen/fab_elevation"
         />
 

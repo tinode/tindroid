@@ -6,7 +6,7 @@ package co.tinode.tinodesdk;
 public class ServerResponseException extends Exception {
     private int code;
 
-    public ServerResponseException(int code, String text) {
+    ServerResponseException(int code, String text) {
         super(text);
         this.code = code;
     }
@@ -14,5 +14,9 @@ public class ServerResponseException extends Exception {
     @Override
     public String getMessage() {
         return super.getMessage() + " (" + code + ")";
+    }
+
+    public int getCode() {
+        return code;
     }
 }

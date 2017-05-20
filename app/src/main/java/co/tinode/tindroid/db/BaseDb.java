@@ -17,6 +17,8 @@ import java.io.ObjectOutputStream;
 
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.AcsHelper;
+import co.tinode.tinodesdk.model.Defacs;
 
 /**
  * SQLite backend. Persistent store for messages and chats.
@@ -201,6 +203,29 @@ public class BaseDb extends SQLiteOpenHelper {
                 result.setMode(parts[0]);
                 result.setWant(parts[1]);
                 result.setGiven(parts[2]);
+            }
+        }
+        return result;
+    }
+
+    static String serializeDefacs(Defacs da) {
+        String result = "";
+        if (da != null) {
+            String val = da.getAuth();
+            result = val != null ? val + "," : ",";
+
+            val = da.getAnon();
+            result += val != null ? val : "";
+        }
+        return result;
+    }
+
+    static Defacs deserializeDefacs(String m) {
+        Defacs result = null;
+        if (m != null) {
+            String[] parts = m.split(",");
+            if (parts.length == 2) {
+                result = new Defacs(parts[0], parts[1]);
             }
         }
         return result;

@@ -3,10 +3,8 @@ package co.tinode.tinodesdk;
 import java.util.Collection;
 import java.util.Date;
 
-import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.Invitation;
+import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
-import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -49,8 +47,8 @@ public interface Storage {
 
     // Message received
     <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> msg);
-    // Invitation message received
-    <Pu,T> long inviteReceived(Topic me, MsgServerData<Invitation<Pu,T>> msg);
+    // Announcement message received
+    <T> long inviteReceived(Topic me, MsgServerData<Announcement<T>> msg);
 
     // Message sent
     <T> long msgSend(Topic topic, T data);

@@ -35,8 +35,13 @@ public class AvatarPhoto implements Serializable {
     public boolean constructBitmap() {
         if (data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-            mImage = Bitmap.createScaledBitmap(bmp, 128, 128, false);
-            bmp.recycle();
+            if (bmp != null) {
+                mImage = Bitmap.createScaledBitmap(bmp, 128, 128, false);
+                // createScaledBitmap may return the same object if scaling is not required.
+                if (bmp != mImage) {
+                    bmp.recycle();
+                }
+            }
         }
         return mImage != null;
     }

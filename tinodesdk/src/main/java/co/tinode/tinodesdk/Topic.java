@@ -8,6 +8,7 @@ import android.util.Log;
 
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
+import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
@@ -475,18 +476,28 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mDesc.acs != null && mDesc.acs.isOwner();
     }
 
-
+    public Defacs getDefacs() {
+        return mDesc.defacs;
+    }
+    public void setDefacs(Defacs da) {
+        mDesc.defacs = da;
+    }
     public void setDefacs(String auth, String anon) {
         mDesc.defacs.setAuth(auth);
         mDesc.defacs.setAnon(anon);
     }
     public AcsHelper getAuthAcs() {
-        return mDesc.defacs.auth;
+        return mDesc.defacs == null ? null : mDesc.defacs.auth;
+    }
+    public String getAuthAcsStr() {
+        return mDesc.defacs != null && mDesc.defacs.auth != null ? mDesc.defacs.auth.toString() : "";
     }
     public AcsHelper getAnonAcs() {
-        return mDesc.defacs.anon;
+        return mDesc.defacs == null ? null : mDesc.defacs.anon;
     }
-
+    public String getAnonAcsStr() {
+        return mDesc.defacs != null && mDesc.defacs.anon != null ? mDesc.defacs.anon.toString() : "";
+    }
     public int getUnreadCount() {
         //Log.d(TAG, "getUnreadCount topic=" + mName + ", seq=" + mDesc.seq + ", read=" + mDesc.read);
         int unread = mDesc.seq - mDesc.read;
@@ -1012,7 +1023,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     @SuppressWarnings("WeakerAccess")
     protected int loadSubs() {
-        Collection<Subscription> subs = mStore.getSubscriptions(this);
+        Collection<Subscription> subs = mStore != null ? mStore.getSubscriptions(this) : null;
         if (subs == null) {
             return 0;
         }

@@ -22,6 +22,7 @@ import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +42,7 @@ import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -73,6 +75,9 @@ public class EditGroupFragment extends ListFragment {
 
     private String mTopicName = null;
     private Topic<VCard,String,String> mTopic = null;
+
+    private String mOldTitle;
+    private boolean mAvatarChanged = false;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
     // private TreeSet<Integer> mSelectedContacts;
@@ -194,7 +199,11 @@ public class EditGroupFragment extends ListFragment {
                     // If image is not loaded, the drawable is a vector.
                     // Ignore it.
                 }
-                createTopic(activity, topicTitle, bmp);
+                if (TextUtils.isEmpty(mTopicName)) {
+                    createTopic(activity, topicTitle, bmp);
+                } else {
+                    updateTopic(activity, topicTitle, bmp);
+                }
             }
         });
 
@@ -254,6 +263,7 @@ public class EditGroupFragment extends ListFragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
+            mAvatarChanged = true;
             UiUtils.acceptAvatar(getActivity(), (ImageView) getActivity().findViewById(R.id.imageAvatar), data);
         }
     }
@@ -284,6 +294,15 @@ public class EditGroupFragment extends ListFragment {
         }
     }
 
+    private void updateTopic(final Activity activity, final String newTitle, final Bitmap newAvatar) {
+        if ((newTitle == null || newTitle.equals(mOldTitle)) && !mAvatarChanged) {
+            // No change, return
+            return;
+        }
+
+        mTopic.updateDesc();
+    }
+
     private void populateForm() {
         if (mTopic != null) {
             final Activity activity = getActivity();
@@ -292,6 +311,7 @@ public class EditGroupFragment extends ListFragment {
             if (vcard != null) {
                 final EditText titleEdit = ((EditText) activity.findViewById(R.id.editTitle));
                 titleEdit.setText(vcard.fn);
+                mOldTitle = vcard.fn;
 
                 Bitmap bmp = vcard.getBitmap();
                 if (bmp != null) {

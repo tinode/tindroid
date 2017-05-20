@@ -97,8 +97,6 @@ public class LoginActivity extends AppCompatActivity {
         if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
             requestAccountAccessPermission();
         }
-
-        Log.d("TAG", "DONE onCreate");
     }
 
     @Override

@@ -4,33 +4,30 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.JavaType;
 
-import co.tinode.tinodesdk.model.Invitation;
-import co.tinode.tinodesdk.model.LastSeen;
+import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 /**
  * MeTopic handles invites and manages contact list
  */
-public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
+public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Announcement<T>> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<Pu,Pr,Invitation<Pu,T>> l) {
+    public MeTopic(Tinode tinode, Listener<Pu,Pr,Announcement<T>> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
     @Override
     public void setTypes(JavaType typeOfPu, JavaType typeOfPr, JavaType typeOfInviteInfo) {
         super.setTypes(typeOfPu, typeOfPr,
-                Tinode.getTypeFactory().constructParametricType(Invitation.class, typeOfPu, typeOfInviteInfo));
+                Tinode.getTypeFactory().constructParametricType(Announcement.class, typeOfInviteInfo));
     }
 
     @Override
@@ -62,7 +59,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
 
     @Override
     /* This method has to be overridden because Subscription generally does not exists for invite senders */
-    protected void routeData(MsgServerData<Invitation<Pu,T>> data) {
+    protected void routeData(MsgServerData<Announcement<T>> data) {
         if (data.seq > mDesc.seq) {
             mDesc.seq = data.seq;
         }
@@ -86,7 +83,6 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Invitation<Pu,T>> {
                 topic.update(sub);
             } else {
                 // This is a new topic. Register it and write to DB.
-                Log.d(TAG, "Adding new topic " + sub.topic);
                 mTinode.registerTopic(new Topic<>(mTinode, sub));
             }
 

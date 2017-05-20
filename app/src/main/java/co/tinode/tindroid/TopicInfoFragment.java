@@ -16,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Switch;
@@ -28,6 +29,7 @@ import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -87,7 +89,8 @@ public class TopicInfoFragment extends Fragment {
         final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
         final TextView address = (TextView) activity.findViewById(R.id.topicAddress);
         final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
-        final View defaultPermissions = activity.findViewById(R.id.defaultPermissions);
+        final View groupMembersCard = activity.findViewById(R.id.groupMembersCard);
+        final View defaultPermissionsCard = activity.findViewById(R.id.defaultPermissionsCard);
 
         mTopic.setListener(new Topic.Listener<VCard, String, String>() {
             @Override
@@ -143,7 +146,7 @@ public class TopicInfoFragment extends Fragment {
         muted.setChecked(mTopic.isMuted());
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                Log.d(TAG, "isChecke=" + isChecked + ", muted=" + mTopic.isMuted());
+                Log.d(TAG, "isChecked=" + isChecked + ", muted=" + mTopic.isMuted());
                 if (mTopic.isMuted() != isChecked) {
                     try {
                         mTopic.updateMuted(isChecked);
@@ -157,8 +160,20 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        if (!mTopic.isAdmin()) {
-            activity.findViewById(R.id.buttonAddMembers).setEnabled(false);
+        if (mTopic.getTopicType() == Topic.TopicType.GRP) {
+            groupMembersCard.setVisibility(View.VISIBLE);
+
+            if (!mTopic.isAdmin()) {
+                // Disable and gray out "invite members" button because only admins can
+                // invite group members.
+                Button button = (Button) activity.findViewById(R.id.buttonAddMembers);
+                button.setEnabled(false);
+                button.setAlpha(0.5f);
+            }
+
+            mAdapter.resetContent();
+        } else {
+            groupMembersCard.setVisibility(View.GONE);
         }
 
         address.setText(mTopic.getName());
@@ -166,16 +181,14 @@ public class TopicInfoFragment extends Fragment {
         permissions.setText(am.getMode());
 
         if (am.isAdmin()) {
-            defaultPermissions.setVisibility(View.VISIBLE);
+            defaultPermissionsCard.setVisibility(View.VISIBLE);
             final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
             final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
-            auth.setText(mTopic.getAuthAcs().toString());
-            anon.setText(mTopic.getAnonAcs().toString());
+            auth.setText(mTopic.getAuthAcsStr());
+            anon.setText(mTopic.getAnonAcsStr());
         } else {
-            defaultPermissions.setVisibility(View.GONE);
+            defaultPermissionsCard.setVisibility(View.GONE);
         }
-
-        mAdapter.resetContent();
     }
 
     @Override

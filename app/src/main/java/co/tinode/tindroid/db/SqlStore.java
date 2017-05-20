@@ -9,7 +9,7 @@ import java.util.Date;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Invitation;
+import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -160,8 +160,8 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <Pu,T> long inviteReceived(Topic topic, MsgServerData<Invitation<Pu,T>> m) {
-        StoredMessage<Invitation<Pu,T>> msg = new StoredMessage<>(m);
+    public <T> long inviteReceived(Topic topic, MsgServerData<Announcement<T>> m) {
+        StoredMessage<Announcement<T>> msg = new StoredMessage<>(m);
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
             return -1;
@@ -172,7 +172,7 @@ class SqlStore implements Storage {
         db.beginTransaction();
         msg.userId = UserDb.getId(db, m.from);
         if (msg.userId < 0) {
-            msg.userId = UserDb.insert(db, m.from, m.content.pub);
+            msg.userId = UserDb.insert(db, m.from, null);
         }
         if (msg.userId > 0) {
             db.setTransactionSuccessful();

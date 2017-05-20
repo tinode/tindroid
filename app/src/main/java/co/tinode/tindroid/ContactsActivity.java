@@ -6,7 +6,6 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -19,8 +18,8 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.Invitation;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -188,10 +187,10 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.activityVisible(focus);
     }
 
-    private class MeListener extends Topic.Listener<VCard, String, Invitation<VCard,String>> {
+    private class MeListener extends Topic.Listener<VCard, String, Announcement<String>> {
 
         @Override
-        public void onData(MsgServerData<Invitation<VCard,String>> data) {
+        public void onData(MsgServerData<Announcement<String>> data) {
             // TODO(gene): handle a chat invitation
             Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
         }

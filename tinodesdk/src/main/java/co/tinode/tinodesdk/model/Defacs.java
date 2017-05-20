@@ -10,6 +10,11 @@ public class Defacs {
     public Defacs() {
     }
 
+    public Defacs(String auth, String anon) {
+        setAuth(auth);
+        setAnon(anon);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null) {
@@ -30,10 +35,16 @@ public class Defacs {
                 (anon  == null ? rhs.anon == null : anon.equals(rhs.anon));
     }
 
+    public String getAuth() {
+        return auth != null ? auth.toString() : null;
+    }
     public void setAuth(String a) {
         auth = new AcsHelper(a);
     }
 
+    public String getAnon() {
+        return anon != null ? anon.toString() : null;
+    }
     public void setAnon(String a) {
         anon = new AcsHelper(a);
     }
