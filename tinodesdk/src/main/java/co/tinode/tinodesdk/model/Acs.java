@@ -8,9 +8,9 @@ import java.util.Map;
  * Access mode.
  */
 public class Acs {
-    private AcsHelper given;
-    private AcsHelper want;
-    private AcsHelper mode;
+    AcsHelper given;
+    AcsHelper want;
+    AcsHelper mode;
 
     public Acs() {
         assign(null, null, null);
@@ -22,9 +22,9 @@ public class Acs {
 
     public Acs(Acs am) {
         if (am != null) {
-            given = am.given;
-            want = am.want;
-            mode = am.mode;
+            given = new AcsHelper(am.given);
+            want = new AcsHelper(am.want);
+            mode = new AcsHelper(am.mode);
         }
     }
 
@@ -46,12 +46,18 @@ public class Acs {
     public String getMode() {
         return mode.toString();
     }
+    public AcsHelper getModeHelper() {
+        return new AcsHelper(mode);
+    }
 
     public void setGiven(String g) {
         given = new AcsHelper(g);
     }
     public String getGiven() {
         return given.toString();
+    }
+    public AcsHelper getGivenHelper() {
+        return new AcsHelper(given);
     }
 
     public void setWant(String w) {
@@ -60,47 +66,23 @@ public class Acs {
     public String getWant() {
         return want.toString();
     }
+    public AcsHelper getWantHelper() {
+        return new AcsHelper(want);
+    }
 
     public boolean merge(Acs am) {
         boolean changed = false;
         if (am != null && !equals(am)) {
-            given = am.given;
-            want = am.want;
-            mode = am.mode;
+            given = new AcsHelper(am.given);
+            want = new AcsHelper(am.want);
+            mode = new AcsHelper(am.mode);
             changed = true;
         }
         return changed;
     }
 
-    public Acs updateMode(String u) {
-        mode.update(u);
-        return this;
-    }
-    public Acs updateGiven(String u) {
-        given.update(u);
-        return this;
-    }
-    public Acs updateWant(String u) {
-        want.update(u);
-        return this;
-    }
-
     public boolean equals(Acs am) {
         return am != null && mode.equals(am.mode) && want.equals(am.want) && mode.equals(am.mode);
-    }
-
-    public boolean modeEquals(Acs am) {
-        return am != null && mode.equals(am.mode);
-    }
-    public boolean modeEquals(String m) {
-        return mode.equals(m);
-    }
-
-    public boolean wantEquals(Acs am) {
-        return am != null && want.equals(am.want);
-    }
-    public boolean wantEquals(String w) {
-        return want.equals(w);
     }
 
     public boolean canRead() {

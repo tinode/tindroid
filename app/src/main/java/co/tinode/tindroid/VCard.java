@@ -78,21 +78,11 @@ public class VCard implements Serializable {
     }
 
     public void addPhone(String phone, String type) {
-        if (tel == null) {
-            tel = new Contact[1];
-        } else {
-            tel = Arrays.copyOf(tel, tel.length + 1);
-        }
-        tel[tel.length - 1] = new Contact(phone, type);
+        tel = Contact.append(tel, new Contact(phone, type));
     }
 
     public void addEmail(String addr, String type) {
-        if (email == null) {
-            email = new Contact[1];
-        } else {
-            email = Arrays.copyOf(email, email.length + 1);
-        }
-        email[email.length - 1] = new Contact(addr, type);
+        email = Contact.append(email, new Contact(addr, type));
     }
 
     @JsonIgnore
@@ -116,12 +106,38 @@ public class VCard implements Serializable {
 
     public enum ContactType {HOME, WORK, MOBILE, PERSONAL, BUSINESS, OTHER}
 
+    public VCard copy() {
+        VCard dst = new VCard();
+
+        dst.fn = fn;
+        dst.n = n != null ? n.copy() : null;
+        dst.org = org;
+        dst.title = title;
+        dst.tel = Contact.copyArray(tel);
+        dst.email = Contact.copyArray(email);
+        dst.impp = Contact.copyArray(impp);
+        // Shallow copy of the photo
+        dst.photo = photo;
+
+        return dst;
+    }
+
     public static class Name implements Serializable {
         public String surname;
         public String given;
         public String additional;
         public String prefix;
         public String suffix;
+
+        public Name copy() {
+            Name dst = new Name();
+            dst.surname = surname;
+            dst.given = given;
+            dst.additional = additional;
+            dst.prefix = prefix;
+            dst.suffix = suffix;
+            return dst;
+        }
     }
 
     public static class Contact implements Serializable {
@@ -131,6 +147,31 @@ public class VCard implements Serializable {
         public Contact(String type, String uri) {
             this.type = type;
             this.uri = uri;
+        }
+
+        public Contact copy() {
+            return new Contact(type, uri);
+        }
+
+        public static Contact[] copyArray(Contact[] src){
+            Contact[] dst = null;
+            if (src != null) {
+                dst = Arrays.copyOf(src, src.length);
+                for (int i=0; i<src.length;i++) {
+                    dst[i] = src[i].copy();
+                }
+            }
+            return dst;
+        }
+
+        public static Contact[] append(Contact[] arr, Contact val) {
+            if (arr == null) {
+                arr = new Contact[1];
+            } else {
+                arr = Arrays.copyOf(arr, arr.length + 1);
+            }
+            arr[arr.length - 1] = val;
+            return arr;
         }
     }
 }

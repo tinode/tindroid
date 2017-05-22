@@ -320,12 +320,14 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param meta original {meta} packet updated topic parameters
      */
     protected void update(MsgServerCtrl ctrl, MsgSetMeta<Pu,Pr,?> meta) {
-        // FIXME(gene): actually update subscription
-
+        Log.d(TAG, "Topic.update, meta is " + meta);
         if (meta.desc != null) {
+            Log.d(TAG, "Topic.update, meta.desc is " + meta.desc);
             update(meta.desc);
             if (mListener != null) {
                 mListener.onMetaDesc(mDesc);
+            } else {
+                Log.d(TAG, "Topic.update(meta.decs)), listener is null");
             }
         }
 
@@ -443,16 +445,18 @@ public class Topic<Pu,Pr,T> implements LocalData {
             mDesc.acs = new Acs();
         }
 
-        final Acs mode = new Acs(mDesc.acs);
-        mode.updateWant(update);
-        if (!mode.wantEquals(mDesc.acs)) {
-            return updateSelfSub(mode.getWant()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        // Log.d(TAG, "acs=" + mDesc.acs.stringify());
+        final AcsHelper want = mDesc.acs.getWantHelper();
+        if (want.update(update)) {
+            return updateSelfSub(want.toString()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    mDesc.acs.updateWant(update);
+                    mDesc.acs.setWant(want.toString());
                     return null;
                 }
             }, null);
+        } else {
+            Log.d(TAG, "accessModes are equal after '" + update + "'");
         }
         // The state is unchanged, return resolved promise.
         return new PromisedReply<>((ServerMessage) null);
@@ -717,12 +721,25 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     /**
      * Update topic description. Calls {@link #setMeta}.
+     * @param desc new description (public, private, default access)
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<Pu,Pr> desc) throws Exception {
         return setMeta(new MsgSetMeta<Pu,Pr,T>(desc, null));
+    }
+
+    /**
+     * Update topic description. Calls {@link #setMeta}.
+     * @param pub new public info
+     * @param priv new private info
+     *
+     * @throws NotSubscribedException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply<ServerMessage> setDescription(final Pu pub, final Pr priv) throws Exception {
+        return setDescription(new MetaSetDesc<>(pub, priv));
     }
 
     /**
@@ -1015,10 +1032,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     protected void setName(String name) {
         mName = name;
-    }
-
-    public Pu getPublic() {
-        return mDesc.pub;
     }
 
     @SuppressWarnings("WeakerAccess")

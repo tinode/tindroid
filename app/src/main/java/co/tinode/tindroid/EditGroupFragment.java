@@ -76,9 +76,6 @@ public class EditGroupFragment extends ListFragment {
     private String mTopicName = null;
     private Topic<VCard,String,String> mTopic = null;
 
-    private String mOldTitle;
-    private boolean mAvatarChanged = false;
-
     // Sorted set of selected contacts (cursor positions of selected contacts).
     // private TreeSet<Integer> mSelectedContacts;
 
@@ -130,7 +127,7 @@ public class EditGroupFragment extends ListFragment {
         Log.d(TAG, "onActivityCreated");
         final Activity activity = getActivity();
 
-        activity.findViewById(R.id.upload_avatar).setOnClickListener(new View.OnClickListener() {
+        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.requestAvatar(EditGroupFragment.this);
@@ -199,11 +196,8 @@ public class EditGroupFragment extends ListFragment {
                     // If image is not loaded, the drawable is a vector.
                     // Ignore it.
                 }
-                if (TextUtils.isEmpty(mTopicName)) {
-                    createTopic(activity, topicTitle, bmp);
-                } else {
-                    updateTopic(activity, topicTitle, bmp);
-                }
+
+                createTopic(activity, topicTitle, bmp);
             }
         });
 
@@ -263,7 +257,6 @@ public class EditGroupFragment extends ListFragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
-            mAvatarChanged = true;
             UiUtils.acceptAvatar(getActivity(), (ImageView) getActivity().findViewById(R.id.imageAvatar), data);
         }
     }
@@ -294,15 +287,6 @@ public class EditGroupFragment extends ListFragment {
         }
     }
 
-    private void updateTopic(final Activity activity, final String newTitle, final Bitmap newAvatar) {
-        if ((newTitle == null || newTitle.equals(mOldTitle)) && !mAvatarChanged) {
-            // No change, return
-            return;
-        }
-
-        mTopic.updateDesc();
-    }
-
     private void populateForm() {
         if (mTopic != null) {
             final Activity activity = getActivity();
@@ -311,7 +295,6 @@ public class EditGroupFragment extends ListFragment {
             if (vcard != null) {
                 final EditText titleEdit = ((EditText) activity.findViewById(R.id.editTitle));
                 titleEdit.setText(vcard.fn);
-                mOldTitle = vcard.fn;
 
                 Bitmap bmp = vcard.getBitmap();
                 if (bmp != null) {

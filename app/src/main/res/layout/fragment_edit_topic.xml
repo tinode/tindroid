@@ -19,7 +19,7 @@
         app:srcCompat="@drawable/ic_group_circle"/>
 
     <android.support.v7.widget.AppCompatButton
-        android:id="@+id/upload_avatar"
+        android:id="@+id/uploadAvatar"
         android:layout_width="48sp"
         android:layout_height="48sp"
         android:layout_alignBottom="@id/imageAvatar"

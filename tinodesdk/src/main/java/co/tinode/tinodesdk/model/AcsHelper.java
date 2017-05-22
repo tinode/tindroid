@@ -1,11 +1,15 @@
 package co.tinode.tinodesdk.model;
 
+import android.util.Log;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Helper class for access mode parser/generator.
  */
 public class AcsHelper {
+    private static final String TAG = "AcsHelper";
+
     // User access to topic
     private static int MODE_SUB = 0x01;    // R
     private static int MODE_PUB = 0x02;    // W
@@ -26,17 +30,24 @@ public class AcsHelper {
         a = decode(str);
     }
 
+    public AcsHelper(AcsHelper ah) {
+        a = ah != null ? ah.a : null;
+    }
+
     @Override
     public String toString() {
         return a == null ? "" : encode(a);
     }
 
-    public void update(String umode) {
+    public boolean update(String umode) {
+        Integer old = a;
         a = update(a, umode);
+        return !a.equals(old);
     }
 
     @Override
     public boolean equals(Object o) {
+
         if (o == null) {
             return false;
         }
@@ -50,7 +61,6 @@ public class AcsHelper {
         }
 
         AcsHelper ah = (AcsHelper) o;
-
         return (a == null && ah.a == null) || (a != null && a.equals(ah.a));
     }
 
@@ -173,7 +183,7 @@ public class AcsHelper {
      * @param umode change to the value, '+' or '-' followed by the letter(s) being set or unset.
      * @return updated value
      */
-    static Integer update(Integer val, String umode) {
+    private static Integer update(Integer val, String umode) {
         if (umode == null || umode.length() == 0) {
             return val;
         }

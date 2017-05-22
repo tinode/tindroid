@@ -1,8 +1,8 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="co.tinode.tindroid.TopicInfoFragment">
@@ -36,6 +36,19 @@
                     android:clickable="true"
                     android:contentDescription="@string/avatar"
                     app:srcCompat="@drawable/ic_group_circle"/>
+
+                <android.support.v7.widget.AppCompatButton
+                    android:id="@+id/uploadAvatar"
+                    android:layout_width="48sp"
+                    android:layout_height="48sp"
+                    android:layout_alignBottom="@id/imageAvatar"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_margin="2sp"
+                    android:background="@drawable/round_shape"
+                    android:drawableTop="@drawable/ic_add_a_photo"
+                    android:gravity="center"
+                    android:paddingTop="10dp"/>
 
                 <TextView
                     android:id="@+id/topicTitle"
@@ -74,28 +87,21 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_height="match_parent">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:text="@string/topic_muted"/>
 
-                    <TextView
-                        style="@style/textPrimary"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="1"
-                        android:text="@string/topic_muted"/>
-
-                    <Switch
-                        android:id="@+id/switchMuted"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"/>
-
-                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchMuted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"/>
             </LinearLayout>
         </android.support.v7.widget.CardView>
 
@@ -189,8 +195,8 @@
                         style="@style/textPrimarySmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textIsSelectable="true"
                         android:fontFamily="monospace"
+                        android:textIsSelectable="true"
                         android:typeface="monospace"
                         tools:text="p2p__fv2qrUr6vAdVURkv6q3w"/>
 
@@ -212,10 +218,10 @@
                         style="@style/textPrimarySmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textIsSelectable="true"
                         android:fontFamily="monospace"
+                        android:textIsSelectable="true"
                         android:typeface="monospace"
-                        tools:text="RWPD" />
+                        tools:text="RWPD"/>
 
                 </LinearLayout>
             </LinearLayout>
@@ -259,10 +265,10 @@
                         style="@style/textPrimarySmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
                         android:textIsSelectable="true"
                         android:typeface="monospace"
-                        android:fontFamily="monospace"
-                        tools:text="RWPD" />
+                        tools:text="RWPD"/>
 
                 </LinearLayout>
 
@@ -282,8 +288,8 @@
                         style="@style/textPrimarySmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textIsSelectable="true"
                         android:fontFamily="monospace"
+                        android:textIsSelectable="true"
                         android:typeface="monospace"
                         tools:text="RWPD"/>
 

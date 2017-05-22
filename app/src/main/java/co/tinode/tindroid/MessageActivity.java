@@ -288,12 +288,34 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         @Override
+        public void onSubsUpdated() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TopicInfoFragment fragment = (TopicInfoFragment) getSupportFragmentManager().
+                            findFragmentByTag(FRAGMENT_INFO);
+
+                    if (fragment != null && fragment.isVisible()) {
+                        fragment.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+
+        @Override
         public void onMetaDesc(final Description<VCard, String> desc) {
+            Log.d(TAG, "onMetaDesc!");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getTopicType(),
                             mTopic.getOnline());
+
+                    TopicInfoFragment fragment = (TopicInfoFragment) getSupportFragmentManager().
+                            findFragmentByTag(FRAGMENT_INFO);
+                    if (fragment != null && fragment.isVisible()) {
+                        fragment.notifyContentChanged();
+                    }
                 }
             });
         }

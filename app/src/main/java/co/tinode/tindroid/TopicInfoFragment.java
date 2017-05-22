@@ -1,11 +1,13 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -29,8 +32,6 @@ import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
-import co.tinode.tinodesdk.model.AcsHelper;
-import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -40,7 +41,7 @@ public class TopicInfoFragment extends Fragment {
 
     private static final String TAG = "TopicInfoFragment";
 
-    Topic<VCard,String,String> mTopic;
+    Topic<VCard, String, String> mTopic;
     private MembersAdapter mAdapter;
 
     public TopicInfoFragment() {
@@ -92,36 +93,16 @@ public class TopicInfoFragment extends Fragment {
         final View groupMembersCard = activity.findViewById(R.id.groupMembersCard);
         final View defaultPermissionsCard = activity.findViewById(R.id.defaultPermissionsCard);
 
-        mTopic.setListener(new Topic.Listener<VCard, String, String>() {
-            @Override
-            public void onSubsUpdated() {
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mAdapter.resetContent();
-                    }
-                });
-            }
-
-            @Override
-            public void onMetaDesc(Description ignored) {
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        permissions.setText(mTopic.getAccessMode().getMode());
-                    }
-                });
-            }
-        });
-
-
         VCard pub = mTopic.getPub();
+        final String titleText;
         if (pub != null) {
             if (!TextUtils.isEmpty(pub.fn)) {
+                titleText = pub.fn;
                 title.setText(pub.fn);
                 title.setTypeface(null, Typeface.NORMAL);
                 title.setTextIsSelectable(true);
             } else {
+                titleText = null;
                 title.setText(R.string.placeholder_contact_title);
                 title.setTypeface(null, Typeface.ITALIC);
                 title.setTextIsSelectable(false);
@@ -130,9 +111,14 @@ public class TopicInfoFragment extends Fragment {
             if (bmp != null) {
                 avatar.setImageBitmap(bmp);
             }
+        } else {
+            titleText = null;
         }
+
         String priv = mTopic.getPriv();
+        final String subtitleText;
         if (!TextUtils.isEmpty(priv)) {
+            subtitleText = priv;
             subtitle.setText(priv);
             subtitle.setTypeface(null, Typeface.NORMAL);
             subtitle.setTextIsSelectable(true);
@@ -140,22 +126,35 @@ public class TopicInfoFragment extends Fragment {
             subtitle.setText(R.string.placeholder_private);
             subtitle.setTypeface(null, Typeface.ITALIC);
             subtitle.setTextIsSelectable(false);
+            subtitleText = null;
         }
+        // Launch edit dialog when title or subtitle is clicked.
+        final View.OnClickListener l = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showEditTopicText();
+            }
+        };
+        if (mTopic.isAdmin()) {
+            title.setOnClickListener(l);
+        }
+        subtitle.setOnClickListener(l);
 
         final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
         muted.setChecked(mTopic.isMuted());
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 Log.d(TAG, "isChecked=" + isChecked + ", muted=" + mTopic.isMuted());
-                if (mTopic.isMuted() != isChecked) {
-                    try {
-                        mTopic.updateMuted(isChecked);
-                    } catch (NotConnectedException ignored) {
-                        muted.setChecked(!isChecked);
-                        Toast.makeText(activity, R.string.error_connection_failed, Toast.LENGTH_SHORT).show();
-                    } catch(Exception ignored){
-                        muted.setChecked(!isChecked);
-                    }
+                try {
+                    Log.d(TAG, "Setting muted to " + isChecked);
+                    mTopic.updateMuted(isChecked);
+                } catch (NotConnectedException ignored) {
+                    Log.d(TAG, "Offline - not changed");
+                    muted.setChecked(!isChecked);
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception ignored) {
+                    Log.d(TAG, "Generic exception", ignored);
+                    muted.setChecked(!isChecked);
                 }
             }
         });
@@ -194,22 +193,133 @@ public class TopicInfoFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+    }
 
-        mTopic.setListener(null);
+    // Dialog for editing pub.fn and priv
+    private void showEditTopicText() {
+        VCard pub = mTopic.getPub();
+        final String title = pub == null ? null : pub.fn;
+        final String priv = mTopic.getPriv();
+        final Activity activity = getActivity();
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final View editor = activity.getLayoutInflater().inflate(R.layout.dialog_edit_group, null);
+        builder.setView(editor).setTitle(R.string.edit_topic);
+
+        final EditText titleEditor = (EditText) editor.findViewById(R.id.editTitle);
+        final EditText subtitleEditor = (EditText) editor.findViewById(R.id.editPrivate);
+        if (mTopic.isAdmin()) {
+            if (!TextUtils.isEmpty(title)) {
+                titleEditor.setText(title);
+            }
+        } else {
+            editor.findViewById(R.id.editTitleWrapper).setVisibility(View.GONE);
+        }
+
+        if (!TextUtils.isEmpty(priv)) {
+            subtitleEditor.setText(priv);
+        }
+
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                VCard pub = null;
+                if (mTopic.isAdmin()) {
+                    String newTitle = titleEditor.getText().toString();
+                    if (!newTitle.equals(title)) {
+                        pub = mTopic.getPub();
+                        if (pub != null) {
+                            pub = pub.copy();
+                        } else {
+                            pub = new VCard();
+                        }
+
+                        pub.fn = newTitle;
+                    }
+                }
+                ;
+                String newPriv = subtitleEditor.getText().toString();
+                if (newPriv.equals(priv)) {
+                    newPriv = null;
+                }
+                if (pub != null || newPriv != null) {
+                    try {
+                        mTopic.setDescription(pub, newPriv);
+                    } catch (NotConnectedException ignored) {
+                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                    } catch (Exception ignored) {
+                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    }
+                }
+                Log.d(TAG, "OK");
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.show();
+    }
+
+    void notifyDataSetChanged() {
+        mAdapter.resetContent();
+    }
+
+    void notifyContentChanged() {
+        final Activity activity = getActivity();
+
+        final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
+        final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
+        final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
+        final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
+        final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
+
+        VCard pub = mTopic.getPub();
+        title.setText(pub != null && pub.fn != null ? pub.fn : "");
+        subtitle.setText(mTopic.getPriv());
+        permissions.setText(mTopic.getAccessMode().getMode());
+        auth.setText(mTopic.getAuthAcsStr());
+        anon.setText(mTopic.getAnonAcsStr());
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.menu_topic_info, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    private static class MemberViewHolder extends RecyclerView.ViewHolder {
+        TextView name;
+        TextView contactPriv;
+        LinearLayout statusContainer;
+        TextView[] status;
+        AppCompatImageView icon;
+
+        MemberViewHolder(View item) {
+            super(item);
+
+            name = (TextView) item.findViewById(android.R.id.text1);
+            contactPriv = (TextView) item.findViewById(android.R.id.text2);
+            statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
+            status = new TextView[statusContainer.getChildCount()];
+            for (int i = 0; i < status.length; i++) {
+                status[i] = (TextView) statusContainer.getChildAt(i);
+            }
+            icon = (AppCompatImageView) item.findViewById(android.R.id.icon);
+        }
     }
 
     private class MembersAdapter extends RecyclerView.Adapter<MemberViewHolder> {
 
-        private Subscription<VCard,String>[] mItems;
+        private Subscription<VCard, String>[] mItems;
         private int mItemCount;
 
         @SuppressWarnings("unchecked")
         MembersAdapter() {
-            mItems = (Subscription<VCard,String>[]) new Subscription[8];
+            mItems = (Subscription<VCard, String>[]) new Subscription[8];
             mItemCount = 0;
         }
 
-        /** Must be run on UI thread */
+        /**
+         * Must be run on UI thread
+         */
         void resetContent() {
             if (mTopic != null) {
                 Collection<Subscription<VCard, String>> c = mTopic.getSubscriptions();
@@ -271,7 +381,7 @@ public class TopicInfoFragment extends Fragment {
                     holder.status[i++].setVisibility(View.VISIBLE);
                 }
             }
-            for (; i<holder.status.length; i++) {
+            for (; i < holder.status.length; i++) {
                 holder.status[i].setVisibility(View.GONE);
             }
 
@@ -283,34 +393,6 @@ public class TopicInfoFragment extends Fragment {
                     Log.d(TAG, "Click, pos=" + holder.getAdapterPosition());
                 }
             });
-        }
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_topic_info, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    private static class MemberViewHolder extends RecyclerView.ViewHolder {
-        TextView name;
-        TextView contactPriv;
-        LinearLayout statusContainer;
-        TextView[] status;
-        AppCompatImageView icon;
-
-        MemberViewHolder(View item) {
-            super(item);
-
-            name = (TextView) item.findViewById(android.R.id.text1);
-            contactPriv = (TextView) item.findViewById(android.R.id.text2);
-            statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
-            status = new TextView[statusContainer.getChildCount()];
-            for (int i=0; i < status.length; i++) {
-                status[i] = (TextView) statusContainer.getChildAt(i);
-            }
-            icon = (AppCompatImageView) item.findViewById(android.R.id.icon);
         }
     }
 }

@@ -57,7 +57,7 @@
                 app:srcCompat="@drawable/ic_person"/>
 
             <Button
-                android:id="@+id/upload_avatar"
+                android:id="@+id/uploadAvatar"
                 android:layout_width="48sp"
                 android:layout_height="48sp"
                 android:layout_alignParentBottom="true"

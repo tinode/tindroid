@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Tindroid</string>
     <string name="app_name_full">Tindroid Messenger</string>
-    <string name="app_version">Version 0.8.10</string>
-    <string name="copyright">© 2016 Tinode</string>
+    <string name="app_version">Version 0.11</string>
+    <string name="copyright">© 2017 Tinode</string>
     <string name="tinode">Tinode</string>
 
     <string name="login_hint">Login: alice, bob, carol, dave, eve, frank</string>
@@ -126,4 +126,6 @@
     <string name="default_permissions">Default permissions</string>
     <string name="auth_permissions">Authenticated users</string>
     <string name="anon_permissions">Anonymous users</string>
+    <string name="topic_private">Additional info (private)</string>
+    <string name="edit_topic">Edit topic</string>
 </resources>
