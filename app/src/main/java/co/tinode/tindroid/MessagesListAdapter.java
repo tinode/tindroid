@@ -308,6 +308,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 }
             }
         });
+        Log.d(TAG, "Msg[" + position + "] seq=" + m.seq + " at " + m.ts.getTime());
     }
 
     @Override

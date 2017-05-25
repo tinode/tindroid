@@ -192,7 +192,7 @@ public class MessageDb implements BaseColumns {
 
             id = db.insert(TABLE_NAME, null, values);
 
-            if (TopicDb.msgReceived(db, topic, msg)) {
+            if (TopicDb.msgReceived(db, topic, msg.ts, msg.seq)) {
                 db.setTransactionSuccessful();
             }
 
@@ -205,12 +205,25 @@ public class MessageDb implements BaseColumns {
         return id;
     }
 
-    public static boolean delivered(SQLiteDatabase db, long id, Date timestamp, int seq) {
+    public static boolean delivered(SQLiteDatabase db, Topic topic, long msgId, Date timestamp, int seq) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
         values.put(COLUMN_NAME_TS, timestamp.getTime());
         values.put(COLUMN_NAME_SEQ, seq);
-        return db.update(TABLE_NAME, values, _ID + "=" + id, null) > 0;
+        try {
+            db.beginTransaction();
+
+            db.update(TABLE_NAME, values, _ID + "=" + msgId, null);
+
+            if (TopicDb.msgReceived(db, topic, timestamp, seq)) {
+                db.setTransactionSuccessful();
+            }
+        } catch (Exception ex) {
+            Log.d(TAG, "Exception while inserting message", ex);
+        }
+
+        db.endTransaction();
+        return false;
     }
 
     /**
@@ -222,13 +235,15 @@ public class MessageDb implements BaseColumns {
      * @param to    maximum seq value to select, inclusive
      * @return cursor with the messages
      */
-    public static Cursor query(SQLiteDatabase db, long topicId, int from, int to) {
+    public static Cursor query(SQLiteDatabase db, long topicId, int from, int to, int limit) {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
                 (to > 0 ?  " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
-                " ORDER BY " + COLUMN_NAME_TS;
+                " ORDER BY " + COLUMN_NAME_TS +
+                (limit > 0 ?  " LIMIT " + limit : "");
+
         // Log.d(TAG, "Sql=[" + sql + "]");
         
         return db.rawQuery(sql, null);
@@ -341,19 +356,21 @@ public class MessageDb implements BaseColumns {
         private long topicId;
         private int fromSeq;
         private int toSeq;
+        private int limit;
 
-        public Loader(Context context, String topic, int from, int to) {
+        public Loader(Context context, String topic, int from, int to, int limit) {
             super(context);
 
             mDb = BaseDb.getInstance().getReadableDatabase();
             this.topicId = TopicDb.getId(mDb, topic);
             this.fromSeq = from;
             this.toSeq = to;
+            this.limit = limit;
         }
 
         @Override
         public Cursor loadInBackground() {
-            return query(mDb, topicId, fromSeq, toSeq);
+            return query(mDb, topicId, fromSeq, toSeq, limit);
         }
 
         /* Runs on the UI thread */

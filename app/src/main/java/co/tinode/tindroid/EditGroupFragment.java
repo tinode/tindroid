@@ -73,7 +73,6 @@ public class EditGroupFragment extends ListFragment {
 
     private int mPreviouslySelectedSearchItem = 0;
 
-    private String mTopicName = null;
     private Topic<VCard,String,String> mTopic = null;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
@@ -208,22 +207,8 @@ public class EditGroupFragment extends ListFragment {
     @Override
     public void onResume() {
         super.onResume();
-        final Tinode tinode = Cache.getTinode();
 
-        Bundle args = getArguments();
-        if (args != null) {
-            // Editing an existing topic
-            mTopicName = args.getString("topic");
-            if (!TextUtils.isEmpty(mTopicName)) {
-                mTopic = tinode.getTopic(mTopicName);
-            }
-        }
-
-        // Creating a new topic
-        if (mTopic == null) {
-            mTopic = new Topic<>(tinode, null);
-        }
-
+        mTopic = new Topic<>(Cache.getTinode(), null);
         mTopic.setListener(new Topic.Listener<VCard, String, String>(){
             @Override
             public void onSubsUpdated() {
@@ -236,8 +221,6 @@ public class EditGroupFragment extends ListFragment {
                 });
             }
         });
-
-        populateForm();
     }
 
     @Override
@@ -249,9 +232,6 @@ public class EditGroupFragment extends ListFragment {
         // In the case onPause() is called during a fling the image loader is
         // un-paused to let any remaining background work complete.
         mImageLoader.setPauseWork(false);
-
-        mTopic = null;
-        mTopicName = null;
     }
 
     @Override
@@ -275,6 +255,9 @@ public class EditGroupFragment extends ListFragment {
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     intent.putExtra("topic", mTopic.getName());
                     startActivity(intent);
+
+                    mTopic = null;
+
                     return null;
                 }
             }, null);
@@ -285,24 +268,6 @@ public class EditGroupFragment extends ListFragment {
         } catch (Exception e) {
             Toast.makeText(activity, R.string.failed_to_create_topic, Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void populateForm() {
-        if (mTopic != null) {
-            final Activity activity = getActivity();
-
-            final VCard vcard = mTopic.getPub();
-            if (vcard != null) {
-                final EditText titleEdit = ((EditText) activity.findViewById(R.id.editTitle));
-                titleEdit.setText(vcard.fn);
-
-                Bitmap bmp = vcard.getBitmap();
-                if (bmp != null) {
-                    UiUtils.acceptAvatar((ImageView) activity.findViewById(R.id.imageAvatar), bmp);
-                }
-            }
-        }
-        mMembersAdapter.resetContent();
     }
 
     /**

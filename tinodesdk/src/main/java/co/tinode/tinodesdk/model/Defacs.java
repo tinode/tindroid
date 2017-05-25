@@ -48,4 +48,26 @@ public class Defacs {
     public void setAnon(String a) {
         anon = new AcsHelper(a);
     }
+
+    public boolean merge(Defacs defacs) {
+        int changed = 0;
+        if (defacs.auth != null) {
+            if (auth == null) {
+                auth = defacs.auth;
+                changed ++;
+            } else {
+                changed += auth.merge(defacs.auth) ? 1 : 0;
+            }
+        }
+        if (defacs.anon != null) {
+            if (anon == null) {
+                anon = defacs.anon;
+                changed ++;
+            } else {
+                changed += anon.merge(defacs.anon) ? 1 : 0;
+            }
+        }
+
+        return changed > 0;
+    }
 }

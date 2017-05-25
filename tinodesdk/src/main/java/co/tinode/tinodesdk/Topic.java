@@ -260,6 +260,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param sub updated topic parameters
      */
     protected void update(Map<String,Object> params, MetaSetSub<?> sub) {
+        Log.d(TAG, "Topic.update(ctrl.params, MetaSetSub)");
         String user = sub.user;
 
         Map<String,String> acsMap = params != null ? (Map<String,String>) params.get("acs") : null;
@@ -277,15 +278,19 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         if (user == null) {
             user = mTinode.getMyId();
-
+            boolean changed = false;
             // This is an update to user's own subscription to topic (want)
-            if (!acs.equals(mDesc.acs)) {
+            if (mDesc.acs == null) {
                 mDesc.acs = acs;
-                if (mStore != null) {
-                    mStore.topicUpdate(this);
-                }
+                changed = true;
+            } else {
+                changed = mDesc.acs.merge(acs);
+            }
+            if (changed && mStore != null) {
+                mStore.topicUpdate(this);
             }
         }
+
 
         // This is an update to someone else's subscription to topic (given)
         Subscription<Pu,Pr> s = mSubs.get(user);
@@ -307,6 +312,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param desc updated topic parameters
      */
     protected void update(MetaSetDesc<Pu,Pr> desc) {
+        Log.d(TAG, "Topic.update(MetaSetDesc)");
         if (mDesc.merge(desc) && mStore != null) {
             mStore.topicUpdate(this);
         }
@@ -320,20 +326,19 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param meta original {meta} packet updated topic parameters
      */
     protected void update(MsgServerCtrl ctrl, MsgSetMeta<Pu,Pr,?> meta) {
-        Log.d(TAG, "Topic.update, meta is " + meta);
         if (meta.desc != null) {
-            Log.d(TAG, "Topic.update, meta.desc is " + meta.desc);
             update(meta.desc);
             if (mListener != null) {
                 mListener.onMetaDesc(mDesc);
-            } else {
-                Log.d(TAG, "Topic.update(meta.decs)), listener is null");
             }
         }
 
         if (meta.sub != null) {
             update(ctrl.params, meta.sub);
             if (mListener != null) {
+                if (meta.sub.user == null) {
+                    mListener.onMetaDesc(mDesc);
+                }
                 mListener.onSubsUpdated();
             }
         }
@@ -440,12 +445,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
     //    mDesc = new Acs(mode);
     //}
 
-    protected PromisedReply<ServerMessage> updateAccessMode(final String update) throws Exception {
+    public PromisedReply<ServerMessage> updateAccessMode(final String update) throws Exception {
         if (mDesc.acs == null) {
             mDesc.acs = new Acs();
         }
 
-        // Log.d(TAG, "acs=" + mDesc.acs.stringify());
         final AcsHelper want = mDesc.acs.getWantHelper();
         if (want.update(update)) {
             return updateSelfSub(want.toString()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -667,7 +671,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                                 int seq = result.ctrl.getIntParam("seq");
                                 setSeq(seq);
                                 if (id > 0 && mStore != null) {
-                                    if (mStore.msgDelivered(id, result.ctrl.ts, seq)) {
+                                    if (mStore.msgDelivered(Topic.this, id, result.ctrl.ts, seq)) {
                                         setRecv(seq);
                                     }
                                 } else {
@@ -743,6 +747,19 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
+     * Update topic's default access
+     *
+     * @param auth default access mode for authenticated users
+     * @param anon default access mode for anonymous users
+     *
+     * @throws NotSubscribedException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply<ServerMessage> updateDefAcs(String auth, String anon)  throws Exception {
+        return setDescription(new MetaSetDesc<Pu,Pr>(auth, anon));
+    }
+
+    /**
      * Update subscription. Calls {@link #setMeta}.
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic
@@ -760,7 +777,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> updateSelfSub(String mode)  throws Exception {
+    protected PromisedReply<ServerMessage> updateSelfSub(String mode)  throws Exception {
         return setSubscription(new MetaSetSub<T>(null, mode, null));
     }
 

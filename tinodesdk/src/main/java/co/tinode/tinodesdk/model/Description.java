@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
-import co.tinode.tinodesdk.Tinode;
-
 /**
  * Topic description as deserialized from the server packet.
  */
@@ -46,15 +44,24 @@ public class Description<Pu,Pr> {
             changed ++;
         }
 
-        if (desc.defacs != null && !desc.defacs.equals(defacs)) {
-            defacs = desc.defacs;
-            changed ++;
+        if (desc.defacs != null) {
+            if (defacs == null) {
+                defacs = desc.defacs;
+                changed ++;
+            } else {
+                changed += defacs.merge(desc.defacs) ? 1 : 0;
+            }
         }
 
-        if (desc.acs != null && !desc.acs.equals(acs)) {
-            acs = desc.acs;
-            changed ++;
+        if (desc.acs != null) {
+            if (acs == null) {
+                acs = desc.acs;
+                changed++;
+            } else {
+                changed += acs.merge(desc.acs) ? 1 : 0;
+            }
         }
+
         if (desc.seq > seq) {
             seq = desc.seq;
             changed ++;
@@ -138,9 +145,13 @@ public class Description<Pu,Pr> {
     public boolean merge(MetaSetDesc<Pu,Pr> desc) {
         int changed = 0;
 
-        if (desc.defacs != null && !desc.defacs.equals(defacs)) {
-            defacs = desc.defacs;
-            changed ++;
+        if (desc.defacs != null) {
+            if (defacs == null) {
+                defacs = desc.defacs;
+                changed ++;
+            } else {
+                changed += defacs.merge(desc.defacs) ? 1 : 0;
+            }
         }
 
         if (desc.pub != null) {

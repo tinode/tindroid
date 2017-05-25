@@ -126,5 +126,4 @@ public class Acs {
     public boolean isInvalid() {
         return mode.isInvalid();
     }
-
 }

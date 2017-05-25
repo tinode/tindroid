@@ -38,6 +38,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class MessagesFragment extends Fragment {
     private static final String TAG = "MessageFragment";
 
+    private static final int MESSAGES_TO_LOAD = 20;
     private static final int MESSAGES_QUERY_ID = 100;
 
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
@@ -204,21 +205,17 @@ public class MessagesFragment extends Fragment {
             final Activity activity = getActivity();
             final TextView inputField = (TextView) activity.findViewById(R.id.editMessage);
             String message = inputField.getText().toString().trim();
-            notifyDataSetChanged();
+            // notifyDataSetChanged();
             if (!message.equals("")) {
                 try {
                     Log.d(TAG, "sendMessage -- sending...");
-                    mTopic.publish(message).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    PromisedReply<ServerMessage> reply = mTopic.publish(message);
+                    runLoader(); // Shows pending message
+                    reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // Update message list.
-                                    notifyDataSetChanged();
-                                    Log.d(TAG, "sendMessage -- {ctrl} received");
-                                }
-                            });
+                            // Updates message list.
+                            runLoader();
                             return null;
                         }
                     }, null);
@@ -257,28 +254,12 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    private void swapCursor(final String topicName, final Cursor cursor) {
-        Log.d(TAG, "MessagesListAdapter.swapCursor, topic=" + topicName);
-        mMessagesAdapter.swapCursor(topicName, cursor);
-
-        Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    notifyDataSetChanged();
-                    // -1 means scroll to the bottom
-                    scrollTo(-1);
-                }
-            });
-        }
-    }
     private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
 
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             if (id == MESSAGES_QUERY_ID) {
-                return new MessageDb.Loader(getActivity(), mTopicName, -1, -1);
+                return new MessageDb.Loader(getActivity(), mTopicName, -1, -1, MESSAGES_TO_LOAD);
             }
             return null;
         }
@@ -296,6 +277,23 @@ public class MessagesFragment extends Fragment {
         public void onLoaderReset(Loader<Cursor> loader) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
                 swapCursor(null, null);
+            }
+        }
+
+        private void swapCursor(final String topicName, final Cursor cursor) {
+            Log.d(TAG, "MessagesListAdapter.swapCursor, topic=" + topicName);
+            mMessagesAdapter.swapCursor(topicName, cursor);
+
+            Activity activity = getActivity();
+            if (activity != null) {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        notifyDataSetChanged();
+                        // -1 means scroll to the bottom
+                        scrollTo(-1);
+                    }
+                });
             }
         }
     }

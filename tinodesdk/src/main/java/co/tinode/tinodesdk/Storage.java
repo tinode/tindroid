@@ -14,6 +14,9 @@ public interface Storage {
     String getMyUid();
     void setMyUid(String uid);
 
+    // Server time minus local time
+    void setTimeAdjustment(long adjustment);
+
     boolean isReady();
 
     // Fetch all topics
@@ -50,10 +53,16 @@ public interface Storage {
     // Announcement message received
     <T> long inviteReceived(Topic me, MsgServerData<Announcement<T>> msg);
 
-    // Message sent
+    /** Message sent. Returns database ID of the message suitable for
+     * use in msgDelivered
+     * @param topic topic which sent the message
+     * @param data message data to save
+     * @return database ID of the message suitable for use in
+     *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
+     */
     <T> long msgSend(Topic topic, T data);
     /** Message delivered to the server and received a real seq ID */
-    boolean msgDelivered(long id, Date timestamp, int seq);
+    boolean msgDelivered(Topic topic, long id, Date timestamp, int seq);
     /** Mark messages for deletion */
     boolean msgMarkToDelete(Topic topic, int before);
     /** Mark messages for deletion by seq ID list */

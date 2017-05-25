@@ -1,7 +1,5 @@
 package co.tinode.tinodesdk.model;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -61,6 +59,7 @@ public class AcsHelper {
         }
 
         AcsHelper ah = (AcsHelper) o;
+
         return (a == null && ah.a == null) || (a != null && a.equals(ah.a));
     }
 
@@ -179,19 +178,26 @@ public class AcsHelper {
     /**
      * Apply changes, defined as a string, to the given internal representation.
      *
-     * @param val value to change
-     * @param umode change to the value, '+' or '-' followed by the letter(s) being set or unset.
-     * @return updated value
+     * @param val value to change.
+     * @param umode change to the value, '+' or '-' followed by the letter(s) being set or unset,
+     *              or an explicit new value.
+     * @return updated value.
      */
     private static Integer update(Integer val, String umode) {
         if (umode == null || umode.length() == 0) {
             return val;
         }
         char sign = umode.charAt(0);
-        if (umode.length() < 2 || (sign != '+' && sign != '-')) {
-            throw new IllegalArgumentException();
+        int m0;
+        if (sign == '+' || sign == '-') {
+            if (umode.length() < 2) {
+                throw new IllegalArgumentException();
+            }
+            m0 = decode(umode.substring(1));
+        } else {
+            m0 = decode(umode);
         }
-        int m0 = decode(umode.substring(1));
+
         if (m0 == MODE_INVALID) {
             throw new IllegalArgumentException();
         }
@@ -209,7 +215,7 @@ public class AcsHelper {
             } else {
                 val |= m0;
             }
-        } else {
+        } else if (sign == '-') {
             if (m0 == MODE_BANNED) {
                 if ((val & MODE_BANNED) != 0) {
                     val = MODE_NONE;
@@ -217,8 +223,20 @@ public class AcsHelper {
             } else {
                 val &= ~m0;
             }
+        } else {
+            val = m0;
         }
 
         return val;
+    }
+
+    public boolean merge(AcsHelper ah) {
+        if (ah != null && ah.a != null && ah.a != MODE_INVALID) {
+            if (!ah.a.equals(a)) {
+                a = ah.a;
+                return true;
+            }
+        }
+        return false;
     }
 }

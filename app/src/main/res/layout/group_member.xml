@@ -40,13 +40,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toLeftOf="@id/optionsMenu"
+        android:layout_toStartOf="@id/optionsMenu"
         android:layout_marginTop="3.5dp"
         android:orientation="horizontal"
         android:focusable="false">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/permission_admin"
+            android:text="@string/modeAdmin"
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
             android:background="@drawable/border_green"
@@ -61,7 +62,7 @@
             android:background="@drawable/border_green"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
-            android:text="@string/permission_owner"
+            android:text="@string/modeOwner"
             android:typeface="monospace"/>
         <TextView
             android:layout_width="wrap_content"
@@ -69,7 +70,7 @@
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
             android:background="@drawable/border_green"
-            android:text="@string/permission_muted"
+            android:text="@string/modeMuted"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
             android:typeface="monospace"/>
@@ -84,7 +85,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
-        android:paddingEnd="16sp"
+        android:paddingEnd="16sp" tools:ignore="RtlSymmetry"
         android:paddingRight="16sp"
         android:layout_alignParentTop="true"
         android:maxLines="1"
@@ -93,7 +94,6 @@
 
     <TextView
         android:id="@android:id/text2"
-        android:layout_toRightOf="@android:id/icon"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
@@ -102,6 +102,9 @@
         android:maxWidth="240sp"
         android:layout_below="@android:id/text1"
         android:layout_toLeftOf="@id/optionsMenu"
+        android:layout_toStartOf="@id/optionsMenu"
+        android:layout_toRightOf="@android:id/icon"
+        android:layout_toEndOf="@android:id/icon"
         tools:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
         android:textAppearance="?android:attr/textAppearanceSmall"/>
 

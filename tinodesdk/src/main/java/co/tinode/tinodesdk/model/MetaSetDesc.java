@@ -18,4 +18,12 @@ public class MetaSetDesc<Pu,Pr> {
         this.pub = pub;
         this.priv = priv;
     }
+
+    public MetaSetDesc(Defacs da) {
+        this.defacs = da;
+    }
+
+    public MetaSetDesc(String auth, String anon) {
+        this.defacs = new Defacs(auth, anon);
+    }
 }

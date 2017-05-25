@@ -2,23 +2,29 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v4.util.ArrayMap;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -27,11 +33,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.zip.Inflater;
 
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -40,6 +50,10 @@ import co.tinode.tinodesdk.model.Subscription;
 public class TopicInfoFragment extends Fragment {
 
     private static final String TAG = "TopicInfoFragment";
+
+    private static final int UPDATE_SELF_SUB = 0;
+    private static final int UPDATE_AUTH = 1;
+    private static final int UPDATE_ANON = 2;
 
     Topic<VCard, String, String> mTopic;
     private MembersAdapter mAdapter;
@@ -83,51 +97,22 @@ public class TopicInfoFragment extends Fragment {
         String name = bundle.getString("topic");
         mTopic = Cache.getTinode().getTopic(name);
 
-
         final Activity activity = getActivity();
-        AppCompatImageView avatar = (AppCompatImageView) activity.findViewById(R.id.imageAvatar);
         final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
         final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
         final TextView address = (TextView) activity.findViewById(R.id.topicAddress);
+        final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
         final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
         final View groupMembersCard = activity.findViewById(R.id.groupMembersCard);
         final View defaultPermissionsCard = activity.findViewById(R.id.defaultPermissionsCard);
 
-        VCard pub = mTopic.getPub();
-        final String titleText;
-        if (pub != null) {
-            if (!TextUtils.isEmpty(pub.fn)) {
-                titleText = pub.fn;
-                title.setText(pub.fn);
-                title.setTypeface(null, Typeface.NORMAL);
-                title.setTextIsSelectable(true);
-            } else {
-                titleText = null;
-                title.setText(R.string.placeholder_contact_title);
-                title.setTypeface(null, Typeface.ITALIC);
-                title.setTextIsSelectable(false);
+        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UiUtils.requestAvatar(TopicInfoFragment.this);
             }
-            final Bitmap bmp = pub.getBitmap();
-            if (bmp != null) {
-                avatar.setImageBitmap(bmp);
-            }
-        } else {
-            titleText = null;
-        }
+        });
 
-        String priv = mTopic.getPriv();
-        final String subtitleText;
-        if (!TextUtils.isEmpty(priv)) {
-            subtitleText = priv;
-            subtitle.setText(priv);
-            subtitle.setTypeface(null, Typeface.NORMAL);
-            subtitle.setTextIsSelectable(true);
-        } else {
-            subtitle.setText(R.string.placeholder_private);
-            subtitle.setTypeface(null, Typeface.ITALIC);
-            subtitle.setTextIsSelectable(false);
-            subtitleText = null;
-        }
         // Launch edit dialog when title or subtitle is clicked.
         final View.OnClickListener l = new View.OnClickListener() {
             @Override
@@ -140,8 +125,6 @@ public class TopicInfoFragment extends Fragment {
         }
         subtitle.setOnClickListener(l);
 
-        final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
-        muted.setChecked(mTopic.isMuted());
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 Log.d(TAG, "isChecked=" + isChecked + ", muted=" + mTopic.isMuted());
@@ -162,7 +145,7 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.getTopicType() == Topic.TopicType.GRP) {
             groupMembersCard.setVisibility(View.VISIBLE);
 
-            if (!mTopic.isAdmin()) {
+            if (!mTopic.isAdmin() && !mTopic.isOwner()) {
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.
                 Button button = (Button) activity.findViewById(R.id.buttonAddMembers);
@@ -176,18 +159,36 @@ public class TopicInfoFragment extends Fragment {
         }
 
         address.setText(mTopic.getName());
-        Acs am = mTopic.getAccessMode();
-        permissions.setText(am.getMode());
 
-        if (am.isAdmin()) {
+        Acs am = mTopic.getAccessMode();
+        permissions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showEditPermissions(mTopic.getAccessMode().getMode(), UPDATE_SELF_SUB, false);
+            }
+        });
+
+        if (am.isAdmin() || am.isOwner()) {
             defaultPermissionsCard.setVisibility(View.VISIBLE);
             final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
             final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
-            auth.setText(mTopic.getAuthAcsStr());
-            anon.setText(mTopic.getAnonAcsStr());
+            auth.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showEditPermissions(mTopic.getAuthAcsStr(), UPDATE_AUTH, true);
+                }
+            });
+            anon.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showEditPermissions(mTopic.getAnonAcsStr(), UPDATE_ANON, true);
+                }
+            });
         } else {
             defaultPermissionsCard.setVisibility(View.GONE);
         }
+
+        notifyContentChanged();
     }
 
     @Override
@@ -202,7 +203,7 @@ public class TopicInfoFragment extends Fragment {
         final String priv = mTopic.getPriv();
         final Activity activity = getActivity();
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = activity.getLayoutInflater().inflate(R.layout.dialog_edit_group, null);
+        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_group, null);
         builder.setView(editor).setTitle(R.string.edit_topic);
 
         final EditText titleEditor = (EditText) editor.findViewById(R.id.editTitle);
@@ -257,6 +258,111 @@ public class TopicInfoFragment extends Fragment {
         builder.show();
     }
 
+    // Dialog for editing permissions
+    private void showEditPermissions(@NonNull final String mode, final int what, boolean noOwner) {
+        final Activity activity = getActivity();
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
+        final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
+        builder
+                .setView(editor)
+                .setTitle(R.string.edit_permissions);
+        final LinkedHashMap<Character, Integer> checks = new LinkedHashMap<>(7);
+        checks.put('O', R.string.permission_owner);
+        checks.put('R', R.string.permission_read);
+        checks.put('W', R.string.permission_write);
+        checks.put('S', R.string.permission_share);
+        checks.put('P', R.string.permission_notifications);
+        checks.put('D', R.string.permission_delete);
+        checks.put('X', R.string.permission_banned);
+        View.OnClickListener checkListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean checked = !((CheckedTextView)view).isChecked();
+                ((CheckedTextView)view).setChecked(checked);
+                Character tag = (Character) view.getTag();
+                // If "banned" is checked, clear all other checks except 'Owner' and 'Banned';
+                if (checked) {
+                    if (tag.equals('X')) {
+                        for (int i = 0; i < editor.getChildCount(); i++) {
+                            CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
+                            Character key = (Character) check.getTag();
+                            if (!key.equals('X') && !key.equals('O')) {
+                                check.setChecked(false);
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < editor.getChildCount(); i++) {
+                            CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
+                            Character key = (Character) check.getTag();
+                            if (key.equals('X')) {
+                                check.setChecked(false);
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        for (Character key : checks.keySet()) {
+            if (noOwner && key.equals('O')) {
+                continue;
+            }
+            CheckedTextView check = (CheckedTextView) inflater.inflate(R.layout.edit_one_permission, editor, false);
+            check.setChecked(mode.contains(key.toString()));
+            check.setText(checks.get(key));
+            check.setTag(key);
+            check.setOnClickListener(checkListener);
+            editor.addView(check, editor.getChildCount());
+        }
+
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                StringBuilder newAcsStr = new StringBuilder();
+                for (int i = 0; i < editor.getChildCount(); i++) {
+                    CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
+                    if (check.isChecked()) {
+                        newAcsStr.append(check.getTag());
+                    }
+                }
+                if (newAcsStr.length() == 0) {
+                    newAcsStr.append('N');
+                }
+                Log.d(TAG, "New access mode: " + newAcsStr);
+                try {
+                    PromisedReply<ServerMessage> reply = null;
+                    if (what == UPDATE_SELF_SUB) {
+                        reply = mTopic.updateAccessMode(newAcsStr.toString());
+                    } else if (what == UPDATE_AUTH) {
+                        reply = mTopic.updateDefAcs(newAcsStr.toString(), null);
+                    } else if (what == UPDATE_ANON) {
+                        reply = mTopic.updateDefAcs(null, newAcsStr.toString());
+                    }
+                    if (reply != null) {
+                        reply.thenApply(null, new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                return null;
+                            }
+                        });
+                    }
+                } catch (NotConnectedException ignored) {
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception ignored) {
+                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.show();
+    }
+
     void notifyDataSetChanged() {
         mAdapter.resetContent();
     }
@@ -264,15 +370,43 @@ public class TopicInfoFragment extends Fragment {
     void notifyContentChanged() {
         final Activity activity = getActivity();
 
+        final AppCompatImageView avatar = (AppCompatImageView) activity.findViewById(R.id.imageAvatar);
         final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
         final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
         final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
+        final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
         final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
         final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
 
         VCard pub = mTopic.getPub();
-        title.setText(pub != null && pub.fn != null ? pub.fn : "");
-        subtitle.setText(mTopic.getPriv());
+        if (pub != null) {
+            if (!TextUtils.isEmpty(pub.fn)) {
+                title.setText(pub.fn);
+                title.setTypeface(null, Typeface.NORMAL);
+                title.setTextIsSelectable(true);
+            } else {
+                title.setText(R.string.placeholder_contact_title);
+                title.setTypeface(null, Typeface.ITALIC);
+                title.setTextIsSelectable(false);
+            }
+            final Bitmap bmp = pub.getBitmap();
+            if (bmp != null) {
+                avatar.setImageBitmap(bmp);
+            }
+        }
+
+        String priv = mTopic.getPriv();
+        if (!TextUtils.isEmpty(priv)) {
+            subtitle.setText(priv);
+            subtitle.setTypeface(null, Typeface.NORMAL);
+            subtitle.setTextIsSelectable(true);
+        } else {
+            subtitle.setText(R.string.placeholder_private);
+            subtitle.setTypeface(null, Typeface.ITALIC);
+            subtitle.setTextIsSelectable(false);
+        }
+
+        muted.setChecked(mTopic.isMuted());
         permissions.setText(mTopic.getAccessMode().getMode());
         auth.setText(mTopic.getAuthAcsStr());
         anon.setText(mTopic.getAnonAcsStr());
@@ -281,7 +415,7 @@ public class TopicInfoFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_topic_info, menu);
+        // inflater.inflate(R.menu.menu_topic_info, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
 

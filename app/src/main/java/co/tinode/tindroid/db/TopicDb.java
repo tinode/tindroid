@@ -259,16 +259,12 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_SEQ, topic.getSeq());
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
+        values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
         Date lastUsed = new Date();
         values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
-
-        /*
-            COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getAccountId() +
-                            " AND " + COLUMN_NAME_TOPIC + "='" + topic.getName() + "'";
-        */
 
         int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
         if (updated > 0) {
@@ -288,7 +284,7 @@ public class TopicDb implements BaseColumns {
      * @return true on success, false otherwise
      */
     @SuppressWarnings("WeakerAccess")
-    public static boolean msgReceived(SQLiteDatabase db, Topic topic, StoredMessage msg) {
+    public static boolean msgReceived(SQLiteDatabase db, Topic topic, Date timestamp, int seq) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
             return false;
@@ -297,13 +293,13 @@ public class TopicDb implements BaseColumns {
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
 
-        if (msg.seq > st.maxLocalSeq) {
-            values.put(COLUMN_NAME_MAX_LOCAL_SEQ, msg.seq);
-        } else if (msg.seq < st.minLocalSeq) {
-            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, msg.seq);
+        if (seq > st.maxLocalSeq) {
+            values.put(COLUMN_NAME_MAX_LOCAL_SEQ, seq);
+        } else if (seq > 0 && seq < st.minLocalSeq) {
+            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, seq);
         }
-        if (msg.ts.after(st.lastUsed)) {
-            values.put(COLUMN_NAME_LASTUSED, msg.ts.getTime());
+        if (timestamp.after(st.lastUsed)) {
+            values.put(COLUMN_NAME_LASTUSED, timestamp.getTime());
         }
 
         if (values.size() > 0) {
@@ -312,9 +308,9 @@ public class TopicDb implements BaseColumns {
                 return false;
             }
 
-            st.lastUsed = msg.ts.after(st.lastUsed) ? msg.ts : st.lastUsed;
-            st.minLocalSeq = msg.seq < st.minLocalSeq ? msg.seq : st.minLocalSeq;
-            st.maxLocalSeq = msg.seq > st.maxLocalSeq ? msg.seq : st.maxLocalSeq;
+            st.lastUsed = timestamp.after(st.lastUsed) ? timestamp : st.lastUsed;
+            st.minLocalSeq = seq > 0 && seq < st.minLocalSeq ? seq : st.minLocalSeq;
+            st.maxLocalSeq = seq > st.maxLocalSeq ? seq : st.maxLocalSeq;
         }
         return true;
     }

@@ -20,6 +20,7 @@ class SqlStore implements Storage {
 
     private BaseDb mDbh;
     private long mMyId = -1;
+    private long mTimeAdjustment = 0;
 
     SqlStore(BaseDb dbh) {
         mDbh = dbh;
@@ -33,6 +34,11 @@ class SqlStore implements Storage {
     @Override
     public void setMyUid(String uid) {
         mDbh.setUid(uid);
+    }
+
+    @Override
+    public void setTimeAdjustment(long adj) {
+        mTimeAdjustment = adj;
     }
 
     public boolean isReady() {
@@ -198,7 +204,7 @@ class SqlStore implements Storage {
 
         msg.topic = topic.getName();
         msg.from = getMyUid();
-        msg.ts = new Date();
+        msg.ts = new Date(new Date().getTime() + mTimeAdjustment);
         // Set seq to zero. MessageDb will assign a unique temporary (nagative int) seq.
         // The temp seq will be updated later, when the message is received by the server.
         msg.seq = 0;
@@ -215,8 +221,8 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgDelivered(long id, Date timestamp, int seq) {
-        return MessageDb.delivered(mDbh.getWritableDatabase(), id, timestamp, seq);
+    public boolean msgDelivered(Topic topic, long messageDbId, Date timestamp, int seq) {
+        return MessageDb.delivered(mDbh.getWritableDatabase(), topic, messageDbId, timestamp, seq);
     }
 
     @Override

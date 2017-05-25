@@ -34,15 +34,19 @@
     <string name="default_host_name">10.0.2.2:6060</string>
 
     <!-- access mode definitions -->
-    <string name="modeReadable">can read</string>
+    <string name="modeReadable">can join</string>
     <string name="modeWritable">can publish</string>
     <string name="modeReadOnly">read-only</string>
-    <string name="modeNotificationsEnabled">notifications on</string>
     <string name="modeMuted">muted</string>
     <string name="modeAdmin">admin</string>
     <string name="modeCanDelete">can delete</string>
     <string name="modeOwner">owner</string>
     <string name="modeBanned">banned</string>
+    <!-- mode-like access statuses -->
+    <string name="modeInvited">invited</string>
+    <string name="modeRequested">requested</string>
+    <string name="modeUndefined">undefined</string>
+    <string name="modePending">pending</string>
 
     <!-- Menu actions -->
     <string name="action_settings">Settings</string>
@@ -108,10 +112,7 @@
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
     <string name="close">Close</string>
-    <string name="modeInvited">invited</string>
-    <string name="modeRequested">requested</string>
-    <string name="modeUndefined">undefined</string>
-    <string name="modePending">pending</string>
+
     <string name="invitation_text">Join my group!</string>
     <string name="no_connection">You are offline</string>
     <string name="action_failed">Action failed</string>
@@ -119,13 +120,19 @@
     <string name="placeholder_contact_title">Unnamed or unknown</string>
     <string name="placeholder_private">Private info: not set</string>
     <string name="options_menu">Options menu</string>
-    <string name="permission_admin">admin</string>
-    <string name="permission_owner">owner</string>
-    <string name="permission_muted">muted</string>
     <string name="current_user">You</string>
     <string name="default_permissions">Default permissions</string>
     <string name="auth_permissions">Authenticated users</string>
     <string name="anon_permissions">Anonymous users</string>
     <string name="topic_private">Additional info (private)</string>
-    <string name="edit_topic">Edit topic</string>
+    <string name="edit_topic">Edit Topic</string>
+    <string name="edit_permissions">Edit Permissions</string>
+
+    <string name="permission_owner">Full control (owner)</string>
+    <string name="permission_banned">Banned/no access</string>
+    <string name="permission_read">Subscribe and read</string>
+    <string name="permission_write">Write</string>
+    <string name="permission_share">Approve new members</string>
+    <string name="permission_notifications">Receive notifications</string>
+    <string name="permission_delete">Delete messages</string>
 </resources>

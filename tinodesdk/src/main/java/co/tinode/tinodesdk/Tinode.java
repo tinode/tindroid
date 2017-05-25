@@ -122,6 +122,9 @@ public class Tinode {
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
 
+    // The difference between server time and local time.
+    private long mTimeAdjustment = 0;
+
     static {
         sJsonMapper = new ObjectMapper();
         // Silently ignore unknown properties
@@ -242,6 +245,12 @@ public class Tinode {
                                         // If this is an auto-reconnect, the promise is already resolved.
                                         connected.resolve(pkt);
                                     }
+
+                                    mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
+                                    if (mStore != null) {
+                                        mStore.setTimeAdjustment(mTimeAdjustment);
+                                    }
+
                                     if (mListener != null) {
                                         mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
                                     }
@@ -1181,6 +1190,10 @@ public class Tinode {
     synchronized String nextUniqueString() {
         ++ mNameCounter;
         return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (mNameCounter & 0xFFFF), 32);
+    }
+
+    long getTimeAdjustment() {
+        return mTimeAdjustment;
     }
 
     /**
