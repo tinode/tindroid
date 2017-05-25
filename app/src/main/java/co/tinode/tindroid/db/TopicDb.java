@@ -295,6 +295,7 @@ public class TopicDb implements BaseColumns {
 
         if (seq > st.maxLocalSeq) {
             values.put(COLUMN_NAME_MAX_LOCAL_SEQ, seq);
+            values.put(COLUMN_NAME_RECV, seq);
         } else if (seq > 0 && seq < st.minLocalSeq) {
             values.put(COLUMN_NAME_MIN_LOCAL_SEQ, seq);
         }

@@ -213,9 +213,8 @@ public class MessageDb implements BaseColumns {
         try {
             db.beginTransaction();
 
-            db.update(TABLE_NAME, values, _ID + "=" + msgId, null);
-
-            if (TopicDb.msgReceived(db, topic, timestamp, seq)) {
+            if (db.update(TABLE_NAME, values, _ID + "=" + msgId, null) > 0 &&
+                    TopicDb.msgReceived(db, topic, timestamp, seq)) {
                 db.setTransactionSuccessful();
             }
         } catch (Exception ex) {

@@ -8,17 +8,17 @@ Work in progress. What works:
 * Unread message counters
 * Offline mode is semi-functional
 * Indicators for messages received/read (little check marks in messages)
-* Register new account, login
+* Muting/unmuting conversations
+* Registering new accounts
 * Load the list of contacts and store it offline
 * Access contacts from the Android stock Contacts app
 * Invite contacts to the app by SMS or email
 
 Does not work yet:
 
-* Editing an existing account
-* Contact discovery - can't find other people to chat with
-* Deleting/muting topics and messages
-* Can't start new group conversations
+* Editing of an existing account
+* Contact discovery is done but not debugged yet
+* Deleting topics and messages
 * No client support for typing notifications.
 * No encryption
 

@@ -678,6 +678,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
                                     setRecv(seq);
                                 }
                                 setRead(seq);
+                                if (mStore != null) {
+                                    mStore.setRead(Topic.this, seq);
+                                }
                             }
                             return null;
                         }
