@@ -922,13 +922,6 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.del.id, future);
-            future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    unregisterTopic(topicName);
-                    return null;
-                }
-            }, null);
             return future;
         } catch (Exception unused) {
             return null;

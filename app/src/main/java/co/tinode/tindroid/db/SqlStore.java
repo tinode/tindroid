@@ -2,9 +2,13 @@ package co.tinode.tindroid.db;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
@@ -17,6 +21,8 @@ import co.tinode.tinodesdk.model.Subscription;
  * Persistence for Tinode.
  */
 class SqlStore implements Storage {
+
+    private static final String TAG = "SqlStore";
 
     private BaseDb mDbh;
     private long mMyId = -1;
@@ -198,7 +204,7 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <T> long msgSend(Topic topic, T data) {
+    public <T> long msgSend(Topic<?,?,T> topic, T data) {
         StoredMessage<T> msg = new StoredMessage<>();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 
@@ -267,5 +273,46 @@ class SqlStore implements Storage {
             result = SubscriberDb.updateRead(mDbh.getWritableDatabase(), ss.id, read);
         }
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R extends Iterator<Message<T>> & Closeable, T> R getUnsentMessages(Topic<?, ?, T> topic) {
+        MessageList<T> list = null;
+        StoredTopic st = (StoredTopic)topic.getLocal();
+        if (st != null && st.id > 0) {
+            Cursor c = MessageDb.queryUnsent(mDbh.getReadableDatabase(), st.id);
+            if (c != null) {
+                list = new MessageList<>(c);
+            }
+        }
+        return (R) list;
+    }
+
+    private static class MessageList<T> implements Iterator<Message<T>>, Closeable {
+        private Cursor mCursor;
+
+        MessageList(Cursor cursor) {
+            mCursor = cursor;
+            mCursor.moveToFirst();
+        }
+
+        @Override
+        public void close() throws IOException {
+            mCursor.close();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !mCursor.isAfterLast();
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public StoredMessage<T> next() {
+            StoredMessage<T> msg = MessageDb.readMessage(mCursor);
+            mCursor.moveToNext();
+            return msg;
+        }
     }
 }

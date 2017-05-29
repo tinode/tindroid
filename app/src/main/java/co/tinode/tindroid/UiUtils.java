@@ -277,7 +277,8 @@ public class UiUtils {
                     UiUtils.SELECT_PICTURE);
         }
     }
-    public static boolean acceptAvatar(ImageView avatar, Bitmap bmp) {
+
+    public static Bitmap scaleSquareBitmap(Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
@@ -293,21 +294,31 @@ public class UiUtils {
         // Scale up or down.
         bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
         // Chop the square from the middle.
-        bmp = Bitmap.createBitmap(bmp, width - BITMAP_SIZE, height - BITMAP_SIZE,
+        return Bitmap.createBitmap(bmp, width - BITMAP_SIZE, height - BITMAP_SIZE,
                 BITMAP_SIZE, BITMAP_SIZE);
-        avatar.setImageBitmap(bmp);
+    }
+
+    public static Bitmap extractBitmap(final Activity activity, final Intent data) {
+        try {
+            return MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
+                    data.getData());
+        } catch (IOException ex) {
+            return null;
+        }
+    }
+
+    public static boolean acceptAvatar(final ImageView avatar, final Bitmap bmp) {
+        avatar.setImageBitmap(scaleSquareBitmap(bmp));
         return true;
     }
 
-    public static boolean acceptAvatar(Activity activity, ImageView avatar, Intent data) {
-        try {
-            Bitmap bmp = MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
-                    data.getData());
-            return acceptAvatar(avatar, bmp);
-        } catch (IOException ex) {
+    public static boolean acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
+        final Bitmap bmp = extractBitmap(activity, data);
+        if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
             return false;
         }
+        return acceptAvatar(avatar, bmp);
     }
 
     public static void assignBitmap(Context context, ImageView icon, Bitmap bmp, int defaultDrawable) {

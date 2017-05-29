@@ -148,9 +148,9 @@
                     android:layout_below="@id/membersTitle"
                     android:layout_toEndOf="@id/buttonAddMembers"
                     android:layout_toRightOf="@id/buttonAddMembers"
-                    android:drawableLeft="@drawable/ic_exit"
+                    android:drawableLeft="@drawable/ic_exit_red"
                     android:drawablePadding="4sp"
-                    android:drawableStart="@drawable/ic_exit"
+                    android:drawableStart="@drawable/ic_exit_red"
                     android:text="@string/leave_group"
                     android:textColor="@color/colorDangerDark"/>
 

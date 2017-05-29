@@ -11,9 +11,13 @@ import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
 
 /**
@@ -99,6 +103,7 @@ public class MessageDb implements BaseColumns {
     public static final Uri CONTENT_URI =
             BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
 
+    private static final int COLUMN_IDX_ID = 0;
     private static final int COLUMN_IDX_TOPIC_ID = 1;
     private static final int COLUMN_IDX_USER_ID = 2;
     private static final int COLUMN_IDX_STATUS = 3;
@@ -150,8 +155,11 @@ public class MessageDb implements BaseColumns {
      * @return ID of the newly added message
      */
     public static long insert(SQLiteDatabase db, Topic topic, StoredMessage msg) {
+        if (msg.id > 0) {
+            return msg.id;
+        }
+
         long id = -1;
-        int status;
 
         try {
             db.beginTransaction();
@@ -172,6 +180,7 @@ public class MessageDb implements BaseColumns {
                 msg.senderIdx = SubscriberDb.getSenderIndex(db, msg.topicId, msg.userId);
             }
 
+            int status;
             if (msg.seq == 0) {
                 msg.seq = getNextUnsentId(db, msg.topicId);
                 status = BaseDb.STATUS_QUEUED;
@@ -317,6 +326,7 @@ public class MessageDb implements BaseColumns {
     public static <T> StoredMessage<T> readMessage(Cursor c) {
         StoredMessage<T> msg = new StoredMessage<>();
 
+        msg.id          = c.getLong(COLUMN_IDX_ID);
         msg.topicId     = c.getLong(COLUMN_IDX_TOPIC_ID);
         msg.userId      = c.getLong(COLUMN_IDX_USER_ID);
         msg.status      = c.getInt(COLUMN_IDX_STATUS);

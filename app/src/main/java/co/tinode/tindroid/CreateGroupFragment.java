@@ -22,7 +22,6 @@ import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,15 +34,12 @@ import android.widget.Toast;
 
 import java.util.Collection;
 import java.util.Locale;
-import java.util.TreeSet;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.ServerResponseException;
-import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -53,9 +49,9 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment for adding/editing a group topic
  */
-public class EditGroupFragment extends ListFragment {
+public class CreateGroupFragment extends ListFragment {
 
-    private static final String TAG = "EditGroupFragment";
+    private static final String TAG = "CreateGroupFragment";
 
     // Bundle key for saving previously selected search result item
     private static final String STATE_PREVIOUSLY_SELECTED_KEY =
@@ -75,10 +71,30 @@ public class EditGroupFragment extends ListFragment {
 
     private Topic<VCard,String,String> mTopic = null;
 
+    private PromisedReply.FailureListener<ServerMessage> mFailureListener;
+
     // Sorted set of selected contacts (cursor positions of selected contacts).
     // private TreeSet<Integer> mSelectedContacts;
 
-    public EditGroupFragment() {
+    public CreateGroupFragment() {
+        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
+                final Activity activity = getActivity();
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (err instanceof NotConnectedException) {
+                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
+                        startActivity(new Intent(activity, ContactsActivity.class));
+                    }
+                });
+                return null;
+            }
+        };
     }
 
     @Override
@@ -102,7 +118,7 @@ public class EditGroupFragment extends ListFragment {
             protected Bitmap processBitmap(Object data) {
                 // This gets called in a background thread and passed the data from
                 // ImageLoader.loadImage().
-                return UiUtils.loadContactPhotoThumbnail(EditGroupFragment.this, (String) data, getImageSize());
+                return UiUtils.loadContactPhotoThumbnail(CreateGroupFragment.this, (String) data, getImageSize());
             }
         };
         // Set a placeholder loading image for the image loader
@@ -129,7 +145,7 @@ public class EditGroupFragment extends ListFragment {
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UiUtils.requestAvatar(EditGroupFragment.this);
+                UiUtils.requestAvatar(CreateGroupFragment.this);
             }
         });
 
@@ -249,8 +265,10 @@ public class EditGroupFragment extends ListFragment {
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                     String inviteText = getActivity().getString(R.string.invitation_text);
                     for (Subscription<VCard, String> sub : mTopic.getSubscriptions()) {
-                        mTopic.invite(sub.user, null /* use default mode */, inviteText);
+                        mTopic.invite(sub.user,
+                                sub.acs != null ? sub.acs.getGiven() : null /* use default */, inviteText);
                     }
+
                     Intent intent = new Intent(activity, MessageActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     intent.putExtra("topic", mTopic.getName());
@@ -260,14 +278,15 @@ public class EditGroupFragment extends ListFragment {
 
                     return null;
                 }
-            }, null);
+            }, mFailureListener);
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
             // Go back to contacts
-            startActivity(new Intent(activity, ContactsActivity.class));
         } catch (Exception e) {
             Toast.makeText(activity, R.string.failed_to_create_topic, Toast.LENGTH_SHORT).show();
         }
+
+        startActivity(new Intent(activity, ContactsActivity.class));
     }
 
     /**

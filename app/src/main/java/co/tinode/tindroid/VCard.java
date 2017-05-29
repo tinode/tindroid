@@ -68,6 +68,10 @@ public class VCard implements Serializable {
     public Bitmap getBitmap() {
         return (photo != null) ? photo.getBitmap() : null;
     }
+    @JsonIgnore
+    public void setBitmap(Bitmap bmp) {
+        photo = new AvatarPhoto(bmp);
+    }
 
     public boolean constructBitmap() {
         return photo != null && photo.constructBitmap();

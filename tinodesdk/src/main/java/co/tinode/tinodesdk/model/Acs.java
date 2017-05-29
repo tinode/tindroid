@@ -71,14 +71,35 @@ public class Acs {
     }
 
     public boolean merge(Acs am) {
-        boolean changed = false;
+        int change = 0;
         if (am != null && !equals(am)) {
-            given = new AcsHelper(am.given);
-            want = new AcsHelper(am.want);
-            mode = new AcsHelper(am.mode);
-            changed = true;
+            if (am.given != null) {
+                change += given.merge(am.given) ? 1 : 0;
+            }
+            if (am.want != null) {
+                change += want.merge(am.want) ? 1 : 0;
+            }
+            if (am.mode != null) {
+                change += mode.merge(am.mode) ? 1 : 0;
+            }
         }
-        return changed;
+        return change > 0;
+    }
+
+    public boolean merge(Map<String,String> am) {
+        int change = 0;
+        if (am != null) {
+            if (am.get("given") != null) {
+                change += given.merge(new AcsHelper(am.get("given"))) ? 1 : 0;
+            }
+            if (am.get("want") != null) {
+                change += want.merge(new AcsHelper(am.get("want"))) ? 1 : 0;
+            }
+            if (am.get("mode") != null) {
+                change += mode.merge(new AcsHelper(am.get("mode"))) ? 1 : 0;
+            }
+        }
+        return change > 0;
     }
 
     public boolean equals(Acs am) {

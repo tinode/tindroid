@@ -1,7 +1,10 @@
 package co.tinode.tinodesdk;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -60,7 +63,7 @@ public interface Storage {
      * @return database ID of the message suitable for use in
      *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
      */
-    <T> long msgSend(Topic topic, T data);
+    <T> long msgSend(Topic<?,?,T> topic, T data);
     /** Message delivered to the server and received a real seq ID */
     boolean msgDelivered(Topic topic, long id, Date timestamp, int seq);
     /** Mark messages for deletion */
@@ -75,13 +78,24 @@ public interface Storage {
     boolean msgRecvByRemote(Subscription sub, int recv);
     /** Set read value for a given subscriber */
     boolean msgReadByRemote(Subscription sub, int read);
+    /** Get a list of unsent messages */
+    <R extends Iterator<Message<T>> & Closeable, T> R getUnsentMessages(Topic<?,?,T> topic);
+
+    interface Message<T> {
+        /** Get current message payload */
+        T getContent();
+        /** Get current message unique ID */
+        long getId();
+        /** Get current message header */
+        Map<String,String> getHeader();
+    }
 
     /**
      * Min and max values.
      */
     class Range {
-        public int min;
-        public int max;
+        int min;
+        int max;
 
         public Range(int from, int to) {
             min = from;

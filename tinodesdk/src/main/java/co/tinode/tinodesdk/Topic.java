@@ -26,9 +26,12 @@ import co.tinode.tinodesdk.model.Subscription;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 
@@ -445,39 +448,18 @@ public class Topic<Pu,Pr,T> implements LocalData {
     //    mDesc = new Acs(mode);
     //}
 
-    public PromisedReply<ServerMessage> updateAccessMode(final String update) throws Exception {
-        if (mDesc.acs == null) {
-            mDesc.acs = new Acs();
-        }
-
-        final AcsHelper want = mDesc.acs.getWantHelper();
-        if (want.update(update)) {
-            return updateSelfSub(want.toString()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    mDesc.acs.setWant(want.toString());
-                    return null;
-                }
-            }, null);
-        } else {
-            Log.d(TAG, "accessModes are equal after '" + update + "'");
-        }
-        // The state is unchanged, return resolved promise.
-        return new PromisedReply<>((ServerMessage) null);
-    }
-
     public boolean isAdmin() {
         return mDesc.acs != null && mDesc.acs.isAdmin();
     }
     public PromisedReply<ServerMessage> updateAdmin(final boolean isAdmin) throws Exception {
-        return updateAccessMode(isAdmin ? "+S" : "-S");
+        return updateMode(null, isAdmin ? "+S" : "-S");
     }
 
     public boolean isMuted() {
         return mDesc.acs != null && mDesc.acs.isMuted();
     }
     public PromisedReply<ServerMessage> updateMuted(final boolean muted) throws Exception {
-        return updateAccessMode(muted ? "-P" : "+P");
+        return updateMode(null, muted ? "-P" : "+P");
     }
 
     public boolean isOwner() {
@@ -646,6 +628,24 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return leave(false);
     }
 
+    private void processDelivery(final MsgServerCtrl ctrl, final long id) {
+        if (ctrl != null) {
+            int seq = ctrl.getIntParam("seq");
+            setSeq(seq);
+            if (id > 0 && mStore != null) {
+                if (mStore.msgDelivered(Topic.this, id, ctrl.ts, seq)) {
+                    setRecv(seq);
+                }
+            } else {
+                setRecv(seq);
+            }
+            setRead(seq);
+            if (mStore != null) {
+                mStore.setRead(Topic.this, seq);
+            }
+        }
+    }
+
     /**
      * Publish message to a topic. It will attempt to publish regardless of subscription status.
      *
@@ -667,21 +667,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            if (result.ctrl != null) {
-                                int seq = result.ctrl.getIntParam("seq");
-                                setSeq(seq);
-                                if (id > 0 && mStore != null) {
-                                    if (mStore.msgDelivered(Topic.this, id, result.ctrl.ts, seq)) {
-                                        setRecv(seq);
-                                    }
-                                } else {
-                                    setRecv(seq);
-                                }
-                                setRead(seq);
-                                if (mStore != null) {
-                                    mStore.setRead(Topic.this, seq);
-                                }
-                            }
+                            processDelivery(result.ctrl, id);
                             return null;
                         }
                     }, null);
@@ -692,6 +678,46 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         throw new NotConnectedException();
+    }
+
+    /**
+     * Re-send pending messages. Processing will stop on the first error.
+     *
+     * @return {@link PromisedReply} of the last sent message.
+     *
+     * @throws NotSubscribedException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to server
+     */
+    public <ML extends Iterator<Storage.Message<T>> & Closeable> PromisedReply<ServerMessage> publishPending()
+            throws Exception {
+        Log.d(TAG, "publishPending");
+
+        ML list = mStore.getUnsentMessages(this);
+        if (list == null) {
+            Log.d(TAG, "getUnreadMessages returned null");
+            return new PromisedReply<>((ServerMessage) null);
+        }
+
+        PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
+        while (list.hasNext()) {
+            final Storage.Message<T> msg = list.next();
+            Log.d(TAG, "publishing '" + msg.getId() + "'");
+            last = mTinode.publish(getName(), msg.getContent());
+            last.thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            processDelivery(result.ctrl, msg.getId());
+                            return null;
+                        }
+                    }, null);
+        }
+
+        try {
+            list.close();
+        } catch (IOException ignored) {}
+
+        return last;
     }
 
     /**
@@ -773,61 +799,85 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     /**
-     * Update user's own subscription to topic
+     * Update another user's access mode.
      *
-     * @param mode access mode
-     *
+     * @param uid UID of the user to update
+     * @param update string which defines the update. It could be a full value or a change.
+
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    protected PromisedReply<ServerMessage> updateSelfSub(String mode)  throws Exception {
-        return setSubscription(new MetaSetSub<T>(null, mode, null));
-    }
+    public PromisedReply<ServerMessage> updateMode(String uid, final String update) throws Exception {
+        final Subscription sub;
+        if (uid != null) {
+            sub = getSubscription(uid);
+            if (uid.equals(mTinode.getMyId())) {
+                uid = null;
+            }
+        } else {
+            sub = getSubscription(mTinode.getMyId());
+        }
 
-    /**
-     * Update user's subscription to topic
-     *
-     * @param mode access mode
-     *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
-     */
-    public PromisedReply<ServerMessage> updateSub(String uid, String mode)  throws Exception {
-        return setSubscription(new MetaSetSub<T>(uid, mode, null));
-    }
+        final boolean self = (uid == null);
 
+        if (sub == null) {
+            throw new NotSubscribedException();
+        }
+
+        if (mDesc.acs == null) {
+            mDesc.acs = new Acs();
+        }
+
+        final AcsHelper mode = uid == null ? mDesc.acs.getWantHelper() : sub.acs.getGivenHelper();
+        if (mode.update(update)) {
+            return setSubscription(new MetaSetSub<T>(uid, mode.toString(), null))
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        @SuppressWarnings("unchecked")
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            if (result.ctrl != null) {
+                                if (self) {
+                                    mDesc.acs.merge((Map) result.ctrl.params);
+                                }
+                                sub.acs.merge((Map) result.ctrl.params);
+                            }
+                            return null;
+                        }
+                    }, null);
+        }
+        // The state is unchanged, return resolved promise.
+        return new PromisedReply<>((ServerMessage) null);
+    }
     /**
-     * Send an invite to topic.
+     * Invite user to the topic.
      *
      * @param uid ID of the user to invite to topic
      * @param mode access mode granted to user
      * @param invite content opf the invite message
      *
-     * @throws AlreadySubscribedException if it's an attempt to invite an existing subscriber
-     * @throws NotSubscribedException if the requester is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     public PromisedReply<ServerMessage> invite(String uid, String mode, T invite)  throws Exception {
 
+        final Subscription<Pu,Pr> sub;
         if (getSubscription(uid) != null) {
-            throw new AlreadySubscribedException();
-        }
-
-        final long id;
-        final Subscription<Pu,Pr> sub = new Subscription<>();
-        sub.topic = getName();
-        sub.user = uid;
-        sub.acs = new Acs();
-        sub.acs.setWant(mode);
-
-        if (mStore != null) {
-            id = mStore.subNew(this, sub);
+            sub = getSubscription(uid);
+            sub.acs.setGiven(mode);
         } else {
-            id = -1;
+            sub = new Subscription<>();
+            sub.topic = getName();
+            sub.user = uid;
+            sub.acs = new Acs();
+            sub.acs.setGiven(mode);
+
+            if (mStore != null) {
+                mStore.subNew(this, sub);
+            }
+
+            addSubToCache(sub);
         }
 
-        addSubToCache(sub);
         if (mListener != null) {
             mListener.onMetaSub(sub);
             mListener.onSubsUpdated();
@@ -842,7 +892,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                        if (id > 0) {
+                        if (mStore != null) {
                             mStore.subUpdate(Topic.this, sub);
                         }
                         if (mListener != null) {
@@ -858,15 +908,22 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * Eject subscriber from topic.
      *
      * @param uid id of the user to unsubscribe from the topic
-     * @param ban
-     * @return
-     * @throws Exception
+     * @param ban ban user (set mode.Given = 'X')
+     *
+     * @throws NotSubscribedException if the user is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     public PromisedReply<ServerMessage> eject(String uid, boolean ban) throws Exception {
         final Subscription<Pu,Pr> sub = getSubscription(uid);
 
         if (sub == null) {
             throw new NotSubscribedException();
+        }
+
+        if (ban) {
+            // Banning someone means the mode is set to 'X' but subscription is persisted.
+            return invite(uid, "X", null);
         }
 
         if (isNew()) {
@@ -893,7 +950,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 if (mListener != null) {
                     mListener.onSubsUpdated();
                 }
-                return null;            }
+                return null;
+            }
         }, null);
     }
 
@@ -914,7 +972,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
             return mTinode.delMessage(getName(), before, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    mStore.msgDelete(Topic.this, before);
+                    if (mStore != null) {
+                        mStore.msgDelete(Topic.this, before);
+                    }
                     return null;
                 }
             }, null);
@@ -944,7 +1004,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
             return mTinode.delMessage(getName(), list, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    mStore.msgDelete(Topic.this, list);
+                    if (mStore != null) {
+                        mStore.msgDelete(Topic.this, list);
+                    }
                     return null;
                 }
             }, null);

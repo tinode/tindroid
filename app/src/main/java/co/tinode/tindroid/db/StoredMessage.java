@@ -1,12 +1,15 @@
 package co.tinode.tindroid.db;
 
 
+import java.util.Map;
+
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
  * StoredMessage fetched from the database
  */
-public class StoredMessage<T> extends MsgServerData<T> {
+public class StoredMessage<T> extends MsgServerData<T> implements Storage.Message<T> {
     public static final int STATUS_DELETE = -1;
     public static final int STATUS_NONE = 0;
     public static final int STATUS_SENT = 1;
@@ -33,5 +36,20 @@ public class StoredMessage<T> extends MsgServerData<T> {
 
     public boolean isMine() {
         return senderIdx == 0;
+    }
+
+    @Override
+    public T getContent() {
+        return content;
+    }
+
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    public Map<String, String> getHeader() {
+        return head;
     }
 }

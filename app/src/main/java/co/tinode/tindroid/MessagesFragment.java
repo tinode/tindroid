@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -27,6 +28,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
@@ -53,8 +55,26 @@ public class MessagesFragment extends Fragment {
     protected Topic<VCard, String, String> mTopic;
 
     private Timer mNoteTimer = null;
+    private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     public MessagesFragment() {
+        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
+                final Activity activity = getActivity();
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (err instanceof NotConnectedException) {
+                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                return null;
+            }
+        };
     }
 
     @Override
@@ -218,7 +238,7 @@ public class MessagesFragment extends Fragment {
                             runLoader();
                             return null;
                         }
-                    }, null);
+                    }, mFailureListener);
                 } catch (NotConnectedException ignored) {
                     Log.d(TAG, "sendMessage -- NotConnectedException");
                 } catch (Exception ignored) {
@@ -239,10 +259,6 @@ public class MessagesFragment extends Fragment {
             mTopic.noteRead();
         }
     }
-
-    // public StoredMessage<String> getMessage(int pos) {
-    //    return mMessagesAdapter.getMessage(pos);
-    // }
 
     void runLoader() {
         LoaderManager lm = getActivity().getSupportLoaderManager();

@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
@@ -16,15 +15,21 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
+
+import java.util.concurrent.Callable;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * View to display a single conversation
@@ -42,9 +47,13 @@ public class MessageActivity extends AppCompatActivity {
     private String mTopicName = null;
     private Topic<VCard, String, String> mTopic = null;
 
+    private PausableSingleThreadExecutor mMessageSender = null;
+
+    private PromisedReply.FailureListener<ServerMessage> mFailureListener;
+
     // private MessagesFragment mMsgFragment = null;
     // private TopicInfoFragment mInfoFragment = null;
-    // private EditGroupFragment mEditTopicFragment = null;
+    // private CreateGroupFragment mEditTopicFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +76,21 @@ public class MessageActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mMessageSender = new PausableSingleThreadExecutor();
+        mMessageSender.pause();
+
+        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                if (err instanceof NotConnectedException) {
+                    Toast.makeText(MessageActivity.this, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MessageActivity.this, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                }
+                return null;
+            }
+        };
     }
 
     @Override
@@ -79,6 +103,7 @@ public class MessageActivity extends AppCompatActivity {
         final Intent intent = getIntent();
 
         // Check if the activity was launched by internally-generated intent.
+        String oldTopicName = mTopicName;
         mTopicName = intent.getStringExtra("topic");
 
         if (TextUtils.isEmpty(mTopicName)) {
@@ -122,10 +147,28 @@ public class MessageActivity extends AppCompatActivity {
                                     .withGetDesc()
                                     .withGetSub()
                                     .withGetData()
-                                    .build());
+                                    .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            mMessageSender.resume();
+                            // Submit unsent messages for processing.
+                            mMessageSender.submit(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Log.d(TAG, "Publishing pending messages");
+                                        mTopic.publishPending();
+                                    } catch (Exception ignored) {
+                                    }
+                                }
+                            });
+                            return null;
+                        }
+                    }, mFailureListener);
                 } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "Offline mode");
+                    Log.d(TAG, "Offline mode, ignore");
                 } catch (Exception ex) {
+                    Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "something went wrong", ex);
                 }
             }
@@ -133,13 +176,16 @@ public class MessageActivity extends AppCompatActivity {
             Log.e(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
         }
 
-        showFragment(FRAGMENT_MESSAGES);
+        if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
+            showFragment(FRAGMENT_MESSAGES);
+        }
     }
 
     @Override
     public void onPause() {
         Log.d(TAG, "onPause");
         super.onPause();
+        mMessageSender.pause();
 
         Cache.getTinode().setListener(null);
         if (mTopic != null) {
@@ -154,6 +200,13 @@ public class MessageActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        mMessageSender.shutdownNow();
     }
 
     @Override
@@ -201,7 +254,7 @@ public class MessageActivity extends AppCompatActivity {
                     fragment = new TopicInfoFragment();
                     break;
                 case FRAGMENT_EDIT_TOPIC:
-                    fragment = new EditGroupFragment();
+                    fragment = new CreateGroupFragment();
                     break;
             }
         }
@@ -229,6 +282,10 @@ public class MessageActivity extends AppCompatActivity {
         if (mTopic != null) {
             mTopic.noteKeyPress();
         }
+    }
+
+    public void submitForExecution(Runnable runnable) {
+        mMessageSender.submit(runnable);
     }
 
     private class TListener extends Topic.Listener<VCard, String, String> {

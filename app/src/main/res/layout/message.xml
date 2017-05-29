@@ -45,8 +45,11 @@
                     android:layout_width="18sp"
                     android:layout_height="11sp" tools:ignore="SmallSp"
                     android:layout_gravity="center_vertical"
+                    android:tint="?android:attr/textColorSecondary"
                     android:paddingLeft="5sp"
-                    android:paddingRight="3sp" />
+                    android:paddingStart="5sp"
+                    android:paddingRight="3sp"
+                    android:paddingEnd="3sp" />
 
             </LinearLayout>
 
