@@ -374,15 +374,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mSubsUpdated;
     }
 
-    public String getWith() {
-        return getTopicType() == TopicType.P2P ? mDesc.with : null;
-    }
-    public void setWith(String with) {
-        if (getTopicType() == TopicType.P2P) {
-            mDesc.with = with;
-        }
-    }
-
     public int getSeq() {
         return mDesc.seq;
     }
@@ -549,7 +540,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
             throw new AlreadySubscribedException();
         }
 
-        if (mTinode.getTopic(getName()) == null) {
+        final String topicName = getName();
+        if (mTinode.getTopic(topicName) == null) {
             mTinode.registerTopic(this);
         }
 
@@ -570,6 +562,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                                     if (isNew()) {
                                         setUpdated(msg.ctrl.ts);
                                         setName(msg.ctrl.topic);
+                                        mTinode.changeTopicName(Topic.this, topicName);
                                     }
 
                                     if (mStore != null) {
@@ -606,6 +599,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
                                 throws Exception {
                             topicLeft(unsub, result.ctrl.code, result.ctrl.text);
+                            if (unsub) {
+                                mTinode.unregisterTopic(getName());
+                            }
                             return null;
                         }
                     }, null);
@@ -1026,15 +1022,22 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> delete() throws Exception {
-        if (mAttached) {
-            return mTinode.delTopic(getName());
+        if (!mTinode.isConnected()) {
+            throw new NotConnectedException();
         }
 
-        if (mTinode.isConnected()) {
-            throw new NotSubscribedException();
-        }
+        // Delete works even if the topic is not attached.
 
-        throw new NotConnectedException();
+        return mTinode.delTopic(getName()).thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
+                            throws Exception {
+                        topicLeft(true, result.ctrl.code, result.ctrl.text);
+                        mTinode.unregisterTopic(getName());
+                        return null;
+                    }
+                }, null);
     }
 
     /**
@@ -1230,7 +1233,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 tp = TopicType.FND;
             } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
                 tp = TopicType.GRP;
-            } else if (name.startsWith(Tinode.TOPIC_P2P_PREFIX) || name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
+            } else if (name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
                 tp = TopicType.P2P;
             }
         }
@@ -1242,8 +1245,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
     public static boolean getIsNewByName(String name) {
-        return name.startsWith(Tinode.TOPIC_USR_PREFIX) ||
-                name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
+        return name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
                                                     // synced with the server
     }
 
@@ -1270,7 +1272,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
             // Don't change topic online status here. Change it in the 'me' topic
 
             if (mListener != null) {
-                mListener.onLeave(code, reason);
+                mListener.onLeave(unsub, code, reason);
             }
         }
     }
@@ -1403,7 +1405,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     public static class Listener<PPu,PPr,Tt> {
 
         public void onSubscribe(int code, String text) {}
-        public void onLeave(int code, String text) {}
+        public void onLeave(boolean unsub, int code, String text) {}
 
         /**
          * Process {data} message.

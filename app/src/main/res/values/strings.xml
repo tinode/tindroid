@@ -41,7 +41,7 @@
     <string name="modeAdmin">admin</string>
     <string name="modeCanDelete">can delete</string>
     <string name="modeOwner">owner</string>
-    <string name="modeBanned">banned</string>
+    <string name="modeBlocked">blocked</string>
     <!-- mode-like access statuses -->
     <string name="modeInvited">invited</string>
     <string name="modeRequested">requested</string>
@@ -66,6 +66,7 @@
     <string name="action_view_details">View details</string>
     <string name="action_copy">Copy</string>
     <string name="action_offline">Working offline</string>
+    <string name="action_delete_group">Delete conversation…</string>
 
     <string name="avatar">Avatar picture</string>
     <string name="select_image">Select Image</string>
@@ -145,4 +146,5 @@
 
     <string name="confirm_member_removal">Remove %1$s from \"%2$s\"?</string>
     <string name="confirm_member_ban">Remove and ban %1$s from \"%2$s\"?</string>
+    <string name="confirm_delete_topic">Do you really want to delete this conversation for everyone?</string>
 </resources>

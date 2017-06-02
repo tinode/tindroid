@@ -535,8 +535,8 @@ public class UiUtils {
         ArrayList<AccessModeLabel> result = new ArrayList<>(4);
         if (acs != null) {
             if (acs.isModeDefined()) {
-                if (acs.isBanned()) {
-                    result.add(new AccessModeLabel(R.string.modeBanned, COLOR_RED_BORDER));
+                if (!acs.isJoiner()) {
+                    result.add(new AccessModeLabel(R.string.modeBlocked, COLOR_RED_BORDER));
                 } else {
                     if (acs.isOwner()) {
                         result.add(new AccessModeLabel(R.string.modeOwner, COLOR_GREEN_BORDER));
@@ -544,7 +544,7 @@ public class UiUtils {
                         if (acs.isAdmin()) {
                             result.add(new AccessModeLabel(R.string.modeAdmin, COLOR_GREEN_BORDER));
                         }
-                        if (!acs.canWrite()) {
+                        if (!acs.isWriter()) {
                             result.add(new AccessModeLabel(R.string.modeReadOnly, COLOR_YELLOW_BORDER));
                         }
                     }

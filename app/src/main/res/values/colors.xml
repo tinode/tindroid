@@ -3,6 +3,8 @@
     <color name="white">#FFFFFF</color>
     <color name="grey">#9e9e9e</color>
 
+    <color name="colorButtonNormal">#d6d7d7</color>
+
     <color name="colorTextPrimary">#212121</color>
     <color name="colorTextSecondary">#616161</color>
 
@@ -12,6 +14,8 @@
     <color name="colorAccent">#334081</color>
     <color name="colorDanger">#E57373</color>
     <color name="colorDangerDark">#B71C1C</color>
+
+    <color name="colorLightGray">#eeeeee</color>
 
     <color name="colorFacebookPrimary">#3B5998</color>
     <color name="colorFacebookDark">#2f4779</color>

@@ -17,8 +17,15 @@ public class MetaGetSub {
 
     public MetaGetSub() {}
 
+    public MetaGetSub(Date ims, Integer limit) {
+        this.ims = ims;
+        this.limit = limit;
+    }
+
+    /*
     @Override
     public String toString() {
         return "ims=" + ims + ", limit=" + limit;
     }
+    */
 }

@@ -23,6 +23,7 @@ import co.tinode.tindroid.VCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MetaGetSub;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -119,10 +120,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             // Don't care if it's resolved or rejected
             tinode.subscribe(Tinode.TOPIC_ME, null, null).waitResult();
 
-            MsgGetMeta meta = new MsgGetMeta();
+            final MsgGetMeta meta = new MsgGetMeta(null, new MetaGetSub(null, null), null);
             // FIXME(gene): The following is commented out for debugging
-            // meta.setSub(getServerSyncMarker(account), null);
-            meta.setSub(null, null);
+            // MsgGetMeta meta = new MsgGetMeta(null, new MetaGetSub(getServerSyncMarker(account), null), null);
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_ME, meta);
             if (future.waitResult()) {
                 ServerMessage<?,VCard,String> pkt = future.getResult();
@@ -130,7 +130,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 // the address book but as invisible contacts (members of invisible group)
                 Collection<Subscription<VCard, String>> updated = new ArrayList<>();
                 for (Subscription<VCard, String> sub : pkt.meta.sub) {
-                    //Log.d(TAG, "updating contact " + sub.topic);
+                    // Log.d(TAG, "updating contact " + sub.topic);
                     if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
                         //Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
                         updated.add(sub);
@@ -158,7 +158,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void setServerSyncMarker(Account account, Date marker) {
-        mAccountManager.setUserData(account, ACCKEY_SYNC_MARKER, Long.toString(marker.getTime()));
+        // The marker could be null if user has no contacts
+        if (marker != null) {
+            mAccountManager.setUserData(account, ACCKEY_SYNC_MARKER, Long.toString(marker.getTime()));
+        }
     }
 
     private long getInvisibleGroupId(Account account) {

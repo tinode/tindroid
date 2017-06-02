@@ -19,15 +19,18 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.SearchManager;
+import android.content.ContentProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.ContactsContract.Contacts;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
@@ -115,8 +118,8 @@ public class ContactsFragment extends ListFragment {
     // can be reselected again
     private int mPreviouslySelectedSearchItem = 0;
 
-    // Whether or not this fragment is showing in a two-pane layout
-    // private boolean mIsTwoPaneLayout;
+    // Observer to receive notifications while the fragment is active
+    private ContentObserver mContactsObserver;
 
     /**
      * Fragments require an empty constructor.
@@ -169,6 +172,14 @@ public class ContactsFragment extends ListFragment {
 
         // Set a placeholder loading image for the image loader
         mImageLoader.setLoadingImage(R.drawable.ic_person_circle);
+
+        mContactsObserver = new ContentObserver(null) {
+            @Override
+            public void onChange(boolean selfChange) {
+                // Content changed, refresh data
+                getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+            }
+        };
     }
 
     @Override
@@ -266,8 +277,6 @@ public class ContactsFragment extends ListFragment {
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
         } else {
-            getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
-
             // Create the main contacts adapter
             mAdapter = new ContactsAdapter(getActivity());
             setListAdapter(mAdapter);
@@ -306,12 +315,23 @@ public class ContactsFragment extends ListFragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Receive updates when the Contacts db is changed
+        getActivity().getContentResolver().registerContentObserver(ContactsQuery.CONTENT_URI, true, mContactsObserver);
+        // Refresh data
+        getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+    }
+    @Override
     public void onPause() {
         super.onPause();
 
         // In the case onPause() is called during a fling the image loader is
         // un-paused to let any remaining background work complete.
         mImageLoader.setPauseWork(false);
+
+        // Stop receiving update for changes to Contacts DB
+        getActivity().getContentResolver().unregisterContentObserver(mContactsObserver);
     }
 
     /**

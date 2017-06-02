@@ -24,7 +24,6 @@ public class Subscription<Pu,Pr> implements LocalData {
     public String topic;
     public int seq;
     public int clear;
-    public String with;
     @JsonProperty("public")
     public Pu pub;
     public LastSeen seen;
@@ -82,10 +81,6 @@ public class Subscription<Pu,Pr> implements LocalData {
         }
         if (sub.seq > seq) {
             seq = sub.seq;
-            changed ++;
-        }
-        if (sub.with != null && !sub.with.equals("") && (with == null || !with.equals(sub.with))) {
-            with = sub.with;
             changed ++;
         }
         if (sub.pub != null) {

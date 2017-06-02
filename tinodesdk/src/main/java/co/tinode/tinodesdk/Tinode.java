@@ -53,7 +53,6 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.MetaSetDesc;
-import co.tinode.tinodesdk.model.Subscription;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -62,7 +61,6 @@ public class Tinode {
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
     public static final String TOPIC_GRP_PREFIX = "grp";
-    public static final String TOPIC_P2P_PREFIX = "p2p";
     public static final String TOPIC_USR_PREFIX = "usr";
 
     protected static final String NOTE_KP = "kp";
@@ -77,7 +75,7 @@ public class Tinode {
     private static final long NOTE_RECV_DELAY = 300L;
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.11";
+    private static final String VERSION = "0.13";
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
@@ -763,17 +761,6 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.leave.id, future);
-            if (unsub) {
-                try {
-                    future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            unregisterTopic(topicName);
-                            return null;
-                        }
-                    }, null);
-                } catch (Exception ignored) { /* ignored */ }
-            }
             return future;
         } catch (JsonProcessingException e) {
             return null;
@@ -895,13 +882,6 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.del.id, future);
-            future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    unregisterTopic(topicName);
-                    return null;
-                }
-            }, null);
             return future;
         } catch (Exception unused) {
             return null;
@@ -1082,9 +1062,9 @@ public class Tinode {
     }
 
     /**
-     * Stop tracking the topic.
+     * Stop tracking the topic, delete it from local storage.
      */
-    private void unregisterTopic(String topicName) {
+    void unregisterTopic(String topicName) {
         Topic topic = mTopics.remove(topicName);
         if (topic != null && mStore != null) {
             topic.setStorage(null);
@@ -1099,7 +1079,7 @@ public class Tinode {
      * @param oldName old name of the topic (e.g. "newXYZ" or "usrZYX")
      * @return true if topic was found by the old name
      */
-    synchronized private boolean changeTopicName(Topic topic, String oldName) {
+    synchronized boolean changeTopicName(Topic topic, String oldName) {
         boolean found = mTopics.remove(oldName) != null;
         mTopics.put(topic.getName(), topic);
         return found;

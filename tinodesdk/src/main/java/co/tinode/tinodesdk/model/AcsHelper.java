@@ -9,18 +9,19 @@ public class AcsHelper {
     private static final String TAG = "AcsHelper";
 
     // User access to topic
-    private static int MODE_SUB = 0x01;    // R
-    private static int MODE_PUB = 0x02;    // W
-    private static int MODE_PRES = 0x04;   // P
-    private static int MODE_SHARE = 0x08;  // S user can invite other people to join (S)
-    private static int MODE_DELETE = 0x10; // D user can hard-delete messages (D), only owner can completely delete
-    private static int MODE_OWNER = 0x20;  // O user is the owner (O) - full access
-    private static int MODE_BANNED = 0x40; // user has no access, requests to share/gain access/{sub} are ignored (X)
+    private static final int MODE_JOIN = 0x01;      // J - join topic
+    private static final int MODE_READ = 0x02;      // R - read broadcasts
+    private static final int MODE_WRITE = 0x04;     // W - publish
+    private static final int MODE_PRES = 0x08;      // P - receive presence notifications
+    private static final int MODE_APPROVE = 0x10;   // A - approve requests
+    private static final int MODE_SHARE = 0x20;     // S - user can invite other people to join (S)
+    private static final int MODE_DELETE = 0x40;    // D - user can hard-delete messages (D), only owner can completely delete
+    private static final int MODE_OWNER = 0x80;     // O - user is the owner (O) - full access
 
-    private static int MODE_NONE = 0; // No access, requests to gain access are processed normally (N)
+    private static final int MODE_NONE = 0; // No access, requests to gain access are processed normally (N)
 
     // Invalid mode to indicate an error
-    private static int MODE_INVALID = 0x100000;
+    private static final int MODE_INVALID = 0x100000;
 
     private Integer a;
 
@@ -68,11 +69,11 @@ public class AcsHelper {
         return (a == null && ah == null) || (a != null && a.equals(ah));
     }
 
-    public boolean canRead() {
-        return (a != null) && ((a & MODE_SUB) != 0);
+    public boolean isReader() {
+        return (a != null) && ((a & MODE_READ) != 0);
     }
-    public boolean canWrite() {
-        return (a != null) && ((a & MODE_PUB) != 0);
+    public boolean isWriter() {
+        return (a != null) && ((a & MODE_WRITE) != 0);
     }
     public boolean isMuted() {
         return (a != null) && ((a & MODE_PRES) == 0);
@@ -87,7 +88,7 @@ public class AcsHelper {
     public boolean isAdmin() {
         return (a != null) && ((a & MODE_SHARE) != 0);
     }
-    public boolean canDelete() {
+    public boolean isDeleter() {
         return (a != null) && ((a & MODE_DELETE) != 0);
     }
 
@@ -95,9 +96,10 @@ public class AcsHelper {
         return (a != null) && ((a & MODE_OWNER) != 0);
     }
 
-    public boolean isBanned() {
-        return (a != null) && ((a & MODE_BANNED) != 0);
+    public boolean isJoiner() {
+        return (a != null) && ((a & MODE_JOIN) == 0);
     }
+
     public boolean isDefined() {
         return a != null && a != MODE_NONE && a != MODE_INVALID;
     }
@@ -113,13 +115,21 @@ public class AcsHelper {
 
         for (char c : mode.toCharArray()) {
             switch (c) {
+                case 'J':
+                case 'j':
+                    m0 |= MODE_JOIN;
+                    continue;
                 case 'R':
                 case 'r':
-                    m0 |= MODE_SUB;
+                    m0 |= MODE_READ;
                     continue;
                 case 'W':
                 case 'w':
-                    m0 |= MODE_PUB;
+                    m0 |= MODE_WRITE;
+                    continue;
+                case 'A':
+                case 'a':
+                    m0 |= MODE_APPROVE;
                     continue;
                 case 'S':
                 case 's':
@@ -137,9 +147,6 @@ public class AcsHelper {
                 case 'o':
                     m0 |= MODE_OWNER;
                     continue;
-                case 'X':
-                case 'x':
-                    return MODE_BANNED;
                 case 'N':
                 case 'n':
                     return MODE_NONE;
@@ -161,12 +168,8 @@ public class AcsHelper {
             return "N";
         }
 
-        if (val == MODE_BANNED) {
-            return "X";
-        }
-
         StringBuilder res = new StringBuilder(6);
-        char[] modes = new char[]{'R', 'W', 'P', 'S', 'D', 'O'};
+        char[] modes = new char[]{'J', 'R', 'W', 'P', 'A', 'S', 'D', 'O'};
         for (int i = 0; i < modes.length; i++) {
             if ((val & (1 << i)) != 0) {
                 res.append(modes[i]);
@@ -210,19 +213,9 @@ public class AcsHelper {
         }
 
         if (sign == '+') {
-            if (m0 == MODE_BANNED) {
-                val = MODE_BANNED;
-            } else {
-                val |= m0;
-            }
+            val |= m0;
         } else if (sign == '-') {
-            if (m0 == MODE_BANNED) {
-                if ((val & MODE_BANNED) != 0) {
-                    val = MODE_NONE;
-                }
-            } else {
-                val &= ~m0;
-            }
+            val &= ~m0;
         } else {
             val = m0;
         }

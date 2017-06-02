@@ -83,7 +83,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
             case R.id.action_new_grp_topic:
                 Log.d(TAG, "Launch new group topic");
-                Intent intent = new Intent(getActivity(), AddGroupActivity.class);
+                Intent intent = new Intent(getActivity(), CreateGroupActivity.class);
                 // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);
                 return true;

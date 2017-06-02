@@ -120,7 +120,13 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
                                             tinode.getMyId(),
                                             AuthScheme.basicInstance(login, password).toString(),
                                             tinode.getAuthToken());
-                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, new Bundle());
+
+                                    // Force immediate sync, otherwise Contacts tab may be unusable.
+                                    Bundle bundle = new Bundle();
+                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+
                                     UiUtils.onLoginSuccess(parent, signIn);
                                     return null;
                                 }

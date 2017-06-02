@@ -1,12 +1,14 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -195,20 +197,55 @@ public class MessagesFragment extends Fragment {
 
         switch (id) {
             case R.id.action_attach: {
-                // TODO: implement
+                // TODO: implement attaching media to message
                 return true;
             }
-            case R.id.action_delete: {
-                // TODO: implement
+            case R.id.action_clear: {
+                // TODO: implement Topic.deleteMessages
                 return true;
             }
             case R.id.action_mute: {
-                // TODO: implement
+                // TODO: implement setting notifications to off
+                return true;
+            }
+            case R.id.action_delete: {
+                showDeleteTopicConfirmationDialog();
                 return true;
             }
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    // Confirmation dialog "Do you really want to do X?"
+    private void showDeleteTopicConfirmationDialog() {
+        final Activity activity = getActivity();
+        final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
+        confirmBuilder.setNegativeButton(android.R.string.cancel, null);
+        confirmBuilder.setMessage(R.string.confirm_delete_topic);
+
+        confirmBuilder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    mTopic.delete().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                            Intent intent = new Intent(getActivity(), ContactsActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            startActivity(intent);
+                            getActivity().finish();
+                            return null;
+                        }
+                    }, mFailureListener);
+                } catch (NotConnectedException ignored) {
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception ignored) {
+                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        confirmBuilder.show();
     }
 
     public void scrollTo(int position) {

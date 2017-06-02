@@ -5,15 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".AddGroupActivity">
+    tools:context=".CreateGroupActivity">
 
     <include layout="@layout/toolbar" />
 
-    <fragment
-        android:id="@+id/add_group_view"
-        android:name="co.tinode.tindroid.CreateGroupFragment"
+    <FrameLayout
+        android:id="@+id/contentFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout="@layout/fragment_edit_topic" />
+        tools:layout="@layout/fragment_add_group" />
 
 </LinearLayout>

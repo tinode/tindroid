@@ -71,7 +71,7 @@
         </activity>
 
         <activity
-            android:name=".AddGroupActivity"
+            android:name=".CreateGroupActivity"
             android:label="@string/action_new_group"
             android:theme="@style/AppTheme">
         </activity>

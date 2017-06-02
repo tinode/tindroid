@@ -1,54 +1,25 @@
 package co.tinode.tindroid;
 
-import android.app.NotificationManager;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Menu;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.db.MessageDb;
-import co.tinode.tindroid.db.StoredMessage;
-import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.MsgServerData;
-import co.tinode.tinodesdk.model.MsgServerInfo;
-import co.tinode.tinodesdk.model.MsgServerPres;
-import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * View to display a single conversation
  */
-public class AddGroupActivity extends AppCompatActivity {
+public class CreateGroupActivity extends AppCompatActivity {
 
-    private static final String TAG = "AddGroupActivity";
+    private static final String TAG = "CreateGroupActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_group);
+        setContentView(R.layout.activity_create_group);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -57,11 +28,15 @@ public class AddGroupActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(AddGroupActivity.this, ContactsActivity.class);
+                Intent intent = new Intent(CreateGroupActivity.this, ContactsActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             }
         });
+
+        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
+        trx.replace(R.id.contentFragment, new CreateGroupFragment());
+        trx.commit();
     }
 
     @Override
@@ -81,7 +56,7 @@ public class AddGroupActivity extends AppCompatActivity {
             // If request is cancelled, the result arrays are empty.
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                UiUtils.requestAvatar(getSupportFragmentManager().findFragmentById(R.id.add_group_view));
+                UiUtils.requestAvatar(getSupportFragmentManager().findFragmentById(R.id.contentFragment));
             }
         }
     }

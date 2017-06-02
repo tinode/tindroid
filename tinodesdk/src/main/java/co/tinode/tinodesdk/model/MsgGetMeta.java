@@ -33,6 +33,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    /*
     @Override
     public String toString() {
         return "[" + what + "]" +
@@ -40,6 +41,7 @@ public class MsgGetMeta {
                 " sub=[" + (sub != null? sub.toString() : "null") + "]," +
                 " data=[" + (data != null ? data.toString() : "null") + "]";
     }
+    */
 
     public void setDesc(Date ims) {
         desc = new MetaGetDesc();
@@ -47,16 +49,11 @@ public class MsgGetMeta {
     }
 
     public void setSub(Date ims, Integer limit) {
-        sub = new MetaGetSub();
-        sub.ims = ims;
-        sub.limit = limit;
+        sub = new MetaGetSub(ims, limit);
     }
 
     public void setData(Integer since, Integer before, Integer limit) {
-        data = new MetaGetData();
-        data.since = since;
-        data.before = before;
-        data.limit = limit;
+        data = new MetaGetData(since, before, limit);
     }
 
     @JsonIgnore

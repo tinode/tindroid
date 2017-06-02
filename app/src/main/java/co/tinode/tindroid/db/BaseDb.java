@@ -30,6 +30,8 @@ public class BaseDb extends SQLiteOpenHelper {
     public static final int STATUS_SYNCED = 1;
     // Object deleted
     public static final int STATUS_DELETED = 2;
+    // Object rejected
+    public static final int STATUS_REJECTED = 3;
 
     /**
      * Schema version.

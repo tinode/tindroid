@@ -64,7 +64,7 @@ public class ContactsManager {
                 currentSyncMarker = rawContact.updated;
             }
 
-            long rawContactId = lookupRawContact(resolver, rawContact.with);
+            long rawContactId = lookupRawContact(resolver, rawContact.topic);
             // Contact already exists
             if (rawContactId != 0) {
                 updateContact(context, resolver, rawContact, rawContactId, batchOperation);
@@ -135,20 +135,20 @@ public class ContactsManager {
 
         // Initiate adding data to contacts provider
         final ContactOperations contactOp = ContactOperations.createNewContact(
-                context, rawContact.with, account.name, aggregate, batchOperation);
+                context, rawContact.topic, account.name, aggregate, batchOperation);
 
         contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
                 .addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.HOME), Phone.TYPE_HOME)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.WORK), Phone.TYPE_WORK)
-                .addIm(rawContact.with)
+                .addIm(rawContact.topic)
                 .addNote(note)
                 .addAvatar(vc.photo != null ? vc.photo.data : null)
                 .addToInvisibleGroup(invisibleGroupId);
 
         // Actually create our status profile.
-        contactOp.addProfileAction(rawContact.with);
+        contactOp.addProfileAction(rawContact.topic);
     }
 
     /**
@@ -279,7 +279,7 @@ public class ContactsManager {
         // If we don't have a status profile, then create one.  This could
         // happen for contacts that were created on the client - we don't
         // create the status profile until after the first sync...
-        final String serverId = rawContact.with;
+        final String serverId = rawContact.topic;
         final long profileId = lookupProfile(resolver, serverId);
         if (profileId <= 0) {
             contactOp.addProfileAction(serverId);
@@ -413,7 +413,7 @@ public class ContactsManager {
                                             BatchOperation batchOperation) {
         final ContentValues values = new ContentValues();
         final ContentResolver resolver = context.getContentResolver();
-        final String uid = rawContact.with;
+        final String uid = rawContact.topic;
         VCard vc;
         try {
             vc = (VCard) rawContact.pub;
@@ -517,11 +517,12 @@ public class ContactsManager {
      * ID.
      */
     final private static class ProfileQuery {
-        public final static String[] PROJECTION = new String[]{Data._ID};
-        public final static int COLUMN_ID = 0;
-        public static final String SELECTION =
+        static final String[] PROJECTION = new String[]{Data._ID};
+        static final int COLUMN_ID = 0;
+        static final String SELECTION =
                 Data.MIMETYPE + "='" + Utils.MIME_PROFILE + "' AND "
                         + Utils.DATA_PID + "=?";
+
         private ProfileQuery() {
         }
     }
@@ -531,15 +532,16 @@ public class ContactsManager {
      * ID.
      */
     final private static class UserIdQuery {
-        public final static String[] PROJECTION = new String[]{
+        static final String[] PROJECTION = new String[]{
                 RawContacts._ID,
                 RawContacts.CONTACT_ID
         };
-        public final static int COLUMN_RAW_CONTACT_ID = 0;
-        public final static int COLUMN_LINKED_CONTACT_ID = 1;
-        public final static Uri CONTENT_URI = RawContacts.CONTENT_URI;
-        public static final String SELECTION =
+        static final int COLUMN_RAW_CONTACT_ID = 0;
+        static final int COLUMN_LINKED_CONTACT_ID = 1;
+        static final Uri CONTENT_URI = RawContacts.CONTENT_URI;
+        static final String SELECTION =
                 RawContacts.ACCOUNT_TYPE + "='" + Utils.ACCOUNT_TYPE + "' AND " + RawContacts.SOURCE_ID + "=?";
+
         private UserIdQuery() {
         }
     }
@@ -548,29 +550,30 @@ public class ContactsManager {
      * Constants for a query to get contact data for a given rawContactId
      */
     final private static class DataQuery {
-        public static final String[] PROJECTION =
+        static final String[] PROJECTION =
                 new String[]{Data._ID, RawContacts.SOURCE_ID, Data.MIMETYPE, Data.DATA1,
                         Data.DATA2, Data.DATA3, Data.DATA15, Data.SYNC1};
-        public static final int COLUMN_ID = 0;
-        public static final int COLUMN_SERVER_ID = 1;
-        public static final int COLUMN_MIMETYPE = 2;
-        public static final int COLUMN_DATA1 = 3;
-        public static final int COLUMN_DATA2 = 4;
-        public static final int COLUMN_DATA3 = 5;
-        public static final int COLUMN_DATA15 = 6;
-        public static final int COLUMN_SYNC1 = 7;
-        public static final Uri CONTENT_URI = Data.CONTENT_URI;
-        public static final int COLUMN_PHONE_NUMBER = COLUMN_DATA1;
-        public static final int COLUMN_PHONE_TYPE = COLUMN_DATA2;
-        public static final int COLUMN_EMAIL_ADDRESS = COLUMN_DATA1;
-        public static final int COLUMN_EMAIL_TYPE = COLUMN_DATA2;
-        public static final int COLUMN_FULL_NAME = COLUMN_DATA1;
-        public static final int COLUMN_GIVEN_NAME = COLUMN_DATA2;
-        public static final int COLUMN_FAMILY_NAME = COLUMN_DATA3;
-        public static final int COLUMN_AVATAR_IMAGE = COLUMN_DATA15;
-        public static final int COLUMN_NOTE = COLUMN_DATA1;
-        public static final int COLUMN_SYNC_DIRTY = COLUMN_SYNC1;
-        public static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
+        static final int COLUMN_ID = 0;
+        static final int COLUMN_SERVER_ID = 1;
+        static final int COLUMN_MIMETYPE = 2;
+        static final int COLUMN_DATA1 = 3;
+        static final int COLUMN_DATA2 = 4;
+        static final int COLUMN_DATA3 = 5;
+        static final int COLUMN_DATA15 = 6;
+        static final int COLUMN_SYNC1 = 7;
+        static final Uri CONTENT_URI = Data.CONTENT_URI;
+        static final int COLUMN_PHONE_NUMBER = COLUMN_DATA1;
+        static final int COLUMN_PHONE_TYPE = COLUMN_DATA2;
+        static final int COLUMN_EMAIL_ADDRESS = COLUMN_DATA1;
+        static final int COLUMN_EMAIL_TYPE = COLUMN_DATA2;
+        static final int COLUMN_FULL_NAME = COLUMN_DATA1;
+        static final int COLUMN_GIVEN_NAME = COLUMN_DATA2;
+        static final int COLUMN_FAMILY_NAME = COLUMN_DATA3;
+        static final int COLUMN_AVATAR_IMAGE = COLUMN_DATA15;
+        static final int COLUMN_NOTE = COLUMN_DATA1;
+        static final int COLUMN_SYNC_DIRTY = COLUMN_SYNC1;
+        static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
+
         private DataQuery() {
         }
     }

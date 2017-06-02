@@ -21,8 +21,6 @@ public class Description<Pu,Pr> {
     public Pu pub;
     @JsonProperty("private")
     public Pr priv;
-    // P2P only
-    public String with;
 
     public Description() {
     }
@@ -87,11 +85,6 @@ public class Description<Pu,Pr> {
             priv = desc.priv;
         }
 
-        if (desc.with != null && !desc.with.equals("") && !desc.with.equals(with)) {
-            with = desc.with;
-            changed ++;
-        }
-
         return changed > 0;
     }
 
@@ -132,11 +125,6 @@ public class Description<Pu,Pr> {
 
         if (sub.priv != null) {
             priv = sub.priv;
-        }
-
-        if (sub.with != null && !sub.with.equals("") && !sub.with.equals(with)) {
-            with = sub.with;
-            changed ++;
         }
 
         return changed > 0;

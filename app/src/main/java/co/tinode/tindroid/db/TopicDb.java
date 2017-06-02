@@ -48,10 +48,6 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_VISIBLE = "visible";
     /**
-     * For P2P topics UID of the other party
-     */
-    public static final String COLUMN_NAME_WITH = "with_uid";
-    /**
      * When the topic was created
      */
     public static final String COLUMN_NAME_CREATED = "created";
@@ -117,21 +113,20 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_TOPIC = 3;
     static final int COLUMN_IDX_TYPE = 4;
     static final int COLUMN_IDX_VISIBLE = 5;
-    static final int COLUMN_IDX_WITH = 6;
-    static final int COLUMN_IDX_CREATED = 7;
-    static final int COLUMN_IDX_UPDATED = 8;
-    static final int COLUMN_IDX_READ = 9;
-    static final int COLUMN_IDX_RECV = 10;
-    static final int COLUMN_IDX_SEQ = 11;
-    static final int COLUMN_IDX_CLEAR = 12;
-    static final int COLUMN_IDX_ACCESSMODE = 13;
-    static final int COLUMN_IDX_DEFACS = 14;
-    static final int COLUMN_IDX_LASTUSED = 15;
-    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
-    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
-    static final int COLUMN_IDX_SERIALIZED_TYPES = 18;
-    static final int COLUMN_IDX_PUBLIC = 19;
-    static final int COLUMN_IDX_PRIVATE = 20;
+    static final int COLUMN_IDX_CREATED = 6;
+    static final int COLUMN_IDX_UPDATED = 7;
+    static final int COLUMN_IDX_READ = 8;
+    static final int COLUMN_IDX_RECV = 9;
+    static final int COLUMN_IDX_SEQ = 10;
+    static final int COLUMN_IDX_CLEAR = 11;
+    static final int COLUMN_IDX_ACCESSMODE = 12;
+    static final int COLUMN_IDX_DEFACS = 13;
+    static final int COLUMN_IDX_LASTUSED = 14;
+    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 15;
+    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 16;
+    static final int COLUMN_IDX_SERIALIZED_TYPES = 17;
+    static final int COLUMN_IDX_PUBLIC = 18;
+    static final int COLUMN_IDX_PRIVATE = 19;
 
     /**
      * SQL statement to create Messages table
@@ -145,7 +140,6 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_TOPIC + " TEXT," +
                     COLUMN_NAME_TYPE + " INT," +
                     COLUMN_NAME_VISIBLE + " INT," +
-                    COLUMN_NAME_WITH + " TEXT," +
                     COLUMN_NAME_CREATED + " INT," +
                     COLUMN_NAME_UPDATED + " INT," +
                     COLUMN_NAME_READ + " INT," +
@@ -198,7 +192,6 @@ public class TopicDb implements BaseColumns {
         Topic.TopicType tp = topic.getTopicType();
         values.put(COLUMN_NAME_TYPE, tp.val());
         values.put(COLUMN_NAME_VISIBLE, tp == Topic.TopicType.GRP || tp == Topic.TopicType.P2P ? 1 : 0);
-        values.put(COLUMN_NAME_WITH, topic.getWith());
         values.put(COLUMN_NAME_CREATED, lastUsed.getTime());
         if (topic.getUpdated() != null) {
             // Updated is null at the topic creation time
@@ -376,7 +369,7 @@ public class TopicDb implements BaseColumns {
      *
      * @param db writable database
      * @param id of the topic to delete
-     * @return 1 on success
+     * @return true if table was actually deleted, false if table was not found
      */
     @SuppressWarnings("WeakerAccess")
     public static boolean delete(SQLiteDatabase db, long id) {

@@ -106,12 +106,12 @@ public class Acs {
         return am != null && mode.equals(am.mode) && want.equals(am.want) && mode.equals(am.mode);
     }
 
-    public boolean canRead() {
-        return mode.canRead();
+    public boolean isReader() {
+        return mode.isReader();
     }
 
-    public boolean canWrite() {
-        return mode.canWrite();
+    public boolean isWriter() {
+        return mode.isWriter();
     }
 
     public boolean isMuted() {
@@ -126,14 +126,14 @@ public class Acs {
     public boolean isAdmin() {
         return mode.isAdmin();
     }
-    public boolean canDelete() {
-        return mode.canDelete();
+    public boolean isDeleter() {
+        return mode.isDeleter();
     }
     public boolean isOwner() {
         return mode.isOwner();
     }
-    public boolean isBanned() {
-        return mode.isBanned();
+    public boolean isJoiner() {
+        return mode.isJoiner();
     }
     public boolean isModeDefined() {
         return mode.isDefined();

@@ -38,10 +38,11 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:preference-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
-    compile 'com.googlecode.libphonenumber:libphonenumber:8.4.0'
-    compile 'com.google.firebase:firebase-messaging:9.6.1'
     compile 'com.android.support:recyclerview-v7:25.3.1'
     compile 'com.android.support:cardview-v7:25.3.1'
+    compile 'com.github.pchmn:MaterialChipsInput:1.0.8'
+    compile 'com.google.firebase:firebase-messaging:9.6.1'
+    compile 'com.googlecode.libphonenumber:libphonenumber:8.4.0'
     testCompile 'junit:junit:4.12'
 }
 

@@ -14,8 +14,8 @@
     <RelativeLayout
         android:layout_width="48sp"
         android:layout_height="48sp"
-        android:layout_alignParentLeft="true"
-        android:layout_marginRight="5dp">
+        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp">
 
         <android.support.v7.widget.AppCompatImageView
             android:id="@+id/avatar"
@@ -61,7 +61,7 @@
                 android:layout_width="20sp"
                 android:layout_height="20sp"
                 android:layout_gravity="end|center_vertical"
-                android:background="@drawable/round_shape"
+                android:background="@drawable/pill_counter"
                 android:padding="3dp"
                 tools:text="9+"
                 android:gravity="center"

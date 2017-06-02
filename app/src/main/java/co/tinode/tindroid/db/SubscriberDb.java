@@ -241,8 +241,14 @@ public class SubscriberDb implements BaseColumns {
         return updated > 0;
     }
 
+    /** Delete one subscription record */
     public static boolean delete(SQLiteDatabase db, long id) {
         return db.delete(TABLE_NAME, _ID + "=" + id, null) > 0;
+    }
+
+    /** Delete all subscription records for the given topic */
+    public static boolean deleteForTopic(SQLiteDatabase db, long topicId) {
+        return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId, null) > 0;
     }
 
     /**
@@ -292,8 +298,7 @@ public class SubscriberDb implements BaseColumns {
                 UserDb.TABLE_NAME + "." + UserDb.COLUMN_NAME_PUBLIC + "," +
 
                 TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_TOPIC + "," +
-                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_SEQ + "," +
-                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_WITH +
+                TopicDb.TABLE_NAME + "." + TopicDb.COLUMN_NAME_SEQ +
                 " FROM " + TABLE_NAME +
                 " LEFT JOIN " + UserDb.TABLE_NAME +
                 " ON " + COLUMN_NAME_USER_ID + "=" + UserDb.TABLE_NAME + "." + UserDb._ID +
@@ -322,7 +327,6 @@ public class SubscriberDb implements BaseColumns {
 
     private static final int JOIN_TOPIC_COLUMN_IDX_TOPIC = 15;
     private static final int JOIN_TOPIC_COLUMN_IDX_SEQ = 16;
-    private static final int JOIN_TOPIC_COLUMN_IDX_WITH = 17;
 
     public static Subscription readOne(Cursor c) {
         // StoredSub part
@@ -353,7 +357,6 @@ public class SubscriberDb implements BaseColumns {
         // From topic table
         s.topic = c.getString(JOIN_TOPIC_COLUMN_IDX_TOPIC);
         s.seq = c.getInt(JOIN_TOPIC_COLUMN_IDX_SEQ);
-        s.with = c.getString(JOIN_TOPIC_COLUMN_IDX_WITH);
 
         s.setLocal(ss);
 

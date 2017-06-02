@@ -83,7 +83,24 @@ class SqlStore implements Storage {
     @Override
     public boolean topicDelete(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return st != null && TopicDb.delete(mDbh.getWritableDatabase(), st.id);
+        boolean success = false;
+        if (st != null) {
+            Log.d(TAG, "deleting topic " + topic.getName());
+            SQLiteDatabase db = mDbh.getWritableDatabase();
+
+            db.beginTransaction();
+
+            MessageDb.delete(db, st.id, -1, false);
+            SubscriberDb.deleteForTopic(db, st.id);
+            TopicDb.delete(db, st.id);
+
+            db.setTransactionSuccessful();
+            success = true;
+
+            db.endTransaction();
+        }
+
+        return success;
     }
 
     @Override

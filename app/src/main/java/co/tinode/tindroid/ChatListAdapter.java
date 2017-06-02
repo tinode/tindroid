@@ -37,7 +37,6 @@ public class ChatListAdapter extends BaseAdapter {
         mContext = context;
         mSelectedItems = new SparseBooleanArray();
         resetContent();
-        Log.d(TAG, "Initialized");
     }
 
     public void resetContent() {

@@ -2,27 +2,29 @@
 
 Work in progress. What works:
 
-* Send and receive messages
-* In-app presence notifications
-* Push notifications
-* Unread message counters
-* Offline mode is semi-functional
-* Indicators for messages received/read (little check marks in messages)
-* Muting/unmuting conversations
-* Registering new accounts
-* Load the list of contacts and store it offline
-* Access contacts from the Android stock Contacts app
-* Invite contacts to the app by SMS or email
+* Send and receive messages in p2p or group chats.
+* Register new accounts.
+* Start new group chats.
+* Edit group chats.
+* In-app presence notifications.
+* Unread message counters.
+* Push notifications.
+* Indicators for messages received/read (little check marks in messages).
+* Muting/unmuting conversations and other permission management.
+* Load the list of contacts and store it offline.
+* Access contacts from the Android stock Contacts app.
+* Invite contacts to the app by SMS or email.
+* Offline mode is semi-functional.
 
 Does not work yet:
 
-* Editing of an existing account
+* Editing of persomal details
 * Contact discovery is done but not debugged yet
 * Deleting topics and messages
 * No client support for typing notifications.
 * No encryption
 
-Dependencies on the SDK side:
+Dependencies on the SDK side (otherwise plain Java):
 
 * [jackson](https://github.com/FasterXML/jackson) for json serialization
 * [nv-websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client) for
@@ -32,6 +34,8 @@ Dependencies on the application side:
 
 * [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
 to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
+* [MaterialChipsInput](https://github.com/pchmn/MaterialChipsInput) widget for group chat member selection. 
+Google should have provided this widget.
 * [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications.
 In order to compile the app you need to [generate your own](https://developers.google.com/mobile/add)
 config file `google-services.json`. Once downloaded, copy it to the `./app/` folder. The
@@ -44,4 +48,4 @@ The `contacts.vcf` contains a list of contacts which can be used for testing. Pu
   `adb push contacts.vcf /sdcard/contacts.vcf`
 
 <img src="android-contacts.png" alt="App screenshot - contacts" width="270" />
-<img src="android-messages.png" alt="App screenshot - contacts" width="270" />
+<img src="android-messages.png" alt="App screenshot - messages" width="270" />

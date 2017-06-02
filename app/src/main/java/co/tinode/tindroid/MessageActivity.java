@@ -17,10 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import java.util.concurrent.Callable;
-
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -82,12 +79,17 @@ public class MessageActivity extends AppCompatActivity {
 
         mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
             @Override
-            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                if (err instanceof NotConnectedException) {
-                    Toast.makeText(MessageActivity.this, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MessageActivity.this, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                }
+            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (err instanceof NotConnectedException) {
+                            Toast.makeText(MessageActivity.this, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MessageActivity.this, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
                 return null;
             }
         };
@@ -138,43 +140,48 @@ public class MessageActivity extends AppCompatActivity {
         mTopic = tinode.getTopic(mTopicName);
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
-            mTopic.setListener(new TListener());
-
-            if (!mTopic.isAttached()) {
-                try {
-                    mTopic.subscribe(null,
-                            mTopic.subscribeParamGetBuilder()
-                                    .withGetDesc()
-                                    .withGetSub()
-                                    .withGetData()
-                                    .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            mMessageSender.resume();
-                            // Submit unsent messages for processing.
-                            mMessageSender.submit(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        Log.d(TAG, "Publishing pending messages");
-                                        mTopic.publishPending();
-                                    } catch (Exception ignored) {
-                                    }
-                                }
-                            });
-                            return null;
-                        }
-                    }, mFailureListener);
-                } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "Offline mode, ignore");
-                } catch (Exception ex) {
-                    Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "something went wrong", ex);
-                }
-            }
         } else {
+            // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.e(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+            mTopic = new Topic<>(tinode, mTopicName, null);
         }
+        mTopic.setListener(new TListener());
+
+        if (!mTopic.isAttached()) {
+            try {
+                mTopic.subscribe(null,
+                        mTopic.subscribeParamGetBuilder()
+                                .withGetDesc()
+                                .withGetSub()
+                                .withGetData()
+                                .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
+                                mTopic.getTopicType(), mTopic.getOnline());
+                        mMessageSender.resume();
+                        // Submit unsent messages for processing.
+                        mMessageSender.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Log.d(TAG, "Publishing pending messages");
+                                    mTopic.publishPending();
+                                } catch (Exception ignored) {
+                                }
+                            }
+                        });
+                        return null;
+                    }
+                }, mFailureListener);
+            } catch (NotConnectedException ignored) {
+                Log.d(TAG, "Offline mode, ignore");
+            } catch (Exception ex) {
+                Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "something went wrong", ex);
+            }
+        }
+
 
         if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
             showFragment(FRAGMENT_MESSAGES);
@@ -290,7 +297,8 @@ public class MessageActivity extends AppCompatActivity {
 
     private class TListener extends Topic.Listener<VCard, String, String> {
 
-        TListener() {}
+        TListener() {
+        }
 
         @Override
         public void onSubscribe(int code, String text) {

@@ -229,6 +229,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onSubsUpdated() {
+            Log.d(TAG, "onSubsUpdated: datasetChanged");
             datasetChanged();
         }
     }

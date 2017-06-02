@@ -45,7 +45,7 @@
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentRight="true"
                     android:layout_margin="2sp"
-                    android:background="@drawable/round_shape"
+                    android:background="@drawable/pill_counter"
                     android:drawableTop="@drawable/ic_add_a_photo"
                     android:gravity="center"
                     android:paddingTop="10dp"/>

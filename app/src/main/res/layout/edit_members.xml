@@ -1,0 +1,12 @@
+<com.pchmn.materialchips.ChipsInput
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/groupMembers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:chip_hasAvatarIcon="true"
+        app:chip_deletable="true"
+        app:showChipDetailed="false"
+        app:filterable_list_backgroundColor="@color/colorLightGray"
+        app:maxRows="4"
+        app:hint="@string/add_members" />

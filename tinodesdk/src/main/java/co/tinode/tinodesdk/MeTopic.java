@@ -4,23 +4,23 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.JavaType;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
 import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-
 /**
  * MeTopic handles invites and manages contact list
  */
-public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Announcement<T>> {
+public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<Pu,Pr,Announcement<T>> l) {
+    public MeTopic(Tinode tinode, Listener<Pu, Pr, Announcement<T>> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
@@ -38,22 +38,22 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Announcement<T>> {
     }
 
     @Override
-    protected void addSubToCache(Subscription<Pu,Pr> sub) {
+    protected void addSubToCache(Subscription<Pu, Pr> sub) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void removeSubFromCache(Subscription<Pu,Pr> sub) {
+    protected void removeSubFromCache(Subscription<Pu, Pr> sub) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Subscription<Pu,Pr> getSubscription(String key) {
+    public Subscription<Pu, Pr> getSubscription(String key) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Collection<Subscription<Pu,Pr>> getSubscriptions() {
+    public Collection<Subscription<Pu, Pr>> getSubscriptions() {
         throw new UnsupportedOperationException();
     }
 
@@ -74,10 +74,10 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Announcement<T>> {
     }
 
     @Override
-    protected void routeMetaSub(MsgServerMeta<Pu,Pr> meta) {
+    protected void routeMetaSub(MsgServerMeta<Pu, Pr> meta) {
         Log.d(TAG, "Me:routeMetaSub");
-        for (Subscription<Pu,Pr> sub : meta.sub) {
-            Topic <Pu,Pr,?> topic = mTinode.getTopic(sub.topic);
+        for (Subscription<Pu, Pr> sub : meta.sub) {
+            Topic<Pu, Pr, ?> topic = mTinode.getTopic(sub.topic);
             if (topic != null) {
                 // This is an existing topic. Update its record in memory and in the database.
                 topic.update(sub);
@@ -100,9 +100,9 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Announcement<T>> {
     protected void routePres(MsgServerPres pres) {
         // FIXME(gene): pres.src may contain UID
         Topic topic = mTinode.getTopic(pres.src);
+        MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
         if (topic != null) {
-            MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
-            switch(what) {
+            switch (what) {
                 case ON: // topic came online
                     topic.setOnline(true);
                     break;
@@ -137,7 +137,7 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Announcement<T>> {
                     break;
 
                 case GONE:
-                    // TODO(gene): the entire topic was deleted
+                    // Handle it below, even if the topic is not found.
                     break;
             }
         } else {
@@ -145,6 +145,9 @@ public class MeTopic<Pu,Pr,T> extends Topic<Pu,Pr,Announcement<T>> {
         }
 
         if (mListener != null) {
+            if (what == MsgServerPres.What.GONE) {
+                mListener.onSubsUpdated();
+            }
             mListener.onPres(pres);
         }
     }

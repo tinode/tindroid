@@ -276,7 +276,7 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Delete messages between 'from' and 'to'. To delete all messages make from and to equal to -1.
+     * Delete messages between 'from' and 'to'. To delete all messages make before equal to -1.
      *
      * @param db    Database to use.
      * @param topicId Tinode topic ID to delete messages from.
@@ -287,7 +287,7 @@ public class MessageDb implements BaseColumns {
     public static boolean delete(SQLiteDatabase db, long topicId, int before, boolean soft) {
         if (!soft) {
             return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    " AND " + COLUMN_NAME_SEQ + "<=" + before, null) > 0;
+                    (before == -1 ? " AND " + COLUMN_NAME_SEQ + "<=" + before : ""), null) > 0;
         } else {
             return TopicDb.updateClear(db, topicId, before);
         }
