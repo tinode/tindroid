@@ -1,24 +1,27 @@
 package co.tinode.tindroid.db;
 
+import android.database.Cursor;
+
 import java.util.Date;
+
+import co.tinode.tinodesdk.LocalData;
+import co.tinode.tinodesdk.User;
 
 /**
  * Topic subscriber stored in the database
  */
-public class StoredUser<Pu,Pr> {
+public class StoredUser implements LocalData.Payload {
     public long id;
-    public String uid;
 
-    public int senderIdx;
+    @SuppressWarnings("unchecked")
+    protected static <Pu> void deserialize(User<Pu> user, Cursor c) {
+        StoredUser su = new StoredUser();
 
-    public String mode;
+        su.id = c.getLong(UserDb.COLUMN_IDX_ID);
 
-    public int recv;
-    public int read;
+        user.updated = new Date(c.getLong(UserDb.COLUMN_IDX_UPDATED));
+        user.pub = (Pu) BaseDb.deserialize(c.getBlob(UserDb.COLUMN_IDX_PUBLIC));
 
-    public Date updated;
-    public Date deleted;
-
-    public Pu pub;
-    public Pu priv;
+        user.setLocal(su);
+    }
 }

@@ -2,6 +2,7 @@ package co.tinode.tindroid.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
 import android.provider.BaseColumns;
@@ -389,7 +390,7 @@ public class TopicDb implements BaseColumns {
                     " WHERE " +
                     COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
                     COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
-        } catch (SQLiteDoneException ex) {
+        } catch (SQLException ignored) {
             // topic not round
             return -1;
         }

@@ -9,6 +9,10 @@ import android.util.Log;
 import java.util.Date;
 
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.User;
+
+import static co.tinode.tindroid.R.string.tinode;
+import static co.tinode.tindroid.db.TopicDb.COLUMN_IDX_TOPIC;
 
 /**
  * Local cash of known users
@@ -47,12 +51,12 @@ public class UserDb implements BaseColumns {
     public static final String COLUMN_NAME_PUBLIC = "pub";
 
 
-    private static final int COLUMN_IDX_ID = 0;
-    private static final int COLUMN_IDX_ACCOUNT_ID = 1;
-    private static final int COLUMN_IDX_UID = 2;
-    private static final int COLUMN_IDX_UPDATED = 3;
-    private static final int COLUMN_IDX_DELETED = 4;
-    private static final int COLUMN_IDX_PUBLIC = 5;
+    static final int COLUMN_IDX_ID = 0;
+    static final int COLUMN_IDX_ACCOUNT_ID = 1;
+    static final int COLUMN_IDX_UID = 2;
+    static final int COLUMN_IDX_UPDATED = 3;
+    static final int COLUMN_IDX_DELETED = 4;
+    static final int COLUMN_IDX_PUBLIC = 5;
 
     /**
      * SQL statement to create Messages table
@@ -144,12 +148,13 @@ public class UserDb implements BaseColumns {
             values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
         }
         // values.put(COLUMN_NAME_DELETED, NULL);
-        values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
-        int updated = db.update(TABLE_NAME, values, _ID + "=" + ss.userId, null);
+        if (sub.pub != null) {
+            values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
+        }
+
+        return values.size() <= 0 || db.update(TABLE_NAME, values, _ID + "=" + ss.userId, null) > 0;
 
         // Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() + " name=" + sub.user + " returned " + updated);
-
-        return updated > 0;
     }
 
     /**
@@ -170,12 +175,32 @@ public class UserDb implements BaseColumns {
                         COLUMN_NAME_UID + "='" + uid + "'";
         Log.d(TAG, sql);
         Cursor c = db.rawQuery(sql, null);
-        if (c != null) {
+        if (c != null && c.getCount() > 0) {
             if (c.moveToFirst()) {
                 id = c.getLong(0);
             }
             c.close();
         }
         return id;
+    }
+
+    static <Pu> User<Pu> readOne(SQLiteDatabase db, String uid) {
+        // Instantiate topic of an appropriate class ('me' or group)
+        User<Pu> user = null;
+        String sql =
+                "SELECT * FROM " + TABLE_NAME +
+                        " WHERE " +
+                        COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
+                        " AND " +
+                        COLUMN_NAME_UID + "='" + uid + "'";
+        Cursor c = db.rawQuery(sql, null);
+        if (c != null && c.getCount() > 0) {
+            user = new User<>(uid);
+            if (c.moveToFirst()) {
+                StoredUser.deserialize(user, c);
+            }
+            c.close();
+        }
+        return user;
     }
 }

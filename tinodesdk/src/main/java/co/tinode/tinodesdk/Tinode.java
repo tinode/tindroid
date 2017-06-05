@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
+import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientDel;
 import co.tinode.tinodesdk.model.MsgClientGet;
@@ -53,6 +54,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.Subscription;
 
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
@@ -95,6 +97,7 @@ public class Tinode {
     private String mLanguage = null;
 
     private String mAppName = null;
+    private String mOsVersion = null;
 
     private Connection mConnection = null;
     // True is connection is authenticated
@@ -117,6 +120,8 @@ public class Tinode {
 
     private ConcurrentMap<String, PromisedReply<ServerMessage>> mFutures;
     private HashMap<String, Topic> mTopics;
+    private HashMap<String, User> mUsers;
+
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
 
@@ -151,12 +156,16 @@ public class Tinode {
      */
     public Tinode(String appname, String apikey, Storage store, EventListener listener) {
         mAppName = appname;
+        mOsVersion = System.getProperty("os.version");
+
         mApiKey = apikey;
         mListener = listener;
 
         mFutures = new ConcurrentHashMap<>(16, 0.75f, 4);
 
         mTopics = new HashMap<>();
+        mUsers = new HashMap<>();
+
         mStore = store;
         if (mStore != null) {
             mMyUid = mStore.getMyUid();
@@ -190,6 +199,11 @@ public class Tinode {
         EventListener oldListener = mListener;
         mListener = listener;
         return oldListener;
+    }
+
+    /** Set non-default version of OS string for User-Agent */
+    public void setOsString(String os) {
+        mOsVersion = os;
     }
 
     private boolean loadTopics() {
@@ -547,7 +561,7 @@ public class Tinode {
 
     @SuppressWarnings("WeakerAccess")
     protected String makeUserAgent() {
-        return mAppName + " (Android " + System.getProperty("os.version") + "; "
+        return mAppName + " (Android " + mOsVersion + "; "
                 + Locale.getDefault().toString() + ") " + LIBRARY;
     }
 
@@ -1024,9 +1038,8 @@ public class Tinode {
             return null;
         }
         ArrayList<Topic> result = new ArrayList<>();
-        int typeVal = type.val();
         for (Topic t : mTopics.values()) {
-            if (((t.getTopicType().val() & typeVal) != 0) &&
+            if (t.getTopicType().compare(type) &&
                     (updated == null || updated.before(t.getUpdated()))) {
                 result.add(t);
             }
@@ -1083,6 +1096,40 @@ public class Tinode {
         boolean found = mTopics.remove(oldName) != null;
         mTopics.put(topic.getName(), topic);
         return found;
+    }
+
+    @SuppressWarnings("unchecked")
+    <Pu> User<Pu> getUser(String uid) {
+        User<Pu> user = (User<Pu>) mUsers.get(uid);
+        if (user == null && mStore != null) {
+            user = mStore.userGet(uid);
+            if (user != null) {
+                mUsers.put(uid, user);
+            }
+        }
+        return user;
+    }
+
+    @SuppressWarnings("unchecked")
+    <Pu> void updateUser(Subscription<Pu,?> sub) {
+        User<Pu> user = mUsers.get(sub.user);
+        if (user == null) {
+            user = new User<>(sub);
+            mUsers.put(sub.user, user);
+        } else {
+            user.merge(sub);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    <Pu> void updateUser(String uid, Description<Pu,?> desc) {
+        User<Pu> user = mUsers.get(uid);
+        if (user == null) {
+            user = new User<>(uid, desc);
+            mUsers.put(uid, user);
+        } else {
+            user.merge(desc);
+        }
     }
 
     /**

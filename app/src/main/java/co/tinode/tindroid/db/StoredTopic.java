@@ -49,6 +49,6 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
 
     public static long getId(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return st.id;
+        return st != null ? st.id : -1;
     }
 }

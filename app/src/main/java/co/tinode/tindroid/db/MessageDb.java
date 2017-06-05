@@ -287,7 +287,7 @@ public class MessageDb implements BaseColumns {
     public static boolean delete(SQLiteDatabase db, long topicId, int before, boolean soft) {
         if (!soft) {
             return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    (before == -1 ? " AND " + COLUMN_NAME_SEQ + "<=" + before : ""), null) > 0;
+                    (before != -1 ? " AND " + COLUMN_NAME_SEQ + "<=" + before : ""), null) > 0;
         } else {
             return TopicDb.updateClear(db, topicId, before);
         }

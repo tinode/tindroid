@@ -47,9 +47,11 @@ public interface Storage {
     /** Delete existing subscription */
     boolean subDelete(Topic topic, Subscription sub);
 
-
     /** Get a list o topic subscriptions from DB. */
     Collection<Subscription> getSubscriptions(Topic topic);
+
+    /** Read user description */
+    <Pu> User<Pu> userGet(String uid);
 
     // Message received
     <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> msg);

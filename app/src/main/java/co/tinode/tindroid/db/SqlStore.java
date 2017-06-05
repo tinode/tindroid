@@ -1,6 +1,7 @@
 package co.tinode.tindroid.db;
 
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -13,6 +14,7 @@ import java.util.Iterator;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.User;
 import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
@@ -85,17 +87,23 @@ class SqlStore implements Storage {
         StoredTopic st = (StoredTopic) topic.getLocal();
         boolean success = false;
         if (st != null) {
-            Log.d(TAG, "deleting topic " + topic.getName());
+            //Log.d(TAG, "deleting topic " + topic.getName());
             SQLiteDatabase db = mDbh.getWritableDatabase();
 
-            db.beginTransaction();
+            try {
+                db.beginTransaction();
 
-            MessageDb.delete(db, st.id, -1, false);
-            SubscriberDb.deleteForTopic(db, st.id);
-            TopicDb.delete(db, st.id);
+                MessageDb.delete(db, st.id, -1, false);
+                SubscriberDb.deleteForTopic(db, st.id);
+                TopicDb.delete(db, st.id);
 
-            db.setTransactionSuccessful();
-            success = true;
+                db.setTransactionSuccessful();
+                success = true;
+
+                // Log.d(TAG, "SUCCESS deleting topic " + topic.getName());
+            } catch (SQLException ignored) {
+                // Log.e(TAG, "Topic deletion failed", ignored);
+            }
 
             db.endTransaction();
         }
@@ -171,6 +179,11 @@ class SqlStore implements Storage {
         Collection<Subscription> result = SubscriberDb.readAll(c);
         c.close();
         return result;
+    }
+
+    @Override
+    public <Pu> User<Pu> userGet(String uid) {
+        return UserDb.readOne(mDbh.getReadableDatabase(), uid);
     }
 
     @Override

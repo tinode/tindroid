@@ -54,6 +54,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         public int val() {return val;}
+        public boolean compare(TopicType v2) {
+            return (val & v2.val) != 0;
+        }
     }
 
     protected enum NoteType {READ, RECV}
@@ -80,7 +83,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected HashMap<String,Subscription<Pu,Pr>> mSubs = null;
     // Timestamp of the last update to subscriptions. Default: Oct 25, 2014 05:06:02 UTC, incidentally equal
     // to the first few digits of sqrt(2)
-    protected Date mSubsUpdated = new Date(1414213562);
+    protected Date mSubsUpdated = null;
 
     protected boolean mAttached = false;
     protected Listener<Pu,Pr,T> mListener = null;
@@ -871,6 +874,9 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 mStore.subNew(this, sub);
             }
 
+            User<Pu> user = mTinode.getUser(uid);
+            sub.pub = user != null ? user.pub : null;
+
             addSubToCache(sub);
         }
 
@@ -904,7 +910,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * Eject subscriber from topic.
      *
      * @param uid id of the user to unsubscribe from the topic
-     * @param ban ban user (set mode.Given = 'X')
+     * @param ban ban user (set mode.Given = 'N')
      *
      * @throws NotSubscribedException if the user is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
@@ -918,8 +924,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         if (ban) {
-            // Banning someone means the mode is set to 'X' but subscription is persisted.
-            return invite(uid, "X", null);
+            // Banning someone means the mode is set to 'N' but subscription is persisted.
+            return invite(uid, "N", null);
         }
 
         if (isNew()) {
@@ -1127,7 +1133,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
 
         for (Subscription sub : subs) {
-            if (mSubsUpdated.before(sub.updated)) {
+            if (mSubsUpdated == null || mSubsUpdated.before(sub.updated)) {
                 mSubsUpdated = sub.updated;
             }
             addSubToCache(sub);
@@ -1294,13 +1300,17 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected void routeMetaDesc(MsgServerMeta<Pu,Pr> meta) {
         update(meta.desc);
 
+        if (getTopicType() == TopicType.P2P) {
+            mTinode.updateUser(getName(), meta.desc);
+        }
+
         if (mListener != null) {
             mListener.onMetaDesc(meta.desc);
         }
     }
 
     protected void routeMetaSub(MsgServerMeta<Pu,Pr> meta) {
-        //Log.d(TAG, "Generic.routeMetaSub");
+        // Log.d(TAG, "Generic.routeMetaSub");
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
         for (Subscription<Pu,Pr> newsub : meta.sub) {
@@ -1317,6 +1327,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
                     mStore.subAdd(this, sub);
                 }
             }
+
+            mTinode.updateUser(sub);
 
             if (mListener != null) {
                 mListener.onMetaSub(sub);

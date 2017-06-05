@@ -2,6 +2,7 @@ package co.tinode.tindroid.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
@@ -10,7 +11,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 
-import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -19,8 +19,6 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 
 public class SubscriberDb implements BaseColumns {
-    private static final String TAG = "SubscriberDb";
-
     /**
      * The name of the table.
      */
@@ -77,7 +75,6 @@ public class SubscriberDb implements BaseColumns {
      * User agent string when last seen.
      */
     public static final String COLUMN_NAME_USER_AGENT = "user_agent";
-
     /**
      * SQL statement to create Messages table
      */
@@ -98,14 +95,12 @@ public class SubscriberDb implements BaseColumns {
                     COLUMN_NAME_CLEAR + " INT," +
                     COLUMN_NAME_LAST_SEEN + " INT," +
                     COLUMN_NAME_USER_AGENT + " TEXT)";
-
     /**
      * Add index on topic_id
      */
     static final String CREATE_INDEX =
             "CREATE INDEX " + INDEX_NAME +
                     " ON " + TABLE_NAME + " (" + COLUMN_NAME_TOPIC_ID + ")";
-
     /**
      * SQL statement to drop the table.
      */
@@ -116,11 +111,29 @@ public class SubscriberDb implements BaseColumns {
      */
     static final String DROP_INDEX =
             "DROP INDEX IF EXISTS " + INDEX_NAME;
+    private static final String TAG = "SubscriberDb";
+    private static final int COLUMN_IDX_ID = 0;
+    private static final int COLUMN_IDX_TOPIC_ID = 1;
+    private static final int COLUMN_IDX_USER_ID = 2;
+    private static final int COLUMN_IDX_STATUS = 3;
+    private static final int COLUMN_IDX_SENDER_INDEX = 4;
+    private static final int COLUMN_IDX_MODE = 5;
+    private static final int COLUMN_IDX_UPDATED = 6;
+    private static final int COLUMN_IDX_DELETED = 7;
+    private static final int COLUMN_IDX_READ = 8;
+    private static final int COLUMN_IDX_RECV = 9;
+    private static final int COLUMN_IDX_CLEAR = 10;
+    private static final int COLUMN_IDX_LAST_SEEN = 11;
+    private static final int COLUMN_IDX_USER_AGENT = 12;
+    private static final int JOIN_USER_COLUMN_IDX_UID = 13;
+    private static final int JOIN_USER_COLUMN_IDX_PUBLIC = 14;
+    private static final int JOIN_TOPIC_COLUMN_IDX_TOPIC = 15;
+    private static final int JOIN_TOPIC_COLUMN_IDX_SEQ = 16;
 
     /**
      * Save user's subscription to topic.
      *
-     * @param db database to insert to
+     * @param db  database to insert to
      * @param sub Subscription to save
      * @return database ID of the newly added subscription
      */
@@ -172,8 +185,8 @@ public class SubscriberDb implements BaseColumns {
             db.setTransactionSuccessful();
             sub.setLocal(ss);
 
-        } catch (Exception ex) {
-            Log.e(TAG, "Exception while inserting", ex);
+        } catch (SQLException ignored) {
+            Log.e(TAG, "Exception while inserting", ignored);
         }
 
         db.endTransaction();
@@ -197,43 +210,44 @@ public class SubscriberDb implements BaseColumns {
 
             db.beginTransaction();
 
+            int status = ss.status;
+
             // Update user
-            if (UserDb.update(db, sub)) {
-                int status = ss.status;
+            UserDb.update(db, sub);
 
-                // Convert topic description to a map of values
-                ContentValues values = new ContentValues();
-                values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
-                if (sub.updated != null) {
-                    values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
-                }
-                if (ss.status != BaseDb.STATUS_SYNCED) {
-                    values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
-                    status = BaseDb.STATUS_SYNCED;
-                }
-                values.put(COLUMN_NAME_READ, sub.read);
-                values.put(COLUMN_NAME_RECV, sub.recv);
-                values.put(COLUMN_NAME_CLEAR, sub.clear);
-                if (sub.seen != null) {
-                    if (sub.seen.when != null) {
-                        values.put(COLUMN_NAME_LAST_SEEN, sub.seen.when.getTime());
-                    }
-                    if (sub.seen.ua != null) {
-                        values.put(COLUMN_NAME_USER_AGENT, sub.seen.ua);
-                    }
-                }
-
-                updated = db.update(TABLE_NAME, values, _ID + "=" + ss.id, null);
-
-                //Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
-                //        " name=" + sub.user + " returned " + updated);
-
-                db.setTransactionSuccessful();
-
-                ss.status = status;
+            // Convert topic description to a map of values
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
+            if (sub.updated != null) {
+                values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
             }
-        } catch (Exception ex) {
-            Log.e(TAG, "Exception while updating subscription", ex);
+            if (ss.status != BaseDb.STATUS_SYNCED) {
+                values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
+                status = BaseDb.STATUS_SYNCED;
+            }
+            values.put(COLUMN_NAME_READ, sub.read);
+            values.put(COLUMN_NAME_RECV, sub.recv);
+            values.put(COLUMN_NAME_CLEAR, sub.clear);
+            if (sub.seen != null) {
+                if (sub.seen.when != null) {
+                    values.put(COLUMN_NAME_LAST_SEEN, sub.seen.when.getTime());
+                }
+                if (sub.seen.ua != null) {
+                    values.put(COLUMN_NAME_USER_AGENT, sub.seen.ua);
+                }
+            }
+
+            updated = db.update(TABLE_NAME, values, _ID + "=" + ss.id, null);
+
+            //Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
+            //        " name=" + sub.user + " returned " + updated);
+
+            db.setTransactionSuccessful();
+
+            ss.status = status;
+
+        } catch (SQLException ignored) {
+            Log.e(TAG, "Exception while updating subscription", ignored);
         }
 
         db.endTransaction();
@@ -241,12 +255,16 @@ public class SubscriberDb implements BaseColumns {
         return updated > 0;
     }
 
-    /** Delete one subscription record */
+    /**
+     * Delete one subscription record
+     */
     public static boolean delete(SQLiteDatabase db, long id) {
         return db.delete(TABLE_NAME, _ID + "=" + id, null) > 0;
     }
 
-    /** Delete all subscription records for the given topic */
+    /**
+     * Delete all subscription records for the given topic
+     */
     public static boolean deleteForTopic(SQLiteDatabase db, long topicId) {
         return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId, null) > 0;
     }
@@ -254,7 +272,7 @@ public class SubscriberDb implements BaseColumns {
     /**
      * Get the next available senderId for the given topic. Min Id == 1.
      *
-     * @param db database
+     * @param db      database
      * @param topicId _id of the topic to query
      * @return _id of the user
      */
@@ -266,7 +284,7 @@ public class SubscriberDb implements BaseColumns {
     /**
      * Get the next available senderId for the given topic. Min Id == 1.
      *
-     * @param db database
+     * @param db      database
      * @param topicId _id of the topic to query
      * @return _id of the user
      */
@@ -307,26 +325,6 @@ public class SubscriberDb implements BaseColumns {
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId, null);
 
     }
-
-    private static final int COLUMN_IDX_ID = 0;
-    private static final int COLUMN_IDX_TOPIC_ID = 1;
-    private static final int COLUMN_IDX_USER_ID = 2;
-    private static final int COLUMN_IDX_STATUS = 3;
-    private static final int COLUMN_IDX_SENDER_INDEX = 4;
-    private static final int COLUMN_IDX_MODE = 5;
-    private static final int COLUMN_IDX_UPDATED = 6;
-    private static final int COLUMN_IDX_DELETED = 7;
-    private static final int COLUMN_IDX_READ = 8;
-    private static final int COLUMN_IDX_RECV = 9;
-    private static final int COLUMN_IDX_CLEAR = 10;
-    private static final int COLUMN_IDX_LAST_SEEN = 11;
-    private static final int COLUMN_IDX_USER_AGENT = 12;
-
-    private static final int JOIN_USER_COLUMN_IDX_UID = 13;
-    private static final int JOIN_USER_COLUMN_IDX_PUBLIC = 14;
-
-    private static final int JOIN_TOPIC_COLUMN_IDX_TOPIC = 15;
-    private static final int JOIN_TOPIC_COLUMN_IDX_SEQ = 16;
 
     public static Subscription readOne(Cursor c) {
         // StoredSub part

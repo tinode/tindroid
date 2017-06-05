@@ -10,9 +10,16 @@ import java.util.List;
  * Topic metadata request.
  */
 public class MsgGetMeta {
+    private static final int DESC_SET = 0x01;
+    private static final int SUB_SET = 0x02;
+    private static final int DATA_SET = 0x04;
+
     public static final String DESC = "desc";
     public static final String SUB = "sub";
     public static final String DATA = "data";
+
+    @JsonIgnore
+    private int mSet = 0;
 
     public String what;
     public MetaGetDesc desc;
@@ -20,12 +27,19 @@ public class MsgGetMeta {
     public MetaGetData data;
 
     /**
-     * Query to get everything
+     * Generate query to get everything
      */
     public MsgGetMeta() {
         this.what = DESC + " " + SUB + " " + DATA;
     }
 
+    /**
+     * Generate query to get specific data:
+     *
+     * @param desc request topic description
+     * @param sub request subscriptions
+     * @param data request data messages
+     */
     public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data) {
         this.desc = desc;
         this.sub = sub;
@@ -43,17 +57,31 @@ public class MsgGetMeta {
     }
     */
 
+    /**
+     * Request topic description
+     *
+     * @param ims timestamp to receive public if it's newer than ims; could be null
+     */
     public void setDesc(Date ims) {
-        desc = new MetaGetDesc();
-        desc.ims = ims;
+        if (ims != null) {
+            desc = new MetaGetDesc();
+            desc.ims = ims;
+        }
+        mSet |= DESC_SET;
     }
 
     public void setSub(Date ims, Integer limit) {
-        sub = new MetaGetSub(ims, limit);
+        if (ims != null || limit != null) {
+            sub = new MetaGetSub(ims, limit);
+        }
+        mSet |= SUB_SET;
     }
 
     public void setData(Integer since, Integer before, Integer limit) {
-        data = new MetaGetData(since, before, limit);
+        if (since != null || before != null || limit != null) {
+            data = new MetaGetData(since, before, limit);
+        }
+        mSet |= DATA_SET;
     }
 
     @JsonIgnore
@@ -61,13 +89,13 @@ public class MsgGetMeta {
         List<String> parts = new LinkedList<>();
         StringBuilder sb = new StringBuilder();
 
-        if (desc != null) {
+        if (desc != null || (mSet & DESC_SET) != 0) {
             parts.add(DESC);
         }
-        if (sub != null) {
+        if (sub != null || (mSet & SUB_SET) != 0) {
             parts.add(SUB);
         }
-        if (data != null) {
+        if (data != null || (mSet & DATA_SET) != 0) {
             parts.add(DATA);
         }
 

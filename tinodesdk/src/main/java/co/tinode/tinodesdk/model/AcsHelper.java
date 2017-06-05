@@ -86,7 +86,7 @@ public class AcsHelper {
         a = !v ? a | MODE_PRES : (a & ~MODE_PRES);
     }
     public boolean isAdmin() {
-        return (a != null) && ((a & MODE_SHARE) != 0);
+        return (a != null) && ((a & MODE_APPROVE) != 0);
     }
     public boolean isDeleter() {
         return (a != null) && ((a & MODE_DELETE) != 0);
@@ -97,7 +97,7 @@ public class AcsHelper {
     }
 
     public boolean isJoiner() {
-        return (a != null) && ((a & MODE_JOIN) == 0);
+        return (a != null) && ((a & MODE_JOIN) != 0);
     }
 
     public boolean isDefined() {

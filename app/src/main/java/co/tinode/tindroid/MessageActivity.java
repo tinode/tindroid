@@ -35,9 +35,10 @@ public class MessageActivity extends AppCompatActivity {
 
     private static final String TAG = "MessageActivity";
 
-    private static final String FRAGMENT_MESSAGES = "msg";
-    private static final String FRAGMENT_INFO = "info";
-    private static final String FRAGMENT_EDIT_TOPIC = "edit_topic";
+    static final String FRAGMENT_MESSAGES = "msg";
+    static final String FRAGMENT_INFO = "info";
+    static final String FRAGMENT_ADD_TOPIC = "add_topic";
+    static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
 
     private String mMessageText = null;
 
@@ -64,8 +65,10 @@ public class MessageActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!isFragmentVisible(FRAGMENT_MESSAGES)) {
-                    showFragment(FRAGMENT_MESSAGES);
+                if (isFragmentVisible(FRAGMENT_EDIT_MEMBERS)) {
+                    showFragment(FRAGMENT_INFO, false);
+                } else if (!isFragmentVisible(FRAGMENT_MESSAGES)) {
+                    showFragment(FRAGMENT_MESSAGES, false);
                 } else {
                     Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -184,7 +187,7 @@ public class MessageActivity extends AppCompatActivity {
 
 
         if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
-            showFragment(FRAGMENT_MESSAGES);
+            showFragment(FRAGMENT_MESSAGES, false);
         }
     }
 
@@ -232,11 +235,11 @@ public class MessageActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_view_contact: {
-                showFragment(FRAGMENT_INFO);
+                showFragment(FRAGMENT_INFO, false);
                 return true;
             }
             case R.id.action_topic_edit: {
-                showFragment(FRAGMENT_EDIT_TOPIC);
+                showFragment(FRAGMENT_ADD_TOPIC, false);
                 return true;
             }
             default:
@@ -249,7 +252,7 @@ public class MessageActivity extends AppCompatActivity {
         return fragment != null && fragment.isVisible();
     }
 
-    private void showFragment(String tag) {
+    void showFragment(String tag, boolean addToBackstack) {
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
@@ -260,8 +263,11 @@ public class MessageActivity extends AppCompatActivity {
                 case FRAGMENT_INFO:
                     fragment = new TopicInfoFragment();
                     break;
-                case FRAGMENT_EDIT_TOPIC:
+                case FRAGMENT_ADD_TOPIC:
                     fragment = new CreateGroupFragment();
+                    break;
+                case FRAGMENT_EDIT_MEMBERS:
+                    fragment = new EditMembersFragment();
                     break;
             }
         }
@@ -281,6 +287,9 @@ public class MessageActivity extends AppCompatActivity {
         if (!fragment.isVisible()) {
             FragmentTransaction trx = fm.beginTransaction();
             trx.replace(R.id.contentFragment, fragment, tag);
+            if (addToBackstack) {
+                trx.addToBackStack(tag);
+            }
             trx.commit();
         }
     }

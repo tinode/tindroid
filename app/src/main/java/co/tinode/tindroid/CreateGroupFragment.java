@@ -39,13 +39,11 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment for adding/editing a group topic
  */
-public class CreateGroupFragment extends Fragment {
+public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoaderResultReceiver {
 
     private static final String TAG = "CreateGroupFragment";
 
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
-
-    private ContactsLoaderCallback mContactsLoaderCallback;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -78,8 +76,6 @@ public class CreateGroupFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mContactsLoaderCallback = new ContactsLoaderCallback();
 
         mImageLoader = new ImageLoader(getActivity(), UiUtils.getListPreferredItemHeight(this),
                 getActivity().getSupportFragmentManager()) {
@@ -130,6 +126,7 @@ public class CreateGroupFragment extends Fragment {
                     titleEdit.setError(getString(R.string.name_required));
                     return;
                 }
+                final String subtitle = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
 
                 List<Chip> selected = (List<Chip>) mChipsInput.getSelectedChipList();
                 Log.d(TAG, "Chips count: " + selected.size() + " == " + mChipsInput.getChildCount());
@@ -147,11 +144,12 @@ public class CreateGroupFragment extends Fragment {
                     // Ignore it.
                 }
 
-                createTopic(activity, topicTitle, bmp);
+                createTopic(activity, topicTitle, bmp, subtitle);
             }
         });
 
-        getLoaderManager().initLoader(0, null, mContactsLoaderCallback);
+        getLoaderManager().initLoader(0, null,
+                new UiUtils.ContactsLoaderCallback(getActivity(), this));
     }
 
 
@@ -176,27 +174,15 @@ public class CreateGroupFragment extends Fragment {
         }
     }
 
-    private List<Chip> createFilteredList(Cursor cursor) {
-        List<Chip> list = new ArrayList<>();
-
-        if (cursor != null) {
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                final String uid = cursor.getString(ContactsQuery.IM_HANDLE);
-                final String uriString = cursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
-                final Uri photoUri = uriString == null ? null : Uri.parse(uriString);
-                final String displayName = cursor.getString(ContactsQuery.DISPLAY_NAME);
-                list.add(new Chip(uid, photoUri, displayName, null));
-                cursor.moveToNext();
-            }
-        }
-
-        return list;
+    @Override
+    public void receiveResult(int id, Cursor data) {
+        mChipsInput.setFilterableList(UiUtils.createChipsInputFilteredList(data));
     }
 
-    private void createTopic(final Activity activity, final String title, final Bitmap avatar) {
+    private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle) {
         final Topic<VCard,String,String> topic = new Topic<>(Cache.getTinode(), null);
         topic.setPub(new VCard(title, avatar));
+        topic.setPriv(subtitle);
         try {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
@@ -222,66 +208,5 @@ public class CreateGroupFragment extends Fragment {
         }
 
         startActivity(new Intent(activity, ContactsActivity.class));
-    }
-
-    interface ContactsQuery {
-        String[] PROJECTION = {
-                ContactsContract.Data._ID,
-                ContactsContract.Data.CONTACT_ID,
-                ContactsContract.CommonDataKinds.Im.DISPLAY_NAME_PRIMARY,
-                ContactsContract.CommonDataKinds.Im.PHOTO_THUMBNAIL_URI,
-                ContactsContract.CommonDataKinds.Im.DATA,
-                ContactsContract.Data.MIMETYPE,
-                ContactsContract.CommonDataKinds.Im.PROTOCOL,
-                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL,
-        };
-
-        int ID = 0;
-        int CONTACT_ID = 1;
-        int DISPLAY_NAME = 2;
-        int PHOTO_THUMBNAIL_DATA = 3;
-        int IM_HANDLE = 4;
-
-        String SELECTION = ContactsContract.Data.MIMETYPE + "=? AND " +
-                ContactsContract.CommonDataKinds.Im.PROTOCOL + "=? AND " +
-                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL + "=?";
-        String[] SELECTION_ARGS = {
-                ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
-                Integer.toString(ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM),
-                Utils.IM_PROTOCOL,
-        };
-        String SORT_ORDER = ContactsContract.CommonDataKinds.Im.DISPLAY_NAME_PRIMARY;
-    }
-
-    private class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
-
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
-            // Returns a new CursorLoader for querying the Contacts table. No arguments are used
-            // for the selection clause. The search string is either encoded onto the content URI,
-            // or no contacts search string is used. The other search criteria are constants. See
-            // the ContactsQuery interface.
-            return new CursorLoader(getActivity(),
-                    ContactsContract.Data.CONTENT_URI,
-                    ContactsQuery.PROJECTION,
-                    ContactsQuery.SELECTION,
-                    ContactsQuery.SELECTION_ARGS,
-                    ContactsQuery.SORT_ORDER);
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-            // This swaps the new cursor into the adapter.
-            Log.d(TAG, "delivered cursor with items: " + data.getCount());
-            mChipsInput.setFilterableList(createFilteredList(data));
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
-            // When the loader is being reset, clear the cursor from the adapter. This allows the
-            // cursor resources to be freed.
-            mChipsInput.setFilterableList(createFilteredList(null));
-        }
     }
 }

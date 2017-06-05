@@ -112,6 +112,7 @@
     <string name="address">Address</string>
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
+    <string name="permissions_list">Permissions: %1$s</string>
     <string name="close">Close</string>
 
     <string name="invitation_text">Join my group!</string>
@@ -132,12 +133,14 @@
     <string name="edit_permissions">Edit Permissions</string>
 
     <string name="permission_owner">Full control (owner)</string>
-    <string name="permission_banned">Banned/no access</string>
-    <string name="permission_read">Subscribe and read</string>
+    <string name="permission_join">Join</string>
+    <string name="permission_read">Read</string>
     <string name="permission_write">Write</string>
-    <string name="permission_share">Approve new members</string>
+    <string name="permission_approve">Approve new members</string>
+    <string name="permission_share">Invite new members</string>
     <string name="permission_notifications">Receive notifications</string>
     <string name="permission_delete">Delete messages</string>
+
     <string name="send_message">Send message</string>
     <string name="change_permissions">Change permissions</string>
     <string name="make_owner">Make owner</string>
@@ -147,4 +150,5 @@
     <string name="confirm_member_removal">Remove %1$s from \"%2$s\"?</string>
     <string name="confirm_member_ban">Remove and ban %1$s from \"%2$s\"?</string>
     <string name="confirm_delete_topic">Do you really want to delete this conversation for everyone?</string>
+    <string name="modeWriteOnly">write-only</string>
 </resources>

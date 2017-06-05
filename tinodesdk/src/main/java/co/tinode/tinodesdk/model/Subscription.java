@@ -45,7 +45,14 @@ public class Subscription<Pu,Pr> implements LocalData {
 
         if ((sub.updated != null) && (updated == null || updated.before(sub.updated))) {
             updated = sub.updated;
+
+            if (sub.pub != null) {
+                pub = sub.pub;
+            }
+
             changed ++;
+        } else if (pub == null && sub.pub != null) {
+            pub = sub.pub;
         }
 
         if (sub.acs != null) {
@@ -82,9 +89,6 @@ public class Subscription<Pu,Pr> implements LocalData {
         if (sub.seq > seq) {
             seq = sub.seq;
             changed ++;
-        }
-        if (sub.pub != null) {
-            pub = sub.pub;
         }
 
         if (sub.seen != null) {

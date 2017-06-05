@@ -64,6 +64,14 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        mAdapter.resetContent();
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         super.onCreateOptionsMenu(menu, inflater);

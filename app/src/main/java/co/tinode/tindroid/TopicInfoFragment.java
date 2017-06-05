@@ -9,6 +9,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -168,12 +169,20 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.getTopicType() == Topic.TopicType.GRP) {
             groupMembersCard.setVisibility(View.VISIBLE);
 
+            Button button = (Button) activity.findViewById(R.id.buttonAddMembers);
             if (!mTopic.isAdmin() && !mTopic.isOwner()) {
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.
-                Button button = (Button) activity.findViewById(R.id.buttonAddMembers);
                 button.setEnabled(false);
                 button.setAlpha(0.5f);
+            } else {
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        MessageActivity activity = (MessageActivity) getActivity();
+                        activity.showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS, true);
+                    }
+                });
             }
 
             mAdapter.resetContent();
@@ -292,38 +301,18 @@ public class TopicInfoFragment extends Fragment {
                 .setTitle(R.string.edit_permissions);
         final LinkedHashMap<Character, Integer> checks = new LinkedHashMap<>(7);
         checks.put('O', R.string.permission_owner);
+        checks.put('J', R.string.permission_join);
         checks.put('R', R.string.permission_read);
         checks.put('W', R.string.permission_write);
+        checks.put('A', R.string.permission_approve);
         checks.put('S', R.string.permission_share);
         checks.put('P', R.string.permission_notifications);
         checks.put('D', R.string.permission_delete);
-        checks.put('X', R.string.permission_banned);
         View.OnClickListener checkListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 boolean checked = !((CheckedTextView) view).isChecked();
                 ((CheckedTextView) view).setChecked(checked);
-                Character tag = (Character) view.getTag();
-                // If "banned" is checked, clear all other checks except 'Owner' and 'Banned';
-                if (checked) {
-                    if (tag.equals('X')) {
-                        for (int i = 0; i < editor.getChildCount(); i++) {
-                            CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
-                            Character key = (Character) check.getTag();
-                            if (!key.equals('X') && !key.equals('O')) {
-                                check.setChecked(false);
-                            }
-                        }
-                    } else {
-                        for (int i = 0; i < editor.getChildCount(); i++) {
-                            CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
-                            Character key = (Character) check.getTag();
-                            if (key.equals('X')) {
-                                check.setChecked(false);
-                            }
-                        }
-                    }
-                }
             }
         };
         for (Character key : checks.keySet()) {
@@ -592,7 +581,7 @@ public class TopicInfoFragment extends Fragment {
 
     private static class MemberViewHolder extends RecyclerView.ViewHolder {
         TextView name;
-        TextView contactPriv;
+        TextView extraInfo;
         LinearLayout statusContainer;
         TextView[] status;
         AppCompatImageView icon;
@@ -601,7 +590,7 @@ public class TopicInfoFragment extends Fragment {
             super(item);
 
             name = (TextView) item.findViewById(android.R.id.text1);
-            contactPriv = (TextView) item.findViewById(android.R.id.text2);
+            extraInfo = (TextView) item.findViewById(android.R.id.text2);
             statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
             status = new TextView[statusContainer.getChildCount()];
             for (int i = 0; i < status.length; i++) {
@@ -674,7 +663,8 @@ public class TopicInfoFragment extends Fragment {
                 Log.d(TAG, "Pub is null for " + sub.user);
             }
             holder.name.setText(title);
-            holder.contactPriv.setText(sub.priv);
+            holder.extraInfo.setText(
+                    getString(R.string.permissions_list, sub.acs.getGiven() + "/" + sub.acs.getWant()));
 
             int i = 0;
             UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.acs, ss.status);

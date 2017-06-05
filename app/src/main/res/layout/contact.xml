@@ -2,9 +2,9 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:paddingBottom="2dp"
     android:paddingLeft="4dp"
@@ -29,6 +29,7 @@
             android:layout_height="16sp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
             app:srcCompat="@drawable/ic_circle"
             />
 
@@ -50,11 +51,11 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
                 android:maxLines="1"
-                android:paddingEnd="16sp"
+                android:paddingEnd="16sp" tools:ignore="RtlSymmetry"
                 android:paddingRight="16sp"
-                android:text=""
                 tools:text="Contact title"
-                android:textAppearance="@style/contactListTextPrimary"/>
+                android:textAppearance="@style/contactListTextPrimary"
+                />
 
             <TextView
                 android:id="@+id/unreadCount"

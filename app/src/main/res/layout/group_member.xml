@@ -45,32 +45,38 @@
         android:orientation="horizontal"
         android:focusable="false">
         <TextView
+            tools:text="one"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/modeAdmin"
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
+            android:paddingBottom="1.3dp"
             android:background="@drawable/border_green"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
+            android:textSize="12sp"
             android:typeface="monospace"/>
         <TextView
+            tools:text="two"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
+            android:paddingBottom="1.3dp"
             android:background="@drawable/border_green"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
-            android:text="@string/modeOwner"
+            android:textSize="12sp"
             android:typeface="monospace"/>
         <TextView
+            tools:text="three"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
+            android:paddingBottom="1.3dp"
             android:background="@drawable/border_green"
-            android:text="@string/modeMuted"
+            android:textSize="12sp"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
             android:typeface="monospace"/>

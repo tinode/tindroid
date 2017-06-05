@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.os.Build;
 import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -29,6 +30,8 @@ public class Cache {
             Log.d(TAG, "Tinode instantiated");
 
             sTinode = new Tinode("Tindroid", API_KEY, BaseDb.getInstance().getStore(), null);
+            sTinode.setOsString(Build.VERSION.RELEASE);
+
             // Default types for parsing Public, Private, Content fields of messages
             sTinode.setDefaultTypes(VCard.class, String.class, String.class);
             // Set device language

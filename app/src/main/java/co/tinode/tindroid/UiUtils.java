@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorMatrixColorFilter;
@@ -21,10 +22,14 @@ import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -39,6 +44,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.neovisionaries.ws.client.WebSocketException;
+import com.pchmn.materialchips.model.Chip;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
@@ -47,6 +53,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import co.tinode.tindroid.account.Utils;
@@ -243,6 +250,7 @@ public class UiUtils {
         });
     }
 
+    // Date formatter for messages
     public static String shortDate(Date date) {
         if (date != null) {
             Calendar now = Calendar.getInstance();
@@ -532,25 +540,19 @@ public class UiUtils {
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
 
     public static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
-        ArrayList<AccessModeLabel> result = new ArrayList<>(4);
+        ArrayList<AccessModeLabel> result = new ArrayList<>(2);
         if (acs != null) {
             if (acs.isModeDefined()) {
-                if (!acs.isJoiner()) {
+                if (!acs.isJoiner() || (!acs.isWriter() && !acs.isReader())) {
                     result.add(new AccessModeLabel(R.string.modeBlocked, COLOR_RED_BORDER));
-                } else {
-                    if (acs.isOwner()) {
-                        result.add(new AccessModeLabel(R.string.modeOwner, COLOR_GREEN_BORDER));
-                    } else {
-                        if (acs.isAdmin()) {
-                            result.add(new AccessModeLabel(R.string.modeAdmin, COLOR_GREEN_BORDER));
-                        }
-                        if (!acs.isWriter()) {
-                            result.add(new AccessModeLabel(R.string.modeReadOnly, COLOR_YELLOW_BORDER));
-                        }
-                    }
-                    if (acs.isMuted()) {
-                        result.add(new AccessModeLabel(R.string.modeMuted, COLOR_GRAY_BORDER));
-                    }
+                } else if (acs.isOwner()) {
+                    result.add(new AccessModeLabel(R.string.modeOwner, COLOR_GREEN_BORDER));
+                } else if (acs.isAdmin()) {
+                    result.add(new AccessModeLabel(R.string.modeAdmin, COLOR_GREEN_BORDER));
+                } else if (!acs.isWriter()) {
+                    result.add(new AccessModeLabel(R.string.modeReadOnly, COLOR_YELLOW_BORDER));
+                } else if (!acs.isReader()) {
+                    result.add(new AccessModeLabel(R.string.modeWriteOnly, COLOR_YELLOW_BORDER));
                 }
             } else if (!acs.isInvalid()) {
                 // The mode is undefined (NONE)
@@ -559,7 +561,7 @@ public class UiUtils {
                 } else if (!acs.isGivenDefined() && acs.isWantDefined()) {
                     result.add(new AccessModeLabel(R.string.modeRequested, COLOR_GRAY_BORDER));
                 } else {
-                    // It's either an undefined state or invalid
+                    // Undefined state
                     result.add(new AccessModeLabel(R.string.modeUndefined, COLOR_GRAY_BORDER));
                 }
             }
@@ -570,5 +572,97 @@ public class UiUtils {
 
         return !result.isEmpty() ?
                 result.toArray(new AccessModeLabel[result.size()]) : null;
+    }
+
+    interface ContactsQuery {
+        String[] PROJECTION = {
+                ContactsContract.Data._ID,
+                ContactsContract.Data.CONTACT_ID,
+                ContactsContract.CommonDataKinds.Im.DISPLAY_NAME_PRIMARY,
+                ContactsContract.CommonDataKinds.Im.PHOTO_THUMBNAIL_URI,
+                ContactsContract.CommonDataKinds.Im.DATA,
+                ContactsContract.Data.MIMETYPE,
+                ContactsContract.CommonDataKinds.Im.PROTOCOL,
+                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL,
+        };
+
+        int ID = 0;
+        int CONTACT_ID = 1;
+        int DISPLAY_NAME = 2;
+        int PHOTO_THUMBNAIL_DATA = 3;
+        int IM_HANDLE = 4;
+
+        String SELECTION = ContactsContract.Data.MIMETYPE + "=? AND " +
+                ContactsContract.CommonDataKinds.Im.PROTOCOL + "=? AND " +
+                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL + "=?";
+        String[] SELECTION_ARGS = {
+                ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
+                Integer.toString(ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM),
+                Utils.IM_PROTOCOL,
+        };
+        String SORT_ORDER = ContactsContract.CommonDataKinds.Im.DISPLAY_NAME_PRIMARY;
+    }
+
+    interface ContactsLoaderResultReceiver {
+        void receiveResult(int id, Cursor c);
+    }
+
+    static class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+        private Activity mActivity;
+        private ContactsLoaderResultReceiver mReceiver;
+        private int mLoaderId = -1;
+
+        public ContactsLoaderCallback(Activity activity, ContactsLoaderResultReceiver receiver) {
+            mActivity = activity;
+            mReceiver = receiver;
+        }
+
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            mLoaderId = id;
+
+            // Returns a new CursorLoader for querying the Contacts table. No arguments are used
+            // for the selection clause. The search string is either encoded onto the content URI,
+            // or no contacts search string is used. The other search criteria are constants. See
+            // the ContactsQuery interface.
+            return new CursorLoader(mActivity,
+                    ContactsContract.Data.CONTENT_URI,
+                    ContactsQuery.PROJECTION,
+                    ContactsQuery.SELECTION,
+                    ContactsQuery.SELECTION_ARGS,
+                    ContactsQuery.SORT_ORDER);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+            // This swaps the new cursor into the adapter.
+            Log.d(TAG, "delivered cursor with items: " + data.getCount());
+            mReceiver.receiveResult(mLoaderId, data);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            // When the loader is being reset, clear the cursor from the adapter. This allows the
+            // cursor resources to be freed.
+            mReceiver.receiveResult(mLoaderId, null);
+        }
+    }
+
+    static List<Chip> createChipsInputFilteredList(Cursor cursor) {
+        List<Chip> list = new ArrayList<>();
+
+        if (cursor != null) {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                final String uid = cursor.getString(UiUtils.ContactsQuery.IM_HANDLE);
+                final String uriString = cursor.getString(UiUtils.ContactsQuery.PHOTO_THUMBNAIL_DATA);
+                final Uri photoUri = uriString == null ? null : Uri.parse(uriString);
+                final String displayName = cursor.getString(UiUtils.ContactsQuery.DISPLAY_NAME);
+                list.add(new Chip(uid, photoUri, displayName, null));
+                cursor.moveToNext();
+            }
+        }
+
+        return list;
     }
 }
