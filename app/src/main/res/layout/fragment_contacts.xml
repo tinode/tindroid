@@ -1,31 +1,14 @@
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/white"
-    android:paddingBottom="6dp"
-    android:paddingTop="6dp"
-    tools:context="co.tinode.tindroid.ContactsFragment">
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
 
-    <!-- Use standard android.R class list id instead of app specific id. This is just useful for
-         consistency. -->
-    <ListView
-        android:id="@id/android:list"
+    <include layout="@layout/toolbar_with_tabs" />
+
+    <FrameLayout
+        android:id="@+id/contentFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fastScrollAlwaysVisible="true"
-        android:scrollbarStyle="outsideInset"
-        android:verticalScrollbarPosition="right"/>
+        android:layout_height="match_parent"/>
 
-    <!-- Use standard android.R class empty id instead of app specific id. This is just useful for
-     consistency. -->
-    <TextView
-        android:id="@id/android:empty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="@string/no_contacts"
-        android:textAppearance="?android:attr/textAppearanceLarge"/>
-
-</FrameLayout>
+</LinearLayout>

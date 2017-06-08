@@ -32,6 +32,8 @@ import android.widget.ImageView;
 import java.io.FileDescriptor;
 import java.lang.ref.WeakReference;
 
+import co.tinode.tindroid.widgets.RoundImageDrawable;
+
 /**
  * This class wraps up completing some arbitrary long running work when loading a bitmap to an
  * ImageView. It handles things like using a memory and disk cache, running the work in a background

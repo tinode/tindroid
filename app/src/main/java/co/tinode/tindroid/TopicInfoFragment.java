@@ -9,7 +9,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -34,6 +33,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 
 import co.tinode.tindroid.db.StoredSubscription;
+import co.tinode.tindroid.widgets.LetterTileDrawable;
+import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
@@ -50,10 +51,6 @@ public class TopicInfoFragment extends Fragment {
 
     private static final String TAG = "TopicInfoFragment";
 
-    private static final int ACTION_UPDATE_SELF_SUB = 0;
-    private static final int ACTION_UPDATE_SUB = 1;
-    private static final int ACTION_UPDATE_AUTH = 2;
-    private static final int ACTION_UPDATE_ANON = 3;
     private static final int ACTION_REMOVE = 4;
     private static final int ACTION_BAN = 5;
 
@@ -63,23 +60,6 @@ public class TopicInfoFragment extends Fragment {
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     public TopicInfoFragment() {
-        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
-                Activity activity = getActivity();
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(getActivity(), R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(getActivity(), R.string.action_failed, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-                return null;
-            }
-        };
     }
 
     @Override
@@ -101,6 +81,8 @@ public class TopicInfoFragment extends Fragment {
         mAdapter = new MembersAdapter();
 
         final Activity activity = getActivity();
+
+        mFailureListener = new UiUtils.ToastFailureListener(activity);
 
         RecyclerView rv = (RecyclerView) activity.findViewById(R.id.groupMembers);
         rv.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
@@ -137,6 +119,7 @@ public class TopicInfoFragment extends Fragment {
         };
         if (mTopic.isAdmin() || mTopic.isOwner()) {
             title.setOnClickListener(l);
+
             uploadAvatarButton.setVisibility(View.VISIBLE);
             uploadAvatarButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -169,7 +152,30 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.getTopicType() == Topic.TopicType.GRP) {
             groupMembersCard.setVisibility(View.VISIBLE);
 
-            Button button = (Button) activity.findViewById(R.id.buttonAddMembers);
+            Button button = (Button) activity.findViewById(R.id.buttonLeaveGroup);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mTopic.isOwner()) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                        builder.setMessage(R.string.owner_cannot_unsubscribe)
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .setCancelable(true)
+                                .setNegativeButton(android.R.string.ok, null)
+                                .show();
+                    } else {
+                        try {
+                            mTopic.delete().thenApply(null, mFailureListener);
+                        } catch (NotConnectedException ignored) {
+                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        } catch (Exception ignored) {
+                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            });
+
+            button = (Button) activity.findViewById(R.id.buttonAddMembers);
             if (!mTopic.isAdmin() && !mTopic.isOwner()) {
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.
@@ -179,8 +185,7 @@ public class TopicInfoFragment extends Fragment {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        MessageActivity activity = (MessageActivity) getActivity();
-                        activity.showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS, true);
+                        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS, true);
                     }
                 });
             }
@@ -196,7 +201,8 @@ public class TopicInfoFragment extends Fragment {
         permissions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showEditPermissions(mTopic.getAccessMode().getMode(), null, ACTION_UPDATE_SELF_SUB, false);
+                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getMode(), null,
+                        UiUtils.ACTION_UPDATE_SELF_SUB, false);
             }
         });
 
@@ -207,13 +213,15 @@ public class TopicInfoFragment extends Fragment {
             auth.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showEditPermissions(mTopic.getAuthAcsStr(), null, ACTION_UPDATE_AUTH, true);
+                    UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
+                            UiUtils.ACTION_UPDATE_AUTH, true);
                 }
             });
             anon.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showEditPermissions(mTopic.getAnonAcsStr(), null, ACTION_UPDATE_ANON, true);
+                    UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
+                            UiUtils.ACTION_UPDATE_ANON, true);
                 }
             });
         } else {
@@ -255,127 +263,12 @@ public class TopicInfoFragment extends Fragment {
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                VCard pub = null;
+                String newTitle = null;
                 if (mTopic.isAdmin()) {
-                    String newTitle = titleEditor.getText().toString();
-                    if (!newTitle.equals(title)) {
-                        pub = mTopic.getPub();
-                        if (pub != null) {
-                            pub = pub.copy();
-                        } else {
-                            pub = new VCard();
-                        }
-
-                        pub.fn = newTitle;
-                    }
+                    newTitle = titleEditor.getText().toString();
                 }
-                ;
                 String newPriv = subtitleEditor.getText().toString();
-                if (newPriv.equals(priv)) {
-                    newPriv = null;
-                }
-                if (pub != null || newPriv != null) {
-                    try {
-                        mTopic.setDescription(pub, newPriv);
-                    } catch (NotConnectedException ignored) {
-                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                    } catch (Exception ignored) {
-                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                    }
-                }
-                Log.d(TAG, "OK");
-            }
-        });
-        builder.setNegativeButton(android.R.string.cancel, null);
-        builder.show();
-    }
-
-    // Dialog for editing permissions
-    private void showEditPermissions(@NonNull final String mode, final String uid, final int what, boolean noOwner) {
-        final Activity activity = getActivity();
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
-        final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
-        builder
-                .setView(editor)
-                .setTitle(R.string.edit_permissions);
-        final LinkedHashMap<Character, Integer> checks = new LinkedHashMap<>(7);
-        checks.put('O', R.string.permission_owner);
-        checks.put('J', R.string.permission_join);
-        checks.put('R', R.string.permission_read);
-        checks.put('W', R.string.permission_write);
-        checks.put('A', R.string.permission_approve);
-        checks.put('S', R.string.permission_share);
-        checks.put('P', R.string.permission_notifications);
-        checks.put('D', R.string.permission_delete);
-        View.OnClickListener checkListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                boolean checked = !((CheckedTextView) view).isChecked();
-                ((CheckedTextView) view).setChecked(checked);
-            }
-        };
-        for (Character key : checks.keySet()) {
-            if (noOwner && key.equals('O')) {
-                continue;
-            }
-            CheckedTextView check = (CheckedTextView) inflater.inflate(R.layout.edit_one_permission, editor, false);
-            check.setChecked(mode.contains(key.toString()));
-            check.setText(checks.get(key));
-            check.setTag(key);
-            check.setOnClickListener(checkListener);
-            editor.addView(check, editor.getChildCount());
-        }
-
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                StringBuilder newAcsStr = new StringBuilder();
-                for (int i = 0; i < editor.getChildCount(); i++) {
-                    CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
-                    if (check.isChecked()) {
-                        newAcsStr.append(check.getTag());
-                    }
-                }
-                if (newAcsStr.length() == 0) {
-                    newAcsStr.append('N');
-                }
-                Log.d(TAG, "New access mode: " + newAcsStr);
-                try {
-                    PromisedReply<ServerMessage> reply = null;
-                    switch (what) {
-                        case ACTION_UPDATE_SELF_SUB:
-                            reply = mTopic.updateMode(null, newAcsStr.toString());
-                            break;
-                        case ACTION_UPDATE_SUB:
-                            reply = mTopic.updateMode(uid, newAcsStr.toString());
-                            break;
-                        case ACTION_UPDATE_AUTH:
-                            reply = mTopic.updateDefAcs(newAcsStr.toString(), null);
-                            break;
-                        case ACTION_UPDATE_ANON:
-                            reply = mTopic.updateDefAcs(null, newAcsStr.toString());
-                    }
-
-                    if (reply != null) {
-                        reply.thenApply(null, new PromisedReply.FailureListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                activity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                                return null;
-                            }
-                        });
-                    }
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                }
+                UiUtils.updateTitle(getActivity(), mTopic, newTitle, newPriv);
             }
         });
         builder.setNegativeButton(android.R.string.cancel, null);
@@ -387,11 +280,11 @@ public class TopicInfoFragment extends Fragment {
                                         final String title, final String uid, int message_id, final int what) {
         final Activity activity = getActivity();
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
-        confirmBuilder.setNegativeButton(android.R.string.cancel, null);
+        confirmBuilder.setNegativeButton(android.R.string.no, null);
         String message = activity.getString(message_id, title, topicTitle);
         confirmBuilder.setMessage(message);
 
-        confirmBuilder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+        confirmBuilder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 try {
@@ -444,7 +337,7 @@ public class TopicInfoFragment extends Fragment {
                         case R.id.buttonSendMessage:
                             break;
                         case R.id.buttonPermissions:
-                            showEditPermissions(mode, uid, ACTION_UPDATE_SUB, true);
+                            UiUtils.showEditPermissions(activity, mTopic, mode, uid, UiUtils.ACTION_UPDATE_SUB, true);
                             break;
                         case R.id.buttonMakeOwner:
                             mTopic.updateMode(uid, "+O").thenApply(null, mFailureListener);
@@ -516,8 +409,20 @@ public class TopicInfoFragment extends Fragment {
             }
             final Bitmap bmp = pub.getBitmap();
             if (bmp != null) {
-                avatar.setImageBitmap(bmp);
+                avatar.setImageDrawable(new RoundImageDrawable(bmp));
+            } else {
+                avatar.setImageDrawable(
+                        new LetterTileDrawable(getResources())
+                                .setIsCircular(true)
+                                .setContactTypeAndColor(
+                                        mTopic.getTopicType() == Topic.TopicType.P2P ?
+                                            LetterTileDrawable.TYPE_PERSON :
+                                                LetterTileDrawable.TYPE_GROUP)
+                                .setLetterAndColor(pub.fn, mTopic.getName()));
             }
+        } else {
+            avatar.setImageDrawable(
+                    new LetterTileDrawable(getResources()).setIsCircular(true));
         }
 
         String priv = mTopic.getPriv();
@@ -547,26 +452,7 @@ public class TopicInfoFragment extends Fragment {
             activity.submitForExecution(new Runnable() {
                 @Override
                 public void run() {
-                    Bitmap bmp = UiUtils.extractBitmap(activity, data);
-                    if (bmp == null) {
-                        Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    VCard pub = mTopic.getPub();
-                    if (pub != null) {
-                        pub = pub.copy();
-                    } else {
-                        pub = new VCard();
-                    }
-
-                    pub.setBitmap(bmp);
-                    try {
-                        mTopic.setDescription(pub, null);
-                    } catch (NotConnectedException ignored) {
-                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                    } catch (Exception ignored) {
-                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                    }
+                UiUtils.updateAvatar(activity, mTopic, data);
                 }
             });
         }
@@ -680,7 +566,8 @@ public class TopicInfoFragment extends Fragment {
                 holder.status[i].setVisibility(View.GONE);
             }
 
-            UiUtils.assignBitmap(getActivity(), holder.icon, bmp, R.drawable.ic_person_circle);
+            UiUtils.assignBitmap(getActivity(), holder.icon, bmp,
+                    sub.pub != null ? sub.pub.fn : null, sub.user);
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override

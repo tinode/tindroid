@@ -618,6 +618,7 @@ public class Tinode {
     /**
      * Create new account. Connection must be established prior to calling this method.
      *
+     * @param uid uid of the user to affect
      * @param scheme authentication scheme to use
      * @param secret authentication secret for the chosen scheme
      * @param loginNow use the new account to login immediately
@@ -626,11 +627,11 @@ public class Tinode {
      * @throws Exception if there is no connection
      */
     @SuppressWarnings("WeakerAccess")
-    protected <Pu,Pr,T> PromisedReply<ServerMessage> createAccount(String scheme, String secret,
+    protected <Pu,Pr,T> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
                                                          boolean loginNow,
                                                          MetaSetDesc<Pu,Pr> desc) throws Exception {
         ClientMessage msg = new ClientMessage<Pu,Pr,T>(
-                new MsgClientAcc<>(getNextId(), scheme, secret, loginNow, desc));
+                new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
@@ -653,8 +654,19 @@ public class Tinode {
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
             String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc)
                 throws Exception {
-        return createAccount(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
+        return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, desc);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret)
+            throws Exception {
+        return account(uid, scheme, secret, false, null);
+    }
+
+    public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password)
+            throws Exception {
+        return updateAccountSecret(uid, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
     }
 
     /**
@@ -737,6 +749,16 @@ public class Tinode {
 
     public void setAutologin(boolean state) {
         mAutologin = state;
+    }
+
+    public void logout() {
+        setAutologin(false);
+        mConnection.disconnect();
+        mMyUid = null;
+
+        if (mStore != null) {
+            mStore.logout();
+        }
     }
 
     /**

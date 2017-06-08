@@ -100,17 +100,14 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
             ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.login_required));
             return;
         }
-        final String password = ((EditText) parent.findViewById(R.id.newPassword)).getText().toString().trim();
-        if (password.isEmpty()) {
-            ((EditText) parent.findViewById(R.id.newPassword)).setError(getText(R.string.password_required));
+        if (login.contains(":")) {
+            ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.invalid_login));
             return;
         }
 
-        String password2 = ((EditText) parent.findViewById(R.id.repeatPassword)).getText().toString();
-        // Check if passwords match. If not, report error.
-        if (!password.equals(password2)) {
-            ((EditText) parent.findViewById(R.id.repeatPassword)).setError(getText(R.string.passwords_dont_match));
-            Toast.makeText(parent, getText(R.string.passwords_dont_match), Toast.LENGTH_SHORT).show();
+        final String password = ((EditText) parent.findViewById(R.id.newPassword)).getText().toString().trim();
+        if (password.isEmpty()) {
+            ((EditText) parent.findViewById(R.id.newPassword)).setError(getText(R.string.password_required));
             return;
         }
 

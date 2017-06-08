@@ -45,4 +45,56 @@
     <color name="colorBorderRed">#E57373</color>
     <color name="colorBorderYellow">#FFCA28</color>
 
+
+    <!-- Background colors for LetterTileDrawables. This set of colors is a subset of
+        https://spec.googleplex.com/quantumpalette#extended which passes Google Accessibility
+        Requirements for the color in question on white with >= 3.0 contrast. We used
+        http://leaverou.github.io/contrast-ratio/#white-on-%23db4437 to double-check the contrast.
+        These colors are also used by MaterialColorMapUtils to generate primary activity colors.
+
+    -->
+    <array name="letter_tile_colors_light">
+        <item>#ef9a9a</item>
+        <item>#90caf9</item>
+        <item>#b0bec5</item>
+        <item>#b39ddb</item>
+        <item>#ffab91</item>
+        <item>#a5d6a7</item>
+        <item>#dddddd</item>
+        <item>#e6ee9c</item>
+        <item>#c5e1a5</item>
+        <item>#fff59d</item>
+        <item>#f48fb1</item>
+        <item>#9fa8da</item>
+        <item>#ffe082</item>
+        <item>#bcaaa4</item>
+        <item>#80deea</item>
+        <item>#ce93d8</item>
+    </array>
+    <color name="letter_tile_text_color_light">#f0f0f0</color>
+
+    <!-- Darker versions of letter_tile_colors, two shades darker. These colors are used
+        for settings secondary activity colors. -->
+    <array name="letter_tile_colors_dark">
+        <item>#C62828</item>
+        <item>#AD1457</item>
+        <item>#6A1B9A</item>
+        <item>#4527A0</item>
+        <item>#283593</item>
+        <item>#1565C0</item>
+        <item>#0277BD</item>
+        <item>#00838F</item>
+        <item>#00695C</item>
+        <item>#2E7D32</item>
+        <item>#558B2F</item>
+        <item>#9E9D24</item>
+        <item>#F9A825</item>
+        <item>#FF8F00</item>
+        <item>#EF6C00</item>
+        <item>#D84315</item>
+        <item>#4E342E</item>
+        <item>#37474F</item>
+    </array>
+    <color name="letter_tile_text_color_dark">#dedede</color>
+
 </resources>

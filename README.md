@@ -1,11 +1,11 @@
 # Demo chat for Android
 
-Work in progress. What works:
+Beta-quality software. What works:
 
 * Send and receive messages in p2p or group chats.
 * Register new accounts.
 * Start new group chats.
-* Edit group chats.
+* Edit group chat parameters.
 * In-app presence notifications.
 * Unread message counters.
 * Push notifications.
@@ -14,14 +14,14 @@ Work in progress. What works:
 * Load the list of contacts and store it offline.
 * Access contacts from the Android stock Contacts app.
 * Invite contacts to the app by SMS or email.
-* Offline mode is semi-functional.
+* Offline mode is mostly functional.
 
 Does not work yet:
 
-* Editing of persomal details
+* Editing of personal details
 * Contact discovery is done but not debugged yet
-* Deleting topics and messages
-* No client support for typing notifications.
+* Deleting messages
+* No client support for typing notifications (they are sent but not shown in the UI).
 * No encryption
 
 Dependencies on the SDK side (otherwise plain Java):

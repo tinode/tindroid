@@ -57,6 +57,7 @@ public class ContactsManager {
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
         for (final Subscription<VCard, String> rawContact : rawContacts) {
+
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
             if (currentSyncMarker == null ||
@@ -65,11 +66,17 @@ public class ContactsManager {
             }
 
             long rawContactId = lookupRawContact(resolver, rawContact.topic);
-            // Contact already exists
-            if (rawContactId != 0) {
-                updateContact(context, resolver, rawContact, rawContactId, batchOperation);
+            if (rawContact.deleted != null) {
+                if (rawContactId > 0) {
+                    deleteContact(context, rawContactId, batchOperation);
+                }
             } else {
-                addContact(context, account, rawContact, invisibleGroupId, batchOperation);
+                // Contact already exists
+                if (rawContactId > 0) {
+                    updateContact(context, resolver, rawContact, rawContactId, batchOperation);
+                } else {
+                    addContact(context, account, rawContact, invisibleGroupId, batchOperation);
+                }
             }
             // A sync adapter should batch operations on multiple contacts,
             // because it will make a dramatic performance difference.

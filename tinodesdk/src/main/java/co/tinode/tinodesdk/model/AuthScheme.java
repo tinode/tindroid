@@ -22,7 +22,6 @@ public class AuthScheme {
         this.secret = secret;
     }
 
-
     @Override
     public String toString() {
         return scheme + ":" + secret;
@@ -36,6 +35,8 @@ public class AuthScheme {
                 if (scheme.contentEquals(LOGIN_BASIC) || scheme.contentEquals(LOGIN_TOKEN)) {
                     return new AuthScheme(scheme, st.nextToken());
                 }
+            } else {
+                throw new IllegalArgumentException();
             }
         }
         return null;
@@ -44,6 +45,10 @@ public class AuthScheme {
     public static String encodeBasicToken(String uname, String password) {
         // Encode string as base64
         try {
+            if (uname.contains(":")) {
+                throw new IllegalArgumentException("illegal character ':' in user name '" + uname + "'");
+            }
+            password = password == null ? "" : password;
             return Base64Variants.getDefaultVariant().encode((uname + ":" + password).getBytes("UTF-8"));
         } catch (UnsupportedEncodingException ignored) {}
         return null;
@@ -57,12 +62,17 @@ public class AuthScheme {
         } catch (UnsupportedEncodingException ignored) {
             return null;
         }
+
         // Split "login:password" into parts.
-        StringTokenizer st = new StringTokenizer(basicToken, ":");
-        if (st.countTokens() != 2) {
+        int splitAt = basicToken.indexOf(':');
+        if (splitAt <= 0) {
             return null;
         }
-        return new String[] { st.nextToken(), st.nextToken() };
+
+        return new String[] {
+                basicToken.substring(0, splitAt),
+                splitAt == basicToken.length() - 1 ? "" : basicToken.substring(splitAt+1, basicToken.length()-1)
+        };
     }
 
 

@@ -2,21 +2,13 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.database.Cursor;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.pchmn.materialchips.ChipsInput;
@@ -27,9 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -56,24 +45,6 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
 
     public EditMembersFragment() {
         mInitialMembers = new HashMap<>();
-
-        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
-                final Activity activity = getActivity();
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-                return null;
-            }
-        };
     }
 
     @Override
@@ -92,6 +63,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
 
         final Activity activity = getActivity();
 
+        mFailureListener = new UiUtils.ToastFailureListener(activity);
         mChipsInput = (ChipsInput) activity.findViewById(R.id.groupMembers);
 
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {

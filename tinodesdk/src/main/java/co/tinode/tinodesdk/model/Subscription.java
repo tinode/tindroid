@@ -14,6 +14,8 @@ import co.tinode.tinodesdk.Topic;
 public class Subscription<Pu,Pr> implements LocalData {
     public String user;
     public Date updated;
+    public Date deleted;
+
     public Acs acs;
     public int read;
     public int recv;

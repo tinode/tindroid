@@ -49,10 +49,6 @@ public class MessageActivity extends AppCompatActivity {
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    // private MessagesFragment mMsgFragment = null;
-    // private TopicInfoFragment mInfoFragment = null;
-    // private CreateGroupFragment mEditTopicFragment = null;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,22 +76,7 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
 
-        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(MessageActivity.this, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MessageActivity.this, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-                return null;
-            }
-        };
+        mFailureListener = new UiUtils.ToastFailureListener(this);
     }
 
     @Override
@@ -142,7 +123,7 @@ public class MessageActivity extends AppCompatActivity {
         // Get a known topic.
         mTopic = tinode.getTopic(mTopicName);
         if (mTopic != null) {
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopic.getTopicType(), mTopic.getOnline());
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.e(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
@@ -161,7 +142,7 @@ public class MessageActivity extends AppCompatActivity {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                                mTopic.getTopicType(), mTopic.getOnline());
+                                mTopicName, mTopic.getOnline());
                         mMessageSender.resume();
                         // Submit unsent messages for processing.
                         mMessageSender.submit(new Runnable() {
@@ -382,7 +363,7 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getTopicType(),
+                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
                             mTopic.getOnline());
 
                     TopicInfoFragment fragment = (TopicInfoFragment) getSupportFragmentManager().
@@ -399,7 +380,7 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getTopicType(),
+                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
                             mTopic.getOnline());
                 }
             });

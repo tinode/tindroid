@@ -151,4 +151,15 @@
     <string name="confirm_member_ban">Remove and ban %1$s from \"%2$s\"?</string>
     <string name="confirm_delete_topic">Do you really want to delete this conversation for everyone?</string>
     <string name="modeWriteOnly">write-only</string>
+    <string name="owner_cannot_unsubscribe">Owner cannot unsubscribe</string>
+    <string name="read_receipts_enabled">Send read receipts</string>
+    <string name="typing_notifications_enabled">Show typing notifications</string>
+    <string name="logout">Logout</string>
+    <string name="change_password">Change password</string>
+    <string name="account_settings">Account settings</string>
+    <string name="enter_new_password">Enter new password</string>
+    <string name="failed_empty_password">Not changed: empty password</string>
+    <string name="confirm_logout">Are you sure you want to logout?</string>
+    <string name="edit_account">Edit account name</string>
+    <string name="invalid_login">Login is invalid</string>
 </resources>

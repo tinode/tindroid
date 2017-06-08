@@ -73,9 +73,9 @@
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
         android:clickable="true"
-        android:drawableLeft="@drawable/ic_exit_grey"
+        android:drawableLeft="@drawable/ic_exit_gray"
         android:drawablePadding="4sp"
-        android:drawableStart="@drawable/ic_exit_grey"
+        android:drawableStart="@drawable/ic_exit_gray"
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/remove_from_group"/>

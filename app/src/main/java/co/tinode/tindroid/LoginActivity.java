@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -53,13 +55,18 @@ public class LoginActivity extends AppCompatActivity {
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
 
+    private static final String FRAGMENT_LOGIN = "login";
+    private static final String FRAGMENT_SIGNUP = "signup";
+    private static final String FRAGMENT_SETTINGS = "settings";
+
+    static final String PREFS_LAST_LOGIN = "pref_lastLogin";
+
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
     private Bundle mResultBundle = null;
-    public String mAccountName = null;
 
-    private LoginFragment mLoginFragment = null;
-    private SignUpFragment mSignUpFragment = null;
-    private LoginSettingsFragment mSettingsFragment = null;
+    //private LoginFragment mLoginFragment = null;
+    //private SignUpFragment mSignUpFragment = null;
+    //private LoginSettingsFragment mSettingsFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +83,7 @@ public class LoginActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showLoginFragment();
+                showFragment(FRAGMENT_LOGIN);
             }
         });
 
@@ -91,7 +98,7 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         // Display the login form.
-        showLoginFragment();
+        showFragment(FRAGMENT_LOGIN);
 
         // Request permission to access accounts. We need access to acccounts to store the login token.
         if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
@@ -170,11 +177,11 @@ public class LoginActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_settings: {
-                showSettingsFragment();
+                showFragment(FRAGMENT_SETTINGS);
                 return true;
             }
             case R.id.action_signup: {
-                showSignUpFragment();
+                showFragment(FRAGMENT_SIGNUP);
                 return true;
             }
             case R.id.action_about:
@@ -187,66 +194,28 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    /** Display the login form */
-    private void showLoginFragment() {
-        if (mLoginFragment == null) {
-            mLoginFragment = new LoginFragment();
+    private void showFragment(String tag) {
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentByTag(tag);
+        if (fragment == null) {
+            switch (tag) {
+                case FRAGMENT_LOGIN:
+                    fragment = new LoginFragment();
+                    break;
+                case FRAGMENT_SETTINGS:
+                    fragment = new LoginSettingsFragment();
+                    break;
+                case FRAGMENT_SIGNUP:
+                    fragment = new SignUpFragment();
+                    break;
+                default:
+                    throw new IllegalArgumentException();
+            }
         }
-        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, mLoginFragment);
-        trx.commit();
-    }
 
-    /** Display the sign up form */
-    private void showSignUpFragment() {
-        if (mSignUpFragment == null) {
-            mSignUpFragment = new SignUpFragment();
-        }
-        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, mSignUpFragment);
-        trx.commit();
-    }
-
-    /** Display the sign up form */
-    private void showSettingsFragment() {
-        if (mSettingsFragment == null) {
-            mSettingsFragment = new LoginSettingsFragment();
-        }
-        FragmentTransaction trx = getSupportFragmentManager().beginTransaction();
-        trx.replace(R.id.contentFragment, mSettingsFragment);
-        trx.commit();
-    }
-
-    /**
-     * Called when the account needs to be added
-     * @param account account t to be added
-     * @param password password
-     * @param token auth token
-     */
-    public void onTokenReceived(Account account, String password, String token) {
-        final AccountManager am = AccountManager.get(this);
-        final Bundle result = new Bundle();
-        if (am.addAccountExplicitly(account, password, new Bundle())) {
-            result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-            result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
-            result.putString(AccountManager.KEY_AUTHTOKEN, token);
-            am.setAuthToken(account, account.type, token);
-        } else {
-            result.putString(AccountManager.KEY_ERROR_MESSAGE, getString(R.string.account_already_exists));
-        }
-        setAccountAuthenticatorResult(result);
-        setResult(RESULT_OK);
-        finish();
-    }
-
-    /**
-     * Set the result that is to be sent as the result of the request that caused this
-     * Activity to be launched. If result is null or this method is never called then
-     * the request will be canceled.
-     * @param result this is returned as the result of the AbstractAccountAuthenticator request
-     */
-    public final void setAccountAuthenticatorResult(Bundle result) {
-        mResultBundle = result;
+        fm.beginTransaction()
+            .replace(R.id.contentFragment, fragment)
+            .commit();
     }
 
     /**

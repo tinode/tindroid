@@ -4,6 +4,7 @@ import android.*;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.os.Bundle;
@@ -29,9 +30,9 @@ public class SplashActivity extends AppCompatActivity {
         String uid = BaseDb.getInstance().getUid();
 
         if (!TextUtils.isEmpty(uid)) {
-            AccountManager accountManager = AccountManager.get(this);
+            final AccountManager accountManager = AccountManager.get(this);
             // If uid is non-null, get account to use it to login by saved token
-            Account account = getSavedAccount(accountManager, uid);
+            final Account account = UiUtils.getSavedAccount(this, accountManager, uid);
             if (account != null) {
                 // Check if sync is enabled.
                 if (ContentResolver.getMasterSyncAutomatically()) {
@@ -49,32 +50,5 @@ public class SplashActivity extends AppCompatActivity {
 
         startActivity(new Intent(this, LoginActivity.class));
         finish();
-    }
-
-    private Account getSavedAccount(final AccountManager accountManager, final @NonNull String uid) {
-        Account account = null;
-
-        // Run-time check for permission to GET_ACCOUNTS
-        if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
-            // Don't have permission. It's the first launch or the user denied access.
-            // Fail and go to full login. We should not ask for permission on the splash screen.
-            Log.d(TAG, "NO permission to get accounts");
-            return null;
-        }
-
-        // Have permission to access accounts. Let's find out if we already have a suitable account.
-        // If one is not found, go to full login. It will create an account with suitable name.
-        final Account[] availableAccounts = accountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
-        if (availableAccounts.length > 0) {
-            // Found some accounts, let's find the one with the right name
-            for (Account acc : availableAccounts) {
-                if (uid.equals(acc.name)) {
-                    account = acc;
-                    break;
-                }
-            }
-        }
-
-        return account;
     }
 }

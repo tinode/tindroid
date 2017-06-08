@@ -60,23 +60,6 @@ public class MessagesFragment extends Fragment {
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     public MessagesFragment() {
-        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
-                final Activity activity = getActivity();
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-                return null;
-            }
-        };
     }
 
     @Override
@@ -108,6 +91,8 @@ public class MessagesFragment extends Fragment {
         mMessageList.setAdapter(mMessagesAdapter);
 
         mLoaderCallbacks = new MessageLoaderCallbacks();
+
+        mFailureListener = new UiUtils.ToastFailureListener(getActivity());
 
         // Send message on button click
         getActivity().findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {

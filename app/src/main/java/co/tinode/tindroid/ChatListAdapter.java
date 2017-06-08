@@ -93,7 +93,6 @@ public class ChatListAdapter extends BaseAdapter {
         final Topic<VCard,String,String> topic = mTopics.get(position);
 
         holder.topic = topic.getName();
-
         VCard pub = topic.getPub();
         if (pub != null) {
             holder.name.setText(pub.fn);
@@ -112,16 +111,10 @@ public class ChatListAdapter extends BaseAdapter {
             holder.unreadCount.setVisibility(View.INVISIBLE);
         }
 
-        Bitmap bmp = pub != null ? pub.getBitmap() : null;
-        int res = -1;
-        Topic.TopicType topicType = topic.getTopicType();
-        if (topicType == Topic.TopicType.GRP) {
-            res = R.drawable.ic_group_circle;
-        } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
-            res = R.drawable.ic_person_circle;
-        }
-
-        UiUtils.assignBitmap(mContext, holder.icon, bmp, res);
+        UiUtils.assignBitmap(mContext, holder.icon,
+                pub != null ? pub.getBitmap() : null,
+                pub != null ? pub.fn : null,
+                holder.topic);
 
         holder.online.setColorFilter(topic.getOnline() ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
         //Log.d(TAG, "User " + topic.getName() + " is " + (topic.getOnline() ? "online" : "offline"));

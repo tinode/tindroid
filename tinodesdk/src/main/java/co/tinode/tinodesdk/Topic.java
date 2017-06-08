@@ -1314,21 +1314,32 @@ public class Topic<Pu,Pr,T> implements LocalData {
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
         for (Subscription<Pu,Pr> newsub : meta.sub) {
-            Subscription<Pu,Pr> sub = getSubscription(newsub.user);
-            if (sub != null) {
-                sub.merge(newsub);
-                if (mStore != null) {
-                    mStore.subUpdate(this, sub);
-                }
-            } else {
-                sub = newsub;
-                addSubToCache(sub);
-                if (mStore != null) {
-                    mStore.subAdd(this, sub);
-                }
-            }
+            Subscription<Pu, Pr> sub = null;
 
-            mTinode.updateUser(sub);
+            if (newsub.deleted != null) {
+                if (mStore != null) {
+                    mStore.subDelete(this, newsub);
+                }
+                removeSubFromCache(newsub);
+
+                sub = newsub;
+            } else {
+                sub = getSubscription(newsub.user);
+                if (sub != null) {
+                    sub.merge(newsub);
+                    if (mStore != null) {
+                        mStore.subUpdate(this, sub);
+                    }
+                } else {
+                    sub = newsub;
+                    addSubToCache(sub);
+                    if (mStore != null) {
+                        mStore.subAdd(this, sub);
+                    }
+                }
+
+                mTinode.updateUser(sub);
+            }
 
             if (mListener != null) {
                 mListener.onMetaSub(sub);

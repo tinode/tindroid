@@ -3,6 +3,9 @@ package co.tinode.tindroid;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -97,7 +100,16 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             case R.id.action_settings:
-                Log.d(TAG, "Edit user's profile");
+                FragmentManager fm = getActivity().getSupportFragmentManager();
+                Fragment fragment = fm.findFragmentByTag(ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
+                FragmentTransaction trx = fm.beginTransaction();
+                if (fragment == null) {
+                    fragment = new AccountInfoFragment();
+                    trx.add(R.id.contentFragment, fragment, ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
+                }
+                trx.addToBackStack(ContactsActivity.FRAGMENT_EDIT_ACCOUNT)
+                        .show(fragment)
+                        .commit();
                 break;
             case R.id.action_about:
                 DialogFragment about = new AboutDialogFragment();

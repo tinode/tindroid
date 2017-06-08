@@ -26,14 +26,27 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Display user's list of contacts
+ * Activity holds the following fragments:
+ *   ContactsFragment
+ *     ChatListFragment
+ *     ContactListFragment
+ *
+ *   AccountInfoFragment
+ *
+ * This activity owns 'me' topic.
  */
 public class ContactsActivity extends AppCompatActivity implements
-        ContactsFragment.OnContactsInteractionListener {
+        ContactListFragment.OnContactsInteractionListener {
 
     private static final String TAG = "ContactsActivity";
 
-    protected ChatListAdapter mChatListAdapter;
+    static final String FRAGMENT_CONTACTS = "contacts";
+    static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
+
+    private AccountInfoFragment mAccountInfoFragment;
+    private ContactsFragment mContactsFragment;
+
+    private ChatListAdapter mChatListAdapter;
 
     private MeListener mMeTopicListener = null;
 
@@ -43,28 +56,12 @@ public class ContactsActivity extends AppCompatActivity implements
 
         setContentView(R.layout.activity_contacts);
 
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        mContactsFragment = new ContactsFragment();
+        // mAccountInfoFragment = new AccountInfoFragment();
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabsContacts);
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.tabPager);
-        final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount());
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
-        });
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.contentFragment, mContactsFragment, FRAGMENT_CONTACTS)
+                .commit();
 
         mChatListAdapter = new ChatListAdapter(this);
         mMeTopicListener = new MeListener();
@@ -93,6 +90,9 @@ public class ContactsActivity extends AppCompatActivity implements
     public void onSelectionCleared() {
     }
 
+    /**
+     * onResume restores subscription to 'me' topic and sets listener.
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -101,7 +101,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         tinode.setListener(new UiUtils.EventListener(this, tinode.isConnected()));
 
-        UiUtils.setupToolbar(this, null, Topic.TopicType.ME, false);
+        UiUtils.setupToolbar(this, null, null, false);
 
         MeTopic<VCard, String, String> me = tinode.getMeTopic();
         if (me == null) {
@@ -231,40 +231,6 @@ public class ContactsActivity extends AppCompatActivity implements
         public void onSubsUpdated() {
             Log.d(TAG, "onSubsUpdated: datasetChanged");
             datasetChanged();
-        }
-    }
-
-    private class PagerAdapter extends FragmentStatePagerAdapter {
-        int mNumOfTabs;
-        Fragment mChatList;
-        Fragment mContacts;
-
-        PagerAdapter(FragmentManager fm, int numTabs) {
-            super(fm);
-            mNumOfTabs = numTabs;
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            switch (position) {
-                case 0:
-                    if (mChatList == null) {
-                        mChatList = new ChatListFragment();
-                    }
-                    return mChatList;
-                case 1:
-                    if (mContacts == null) {
-                        mContacts = new ContactsFragment();
-                    }
-                    return mContacts;
-                default:
-                    return null;
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return mNumOfTabs;
         }
     }
 }

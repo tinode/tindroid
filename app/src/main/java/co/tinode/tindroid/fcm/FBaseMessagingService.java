@@ -20,7 +20,7 @@ import java.util.Map;
 import co.tinode.tindroid.ContactsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.RoundImageDrawable;
+import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.VCard;
 import co.tinode.tindroid.account.ContactsManager;

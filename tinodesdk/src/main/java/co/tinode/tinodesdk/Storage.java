@@ -17,6 +17,8 @@ public interface Storage {
     String getMyUid();
     void setMyUid(String uid);
 
+    void logout();
+
     // Server time minus local time
     void setTimeAdjustment(long adjustment);
 

@@ -33,7 +33,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class LoginFragment extends Fragment  implements View.OnClickListener {
 
     private static final String TAG = "LoginFragment";
-    private AccountManager mAccountManager;
 
     public LoginFragment() {
     }
@@ -43,15 +42,16 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
 
-        ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        final ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(false);
         }
 
-        mAccountManager = AccountManager.get(getActivity().getBaseContext());
-
         View fragment = inflater.inflate(R.layout.fragment_login, container, false);
-        String login = ((LoginActivity) getActivity()).mAccountName;
+
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
+
         if (!TextUtils.isEmpty(login)) {
             TextView loginView = (TextView) fragment.findViewById(R.id.editLogin);
             if (loginView != null) {
@@ -116,6 +116,8 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                    sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
+
                                     final Account acc = addAndroidAccount(
                                             tinode.getMyId(),
                                             AuthScheme.basicInstance(login, password).toString(),
@@ -146,13 +148,14 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
 
 
     private Account addAndroidAccount(final String uid, final String secret, final String token) {
+        final AccountManager am = AccountManager.get(getActivity().getBaseContext());
         final Account acc = Utils.createAccount(uid);
-        mAccountManager.addAccountExplicitly(acc, secret, null);
+        am.addAccountExplicitly(acc, secret, null);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mAccountManager.notifyAccountAuthenticated(acc);
+            am.notifyAccountAuthenticated(acc);
         }
         if (!TextUtils.isEmpty(token)) {
-            mAccountManager.setAuthToken(acc, Utils.TOKEN_TYPE, token);
+            am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
         }
         return acc;
     }

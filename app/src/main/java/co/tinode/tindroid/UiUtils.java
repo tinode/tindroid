@@ -9,6 +9,7 @@ import android.accounts.OperationCanceledException;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -30,6 +31,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -37,10 +39,13 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.neovisionaries.ws.client.WebSocketException;
@@ -53,69 +58,98 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.widgets.LetterTileDrawable;
+import co.tinode.tindroid.widgets.OnlineDrawable;
+import co.tinode.tindroid.widgets.RoundImageDrawable;
+import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * Static utilities for UI support.
  */
 public class UiUtils {
+    static final int ACTION_UPDATE_SELF_SUB = 0;
+    static final int ACTION_UPDATE_SUB = 1;
+    static final int ACTION_UPDATE_AUTH = 2;
+    static final int ACTION_UPDATE_ANON = 3;
+    static final int SELECT_PICTURE = 1;
+    static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
+    static final String PREF_TYPING_NOTIF = "pref_typingNotif";
+    static final String PREF_READ_RCPT = "pref_readReceipts";
+    static final int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
+    static final int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
     private static final String TAG = "UiUtils";
-    // If StoredMessage activity is visible, this is the current topic in that activity.
-    public static String sVisibleTopic = null;
-
-    public static int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
-    public static int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
-
-    public static final int SELECT_PICTURE = 1;
-
     private static final int BITMAP_SIZE = 128;
+    // Material colors, shade #200.
+    // TODO(gene): maybe move to resource file
+    private static final Colorizer[] sColorizer = {
+            new Colorizer(0xffffffff, 0xff212121),
+            new Colorizer(0xffef9a9a, 0xff212121), new Colorizer(0xffc5e1a5, 0xff212121),
+            new Colorizer(0xff90caf9, 0xff212121), new Colorizer(0xfffff59d, 0xff212121),
+            new Colorizer(0xffb0bec5, 0xff212121), new Colorizer(0xfff48fb1, 0xff212121),
+            new Colorizer(0xffb39ddb, 0xff212121), new Colorizer(0xff9fa8da, 0xff212121),
+            new Colorizer(0xffffab91, 0xff212121), new Colorizer(0xffffe082, 0xff212121),
+            new Colorizer(0xffa5d6a7, 0xff212121), new Colorizer(0xffbcaaa4, 0xff212121),
+            new Colorizer(0xffeeeeee, 0xff212121), new Colorizer(0xff80deea, 0xff212121),
+            new Colorizer(0xffe6ee9c, 0xff212121), new Colorizer(0xffce93d8, 0xff212121)
+    };
 
-    public static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
+    private static final Colorizer[] sColorizerDark = {
+            new Colorizer(0xff424242, 0xffdedede),
+            new Colorizer(0xffC62828, 0xffdedede), new Colorizer(0xffAD1457, 0xffdedede),
+            new Colorizer(0xff6A1B9A, 0xffdedede), new Colorizer(0xff4527A0, 0xffdedede),
+            new Colorizer(0xff283593, 0xffdedede), new Colorizer(0xff1565C0, 0xffdedede),
+            new Colorizer(0xff0277BD, 0xffdedede), new Colorizer(0xff00838F, 0xffdedede),
+            new Colorizer(0xff00695C, 0xffdedede), new Colorizer(0xff2E7D32, 0xffdedede),
+            new Colorizer(0xff558B2F, 0xffdedede), new Colorizer(0xff9E9D24, 0xff212121),
+            new Colorizer(0xffF9A825, 0xff212121), new Colorizer(0xffFF8F00, 0xff212121),
+            new Colorizer(0xffEF6C00, 0xffdedede), new Colorizer(0xffD84315, 0xffdedede),
+            new Colorizer(0xff4E342E, 0xffdedede), new Colorizer(0xff37474F, 0xffdedede)
+    };
 
-    public static void setupToolbar(final Activity activity, VCard pub,
-                                    Topic.TopicType topicType, boolean online) {
+    private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
+    private static final int COLOR_RED_BORDER = 0xFFE57373;
+    private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
+    private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
+    private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
+    // If StoredMessage activity is visible, this is the current topic in that activity.
+    static String sVisibleTopic = null;
+
+    static void setupToolbar(final Activity activity, VCard pub,
+                             String topicName, boolean online) {
         final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
         }
 
         if (pub != null) {
+            Topic.TopicType topicType = Topic.getTopicTypeByName(topicName);
+
             toolbar.setTitle(" " + pub.fn);
 
             pub.constructBitmap();
             Bitmap bmp = pub.getBitmap();
+            Drawable drw;
             if (bmp != null) {
-                toolbar.setLogo(
-                        new LayerDrawable(
-                                new Drawable[] {new RoundImageDrawable(bmp), new OnlineDrawable(online)}));
+                drw = new RoundImageDrawable(bmp);
             } else {
-                Drawable drw;
-                int res = -1;
-                if (topicType == Topic.TopicType.GRP) {
-                    res = R.drawable.ic_group_circle;
-                } else if (topicType == Topic.TopicType.P2P || topicType == Topic.TopicType.ME) {
-                    res = R.drawable.ic_person_circle;
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    drw = activity.getResources().getDrawable(res, activity.getTheme());
-                } else {
-                    drw = activity.getResources().getDrawable(res);
-                }
-                if (drw != null) {
-                    LayerDrawable ld = new LayerDrawable(
-                            new Drawable[] {drw, new OnlineDrawable(online)});
-                    invertDrawable(drw);
-                    toolbar.setLogo(ld);
-                }
+                drw = new LetterTileDrawable(activity.getResources())
+                        .setLetterAndColor(pub.fn, topicName)
+                        .setContactTypeAndColor(topicType == Topic.TopicType.P2P ?
+                            LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP);
             }
+            toolbar.setLogo(
+                    new LayerDrawable(new Drawable[]{drw, new OnlineDrawable(online)}));
         } else {
             toolbar.setLogo(null);
             toolbar.setTitle(R.string.app_name);
@@ -132,34 +166,19 @@ public class UiUtils {
 
         drw.setColorFilter(new ColorMatrixColorFilter(NEGATIVE));
     }
-    /*
-    public static void setOnlineStatus(final AppCompatActivity activity, boolean online) {
-        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
-        if (toolbar == null) {
-            return;
-        }
-
-        LayerDrawable logo = (LayerDrawable) toolbar.getLogo();
-        if (logo != null) {
-            OnlineDrawable indicator = (OnlineDrawable) logo.getDrawable(1);
-            if (indicator != null) {
-                indicator.setOnline(online);
-                toolbar.setLogo(logo);
-            }
-        }
-    }
-    */
 
     public static String getVisibleTopic() {
         return sVisibleTopic;
     }
 
-    public static void setVisibleTopic(String topic) {
+    static void setVisibleTopic(String topic) {
         sVisibleTopic = topic;
     }
 
-    /** Login successful. Show contacts activity */
-    public static void onLoginSuccess(Activity activity, final Button button) {
+    /**
+     * Login successful. Show contacts activity
+     */
+    static void onLoginSuccess(Activity activity, final Button button) {
         if (button != null) {
             activity.runOnUiThread(new Runnable() {
                 public void run() {
@@ -173,14 +192,14 @@ public class UiUtils {
         activity.finish();
     }
 
-    public static boolean checkPermission(Context context, String permission) {
+    static boolean checkPermission(Context context, String permission) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
-    public static void loginWithSavedAccount(final Activity activity,
-                                              final AccountManager accountManager,
-                                              final Account account) {
+    static void loginWithSavedAccount(final Activity activity,
+                                      final AccountManager accountManager,
+                                      final Account account) {
         accountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
             @Override
             public void run(AccountManagerFuture<Bundle> future) {
@@ -218,8 +237,7 @@ public class UiUtils {
                             // If we have UID, go to Contacts, otherwise to Login
                             success = BaseDb.getInstance().isReady();
                             Log.d(TAG, "Network failure/" + (success ? "DB ready" : "DB NOT ready"));
-                        }
-                        catch (Exception ignored) {
+                        } catch (Exception ignored) {
                             Log.d(TAG, "Other failure", ignored);
                             // Login failed due to invalid (expired) token
                             accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
@@ -229,6 +247,34 @@ public class UiUtils {
                 activity.startActivity(new Intent(activity, success ? ContactsActivity.class : LoginActivity.class));
             }
         }, null);
+    }
+
+    static Account getSavedAccount(final Activity activity, final AccountManager accountManager,
+                                   final @NonNull String uid) {
+        Account account = null;
+
+        // Run-time check for permission to GET_ACCOUNTS
+        if (!UiUtils.checkPermission(activity, android.Manifest.permission.GET_ACCOUNTS)) {
+            // Don't have permission. It's the first launch or the user denied access.
+            // Fail and go to full login. We should not ask for permission on the splash screen.
+            Log.d(TAG, "NO permission to get accounts");
+            return null;
+        }
+
+        // Have permission to access accounts. Let's find out if we already have a suitable account.
+        // If one is not found, go to full login. It will create an account with suitable name.
+        final Account[] availableAccounts = accountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
+        if (availableAccounts.length > 0) {
+            // Found some accounts, let's find the one with the right name
+            for (Account acc : availableAccounts) {
+                if (uid.equals(acc.name)) {
+                    account = acc;
+                    break;
+                }
+            }
+        }
+
+        return account;
     }
 
     public static void setConnectedStatus(final Activity activity, final boolean online) {
@@ -316,7 +362,7 @@ public class UiUtils {
     }
 
     public static boolean acceptAvatar(final ImageView avatar, final Bitmap bmp) {
-        avatar.setImageBitmap(scaleSquareBitmap(bmp));
+        avatar.setImageDrawable(new RoundImageDrawable(scaleSquareBitmap(bmp)));
         return true;
     }
 
@@ -329,56 +375,17 @@ public class UiUtils {
         return acceptAvatar(avatar, bmp);
     }
 
-    public static void assignBitmap(Context context, ImageView icon, Bitmap bmp, int defaultDrawable) {
+    public static void assignBitmap(Context context, ImageView icon, Bitmap bmp, String name, String address) {
         if (bmp != null) {
             icon.setImageDrawable(new RoundImageDrawable(bmp));
         } else {
-            Drawable drw;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                drw = context.getResources().getDrawable(defaultDrawable, context.getTheme());
-            } else {
-                drw = context.getResources().getDrawable(defaultDrawable);
-            }
-            if (drw != null) {
-                icon.setImageDrawable(drw);
-            }
-        }
-    }
-
-    public static class EventListener extends Tinode.EventListener {
-        private AppCompatActivity mActivity = null;
-        private Boolean mOnline = null;
-
-        public EventListener(AppCompatActivity owner, Boolean online) {
-            super();
-            mActivity = owner;
-            mOnline = online;
-        }
-
-        @Override
-        public void onConnect(int code, String reason, Map<String, Object> params) {
-            // Show that we are connected
-            setOnlineStatus(true);
-        }
-
-        @Override
-        public void onDisconnect(boolean byServer, int code, String reason) {
-            // Show that we are disconnected
-            if (code <= 0) {
-                Log.d(TAG, "Network error");
-            } else {
-                Log.d(TAG, "Tinode error: " + code);
-            }
-            setOnlineStatus(false);
-        }
-
-        private void setOnlineStatus(final boolean online) {
-            if (mActivity != null && (mOnline == null || online != mOnline)) {
-                mOnline = online;
-                UiUtils.setConnectedStatus(mActivity, online);
-            } else {
-                mOnline = null;
-            }
+            LetterTileDrawable drawable = new LetterTileDrawable(context.getResources());
+            drawable.setContactTypeAndColor(
+                    Topic.getTopicTypeByName(address) == Topic.TopicType.P2P ?
+                            LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP)
+                    .setLetterAndColor(name, address)
+                    .setIsCircular(true);
+            icon.setImageDrawable(drawable);
         }
     }
 
@@ -473,42 +480,6 @@ public class UiUtils {
         return (int) typedValue.getDimension(metrics);
     }
 
-    // Material colors, shade #200.
-    // TODO(gene): maybe move to resource file
-    private static final Colorizer[] sColorizer = {
-            new Colorizer(0xffffffff, 0xff212121),
-            new Colorizer(0xffef9a9a, 0xff212121), new Colorizer(0xffc5e1a5, 0xff212121),
-            new Colorizer(0xff90caf9, 0xff212121), new Colorizer(0xfffff59d, 0xff212121),
-            new Colorizer(0xffb0bec5, 0xff212121), new Colorizer(0xfff48fb1, 0xff212121),
-            new Colorizer(0xffb39ddb, 0xff212121), new Colorizer(0xff9fa8da, 0xff212121),
-            new Colorizer(0xffffab91, 0xff212121), new Colorizer(0xffffe082, 0xff212121),
-            new Colorizer(0xffa5d6a7, 0xff212121), new Colorizer(0xffbcaaa4, 0xff212121),
-            new Colorizer(0xffeeeeee, 0xff212121), new Colorizer(0xff80deea, 0xff212121),
-            new Colorizer(0xffe6ee9c, 0xff212121), new Colorizer(0xffce93d8, 0xff212121)
-    };
-    private static final Colorizer[] sColorizerDark = {
-            new Colorizer(0xff424242, 0xffdedede),
-            new Colorizer(0xffC62828, 0xffdedede), new Colorizer(0xffAD1457, 0xffdedede),
-            new Colorizer(0xff6A1B9A, 0xffdedede), new Colorizer(0xff4527A0, 0xffdedede),
-            new Colorizer(0xff283593, 0xffdedede), new Colorizer(0xff1565C0, 0xffdedede),
-            new Colorizer(0xff0277BD, 0xffdedede), new Colorizer(0xff00838F, 0xffdedede),
-            new Colorizer(0xff00695C, 0xffdedede), new Colorizer(0xff2E7D32, 0xffdedede),
-            new Colorizer(0xff558B2F, 0xffdedede), new Colorizer(0xff9E9D24, 0xff212121),
-            new Colorizer(0xffF9A825, 0xff212121), new Colorizer(0xffFF8F00, 0xff212121),
-            new Colorizer(0xffEF6C00, 0xffdedede), new Colorizer(0xffD84315, 0xffdedede),
-            new Colorizer(0xff4E342E, 0xffdedede), new Colorizer(0xff37474F, 0xffdedede)
-    };
-
-    public static class Colorizer {
-        int bg;
-        int fg;
-
-        Colorizer(int bg, int fg) {
-            this.bg = bg;
-            this.fg = fg;
-        }
-    }
-
     public static Colorizer getColorsFor(int index) {
         if (index >= sColorizer.length) {
             index = index % sColorizer.length;
@@ -522,22 +493,6 @@ public class UiUtils {
         }
         return sColorizerDark[index];
     }
-
-    public static class AccessModeLabel {
-        public int nameId;
-        public int color;
-
-        public AccessModeLabel(int nameId, int color) {
-            this.nameId = nameId;
-            this.color = color;
-        }
-    }
-
-    private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
-    private static final int COLOR_RED_BORDER = 0xFFE57373;
-    private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
-    private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
-    private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
 
     public static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
         ArrayList<AccessModeLabel> result = new ArrayList<>(2);
@@ -574,6 +529,182 @@ public class UiUtils {
                 result.toArray(new AccessModeLabel[result.size()]) : null;
     }
 
+    static List<Chip> createChipsInputFilteredList(Cursor cursor) {
+        List<Chip> list = new ArrayList<>();
+
+        if (cursor != null) {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                final String uid = cursor.getString(UiUtils.ContactsQuery.IM_HANDLE);
+                final String uriString = cursor.getString(UiUtils.ContactsQuery.PHOTO_THUMBNAIL_DATA);
+                final Uri photoUri = uriString == null ? null : Uri.parse(uriString);
+                final String displayName = cursor.getString(UiUtils.ContactsQuery.DISPLAY_NAME);
+                list.add(new Chip(uid, photoUri, displayName, null));
+                cursor.moveToNext();
+            }
+        }
+
+        return list;
+    }
+
+    static void showEditPermissions(final Activity activity, final Topic topic,
+                                    @NonNull final String mode,
+                                    final String uid, final int what,
+                                    boolean noOwner) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
+        final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
+        builder
+                .setView(editor)
+                .setTitle(R.string.edit_permissions);
+        final LinkedHashMap<Character, Integer> checks = new LinkedHashMap<>(7);
+        checks.put('O', R.string.permission_owner);
+        checks.put('J', R.string.permission_join);
+        checks.put('R', R.string.permission_read);
+        checks.put('W', R.string.permission_write);
+        checks.put('A', R.string.permission_approve);
+        checks.put('S', R.string.permission_share);
+        checks.put('P', R.string.permission_notifications);
+        checks.put('D', R.string.permission_delete);
+        View.OnClickListener checkListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean checked = !((CheckedTextView) view).isChecked();
+                ((CheckedTextView) view).setChecked(checked);
+            }
+        };
+        for (Character key : checks.keySet()) {
+            if (noOwner && key.equals('O')) {
+                continue;
+            }
+            CheckedTextView check = (CheckedTextView) inflater.inflate(R.layout.edit_one_permission, editor, false);
+            check.setChecked(mode.contains(key.toString()));
+            check.setText(checks.get(key));
+            check.setTag(key);
+            check.setOnClickListener(checkListener);
+            editor.addView(check, editor.getChildCount());
+        }
+
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                StringBuilder newAcsStr = new StringBuilder();
+                for (int i = 0; i < editor.getChildCount(); i++) {
+                    CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
+                    if (check.isChecked()) {
+                        newAcsStr.append(check.getTag());
+                    }
+                }
+                if (newAcsStr.length() == 0) {
+                    newAcsStr.append('N');
+                }
+                Log.d(TAG, "New access mode: " + newAcsStr);
+                try {
+                    PromisedReply reply = null;
+                    switch (what) {
+                        case ACTION_UPDATE_SELF_SUB:
+                            reply = topic.updateMode(null, newAcsStr.toString());
+                            break;
+                        case ACTION_UPDATE_SUB:
+                            reply = topic.updateMode(uid, newAcsStr.toString());
+                            break;
+                        case ACTION_UPDATE_AUTH:
+                            reply = topic.updateDefAcs(newAcsStr.toString(), null);
+                            break;
+                        case ACTION_UPDATE_ANON:
+                            reply = topic.updateDefAcs(null, newAcsStr.toString());
+                    }
+
+                    if (reply != null) {
+                        ((PromisedReply<ServerMessage>) reply).thenApply(null, new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                return null;
+                            }
+                        });
+                    }
+                } catch (NotConnectedException ignored) {
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception ignored) {
+                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.show();
+    }
+
+    static boolean updateAvatar(final Activity activity, final Topic<VCard, ?, ?> topic, final Intent data) {
+        Bitmap bmp = UiUtils.extractBitmap(activity, data);
+        if (bmp == null) {
+            Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        VCard pub = topic.getPub();
+        if (pub != null) {
+            pub = pub.copy();
+        } else {
+            pub = new VCard();
+        }
+
+        pub.setBitmap(bmp);
+        try {
+            topic.setDescription(pub, null).thenApply(null, new ToastFailureListener(activity));
+        } catch (NotConnectedException ignored) {
+            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+            return false;
+        } catch (Exception ignored) {
+            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    static boolean updateTitle(final Activity activity, Topic<VCard, String, ?> topic, String title, String priv) {
+        VCard pub = null;
+        if (title != null) {
+            pub = topic.getPub();
+            if (pub == null) {
+                pub = new VCard();
+            } else {
+                pub = pub.copy();
+            }
+            if (title.equals(pub.fn)) {
+                pub = null;
+            } else {
+                pub.fn = title;
+            }
+        }
+
+        if (priv != null) {
+            String oldPriv = topic.getPriv();
+            if (priv.equals(oldPriv)) {
+                priv = null;
+            }
+        }
+
+        if (pub != null || priv != null) {
+            try {
+                topic.setDescription(pub, priv).thenApply(null, new ToastFailureListener(activity));
+            } catch (NotConnectedException ignored) {
+                Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                return false;
+            } catch (Exception ignored) {
+                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+        Log.d(TAG, "OK");
+
+        return true;
+    }
+
     interface ContactsQuery {
         String[] PROJECTION = {
                 ContactsContract.Data._ID,
@@ -605,6 +736,63 @@ public class UiUtils {
 
     interface ContactsLoaderResultReceiver {
         void receiveResult(int id, Cursor c);
+    }
+
+    public static class EventListener extends Tinode.EventListener {
+        private AppCompatActivity mActivity = null;
+        private Boolean mOnline = null;
+
+        public EventListener(AppCompatActivity owner, Boolean online) {
+            super();
+            mActivity = owner;
+            mOnline = online;
+        }
+
+        @Override
+        public void onConnect(int code, String reason, Map<String, Object> params) {
+            // Show that we are connected
+            setOnlineStatus(true);
+        }
+
+        @Override
+        public void onDisconnect(boolean byServer, int code, String reason) {
+            // Show that we are disconnected
+            if (code <= 0) {
+                Log.d(TAG, "Network error");
+            } else {
+                Log.d(TAG, "Tinode error: " + code);
+            }
+            setOnlineStatus(false);
+        }
+
+        private void setOnlineStatus(final boolean online) {
+            if (mActivity != null && (mOnline == null || online != mOnline)) {
+                mOnline = online;
+                UiUtils.setConnectedStatus(mActivity, online);
+            } else {
+                mOnline = null;
+            }
+        }
+    }
+
+    public static class Colorizer {
+        int bg;
+        int fg;
+
+        Colorizer(int bg, int fg) {
+            this.bg = bg;
+            this.fg = fg;
+        }
+    }
+
+    public static class AccessModeLabel {
+        public int nameId;
+        public int color;
+
+        public AccessModeLabel(int nameId, int color) {
+            this.nameId = nameId;
+            this.color = color;
+        }
     }
 
     static class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -648,21 +836,26 @@ public class UiUtils {
         }
     }
 
-    static List<Chip> createChipsInputFilteredList(Cursor cursor) {
-        List<Chip> list = new ArrayList<>();
+    static class ToastFailureListener extends PromisedReply.FailureListener<ServerMessage> {
+        private Activity mActivity;
 
-        if (cursor != null) {
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                final String uid = cursor.getString(UiUtils.ContactsQuery.IM_HANDLE);
-                final String uriString = cursor.getString(UiUtils.ContactsQuery.PHOTO_THUMBNAIL_DATA);
-                final Uri photoUri = uriString == null ? null : Uri.parse(uriString);
-                final String displayName = cursor.getString(UiUtils.ContactsQuery.DISPLAY_NAME);
-                list.add(new Chip(uid, photoUri, displayName, null));
-                cursor.moveToNext();
-            }
+        public ToastFailureListener(Activity activity) {
+            mActivity = activity;
         }
 
-        return list;
+        @Override
+        public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (err instanceof NotConnectedException) {
+                        Toast.makeText(mActivity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            return null;
+        }
     }
 }

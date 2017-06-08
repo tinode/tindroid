@@ -12,12 +12,13 @@ public class MsgClientAcc<Pu,Pr> {
     public String secret;
     // Use the new account for immediate authentication.
     public Boolean login;
-    // Account parameters
+    // New account parameters
     public MetaSetDesc<Pu,Pr> desc;
 
-    public MsgClientAcc(String id, String scheme, String secret, boolean login, MetaSetDesc<Pu, Pr> desc) {
+    public MsgClientAcc(String id, String uid, String scheme, String secret, boolean login,
+                        MetaSetDesc<Pu, Pr> desc) {
         this.id = id;
-        this.user = USER_NEW;
+        this.user = uid == null ? USER_NEW : uid;
         this.scheme = scheme;
         this.secret = secret;
         this.login = login;
