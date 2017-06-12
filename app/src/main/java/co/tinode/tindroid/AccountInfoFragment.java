@@ -18,6 +18,8 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
@@ -43,6 +45,12 @@ public class AccountInfoFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.d(TAG, "AccountInfoFragment.onCreateView");
@@ -51,12 +59,19 @@ public class AccountInfoFragment extends Fragment {
 
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_account_info, container, false);
-        activity.setSupportActionBar((Toolbar) fragment.findViewById(R.id.toolbar));
+        Toolbar toolbar = (Toolbar) fragment.findViewById(R.id.toolbar);
+        activity.setSupportActionBar(toolbar);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
-            bar.setTitle(R.string.account_settings);
             bar.setDisplayHomeAsUpEnabled(true);
         }
+        toolbar.setTitle(R.string.account_settings);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            getFragmentManager().popBackStack();
+            }
+        });
         return fragment;
     }
 
@@ -240,5 +255,10 @@ public class AccountInfoFragment extends Fragment {
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
             UiUtils.updateAvatar(getActivity(), me, data);
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
     }
 }

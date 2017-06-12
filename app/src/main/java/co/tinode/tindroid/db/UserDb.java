@@ -94,19 +94,8 @@ public class UserDb implements BaseColumns {
      *
      * @return ID of the newly added user
      */
-    public static long insert(SQLiteDatabase db, Subscription sub) {
-        // Log.d(TAG, "Inserting user " + sub.user);
-
-        // Convert subscription description to a map of values
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
-        values.put(COLUMN_NAME_UID, sub.user);
-        values.put(COLUMN_NAME_UPDATED, (sub.updated != null ? sub.updated : new Date()).getTime());
-        // values.put(COLUMN_NAME_DELETED, NULL);
-        if (sub.pub != null) {
-            values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
-        }
-        return db.insert(TABLE_NAME, null, values);
+    static long insert(SQLiteDatabase db, Subscription sub) {
+        return insert(db, sub.user, sub.updated, sub.pub);
     }
 
     /**
@@ -114,14 +103,15 @@ public class UserDb implements BaseColumns {
      *
      * @return ID of the newly added user
      */
-    public static long insert(SQLiteDatabase db, String uid, Object pub) {
+    static long insert(SQLiteDatabase db, String uid, Date updated, Object pub) {
         // Log.d(TAG, "Inserting user " + uid + " from invite");
 
         // Convert subscription description to a map of values
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
         values.put(COLUMN_NAME_UID, uid);
-        values.put(COLUMN_NAME_UPDATED, new Date().getTime());
+        values.put(COLUMN_NAME_UPDATED,
+                updated == null ? new Date().getTime() : updated.getTime() );
         // values.put(COLUMN_NAME_DELETED, NULL);
         if (pub != null) {
             values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(pub));
@@ -129,6 +119,20 @@ public class UserDb implements BaseColumns {
         return db.insert(TABLE_NAME, null, values);
     }
 
+    /**
+     * Save user to DB
+     *
+     * @return ID of the newly added user
+     */
+    static <Pu> long insert(SQLiteDatabase db, User<Pu> user) {
+        long id = insert(db, user.uid, user.updated, user.pub);
+        if (id > 0) {
+            StoredUser su = new StoredUser();
+            su.id = id;
+            user.setLocal(su);
+        }
+        return id;
+    }
 
     /**
      * Update user record
@@ -136,25 +140,38 @@ public class UserDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     public static boolean update(SQLiteDatabase db, Subscription sub) {
-
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
-        if (ss == null || ss.userId <= 0) {
-            return false;
-        }
+        return !(ss == null || ss.userId <= 0) && update(db, ss.userId, sub.updated, sub.pub);
+    }
+
+    /**
+     * Update user record
+     *
+     * @return true if the record was updated, false otherwise
+     */
+    public static boolean update(SQLiteDatabase db, User user) {
+        StoredUser su = (StoredUser) user.getLocal();
+        return !(su == null || su.id <= 0) && update(db, su.id, user.updated, user.pub);
+    }
+
+    /**
+     * Update user record
+     *
+     * @return true if the record was updated, false otherwise
+     */
+    public static boolean update(SQLiteDatabase db, long userId, Date updated, Object pub) {
 
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
-        if (sub.updated != null) {
-            values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
+        if (updated != null) {
+            values.put(COLUMN_NAME_UPDATED, updated.getTime());
         }
         // values.put(COLUMN_NAME_DELETED, NULL);
-        if (sub.pub != null) {
-            values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(sub.pub));
+        if (pub != null) {
+            values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(pub));
         }
 
-        return values.size() <= 0 || db.update(TABLE_NAME, values, _ID + "=" + ss.userId, null) > 0;
-
-        // Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() + " name=" + sub.user + " returned " + updated);
+        return values.size() <= 0 || db.update(TABLE_NAME, values, _ID + "=" + userId, null) > 0;
     }
 
     /**
@@ -173,7 +190,7 @@ public class UserDb implements BaseColumns {
                         COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
                         " AND " +
                         COLUMN_NAME_UID + "='" + uid + "'";
-        Log.d(TAG, sql);
+        // Log.d(TAG, sql);
         Cursor c = db.rawQuery(sql, null);
         if (c != null && c.getCount() > 0) {
             if (c.moveToFirst()) {

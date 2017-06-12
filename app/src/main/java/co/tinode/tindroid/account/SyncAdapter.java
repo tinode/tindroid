@@ -120,7 +120,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             // Don't care if it's resolved or rejected
             tinode.subscribe(Tinode.TOPIC_ME, null, null).waitResult();
 
-            final MsgGetMeta meta = new MsgGetMeta(null, new MetaGetSub(null, null), null);
+            final MsgGetMeta meta = MsgGetMeta.sub();
             // FIXME(gene): The following is commented out for debugging
             // MsgGetMeta meta = new MsgGetMeta(null, new MetaGetSub(getServerSyncMarker(account), null), null);
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_ME, meta);
@@ -136,7 +136,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                         updated.add(sub);
                     }
                 }
-                Date upd = ContactsManager.updateContacts(mContext, account, updated, meta.sub.ims, invisibleGroupId);
+                Date upd = ContactsManager.updateContacts(mContext, account, updated,
+                        meta.sub == null ? null : meta.sub.ims, invisibleGroupId);
                 setServerSyncMarker(account, upd);
             }
         } catch (IOException e) {

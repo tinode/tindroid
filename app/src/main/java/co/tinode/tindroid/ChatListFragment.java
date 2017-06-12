@@ -34,12 +34,12 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.fragment_chat_list, container, false);
     }
 
@@ -77,7 +77,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        super.onCreateOptionsMenu(menu, inflater);
+        // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.menu_chat_list, menu);
     }
@@ -100,16 +100,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             case R.id.action_settings:
-                FragmentManager fm = getActivity().getSupportFragmentManager();
-                Fragment fragment = fm.findFragmentByTag(ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
-                FragmentTransaction trx = fm.beginTransaction();
-                if (fragment == null) {
-                    fragment = new AccountInfoFragment();
-                    trx.add(R.id.contentFragment, fragment, ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
-                }
-                trx.addToBackStack(ContactsActivity.FRAGMENT_EDIT_ACCOUNT)
-                        .show(fragment)
-                        .commit();
+                ((ContactsActivity)getActivity()).showAccountInfoFragment();
                 break;
             case R.id.action_about:
                 DialogFragment about = new AboutDialogFragment();

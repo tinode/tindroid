@@ -37,6 +37,7 @@ public class LetterTileDrawable extends Drawable {
     private static final Rect sRect = new Rect();
     private static final char[] sFirstChar = new char[1];
 
+    private static final int INTRINSIC_SIZE = 128;
     /**
      * Letter tile
      */
@@ -51,7 +52,7 @@ public class LetterTileDrawable extends Drawable {
 
     private final Paint mPaint;
     private int mContactType = TYPE_DEFAULT;
-    private float mScale = 0.8f;
+    private float mScale = 0.7f;
     private float mOffset = 0.0f;
     private boolean mIsCircle = true;
 
@@ -66,7 +67,7 @@ public class LetterTileDrawable extends Drawable {
             sDefaultColor = res.getColor(R.color.grey);
             sTileFontColorLight = res.getColor(R.color.letter_tile_text_color_light);
             sTileFontColorDark = res.getColor(R.color.letter_tile_text_color_dark);
-            sLetterToTileRatio = 0.67f;
+            sLetterToTileRatio = 0.75f;
             DEFAULT_PERSON_AVATAR = BitmapFactory.decodeResource(res,
                     R.drawable.ic_person_white);
             DEFAULT_GROUP_AVATAR = BitmapFactory.decodeResource(res,
@@ -196,6 +197,17 @@ public class LetterTileDrawable extends Drawable {
     @Override
     public int getOpacity() {
         return android.graphics.PixelFormat.OPAQUE;
+    }
+
+    @Override
+    public int getIntrinsicWidth() {
+        // This has to be set otherwise it does not show in toolbar
+        return INTRINSIC_SIZE;
+    }
+
+    @Override
+    public int getIntrinsicHeight() {
+        return INTRINSIC_SIZE;
     }
 
     /**

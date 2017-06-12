@@ -134,7 +134,7 @@ public class MessageActivity extends AppCompatActivity {
         if (!mTopic.isAttached()) {
             try {
                 mTopic.subscribe(null,
-                        mTopic.subscribeParamGetBuilder()
+                        mTopic.getMetaGetBuilder()
                                 .withGetDesc()
                                 .withGetSub()
                                 .withGetData()

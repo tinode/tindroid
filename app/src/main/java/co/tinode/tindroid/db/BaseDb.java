@@ -17,7 +17,6 @@ import java.io.ObjectOutputStream;
 
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tinodesdk.model.Acs;
-import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Defacs;
 
 /**
@@ -48,7 +47,9 @@ public class BaseDb extends SQLiteOpenHelper {
 
     private SqlStore mStore = null;
 
-    /** Private constructor */
+    /**
+     * Private constructor
+     */
     private BaseDb(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -65,77 +66,6 @@ public class BaseDb extends SQLiteOpenHelper {
             sInstance.mStore = new SqlStore(sInstance);
         }
         return sInstance;
-    }
-
-    public String getUid() {
-        return mAcc != null ? mAcc.uid : null;
-    }
-
-    public boolean isReady() {
-        return mAcc != null;
-    }
-
-    public void setUid(String uid) {
-        if (mAcc == null) {
-            mAcc = AccountDb.addOrActivateAccount(sInstance.getReadableDatabase(), uid);
-        } else if (!mAcc.uid.equals(uid)) {
-            // It won't work if the account is switched on a live DB.
-            throw new IllegalStateException("Illegal account assignment");
-        }
-    }
-
-    /**
-     * Get an instance of {@link SqlStore} to use by  Tinode core for persistence.
-     *
-     * @return instance of {@link SqlStore}
-     */
-    public SqlStore getStore() {
-        return mStore;
-    }
-
-    long getAccountId() {
-        return mAcc.id;
-    }
-
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL(AccountDb.CREATE_TABLE);
-        db.execSQL(AccountDb.CREATE_INDEX_1);
-        db.execSQL(AccountDb.CREATE_INDEX_2);
-        db.execSQL(TopicDb.CREATE_TABLE);
-        db.execSQL(TopicDb.CREATE_INDEX);
-        db.execSQL(UserDb.CREATE_TABLE);
-        db.execSQL(UserDb.CREATE_INDEX);
-        db.execSQL(SubscriberDb.CREATE_TABLE);
-        db.execSQL(SubscriberDb.CREATE_INDEX);
-        db.execSQL(MessageDb.CREATE_TABLE);
-        db.execSQL(MessageDb.CREATE_INDEX);
-    }
-
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // This is just a cache. Drop then re-fetch everything from the server.
-        db.execSQL(MessageDb.DROP_INDEX);
-        db.execSQL(MessageDb.DROP_TABLE);
-        db.execSQL(SubscriberDb.DROP_INDEX);
-        db.execSQL(SubscriberDb.DROP_TABLE);
-        db.execSQL(UserDb.DROP_INDEX);
-        db.execSQL(UserDb.DROP_TABLE);
-        db.execSQL(TopicDb.DROP_INDEX);
-        db.execSQL(TopicDb.DROP_TABLE);
-        db.execSQL(AccountDb.DROP_INDEX_2);
-        db.execSQL(AccountDb.DROP_INDEX_1);
-        db.execSQL(AccountDb.DROP_TABLE);
-        onCreate(db);
-    }
-
-    @Override
-    public void onConfigure(SQLiteDatabase db){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            db.setForeignKeyConstraintsEnabled(true);
-        } else {
-            db.execSQL("PRAGMA foreign_keys = ON;");
-        }
     }
 
     static byte[] serialize(Object obj) {
@@ -233,7 +163,7 @@ public class BaseDb extends SQLiteOpenHelper {
         return result;
     }
 
-    static boolean updateCounter(SQLiteDatabase db, String table, String column, long id,  int counter) {
+    static boolean updateCounter(SQLiteDatabase db, String table, String column, long id, int counter) {
         ContentValues values = new ContentValues();
         values.put(column, counter);
         return db.update(table, values, BaseColumns._ID + "=" + id + " AND " + column + "<" + counter, null) > 0;
@@ -241,5 +171,80 @@ public class BaseDb extends SQLiteOpenHelper {
 
     static boolean isMe(String uid) {
         return uid != null && uid.equals(sInstance.getUid());
+    }
+
+    public String getUid() {
+        return mAcc != null ? mAcc.uid : null;
+    }
+
+    public void setUid(String uid) {
+        if (uid == null) {
+            mAcc = null;
+        } else {
+            if (mAcc == null) {
+                mAcc = AccountDb.addOrActivateAccount(sInstance.getReadableDatabase(), uid);
+            } else if (!mAcc.uid.equals(uid)) {
+                // It won't work if the account is switched on a live DB.
+                throw new IllegalStateException("Illegal account assignment");
+            }
+        }
+    }
+
+    public boolean isReady() {
+        return mAcc != null;
+    }
+
+    /**
+     * Get an instance of {@link SqlStore} to use by  Tinode core for persistence.
+     *
+     * @return instance of {@link SqlStore}
+     */
+    public SqlStore getStore() {
+        return mStore;
+    }
+
+    long getAccountId() {
+        return mAcc.id;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(AccountDb.CREATE_TABLE);
+        db.execSQL(AccountDb.CREATE_INDEX_1);
+        db.execSQL(AccountDb.CREATE_INDEX_2);
+        db.execSQL(TopicDb.CREATE_TABLE);
+        db.execSQL(TopicDb.CREATE_INDEX);
+        db.execSQL(UserDb.CREATE_TABLE);
+        db.execSQL(UserDb.CREATE_INDEX);
+        db.execSQL(SubscriberDb.CREATE_TABLE);
+        db.execSQL(SubscriberDb.CREATE_INDEX);
+        db.execSQL(MessageDb.CREATE_TABLE);
+        db.execSQL(MessageDb.CREATE_INDEX);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // This is just a cache. Drop then re-fetch everything from the server.
+        db.execSQL(MessageDb.DROP_INDEX);
+        db.execSQL(MessageDb.DROP_TABLE);
+        db.execSQL(SubscriberDb.DROP_INDEX);
+        db.execSQL(SubscriberDb.DROP_TABLE);
+        db.execSQL(UserDb.DROP_INDEX);
+        db.execSQL(UserDb.DROP_TABLE);
+        db.execSQL(TopicDb.DROP_INDEX);
+        db.execSQL(TopicDb.DROP_TABLE);
+        db.execSQL(AccountDb.DROP_INDEX_2);
+        db.execSQL(AccountDb.DROP_INDEX_1);
+        db.execSQL(AccountDb.DROP_TABLE);
+        onCreate(db);
+    }
+
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            db.setForeignKeyConstraintsEnabled(true);
+        } else {
+            db.execSQL("PRAGMA foreign_keys = ON;");
+        }
     }
 }

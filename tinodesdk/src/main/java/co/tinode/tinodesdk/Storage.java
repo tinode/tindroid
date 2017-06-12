@@ -54,11 +54,15 @@ public interface Storage {
 
     /** Read user description */
     <Pu> User<Pu> userGet(String uid);
+    /** Insert new user */
+    <Pu> long userAdd(User<Pu> user);
+    /** Update existing user */
+    <Pu> boolean userUpdate(User<Pu> user);
 
     // Message received
     <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> msg);
     // Announcement message received
-    <T> long inviteReceived(Topic me, MsgServerData<Announcement<T>> msg);
+    <T> long annReceived(MeTopic me, Topic topic, MsgServerData<Announcement<T>> msg);
 
     /** Message sent. Returns database ID of the message suitable for
      * use in msgDelivered

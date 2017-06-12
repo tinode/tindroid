@@ -389,6 +389,8 @@ public class Tinode {
             Topic topic = getTopic(pkt.meta.topic);
             if (topic != null) {
                 topic.routeMeta(pkt.meta);
+            } else {
+                maybeCreateTopic(pkt.meta);
             }
 
             if (mListener != null) {
@@ -836,6 +838,8 @@ public class Tinode {
     public PromisedReply<ServerMessage> getMeta(final String topicName, final MsgGetMeta query) {
         ClientMessage msg = new ClientMessage(new MsgClientGet(getNextId(), topicName, query));
         try {
+            Log.d(TAG, "Tinode.getMeta(" + query.toString() + ")");
+
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.get.id, future);
@@ -1027,6 +1031,23 @@ public class Tinode {
         return new Topic(this, name, l);
     }
 
+    @SuppressWarnings("unchecked")
+    protected <Pu,Pr> Topic maybeCreateTopic(MsgServerMeta<Pu,Pr> meta) {
+        if (meta.desc == null) {
+            return null;
+        }
+
+        Topic<Pu,Pr,?> topic;
+        if (TOPIC_ME.equals(meta.topic)) {
+            topic = new MeTopic<>(this, meta.desc);
+        } else {
+            topic = new Topic<>(this, meta.topic, meta.desc);
+        }
+
+        registerTopic(topic);
+        return topic;
+    }
+
     /**
      * Obtain a 'me' topic ({@link MeTopic}).
      *
@@ -1132,6 +1153,14 @@ public class Tinode {
         return user;
     }
 
+    void addUser(String uid) {
+        User user = new User(uid);
+        mUsers.put(uid, user);
+        if (mStore != null) {
+            mStore.userAdd(user);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     <Pu> void updateUser(Subscription<Pu,?> sub) {
         User<Pu> user = mUsers.get(sub.user);
@@ -1140,6 +1169,9 @@ public class Tinode {
             mUsers.put(sub.user, user);
         } else {
             user.merge(sub);
+        }
+        if (mStore != null) {
+            mStore.userUpdate(user);
         }
     }
 
@@ -1151,6 +1183,9 @@ public class Tinode {
             mUsers.put(uid, user);
         } else {
             user.merge(desc);
+        }
+        if (mStore != null) {
+            mStore.userUpdate(user);
         }
     }
 

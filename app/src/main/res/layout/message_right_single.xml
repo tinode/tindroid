@@ -1,0 +1,84 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:paddingBottom="4dp">
+
+            <LinearLayout
+                android:id="@+id/messageBubble"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bubble_r"
+                android:layout_gravity="right"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/messageText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxWidth="270dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end">
+
+                    <TextView
+                        android:id="@+id/messageMeta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="4dp"
+                        android:paddingRight="4dp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="11sp"
+                        tools:ignore="SmallSp"
+                        tools:text="Jun 11 22:17"/>
+
+                    <android.support.v7.widget.AppCompatImageView
+                        android:id="@+id/messageViewedIcon"
+                        android:layout_width="18sp"
+                        android:layout_height="11sp"
+                        android:layout_gravity="center_vertical"
+                        android:paddingEnd="3dp"
+                        android:paddingLeft="5dp"
+                        android:paddingRight="3dp"
+                        android:paddingStart="5dp"
+                        android:tint="?android:attr/textColorSecondary"
+                        tools:ignore="SmallSp"
+                        tools:src="@drawable/ic_visibility"/>
+
+                </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/selected"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorMessageSelected"
+        android:visibility="gone"
+        />
+
+    <View
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        />
+
+</FrameLayout>

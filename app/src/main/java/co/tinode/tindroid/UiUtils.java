@@ -122,6 +122,10 @@ public class UiUtils {
     private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
     private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
+
+    static final int COLOR_MESSAGE_BUBBLE = 0xffc5e1a5;
+    static final int COLOR_META_BUBBLE = 0xFFCFD8DC;
+
     // If StoredMessage activity is visible, this is the current topic in that activity.
     static String sVisibleTopic = null;
 
@@ -154,17 +158,6 @@ public class UiUtils {
             toolbar.setLogo(null);
             toolbar.setTitle(R.string.app_name);
         }
-    }
-
-    private static void invertDrawable(Drawable drw) {
-        final float[] NEGATIVE = {
-                -1.0f, 0, 0, 0, 255, // red
-                0, -1.0f, 0, 0, 255, // green
-                0, 0, -1.0f, 0, 255, // blue
-                0, 0, 0, 1.0f, 0  // alpha
-        };
-
-        drw.setColorFilter(new ColorMatrixColorFilter(NEGATIVE));
     }
 
     public static String getVisibleTopic() {
@@ -480,11 +473,9 @@ public class UiUtils {
         return (int) typedValue.getDimension(metrics);
     }
 
-    public static Colorizer getColorsFor(int index) {
-        if (index >= sColorizer.length) {
-            index = index % sColorizer.length;
-        }
-        return sColorizer[index];
+    public static Colorizer getColorsFor(String uid) {
+        int index = uid != null ? Math.abs(uid.hashCode()) : 0;
+        return sColorizer[index % sColorizer.length];
     }
 
     public static Colorizer getDarkColorsFor(int index) {

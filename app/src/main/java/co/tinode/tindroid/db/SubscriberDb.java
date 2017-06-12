@@ -40,10 +40,6 @@ public class SubscriberDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_STATUS = "status";
     /**
-     * Sequential ID of the user within the topic
-     */
-    public static final String COLUMN_NAME_SENDER_INDEX = "sender_idx";
-    /**
      * User's access mode
      */
     public static final String COLUMN_NAME_MODE = "mode";
@@ -86,7 +82,6 @@ public class SubscriberDb implements BaseColumns {
                     COLUMN_NAME_USER_ID
                     + " REFERENCES " + UserDb.TABLE_NAME + "(" + UserDb._ID + ")," +
                     COLUMN_NAME_STATUS + " INT," +
-                    COLUMN_NAME_SENDER_INDEX + " INT," +
                     COLUMN_NAME_MODE + " TEXT," +
                     COLUMN_NAME_UPDATED + " INT," +
                     COLUMN_NAME_DELETED + " INT," +
@@ -116,19 +111,18 @@ public class SubscriberDb implements BaseColumns {
     private static final int COLUMN_IDX_TOPIC_ID = 1;
     private static final int COLUMN_IDX_USER_ID = 2;
     private static final int COLUMN_IDX_STATUS = 3;
-    private static final int COLUMN_IDX_SENDER_INDEX = 4;
-    private static final int COLUMN_IDX_MODE = 5;
-    private static final int COLUMN_IDX_UPDATED = 6;
-    private static final int COLUMN_IDX_DELETED = 7;
-    private static final int COLUMN_IDX_READ = 8;
-    private static final int COLUMN_IDX_RECV = 9;
-    private static final int COLUMN_IDX_CLEAR = 10;
-    private static final int COLUMN_IDX_LAST_SEEN = 11;
-    private static final int COLUMN_IDX_USER_AGENT = 12;
-    private static final int JOIN_USER_COLUMN_IDX_UID = 13;
-    private static final int JOIN_USER_COLUMN_IDX_PUBLIC = 14;
-    private static final int JOIN_TOPIC_COLUMN_IDX_TOPIC = 15;
-    private static final int JOIN_TOPIC_COLUMN_IDX_SEQ = 16;
+    private static final int COLUMN_IDX_MODE = 4;
+    private static final int COLUMN_IDX_UPDATED = 5;
+    private static final int COLUMN_IDX_DELETED = 6;
+    private static final int COLUMN_IDX_READ = 7;
+    private static final int COLUMN_IDX_RECV = 8;
+    private static final int COLUMN_IDX_CLEAR = 9;
+    private static final int COLUMN_IDX_LAST_SEEN = 10;
+    private static final int COLUMN_IDX_USER_AGENT = 11;
+    private static final int JOIN_USER_COLUMN_IDX_UID = 12;
+    private static final int JOIN_USER_COLUMN_IDX_PUBLIC = 13;
+    private static final int JOIN_TOPIC_COLUMN_IDX_TOPIC = 14;
+    private static final int JOIN_TOPIC_COLUMN_IDX_SEQ = 15;
 
     /**
      * Save user's subscription to topic.
@@ -162,9 +156,6 @@ public class SubscriberDb implements BaseColumns {
             values.put(COLUMN_NAME_USER_ID, ss.userId);
             ss.status = status;
             values.put(COLUMN_NAME_STATUS, ss.status);
-            // User's own sender index is 0.
-            ss.senderIdx = BaseDb.isMe(sub.user) ? 0 : getNextSenderIndex(db, ss.topicId);
-            values.put(COLUMN_NAME_SENDER_INDEX, ss.senderIdx);
             values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
             values.put(COLUMN_NAME_UPDATED, (sub.updated != null ? sub.updated : new Date()).getTime());
             // values.put(COLUMN_NAME_DELETED, NULL);
@@ -281,28 +272,12 @@ public class SubscriberDb implements BaseColumns {
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId).simpleQueryForLong() + 1;
     }
 
-    /**
-     * Get the next available senderId for the given topic. Min Id == 1.
-     *
-     * @param db      database
-     * @param topicId _id of the topic to query
-     * @return _id of the user
-     */
-    protected static int getSenderIndex(SQLiteDatabase db, long topicId, long userId) {
-        return (int) db.compileStatement("SELECT " + COLUMN_NAME_SENDER_INDEX + " FROM " + TABLE_NAME +
-                " WHERE " +
-                COLUMN_NAME_TOPIC_ID + "=" + topicId
-                + " AND " +
-                COLUMN_NAME_USER_ID + "=" + userId).simpleQueryForLong();
-    }
-
     protected static Cursor query(SQLiteDatabase db, long topicId) {
         return db.rawQuery("SELECT " +
                 TABLE_NAME + "." + _ID + "," +
                 TABLE_NAME + "." + COLUMN_NAME_TOPIC_ID + "," +
                 TABLE_NAME + "." + COLUMN_NAME_USER_ID + "," +
                 TABLE_NAME + "." + COLUMN_NAME_STATUS + "," +
-                TABLE_NAME + "." + COLUMN_NAME_SENDER_INDEX + "," +
                 TABLE_NAME + "." + COLUMN_NAME_MODE + "," +
                 TABLE_NAME + "." + COLUMN_NAME_UPDATED + "," +
                 TABLE_NAME + "." + COLUMN_NAME_DELETED + "," +
@@ -333,7 +308,6 @@ public class SubscriberDb implements BaseColumns {
         ss.topicId = c.getLong(COLUMN_IDX_TOPIC_ID);
         ss.userId = c.getLong(COLUMN_IDX_USER_ID);
         ss.status = c.getInt(COLUMN_IDX_STATUS);
-        ss.senderIdx = c.getInt(COLUMN_IDX_SENDER_INDEX);
 
         // Subscription part
         Subscription s = new Subscription();

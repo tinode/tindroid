@@ -107,7 +107,6 @@ public class TopicDb implements BaseColumns {
     public static final String COLUMN_NAME_PRIVATE = "priv";
 
 
-
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_STATUS = 2;
@@ -225,6 +224,7 @@ public class TopicDb implements BaseColumns {
     }
 
 
+
     /**
      * Update topic description
      *
@@ -290,7 +290,7 @@ public class TopicDb implements BaseColumns {
         if (seq > st.maxLocalSeq) {
             values.put(COLUMN_NAME_MAX_LOCAL_SEQ, seq);
             values.put(COLUMN_NAME_RECV, seq);
-        } else if (seq > 0 && seq < st.minLocalSeq) {
+        } else if (seq > 0 && (st.minLocalSeq == 0 || seq < st.minLocalSeq)) {
             values.put(COLUMN_NAME_MIN_LOCAL_SEQ, seq);
         }
         if (timestamp.after(st.lastUsed)) {
@@ -304,7 +304,8 @@ public class TopicDb implements BaseColumns {
             }
 
             st.lastUsed = timestamp.after(st.lastUsed) ? timestamp : st.lastUsed;
-            st.minLocalSeq = seq > 0 && seq < st.minLocalSeq ? seq : st.minLocalSeq;
+            st.minLocalSeq = seq > 0 && (st.minLocalSeq == 0 || seq < st.minLocalSeq) ?
+                    seq : st.minLocalSeq;
             st.maxLocalSeq = seq > st.maxLocalSeq ? seq : st.maxLocalSeq;
         }
         return true;

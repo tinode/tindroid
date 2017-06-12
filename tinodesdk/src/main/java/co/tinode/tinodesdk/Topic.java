@@ -112,6 +112,21 @@ public class Topic<Pu,Pr,T> implements LocalData {
         mDesc.merge(sub);
     }
 
+    protected Topic(Tinode tinode, String name, Description<Pu,Pr> desc) {
+        if (tinode == null) {
+            throw new IllegalArgumentException("Tinode cannot be null");
+        }
+        mTinode = tinode;
+
+        mTypeOfDataPacket   = tinode.getTypeOfDataPacket();
+        mTypeOfMetaPacket   = tinode.getTypeOfMetaPacket();
+
+        setName(name);
+
+        mDesc   = new Description<>();
+        mDesc.merge(desc);
+    }
+
     /**
      * Create a named topic.
      *
@@ -526,7 +541,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
             // If this is a new topic, sync topic description
             mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null);
         }
-        return subscribe(mset, subscribeParamGetBuilder()
+        return subscribe(mset, getMetaGetBuilder()
                 .withGetDesc().withGetData().withGetSub().build());
     }
 
@@ -583,7 +598,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 }, null);
     }
 
-    public MetaGetBuilder subscribeParamGetBuilder() {
+    public MetaGetBuilder getMetaGetBuilder() {
         return new MetaGetBuilder(this);
     }
 
@@ -722,7 +737,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     /**
      * Query topic for data or metadata
      */
-    public PromisedReply getMeta(MsgGetMeta query) {
+    public PromisedReply<ServerMessage> getMeta(MsgGetMeta query) {
         return mTinode.getMeta(getName(), query);
     }
 
@@ -966,7 +981,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply delMessages(final int before, final boolean hard) throws Exception {
+    public PromisedReply<ServerMessage> delMessages(final int before, final boolean hard) throws Exception {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, before);
         }
@@ -1357,7 +1372,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
             mDesc.seq = data.seq;
         }
 
-        if (mStore != null && mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
+        if (mStore != null) {
+            if (mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
+                noteRecv();
+            }
+        } else {
             noteRecv();
         }
 

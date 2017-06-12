@@ -1,58 +1,65 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/message_view_bkg"
     tools:context="co.tinode.tindroid.MessagesFragment">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/messages_container"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_above="@+id/sendMessagePanel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="vertical"
-        app:stackFromEnd="true"
-        app:reverseLayout="false"/>
-
     <LinearLayout
         android:id="@+id/sendMessagePanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:paddingLeft="6sp"
-        android:paddingStart="6sp"
+        android:background="@android:color/background_light"
         android:orientation="horizontal"
-        android:background="@android:color/background_light">
+        android:paddingLeft="6sp"
+        android:paddingStart="6sp" tools:ignore="RtlSymmetry">
 
         <EditText
+            android:id="@+id/editMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/editMessage"
-            android:inputType="text"
+            android:layout_weight="1"
             android:hint="@string/new_message_hint"
             android:imeOptions="actionSend"
-            android:layout_weight="1" />
+            android:inputType="text"/>
 
         <android.support.v7.widget.AppCompatImageButton
             android:id="@+id/chatSendButton"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            app:srcCompat="@drawable/ic_send"
-            android:contentDescription="@string/send_message_button_hint"
-            android:tint="@android:color/holo_blue_dark"
             android:layout_weight="0.1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/send_message_button_hint"
             android:paddingLeft="4sp"
             android:paddingRight="8sp"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            android:tint="@android:color/holo_blue_dark"
+            app:srcCompat="@drawable/ic_send"/>
 
     </LinearLayout>
+
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresher"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/sendMessagePanel">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/messages_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical"
+            app:reverseLayout="true"
+            app:stackFromEnd="true"/>
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

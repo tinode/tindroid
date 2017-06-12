@@ -162,4 +162,6 @@
     <string name="confirm_logout">Are you sure you want to logout?</string>
     <string name="edit_account">Edit account name</string>
     <string name="invalid_login">Login is invalid</string>
+    <string name="join">Join</string>
+    <string name="ignore">Ignore</string>
 </resources>

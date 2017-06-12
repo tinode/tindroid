@@ -1,23 +1,17 @@
 package co.tinode.tindroid.db;
 
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDoneException;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
 
-import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
 
 /**
@@ -36,83 +30,71 @@ public class MessageDb implements BaseColumns {
     /**
      * Content provider authority.
      */
-    public static final String CONTENT_AUTHORITY = "co.tinode.tindroid";
+    private static final String CONTENT_AUTHORITY = "co.tinode.tindroid";
 
     /**
      * Base URI. (content://co.tinode.tindroid)
      */
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+    private static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
-    /**
-     * MIME type for lists of messages
-     */
-    public static final String CONTENT_TYPE =
-            ContentResolver.CURSOR_DIR_BASE_TYPE + "/vnd.tinode.im-msg";
-    /**
-     * MIME type for individual messages
-     */
-    public static final String CONTENT_ITEM_TYPE =
-            ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.tinode.im-msg";
     /**
      * The name of the main table.
      */
-    public static final String TABLE_NAME = "messages";
+    private static final String TABLE_NAME = "messages";
+    /**
+     * SQL statement to drop Messages table.
+     */
+    static final String DROP_TABLE =
+            "DROP TABLE IF EXISTS " + TABLE_NAME;
     /**
      * The name of index: messages by topic and sequence.
      */
-    public static final String INDEX_NAME = "message_topic_id_seq";
+    private static final String INDEX_NAME = "message_topic_id_seq";
+    /**
+     * Drop the index too
+     */
+    static final String DROP_INDEX =
+            "DROP INDEX IF EXISTS " + INDEX_NAME;
     /**
      * Topic ID, references topics._ID
      */
-    public static final String COLUMN_NAME_TOPIC_ID = "topic_id";
+    private static final String COLUMN_NAME_TOPIC_ID = "topic_id";
     /**
      * Id of the originator of the message, references users._ID
      */
-    public static final String COLUMN_NAME_USER_ID = "user_id";
+    private static final String COLUMN_NAME_USER_ID = "user_id";
     /**
      * Status of the message: unsent, delivered, deleted
      */
-    public static final String COLUMN_NAME_STATUS = "status";
+    private static final String COLUMN_NAME_STATUS = "status";
+    /**
+     * Type of the message, normal or meta (invite)
+     */
+    private static final String COLUMN_NAME_TYPE = "type";
     /**
      * Uid as string. Deserialized here to avoid a join.
      */
-    public static final String COLUMN_NAME_SENDER = "sender";
-    /**
-     * Sequential ID of the sender within the topic. Needed for assigning colors to message bubbles in UI.
-     */
-    public static final String COLUMN_NAME_SENDER_INDEX = "sender_idx";
+    private static final String COLUMN_NAME_SENDER = "sender";
     /**
      * Message timestamp
      */
-    public static final String COLUMN_NAME_TS = "ts";
+    private static final String COLUMN_NAME_TS = "ts";
+    /**
+     * Add index on account_id-topic-seq, in descending order
+     */
+    static final String CREATE_INDEX =
+            "CREATE INDEX " + INDEX_NAME +
+                    " ON " + TABLE_NAME + " (" +
+                    COLUMN_NAME_TOPIC_ID + "," +
+                    COLUMN_NAME_TS + " DESC)";
     /**
      * Server-issued sequence ID, integer, indexed
      */
-    public static final String COLUMN_NAME_SEQ = "seq";
+    private static final String COLUMN_NAME_SEQ = "seq";
     /**
      * Serialized message content
      */
-    public static final String COLUMN_NAME_CONTENT = "content";
-    /**
-     * Path component for "message"-type resources..
-     */
-    private static final String PATH_MESSAGES = "messages";
-    /**
-     * URI for "messages" resource.
-     */
-    public static final Uri CONTENT_URI =
-            BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
-
-    private static final int COLUMN_IDX_ID = 0;
-    private static final int COLUMN_IDX_TOPIC_ID = 1;
-    private static final int COLUMN_IDX_USER_ID = 2;
-    private static final int COLUMN_IDX_STATUS = 3;
-    private static final int COLUMN_IDX_SENDER = 4;
-    private static final int COLUMN_IDX_SENDER_INDEX = 5;
-    private static final int COLUMN_IDX_TS = 6;
-    private static final int COLUMN_IDX_SEQ = 7;
-    private static final int COLUMN_IDX_CONTENT = 8;
-
+    private static final String COLUMN_NAME_CONTENT = "content";
     /**
      * SQL statement to create Messages table
      */
@@ -124,123 +106,90 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_USER_ID
                     + " REFERENCES " + UserDb.TABLE_NAME + "(" + UserDb._ID + ")," +
                     COLUMN_NAME_STATUS + " INT," +
+                    COLUMN_NAME_TYPE + " INT," +
                     COLUMN_NAME_SENDER + " TEXT," +
-                    COLUMN_NAME_SENDER_INDEX + " INT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
                     COLUMN_NAME_CONTENT + " BLOB)";
     /**
-     * Add index on account_id-topic-seq, in descending order
+     * Path component for "message"-type resources..
      */
-    static final String CREATE_INDEX =
-            "CREATE UNIQUE INDEX " + INDEX_NAME +
-                    " ON " + TABLE_NAME + " (" +
-                    COLUMN_NAME_TOPIC_ID + "," +
-                    COLUMN_NAME_SEQ + " DESC)";
-
+    private static final String PATH_MESSAGES = "messages";
     /**
-     * SQL statement to drop Messages table.
+     * URI for "messages" resource.
      */
-    static final String DROP_TABLE =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
-    /**
-     * Drop the index too
-     */
-    static final String DROP_INDEX =
-            "DROP INDEX IF EXISTS " + INDEX_NAME;
+    public static final Uri CONTENT_URI =
+            BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
+    private static final int COLUMN_IDX_ID = 0;
+    private static final int COLUMN_IDX_TOPIC_ID = 1;
+    private static final int COLUMN_IDX_USER_ID = 2;
+    private static final int COLUMN_IDX_STATUS = 3;
+    private static final int COLUMN_IDX_TYPE = 4;
+    private static final int COLUMN_IDX_SENDER = 5;
+    private static final int COLUMN_IDX_TS = 6;
+    private static final int COLUMN_IDX_SEQ = 7;
+    private static final int COLUMN_IDX_CONTENT = 8;
 
     /**
      * Save message to DB
      *
      * @return ID of the newly added message
      */
-    public static long insert(SQLiteDatabase db, Topic topic, StoredMessage msg) {
+    static long insert(SQLiteDatabase db, Topic topic, StoredMessage msg) {
         if (msg.id > 0) {
             return msg.id;
         }
 
-        long id = -1;
-
-        try {
-            db.beginTransaction();
-
-            if (msg.topicId <= 0) {
-                msg.topicId = TopicDb.getId(db, msg.topic);
-            }
-            if (msg.userId <= 0) {
-                msg.userId = UserDb.getId(db, msg.from);
-            }
-
-            if (msg.userId <= 0 || msg.topicId <= 0) {
-                Log.d(TAG, "Failed to insert message " + msg.seq);
-                return -1;
-            }
-
-            if (msg.senderIdx < 0) {
-                msg.senderIdx = SubscriberDb.getSenderIndex(db, msg.topicId, msg.userId);
-            }
-
-            int status;
-            if (msg.seq == 0) {
-                msg.seq = getNextUnsentId(db, msg.topicId);
-                status = BaseDb.STATUS_QUEUED;
-            } else {
-                status = BaseDb.STATUS_SYNCED;
-            }
-
-            // Convert message to a map of values
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
-            values.put(COLUMN_NAME_USER_ID, msg.userId);
-            values.put(COLUMN_NAME_STATUS, status);
-            values.put(COLUMN_NAME_SENDER, msg.from);
-            values.put(COLUMN_NAME_SENDER_INDEX, msg.senderIdx);
-            values.put(COLUMN_NAME_TS, msg.ts.getTime());
-            values.put(COLUMN_NAME_SEQ, msg.seq);
-            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
-
-            id = db.insert(TABLE_NAME, null, values);
-
-            if (TopicDb.msgReceived(db, topic, msg.ts, msg.seq)) {
-                db.setTransactionSuccessful();
-            }
-
-        } catch (Exception ex) {
-            Log.d(TAG, "Exception while inserting message", ex);
+        if (msg.topicId <= 0) {
+            msg.topicId = TopicDb.getId(db, msg.topic);
+        }
+        if (msg.userId <= 0) {
+            msg.userId = UserDb.getId(db, msg.from);
         }
 
-        db.endTransaction();
+        if (msg.userId <= 0 || msg.topicId <= 0) {
+            Log.d(TAG, "Failed to insert message " + msg.seq);
+            return -1;
+        }
 
-        return id;
+        int status;
+        if (msg.seq == 0) {
+            msg.seq = getNextUnsentId(db, msg.topicId);
+            status = BaseDb.STATUS_QUEUED;
+        } else {
+            status = BaseDb.STATUS_SYNCED;
+        }
+
+        // Convert message to a map of values
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
+        values.put(COLUMN_NAME_USER_ID, msg.userId);
+        values.put(COLUMN_NAME_STATUS, status);
+        values.put(COLUMN_NAME_TYPE, msg.type);
+        values.put(COLUMN_NAME_SENDER, msg.from);
+        values.put(COLUMN_NAME_TS, msg.ts.getTime());
+        values.put(COLUMN_NAME_SEQ, msg.seq);
+        values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
+
+        return db.insert(TABLE_NAME, null, values);
     }
 
-    public static boolean delivered(SQLiteDatabase db, Topic topic, long msgId, Date timestamp, int seq) {
+    static boolean delivered(SQLiteDatabase db, Topic topic, long msgId, Date timestamp, int seq) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
         values.put(COLUMN_NAME_TS, timestamp.getTime());
         values.put(COLUMN_NAME_SEQ, seq);
-        try {
-            db.beginTransaction();
 
-            if (db.update(TABLE_NAME, values, _ID + "=" + msgId, null) > 0 &&
-                    TopicDb.msgReceived(db, topic, timestamp, seq)) {
-                db.setTransactionSuccessful();
-            }
-        } catch (Exception ex) {
-            Log.d(TAG, "Exception while inserting message", ex);
-        }
-
-        db.endTransaction();
-        return false;
+        return db.update(TABLE_NAME, values, _ID + "=" + msgId, null) > 0;
     }
 
     /**
      * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
      *
-     * @param db    database to select from;
+     * @param db      database to select from;
      * @param topicId Tinode topic ID (topics._id) to select from
-     * @param from  minimum seq value to select, exclusive
-     * @param to    maximum seq value to select, inclusive
+     * @param from    minimum seq value to select, exclusive
+     * @param to      maximum seq value to select, inclusive
      * @return cursor with the messages
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int from, int to, int limit) {
@@ -248,27 +197,46 @@ public class MessageDb implements BaseColumns {
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
-                (to > 0 ?  " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
+                (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
                 " ORDER BY " + COLUMN_NAME_TS +
-                (limit > 0 ?  " LIMIT " + limit : "");
+                (limit > 0 ? " LIMIT " + limit : "");
 
         // Log.d(TAG, "Sql=[" + sql + "]");
-        
+
+        return db.rawQuery(sql, null);
+    }
+
+    /**
+     * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
+     *
+     * @param db        database to select from;
+     * @param topicId   Tinode topic ID (topics._id) to select from
+     * @param pageCount number of pages to return
+     * @param pageSize  number of messages per page
+     * @return cursor with the messages
+     */
+    public static Cursor query(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
+        String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE " +
+                COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
+
+        // Log.d(TAG, "Sql=[" + sql + "]");
+
         return db.rawQuery(sql, null);
     }
 
     /**
      * Query messages which has not been sent yet.
      *
-     * @param db    database to select from;
+     * @param db      database to select from;
      * @param topicId Tinode topic ID (topics._id) to select from
-     *
      * @return cursor with the messages
      */
     public static Cursor queryUnsent(SQLiteDatabase db, long topicId) {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
-                    COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " + COLUMN_NAME_SEQ + "<=0 " +
+                COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " + COLUMN_NAME_SEQ + "<=0 " +
                 "ORDER BY " + COLUMN_NAME_TS;
         // Log.d(TAG, "Sql=[" + sql + "]");
 
@@ -278,10 +246,10 @@ public class MessageDb implements BaseColumns {
     /**
      * Delete messages between 'from' and 'to'. To delete all messages make before equal to -1.
      *
-     * @param db    Database to use.
+     * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
-     * @param before maximum seq value to delete, inclusive.
-     * @param soft  mark messages as deleted but do not actually delete them
+     * @param before  maximum seq value to delete, inclusive.
+     * @param soft    mark messages as deleted but do not actually delete them
      * @return number of deleted messages
      */
     public static boolean delete(SQLiteDatabase db, long topicId, int before, boolean soft) {
@@ -296,10 +264,10 @@ public class MessageDb implements BaseColumns {
     /**
      * Delete messages between 'from' and 'to'. To delete all messages make from and to equal to -1.
      *
-     * @param db    Database to use.
+     * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
-     * @param list maximum seq value to delete, inclusive.
-     * @param soft  mark messages as deleted but do not actually delete them
+     * @param list    maximum seq value to delete, inclusive.
+     * @param soft    mark messages as deleted but do not actually delete them
      * @return number of deleted messages
      */
     public static boolean delete(SQLiteDatabase db, long topicId, int[] list, boolean soft) {
@@ -319,22 +287,22 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED);
             return db.update(TABLE_NAME, values,
                     COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
+                            " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
         }
     }
 
     public static <T> StoredMessage<T> readMessage(Cursor c) {
         StoredMessage<T> msg = new StoredMessage<>();
 
-        msg.id          = c.getLong(COLUMN_IDX_ID);
-        msg.topicId     = c.getLong(COLUMN_IDX_TOPIC_ID);
-        msg.userId      = c.getLong(COLUMN_IDX_USER_ID);
-        msg.status      = c.getInt(COLUMN_IDX_STATUS);
-        msg.from        = c.getString(COLUMN_IDX_SENDER);
-        msg.senderIdx   = c.getInt(COLUMN_IDX_SENDER_INDEX);
-        msg.seq         = c.getInt(COLUMN_IDX_SEQ);
-        msg.ts          = new Date(c.getLong(COLUMN_IDX_TS));
-        msg.content     = BaseDb.deserialize(c.getBlob(COLUMN_IDX_CONTENT));
+        msg.id = c.getLong(COLUMN_IDX_ID);
+        msg.topicId = c.getLong(COLUMN_IDX_TOPIC_ID);
+        msg.userId = c.getLong(COLUMN_IDX_USER_ID);
+        msg.status = c.getInt(COLUMN_IDX_STATUS);
+        msg.type = c.getInt(COLUMN_IDX_TYPE);
+        msg.from = c.getString(COLUMN_IDX_SENDER);
+        msg.seq = c.getInt(COLUMN_IDX_SEQ);
+        msg.ts = new Date(c.getLong(COLUMN_IDX_TS));
+        msg.content = BaseDb.deserialize(c.getBlob(COLUMN_IDX_CONTENT));
 
         return msg;
     }
@@ -353,9 +321,7 @@ public class MessageDb implements BaseColumns {
      * Get negative ID to be used as seq for unsent messages.
      */
     public static int getNextUnsentId(SQLiteDatabase db, long topicId) {
-        int id = (int) db.compileStatement("SELECT MIN(" + COLUMN_NAME_SEQ + ") FROM " + TABLE_NAME +
-                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId).simpleQueryForLong();
-        return id < 0 ? id - 1 : -1;
+        return -1;
     }
 
     public static class Loader extends AsyncTaskLoader<Cursor> {
@@ -363,23 +329,21 @@ public class MessageDb implements BaseColumns {
         private Cursor mCursor;
 
         private long topicId;
-        private int fromSeq;
-        private int toSeq;
-        private int limit;
+        private int pageCount;
+        private int pageSize;
 
-        public Loader(Context context, String topic, int from, int to, int limit) {
+        public Loader(Context context, String topic, int pageCount, int pageSize) {
             super(context);
 
             mDb = BaseDb.getInstance().getReadableDatabase();
             this.topicId = TopicDb.getId(mDb, topic);
-            this.fromSeq = from;
-            this.toSeq = to;
-            this.limit = limit;
+            this.pageCount = pageCount;
+            this.pageSize = pageSize;
         }
 
         @Override
         public Cursor loadInBackground() {
-            return query(mDb, topicId, fromSeq, toSeq, limit);
+            return query(mDb, topicId, pageCount, pageSize);
         }
 
         /* Runs on the UI thread */

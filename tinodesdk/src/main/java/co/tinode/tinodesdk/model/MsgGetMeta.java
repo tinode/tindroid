@@ -47,7 +47,11 @@ public class MsgGetMeta {
         buildWhat();
     }
 
-    /*
+    protected MsgGetMeta(String what) {
+        this.what = what;
+    }
+
+
     @Override
     public String toString() {
         return "[" + what + "]" +
@@ -55,7 +59,7 @@ public class MsgGetMeta {
                 " sub=[" + (sub != null? sub.toString() : "null") + "]," +
                 " data=[" + (data != null ? data.toString() : "null") + "]";
     }
-    */
+
 
     /**
      * Request topic description
@@ -68,6 +72,7 @@ public class MsgGetMeta {
             desc.ims = ims;
         }
         mSet |= DESC_SET;
+        buildWhat();
     }
 
     public void setSub(Date ims, Integer limit) {
@@ -75,6 +80,7 @@ public class MsgGetMeta {
             sub = new MetaGetSub(ims, limit);
         }
         mSet |= SUB_SET;
+        buildWhat();
     }
 
     public void setData(Integer since, Integer before, Integer limit) {
@@ -82,6 +88,7 @@ public class MsgGetMeta {
             data = new MetaGetData(since, before, limit);
         }
         mSet |= DATA_SET;
+        buildWhat();
     }
 
     @JsonIgnore
@@ -106,5 +113,17 @@ public class MsgGetMeta {
             }
         }
         what = sb.toString();
+    }
+
+    public static MsgGetMeta desc() {
+        return new MsgGetMeta(DESC);
+    }
+
+    public static MsgGetMeta data() {
+        return new MsgGetMeta(DATA);
+    }
+
+    public static MsgGetMeta sub() {
+        return new MsgGetMeta(SUB);
     }
 }

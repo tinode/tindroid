@@ -82,9 +82,10 @@ public class AccountDb implements BaseColumns {
             db.setTransactionSuccessful();
         } catch (SQLException ignored) {
             acc = null;
+        } finally {
+            db.endTransaction();
         }
 
-        db.endTransaction();
         return acc;
     }
 

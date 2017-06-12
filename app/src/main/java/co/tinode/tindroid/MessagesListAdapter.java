@@ -39,6 +39,12 @@ import co.tinode.tinodesdk.model.Subscription;
 public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapter.ViewHolder> {
     private static final String TAG = "MessagesListAdapter";
 
+    private static final int VIEWTYPE_FULL_LEFT     = 0;
+    private static final int VIEWTYPE_SIMPLE_LEFT   = 1;
+    private static final int VIEWTYPE_FULL_RIGHT    = 2;
+    private static final int VIEWTYPE_SIMPLE_RIGHT  = 3;
+    private static final int VIEWTYPE_FULL_CENTER   = 4;
+
     // Vertical padding between two messages from different senders
     private static final int SINGLE_PADDING = 10;
     // Vertical padding between two messages from the same sender
@@ -185,84 +191,96 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message, parent, false);
-        return new ViewHolder(v);
+        View v;
+        Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
+        int bgColor = 0;
+        switch (viewType) {
+            case VIEWTYPE_FULL_CENTER:
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message, parent, false);
+                bgColor = UiUtils.COLOR_META_BUBBLE;
+                break;
+            case VIEWTYPE_FULL_LEFT:
+                v = LayoutInflater.from(parent.getContext()).inflate(
+                        tp == Topic.TopicType.GRP ?
+                                R.layout.message_left_single_avatar :
+                                R.layout.message_left_single, parent, false);
+                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                break;
+            case VIEWTYPE_FULL_RIGHT:
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single, parent, false);
+                break;
+            case VIEWTYPE_SIMPLE_LEFT:
+                v = LayoutInflater.from(parent.getContext()).inflate(
+                        tp == Topic.TopicType.GRP ?
+                                R.layout.message_left_avatar :
+                                R.layout.message_left, parent, false);
+                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                break;
+            case VIEWTYPE_SIMPLE_RIGHT:
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right, parent, false);
+                break;
+            default:
+                return null;
+        }
+
+        if (bgColor != 0) {
+            v.findViewById(R.id.messageBubble).getBackground().mutate()
+                    .setColorFilter(bgColor, PorterDuff.Mode.MULTIPLY);
+        }
+
+        return new ViewHolder(v, viewType);
     }
 
-    @SuppressLint("RtlHardcoded")
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
-
+    public int getItemViewType(int position) {
         mCursor.moveToPosition(position);
         StoredMessage<String> m = MessageDb.readMessage(mCursor);
 
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
-        long prevFrom = -2;
-        if (position > 0) {
-            mCursor.moveToPrevious();
-            prevFrom = MessageDb.readMessage(mCursor).userId;
-        }
+        // Cursor holds items in reverse order.
         long nextFrom = -2;
-        if (position < getItemCount() - 1) {
-            mCursor.moveToPosition(position + 1);
+        if (position > 0) {
+            mCursor.moveToPosition(position - 1);
             nextFrom = MessageDb.readMessage(mCursor).userId;
         }
-        DisplayAs display = DisplayAs.SINGLE;
-        if (m.userId == prevFrom) {
-            if (m.userId == nextFrom) {
-                display = DisplayAs.MIDDLE;
-            } else {
-                display = DisplayAs.LAST;
-            }
-        } else if (m.userId == nextFrom) {
-            display = DisplayAs.FIRST;
-        }
 
-        holder.mContent.setGravity(m.isMine() ? Gravity.RIGHT : Gravity.LEFT);
-
-        // To make sure padding is properly set, first set background, then set text.
-        int bg_bubble = m.isMine() ? R.drawable.bubble_r : R.drawable.bubble_l;
-        switch (display) {
-            case SINGLE:
-                bg_bubble = m.isMine() ? R.drawable.bubble_r : R.drawable.bubble_l;
-                holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), SINGLE_PADDING,
-                        holder.mContainer.getPaddingRight(), SINGLE_PADDING);
-                break;
-            case FIRST:
-                bg_bubble = m.isMine() ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
-                holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), SINGLE_PADDING,
-                        holder.mContainer.getPaddingRight(), TRAIN_PADDING);
-                break;
-            case MIDDLE:
-                bg_bubble = m.isMine() ? R.drawable.bubble_r_z : R.drawable.bubble_l_z;
-                holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), TRAIN_PADDING,
-                        holder.mContainer.getPaddingRight(), TRAIN_PADDING);
-                break;
-            case LAST:
-                bg_bubble = m.isMine() ? R.drawable.bubble_r : R.drawable.bubble_l;
-                holder.mContainer.setPadding(holder.mContainer.getPaddingLeft(), TRAIN_PADDING,
-                        holder.mContainer.getPaddingRight(), SINGLE_PADDING);
-                break;
-        }
-
-        holder.mMessageBubble.setBackgroundResource(bg_bubble);
-        if (!m.isMine()) {
-            holder.mMessageBubble.getBackground().mutate()
-                    .setColorFilter(UiUtils.getColorsFor(m.senderIdx).bg, PorterDuff.Mode.MULTIPLY);
-        }
-
-        if (mSelectedItems != null && mSelectedItems.get(position)) {
-            Log.d(TAG, "Visible item " + position);
-            holder.mSelected.setVisibility(View.VISIBLE);
+        int itemType;
+        if (m.type == StoredMessage.MSG_TYPE_META) {
+            itemType = VIEWTYPE_FULL_CENTER;
         } else {
-            holder.mSelected.setVisibility(View.GONE);
+            final boolean isMine = m.isMine();
+
+            if (m.userId != nextFrom) {
+                itemType = isMine ? VIEWTYPE_FULL_RIGHT : VIEWTYPE_FULL_LEFT;
+            } else {
+                itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT : VIEWTYPE_SIMPLE_LEFT;
+            }
+        }
+        return itemType;
+    }
+
+    @Override
+    public void onBindViewHolder(final ViewHolder holder, int position) {
+
+        StoredMessage<String> m = getMessage(position);
+
+        if (m.type == StoredMessage.MSG_TYPE_META) {
+            holder.mText.setText(".--==META==--.");
+        } else {
+            holder.mText.setText(m.content);
+
+            if (mSelectedItems != null && mSelectedItems.get(position)) {
+                // Log.d(TAG, "Visible item " + position);
+                holder.mSelected.setVisibility(View.VISIBLE);
+            } else {
+                holder.mSelected.setVisibility(View.GONE);
+            }
         }
 
-        holder.mText.setText(m.content);
         holder.mMeta.setText(UiUtils.shortDate(m.ts));
 
         holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
-        if (m.isMine()) {
+        if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
             if (m.seq <= 0) {
                 holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
             } else {
@@ -362,20 +380,15 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         Log.d(TAG, "swapped cursor, topic=" + mTopicName);
     }
 
-    StoredMessage<String> getMessage(int position) {
+    private StoredMessage<String> getMessage(int position) {
         Log.d(TAG, "getMessage at position " + position);
 
         mCursor.moveToPosition(position);
         return MessageDb.readMessage(mCursor);
     }
 
-    // Grouping messages from the same sender (controls rounding of borders)
-    private enum DisplayAs {
-        SINGLE, FIRST, MIDDLE, LAST
-    }
-
-
     class ViewHolder extends RecyclerView.ViewHolder {
+        int mViewType;
         View mItemView;
         FrameLayout mContainer;
         LinearLayout mContent;
@@ -386,8 +399,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         View mSelected;
         View mOverlay;
 
-        ViewHolder(View itemView) {
+        ViewHolder(View itemView, int viewType) {
             super(itemView);
+
+            mViewType = viewType;
             mItemView = itemView;
             mContainer = (FrameLayout) itemView.findViewById(R.id.container);
             mContent = (LinearLayout) itemView.findViewById(R.id.content);

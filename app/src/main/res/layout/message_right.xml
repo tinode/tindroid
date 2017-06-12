@@ -1,7 +1,7 @@
 <FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
-    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -9,14 +9,16 @@
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="6sp"
-        android:paddingRight="6sp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp">
 
         <LinearLayout
             android:id="@+id/messageBubble"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/bubble_r_z"
+            android:layout_gravity="right"
             android:orientation="vertical">
 
             <TextView
@@ -24,7 +26,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxWidth="280dp"
-                tools:text="Lerem ipusm blah blah blah"
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
                 android:textColor="?android:attr/textColorPrimary"/>
 
             <LinearLayout
@@ -39,18 +41,20 @@
                     android:paddingLeft="4sp"
                     android:paddingRight="4sp"
                     android:textColor="?android:attr/textColorSecondary"
+                    tools:text="Jun 11 22:17"
                     android:textSize="11sp" tools:ignore="SmallSp"/>
 
                 <android.support.v7.widget.AppCompatImageView
                     android:id="@+id/messageViewedIcon"
                     android:layout_width="18sp"
-                    android:layout_height="11sp" tools:ignore="SmallSp"
+                    android:layout_height="11sp"
                     android:layout_gravity="center_vertical"
-                    android:tint="?android:attr/textColorSecondary"
+                    android:paddingEnd="3sp"
                     android:paddingLeft="5sp"
-                    android:paddingStart="5sp"
                     android:paddingRight="3sp"
-                    android:paddingEnd="3sp" />
+                    android:paddingStart="5sp"
+                    android:tint="?android:attr/textColorSecondary"
+                    tools:ignore="SmallSp"/>
 
             </LinearLayout>
 
@@ -61,17 +65,17 @@
         android:id="@+id/selected"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
         android:background="@color/colorMessageSelected"
+        android:visibility="gone"
         />
 
     <View
         android:id="@+id/overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:background="?android:attr/selectableItemBackground"
         />
 
 </FrameLayout>

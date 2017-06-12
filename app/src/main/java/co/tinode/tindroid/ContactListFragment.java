@@ -124,6 +124,9 @@ public class ContactListFragment extends ListFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Let this fragment contribute menu items
+        setHasOptionsMenu(true);
+
         // Check if this fragment is part of a two-pane set up or a single pane by reading a
         // boolean from the application resource directories. This lets allows us to easily specify
         // which screen sizes should use a two-pane layout by setting this boolean in the
@@ -178,8 +181,6 @@ public class ContactListFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Let this fragment contribute menu items
-        setHasOptionsMenu(true);
         // Inflate the list fragment layout
         return inflater.inflate(R.layout.fragment_contact_list, container, false);
     }
@@ -343,6 +344,7 @@ public class ContactListFragment extends ListFragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
 
         // Inflate the menu items
         inflater.inflate(R.menu.menu_contacts, menu);
@@ -463,6 +465,10 @@ public class ContactListFragment extends ListFragment {
             // For platforms earlier than Android 3.0, triggers the search activity
             case R.id.action_search:
                 return false;
+
+            case R.id.action_settings:
+                ((ContactsActivity) getActivity()).showAccountInfoFragment();
+                break;
 
             case R.id.action_about:
                 DialogFragment about = new AboutDialogFragment();

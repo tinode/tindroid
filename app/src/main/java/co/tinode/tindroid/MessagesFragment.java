@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -31,9 +32,11 @@ import java.util.TimerTask;
 
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
@@ -51,7 +54,9 @@ public class MessagesFragment extends Fragment {
 
     private MessagesListAdapter mMessagesAdapter;
     private RecyclerView mMessageList;
+    private SwipeRefreshLayout mRefresher;
     private MessageLoaderCallbacks mLoaderCallbacks;
+    private int mPagesToLoad;
 
     private String mTopicName = null;
     protected Topic<VCard, String, String> mTopic;
@@ -81,7 +86,7 @@ public class MessagesFragment extends Fragment {
         final MessageActivity activity = (MessageActivity) getActivity();
 
         LinearLayoutManager lm = new LinearLayoutManager(activity);
-        //lm.setReverseLayout(true);
+        lm.setReverseLayout(true);
         lm.setStackFromEnd(true);
 
         mMessageList = (RecyclerView) activity.findViewById(R.id.messages_container);
@@ -89,6 +94,22 @@ public class MessagesFragment extends Fragment {
 
         mMessagesAdapter = new MessagesListAdapter(activity);
         mMessageList.setAdapter(mMessagesAdapter);
+
+        mRefresher = (SwipeRefreshLayout) activity.findViewById(R.id.swipe_refresher);
+        mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.d(TAG, "time to refresh!!!");
+                if (mMessagesAdapter.getItemCount() == mPagesToLoad * MESSAGES_TO_LOAD) {
+                    mPagesToLoad++;
+                    runLoader();
+                } else if (!StoredTopic.isAllDataLoaded(mTopic)) {
+                    mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build());
+                } else {
+                    mRefresher.setRefreshing(false);
+                }
+            }
+        });
 
         mLoaderCallbacks = new MessageLoaderCallbacks();
 
@@ -137,8 +158,13 @@ public class MessagesFragment extends Fragment {
         super.onResume();
 
         Bundle bundle = getArguments();
+        String oldTopicName = mTopicName;
         mTopicName = bundle.getString("topic");
         String messageToSend = bundle.getString("messageText");
+
+        if (mTopicName != null && !mTopicName.equals(oldTopicName)) {
+            mMessagesAdapter.swapCursor(mTopicName, null);
+        }
 
         Log.d(TAG, "Resumed with topic=" + mTopicName);
 
@@ -155,6 +181,9 @@ public class MessagesFragment extends Fragment {
                 sendReadNotification();
             }
         }, READ_DELAY, READ_DELAY);
+
+        mPagesToLoad = 1;
+        mRefresher.setRefreshing(false);
 
         runLoader();
         scrollTo(0);
@@ -297,7 +326,7 @@ public class MessagesFragment extends Fragment {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             if (id == MESSAGES_QUERY_ID) {
-                return new MessageDb.Loader(getActivity(), mTopicName, -1, -1, MESSAGES_TO_LOAD);
+                return new MessageDb.Loader(getActivity(), mTopicName, mPagesToLoad, MESSAGES_TO_LOAD);
             }
             return null;
         }
@@ -321,15 +350,13 @@ public class MessagesFragment extends Fragment {
         private void swapCursor(final String topicName, final Cursor cursor) {
             Log.d(TAG, "MessagesListAdapter.swapCursor, topic=" + topicName);
             mMessagesAdapter.swapCursor(topicName, cursor);
-
             Activity activity = getActivity();
             if (activity != null) {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        mRefresher.setRefreshing(false);
                         notifyDataSetChanged();
-                        // -1 means scroll to the bottom
-                        scrollTo(-1);
                     }
                 });
             }

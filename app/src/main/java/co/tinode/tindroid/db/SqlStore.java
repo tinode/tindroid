@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -55,6 +56,7 @@ class SqlStore implements Storage {
 
     public void logout() {
         AccountDb.deactivateAll(mDbh.getWritableDatabase());
+        mDbh.setUid(null);
     }
 
     @Override
@@ -115,7 +117,7 @@ class SqlStore implements Storage {
     public Range getCachedMessagesRange(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
-            return new Range(st.maxLocalSeq, st.maxLocalSeq);
+            return new Range(st.minLocalSeq, st.maxLocalSeq);
         }
         return null;
     }
@@ -187,50 +189,84 @@ class SqlStore implements Storage {
     }
 
     @Override
+    public <Pu> long userAdd(User<Pu> user) {
+        return UserDb.insert(mDbh.getWritableDatabase(), user);
+    }
+
+    @Override
+    public <Pu> boolean userUpdate(User<Pu> user) {
+        return UserDb.update(mDbh.getWritableDatabase(), user);
+    }
+
+    @Override
     public <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> m) {
-        StoredMessage<T> msg = new StoredMessage<>(m);
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss == null) {
            return -1;
         }
 
+        StoredMessage<T> msg = new StoredMessage<>(m);
         msg.topicId = ss.topicId;
         msg.userId = ss.userId;
-        msg.senderIdx = ss.senderIdx;
 
-        return MessageDb.insert(mDbh.getWritableDatabase(), topic, msg);
+        SQLiteDatabase db = mDbh.getWritableDatabase();
+        try {
+            db.beginTransaction();
+
+            msg.id = MessageDb.insert(db, topic, msg);
+
+            if (msg.id > 0 && TopicDb.msgReceived(db, topic, msg.ts, msg.seq)) {
+                db.setTransactionSuccessful();
+            }
+
+        } catch (SQLException ex) {
+            Log.d(TAG, "Failed to save message", ex);
+        } finally {
+            db.endTransaction();
+        }
+
+        return msg.id;
     }
 
     @Override
-    public <T> long inviteReceived(Topic topic, MsgServerData<Announcement<T>> m) {
-        StoredMessage<Announcement<T>> msg = new StoredMessage<>(m);
+    public <T> long annReceived(MeTopic me, Topic topic, MsgServerData<Announcement<T>> m) {
+        if (topic == null || m.content == null) {
+            // Done't know how to save message without the topic or content.
+            return -1;
+        }
+
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
             return -1;
         }
 
+        StoredMessage<Announcement<T>> msg = new StoredMessage<>(m);
         SQLiteDatabase db = mDbh.getWritableDatabase();
+        try {
+            db.beginTransaction();
 
-        db.beginTransaction();
-        msg.userId = UserDb.getId(db, m.from);
-        if (msg.userId < 0) {
-            msg.userId = UserDb.insert(db, m.from, null);
+            msg.userId = UserDb.getId(db, m.content.user);
+            if (msg.userId < 0) {
+                msg.userId = UserDb.insert(db, m.content.user, null, null);
+            }
+            if (msg.userId < 0) {
+                return -1;
+            }
+
+            msg.topicId = st.id;
+
+            // Saving message to 'topic', but recoding metadata in 'me'
+            msg.id = MessageDb.insert(db, topic, msg);
+            if (msg.id > 0 && TopicDb.msgReceived(db, me, msg.ts, msg.seq)) {
+                db.setTransactionSuccessful();
+            }
+        } catch (SQLException ex) {
+            Log.d(TAG, "Failed to save message", ex);
+        } finally {
+            db.endTransaction();
         }
-        if (msg.userId > 0) {
-            db.setTransactionSuccessful();
-        }
-        db.endTransaction();
 
-        if (msg.userId <= 0) {
-            return -1;
-        }
-
-        msg.topicId = st.id;
-
-        // Use the same sender index for all invites.
-        msg.senderIdx = 1;
-
-        return MessageDb.insert(db, topic, msg);
+        return msg.id;
     }
 
     @Override
@@ -251,14 +287,28 @@ class SqlStore implements Storage {
             mMyId = UserDb.getId(db, msg.from);
         }
         msg.userId = mMyId;
-        msg.senderIdx = 0;
 
         return MessageDb.insert(db, topic, msg);
     }
 
     @Override
     public boolean msgDelivered(Topic topic, long messageDbId, Date timestamp, int seq) {
-        return MessageDb.delivered(mDbh.getWritableDatabase(), topic, messageDbId, timestamp, seq);
+        SQLiteDatabase db = mDbh.getWritableDatabase();
+        boolean result = false;
+        try {
+            db.beginTransaction();
+
+            if (MessageDb.delivered(mDbh.getWritableDatabase(), topic, messageDbId, timestamp, seq) &&
+                    TopicDb.msgReceived(db, topic, timestamp, seq)) {
+                db.setTransactionSuccessful();
+                result = true;
+            }
+        } catch (SQLException ex) {
+            Log.d(TAG, "Exception while inserting message", ex);
+        } finally {
+            db.endTransaction();
+        }
+        return result;
     }
 
     @Override

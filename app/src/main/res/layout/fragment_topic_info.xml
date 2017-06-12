@@ -17,6 +17,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_default_margin"
             android:layout_marginTop="@dimen/activity_default_margin"
+            android:padding="4dp"
             card_view:cardElevation="@dimen/cardview_default_elevation"
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPaddingLeft="@dimen/activity_horizontal_margin">
@@ -31,8 +32,7 @@
                     android:layout_height="@dimen/avatar_size_large"
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentRight="true"
-                    android:layout_marginLeft="8sp"
-                    android:layout_marginStart="8sp"
+                    android:layout_margin="4sp"
                     android:clickable="true"
                     android:contentDescription="@string/avatar"
                     app:srcCompat="@drawable/ic_group_circle"/>

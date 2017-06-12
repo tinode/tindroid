@@ -4,18 +4,23 @@ package co.tinode.tindroid.db;
 import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
  * StoredMessage fetched from the database
  */
 public class StoredMessage<T> extends MsgServerData<T> implements Storage.Message<T> {
+    public static final int MSG_TYPE_NORMAL = 0;
+    public static final int MSG_TYPE_META = 1;
 
     public long id;
     public long topicId;
     public long userId;
-    public int senderIdx;
     public int status;
+    public int type;
+    public Announcement<T> announcement;
 
     public StoredMessage() {
     }
@@ -26,11 +31,13 @@ public class StoredMessage<T> extends MsgServerData<T> implements Storage.Messag
         from = m.from;
         ts = m.ts;
         seq = m.seq;
+        type = Topic.getTopicTypeByName(topic) == Topic.TopicType.ME ?
+                MSG_TYPE_META : MSG_TYPE_NORMAL;
         content = m.content;
     }
 
     public boolean isMine() {
-        return senderIdx == 0;
+        return BaseDb.isMe(from);
     }
 
     @Override

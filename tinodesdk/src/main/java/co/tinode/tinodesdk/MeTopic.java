@@ -9,9 +9,12 @@ import java.util.Date;
 import java.util.List;
 
 import co.tinode.tinodesdk.model.Announcement;
+import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -22,6 +25,10 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
 
     public MeTopic(Tinode tinode, Listener<Pu, Pr, Announcement<T>> l) {
         super(tinode, Tinode.TOPIC_ME, l);
+    }
+
+    protected MeTopic(Tinode tinode, Description<Pu, Pr> desc) {
+        super(tinode, Tinode.TOPIC_ME, desc);
     }
 
     @Override
@@ -57,16 +64,56 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * This method has to be overridden because Subscription generally does not exists for invited senders.
+     */
     @Override
-    /* This method has to be overridden because Subscription generally does not exists for invite senders */
-    protected void routeData(MsgServerData<Announcement<T>> data) {
+    protected void routeData(final MsgServerData<Announcement<T>> data) {
         if (data.seq > mDesc.seq) {
             mDesc.seq = data.seq;
         }
 
-        if (mStore != null && mStore.inviteReceived(this, data) > 0) {
+        Topic<?,?,T> receiver = null;
+        if (data.content != null) {
+            // Fetch the topic & user descriptions, if missing.
+            receiver = mTinode.getTopic(data.content.topic);
+            if (receiver == null) {
+                receiver = mTinode.newTopic(data.content.topic, null);
+                mTinode.registerTopic(receiver);
+                try {
+                    receiver.getMeta(MsgGetMeta.desc()).thenApply(null,
+                            new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                    if (err instanceof ServerResponseException) {
+                                        // Delete the topic if server responded with "404 NOT FOUND".
+                                        if (((ServerResponseException) err).getCode() ==
+                                                ServerMessage.STATUS_NOT_FOUND) {
+                                            mTinode.unregisterTopic(data.content.topic);
+                                        }
+                                    }
+                                    return null;
+                                }
+                            });
+                } catch (Exception ignored) {
+                }
+            }
+
+            User user = mTinode.getUser(data.content.user);
+            if (user == null) {
+                mTinode.addUser(data.content.user);
+                mTinode.getMeta(data.content.user, MsgGetMeta.desc());
+            }
+        }
+
+        if (mStore != null) {
+            if (mStore.annReceived(this, receiver, data) > 0) {
+                noteRecv();
+            }
+        } else {
             noteRecv();
         }
+
 
         if (mListener != null) {
             mListener.onData(data);

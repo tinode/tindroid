@@ -1,6 +1,7 @@
 package co.tinode.tindroid.db;
 
 import android.database.Cursor;
+import android.util.Log;
 
 import java.util.Date;
 
@@ -11,6 +12,8 @@ import co.tinode.tinodesdk.Topic;
  * Representation of a topic stored in a database;
  */
 public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
+    private static final String TAG = "StoredTopic";
+
     public long id;
     public Date lastUsed;
     public int minLocalSeq;
@@ -50,5 +53,10 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
     public static long getId(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         return st != null ? st.id : -1;
+    }
+
+    public static boolean isAllDataLoaded(Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return st != null && st.minLocalSeq == 1;
     }
 }

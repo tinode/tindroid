@@ -2,13 +2,10 @@ package co.tinode.tindroid;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.Toast;
@@ -43,8 +40,6 @@ public class ContactsActivity extends AppCompatActivity implements
     static final String FRAGMENT_CONTACTS = "contacts";
     static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
 
-    private AccountInfoFragment mAccountInfoFragment;
-    private ContactsFragment mContactsFragment;
 
     private ChatListAdapter mChatListAdapter;
 
@@ -56,11 +51,8 @@ public class ContactsActivity extends AppCompatActivity implements
 
         setContentView(R.layout.activity_contacts);
 
-        mContactsFragment = new ContactsFragment();
-        // mAccountInfoFragment = new AccountInfoFragment();
-
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.contentFragment, mContactsFragment, FRAGMENT_CONTACTS)
+                .replace(R.id.contentFragment, new ContactsFragment(), FRAGMENT_CONTACTS)
                 .commit();
 
         mChatListAdapter = new ChatListAdapter(this);
@@ -118,7 +110,7 @@ public class ContactsActivity extends AppCompatActivity implements
             try {
                 Log.d(TAG, "Trying to subscribe to me");
                 me.subscribe(null, me
-                        .subscribeParamGetBuilder()
+                        .getMetaGetBuilder()
                         .withGetDesc()
                         .withGetSub()
                         .withGetData()
@@ -193,6 +185,7 @@ public class ContactsActivity extends AppCompatActivity implements
         public void onData(MsgServerData<Announcement<String>> data) {
             // TODO(gene): handle a chat invitation
             Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
+            datasetChanged();
         }
 
         @Override
@@ -232,5 +225,18 @@ public class ContactsActivity extends AppCompatActivity implements
             Log.d(TAG, "onSubsUpdated: datasetChanged");
             datasetChanged();
         }
+    }
+
+    void showAccountInfoFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentByTag(FRAGMENT_EDIT_ACCOUNT);
+        FragmentTransaction trx = fm.beginTransaction();
+        if (fragment == null) {
+            fragment = new AccountInfoFragment();
+            trx.add(R.id.contentFragment, fragment, FRAGMENT_EDIT_ACCOUNT);
+        }
+        trx.addToBackStack(FRAGMENT_EDIT_ACCOUNT)
+                .show(fragment)
+                .commit();
     }
 }

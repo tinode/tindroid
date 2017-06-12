@@ -22,7 +22,12 @@ public class MsgClientGet {
     public MsgClientGet() {}
 
     public MsgClientGet(String id, String topic, MsgGetMeta query) {
-        this(id, topic, query.desc, query.sub, query.data);
+        this.id = id;
+        this.topic = topic;
+        this.what = query.what;
+        this.desc = query.desc;
+        this.sub = query.sub;
+        this.data = query.data;
     }
 
     public MsgClientGet(String id, String topic, MetaGetDesc desc,

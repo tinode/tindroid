@@ -19,6 +19,7 @@ public class StoredUser implements LocalData.Payload {
 
         su.id = c.getLong(UserDb.COLUMN_IDX_ID);
 
+        user.uid = c.getString(UserDb.COLUMN_IDX_UID);
         user.updated = new Date(c.getLong(UserDb.COLUMN_IDX_UPDATED));
         user.pub = (Pu) BaseDb.deserialize(c.getBlob(UserDb.COLUMN_IDX_PUBLIC));
 

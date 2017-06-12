@@ -1,0 +1,60 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:paddingLeft="6sp"
+    android:paddingRight="6sp">
+
+    <RelativeLayout
+        android:id="@+id/messageBubble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginRight="20dp"
+        android:layout_marginLeft="20dp"
+        android:background="@drawable/bubble">
+
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/avatar"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginRight="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_width="40sp"
+                android:layout_height="40sp"
+                app:srcCompat="@drawable/ic_person_circle" />
+
+            <TextView
+                android:id="@+id/messageText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/avatar"
+                android:layout_toEndOf="@id/avatar"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="John Doe invites you to join 'Test topic 123':\n 'Join my topic!'"/>
+
+            <android.support.v7.widget.AppCompatButton
+                android:id="@+id/buttonJoin"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/messageText"
+                android:text="@string/join"/>
+
+            <android.support.v7.widget.AppCompatButton
+                android:id="@+id/buttonIgnore"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/messageText"
+                android:text="@string/ignore"/>
+        </RelativeLayout>
+</LinearLayout>

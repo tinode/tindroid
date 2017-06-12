@@ -45,6 +45,9 @@
     <color name="colorBorderRed">#E57373</color>
     <color name="colorBorderYellow">#FFCA28</color>
 
+    <color name="colorMessageBubble">#c5e1a5</color>
+    <color name="colorMessageMetaBubble">#CFD8DC</color>
+
 
     <!-- Background colors for LetterTileDrawables. This set of colors is a subset of
         https://spec.googleplex.com/quantumpalette#extended which passes Google Accessibility
