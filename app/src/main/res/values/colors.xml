@@ -26,6 +26,9 @@
 
     <color name="colorPillCounter">#FF98AFC7</color>
     <color name="colorUserOnline">#FF40C040</color>
+    <color name="colorUserOnlineH1">#FF30D030</color>
+    <color name="colorUserOnlineH2">#FF10EE10</color>
+    <color name="colorUserOnlineH3">#FF00FF00</color>
     <color name="colorUserOffline">#FFC0C0C0</color>
 
     <color name="colorAvatarLight">#66000000</color>

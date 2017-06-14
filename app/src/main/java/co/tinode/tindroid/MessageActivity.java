@@ -17,6 +17,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.Timer;
+
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -39,6 +41,10 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_INFO = "info";
     static final String FRAGMENT_ADD_TOPIC = "add_topic";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
+
+    // How long a typing indicator should play its animation, milliseconds.
+    private static final int TYPING_INDICATOR_DURATION = 4000;
+    private Timer mTypingAnimationTimer;
 
     private String mMessageText = null;
 
@@ -149,7 +155,6 @@ public class MessageActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 try {
-                                    Log.d(TAG, "Publishing pending messages");
                                     mTopic.publishPending();
                                 } catch (Exception ignored) {
                                 }
@@ -177,6 +182,10 @@ public class MessageActivity extends AppCompatActivity {
         Log.d(TAG, "onPause");
         super.onPause();
         mMessageSender.pause();
+        if (mTypingAnimationTimer != null) {
+            mTypingAnimationTimer.cancel();
+            mTypingAnimationTimer = null;
+        }
 
         Cache.getTinode().setListener(null);
         if (mTopic != null) {
@@ -334,8 +343,14 @@ public class MessageActivity extends AppCompatActivity {
                     });
                     break;
                 case "kp":
-                    // TODO(gene): show typing notification
-                    Log.d(TAG, info.from + ": typing...");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Show typing indicator as animation over avatar in toolbar
+                            mTypingAnimationTimer = UiUtils.toolbarTypingIndicator(MessageActivity.this,
+                                    mTypingAnimationTimer, TYPING_INDICATOR_DURATION);
+                        }
+                    });
                     break;
                 default:
                     break;
@@ -359,7 +374,6 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onMetaDesc(final Description<VCard, String> desc) {
-            Log.d(TAG, "onMetaDesc!");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -380,8 +394,7 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
-                            mTopic.getOnline());
+                    UiUtils.toolbarSetOnline(MessageActivity.this, mTopic.getOnline());
                 }
             });
 

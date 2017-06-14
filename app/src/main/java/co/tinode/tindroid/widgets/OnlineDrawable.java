@@ -20,7 +20,7 @@ public class OnlineDrawable extends Drawable {
     private int mColorOnline;
     private int mColorOffline;
 
-    private boolean mOnline;
+    private Boolean mOnline;
     private Paint mPaint;
 
     public OnlineDrawable(boolean online) {

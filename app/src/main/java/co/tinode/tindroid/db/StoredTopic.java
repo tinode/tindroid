@@ -57,6 +57,7 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
 
     public static boolean isAllDataLoaded(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return st != null && st.minLocalSeq == 1;
+        Log.d(TAG, "Is all data loaded? " + (st == null ? "st=null" : "st.min=" + st.minLocalSeq) + ", topic.seq=" + topic.getSeq());
+        return topic.getSeq() == 0 || (st != null && st.minLocalSeq == 1);
     }
 }

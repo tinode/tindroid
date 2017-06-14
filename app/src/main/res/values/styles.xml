@@ -58,4 +58,9 @@
         <item name="android:textAllCaps">true</item>
     </style>
 
+    <style name="textMetaBubble">
+        <item name="android:textColor">@color/colorTextSecondary</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
 </resources>

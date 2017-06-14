@@ -86,7 +86,7 @@ public class MessagesFragment extends Fragment {
         final MessageActivity activity = (MessageActivity) getActivity();
 
         LinearLayoutManager lm = new LinearLayoutManager(activity);
-        lm.setReverseLayout(true);
+        // lm.setReverseLayout(true);
         lm.setStackFromEnd(true);
 
         mMessageList = (RecyclerView) activity.findViewById(R.id.messages_container);
@@ -99,11 +99,11 @@ public class MessagesFragment extends Fragment {
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                Log.d(TAG, "time to refresh!!!");
                 if (mMessagesAdapter.getItemCount() == mPagesToLoad * MESSAGES_TO_LOAD) {
                     mPagesToLoad++;
                     runLoader();
                 } else if (!StoredTopic.isAllDataLoaded(mTopic)) {
+                    Log.d(TAG, "Calling server for more data");
                     mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build());
                 } else {
                     mRefresher.setRefreshing(false);
@@ -186,7 +186,6 @@ public class MessagesFragment extends Fragment {
         mRefresher.setRefreshing(false);
 
         runLoader();
-        scrollTo(0);
     }
 
     @Override
@@ -279,7 +278,6 @@ public class MessagesFragment extends Fragment {
             // notifyDataSetChanged();
             if (!message.equals("")) {
                 try {
-                    Log.d(TAG, "sendMessage -- sending...");
                     PromisedReply<ServerMessage> reply = mTopic.publish(message);
                     runLoader(); // Shows pending message
                     reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -299,7 +297,6 @@ public class MessagesFragment extends Fragment {
                 }
 
                 // Message is successfully queued, clear text from the input field and redraw the list.
-                Log.d(TAG, "sendMessage -- clearing text and notifying");
                 inputField.setText("");
             }
         }
@@ -348,7 +345,6 @@ public class MessagesFragment extends Fragment {
         }
 
         private void swapCursor(final String topicName, final Cursor cursor) {
-            Log.d(TAG, "MessagesListAdapter.swapCursor, topic=" + topicName);
             mMessagesAdapter.swapCursor(topicName, cursor);
             Activity activity = getActivity();
             if (activity != null) {
@@ -357,6 +353,8 @@ public class MessagesFragment extends Fragment {
                     public void run() {
                         mRefresher.setRefreshing(false);
                         notifyDataSetChanged();
+                        if (cursor != null)
+                        mMessageList.scrollToPosition(cursor.getCount() - 1);
                     }
                 });
             }

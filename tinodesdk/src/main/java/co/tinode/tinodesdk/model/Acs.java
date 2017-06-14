@@ -2,12 +2,13 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * Access mode.
  */
-public class Acs {
+public class Acs implements Serializable {
     AcsHelper given;
     AcsHelper want;
     AcsHelper mode;

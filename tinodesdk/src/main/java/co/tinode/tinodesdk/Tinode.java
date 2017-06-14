@@ -838,8 +838,6 @@ public class Tinode {
     public PromisedReply<ServerMessage> getMeta(final String topicName, final MsgGetMeta query) {
         ClientMessage msg = new ClientMessage(new MsgClientGet(getNextId(), topicName, query));
         try {
-            Log.d(TAG, "Tinode.getMeta(" + query.toString() + ")");
-
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.get.id, future);

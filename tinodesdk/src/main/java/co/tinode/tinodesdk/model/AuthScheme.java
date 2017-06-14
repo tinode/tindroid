@@ -2,13 +2,14 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.core.Base64Variants;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.StringTokenizer;
 
 /**
  * Helper of authentication scheme for account creation.
  */
-public class AuthScheme {
+public class AuthScheme implements Serializable {
     public static final String LOGIN_BASIC = "basic";
     public static final String LOGIN_TOKEN = "token";
 

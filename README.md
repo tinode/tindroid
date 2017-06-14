@@ -8,6 +8,7 @@ Beta-quality software. What works:
 * Edit group chat parameters.
 * In-app presence notifications.
 * Unread message counters.
+* Typing indicators.
 * Push notifications.
 * Indicators for messages received/read (little check marks in messages).
 * Muting/unmuting conversations and other permission management.
@@ -15,13 +16,12 @@ Beta-quality software. What works:
 * Access contacts from the Android stock Contacts app.
 * Invite contacts to the app by SMS or email.
 * Offline mode is mostly functional.
+* Editing of personal details
 
 Does not work yet:
 
-* Editing of personal details
 * Contact discovery is done but not debugged yet
 * Deleting messages
-* No client support for typing notifications (they are sent but not shown in the UI).
 * No encryption
 
 Dependencies on the SDK side (otherwise plain Java):
@@ -35,7 +35,7 @@ Dependencies on the application side:
 * [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
 to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
 * [MaterialChipsInput](https://github.com/pchmn/MaterialChipsInput) widget for group chat member selection. 
-Google should have provided this widget.
+This one is buggy and inflexible, should be replaced ASAP. Google should have provided this widget.
 * [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications.
 In order to compile the app you need to [generate your own](https://developers.google.com/mobile/add)
 config file `google-services.json`. Once downloaded, copy it to the `./app/` folder. The
@@ -47,5 +47,6 @@ The `contacts.vcf` contains a list of contacts which can be used for testing. Pu
 
   `adb push contacts.vcf /sdcard/contacts.vcf`
 
-<img src="android-contacts.png" alt="App screenshot - contacts" width="270" />
-<img src="android-messages.png" alt="App screenshot - messages" width="270" />
+| --- | --- |
+| <img src="android-contacts.png" alt="App screenshot - contacts" width="270" /> | <img src="android-messages.png" alt="App screenshot - messages" width="270" /> |
+| <img src="android-settings.png" alt="App screenshot - settings" width="270" /> | <img src="android-account.png" alt="App screenshot - account" width="270" /> |

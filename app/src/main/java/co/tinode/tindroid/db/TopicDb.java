@@ -290,9 +290,16 @@ public class TopicDb implements BaseColumns {
         if (seq > st.maxLocalSeq) {
             values.put(COLUMN_NAME_MAX_LOCAL_SEQ, seq);
             values.put(COLUMN_NAME_RECV, seq);
-        } else if (seq > 0 && (st.minLocalSeq == 0 || seq < st.minLocalSeq)) {
+        }
+
+        if (seq > 0 && (st.minLocalSeq == 0 || seq < st.minLocalSeq)) {
             values.put(COLUMN_NAME_MIN_LOCAL_SEQ, seq);
         }
+
+        if (seq > topic.getSeq()) {
+            values.put(COLUMN_NAME_SEQ, seq);
+        }
+
         if (timestamp.after(st.lastUsed)) {
             values.put(COLUMN_NAME_LASTUSED, timestamp.getTime());
         }

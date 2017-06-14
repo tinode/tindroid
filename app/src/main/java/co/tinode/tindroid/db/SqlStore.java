@@ -298,7 +298,7 @@ class SqlStore implements Storage {
         try {
             db.beginTransaction();
 
-            if (MessageDb.delivered(mDbh.getWritableDatabase(), topic, messageDbId, timestamp, seq) &&
+            if (MessageDb.delivered(mDbh.getWritableDatabase(), messageDbId, timestamp, seq) &&
                     TopicDb.msgReceived(db, topic, timestamp, seq)) {
                 db.setTransactionSuccessful();
                 result = true;
@@ -390,7 +390,7 @@ class SqlStore implements Storage {
         @SuppressWarnings("unchecked")
         @Override
         public StoredMessage<T> next() {
-            StoredMessage<T> msg = MessageDb.readMessage(mCursor);
+            StoredMessage<T> msg = StoredMessage.readMessage(mCursor);
             mCursor.moveToNext();
             return msg;
         }

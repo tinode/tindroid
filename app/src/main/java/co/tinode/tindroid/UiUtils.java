@@ -17,7 +17,9 @@ import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
@@ -61,6 +63,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -88,6 +92,8 @@ public class UiUtils {
     static final String PREF_READ_RCPT = "pref_readReceipts";
     static final int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
     static final int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
+    static final int COLOR_MESSAGE_BUBBLE = 0xffc5e1a5;
+    static final int COLOR_META_BUBBLE = 0xFFCFD8DC;
     private static final String TAG = "UiUtils";
     private static final int BITMAP_SIZE = 128;
     // Material colors, shade #200.
@@ -103,7 +109,6 @@ public class UiUtils {
             new Colorizer(0xffeeeeee, 0xff212121), new Colorizer(0xff80deea, 0xff212121),
             new Colorizer(0xffe6ee9c, 0xff212121), new Colorizer(0xffce93d8, 0xff212121)
     };
-
     private static final Colorizer[] sColorizerDark = {
             new Colorizer(0xff424242, 0xffdedede),
             new Colorizer(0xffC62828, 0xffdedede), new Colorizer(0xffAD1457, 0xffdedede),
@@ -116,18 +121,18 @@ public class UiUtils {
             new Colorizer(0xffEF6C00, 0xffdedede), new Colorizer(0xffD84315, 0xffdedede),
             new Colorizer(0xff4E342E, 0xffdedede), new Colorizer(0xff37474F, 0xffdedede)
     };
-
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
     private static final int COLOR_RED_BORDER = 0xFFE57373;
     private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
     private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
-
-    static final int COLOR_MESSAGE_BUBBLE = 0xffc5e1a5;
-    static final int COLOR_META_BUBBLE = 0xFFCFD8DC;
-
     // If StoredMessage activity is visible, this is the current topic in that activity.
     static String sVisibleTopic = null;
+
+    // Logo LayerDrawable IDs
+    private static final int LOGO_LAYER_AVATAR = 0;
+    private static final int LOGO_LAYER_ONLINE = 1;
+    private static final int LOGO_LAYER_TYPING = 2;
 
     static void setupToolbar(final Activity activity, VCard pub,
                              String topicName, boolean online) {
@@ -135,29 +140,99 @@ public class UiUtils {
         if (toolbar == null) {
             return;
         }
-
         if (pub != null) {
-            Topic.TopicType topicType = Topic.getTopicTypeByName(topicName);
-
             toolbar.setTitle(" " + pub.fn);
-
-            pub.constructBitmap();
-            Bitmap bmp = pub.getBitmap();
-            Drawable drw;
-            if (bmp != null) {
-                drw = new RoundImageDrawable(bmp);
-            } else {
-                drw = new LetterTileDrawable(activity.getResources())
-                        .setLetterAndColor(pub.fn, topicName)
-                        .setContactTypeAndColor(topicType == Topic.TopicType.P2P ?
-                            LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP);
-            }
-            toolbar.setLogo(
-                    new LayerDrawable(new Drawable[]{drw, new OnlineDrawable(online)}));
+            constructToolbarLogo(activity, pub.getBitmap(), pub.fn, topicName, online);
         } else {
             toolbar.setLogo(null);
             toolbar.setTitle(R.string.app_name);
         }
+    }
+
+    // 0. [Avatar or LetterTileDrawable] 1. [Online indicator] 2. [Typing indicator]
+    private static void constructToolbarLogo(final Activity activity, Bitmap avatar, String name,
+                                             String uid, boolean online) {
+        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        if (toolbar == null) {
+            return;
+        }
+
+        Drawable avatarDrawable;
+        if (avatar != null) {
+            avatarDrawable = new RoundImageDrawable(avatar);
+        } else {
+            avatarDrawable = new LetterTileDrawable(activity.getResources())
+                    .setLetterAndColor(name, uid)
+                    .setContactTypeAndColor(Topic.getTopicTypeByName(uid) == Topic.TopicType.P2P ?
+                            LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP);
+        }
+        AnimationDrawable typing = (AnimationDrawable)
+                activity.getResources().getDrawable(R.drawable.typing_indicator);
+        typing.setOneShot(false);
+        typing.setVisible(false, true);
+        typing.setAlpha(0);
+        LayerDrawable layers = new LayerDrawable(
+                new Drawable[]{
+                        avatarDrawable,
+                        new OnlineDrawable(online),
+                        typing});
+        layers.setId(0, LOGO_LAYER_AVATAR);
+        layers.setId(1, LOGO_LAYER_ONLINE);
+        layers.setId(2, LOGO_LAYER_TYPING);
+        toolbar.setLogo(layers);
+        Rect b = toolbar.getLogo().getBounds();
+        typing.setBounds(b.right - b.width()/4, b.bottom - b.height()/4, b.right, b.bottom);
+    }
+
+    static Timer toolbarTypingIndicator(final Activity activity, Timer timer, int duration) {
+        if (timer != null) {
+            timer.cancel();
+        }
+
+        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        if (toolbar == null) {
+            return null;
+        }
+        Drawable logo = toolbar.getLogo();
+        if (logo == null || !(logo instanceof LayerDrawable)) {
+            return null;
+        }
+
+        final AnimationDrawable typing = (AnimationDrawable) ((LayerDrawable) logo)
+                .findDrawableByLayerId(LOGO_LAYER_TYPING);
+        Rect b = logo.getBounds();
+        typing.setBounds(b.right - b.width()/4, b.bottom - b.height()/4, b.right, b.bottom);
+        typing.setVisible(true, false);
+        typing.setAlpha(255);
+        typing.start();
+
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        typing.setVisible(false, true);
+                        typing.setAlpha(0);
+                    }
+                });
+            }
+        }, duration);
+        return timer;
+    }
+
+    static void toolbarSetOnline(final Activity activity, boolean online) {
+        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        if (toolbar == null) {
+            return;
+        }
+        Drawable logo = toolbar.getLogo();
+        if (logo == null || !(logo instanceof LayerDrawable)) {
+            return;
+        }
+
+        ((OnlineDrawable)((LayerDrawable) logo).findDrawableByLayerId(LOGO_LAYER_ONLINE)).setOnline(online);
     }
 
     public static String getVisibleTopic() {
@@ -341,7 +416,7 @@ public class UiUtils {
         // Scale up or down.
         bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
         // Chop the square from the middle.
-        return Bitmap.createBitmap(bmp, width - BITMAP_SIZE, height - BITMAP_SIZE,
+        return Bitmap.createBitmap(bmp, (width - BITMAP_SIZE)/2, (height - BITMAP_SIZE)/2,
                 BITMAP_SIZE, BITMAP_SIZE);
     }
 
@@ -483,6 +558,11 @@ public class UiUtils {
             index = index % sColorizerDark.length;
         }
         return sColorizerDark[index];
+    }
+
+    public static Colorizer getDarkColorsFor(String uid) {
+        int index = uid != null ? Math.abs(uid.hashCode()) : 0;
+        return sColorizerDark[index % sColorizerDark.length];
     }
 
     public static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {

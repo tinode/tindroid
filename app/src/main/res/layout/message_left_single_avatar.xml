@@ -15,8 +15,8 @@
 
         <android.support.v7.widget.AppCompatImageView
             android:id="@+id/avatar"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_gravity="bottom"
             android:layout_marginBottom="12dp"
             tools:src="@drawable/ic_person_circle"/>
@@ -49,8 +49,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:paddingLeft="12dp"
-                    android:paddingRight="12dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="11sp"
                     tools:ignore="SmallSp"
@@ -65,8 +65,8 @@
                 android:paddingLeft="6dp"
                 android:paddingStart="6dp"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="11sp"
-                tools:ignore="SmallSp"
+                android:textSize="12sp"
+                tools:ignore="RtlSymmetry"
                 tools:text="John Doe"
                 />
 

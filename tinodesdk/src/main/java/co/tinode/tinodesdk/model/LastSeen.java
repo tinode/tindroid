@@ -1,11 +1,12 @@
 package co.tinode.tinodesdk.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Class to hold last seen date-time and User Agent.
  */
-public class LastSeen {
+public class LastSeen implements Serializable {
     public Date when;
     public String ua;
 

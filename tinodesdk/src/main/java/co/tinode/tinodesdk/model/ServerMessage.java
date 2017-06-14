@@ -1,9 +1,11 @@
 package co.tinode.tinodesdk.model;
 
+import java.io.Serializable;
+
 /**
  * Combined server message
  */
-public class ServerMessage<T,Pu,Pr> {
+public class ServerMessage<T,Pu,Pr> implements Serializable {
     public static final int STATUS_CONTINUE               = 100; // RFC 7231, 6.2.1
     public static final int STATUS_SWITCHING_PROTOCOLS    = 101; // RFC 7231, 6.2.2
     public static final int STATUS_PROCESSING             = 102; // RFC 2518, 10.1

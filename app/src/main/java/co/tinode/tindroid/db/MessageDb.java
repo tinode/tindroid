@@ -120,15 +120,16 @@ public class MessageDb implements BaseColumns {
      */
     public static final Uri CONTENT_URI =
             BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
-    private static final int COLUMN_IDX_ID = 0;
-    private static final int COLUMN_IDX_TOPIC_ID = 1;
-    private static final int COLUMN_IDX_USER_ID = 2;
-    private static final int COLUMN_IDX_STATUS = 3;
-    private static final int COLUMN_IDX_TYPE = 4;
-    private static final int COLUMN_IDX_SENDER = 5;
-    private static final int COLUMN_IDX_TS = 6;
-    private static final int COLUMN_IDX_SEQ = 7;
-    private static final int COLUMN_IDX_CONTENT = 8;
+
+    static final int COLUMN_IDX_ID = 0;
+    static final int COLUMN_IDX_TOPIC_ID = 1;
+    static final int COLUMN_IDX_USER_ID = 2;
+    static final int COLUMN_IDX_STATUS = 3;
+    static final int COLUMN_IDX_TYPE = 4;
+    static final int COLUMN_IDX_SENDER = 5;
+    static final int COLUMN_IDX_TS = 6;
+    static final int COLUMN_IDX_SEQ = 7;
+    static final int COLUMN_IDX_CONTENT = 8;
 
     /**
      * Save message to DB
@@ -169,12 +170,17 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_SENDER, msg.from);
         values.put(COLUMN_NAME_TS, msg.ts.getTime());
         values.put(COLUMN_NAME_SEQ, msg.seq);
-        values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
+        if (msg.type == StoredMessage.MSG_TYPE_META) {
+            Log.d(TAG, "Saving meta" + msg.meta);
+            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.meta));
+        } else {
+            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
+        }
 
         return db.insert(TABLE_NAME, null, values);
     }
 
-    static boolean delivered(SQLiteDatabase db, Topic topic, long msgId, Date timestamp, int seq) {
+    static boolean delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
         values.put(COLUMN_NAME_TS, timestamp.getTime());
@@ -289,22 +295,6 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_TOPIC_ID + "=" + topicId +
                             " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
         }
-    }
-
-    public static <T> StoredMessage<T> readMessage(Cursor c) {
-        StoredMessage<T> msg = new StoredMessage<>();
-
-        msg.id = c.getLong(COLUMN_IDX_ID);
-        msg.topicId = c.getLong(COLUMN_IDX_TOPIC_ID);
-        msg.userId = c.getLong(COLUMN_IDX_USER_ID);
-        msg.status = c.getInt(COLUMN_IDX_STATUS);
-        msg.type = c.getInt(COLUMN_IDX_TYPE);
-        msg.from = c.getString(COLUMN_IDX_SENDER);
-        msg.seq = c.getInt(COLUMN_IDX_SEQ);
-        msg.ts = new Date(c.getLong(COLUMN_IDX_TS));
-        msg.content = BaseDb.deserialize(c.getBlob(COLUMN_IDX_CONTENT));
-
-        return msg;
     }
 
     /**

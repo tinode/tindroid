@@ -2,12 +2,13 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Topic description as deserialized from the server packet.
  */
-public class Description<Pu,Pr> {
+public class Description<Pu,Pr> implements Serializable {
     public Date created;
     public Date updated;
     public Defacs defacs;

@@ -38,7 +38,7 @@
             android:contentDescription="@string/send_message_button_hint"
             android:paddingLeft="4sp"
             android:paddingRight="8sp"
-            android:tint="@android:color/holo_blue_dark"
+            android:tint="?attr/colorAccent"
             app:srcCompat="@drawable/ic_send"/>
 
     </LinearLayout>
@@ -56,9 +56,7 @@
             android:id="@+id/messages_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            app:reverseLayout="true"
-            app:stackFromEnd="true"/>
+            android:scrollbars="vertical"/>
 
     </android.support.v4.widget.SwipeRefreshLayout>
 

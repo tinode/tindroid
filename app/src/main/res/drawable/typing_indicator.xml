@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/selected"
+                android:oneshot="false"
+                android:visible="false">
+    <item
+        android:drawable="@drawable/typing_indicator_0"
+        android:duration="300"/>
+    <item
+        android:drawable="@drawable/typing_indicator_1"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_2"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_3"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_1"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_2"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_3"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_1"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_2"
+        android:duration="100"/>
+    <item
+        android:drawable="@drawable/typing_indicator_3"
+        android:duration="100"/>
+</animation-list>

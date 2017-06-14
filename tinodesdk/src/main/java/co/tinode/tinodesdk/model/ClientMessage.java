@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk.model;
 
+import java.io.Serializable;
+
 /**
  * Client message:
  *
@@ -15,7 +17,7 @@ package co.tinode.tinodesdk.model;
  * Note  *MsgClientNote  `json:"note"`
  */
 
-public class ClientMessage<Pu,Pr,T> {
+public class ClientMessage<Pu,Pr,T> implements Serializable {
     public MsgClientHi hi;
     public MsgClientAcc<Pu,Pr> acc;
     public MsgClientLogin login;

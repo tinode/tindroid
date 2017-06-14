@@ -1,9 +1,11 @@
 package co.tinode.tinodesdk.model;
 
+import java.io.Serializable;
+
 /**
  * Class describing default access to topic
  */
-public class Defacs {
+public class Defacs implements Serializable {
     public AcsHelper auth;
     public AcsHelper anon;
 

@@ -10,10 +10,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingEnd="6dp"
-        android:paddingLeft="6dp"
         android:paddingRight="6dp"
-        android:paddingStart="36dp">
+        android:paddingEnd="6dp"
+        android:paddingLeft="32dp"
+        android:paddingStart="32dp">
 
         <LinearLayout
             android:id="@+id/messageBubble"
@@ -26,7 +26,7 @@
                 android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:maxWidth="280dp"
+                android:maxWidth="270dp"
                 android:textColor="?android:attr/textColorPrimary"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
 
@@ -35,8 +35,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:paddingLeft="12dp"
-                android:paddingRight="12dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="11sp"
                 tools:ignore="SmallSp"

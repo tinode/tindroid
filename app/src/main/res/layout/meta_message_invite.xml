@@ -13,8 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginRight="20dp"
-        android:layout_marginLeft="20dp"
+        android:maxWidth="260dp"
         android:background="@drawable/bubble">
 
             <android.support.v7.widget.AppCompatImageView
@@ -31,10 +30,10 @@
                 android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:maxWidth="200dp"
                 android:layout_toRightOf="@id/avatar"
                 android:layout_toEndOf="@id/avatar"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="?android:attr/textColorSecondary"
+                style="@style/textMetaBubble"
                 tools:text="John Doe invites you to join 'Test topic 123':\n 'Join my topic!'"/>
 
             <android.support.v7.widget.AppCompatButton
@@ -42,9 +41,10 @@
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true"
+                android:layout_alignRight="@id/messageText"
+                android:layout_alignEnd="@id/messageText"
                 android:layout_below="@id/messageText"
+                android:textSize="12sp"
                 android:text="@string/join"/>
 
             <android.support.v7.widget.AppCompatButton
@@ -52,9 +52,10 @@
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
+                android:layout_alignLeft="@id/messageText"
+                android:layout_alignStart="@id/messageText"
                 android:layout_below="@id/messageText"
+                android:textSize="12sp"
                 android:text="@string/ignore"/>
         </RelativeLayout>
 </LinearLayout>

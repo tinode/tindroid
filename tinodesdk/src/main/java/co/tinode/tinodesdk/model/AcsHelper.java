@@ -2,10 +2,12 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
+
 /**
  * Helper class for access mode parser/generator.
  */
-public class AcsHelper {
+public class AcsHelper implements Serializable {
     private static final String TAG = "AcsHelper";
 
     // User access to topic

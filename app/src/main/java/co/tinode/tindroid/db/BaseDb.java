@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,6 +24,8 @@ import co.tinode.tinodesdk.model.Defacs;
  * SQLite backend. Persistent store for messages and chats.
  */
 public class BaseDb extends SQLiteOpenHelper {
+    private static final String TAG = "BaseDb";
+
     // Object not yet sent to the server
     public static final int STATUS_QUEUED = 0;
     // Object received by the server
@@ -77,14 +80,16 @@ public class BaseDb extends SQLiteOpenHelper {
                 objout.writeObject(obj);
                 objout.flush();
                 return baos.toByteArray();
-            } catch (IOException ignored) {
+            } catch (IOException ex) {
+                Log.e(TAG, "Failed to serialize", ex);
             } finally {
                 try {
                     baos.close();
                     if (objout != null) {
                         objout.close();
                     }
-                } catch (IOException ignored) {
+                } catch (IOException ex) {
+                    Log.e(TAG, "Failed to close in serialize", ex);
                 }
             }
         }
@@ -98,14 +103,16 @@ public class BaseDb extends SQLiteOpenHelper {
             try {
                 objin = new ObjectInputStream(bais);
                 return (T) objin.readObject();
-            } catch (IOException | ClassNotFoundException | ClassCastException ignored) {
+            } catch (IOException | ClassNotFoundException | ClassCastException ex) {
+                Log.e(TAG, "Failed to de-serialize", ex);
             } finally {
                 try {
                     bais.close();
                     if (objin != null) {
                         objin.close();
                     }
-                } catch (IOException ignored) {
+                } catch (IOException ex) {
+                    Log.e(TAG, "Failed to close in de-serialize", ex);
                 }
             }
         }

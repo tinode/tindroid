@@ -3,6 +3,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import co.tinode.tinodesdk.LocalData;
@@ -11,7 +12,7 @@ import co.tinode.tinodesdk.Topic;
 /**
  * Subscription to topic.
  */
-public class Subscription<Pu,Pr> implements LocalData {
+public class Subscription<Pu,Pr> implements LocalData, Serializable {
     public String user;
     public Date updated;
     public Date deleted;

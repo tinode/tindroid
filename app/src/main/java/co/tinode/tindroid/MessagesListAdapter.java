@@ -1,11 +1,10 @@
 package co.tinode.tindroid;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
@@ -13,23 +12,23 @@ import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.SparseBooleanArray;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tindroid.widgets.LetterTileDrawable;
+import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -39,16 +38,13 @@ import co.tinode.tinodesdk.model.Subscription;
 public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapter.ViewHolder> {
     private static final String TAG = "MessagesListAdapter";
 
-    private static final int VIEWTYPE_FULL_LEFT     = 0;
-    private static final int VIEWTYPE_SIMPLE_LEFT   = 1;
-    private static final int VIEWTYPE_FULL_RIGHT    = 2;
-    private static final int VIEWTYPE_SIMPLE_RIGHT  = 3;
-    private static final int VIEWTYPE_FULL_CENTER   = 4;
-
-    // Vertical padding between two messages from different senders
-    private static final int SINGLE_PADDING = 10;
-    // Vertical padding between two messages from the same sender
-    private static final int TRAIN_PADDING = 2;
+    private static final int VIEWTYPE_FULL_LEFT = 0;
+    private static final int VIEWTYPE_SIMPLE_LEFT = 1;
+    private static final int VIEWTYPE_FULL_AVATAR = 2;
+    private static final int VIEWTYPE_SIMPLE_AVATAR = 3;
+    private static final int VIEWTYPE_FULL_RIGHT = 4;
+    private static final int VIEWTYPE_SIMPLE_RIGHT = 5;
+    private static final int VIEWTYPE_FULL_CENTER = 6;
 
     private AppCompatActivity mActivity;
     private Cursor mCursor;
@@ -117,7 +113,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     private int[] getSelectedArray() {
         int[] items = new int[mSelectedItems.size()];
-        for (int i=0; i< items.length; i++) {
+        for (int i = 0; i < items.length; i++) {
             items[i] = mSelectedItems.keyAt(i);
         }
         return items;
@@ -189,10 +185,41 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     @Override
+    public int getItemViewType(int position) {
+        int itemType;
+        StoredMessage<String> m = getMessage(position);
+        Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
+
+        // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
+        // Cursor holds items in reverse order.
+        long nextFrom = -2;
+        if (position < getItemCount() - 1) {
+            nextFrom = getMessage(position + 1).userId;
+        }
+
+        if (m.type == StoredMessage.MSG_TYPE_META) {
+            itemType = VIEWTYPE_FULL_CENTER;
+        } else {
+            final boolean isMine = m.isMine();
+
+            if (m.userId != nextFrom) {
+                itemType = isMine ? VIEWTYPE_FULL_RIGHT :
+                        tp == Topic.TopicType.GRP ? VIEWTYPE_FULL_AVATAR :
+                                VIEWTYPE_FULL_LEFT;
+            } else {
+                itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT :
+                        tp == Topic.TopicType.GRP ? VIEWTYPE_SIMPLE_AVATAR :
+                                VIEWTYPE_SIMPLE_LEFT;
+            }
+        }
+        return itemType;
+    }
+
+    @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
         View v;
-        Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
+
         int bgColor = 0;
         switch (viewType) {
             case VIEWTYPE_FULL_CENTER:
@@ -200,20 +227,22 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 bgColor = UiUtils.COLOR_META_BUBBLE;
                 break;
             case VIEWTYPE_FULL_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(
-                        tp == Topic.TopicType.GRP ?
-                                R.layout.message_left_single_avatar :
-                                R.layout.message_left_single, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single, parent, false);
+                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                break;
+            case VIEWTYPE_FULL_AVATAR:
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar, parent, false);
                 bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
                 break;
             case VIEWTYPE_FULL_RIGHT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single, parent, false);
                 break;
             case VIEWTYPE_SIMPLE_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(
-                        tp == Topic.TopicType.GRP ?
-                                R.layout.message_left_avatar :
-                                R.layout.message_left, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left, parent, false);
+                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                break;
+            case VIEWTYPE_SIMPLE_AVATAR:
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar, parent, false);
                 bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
                 break;
             case VIEWTYPE_SIMPLE_RIGHT:
@@ -232,43 +261,17 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     @Override
-    public int getItemViewType(int position) {
-        mCursor.moveToPosition(position);
-        StoredMessage<String> m = MessageDb.readMessage(mCursor);
-
-        // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
-        // Cursor holds items in reverse order.
-        long nextFrom = -2;
-        if (position > 0) {
-            mCursor.moveToPosition(position - 1);
-            nextFrom = MessageDb.readMessage(mCursor).userId;
-        }
-
-        int itemType;
-        if (m.type == StoredMessage.MSG_TYPE_META) {
-            itemType = VIEWTYPE_FULL_CENTER;
-        } else {
-            final boolean isMine = m.isMine();
-
-            if (m.userId != nextFrom) {
-                itemType = isMine ? VIEWTYPE_FULL_RIGHT : VIEWTYPE_FULL_LEFT;
-            } else {
-                itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT : VIEWTYPE_SIMPLE_LEFT;
-            }
-        }
-        return itemType;
-    }
-
-    @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-
-        StoredMessage<String> m = getMessage(position);
+        Topic<VCard,?,?> topic = Cache.getTinode().getTopic(mTopicName);
+        StoredMessage m = getMessage(position);
 
         if (m.type == StoredMessage.MSG_TYPE_META) {
-            holder.mText.setText(".--==META==--.");
+            holder.mText.setText(parseAnnouncement(topic, m));
         } else {
-            holder.mText.setText(m.content);
+            holder.mText.setText((String) m.content);
+        }
 
+        if (holder.mSelected != null) {
             if (mSelectedItems != null && mSelectedItems.get(position)) {
                 // Log.d(TAG, "Visible item " + position);
                 holder.mSelected.setVisibility(View.VISIBLE);
@@ -277,55 +280,80 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             }
         }
 
-        holder.mMeta.setText(UiUtils.shortDate(m.ts));
+        if (holder.mAvatar != null || holder.mUserName != null) {
+            Subscription<VCard,?> sub = topic != null ? topic.getSubscription(m.from) : null;
+            if (sub != null && sub.pub != null) {
+                Bitmap avatar = sub.pub.getBitmap();
+                if (holder.mAvatar != null) {
+                    if (avatar != null) {
+                        holder.mAvatar.setImageDrawable(new RoundImageDrawable(avatar));
+                    } else {
+                        holder.mAvatar.setImageDrawable(
+                                new LetterTileDrawable(mActivity.getResources())
+                                        .setLetterAndColor(sub.pub.fn, sub.user)
+                                        .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON));
+                    }
+                }
 
-        holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
-        if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
-            if (m.seq <= 0) {
-                holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
-            } else {
-                Topic topic = Cache.getTinode().getTopic(mTopicName);
-
-                if (topic.msgReadCount(m.seq) > 0) {
-                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
-                } else if (topic.msgRecvCount(m.seq) > 0) {
-                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
-                } else {
-                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_done);
+                if (holder.mUserName != null) {
+                    holder.mUserName.setText(sub.pub.fn);
                 }
             }
         }
 
-        holder.mOverlay.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                int pos = holder.getAdapterPosition();
-                Log.d(TAG, "Long click in position " + pos);
+        if (holder.mMeta != null) {
+            holder.mMeta.setText(UiUtils.shortDate(m.ts));
+        }
 
-                if (mSelectedItems == null) {
-                    mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
+        if (holder.mDeliveredIcon != null) {
+            holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
+            if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
+                if (m.seq <= 0) {
+                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
+                } else if (topic != null) {
+                    if (topic.msgReadCount(m.seq) > 0) {
+                        holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
+                    } else if (topic.msgRecvCount(m.seq) > 0) {
+                        holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
+                    } else {
+                        holder.mDeliveredIcon.setImageResource(R.drawable.ic_done);
+                    }
                 }
-
-                toggleSelectionAt(pos);
-                notifyItemChanged(pos);
-                updateSelectionMode();
-
-                return true;
             }
-        });
-        holder.mOverlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSelectedItems != null) {
+        }
+
+        if (holder.mOverlay != null) {
+            holder.mOverlay.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
                     int pos = holder.getAdapterPosition();
-                    Log.d(TAG, "Short click in position " + pos);
+                    Log.d(TAG, "Long click in position " + pos);
+
+                    if (mSelectedItems == null) {
+                        mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
+                    }
 
                     toggleSelectionAt(pos);
                     notifyItemChanged(pos);
                     updateSelectionMode();
+
+                    return true;
                 }
-            }
-        });
+            });
+            holder.mOverlay.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mSelectedItems != null) {
+                        int pos = holder.getAdapterPosition();
+                        Log.d(TAG, "Short click in position " + pos);
+
+                        toggleSelectionAt(pos);
+                        notifyItemChanged(pos);
+                        updateSelectionMode();
+                    }
+                }
+            });
+        }
         // Log.d(TAG, "Msg[" + position + "] seq=" + m.seq + " at " + m.ts.getTime());
     }
 
@@ -381,21 +409,18 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     private StoredMessage<String> getMessage(int position) {
-        Log.d(TAG, "getMessage at position " + position);
-
-        mCursor.moveToPosition(position);
-        return MessageDb.readMessage(mCursor);
+        mCursor.moveToPosition(mCursor.getCount() - position - 1);
+        return StoredMessage.readMessage(mCursor);
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
         int mViewType;
-        View mItemView;
-        FrameLayout mContainer;
-        LinearLayout mContent;
+        ImageView mAvatar;
         View mMessageBubble;
         AppCompatImageView mDeliveredIcon;
         TextView mText;
         TextView mMeta;
+        TextView mUserName;
         View mSelected;
         View mOverlay;
 
@@ -403,15 +428,55 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             super(itemView);
 
             mViewType = viewType;
-            mItemView = itemView;
-            mContainer = (FrameLayout) itemView.findViewById(R.id.container);
-            mContent = (LinearLayout) itemView.findViewById(R.id.content);
+            mAvatar = (ImageView) itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = (AppCompatImageView) itemView.findViewById(R.id.messageViewedIcon);
             mText = (TextView) itemView.findViewById(R.id.messageText);
             mMeta = (TextView) itemView.findViewById(R.id.messageMeta);
+            mUserName = (TextView) itemView.findViewById(R.id.userName);
             mSelected = itemView.findViewById(R.id.selected);
             mOverlay = itemView.findViewById(R.id.overlay);
         }
+    }
+
+    private String parseAnnouncement(Topic<VCard,?,?> topic, StoredMessage<Announcement<String>> m) {
+        if (m.meta == null || topic == null) {
+            return "null";
+        }
+
+        String str = null;
+        switch (m.meta.act) {
+            case "inv": {
+                Subscription<VCard, ?> from = topic.getSubscription(m.from);
+                String fromStr = from != null && from.pub != null && from.pub.fn != null ? from.pub.fn : m.from;
+                str = mActivity.getString(R.string.announce_inv, fromStr, m.meta.info);
+                break;
+            }
+            case "appr": {
+                Subscription<VCard, ?> user = topic.getSubscription(m.meta.user);
+                String userStr = user != null && user.pub != null && user.pub.fn != null ? user.pub.fn : m.meta.user;
+                str = mActivity.getString(R.string.announce_appr, userStr, m.meta.info);
+                break;
+            }
+            case "upd": {
+                Subscription<VCard, ?> from = topic.getSubscription(m.from);
+                String fromStr = from != null && from.pub != null && from.pub.fn != null ? from.pub.fn : m.from;
+                Subscription<VCard, ?> user = topic.getSubscription(m.meta.user);
+                String userStr = user != null && user.pub != null && user.pub.fn != null ? user.pub.fn : m.meta.user;
+                str = mActivity.getString(R.string.announce_upd, fromStr, userStr);
+                break;
+            }
+            case "del": {
+                Subscription<VCard, ?> from = topic.getSubscription(m.from);
+                String fromStr = from != null && from.pub != null && from.pub.fn != null ? from.pub.fn : m.from;
+                Subscription<VCard, ?> user = topic.getSubscription(m.meta.user);
+                String userStr = user != null && user.pub != null && user.pub.fn != null ? user.pub.fn : m.meta.user;
+                str = mActivity.getString(R.string.announce_del, fromStr, userStr);
+                break;
+            }
+            default:
+        }
+
+        return str;
     }
 }
