@@ -49,6 +49,6 @@ The `contacts.vcf` contains a list of contacts which can be used for testing. Pu
 
 
 ## Screenshots
-<img src="android-chats.png" alt="App screenshot - contacts" width="270" /> <img src="android-contacts.png" alt="App screenshot - contacts" width="270" /> 
+<img src="android-chats.png" alt="App screenshot - contacts" width="270" /> <img src="android-contacts2.png" alt="App screenshot - contacts" width="270" /> 
 <img src="android-messages.png" alt="App screenshot - messages" width="270" /> <img src="android-settings.png" alt="App screenshot - settings" width="270" /> 
 <img src="android-account.png" alt="App screenshot - account" width="270" />
