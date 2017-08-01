@@ -52,13 +52,7 @@
     <color name="colorMessageMetaBubble">#CFD8DC</color>
 
 
-    <!-- Background colors for LetterTileDrawables. This set of colors is a subset of
-        https://spec.googleplex.com/quantumpalette#extended which passes Google Accessibility
-        Requirements for the color in question on white with >= 3.0 contrast. We used
-        http://leaverou.github.io/contrast-ratio/#white-on-%23db4437 to double-check the contrast.
-        These colors are also used by MaterialColorMapUtils to generate primary activity colors.
-
-    -->
+    <!-- Background colors for LetterTileDrawables. -->
     <array name="letter_tile_colors_light">
         <item>#ef9a9a</item>
         <item>#90caf9</item>
@@ -79,8 +73,7 @@
     </array>
     <color name="letter_tile_text_color_light">#f0f0f0</color>
 
-    <!-- Darker versions of letter_tile_colors, two shades darker. These colors are used
-        for settings secondary activity colors. -->
+    <!-- Darker versions of letter_tile_colors, two shades darker. -->
     <array name="letter_tile_colors_dark">
         <item>#C62828</item>
         <item>#AD1457</item>
@@ -98,8 +91,6 @@
         <item>#FF8F00</item>
         <item>#EF6C00</item>
         <item>#D84315</item>
-        <item>#4E342E</item>
-        <item>#37474F</item>
     </array>
     <color name="letter_tile_text_color_dark">#dedede</color>
 
