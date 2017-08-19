@@ -1,4 +1,4 @@
-package co.tinode.tindroid;
+package co.tinode.tindroid.media;
 
 import android.graphics.Bitmap;
 

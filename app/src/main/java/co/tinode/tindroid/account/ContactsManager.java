@@ -24,9 +24,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import co.tinode.tindroid.AvatarPhoto;
+import co.tinode.tindroid.media.AvatarPhoto;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.VCard;
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 

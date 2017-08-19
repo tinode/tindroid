@@ -30,6 +30,7 @@ import android.widget.Toast;
 import java.util.Collection;
 
 import co.tinode.tindroid.db.StoredSubscription;
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.NotConnectedException;

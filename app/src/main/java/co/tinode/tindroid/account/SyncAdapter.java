@@ -19,11 +19,10 @@ import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tindroid.Cache;
-import co.tinode.tindroid.VCard;
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.MetaGetSub;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;

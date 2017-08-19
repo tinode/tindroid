@@ -1,4 +1,4 @@
-package co.tinode.tindroid;
+package co.tinode.tindroid.media;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
 /**
- * Utility class: constructs a Bitmap from bytes/serializes to bytes
+ * Utility class: constructs a square 128x128 Bitmap from bytes/serializes to jpeg bytes
  */
 public class AvatarPhoto implements Serializable {
     public byte[] data;

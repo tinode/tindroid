@@ -20,6 +20,7 @@ import android.widget.Toast;
 import java.util.Timer;
 
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;

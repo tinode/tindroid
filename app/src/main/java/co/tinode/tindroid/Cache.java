@@ -8,6 +8,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.Tinode;
 
 /**

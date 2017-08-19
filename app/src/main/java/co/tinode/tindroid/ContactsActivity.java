@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.widget.Toast;
 
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;

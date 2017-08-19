@@ -2,13 +2,9 @@ package co.tinode.tindroid;
 
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatImageView;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +15,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import co.tinode.tindroid.db.StoredTopic;
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.Topic;
 
 /**

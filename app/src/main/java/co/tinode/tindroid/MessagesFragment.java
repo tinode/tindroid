@@ -31,12 +31,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import co.tinode.tindroid.db.MessageDb;
-import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.db.StoredTopic;
+import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
