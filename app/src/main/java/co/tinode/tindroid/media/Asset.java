@@ -16,7 +16,7 @@ public class Asset implements Serializable {
     public String caption;
 
     // Presentations, possibly multiple versions. At least one version must be present.
-    // Version at index 0 is the preview/default one to show (could be the only one too)
+    // Version at index 0 is the preview/default one to show (could be the only one)
     public Media[] media;
 
     public Asset() {

@@ -1,19 +1,179 @@
 package co.tinode.tindroid.media;
 
+import android.graphics.Typeface;
 import android.support.annotation.NonNull;
+import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.CharacterStyle;
+import android.text.style.StrikethroughSpan;
+import android.text.style.StyleSpan;
+import android.text.style.TypefaceSpan;
+import android.text.style.URLSpan;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 /**
- * Class for representing and handling text with minimal formatting.
+ Basic parser and formatter for very simple rich text. Mostly targeted at
+ mobile use cases similar to Telegram and WhatsApp.
+
+ Supports:
+    *abc* -> <b>abc</b>
+    _abc_ -> <i>abc</i>
+    ~abc~ -> <del>abc</del>
+    `abc` -> <tt>abc</tt>
+
+ Nested formatting is supported, e.g. *abc _def_* -> <b>abc <i>def</i></b>
+
+ URLs, @mentions, and #hashtags are extracted.
+
+ JSON data representation is similar to Draft.js raw formatting.
+
+ Text:
+     this is *bold*, `code`, _italic_ and ~deleted~.
+     nested styles: *just bold _bold-italic_*
+     couple of urls: http://www.example.com/path?a=b%20c#fragment, and bolded *www.tinode.co*
+     this is a @mention and a #hashtag in a string
+     the _#hashtag_ used again
+
+ Sample JSON representation of the text above:
+ {
+    "blocks":[
+        {
+            "txt":"this is bold, code, italic and deleted.",
+            "fmt":[
+                {
+                    "at":8,
+                    "len":4,
+                    "tp":"BO"
+                },
+                {
+                    "at":14,
+                    "len":4,
+                    "tp":"CO"
+                },
+                {
+                    "at":20,
+                    "len":6,
+                    "tp":"IT"
+                },
+                {
+                    "at":31,
+                    "len":7,
+                    "tp":"ST"
+                }
+            ]
+        },
+        {
+            "txt":"nested styles: just bold bold-italic",
+            "fmt":[
+                {
+                    "at":25,
+                    "len":11,
+                    "tp":"IT"
+                },
+                {
+                    "at":15,
+                    "len":21,
+                    "tp":"BO"
+                }
+            ]
+        },
+        {
+            "txt":"couple of urls: http://www.example.com/path?a=b%20c#fragment, and bolded www.tinode.co",
+            "fmt":[
+                {
+                    "at":73,
+                    "len":13,
+                    "tp":"BO"
+                }
+            ],
+            "ent":[
+                {
+                    "at":16,
+                    "len":44,
+                    "key":0
+                },
+                {
+                    "at":73,
+                    "len":13,
+                    "key":1
+                }
+            ]
+        },
+        {
+            "txt":"this is a @mention and a #hashtag in a string",
+            "ent":[
+                {
+                    "at":10,
+                    "len":8,
+                    "key":2
+                },
+                {
+                    "at":25,
+                    "len":8,
+                    "key":3
+                }
+            ]
+        },
+        {
+            "txt":"the #hashtag used again",
+            "fmt":[
+                {
+                    "at":4,
+                    "len":8,
+                    "tp":"IT"
+                }
+            ],
+            "ent":[
+                {
+                    "at":4,
+                    "len":8,
+                    "key":3
+                }
+            ]
+        }
+    ],
+    "refs":[
+        {
+            "tp":"LN",
+            "data":{
+                "url":"http://www.example.com/path?a=b%20c#fragment"
+            }
+        },
+        {
+            "tp":"LN",
+            "data":{
+                "url":"http://www.tinode.co"
+            }
+        },
+        {
+            "tp":"MN",
+            "data":{
+                "val":"mention"
+            }
+        },
+        {
+            "tp":"HT",
+            "data":{
+               "val":"hashtag"
+            }
+        }
+    ]
+ }
  */
-public class Drafty {
+
+public class Drafty implements Serializable {
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end
     private static final String INLINE_STYLE_NAME[] = {"BO", "IT", "ST", "CO" };
@@ -26,65 +186,73 @@ public class Drafty {
 
     private static final String ENTITY_NAME[] = {"LN", "MN", "HT"};
     private static final EntityProc ENTITY_PROC[] = {
-            new EntityProc("LN", ) {
+            new EntityProc("LN",
+                    "(?<=^|\\W)(https?:\\/\\/)?(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,4}\\b(?:[-a-zA-Z0-9@:%_\\+.~#?&//=]*)") {
 
                 @Override
-                Object pack(String val) {
-                    return null;
+                Object pack(Matcher m) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("url", m.group(1) == null ? "http://" + m.group() : m.group());
+                    return data;
                 }
 
                 @Override
-                String openDecor(Object data) {
-                    return null;
-                }
-
-                @Override
-                String closeDecor(Object data) {
+                Object decorate(Object data) {
+                    String url = ((Map<String, String>) data).get("url");
+                    if (url != null) {
+                        return new URLSpan(url);
+                    }
                     return null;
                 }
             },
-            new EntityProc("MN", ) {
+            new EntityProc("MN", "\\B@(\\w\\w+)") {
                 @Override
-                Object pack(String val) {
-                    return null;
+                Object pack(Matcher m) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("val", m.group());
+                    return data;
                 }
 
                 @Override
-                String openDecor(Object data) {
-                    return null;
-                }
-
-                @Override
-                String closeDecor(Object data) {
+                Object decorate(Object data) {
+                    // Don't know how to handle mentions in the UI
+                    // String val = ((Map<String, String>) data).get("val");
                     return null;
                 }
             },
-            new EntityProc("HT", ) {
+            new EntityProc("HT", "(?<=[\\s,.!]|^)#(\\w\\w+)") {
                 @Override
-                Object pack(String val) {
-                    return null;
+                Object pack(Matcher m) {
+                    Map<String, String> data = new HashMap<>();
+                    data.put("val", m.group());
+                    return data;
                 }
 
                 @Override
-                String openDecor(Object data) {
-                    return null;
-                }
-
-                @Override
-                String closeDecor(Object data) {
+                Object decorate(Object data) {
+                    // Don't know how to handle hashtags in the UI
+                    // String val = ((Map<String, String>) data).get("val");
                     return null;
                 }
             }
     };
 
-    Block[] blocks;
-    EntityMap[] refs;
+    public Block[] blocks;
+    public EntityRef[] refs;
 
     public Drafty() {
     }
 
     public Drafty(String content) {
-        parse(content);
+        Drafty that = parse(content);
+
+        this.blocks = that.blocks;
+        this.refs = that.refs;
+    }
+
+    protected Drafty(Block[] blocks, EntityRef[] refs) {
+        this.blocks = blocks;
+        this.refs = refs;
     }
 
     // Detect starts and ends of formatting spans. Unformatted spans are
@@ -184,7 +352,7 @@ public class Drafty {
     }
 
     // Convert a list of chunks into block.
-    private Block draftify(List<Span> chunks, int startAt) {
+    private static Block draftify(List<Span> chunks, int startAt) {
         Block block = new Block("");
 
         List<InlineStyle> ranges = new ArrayList<>();
@@ -222,7 +390,7 @@ public class Drafty {
                 ee.value = matcher.group(1);
                 ee.len = ee.value.length();
                 ee.tp = ENTITY_NAME[i];
-                ee.data = ENTITY_PROC[i].pack(ee.value);
+                ee.data = ENTITY_PROC[i].pack(matcher);
             }
         }
 
@@ -233,13 +401,18 @@ public class Drafty {
         return extracted;
     }
 
-    void parse(String content) {
+    public static Drafty parse(String content) {
         // Break input into individual lines. Format cannot span multiple lines.
         String lines[] = content.split("\\r?\\n");
         List<Block> blks = new ArrayList<>();
+        List<EntityRef> refs = new ArrayList<>();
 
         List<Span> spans = new ArrayList<>();
+        List<Entity> ent_ranges = new ArrayList<>();
+        Map<String, Integer> ent_map = new HashMap<>();
+        List<ExtractedEnt> entities;
         for (String line : lines) {
+            spans.clear();
             // Select styled spans.
             for (int i = 0;i < INLINE_STYLE_NAME.length; i++) {
                 spans.addAll(spannify(line, INLINE_STYLE_RE[i], INLINE_STYLE_NAME[i]));
@@ -263,21 +436,110 @@ public class Drafty {
             }
 
             blks.add(b);
+
+            // Extract entities from the string already cleared of markup.
+            entities = extractEntities(b.txt);
+            if (entities != null) {
+                ent_ranges.clear();
+                for (ExtractedEnt ent : entities) {
+                    // Check if the entity has been indexed already
+                    Integer index = ent_map.get(ent.value);
+                    if (index == null) {
+                        index = refs.size();
+                        ent_map.put(ent.value, index);
+                        refs.add(new EntityRef(ent.tp, ent.data));
+                    }
+                    ent_ranges.add(new Entity(ent.at, ent.len, index));
+                }
+                b.ent = (Entity[]) ent_ranges.toArray();
+            }
         }
 
-        blocks = (Block[]) blks.toArray();
+        return new Drafty((Block[]) blks.toArray(), (EntityRef[]) refs.toArray());
     }
 
-    protected SpannableString toSpannable() {
-        return null;
+    private Spannable applySpans(Block block) {
+        SpannableString line = new SpannableString(block.txt);
+
+        if (block.fmt != null) {
+            for (InlineStyle style : block.fmt) {
+                CharacterStyle span;
+                switch (style.tp) {
+                    case "BO": span = new StyleSpan(Typeface.BOLD); break;
+                    case "IT": span = new StyleSpan(Typeface.ITALIC); break;
+                    case "ST": span = new StrikethroughSpan(); break;
+                    case "CO": span = new TypefaceSpan("monospace"); break;
+                    default: span = null;
+                }
+
+                if (span != null) {
+                    line.setSpan(span, style.at, style.at + style.len, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+        }
+
+        if (block.ent != null) {
+            for (Entity ent : block.ent) {
+                EntityRef ref = refs[ent.key];
+                CharacterStyle span;
+                switch (ref.tp) {
+                    case "LN": span = (CharacterStyle) ENTITY_PROC[0].decorate(ref.data); break;
+                    case "MN": span = (CharacterStyle) ENTITY_PROC[1].decorate(ref.data); break;
+                    case "HT": span = (CharacterStyle) ENTITY_PROC[2].decorate(ref.data); break;
+                    default: span = null;
+                }
+
+                if (span != null) {
+                    line.setSpan(span, ent.at, ent.at + ent.len, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+        }
+
+        return line;
+    }
+
+    public Spanned toSpanned() {
+        SpannableStringBuilder text = new SpannableStringBuilder(applySpans(blocks[0]));
+
+        for (int i = 1; i < blocks.length; i++) {
+            text.append("\n").append(applySpans(blocks[i]));
+        }
+
+        return text;
     }
 
     // Convert Drafty to plain text;
+    @Override
     public String toString() {
-        return null;
+        StringBuilder plainText = new StringBuilder(blocks[0].txt);
+
+        for (int i = 1; i < blocks.length; i++) {
+            plainText.append("\n").append(blocks[i].txt);
+        }
+
+        return plainText.toString();
     }
 
-    public static class Block {
+    /**
+     * Check if the give Drafty can be represented by plain text.
+     *
+     * @return true if this Drafty has no markup other thn line breaks.
+     */
+    public boolean isPlain() {
+        if (refs != null) {
+            return false;
+        }
+
+        for (Block b : blocks) {
+            if (b.fmt != null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static class Block  implements Serializable {
         String txt;
         InlineStyle[] fmt;
         Entity[] ent;
@@ -290,7 +552,7 @@ public class Drafty {
         }
     }
 
-    public static class InlineStyle {
+    public static class InlineStyle  implements Serializable {
         int at;
         int len;
         String tp;
@@ -304,15 +566,30 @@ public class Drafty {
         }
     }
 
-    public static class Entity {
+    public static class Entity  implements Serializable {
         int at;
         int len;
         int key;
+
+        public Entity() {}
+
+        public Entity(int at, int len, int key) {
+            this.at = at;
+            this.len = len;
+            this.key = key;
+        }
     }
 
-    public static class EntityMap {
+    public static class EntityRef  implements Serializable {
         String tp;
         Object data;
+
+        public EntityRef() {}
+
+        public EntityRef(String tp, Object data) {
+            this.tp = tp;
+            this.data = data;
+        }
     }
 
     private static class Span implements Comparable<Span> {
@@ -353,9 +630,8 @@ public class Drafty {
             this.re = Pattern.compile(patten);
         }
 
-        abstract Object pack(String val);
+        abstract Object pack(Matcher m);
 
-        abstract String openDecor(Object data);
-        abstract String closeDecor(Object data);
+        abstract Object decorate(Object data);
     }
 }
