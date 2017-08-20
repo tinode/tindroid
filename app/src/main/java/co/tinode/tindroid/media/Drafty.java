@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
                 {
                     "at":8,
                     "len":4,
-                    "tp":"BO"
+                    "tp":"ST"
                 },
                 {
                     "at":14,
@@ -65,12 +65,12 @@ import java.util.regex.Pattern;
                 {
                     "at":20,
                     "len":6,
-                    "tp":"IT"
+                    "tp":"EM"
                 },
                 {
                     "at":31,
                     "len":7,
-                    "tp":"ST"
+                    "tp":"DL"
                 }
             ]
         },
@@ -80,12 +80,12 @@ import java.util.regex.Pattern;
                 {
                     "at":25,
                     "len":11,
-                    "tp":"IT"
+                    "tp":"EM"
                 },
                 {
                     "at":15,
                     "len":21,
-                    "tp":"BO"
+                    "tp":"ST"
                 }
             ]
         },
@@ -95,7 +95,7 @@ import java.util.regex.Pattern;
                 {
                     "at":73,
                     "len":13,
-                    "tp":"BO"
+                    "tp":"ST"
                 }
             ],
             "ent":[
@@ -132,7 +132,7 @@ import java.util.regex.Pattern;
                 {
                     "at":4,
                     "len":8,
-                    "tp":"IT"
+                    "tp":"EM"
                 }
             ],
             "ent":[
@@ -176,7 +176,7 @@ import java.util.regex.Pattern;
 public class Drafty implements Serializable {
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end
-    private static final String INLINE_STYLE_NAME[] = {"BO", "IT", "ST", "CO" };
+    private static final String INLINE_STYLE_NAME[] = {"ST", "EM", "DL", "CO" };
     private static final Pattern INLINE_STYLE_RE[] = {
             Pattern.compile("(?<=^|\\W)\\*([^\\s*]+)\\*(?=$|\\W)"),    // bold *bo*
             Pattern.compile("(?<=^|[\\W_])_([^\\s_]+)_(?=$|[\\W_])"),  // italic _it_
@@ -465,9 +465,9 @@ public class Drafty implements Serializable {
             for (InlineStyle style : block.fmt) {
                 CharacterStyle span;
                 switch (style.tp) {
-                    case "BO": span = new StyleSpan(Typeface.BOLD); break;
-                    case "IT": span = new StyleSpan(Typeface.ITALIC); break;
-                    case "ST": span = new StrikethroughSpan(); break;
+                    case "ST": span = new StyleSpan(Typeface.BOLD); break;
+                    case "EM": span = new StyleSpan(Typeface.ITALIC); break;
+                    case "DL": span = new StrikethroughSpan(); break;
                     case "CO": span = new TypefaceSpan("monospace"); break;
                     default: span = null;
                 }
