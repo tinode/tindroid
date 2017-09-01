@@ -132,7 +132,7 @@ public class PromisedReply<T> {
                         break;
                 }
             } catch (Exception e) {
-                mNextPromise = new PromisedReply<T>(e);
+                mNextPromise = new PromisedReply<>(e);
             }
 
             return mNextPromise;

@@ -20,10 +20,10 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * MeTopic handles invites and manages contact list
  */
-public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
+public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<Pu, Pr, Announcement<T>> l) {
+    public MeTopic(Tinode tinode, Listener<Pu, Pr> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
@@ -32,16 +32,14 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
     }
 
     @Override
-    public void setTypes(JavaType typeOfPu, JavaType typeOfPr, JavaType typeOfInviteInfo) {
-        super.setTypes(typeOfPu, typeOfPr,
-                Tinode.getTypeFactory().constructParametricType(Announcement.class, typeOfInviteInfo));
+    public void setTypes(JavaType typeOfPu, JavaType typeOfPr) {
+        super.setTypes(typeOfPu, typeOfPr);
     }
 
     @Override
-    public void setTypes(Class<?> typeOfPu, Class<?> typeOfPr, Class<?> typeOfInviteInfo) {
+    public void setTypes(Class<?> typeOfPu, Class<?> typeOfPr) {
         this.setTypes(Tinode.getTypeFactory().constructType(typeOfPu),
-                Tinode.getTypeFactory().constructType(typeOfPr),
-                Tinode.getTypeFactory().constructType(typeOfInviteInfo));
+                Tinode.getTypeFactory().constructType(typeOfPr));
     }
 
     @Override
@@ -68,17 +66,18 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
      * This method has to be overridden because Subscription generally does not exists for invited senders.
      */
     @Override
-    protected void routeData(final MsgServerData<Announcement<T>> data) {
+    protected void routeData(final MsgServerData data) {
         if (data.seq > mDesc.seq) {
             mDesc.seq = data.seq;
         }
 
-        Topic<?,?,T> receiver = null;
+        Topic receiver = null;
         if (data.content != null) {
+            final Announcement content = (Announcement) data.content;
             // Fetch the topic & user descriptions, if missing.
-            receiver = mTinode.getTopic(data.content.topic);
+            receiver = mTinode.getTopic(content.topic);
             if (receiver == null) {
-                receiver = mTinode.newTopic(data.content.topic, null);
+                receiver = mTinode.newTopic(content.topic, null);
                 mTinode.registerTopic(receiver);
                 try {
                     receiver.getMeta(MsgGetMeta.desc()).thenApply(null,
@@ -89,7 +88,7 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
                                         // Delete the topic if server responded with "404 NOT FOUND".
                                         if (((ServerResponseException) err).getCode() ==
                                                 ServerMessage.STATUS_NOT_FOUND) {
-                                            mTinode.unregisterTopic(data.content.topic);
+                                            mTinode.unregisterTopic(content.topic);
                                         }
                                     }
                                     return null;
@@ -99,10 +98,10 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
                 }
             }
 
-            User user = mTinode.getUser(data.content.user);
+            User user = mTinode.getUser(content.user);
             if (user == null) {
-                mTinode.addUser(data.content.user);
-                mTinode.getMeta(data.content.user, MsgGetMeta.desc());
+                mTinode.addUser(content.user);
+                mTinode.getMeta(content.user, MsgGetMeta.desc());
             }
         }
 
@@ -124,7 +123,7 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr, Announcement<T>> {
     protected void routeMetaSub(MsgServerMeta<Pu, Pr> meta) {
         Log.d(TAG, "Me:routeMetaSub");
         for (Subscription<Pu, Pr> sub : meta.sub) {
-            Topic<Pu, Pr, ?> topic = mTinode.getTopic(sub.topic);
+            Topic<Pu, Pr> topic = mTinode.getTopic(sub.topic);
             if (topic != null) {
                 // This is an existing topic.
                 if (sub.deleted != null) {

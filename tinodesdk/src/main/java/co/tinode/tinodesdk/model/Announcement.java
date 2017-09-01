@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * Container for a generic invitation.
  */
-public class Announcement<T> implements Serializable {
+public class Announcement implements Serializable {
 
     private static final String INVITE = "inv";
     private static final String APPROVE = "appr";
@@ -22,8 +22,9 @@ public class Announcement<T> implements Serializable {
     public String act;
     // Current state of the access mode
     public Acs acs;
-    // Free-form payload
-    public T info;
+    // Mime-type of the payload. Null means "text/plain".
+    public String mime;
+
 
     public Announcement() {}
 }

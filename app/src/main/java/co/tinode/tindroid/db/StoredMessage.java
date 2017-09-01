@@ -14,51 +14,35 @@ import co.tinode.tinodesdk.model.MsgServerData;
 /**
  * StoredMessage fetched from the database
  */
-public class StoredMessage<T> extends MsgServerData<T> implements Storage.Message<T> {
-    public static final int MSG_TYPE_NORMAL = 0;
-    public static final int MSG_TYPE_META = 1;
-
+public class StoredMessage extends MsgServerData implements Storage.Message {
     public long id;
     public long topicId;
     public long userId;
     public int status;
-    public int type;
-    public Announcement meta;
 
     public StoredMessage() {
     }
 
-    public StoredMessage(MsgServerData<T> m) {
+    public StoredMessage(MsgServerData m) {
         topic = m.topic;
         head = m.head;
         from = m.from;
         ts = m.ts;
         seq = m.seq;
-        type = Topic.getTopicTypeByName(topic) == Topic.TopicType.ME ?
-                MSG_TYPE_META : MSG_TYPE_NORMAL;
-        if (type == MSG_TYPE_META) {
-            meta = (Announcement) m.content;
-        } else {
-            content = m.content;
-        }
+        content = m.content;
     }
 
-    public static <T> StoredMessage<T> readMessage(Cursor c) {
-        StoredMessage<T> msg = new StoredMessage<>();
+    public static StoredMessage readMessage(Cursor c) {
+        StoredMessage msg = new StoredMessage();
 
         msg.id = c.getLong(MessageDb.COLUMN_IDX_ID);
         msg.topicId = c.getLong(MessageDb.COLUMN_IDX_TOPIC_ID);
         msg.userId = c.getLong(MessageDb.COLUMN_IDX_USER_ID);
         msg.status = c.getInt(MessageDb.COLUMN_IDX_STATUS);
-        msg.type = c.getInt(MessageDb.COLUMN_IDX_TYPE);
         msg.from = c.getString(MessageDb.COLUMN_IDX_SENDER);
         msg.seq = c.getInt(MessageDb.COLUMN_IDX_SEQ);
         msg.ts = new Date(c.getLong(MessageDb.COLUMN_IDX_TS));
-        if (msg.type == MSG_TYPE_META) {
-            msg.meta = BaseDb.deserialize(c.getBlob(MessageDb.COLUMN_IDX_CONTENT));
-        } else {
-            msg.content = BaseDb.deserialize(c.getBlob(MessageDb.COLUMN_IDX_CONTENT));
-        }
+        msg.content = BaseDb.deserialize(c.getBlob(MessageDb.COLUMN_IDX_CONTENT));
 
         return msg;
     }
@@ -68,7 +52,7 @@ public class StoredMessage<T> extends MsgServerData<T> implements Storage.Messag
     }
 
     @Override
-    public T getContent() {
+    public Object getContent() {
         return content;
     }
 

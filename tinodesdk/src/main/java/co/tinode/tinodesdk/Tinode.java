@@ -83,8 +83,9 @@ public class Tinode {
     private static ObjectMapper sJsonMapper;
     private static TypeFactory sTypeFactory;
 
-    protected JavaType mTypeOfDataPacket;
     protected JavaType mTypeOfMetaPacket;
+
+    private MimeTypeResolver mMimeResolver = null;
 
     protected static SimpleDateFormat sDateFormat;
 
@@ -512,13 +513,9 @@ public class Tinode {
      *
      * @param typeOfPublic  - type of public values
      * @param typeOfPrivate - type of private values
-     * @param typeOfContent - type of content sent in {pub}/{data} messages
      */
     @SuppressWarnings("WeakerAccess")
-    public void setDefaultTypes(JavaType typeOfPublic,
-                                JavaType typeOfPrivate, JavaType typeOfContent) {
-        mTypeOfDataPacket = sTypeFactory
-                .constructParametricType(MsgServerData.class, typeOfContent);
+    public void setDefaultTypes(JavaType typeOfPublic, JavaType typeOfPrivate) {
         mTypeOfMetaPacket = sTypeFactory
                 .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
     }
@@ -528,25 +525,11 @@ public class Tinode {
      *
      * @param typeOfPublic  - type of public values
      * @param typeOfPrivate - type of private values
-     * @param typeOfContent - type of content sent in {pub}/{data} messages
      */
     public void setDefaultTypes(Class<?> typeOfPublic,
-                                Class<?> typeOfPrivate, Class<?> typeOfContent) {
+                                Class<?> typeOfPrivate) {
         setDefaultTypes(sTypeFactory.constructType(typeOfPublic),
-                sTypeFactory.constructType(typeOfPrivate),
-                sTypeFactory.constructType(typeOfContent));
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    protected JavaType getTypeOfDataPacket() {
-        return mTypeOfDataPacket;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    protected JavaType getTypeOfDataPacket(String topicName) {
-        Topic topic = getTopic(topicName);
-        JavaType result = (topic != null) ? topic.getTypeOfDataPacket() : null;
-        return result != null ? result : mTypeOfDataPacket;
+                sTypeFactory.constructType(typeOfPrivate));
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -559,6 +542,23 @@ public class Tinode {
         Topic topic = getTopic(topicName);
         JavaType result = (topic != null) ? topic.getTypeOfMetaPacket() : null;
         return result != null ? result : mTypeOfMetaPacket;
+    }
+
+    protected JavaType resolveMimeType(String mimeType) {
+        JavaType type = null;
+        if (mMimeResolver != null) {
+            type = mMimeResolver.resolve(mimeType);
+        }
+        if (type == null) {
+            if (mimeType == null) {
+                // Default mime type = text/plain -> String
+                type = sTypeFactory.constructType(String.class);
+            } else {
+                // All other mime-types convert to byte array.
+                type = sTypeFactory.constructType(Byte[].class);
+            }
+        }
+        return type;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -629,10 +629,10 @@ public class Tinode {
      * @throws Exception if there is no connection
      */
     @SuppressWarnings("WeakerAccess")
-    protected <Pu,Pr,T> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
+    protected <Pu,Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
                                                          boolean loginNow,
                                                          MetaSetDesc<Pu,Pr> desc) throws Exception {
-        ClientMessage msg = new ClientMessage<Pu,Pr,T>(
+        ClientMessage msg = new ClientMessage<Pu,Pr>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
@@ -771,7 +771,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu,Pr,T> PromisedReply<ServerMessage> subscribe(String topicName,
-                                                              MsgSetMeta<Pu,Pr,T> set,
+                                                              MsgSetMeta<Pu,Pr> set,
                                                               MsgGetMeta get) {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
         try {
@@ -816,7 +816,7 @@ public class Tinode {
      */
     @SuppressWarnings("unchecked, WeakerAccess")
     public PromisedReply<ServerMessage> publish(String topicName, Object data) {
-        ClientMessage msg = new ClientMessage(new MsgClientPub<>(getNextId(), topicName, true, data));
+        ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
@@ -857,7 +857,7 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     public <Pu,Pr,T> PromisedReply<ServerMessage> setMeta(final String topicName,
-                                                            final MsgSetMeta<Pu,Pr,T> meta) {
+                                                            final MsgSetMeta<Pu,Pr> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
@@ -1035,7 +1035,7 @@ public class Tinode {
             return null;
         }
 
-        Topic<Pu,Pr,?> topic;
+        Topic<Pu,Pr> topic;
         if (TOPIC_ME.equals(meta.topic)) {
             topic = new MeTopic<>(this, meta.desc);
         } else {
@@ -1095,7 +1095,7 @@ public class Tinode {
      * @return existing topic or null if no such topic was found
      */
     @SuppressWarnings("unchecked")
-    public <Pu,Pr,T> Topic<Pu,Pr,T> getTopic(String name) {
+    public <Pu,Pr,T> Topic<Pu,Pr> getTopic(String name) {
         if (name == null) {
             return null;
         }
@@ -1221,10 +1221,7 @@ public class Tinode {
                         msg.info = mapper.readValue(node.traverse(), MsgServerInfo.class);
                         break;
                     case "data":
-                        if (node.has("topic")) {
-                            msg.data = mapper.readValue(node.traverse(),
-                                    getTypeOfDataPacket(node.get("topic").asText()));
-                        }
+                        msg.data = mapper.readValue(node.traverse(), MsgServerData.class);
                         break;
                     case "meta":
                         if (node.has("topic")) {
@@ -1341,7 +1338,7 @@ public class Tinode {
          * @param data control message to process
          */
         @SuppressWarnings("unused, WeakerAccess")
-        public void onDataMessage(MsgServerData<?> data) {
+        public void onDataMessage(MsgServerData data) {
         }
 
         /**
@@ -1380,6 +1377,10 @@ public class Tinode {
             this.scheme = scheme;
             this.secret = secret;
         }
+    }
+
+    public interface MimeTypeResolver {
+        JavaType resolve(String mimeType);
     }
 
     /**

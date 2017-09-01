@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Content packet
  */
-public class MsgServerData<T> {
+public class MsgServerData {
 
     public String id;
     public String topic;
@@ -16,7 +16,7 @@ public class MsgServerData<T> {
     public String from;
     public Date ts;
     public int seq;
-    public T content;
+    public Drafty content;
 
     public MsgServerData() {
     }

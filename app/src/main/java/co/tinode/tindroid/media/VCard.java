@@ -30,6 +30,7 @@ public class VCard implements Serializable {
     public Contact[] impp;
     // Avatar photo
     public AvatarPhoto photo;
+
     public VCard() {
     }
 

@@ -17,13 +17,13 @@ import java.io.Serializable;
  * Note  *MsgClientNote  `json:"note"`
  */
 
-public class ClientMessage<Pu,Pr,T> implements Serializable {
+public class ClientMessage<Pu,Pr> implements Serializable {
     public MsgClientHi hi;
     public MsgClientAcc<Pu,Pr> acc;
     public MsgClientLogin login;
     public MsgClientSub sub;
     public MsgClientLeave leave;
-    public MsgClientPub<T> pub;
+    public MsgClientPub pub;
     public MsgClientGet get;
     public MsgClientSet set;
     public MsgClientDel del;
@@ -46,7 +46,7 @@ public class ClientMessage<Pu,Pr,T> implements Serializable {
     public ClientMessage(MsgClientLeave leave) {
         this.leave = leave;
     }
-    public ClientMessage(MsgClientPub<T> pub) {
+    public ClientMessage(MsgClientPub pub) {
         this.pub = pub;
     }
     public ClientMessage(MsgClientGet get) {

@@ -40,7 +40,7 @@ import java.util.Vector;
  * Class for handling communication on a single topic
  *
  */
-public class Topic<Pu,Pr,T> implements LocalData {
+public class Topic<Pu,Pr> implements LocalData {
     private static final String TAG = "tinodesdk.Topic";
 
     public enum TopicType {
@@ -61,12 +61,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
     protected enum NoteType {READ, RECV}
 
-    protected JavaType mTypeOfDataPacket = null;
     protected JavaType mTypeOfMetaPacket = null;
 
     protected String mClassNameOfPublic;
     protected String mClassNameOfPrivate;
-    protected String mClassNameOfContent;
 
     protected Tinode mTinode;
 
@@ -86,7 +84,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     protected Date mSubsUpdated = null;
 
     protected boolean mAttached = false;
-    protected Listener<Pu,Pr,T> mListener = null;
+    protected Listener<Pu,Pr> mListener = null;
 
     // Timestamp of the last key press that the server was notified of, milliseconds
     protected long mLastKeyPress = 0;
@@ -103,7 +101,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
         mTinode = tinode;
 
-        mTypeOfDataPacket   = tinode.getTypeOfDataPacket();
         mTypeOfMetaPacket   = tinode.getTypeOfMetaPacket();
 
         setName(sub.topic);
@@ -118,7 +115,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
         }
         mTinode = tinode;
 
-        mTypeOfDataPacket   = tinode.getTypeOfDataPacket();
         mTypeOfMetaPacket   = tinode.getTypeOfMetaPacket();
 
         setName(name);
@@ -136,7 +132,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @throws IllegalArgumentException if 'tinode' argument is null
      */
-    public Topic(Tinode tinode, String name, Listener<Pu,Pr,T> l) {
+    public Topic(Tinode tinode, String name, Listener<Pu,Pr> l) {
         if (tinode == null) {
             throw new IllegalArgumentException("Tinode cannot be null");
         }
@@ -161,7 +157,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param tinode tinode instance
      * @param l event listener, optional
      */
-    public Topic(Tinode tinode, Listener<Pu,Pr,T> l) {
+    public Topic(Tinode tinode, Listener<Pu,Pr> l) {
         this(tinode, Tinode.TOPIC_NEW + tinode.nextUniqueString(), l);
     }
 
@@ -171,17 +167,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param typeOfPublic type of {meta.desc.public}
      * @param typeOfPrivate type of {meta.desc.private}
-     * @param typeOfContent type of {data.content}
      *
      */
-    public void setTypes(JavaType typeOfPublic,
-                                JavaType typeOfPrivate, JavaType typeOfContent) {
+    public void setTypes(JavaType typeOfPublic, JavaType typeOfPrivate) {
         mClassNameOfPublic = typeOfPublic.toCanonical();
         mClassNameOfPrivate = typeOfPrivate.toCanonical();
-        mClassNameOfContent = typeOfContent.toCanonical();
 
-        mTypeOfDataPacket = Tinode.getTypeFactory()
-                .constructParametricType(MsgServerData.class, typeOfContent);
         mTypeOfMetaPacket = Tinode.getTypeFactory()
                 .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
     }
@@ -192,13 +183,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param typeOfPublic type of {meta.desc.public}
      * @param typeOfPrivate type of {meta.desc.private}
-     * @param typeOfContent type of {data.content}
      *
      */
-    public void setTypes(Class<?> typeOfPublic,
-                                Class<?> typeOfPrivate, Class<?> typeOfContent) {
+    public void setTypes(Class<?> typeOfPublic, Class<?> typeOfPrivate) {
         final TypeFactory tf = Tinode.getTypeFactory();
-        setTypes(tf.constructType(typeOfPublic), tf.constructType(typeOfPrivate), tf.constructType(typeOfContent));
+        setTypes(tf.constructType(typeOfPublic), tf.constructType(typeOfPrivate));
     }
 
     /**
@@ -207,15 +196,12 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param typeOfPublic type of {meta.desc.public}
      * @param typeOfPrivate type of {meta.desc.private}
-     * @param typeOfContent type of {data.content}
      *
      * @throws IllegalArgumentException if types cannot be parsed
      */
-    public void setTypes(String typeOfPublic, String typeOfPrivate, String typeOfContent)
-            throws IllegalArgumentException {
+    public void setTypes(String typeOfPublic, String typeOfPrivate) throws IllegalArgumentException {
         final TypeFactory tf = Tinode.getTypeFactory();
-        setTypes(tf.constructFromCanonical(typeOfPublic), tf.constructFromCanonical(typeOfPrivate),
-                tf.constructFromCanonical(typeOfContent));
+        setTypes(tf.constructFromCanonical(typeOfPublic), tf.constructFromCanonical(typeOfPrivate));
     }
 
     /**
@@ -236,8 +222,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
         String[] parts = serialized.split("\\n");
         // Log.d(TAG, "Serialized types parsed: " + Arrays.toString(parts));
 
-        if (parts.length == 3) {
-            setTypes(parts[0], parts[1], parts[2]);
+        if (parts.length == 2) {
+            setTypes(parts[0], parts[1]);
         } else {
             throw new IllegalArgumentException("Failed to parse serialized types");
         }
@@ -247,10 +233,10 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @return Content types as a string suitable for persistent storage.
      */
     public String getSerializedTypes() {
-        if (mClassNameOfContent == null || mClassNameOfPrivate == null || mClassNameOfPublic == null) {
+        if (mClassNameOfPrivate == null || mClassNameOfPublic == null) {
             return null;
         }
-        return mClassNameOfPublic + "\n" + mClassNameOfPrivate + "\n" + mClassNameOfContent;
+        return mClassNameOfPublic + "\n" + mClassNameOfPrivate;
     }
 
     /**
@@ -280,7 +266,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      *
      * @param sub updated topic parameters
      */
-    protected void update(Map<String,Object> params, MetaSetSub<?> sub) {
+    protected void update(Map<String,Object> params, MetaSetSub sub) {
         Log.d(TAG, "Topic.update(ctrl.params, MetaSetSub)");
         String user = sub.user;
 
@@ -346,7 +332,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @param ctrl {ctrl} packet sent by the server
      * @param meta original {meta} packet updated topic parameters
      */
-    protected void update(MsgServerCtrl ctrl, MsgSetMeta<Pu,Pr,?> meta) {
+    protected void update(MsgServerCtrl ctrl, MsgSetMeta<Pu,Pr> meta) {
         if (meta.desc != null) {
             update(meta.desc);
             if (mListener != null) {
@@ -536,7 +522,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws Exception when anything goes wrong
      */
     public PromisedReply<ServerMessage> subscribe() throws Exception {
-        MsgSetMeta<Pu,Pr,?> mset = null;
+        MsgSetMeta<Pu,Pr> mset = null;
         if (isNew() && (mDesc.pub != null || mDesc.priv != null)) {
             // If this is a new topic, sync topic description
             mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null);
@@ -551,7 +537,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotConnectedException if there is no live connection to the server
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
-    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<Pu,Pr,?> set, MsgGetMeta get)
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<Pu,Pr> set, MsgGetMeta get)
             throws Exception {
 
         if (mAttached) {
@@ -668,7 +654,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
-    public PromisedReply<ServerMessage> publish(T content) throws Exception {
+    public PromisedReply<ServerMessage> publish(Object content) throws Exception {
         final long id;
         if (mStore != null) {
             id = mStore.msgSend(this, content);
@@ -702,7 +688,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
-    public <ML extends Iterator<Storage.Message<T>> & Closeable> PromisedReply<ServerMessage> publishPending()
+    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> publishPending()
             throws Exception {
         Log.d(TAG, "publishPending");
 
@@ -714,7 +700,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
         while (list.hasNext()) {
-            final Storage.Message<T> msg = list.next();
+            final Storage.Message msg = list.next();
             Log.d(TAG, "publishing '" + msg.getId() + "'");
             last = mTinode.publish(getName(), msg.getContent());
             last.thenApply(
@@ -747,7 +733,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<Pu,Pr,T> meta) throws Exception {
+    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<Pu,Pr> meta) throws Exception {
         if (mAttached) {
             return mTinode.setMeta(getName(), meta).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
@@ -774,7 +760,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<Pu,Pr> desc) throws Exception {
-        return setMeta(new MsgSetMeta<Pu,Pr,T>(desc, null));
+        return setMeta(new MsgSetMeta<>(desc, null));
     }
 
     /**
@@ -808,8 +794,8 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub<T> sub) throws Exception {
-        return setMeta(new MsgSetMeta<Pu,Pr,T>(null, sub));
+    protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) throws Exception {
+        return setMeta(new MsgSetMeta<Pu,Pr>(null, sub));
     }
 
     /**
@@ -844,7 +830,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
 
         final AcsHelper mode = uid == null ? mDesc.acs.getWantHelper() : sub.acs.getGivenHelper();
         if (mode.update(update)) {
-            return setSubscription(new MetaSetSub<T>(uid, mode.toString(), null))
+            return setSubscription(new MetaSetSub(uid, mode.toString(), null))
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         @SuppressWarnings("unchecked")
@@ -872,7 +858,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
-    public PromisedReply<ServerMessage> invite(String uid, String mode, T invite)  throws Exception {
+    public PromisedReply<ServerMessage> invite(String uid, String mode, Object invite)  throws Exception {
 
         final Subscription<Pu,Pr> sub;
         if (getSubscription(uid) != null) {
@@ -905,7 +891,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
             throw new NotSynchronizedException();
         }
 
-        return setSubscription(new MetaSetSub<>(uid, mode, invite)).thenApply(
+        return setSubscription(new MetaSetSub(uid, mode, invite)).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
@@ -1120,11 +1106,6 @@ public class Topic<Pu,Pr,T> implements LocalData {
                 mLastKeyPress = now;
             } catch (NotConnectedException ignored) {}
         }
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    protected JavaType getTypeOfDataPacket() {
-        return mTypeOfDataPacket;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -1367,7 +1348,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
     }
 
 
-    protected void routeData(MsgServerData<T> data) {
+    protected void routeData(MsgServerData data) {
         if (data.seq > mDesc.seq) {
             mDesc.seq = data.seq;
         }
@@ -1440,11 +1421,11 @@ public class Topic<Pu,Pr,T> implements LocalData {
         return mLocal;
     }
 
-    public synchronized void setListener(Listener <Pu,Pr,T> l) {
+    public synchronized void setListener(Listener <Pu,Pr> l) {
         mListener = l;
     }
 
-    public static class Listener<PPu,PPr,Tt> {
+    public static class Listener<PPu,PPr> {
 
         public void onSubscribe(int code, String text) {}
         public void onLeave(boolean unsub, int code, String text) {}
@@ -1453,7 +1434,7 @@ public class Topic<Pu,Pr,T> implements LocalData {
          * Process {data} message.
          * @param data data packet
          */
-        public void onData(MsgServerData<Tt> data) { }
+        public void onData(MsgServerData data) { }
 
         public void onContactUpdate(String what, Subscription<PPu,PPr> sub) {}
         public void onInfo(MsgServerInfo info) {}

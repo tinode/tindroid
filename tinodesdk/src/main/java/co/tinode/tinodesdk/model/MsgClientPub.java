@@ -8,21 +8,24 @@ import java.util.Map;
 /**
  * Publish to topic packet.
  */
-public class MsgClientPub<T> {
+public class MsgClientPub {
     public String id;
     public String topic;
     public Boolean noecho;
     public Map<String, String> head;
-    public T content;
+    public Object content;
 
     public MsgClientPub() {
     }
 
-    public MsgClientPub(String id, String topic, Boolean noecho, T content) {
+    public MsgClientPub(String id, String topic, Boolean noecho, Object content) {
         this.id = id;
         this.topic = topic;
         this.noecho = noecho ? true : null;
         this.content = content;
+        if (content instanceof Drafty) {
+            setHeader("mime", Drafty.MIME_TYPE);
+        }
     }
 
     @JsonIgnore

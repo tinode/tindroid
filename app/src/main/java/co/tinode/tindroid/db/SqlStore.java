@@ -17,6 +17,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
 import co.tinode.tinodesdk.model.Announcement;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -199,13 +200,13 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> m) {
+    public long msgReceived(Topic topic, Subscription sub, MsgServerData m) {
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss == null) {
            return -1;
         }
 
-        StoredMessage<T> msg = new StoredMessage<>(m);
+        StoredMessage msg = new StoredMessage(m);
         msg.topicId = ss.topicId;
         msg.userId = ss.userId;
 
@@ -229,7 +230,7 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <T> long annReceived(MeTopic me, Topic topic, MsgServerData<Announcement<T>> m) {
+    public long annReceived(MeTopic me, Topic topic, MsgServerData m) {
         if (topic == null || m.content == null) {
             // Done't know how to save message without the topic or content.
             return -1;
@@ -240,7 +241,7 @@ class SqlStore implements Storage {
             return -1;
         }
 
-        StoredMessage<Announcement<T>> msg = new StoredMessage<>(m);
+        StoredMessage msg = new StoredMessage(m);
         SQLiteDatabase db = mDbh.getWritableDatabase();
         try {
             db.beginTransaction();
@@ -270,8 +271,8 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <T> long msgSend(Topic<?,?,T> topic, T data) {
-        StoredMessage<T> msg = new StoredMessage<>();
+    public long msgSend(Topic topic, Drafty data) {
+        StoredMessage msg = new StoredMessage();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 
         msg.topic = topic.getName();
@@ -357,19 +358,19 @@ class SqlStore implements Storage {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends Iterator<Message<T>> & Closeable, T> R getUnsentMessages(Topic<?, ?, T> topic) {
-        MessageList<T> list = null;
+    public <R extends Iterator<Message> & Closeable> R getUnsentMessages(Topic topic) {
+        MessageList list = null;
         StoredTopic st = (StoredTopic)topic.getLocal();
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryUnsent(mDbh.getReadableDatabase(), st.id);
             if (c != null) {
-                list = new MessageList<>(c);
+                list = new MessageList(c);
             }
         }
         return (R) list;
     }
 
-    private static class MessageList<T> implements Iterator<Message<T>>, Closeable {
+    private static class MessageList implements Iterator<Message>, Closeable {
         private Cursor mCursor;
 
         MessageList(Cursor cursor) {
@@ -389,8 +390,8 @@ class SqlStore implements Storage {
 
         @SuppressWarnings("unchecked")
         @Override
-        public StoredMessage<T> next() {
-            StoredMessage<T> msg = StoredMessage.readMessage(mCursor);
+        public StoredMessage next() {
+            StoredMessage msg = StoredMessage.readMessage(mCursor);
             mCursor.moveToNext();
             return msg;
         }

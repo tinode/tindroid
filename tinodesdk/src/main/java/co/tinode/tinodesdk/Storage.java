@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
-import co.tinode.tinodesdk.model.Announcement;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -60,9 +60,9 @@ public interface Storage {
     <Pu> boolean userUpdate(User<Pu> user);
 
     // Message received
-    <T> long msgReceived(Topic topic, Subscription sub, MsgServerData<T> msg);
+    long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
     // Announcement message received
-    <T> long annReceived(MeTopic me, Topic topic, MsgServerData<Announcement<T>> msg);
+    long annReceived(MeTopic me, Topic topic, MsgServerData msg);
 
     /** Message sent. Returns database ID of the message suitable for
      * use in msgDelivered
@@ -71,7 +71,7 @@ public interface Storage {
      * @return database ID of the message suitable for use in
      *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
      */
-    <T> long msgSend(Topic<?,?,T> topic, T data);
+    long msgSend(Topic topic, Drafty data);
     /** Message delivered to the server and received a real seq ID */
     boolean msgDelivered(Topic topic, long id, Date timestamp, int seq);
     /** Mark messages for deletion */
@@ -87,11 +87,11 @@ public interface Storage {
     /** Set read value for a given subscriber */
     boolean msgReadByRemote(Subscription sub, int read);
     /** Get a list of unsent messages */
-    <R extends Iterator<Message<T>> & Closeable, T> R getUnsentMessages(Topic<?,?,T> topic);
+    <R extends Iterator<Message> & Closeable> R getUnsentMessages(Topic topic);
 
-    interface Message<T> {
+    interface Message {
         /** Get current message payload */
-        T getContent();
+        Object getContent();
         /** Get current message unique ID */
         long getId();
         /** Get current message header */

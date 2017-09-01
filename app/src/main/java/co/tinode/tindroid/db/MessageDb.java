@@ -41,20 +41,7 @@ public class MessageDb implements BaseColumns {
      * The name of the main table.
      */
     private static final String TABLE_NAME = "messages";
-    /**
-     * SQL statement to drop Messages table.
-     */
-    static final String DROP_TABLE =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
-    /**
-     * The name of index: messages by topic and sequence.
-     */
-    private static final String INDEX_NAME = "message_topic_id_seq";
-    /**
-     * Drop the index too
-     */
-    static final String DROP_INDEX =
-            "DROP INDEX IF EXISTS " + INDEX_NAME;
+
     /**
      * Topic ID, references topics._ID
      */
@@ -68,10 +55,6 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_STATUS = "status";
     /**
-     * Type of the message, normal or meta (invite)
-     */
-    private static final String COLUMN_NAME_TYPE = "type";
-    /**
      * Uid as string. Deserialized here to avoid a join.
      */
     private static final String COLUMN_NAME_SENDER = "sender";
@@ -80,21 +63,19 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_TS = "ts";
     /**
-     * Add index on account_id-topic-seq, in descending order
-     */
-    static final String CREATE_INDEX =
-            "CREATE INDEX " + INDEX_NAME +
-                    " ON " + TABLE_NAME + " (" +
-                    COLUMN_NAME_TOPIC_ID + "," +
-                    COLUMN_NAME_TS + " DESC)";
-    /**
      * Server-issued sequence ID, integer, indexed
      */
     private static final String COLUMN_NAME_SEQ = "seq";
     /**
+     * Content MIME type
+     */
+    private static final String COLUMN_NAME_MIME = "mime";
+    /**
      * Serialized message content
      */
     private static final String COLUMN_NAME_CONTENT = "content";
+
+
     /**
      * SQL statement to create Messages table
      */
@@ -106,11 +87,35 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_USER_ID
                     + " REFERENCES " + UserDb.TABLE_NAME + "(" + UserDb._ID + ")," +
                     COLUMN_NAME_STATUS + " INT," +
-                    COLUMN_NAME_TYPE + " INT," +
                     COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
+                    COLUMN_NAME_MIME + " TEXT," +
                     COLUMN_NAME_CONTENT + " BLOB)";
+    /**
+     * SQL statement to drop Messages table.
+     */
+    static final String DROP_TABLE =
+            "DROP TABLE IF EXISTS " + TABLE_NAME;
+
+    /**
+     * The name of index: messages by topic and sequence.
+     */
+    private static final String INDEX_NAME = "message_topic_id_seq";
+    /**
+     * Drop the index too
+     */
+    static final String DROP_INDEX =
+            "DROP INDEX IF EXISTS " + INDEX_NAME;
+    /**
+     * Add index on account_id-topic-seq, in descending order
+     */
+    static final String CREATE_INDEX =
+            "CREATE INDEX " + INDEX_NAME +
+                    " ON " + TABLE_NAME + " (" +
+                    COLUMN_NAME_TOPIC_ID + "," +
+                    COLUMN_NAME_TS + " DESC)";
+
     /**
      * Path component for "message"-type resources..
      */
@@ -125,10 +130,10 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_TOPIC_ID = 1;
     static final int COLUMN_IDX_USER_ID = 2;
     static final int COLUMN_IDX_STATUS = 3;
-    static final int COLUMN_IDX_TYPE = 4;
-    static final int COLUMN_IDX_SENDER = 5;
-    static final int COLUMN_IDX_TS = 6;
-    static final int COLUMN_IDX_SEQ = 7;
+    static final int COLUMN_IDX_SENDER = 4;
+    static final int COLUMN_IDX_TS = 5;
+    static final int COLUMN_IDX_SEQ = 6;
+    static final int COLUMN_IDX_MIME = 7;
     static final int COLUMN_IDX_CONTENT = 8;
 
     /**
@@ -166,16 +171,11 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
         values.put(COLUMN_NAME_USER_ID, msg.userId);
         values.put(COLUMN_NAME_STATUS, status);
-        values.put(COLUMN_NAME_TYPE, msg.type);
         values.put(COLUMN_NAME_SENDER, msg.from);
         values.put(COLUMN_NAME_TS, msg.ts.getTime());
         values.put(COLUMN_NAME_SEQ, msg.seq);
-        if (msg.type == StoredMessage.MSG_TYPE_META) {
-            Log.d(TAG, "Saving meta" + msg.meta);
-            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.meta));
-        } else {
-            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
-        }
+        values.put(COLUMN_NAME_MIME, msg.getHeader("mime"));
+        values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
         return db.insert(TABLE_NAME, null, values);
     }
