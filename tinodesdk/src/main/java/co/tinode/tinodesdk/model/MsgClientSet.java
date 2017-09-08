@@ -15,16 +15,16 @@ public class MsgClientSet<Pu,Pr,Inv> {
     public String topic;
 
     public MetaSetDesc<Pu,Pr> desc;
-    public MetaSetSub<Inv> sub;
+    public MetaSetSub sub;
 
     public MsgClientSet() {}
 
-    public MsgClientSet(String id, String topic, MsgSetMeta<Pu,Pr,Inv> meta) {
+    public MsgClientSet(String id, String topic, MsgSetMeta<Pu,Pr> meta) {
         this(id, topic, meta.desc, meta.sub);
     }
 
     public MsgClientSet(String id, String topic, MetaSetDesc<Pu, Pr> desc,
-                        MetaSetSub<Inv> sub) {
+                        MetaSetSub sub) {
         this.id = id;
         this.topic = topic;
         this.desc = desc;

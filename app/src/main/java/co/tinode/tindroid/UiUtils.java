@@ -711,7 +711,7 @@ public class UiUtils {
         builder.show();
     }
 
-    static boolean updateAvatar(final Activity activity, final Topic<VCard, ?, ?> topic, final Intent data) {
+    static boolean updateAvatar(final Activity activity, final Topic<VCard, ?> topic, final Intent data) {
         Bitmap bmp = UiUtils.extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
@@ -737,7 +737,7 @@ public class UiUtils {
         return true;
     }
 
-    static boolean updateTitle(final Activity activity, Topic<VCard, String, ?> topic, String title, String priv) {
+    static boolean updateTitle(final Activity activity, Topic<VCard, String> topic, String title, String priv) {
         VCard pub = null;
         if (title != null) {
             pub = topic.getPub();

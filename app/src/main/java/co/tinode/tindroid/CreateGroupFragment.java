@@ -174,7 +174,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle) {
-        final Topic<VCard,String,String> topic = new Topic<>(Cache.getTinode(), null);
+        final Topic<VCard,String> topic = new Topic<>(Cache.getTinode(), null);
         topic.setPub(new VCard(title, avatar));
         topic.setPriv(subtitle);
         try {

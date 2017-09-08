@@ -61,8 +61,6 @@ public interface Storage {
 
     // Message received
     long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
-    // Announcement message received
-    long annReceived(MeTopic me, Topic topic, MsgServerData msg);
 
     /** Message sent. Returns database ID of the message suitable for
      * use in msgDelivered

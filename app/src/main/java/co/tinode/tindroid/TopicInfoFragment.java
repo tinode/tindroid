@@ -52,7 +52,7 @@ public class TopicInfoFragment extends Fragment {
     private static final int ACTION_REMOVE = 4;
     private static final int ACTION_BAN = 5;
 
-    Topic<VCard, String, String> mTopic;
+    Topic<VCard, String> mTopic;
     private MembersAdapter mAdapter;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;

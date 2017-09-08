@@ -58,7 +58,7 @@ public class MessagesFragment extends Fragment {
     private int mPagesToLoad;
 
     private String mTopicName = null;
-    protected Topic<VCard, String, String> mTopic;
+    protected Topic<VCard, String> mTopic;
 
     private Timer mNoteTimer = null;
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -288,9 +288,9 @@ public class MessagesFragment extends Fragment {
                         }
                     }, mFailureListener);
                 } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "sendMessage -- NotConnectedException");
+                    Log.d(TAG, "sendMessage -- NotConnectedException", ignored);
                 } catch (Exception ignored) {
-                    Log.d(TAG, "sendMessage -- Exception");
+                    Log.d(TAG, "sendMessage -- Exception", ignored);
                     Toast.makeText(activity, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
                     return;
                 }

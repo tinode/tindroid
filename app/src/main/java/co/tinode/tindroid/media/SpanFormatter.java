@@ -19,7 +19,8 @@ import co.tinode.tinodesdk.model.Drafty;
  */
 
 public class SpanFormatter {
-    public Spanned toSpanned(Drafty content) {
+
+    public static Spanned toSpanned(Drafty content) {
         SpannableStringBuilder text = new SpannableStringBuilder(content.toString());
         Drafty.Style[] fmt = content.getStyles();
 

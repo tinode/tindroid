@@ -44,14 +44,14 @@ public class ServerMessage<T,Pu,Pr> implements Serializable {
     public static int STATUS_GATEWAY_TIMEOUT        = 504; // RFC 7231, 6.6.5
     public static int STATUS_HTTP_VERSION_NOT_SUPPORTED = 505; // RFC 7231, 6.6.6
 
-    public MsgServerData<T> data;
+    public MsgServerData data;
     public MsgServerMeta<Pu,Pr> meta;
     public MsgServerCtrl ctrl;
     public MsgServerPres pres;
     public MsgServerInfo info;
 
     public ServerMessage() {}
-    public ServerMessage(MsgServerData<T> data) {
+    public ServerMessage(MsgServerData data) {
         this.data = data;
     }
     public ServerMessage(MsgServerMeta<Pu,Pr> meta) {

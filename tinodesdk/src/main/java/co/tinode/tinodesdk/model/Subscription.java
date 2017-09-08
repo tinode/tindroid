@@ -109,7 +109,7 @@ public class Subscription<Pu,Pr> implements LocalData, Serializable {
     /**
      * Merge changes from {meta set} packet with the subscription.
      */
-    public boolean merge(MetaSetSub<?> sub) {
+    public boolean merge(MetaSetSub sub) {
         int changed = 0;
 
         if (sub.mode != null && acs == null) {

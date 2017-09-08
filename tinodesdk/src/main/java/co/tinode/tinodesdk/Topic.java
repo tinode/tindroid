@@ -10,6 +10,7 @@ import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MetaSetSub;
@@ -654,7 +655,7 @@ public class Topic<Pu,Pr> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
-    public PromisedReply<ServerMessage> publish(Object content) throws Exception {
+    public PromisedReply<ServerMessage> publish(Drafty content) throws Exception {
         final long id;
         if (mStore != null) {
             id = mStore.msgSend(this, content);
@@ -663,7 +664,7 @@ public class Topic<Pu,Pr> implements LocalData {
         }
 
         if (mAttached) {
-            return mTinode.publish(getName(), content).thenApply(
+            return mTinode.publish(getName(), content.isPlain() ? content.toString() : content).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
@@ -680,6 +681,15 @@ public class Topic<Pu,Pr> implements LocalData {
         throw new NotConnectedException();
     }
 
+    /**
+     * Convenience method for plain text messages. Will convert message to Drafty.
+     * @param content message to send
+     * @return
+     * @throws Exception
+     */
+    public PromisedReply<ServerMessage> publish(String content) throws Exception {
+        return publish(Drafty.parse(content));
+    }
     /**
      * Re-send pending messages. Processing will stop on the first error.
      *
@@ -1285,6 +1295,9 @@ public class Topic<Pu,Pr> implements LocalData {
             routeMetaDesc(meta);
         }
         if (meta.sub != null) {
+            if (mSubsUpdated == null || meta.ts.after(mSubsUpdated)) {
+                mSubsUpdated = meta.ts;
+            }
             routeMetaSub(meta);
         }
 

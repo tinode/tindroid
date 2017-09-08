@@ -16,7 +16,6 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -100,7 +99,7 @@ public class ContactsActivity extends AppCompatActivity implements
         if (me == null) {
             // The very first launch of the app.
             me = new MeTopic<>(tinode, mMeTopicListener);
-            me.setTypes(VCard.class, String.class, String.class);
+            me.setTypes(VCard.class, String.class);
             Log.d(TAG, "Initialized NEW 'me' topic");
         } else {
             me.setListener(mMeTopicListener);
@@ -180,14 +179,7 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.activityVisible(focus);
     }
 
-    private class MeListener extends Topic.Listener<VCard, String, Announcement<String>> {
-
-        @Override
-        public void onData(MsgServerData<Announcement<String>> data) {
-            // TODO(gene): handle a chat invitation
-            Log.d(TAG, "Contacts got an invitation to topic " + data.content.topic);
-            datasetChanged();
-        }
+    private class MeListener extends Topic.Listener<VCard, String> {
 
         @Override
         public void onContactUpdate(final String what, final Subscription<VCard,String> sub) {

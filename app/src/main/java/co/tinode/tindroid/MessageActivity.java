@@ -50,7 +50,7 @@ public class MessageActivity extends AppCompatActivity {
     private String mMessageText = null;
 
     private String mTopicName = null;
-    private Topic<VCard, String, String> mTopic = null;
+    private Topic<VCard, String> mTopic = null;
 
     private PausableSingleThreadExecutor mMessageSender = null;
 
@@ -295,7 +295,7 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(runnable);
     }
 
-    private class TListener extends Topic.Listener<VCard, String, String> {
+    private class TListener extends Topic.Listener<VCard, String> {
 
         TListener() {
         }

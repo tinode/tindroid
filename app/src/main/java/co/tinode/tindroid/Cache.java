@@ -34,7 +34,7 @@ public class Cache {
             sTinode.setOsString(Build.VERSION.RELEASE);
 
             // Default types for parsing Public, Private, Content fields of messages
-            sTinode.setDefaultTypes(VCard.class, String.class, String.class);
+            sTinode.setDefaultTypes(VCard.class, String.class);
             // Set device language
             sTinode.setLanguage(Locale.getDefault().getLanguage());
             sTinode.setAutologin(true);

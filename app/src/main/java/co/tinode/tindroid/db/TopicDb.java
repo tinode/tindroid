@@ -179,7 +179,7 @@ public class TopicDb implements BaseColumns {
      * @return ID of the newly added message
      */
     @SuppressWarnings("WeakerAccess")
-    public static <Pu,Pr,T> long insert(SQLiteDatabase db, Topic<Pu,Pr,T> topic) {
+    public static <Pu,Pr,T> long insert(SQLiteDatabase db, Topic<Pu,Pr> topic) {
         // Log.d(TAG, "Creating topic " + topic.getName());
 
         // Convert topic description to a map of values
@@ -231,7 +231,7 @@ public class TopicDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     @SuppressWarnings("unchecked")
-    public static <Pu,Pr,T> boolean update(SQLiteDatabase db, Topic<Pu,Pr,T> topic) {
+    public static <Pu,Pr,T> boolean update(SQLiteDatabase db, Topic<Pu,Pr> topic) {
         StoredTopic<Pu,Pr,T> st = (StoredTopic<Pu,Pr,T>) topic.getLocal();
         if (st == null) {
             return false;
@@ -343,9 +343,9 @@ public class TopicDb implements BaseColumns {
      * @return Subscription
      */
     @SuppressWarnings("unchecked, WeakerAccess")
-    protected static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(Tinode tinode, Cursor c) {
+    protected static <Pu,Pr> Topic<Pu,Pr> readOne(Tinode tinode, Cursor c) {
         // Instantiate topic of an appropriate class ('me' or group)
-        Topic<Pu,Pr,T> topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
+        Topic<Pu,Pr> topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
         StoredTopic.deserialize(topic, c);
         return topic;
     }
@@ -357,8 +357,8 @@ public class TopicDb implements BaseColumns {
      * @param name Name of the topic to read
      * @return Subscription
      */
-    protected static <Pu,Pr,T> Topic<Pu,Pr,T> readOne(SQLiteDatabase db, Tinode tinode, String name) {
-        Topic<Pu,Pr,T> topic = null;
+    protected static <Pu,Pr> Topic<Pu,Pr> readOne(SQLiteDatabase db, Tinode tinode, String name) {
+        Topic<Pu,Pr> topic = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +

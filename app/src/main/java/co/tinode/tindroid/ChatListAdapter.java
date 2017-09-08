@@ -87,7 +87,7 @@ public class ChatListAdapter extends BaseAdapter {
     }
 
     private void bindView(int position, ViewHolder holder) {
-        final Topic<VCard,String,String> topic = mTopics.get(position);
+        final Topic<VCard,String> topic = mTopics.get(position);
 
         holder.topic = topic.getName();
         VCard pub = topic.getPub();

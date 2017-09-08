@@ -16,7 +16,6 @@ import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
-import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
@@ -220,47 +219,6 @@ class SqlStore implements Storage {
                 db.setTransactionSuccessful();
             }
 
-        } catch (SQLException ex) {
-            Log.d(TAG, "Failed to save message", ex);
-        } finally {
-            db.endTransaction();
-        }
-
-        return msg.id;
-    }
-
-    @Override
-    public long annReceived(MeTopic me, Topic topic, MsgServerData m) {
-        if (topic == null || m.content == null) {
-            // Done't know how to save message without the topic or content.
-            return -1;
-        }
-
-        StoredTopic st = (StoredTopic) topic.getLocal();
-        if (st == null) {
-            return -1;
-        }
-
-        StoredMessage msg = new StoredMessage(m);
-        SQLiteDatabase db = mDbh.getWritableDatabase();
-        try {
-            db.beginTransaction();
-
-            msg.userId = UserDb.getId(db, m.content.user);
-            if (msg.userId < 0) {
-                msg.userId = UserDb.insert(db, m.content.user, null, null);
-            }
-            if (msg.userId < 0) {
-                return -1;
-            }
-
-            msg.topicId = st.id;
-
-            // Saving message to 'topic', but recoding metadata in 'me'
-            msg.id = MessageDb.insert(db, topic, msg);
-            if (msg.id > 0 && TopicDb.msgReceived(db, me, msg.ts, msg.seq)) {
-                db.setTransactionSuccessful();
-            }
         } catch (SQLException ex) {
             Log.d(TAG, "Failed to save message", ex);
         } finally {

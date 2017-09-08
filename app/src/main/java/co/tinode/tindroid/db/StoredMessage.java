@@ -7,8 +7,6 @@ import java.util.Date;
 import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
-import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**

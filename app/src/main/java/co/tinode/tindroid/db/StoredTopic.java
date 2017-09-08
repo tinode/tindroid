@@ -24,7 +24,7 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
     }
 
     @SuppressWarnings("unchecked")
-    protected static <Pu,Pr,T> void deserialize(Topic<Pu,Pr,T> topic, Cursor c) {
+    protected static <Pu,Pr,T> void deserialize(Topic<Pu,Pr> topic, Cursor c) {
         StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
 
         st.id = c.getLong(TopicDb.COLUMN_IDX_ID);

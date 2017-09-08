@@ -8,13 +8,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.MsgGetMeta;
-import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
-import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -60,63 +56,6 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
     @Override
     public Collection<Subscription<Pu, Pr>> getSubscriptions() {
         throw new UnsupportedOperationException();
-    }
-
-    /**
-     * This method has to be overridden because Subscription generally does not exists for invited senders.
-     */
-    @Override
-    protected void routeData(final MsgServerData data) {
-        if (data.seq > mDesc.seq) {
-            mDesc.seq = data.seq;
-        }
-
-        Topic receiver = null;
-        if (data.content != null) {
-            final Announcement content = (Announcement) data.content;
-            // Fetch the topic & user descriptions, if missing.
-            receiver = mTinode.getTopic(content.topic);
-            if (receiver == null) {
-                receiver = mTinode.newTopic(content.topic, null);
-                mTinode.registerTopic(receiver);
-                try {
-                    receiver.getMeta(MsgGetMeta.desc()).thenApply(null,
-                            new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                    if (err instanceof ServerResponseException) {
-                                        // Delete the topic if server responded with "404 NOT FOUND".
-                                        if (((ServerResponseException) err).getCode() ==
-                                                ServerMessage.STATUS_NOT_FOUND) {
-                                            mTinode.unregisterTopic(content.topic);
-                                        }
-                                    }
-                                    return null;
-                                }
-                            });
-                } catch (Exception ignored) {
-                }
-            }
-
-            User user = mTinode.getUser(content.user);
-            if (user == null) {
-                mTinode.addUser(content.user);
-                mTinode.getMeta(content.user, MsgGetMeta.desc());
-            }
-        }
-
-        if (mStore != null) {
-            if (mStore.annReceived(this, receiver, data) > 0) {
-                noteRecv();
-            }
-        } else {
-            noteRecv();
-        }
-
-
-        if (mListener != null) {
-            mListener.onData(data);
-        }
     }
 
     @Override
@@ -168,8 +107,7 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
                     break;
 
                 case UPD: // pub/priv updated
-                    // TODO(gene): issue a request for an updated description
-                    // topic.getMeta(...);
+                    this.getMeta(getMetaGetBuilder().withGetSub(mSubsUpdated, 0).build());
                     break;
 
                 case UA: // user agent changed
@@ -193,7 +131,8 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
                     break;
             }
         } else {
-            Log.d(TAG, "Topic not found in me.routePres: " + pres.src);
+            // TODO: if it's an "acs", add dummy subscription and request updated subs
+            Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
         }
 
         if (mListener != null) {

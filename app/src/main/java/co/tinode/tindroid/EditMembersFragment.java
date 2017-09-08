@@ -36,7 +36,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    private Topic<?,?,String> mTopic;
+    private Topic<?,?> mTopic;
     private HashMap<String, Boolean> mInitialMembers;
 
     private ChipsInput mChipsInput;

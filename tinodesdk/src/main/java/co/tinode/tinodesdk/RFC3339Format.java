@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk;
 
+import android.util.Log;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,11 +25,13 @@ public class RFC3339Format extends SimpleDateFormat {
     // SDF cannot parse optional millis. Must treat them explicitly.
     @Override
     public Date parse(String text) throws ParseException {
+        Date date;
         try {
-            return super.parse(text);
+            date = super.parse(text);
         } catch (ParseException ignore) {
-            return mShortDate.parse(text);
+            date = mShortDate.parse(text);
         }
+        return date;
     }
 };
 

@@ -23,13 +23,13 @@ import android.widget.Toast;
 
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tindroid.media.SpanFormatter;
 import co.tinode.tindroid.media.VCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Announcement;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -128,7 +128,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         }
 
         for (int position : positions) {
-            StoredMessage<String> msg = getMessage(position);
+            StoredMessage msg = getMessage(position);
             if (msg != null) {
                 Subscription<VCard, ?> sub = (Subscription<VCard, ?>) topic.getSubscription(msg.from);
                 String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
@@ -154,7 +154,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             int i = 0;
             while (i < positions.length) {
                 int pos = positions[i];
-                StoredMessage<String> msg = getMessage(pos);
+                StoredMessage msg = getMessage(pos);
                 if (msg != null) {
                     list[i] = msg.seq;
                     i++;
@@ -188,7 +188,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     @Override
     public int getItemViewType(int position) {
         int itemType;
-        StoredMessage<String> m = getMessage(position);
+        StoredMessage m = getMessage(position);
         Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
 
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
@@ -198,21 +198,18 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             nextFrom = getMessage(position + 1).userId;
         }
 
-        if (m.type == StoredMessage.MSG_TYPE_META) {
-            itemType = VIEWTYPE_FULL_CENTER;
-        } else {
-            final boolean isMine = m.isMine();
+        final boolean isMine = m.isMine();
 
-            if (m.userId != nextFrom) {
-                itemType = isMine ? VIEWTYPE_FULL_RIGHT :
-                        tp == Topic.TopicType.GRP ? VIEWTYPE_FULL_AVATAR :
-                                VIEWTYPE_FULL_LEFT;
-            } else {
-                itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT :
-                        tp == Topic.TopicType.GRP ? VIEWTYPE_SIMPLE_AVATAR :
-                                VIEWTYPE_SIMPLE_LEFT;
-            }
+        if (m.userId != nextFrom) {
+            itemType = isMine ? VIEWTYPE_FULL_RIGHT :
+                    tp == Topic.TopicType.GRP ? VIEWTYPE_FULL_AVATAR :
+                            VIEWTYPE_FULL_LEFT;
+        } else {
+            itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT :
+                    tp == Topic.TopicType.GRP ? VIEWTYPE_SIMPLE_AVATAR :
+                            VIEWTYPE_SIMPLE_LEFT;
         }
+
         return itemType;
     }
 
@@ -263,14 +260,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        Topic<VCard,?,?> topic = Cache.getTinode().getTopic(mTopicName);
+        Topic<VCard,?> topic = Cache.getTinode().getTopic(mTopicName);
         StoredMessage m = getMessage(position);
 
-        if (m.type == StoredMessage.MSG_TYPE_META) {
-            holder.mText.setText(parseAnnouncement(topic, m));
-        } else {
-            holder.mText.setText((String) m.content);
-        }
+        holder.mText.setText(SpanFormatter.toSpanned(m.content));
 
         if (holder.mSelected != null) {
             if (mSelectedItems != null && mSelectedItems.get(position)) {
@@ -409,7 +402,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         Log.d(TAG, "swapped cursor, topic=" + mTopicName);
     }
 
-    private StoredMessage<String> getMessage(int position) {
+    private StoredMessage getMessage(int position) {
         mCursor.moveToPosition(mCursor.getCount() - position - 1);
         return StoredMessage.readMessage(mCursor);
     }
@@ -438,46 +431,5 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             mSelected = itemView.findViewById(R.id.selected);
             mOverlay = itemView.findViewById(R.id.overlay);
         }
-    }
-
-    private String parseAnnouncement(Topic<VCard,?,?> topic, StoredMessage<Announcement<String>> m) {
-        if (m.meta == null || topic == null) {
-            return "null";
-        }
-
-        String str = null;
-        switch (m.meta.act) {
-            case "inv": {
-                Subscription<VCard, ?> from = topic.getSubscription(m.from);
-                String fromStr = from != null && from.pub != null && from.pub.fn != null ? from.pub.fn : m.from;
-                str = mActivity.getString(R.string.announce_inv, fromStr, m.meta.info);
-                break;
-            }
-            case "appr": {
-                Subscription<VCard, ?> user = topic.getSubscription(m.meta.user);
-                String userStr = user != null && user.pub != null && user.pub.fn != null ? user.pub.fn : m.meta.user;
-                str = mActivity.getString(R.string.announce_appr, userStr, m.meta.info);
-                break;
-            }
-            case "upd": {
-                Subscription<VCard, ?> from = topic.getSubscription(m.from);
-                String fromStr = from != null && from.pub != null && from.pub.fn != null ? from.pub.fn : m.from;
-                Subscription<VCard, ?> user = topic.getSubscription(m.meta.user);
-                String userStr = user != null && user.pub != null && user.pub.fn != null ? user.pub.fn : m.meta.user;
-                str = mActivity.getString(R.string.announce_upd, fromStr, userStr);
-                break;
-            }
-            case "del": {
-                Subscription<VCard, ?> from = topic.getSubscription(m.from);
-                String fromStr = from != null && from.pub != null && from.pub.fn != null ? from.pub.fn : m.from;
-                Subscription<VCard, ?> user = topic.getSubscription(m.meta.user);
-                String userStr = user != null && user.pub != null && user.pub.fn != null ? user.pub.fn : m.meta.user;
-                str = mActivity.getString(R.string.announce_del, fromStr, userStr);
-                break;
-            }
-            default:
-        }
-
-        return str;
     }
 }
