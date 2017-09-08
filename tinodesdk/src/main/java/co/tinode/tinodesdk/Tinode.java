@@ -823,6 +823,7 @@ public class Tinode {
             mFutures.put(msg.pub.id, future);
             return future;
         } catch (Exception e) {
+            Log.e(TAG, "Failed to send message", e);
             return null;
         }
     }

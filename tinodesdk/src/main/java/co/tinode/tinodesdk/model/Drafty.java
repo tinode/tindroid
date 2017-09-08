@@ -343,8 +343,8 @@ public class Drafty implements Serializable {
         }
 
         return new Drafty(text.toString(),
-                (Style[])(fmt.size() > 0 ? fmt.toArray() : null),
-                (Entity[]) (refs.size() > 0 ? refs.toArray() : null));
+                fmt.size() > 0 ? fmt.toArray(new Style[fmt.size()]) : null,
+                refs.size() > 0 ? refs.toArray(new Entity[refs.size()]) : null);
     }
 
     public Style[] getStyles() {
@@ -371,10 +371,10 @@ public class Drafty implements Serializable {
     }
 
     public static class Style implements Serializable, Comparable<Style> {
-        int at;
-        int len;
-        String tp;
-        Integer key;
+        public int at;
+        public int len;
+        public String tp;
+        public Integer key;
 
         public Style() {}
 
@@ -420,8 +420,8 @@ public class Drafty implements Serializable {
     }
 
     public static class Entity implements Serializable {
-        String tp;
-        Map<String,String> data;
+        public String tp;
+        public Map<String,String> data;
 
         public Entity() {}
 
