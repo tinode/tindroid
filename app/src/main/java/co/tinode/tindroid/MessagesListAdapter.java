@@ -170,7 +170,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                             public void run() {
                                 // Update message list.
                                 notifyDataSetChanged();
-                                Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
+                                //Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
                             }
                         });
                         return null;
@@ -399,7 +399,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         if (oldCursor != null) {
             oldCursor.close();
         }
-        Log.d(TAG, "swapped cursor, topic=" + mTopicName);
+        // Log.d(TAG, "swapped cursor, topic=" + mTopicName);
     }
 
     private StoredMessage getMessage(int position) {

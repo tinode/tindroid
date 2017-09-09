@@ -1,5 +1,6 @@
 package co.tinode.tinodesdk.model;
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
@@ -58,6 +59,7 @@ import java.util.regex.Pattern;
 
 public class Drafty implements Serializable {
     public static final String MIME_TYPE = "text/x-drafty";
+    private static final String TAG = "Drafty";
 
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end
@@ -220,21 +222,31 @@ public class Drafty implements Serializable {
 
     // Convert a list of chunks into block.
     private static Block draftify(List<Span> chunks, int startAt) {
-        Block block = new Block("");
+        if (chunks == null) {
+            return null;
+        }
 
+
+        Block block = new Block("");
         List<Style> ranges = new ArrayList<>();
         for (Span chunk : chunks) {
             if (chunk.text == null) {
                 Block drafty = draftify(chunk.children, block.txt.length() + startAt);
-                chunk.text = drafty.txt;
-                ranges.addAll(drafty.fmt);
+                if (drafty != null) {
+                    chunk.text = drafty.txt;
+                    if (drafty.fmt != null) {
+                        ranges.addAll(drafty.fmt);
+                    }
+                }
             }
 
             if (chunk.type != null) {
                 ranges.add(new Style(chunk.type, block.txt.length() + startAt, chunk.text.length()));
             }
 
-            block.txt += chunk.text;
+            if (chunk.text != null) {
+                block.txt += chunk.text;
+            }
         }
 
         if (ranges.size() > 0) {
@@ -252,12 +264,11 @@ public class Drafty implements Serializable {
             Matcher matcher = ENTITY_PROC[i].re.matcher(line);
             while (matcher.find()) {
                 ExtractedEnt ee = new ExtractedEnt();
-                ee.at = matcher.start(1);
-                ee.value = matcher.group(1);
+                ee.at = matcher.start(0);
+                ee.value = matcher.group(0);
                 ee.len = ee.value.length();
                 ee.tp = ENTITY_NAME[i];
                 ee.data = ENTITY_PROC[i].pack(matcher);
-
                 extracted.add(ee);
             }
         }
@@ -275,12 +286,27 @@ public class Drafty implements Serializable {
         Map<String, Integer> entityMap = new HashMap<>();
         List<ExtractedEnt> entities;
         for (String line : lines) {
-            Block b = new Block(line);
-
             spans.clear();
             // Select styled spans.
             for (int i = 0;i < INLINE_STYLE_NAME.length; i++) {
                 spans.addAll(spannify(line, INLINE_STYLE_RE[i], INLINE_STYLE_NAME[i]));
+            }
+
+            Block b;
+            if (!spans.isEmpty()) {
+                // Sort styled spans in ascending order by .start
+                Collections.sort(spans);
+
+                // Rearrange linear list of styled spans into a tree, throw away invalid spans.
+                spans = toTree(spans);
+
+                // Parse the entire string into spans, styled or unstyled.
+                spans = chunkify(line, 0, line.length(), spans);
+
+                // Convert line into a block.
+                b = draftify(spans, 0);
+            } else {
+                b = new Block(line);
             }
 
             // Extract entities from the string already cleared of markup.
@@ -294,22 +320,8 @@ public class Drafty implements Serializable {
                     entityMap.put(ent.value, index);
                     refs.add(new Entity(ent.tp, ent.data));
                 }
-                spans.add(new Span(ent.at, ent.len, index));
-            }
 
-
-            if (!spans.isEmpty()) {
-                // Sort styled spans in ascending order by .start
-                Collections.sort(spans);
-
-                // Rearrange linear list of styled spans into a tree, throw away invalid spans.
-                spans = toTree(spans);
-
-                // Parse the entire string into spans, styled or unstyled.
-                spans = chunkify(line, 0, line.length(), spans);
-
-                // Convert line into a block.
-                b = draftify(spans, 0);
+                b.addStyle(new Style(ent.at, ent.len, index));
             }
 
             blks.add(b);
@@ -347,10 +359,12 @@ public class Drafty implements Serializable {
                 refs.size() > 0 ? refs.toArray(new Entity[refs.size()]) : null);
     }
 
+    @JsonIgnore
     public Style[] getStyles() {
         return fmt;
     }
 
+    @JsonIgnore
     public Entity getEntity(Style style) {
         return ent != null && style.key != null? ent[style.key] : null;
     }
@@ -366,6 +380,7 @@ public class Drafty implements Serializable {
      *
      * @return true if this Drafty has no markup other thn line breaks.
      */
+    @JsonIgnore
     public boolean isPlain() {
         return (ent == null && fmt == null);
     }
@@ -436,10 +451,13 @@ public class Drafty implements Serializable {
             return tp;
         }
 
-        @JsonIgnore
         public Map<String,String> getData() {
             return data;
         }
+
+        //public void setData(Map<String,String> data) {
+        //    this.data = data;
+        // }
     }
 
     // Internal classes
@@ -453,6 +471,13 @@ public class Drafty implements Serializable {
 
         Block(String txt) {
             this.txt = txt;
+        }
+
+        void addStyle(Style s) {
+            if (fmt == null) {
+                fmt = new ArrayList<>();
+            }
+            fmt.add(s);
         }
     }
 

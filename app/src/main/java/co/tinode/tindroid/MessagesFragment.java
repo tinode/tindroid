@@ -331,7 +331,7 @@ public class MessagesFragment extends Fragment {
         public void onLoadFinished(Loader<Cursor> loader,
                                    Cursor cursor) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
-                Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
+                // Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
                 swapCursor(mTopicName, cursor);
             }
         }

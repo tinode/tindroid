@@ -9,6 +9,7 @@ import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.text.style.URLSpan;
+import android.util.Log;
 
 import java.util.Map;
 
@@ -56,6 +57,8 @@ public class SpanFormatter {
                     case "LN":
                         String url = data != null ? data.get("url") : null;
                         span = url != null ? new URLSpan(url) : null;
+                        //Log.d("SpanFormatter", "Doing link span '" + url + "', "
+                        //        + span + ", data=" + data + ", entity=" + entity);
                         break;
                     case "MN": span = null; break;
                     case "HT": span = null; break;

@@ -2,10 +2,10 @@
 
 Beta-quality software. What works:
 
-* Send and receive messages in p2p or group chats.
+* Send and receive messages one-on-one or in group chats.
 * Register new accounts.
-* Start new group chats.
-* Edit group chat parameters.
+* Start new chats.
+* Edit chat parameters.
 * In-app presence notifications.
 * Unread message counters.
 * Typing indicators.
@@ -16,12 +16,13 @@ Beta-quality software. What works:
 * Access contacts from the Android stock Contacts app.
 * Invite contacts to the app by SMS or email.
 * Offline mode is mostly functional.
-* Editing of personal details
+* Editing of personal details.
+* Markdown-style formatting of text, e.g. \*styled\* &rarr; *styled*.
 
 Does not work yet:
 
-* Contact discovery is done but not debugged yet
 * Deleting messages
+* Images and other media cannot be sent or received.
 * No encryption
 
 Dependencies on the SDK side (otherwise plain Java):
