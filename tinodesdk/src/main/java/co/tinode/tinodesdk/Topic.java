@@ -108,6 +108,10 @@ public class Topic<Pu,Pr> implements LocalData {
 
         mDesc   = new Description<>();
         mDesc.merge(sub);
+
+        if (sub.online != null) {
+            mOnline = sub.online;
+        }
     }
 
     protected Topic(Tinode tinode, String name, Description<Pu,Pr> desc) {
@@ -249,6 +253,9 @@ public class Topic<Pu,Pr> implements LocalData {
         if (mDesc.merge(sub) && mStore != null) {
             mStore.topicUpdate(this);
         }
+        if (sub.online != null) {
+            mOnline = sub.online;
+        }
     }
 
     /**
@@ -268,7 +275,7 @@ public class Topic<Pu,Pr> implements LocalData {
      * @param sub updated topic parameters
      */
     protected void update(Map<String,Object> params, MetaSetSub sub) {
-        Log.d(TAG, "Topic.update(ctrl.params, MetaSetSub)");
+        // Log.d(TAG, "Topic.update(ctrl.params, MetaSetSub)");
         String user = sub.user;
 
         Map<String,String> acsMap = params != null ? (Map<String,String>) params.get("acs") : null;
@@ -320,7 +327,7 @@ public class Topic<Pu,Pr> implements LocalData {
      * @param desc updated topic parameters
      */
     protected void update(MetaSetDesc<Pu,Pr> desc) {
-        Log.d(TAG, "Topic.update(MetaSetDesc)");
+        // Log.d(TAG, "Topic.update(MetaSetDesc)");
         if (mDesc.merge(desc) && mStore != null) {
             mStore.topicUpdate(this);
         }
@@ -495,7 +502,7 @@ public class Topic<Pu,Pr> implements LocalData {
     }
     protected void setOnline(boolean online) {
         if (online != mOnline) {
-            //(TAG, "Topic[" + mName + "].setOnline(" + online + ");");
+            //Log.d(TAG, "Topic[" + mName + "].setOnline(" + online + ");");
             mOnline = online;
             if (mListener != null) {
                 mListener.onOnline(mOnline);
@@ -1319,11 +1326,10 @@ public class Topic<Pu,Pr> implements LocalData {
     }
 
     protected void routeMetaSub(MsgServerMeta<Pu,Pr> meta) {
-        // Log.d(TAG, "Generic.routeMetaSub");
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
         for (Subscription<Pu,Pr> newsub : meta.sub) {
-            Subscription<Pu, Pr> sub = null;
+            Subscription<Pu, Pr> sub;
 
             if (newsub.deleted != null) {
                 if (mStore != null) {

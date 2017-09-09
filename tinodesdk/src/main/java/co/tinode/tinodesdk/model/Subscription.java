@@ -22,7 +22,7 @@ public class Subscription<Pu,Pr> implements LocalData, Serializable {
     public int recv;
     @JsonProperty("private")
     public Pr priv;
-    public boolean online;
+    public Boolean online;
 
     public String topic;
     public int seq;

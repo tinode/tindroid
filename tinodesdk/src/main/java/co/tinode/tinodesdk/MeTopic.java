@@ -60,8 +60,9 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
 
     @Override
     protected void routeMetaSub(MsgServerMeta<Pu, Pr> meta) {
-        Log.d(TAG, "Me:routeMetaSub");
+        // Log.d(TAG, "Me:routeMetaSub");
         for (Subscription<Pu, Pr> sub : meta.sub) {
+            // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
             Topic<Pu, Pr> topic = mTinode.getTopic(sub.topic);
             if (topic != null) {
                 // This is an existing topic.
@@ -80,6 +81,7 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
                 // This is a new topic. Register it and write to DB.
                 mTinode.registerTopic(new Topic<>(mTinode, sub));
             }
+
 
             if (mListener != null) {
                 mListener.onMetaSub(sub);
@@ -111,7 +113,7 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
                     break;
 
                 case UPD: // pub/priv updated
-                    this.getMeta(getMetaGetBuilder().withGetSub(mSubsUpdated, 0).build());
+                    this.getMeta(getMetaGetBuilder().withGetSub().build());
                     break;
 
                 case UA: // user agent changed
@@ -126,17 +128,24 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
                     topic.setRead(pres.seq);
                     break;
 
-                case DEL: // messages deleted in other session
+                case DEL: // messages deleted
                     // TODO(gene): add handling for del
                     break;
 
                 case GONE:
-                    // Handle it below, even if the topic is not found.
+                    // If topic is unknown (==null), then we don't care to unregister it.
+                    mTinode.unregisterTopic(pres.src);
                     break;
             }
         } else {
-            // TODO: if it's an "acs", add dummy subscription and request updated subs
-            Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
+            switch (what) {
+                case ACS:
+                    this.getMeta(getMetaGetBuilder().withGetSub().build());
+                    break;
+                default:
+                    Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
+                    break;
+            }
         }
 
         if (mListener != null) {
