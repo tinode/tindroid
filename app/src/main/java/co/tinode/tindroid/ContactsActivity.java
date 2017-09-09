@@ -182,11 +182,6 @@ public class ContactsActivity extends AppCompatActivity implements
     private class MeListener extends Topic.Listener<VCard, String> {
 
         @Override
-        public void onContactUpdate(final String what, final Subscription<VCard,String> sub) {
-            datasetChanged();
-        }
-
-        @Override
         public void onInfo(MsgServerInfo info) {
             Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
         }
@@ -203,7 +198,7 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onMetaSub(Subscription<VCard, String> sub) {
+        public void onMetaSub(final Subscription<VCard, String> sub) {
             if (sub.pub != null) {
                 sub.pub.constructBitmap();
             }
@@ -211,12 +206,21 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onMetaDesc(final Description<VCard, String> desc) {
+            if (desc.pub != null) {
+                desc.pub.constructBitmap();
+            }
         }
 
         @Override
         public void onSubsUpdated() {
             Log.d(TAG, "onSubsUpdated: datasetChanged");
             datasetChanged();
+        }
+
+        @Override
+        public void onContUpdate(final Subscription<VCard, String> sub) {
+            // Method makes no sense in context of MeTopic.
+            throw new UnsupportedOperationException();
         }
     }
 

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Tindroid</string>
     <string name="app_name_full">Tindroid Messenger</string>
-    <string name="app_version">Version 0.11</string>
+    <string name="app_version">Version 0.13</string>
     <string name="copyright">© 2017 Tinode</string>
     <string name="tinode">Tinode</string>
 
@@ -164,9 +164,4 @@
     <string name="invalid_login">Login is invalid</string>
     <string name="join">Join</string>
     <string name="ignore">Ignore</string>
-
-    <string name="announce_inv">%1$s invited you to join the group:\n\"%2$s\".</string>
-    <string name="announce_upd">%1$s updated %2$s\'s subscription.</string>
-    <string name="announce_appr">Please approve %1$s\'s subscription request:\n\"%2$s\".</string>
-    <string name="announce_del">%1$s removed %2$s from the group.</string>
 </resources>

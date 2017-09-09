@@ -30,6 +30,7 @@ import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * View to display a single conversation
@@ -388,6 +389,11 @@ public class MessageActivity extends AppCompatActivity {
                     }
                 }
             });
+        }
+
+        @Override
+        public void onContUpdate(final Subscription<VCard, String> sub) {
+            onMetaDesc(null);
         }
 
         @Override

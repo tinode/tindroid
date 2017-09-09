@@ -1449,14 +1449,22 @@ public class Topic<Pu,Pr> implements LocalData {
          */
         public void onData(MsgServerData data) { }
 
-        public void onContactUpdate(String what, Subscription<PPu,PPr> sub) {}
+        /** {info} message received */
         public void onInfo(MsgServerInfo info) {}
+        /** {meta} message received */
         public void onMeta(MsgServerMeta<PPu,PPr> meta) {}
+        /** {meta what="sub"} message received, and this is one of the subs */
         public void onMetaSub(Subscription<PPu,PPr> sub) {}
+        /** {meta what="desc"} message received */
         public void onMetaDesc(Description<PPu,PPr> desc) {}
+        /** {meta what="sub"} message received and all subs were processed */
         public void onSubsUpdated() {}
+        /** {pres} received */
         public void onPres(MsgServerPres pres) {}
+        /** {pres what="on|off"} is received */
         public void onOnline(boolean online) {}
+        /** Called by MeTopic when topic descriptor as contact is updated */
+        public void onContUpdate(Subscription<PPu,PPr> sub) {}
     }
 
     /**

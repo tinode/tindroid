@@ -71,6 +71,10 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
                 } else {
                     // Update its record in memory and in the database.
                     topic.update(sub);
+                    // Notify topic to update self.
+                    if (topic.mListener != null) {
+                        topic.mListener.onContUpdate(sub);
+                    }
                 }
             } else if (sub.deleted == null) {
                 // This is a new topic. Register it and write to DB.
