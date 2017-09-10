@@ -3,9 +3,11 @@ package co.tinode.tindroid;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.AppCompatImageView;
@@ -20,6 +22,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Map;
 
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
@@ -263,7 +267,17 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         Topic<VCard,?> topic = Cache.getTinode().getTopic(mTopicName);
         StoredMessage m = getMessage(position);
 
-        holder.mText.setText(SpanFormatter.toSpanned(m.content));
+        holder.mText.setText(SpanFormatter.toSpanned(m.content, new SpanFormatter.ClickListener() {
+            @Override
+            public void onClick(String type, Map<String, String> data) {
+                if (type.equals("LN")) {
+                    String url = data != null ? data.get("url") : null;
+                    if (url != null) {
+                        mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    }
+                }
+            }
+        }));
 
         if (holder.mSelected != null) {
             if (mSelectedItems != null && mSelectedItems.get(position)) {
