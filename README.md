@@ -1,42 +1,43 @@
-# Demo chat for Android
+# Tindroid chat
 
-Beta-quality software. What works:
+Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software. 
+
+## What works:
 
 * Send and receive messages one-on-one or in group chats.
 * Register new accounts.
 * Start new chats.
-* Markdown-style formatting of text, e.g. \*styled\* &rarr; *styled*.
 * Edit chat parameters.
 * In-app presence notifications.
 * Unread message counters.
 * Typing indicators.
 * Push notifications.
 * Indicators for messages received/read (little check marks in messages).
+* Markdown-style formatting of text, e.g. \*styled\* &rarr; **styled**. Implemented as spannable.
 * Muting/un-muting conversations and other permission management.
-* Load the list of contacts and store it offline.
-* Access contacts from the Android stock Contacts app.
+* Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
 * Offline mode is mostly functional.
 * Editing of personal details.
 
-Does not work yet:
+## Does not work yet:
 
-* Deleting messages
+* Deleting messages.
 * Images and other media cannot be sent or received.
-* No encryption
+* No encryption.
 
-Dependencies on the SDK side (otherwise plain Java):
+## Dependencies on the SDK side (otherwise plain Java):
 
 * [jackson](https://github.com/FasterXML/jackson) for json serialization
 * [nv-websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client) for
 websocket support
 
-Dependencies on the application side:
+## Dependencies on the application side:
 
 * [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
 to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
 * [MaterialChipsInput](https://github.com/pchmn/MaterialChipsInput) widget for group chat member selection.
-This one is buggy and inflexible, should be replaced ASAP. Google should have provided this widget.
+This implementation is buggy and inflexible, should be replaced ASAP. Google should have provided this widget.
 * [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications.
 In order to compile the app you need to [generate your own](https://developers.google.com/mobile/add)
 config file `google-services.json`. Once downloaded, copy it to the `./app/` folder. The
