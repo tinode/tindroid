@@ -98,10 +98,11 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
         final Tinode tinode = Cache.getTinode();
         try {
             // This is called on the websocket thread.
-            tinode.connect(hostName)
+            tinode.connect(hostName, tls)
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override

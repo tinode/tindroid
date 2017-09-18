@@ -11,6 +11,16 @@
         android:key="pref_hostName"
         android:summary="%s"
         android:title="@string/settings_host_name"/>
+
+    <android.support.v7.preference.CheckBoxPreference
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:defaultValue="false"
+        android:key="pref_useTLS"
+        android:summary="%s"
+        android:title="@string/settings_use_tls"
+        />
+
     <android.support.v7.preference.ListPreference
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

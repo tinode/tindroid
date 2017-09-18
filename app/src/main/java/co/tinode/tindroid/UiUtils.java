@@ -290,10 +290,11 @@ public class UiUtils {
                         final SharedPreferences sharedPref
                                 = PreferenceManager.getDefaultSharedPreferences(activity);
                         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+                        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
                         try {
                             // Connecting with synchronous calls because this is not the UI thread.
                             final Tinode tinode = Cache.getTinode();
-                            tinode.connect(hostName).getResult();
+                            tinode.connect(hostName, tls).getResult();
                             tinode.loginToken(token).getResult();
                             // Logged in successfully. Save refreshed token for future use.
                             accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());

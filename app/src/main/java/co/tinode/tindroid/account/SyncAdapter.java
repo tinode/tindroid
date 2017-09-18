@@ -111,9 +111,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
             String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
             String token = AccountManager.get(mContext)
                     .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-            tinode.connect(hostName).getResult();
+            tinode.connect(hostName, tls).getResult();
             tinode.loginToken(token).getResult();
 
             // Don't care if it's resolved or rejected

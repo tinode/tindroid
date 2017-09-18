@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.CheckBoxPreference;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
@@ -31,6 +32,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         onSharedPreferenceChanged(sharedPreferences, "pref_hostName");
+        onSharedPreferenceChanged(sharedPreferences, "pref_useTLS");
         onSharedPreferenceChanged(sharedPreferences, "pref_wireTransport");
     }
 
@@ -55,6 +57,8 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
             if (prefIndex >= 0) {
                 preference.setSummary(listPreference.getEntries()[prefIndex]);
             }
+        } else if (preference instanceof CheckBoxPreference) {
+            preference.setSummary("");
         } else {
             preference.setSummary(sharedPreferences.getString(key, ""));
         }

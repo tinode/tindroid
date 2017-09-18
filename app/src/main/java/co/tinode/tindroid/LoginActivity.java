@@ -148,7 +148,7 @@ public class LoginActivity extends AppCompatActivity {
 
     void reportError(final Exception err, final Button button, final int errId) {
         String message = err.getMessage();
-        Log.i(TAG, getText(errId) + " " + message);
+        Log.i(TAG, getText(errId) + " " + message, err);
 
         Throwable cause = err;
         while ((cause = cause.getCause()) != null) {

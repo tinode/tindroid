@@ -225,11 +225,12 @@ public class Tinode {
      * Open a websocket connection to the server and process handshake exchange.
      *
      * @param hostName address of the server to connect to
+     * @param tls use transport layer security (wss)
      * @return returns promise which will be resolved when the connection sequence is completed.
      * @throws URISyntaxException if hostName is not a valid internet address
      * @throws IOException if connection call has failed
      */
-    public PromisedReply<ServerMessage> connect(String hostName) throws URISyntaxException, IOException {
+    public PromisedReply<ServerMessage> connect(String hostName, boolean tls) throws URISyntaxException, IOException {
 
         if (mConnection != null && mConnection.isConnected()) {
             // If the connection is live, return a resolved promise
@@ -242,7 +243,7 @@ public class Tinode {
 
         final PromisedReply<ServerMessage> connected = new PromisedReply<>();
         mConnection = new Connection(
-                new URI("ws://" + mServerHost + "/v" + PROTOVERSION + "/"),
+                new URI((tls ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/"),
                 mApiKey, new Connection.WsListener() {
 
             @Override

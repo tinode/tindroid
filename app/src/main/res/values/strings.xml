@@ -28,8 +28,10 @@
     <string name="transport_websocket">websocket</string>
     <string name="transport_long_polling">long polling</string>
     <string name="settings_host_name">Host name</string>
+    <string name="settings_use_tls">Use TLS</string>
     <string name="settings_wire_transport">Wire transport</string>
     <string name="settings_host_name_summary">Change server address</string>
+    <string name="settings_use_tls_summary">Use secure connection</string>
     <string name="settings_wire_transport_summary">Select wire transport</string>
     <string name="default_host_name">10.0.2.2:6060</string>
 

@@ -31,6 +31,7 @@ public class Utils {
 
     // Constants for accessing shared preferences
     public static final String PREFS_HOST_NAME = "pref_hostName";
+    public static final String PREFS_USE_TLS = "pref_useTLS";
 
     // Prefixes for various contacts
     public static final String TAG_LABEL_PHONE = "tel:";
