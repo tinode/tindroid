@@ -14,7 +14,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * A thinly wrapped websocket connection.
@@ -68,8 +67,8 @@ public class Connection {
     }
 
     protected WebSocket createSocket() throws IOException {
-
         WebSocket ws = sWSFactory.createSocket(mEndpoint, CONNECTION_TIMEOUT);
+
         ws.addHeader("X-Tinode-APIKey", mApiKey);
         ws.addListener(new WebSocketAdapter() {
             @Override
