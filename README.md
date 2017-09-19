@@ -17,6 +17,7 @@ Android instant messenger using [Tinode](https://github.com/tinode/chat/) backen
 * Muting/un-muting conversations and other permission management.
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
+* Transport Level Security - https/wss.
 * Offline mode is mostly functional.
 * Editing of personal details.
 
@@ -24,13 +25,13 @@ Android instant messenger using [Tinode](https://github.com/tinode/chat/) backen
 
 * Deleting messages.
 * Images and other media cannot be sent or received.
-* No encryption.
+* No end-to-end encryption.
 
 ## Dependencies on the SDK side (otherwise plain Java):
 
-* [jackson](https://github.com/FasterXML/jackson) for json serialization
-* [nv-websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client) for
-websocket support
+* [jackson](https://github.com/FasterXML/jackson) for json serialization.
+* [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket/) for
+websocket support.
 
 ## Dependencies on the application side:
 

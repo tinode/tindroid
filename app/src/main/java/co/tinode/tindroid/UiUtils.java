@@ -133,15 +133,21 @@ public class UiUtils {
     private static final int LOGO_LAYER_ONLINE = 1;
     private static final int LOGO_LAYER_TYPING = 2;
 
-    static void setupToolbar(final Activity activity, VCard pub,
-                             String topicName, boolean online) {
+    static void setupToolbar(final Activity activity, final VCard pub,
+                             final String topicName, final boolean online) {
         final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
         }
         if (pub != null) {
-            toolbar.setTitle(" " + pub.fn);
-            constructToolbarLogo(activity, pub.getBitmap(), pub.fn, topicName, online);
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    toolbar.setTitle(" " + pub.fn);
+                    constructToolbarLogo(activity, pub.getBitmap(), pub.fn, topicName, online);
+                }
+            });
+
         } else {
             toolbar.setLogo(null);
             toolbar.setTitle(R.string.app_name);
