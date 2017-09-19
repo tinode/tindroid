@@ -8,12 +8,16 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -82,16 +86,26 @@ public class Connection {
             @Override
             public void run() {
                 try {
+                    SSLSocket s = null;
                     if (useTls) {
                         SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                        Socket s = factory.createSocket(mEndpoint.getHost(), mEndpoint.getPort());
+                        s = (SSLSocket) factory.createSocket(mEndpoint.getHost(), mEndpoint.getPort());
                         s.setSoTimeout(CONNECTION_TIMEOUT);
                         ws.setSocket(s);
                     }
                     ws.connect();
+                    if (s != null) {
+                        String host = s.getSession().getPeerHost();
+                        if (!host.equals(mEndpoint.getHost())) {
+                            String reason = "Host '" + host + "' does not match '" + mEndpoint.getHost() + "'";
+                            ws.close(-1, "SSL: " + reason);
+                            throw new SSLPeerUnverifiedException(reason);
+                        }
+                    }
                     mWsClient = ws;
 
                 } catch (IOException e) {
+                    Log.d(TAG, "Caught Exception!", e);
                     mListener.onError(e);
                 }
             }
@@ -153,12 +167,15 @@ public class Connection {
 
         TinodeWSClient(URI endpoint, Map<String,String> headers, int timeout) {
             super(endpoint, new Draft_6455(), headers, timeout);
-            Log.d(TAG, "constructor " + endpoint);
         }
 
         @Override
         public void onOpen(ServerHandshake handshakedata) {
-            Log.d(TAG, "onOpen");
+
+            try {
+                getSocket().setSoTimeout(0);
+            } catch (SocketException ignored) {}
+            
             backoff.reset();
 
             if (mListener != null) {
@@ -206,6 +223,7 @@ public class Connection {
                     Log.d(TAG, "Connection: autoreconnecting " + backoff.getAttemptCount());
                     connectSocket();
                 }
+                Log.d(TAG, "RE-CONNECTED!");
             }
         }
 
