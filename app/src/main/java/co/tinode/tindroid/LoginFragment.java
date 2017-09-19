@@ -101,6 +101,7 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
         final Tinode tinode = Cache.getTinode();
         try {
+            Log.d(TAG, "CONNECTING");
             // This is called on the websocket thread.
             tinode.connect(hostName, tls)
                     .thenApply(
@@ -137,6 +138,7 @@ public class LoginFragment extends Fragment  implements View.OnClickListener {
                             new PromisedReply.FailureListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                    Log.d(TAG, "Login failed", err);
                                     parent.reportError(err, signIn, R.string.error_login_failed);
                                     return null;
                                 }

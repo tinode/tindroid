@@ -49,7 +49,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.neovisionaries.ws.client.WebSocketException;
 import com.pchmn.materialchips.model.Chip;
 
 import java.io.FileDescriptor;
@@ -301,7 +300,7 @@ public class UiUtils {
 
                             // Go to Contacts
                             success = true;
-                        } catch (WebSocketException | IOException ignored) {
+                        } catch (IOException ignored) {
                             // Login failed due to network error.
                             // If we have UID, go to Contacts, otherwise to Login
                             success = BaseDb.getInstance().isReady();
