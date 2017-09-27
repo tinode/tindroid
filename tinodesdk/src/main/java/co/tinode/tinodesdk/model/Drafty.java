@@ -366,6 +366,11 @@ public class Drafty implements Serializable {
     }
 
     @JsonIgnore
+    public Entity[] getEntities() {
+        return ent;
+    }
+
+    @JsonIgnore
     public Entity getEntity(Style style) {
         if (ent != null) {
             try {

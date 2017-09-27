@@ -133,6 +133,31 @@ public class SpanFormatter {
         return text;
     }
 
+    public static boolean hasClickableSpans(final Drafty content) {
+        if (content != null) {
+            Drafty.Entity[] entities = content.getEntities();
+            if (entities == null) {
+                return false;
+            }
+
+            for (Drafty.Entity ent : entities) {
+                if (ent.tp == null) {
+                    continue;
+                }
+                switch (ent.tp) {
+                    case "LN":
+                    case "MN":
+                    case "HT":
+                    case "IM":
+                    case "EX":
+                        return true;
+                    default:
+                }
+            }
+        }
+        return false;
+    }
+
     public interface ClickListener {
         void onClick(String type, Map<String,Object> data);
     }

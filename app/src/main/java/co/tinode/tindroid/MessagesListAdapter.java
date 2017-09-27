@@ -12,11 +12,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -270,6 +272,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, 0, new SpanFormatter.ClickListener() {
             @Override
             public void onClick(String type, Map<String, Object> data) {
+                Log.d(TAG, "Click on spanned");
                 if (type.equals("LN")) {
                     String url = null;
                     try {
@@ -283,7 +286,12 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 }
             }
         }));
-
+        if (SpanFormatter.hasClickableSpans(m.content)) {
+            holder.mText.setLinksClickable(true);
+            holder.mText.setFocusable(true);
+            holder.mText.setClickable(true);
+            holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
+        }
         if (holder.mSelected != null) {
             if (mSelectedItems != null && mSelectedItems.get(position)) {
                 // Log.d(TAG, "Visible item " + position);
@@ -335,38 +343,48 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             }
         }
 
-        if (holder.mOverlay != null) {
-            holder.mOverlay.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    int pos = holder.getAdapterPosition();
-                    Log.d(TAG, "Long click in position " + pos);
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                int pos = holder.getAdapterPosition();
+                Log.d(TAG, "Long click in position " + pos);
 
-                    if (mSelectedItems == null) {
-                        mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
-                    }
+                if (mSelectedItems == null) {
+                    mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
+                }
+
+                toggleSelectionAt(pos);
+                notifyItemChanged(pos);
+                updateSelectionMode();
+
+                return true;
+            }
+        });
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSelectedItems != null) {
+                    int pos = holder.getAdapterPosition();
+                    Log.d(TAG, "Short click in position " + pos);
 
                     toggleSelectionAt(pos);
                     notifyItemChanged(pos);
                     updateSelectionMode();
-
-                    return true;
                 }
-            });
-            holder.mOverlay.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mSelectedItems != null) {
-                        int pos = holder.getAdapterPosition();
-                        Log.d(TAG, "Short click in position " + pos);
+            }
+        });
 
-                        toggleSelectionAt(pos);
-                        notifyItemChanged(pos);
-                        updateSelectionMode();
-                    }
+        // Pass touch event to overlay to generate a ripple
+        holder.itemView.setOnTouchListener(new View.OnTouchListener(){
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (holder.mOverlay != null) {
+                    holder.mOverlay.dispatchTouchEvent(MotionEvent.obtain(event));
                 }
-            });
-        }
+                return false;
+            }
+        });
+
         // Log.d(TAG, "Msg[" + position + "] seq=" + m.seq + " at " + m.ts.getTime());
     }
 
