@@ -14,6 +14,7 @@ Android instant messenger using [Tinode](https://github.com/tinode/chat/) backen
 * Push notifications.
 * Indicators for messages received/read (little check marks in messages).
 * Markdown-style formatting of text, e.g. \*styled\* &rarr; **styled**. Implemented as spannable.
+* Attachments and inline images.
 * Muting/un-muting conversations and other permission management.
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
@@ -24,7 +25,7 @@ Android instant messenger using [Tinode](https://github.com/tinode/chat/) backen
 ## Does not work yet:
 
 * Deleting messages.
-* Images and other media cannot be sent or received.
+* Video and audio is not handled inline.
 * No end-to-end encryption.
 
 ## Dependencies on the SDK side (otherwise plain Java):
