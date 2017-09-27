@@ -267,11 +267,16 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         Topic<VCard,?> topic = Cache.getTinode().getTopic(mTopicName);
         StoredMessage m = getMessage(position);
 
-        holder.mText.setText(SpanFormatter.toSpanned(m.content, new SpanFormatter.ClickListener() {
+        holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, 0, new SpanFormatter.ClickListener() {
             @Override
-            public void onClick(String type, Map<String, String> data) {
+            public void onClick(String type, Map<String, Object> data) {
                 if (type.equals("LN")) {
-                    String url = data != null ? data.get("url") : null;
+                    String url = null;
+                    try {
+                        if (data != null) {
+                            url = (String) data.get("url");
+                        }
+                    } catch (ClassCastException ignored) {}
                     if (url != null) {
                         mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                     }

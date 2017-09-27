@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -78,24 +79,24 @@ public class Drafty implements Serializable {
                             "\\.[a-z]{2,4}\\b(?:[-a-zA-Z0-9@:%_\\+.~#?&\\/=]*)")) {
 
                 @Override
-                Map<String,String> pack(Matcher m) {
-                    Map<String, String> data = new HashMap<>();
+                Map<String,Object> pack(Matcher m) {
+                    Map<String, Object> data = new HashMap<>();
                     data.put("url", m.group(1) == null ? "http://" + m.group() : m.group());
                     return data;
                 }
             },
             new EntityProc("MN", Pattern.compile("\\B@(\\w\\w+)")) {
                 @Override
-                Map<String,String> pack(Matcher m) {
-                    Map<String, String> data = new HashMap<>();
+                Map<String,Object> pack(Matcher m) {
+                    Map<String, Object> data = new HashMap<>();
                     data.put("val", m.group());
                     return data;
                 }
             },
             new EntityProc("HT", Pattern.compile("(?<=[\\s,.!]|^)#(\\w\\w+)")) {
                 @Override
-                Map<String,String> pack(Matcher m) {
-                    Map<String, String> data = new HashMap<>();
+                Map<String,Object> pack(Matcher m) {
+                    Map<String, Object> data = new HashMap<>();
                     data.put("val", m.group());
                     return data;
                 }
@@ -366,13 +367,88 @@ public class Drafty implements Serializable {
 
     @JsonIgnore
     public Entity getEntity(Style style) {
-        return ent != null && style.key != null? ent[style.key] : null;
+        if (ent != null) {
+            try {
+                return ent[style.key == null ? 0 : style.key];
+            } catch (ArrayIndexOutOfBoundsException ignored) {
+            }
+        }
+        return null;
     }
 
     // Convert Drafty to plain text;
     @Override
     public String toString() {
-        return txt;
+        return txt != null ? txt : "";
+    }
+
+    /**
+     * Insert inline image
+     *
+     * @param at location to insert image at
+     * @param mime Content-type, such as 'image/jpeg'.
+     * @param bits Content as an array of bytes
+     * @param width image width in pixels
+     * @param height image height in pixels
+     * @param fname name of the file to suggest to the receiver
+     */
+    public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname) {
+        if (txt == null || txt.length() < at + 1 || at < 0) {
+            throw new IndexOutOfBoundsException("Invalid insertion position");
+        }
+        if (fmt == null) {
+            fmt = new Style[1];
+        } else {
+            fmt = Arrays.copyOf(fmt, fmt.length + 1);
+        }
+        if (ent == null) {
+            ent = new Entity[1];
+        } else {
+            ent = Arrays.copyOf(ent, ent.length + 1);
+        }
+
+        fmt[fmt.length - 1] = new Style(at, 1, ent.length - 1);
+
+        Map<String,Object> data = new HashMap<>();
+        data.put("mime", mime);
+        data.put("val", bits);
+        data.put("width", width);
+        data.put("height", height);
+        data.put("name", fname);
+        ent[ent.length - 1] = new Entity("IM", data);
+
+        return this;
+    }
+
+    /**
+     * Attach file to a drafty object.
+     *
+     * @param mime Content-type, such as 'text/plain'.
+     * @param bits Content as an array of bytes.
+     * @param fname Optional file name to suggest to the receiver.
+     */
+    public Drafty attachFile(String mime, byte[] bits, String fname) {
+
+        if (fmt == null) {
+            fmt = new Style[1];
+        } else {
+            fmt = Arrays.copyOf(fmt, fmt.length + 1);
+        }
+        if (ent == null) {
+            ent = new Entity[1];
+        } else {
+            ent = Arrays.copyOf(ent, ent.length + 1);
+        }
+
+        fmt[fmt.length - 1] = new Style(-1, 1, ent.length - 1);
+
+        Map<String,Object> data = new HashMap<>();
+        data.put("mime", mime);
+        data.put("val", bits);
+        data.put("name", fname);
+        ent[ent.length - 1] = new Entity("EX", data);
+
+        return this;
     }
 
     /**
@@ -432,16 +508,19 @@ public class Drafty implements Serializable {
         }
 
 
+        @Override
+        public String toString() {
+            return "{tp: '" + tp + "', at: " + at + ", len: " + len + ", key: " + key + "}";
+        }
     }
 
     public static class Entity implements Serializable {
         public String tp;
-        public Map<String,String> data;
+        public Map<String,Object> data;
 
         public Entity() {}
 
-
-        public Entity(String tp, Map<String,String> data) {
+        public Entity(String tp, Map<String,Object> data) {
             this.tp = tp;
             this.data = data;
         }
@@ -451,13 +530,14 @@ public class Drafty implements Serializable {
             return tp;
         }
 
-        public Map<String,String> getData() {
+        public Map<String,Object> getData() {
             return data;
         }
 
-        //public void setData(Map<String,String> data) {
-        //    this.data = data;
-        // }
+        @Override
+        public String toString() {
+            return "{tp: '" + tp + "', data: " + (data != null ? data.toString() : "null") + "}";
+        }
     }
 
     // Internal classes
@@ -525,7 +605,7 @@ public class Drafty implements Serializable {
         String tp;
         String value;
 
-        Map<String,String> data;
+        Map<String,Object> data;
     }
 
     private static abstract class EntityProc {
@@ -537,6 +617,6 @@ public class Drafty implements Serializable {
             this.re = patten;
         }
 
-        abstract Map<String,String> pack(Matcher m);
+        abstract Map<String,Object> pack(Matcher m);
     }
 }
