@@ -14,6 +14,7 @@ import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.text.style.URLSpan;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 
@@ -29,7 +30,7 @@ import co.tinode.tinodesdk.model.Drafty;
 public class SpanFormatter {
     private static final String TAG = "SpanFormatter";
 
-    public static Spanned toSpanned(final Context ctx, final Drafty content, final int viewportWidth,
+    public static Spanned toSpanned(final Context ctx, final Drafty content, final int viewport,
                                     final ClickListener clicker) {
         if (content == null) {
             // Malicious user may send a message with null content.
@@ -85,10 +86,21 @@ public class SpanFormatter {
                     case "HT": span = null; break;
                     case "IM":
                         if (data != null) {
+                            DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
                             Bitmap bmp = null;
                             try {
                                 byte[] bits = Base64.decode((String) data.get("val"), Base64.DEFAULT);
                                 bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                                // Scale bitmap for display density.
+                                float width = bmp.getWidth() * metrics.density;
+                                float height = bmp.getHeight() * metrics.density;
+                                // Make sure the scaled bitmap is no bigger than the viewport size;
+                                float scaleX = (width < viewport ? width : viewport) / width;
+                                float scaleY = (height < viewport * 0.75f ? height : viewport * 0.75f) / height;
+                                float scale = scaleX < scaleY ? scaleX : scaleY;
+
+                                bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
+
                             } catch (NullPointerException | IllegalArgumentException | ClassCastException ignored) {
                                 // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
                             }

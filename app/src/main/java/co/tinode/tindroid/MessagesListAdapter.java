@@ -269,7 +269,8 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         Topic<VCard,?> topic = Cache.getTinode().getTopic(mTopicName);
         StoredMessage m = getMessage(position);
 
-        holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, 0, new SpanFormatter.ClickListener() {
+        holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, holder.mText.getMaxWidth(),
+                new SpanFormatter.ClickListener() {
             @Override
             public void onClick(String type, Map<String, Object> data) {
                 Log.d(TAG, "Click on spanned");
