@@ -166,4 +166,7 @@
     <string name="invalid_login">Login is invalid</string>
     <string name="join">Join</string>
     <string name="ignore">Ignore</string>
+    <string name="default_attachment_name">tinode_file_attachment</string>
+    <string name="download_attachment">save</string>
+    <string name="broken_image">Unknown or invalid image format</string>
 </resources>

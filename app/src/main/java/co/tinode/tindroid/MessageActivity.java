@@ -43,6 +43,7 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_INFO = "info";
     static final String FRAGMENT_ADD_TOPIC = "add_topic";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
+    static final String FRAGMENT_VIEW_IMAGE ="view_image";
 
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
@@ -70,9 +71,9 @@ public class MessageActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isFragmentVisible(FRAGMENT_EDIT_MEMBERS)) {
-                    showFragment(FRAGMENT_INFO, false);
+                    showFragment(FRAGMENT_INFO, false, null);
                 } else if (!isFragmentVisible(FRAGMENT_MESSAGES)) {
-                    showFragment(FRAGMENT_MESSAGES, false);
+                    showFragment(FRAGMENT_MESSAGES, false, null);
                 } else {
                     Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -175,7 +176,7 @@ public class MessageActivity extends AppCompatActivity {
 
 
         if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
-            showFragment(FRAGMENT_MESSAGES, false);
+            showFragment(FRAGMENT_MESSAGES, false, null);
         }
     }
 
@@ -227,11 +228,11 @@ public class MessageActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_view_contact: {
-                showFragment(FRAGMENT_INFO, false);
+                showFragment(FRAGMENT_INFO, false, null);
                 return true;
             }
             case R.id.action_topic_edit: {
-                showFragment(FRAGMENT_ADD_TOPIC, false);
+                showFragment(FRAGMENT_ADD_TOPIC, false, null);
                 return true;
             }
             default:
@@ -244,7 +245,7 @@ public class MessageActivity extends AppCompatActivity {
         return fragment != null && fragment.isVisible();
     }
 
-    void showFragment(String tag, boolean addToBackstack) {
+    void showFragment(String tag, boolean addToBackstack, Bundle args) {
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
@@ -261,13 +262,16 @@ public class MessageActivity extends AppCompatActivity {
                 case FRAGMENT_EDIT_MEMBERS:
                     fragment = new EditMembersFragment();
                     break;
+                case FRAGMENT_VIEW_IMAGE:
+                    fragment = new ImageViewFragment();
+                    break;
             }
         }
         if (fragment == null) {
             throw new NullPointerException();
         }
 
-        Bundle args = new Bundle();
+        args = args != null ? args : new Bundle();
         args.putString("topic", mTopicName);
         args.putString("messageText", mMessageText);
         if (fragment.getArguments() != null) {

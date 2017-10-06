@@ -183,7 +183,7 @@ public class TopicInfoFragment extends Fragment {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS, true);
+                        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS, true, null);
                     }
                 });
             }

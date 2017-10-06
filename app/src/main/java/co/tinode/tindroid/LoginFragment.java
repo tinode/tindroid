@@ -30,7 +30,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class LoginFragment extends Fragment  implements View.OnClickListener {
+public class LoginFragment extends Fragment implements View.OnClickListener {
 
     private static final String TAG = "LoginFragment";
 

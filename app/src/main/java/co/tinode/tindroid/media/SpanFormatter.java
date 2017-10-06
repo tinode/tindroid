@@ -3,20 +3,32 @@ package co.tinode.tindroid.media;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
+import android.text.TextUtils;
 import android.text.style.CharacterStyle;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.text.style.LeadingMarginSpan;
+import android.text.style.LineHeightSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
+import android.text.style.SubscriptSpan;
+import android.text.style.TextAppearanceSpan;
 import android.text.style.TypefaceSpan;
 import android.text.style.URLSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.Map;
 
@@ -110,12 +122,25 @@ public class SpanFormatter {
                             } else {
                                 span = new ImageSpan(ctx, bmp);
                             }
+                            final boolean valid = bmp != null;
+
+                            // Insert inline image
+                            text.setSpan(span, style.getOffset(), style.getOffset() + style.length(),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            span = new ClickableSpan() {
+                                @Override
+                                public void onClick(View widget) {
+                                    clicker.onClick("IM", valid ? data : null);
+                                }
+                            };
+                            // Make image clickable
+                            text.setSpan(span, style.getOffset(), style.getOffset() + style.length(),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            span = null;
                         }
                         break;
                     case "EX":
                         if (data != null) {
-                            span = new ImageSpan(ctx, R.drawable.ic_insert_drive_file, ImageSpan.ALIGN_BOTTOM);
-                            length = 1;
                             if (text.length() > 0) {
                                 offset = text.length() + 1;
                                 text.append("\n ");
@@ -123,10 +148,50 @@ public class SpanFormatter {
                                 offset = 0;
                                 text.append(" ");
                             }
+                            // Insert document icon
+                            span = new ImageSpan(ctx, R.drawable.ic_insert_drive_file, ImageSpan.ALIGN_BOTTOM);
+                            Rect bounds = ((ImageSpan) span).getDrawable().getBounds();
+                            text.setSpan(span, offset, offset + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            text.setSpan(new SubscriptSpan(), offset, offset + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                            // Insert document's file name
+                            String fname = null;
                             try {
-                                text.append((String) data.get("name"));
+                                fname = (String) data.get("name");
                             } catch (NullPointerException | ClassCastException ignored) {
                             }
+                            if (TextUtils.isEmpty(fname)) {
+                                fname = ctx.getResources().getString(R.string.default_attachment_name);
+                            } else if (fname.length() > 32) {
+                                fname = fname.substring(0, 16) + "..." + fname.substring(fname.length() - 16);
+                            }
+                            SpannableStringBuilder substr = new SpannableStringBuilder(fname);
+                            substr.setSpan(new TypefaceSpan("monospace"), 0, substr.length(),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            text.append(substr);
+                            text.append("\n");
+
+                            // Insert clickable [_ save] line
+                            // Build string
+                            substr = new SpannableStringBuilder(" ")
+                                    .append(ctx.getResources().getString(R.string.download_attachment));
+                            // Insert 'download file' icon
+                            substr.setSpan(new ImageSpan(ctx, R.drawable.ic_file_download, ImageSpan.ALIGN_BOTTOM),
+                                    0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            // Make line clickable
+                            span = new ClickableSpan() {
+                                @Override
+                                public void onClick(View widget) {
+                                    clicker.onClick("EX", data);
+                                }
+                            };
+                            substr.setSpan(span, 1, substr.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            // Move line right to make it appear under the file name.
+                            substr.setSpan(new LeadingMarginSpan.Standard(bounds.width()), 0, substr.length(),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                            text.append(substr);
+                            span = null;
                         }
                         break;
                     default:

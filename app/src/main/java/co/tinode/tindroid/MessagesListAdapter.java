@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -8,11 +9,16 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.Base64;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
@@ -21,10 +27,14 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Map;
 
 import co.tinode.tindroid.db.MessageDb;
@@ -52,6 +62,13 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     private static final int VIEWTYPE_FULL_RIGHT = 4;
     private static final int VIEWTYPE_SIMPLE_RIGHT = 5;
     private static final int VIEWTYPE_FULL_CENTER = 6;
+
+    // Storage Permissions
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static final String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
 
     private AppCompatActivity mActivity;
     private Cursor mCursor;
@@ -274,16 +291,81 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             @Override
             public void onClick(String type, Map<String, Object> data) {
                 Log.d(TAG, "Click on spanned");
-                if (type.equals("LN")) {
-                    String url = null;
-                    try {
-                        if (data != null) {
-                            url = (String) data.get("url");
+                switch (type) {
+                    case "LN":
+                        String url = null;
+                        try {
+                            if (data != null) {
+                                url = (String) data.get("url");
+                            }
+                        } catch (ClassCastException ignored) {}
+                        if (url != null) {
+                            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                         }
-                    } catch (ClassCastException ignored) {}
-                    if (url != null) {
-                        mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                    }
+                        break;
+
+                    case "IM":
+                        Log.d(TAG, "Inline image click");
+                        if (data == null) {
+                            // Invalid image
+                            Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
+                            break;
+                        }
+
+                        Bundle args = new Bundle();
+                        try {
+                            args.putByteArray("image", Base64.decode((String) data.get("val"), Base64.DEFAULT));
+                            args.putString("mime", (String) data.get("mime"));
+                            args.putString("name", (String) data.get("name"));
+                        } catch (ClassCastException ignored) {}
+                        if (args.getByteArray("image") != null) {
+                            ((MessageActivity) mActivity).showFragment("view_image", true, args);
+                        }
+                        break;
+
+                    case "EX":
+                        Log.d(TAG, "Download attachment");
+                        verifyStoragePermissions();
+
+                        String fname = null;
+                        String mimeType = null;
+                        try {
+                            fname = (String) data.get("name");
+                            mimeType = (String) data.get("mime");
+                        } catch (ClassCastException ignored) {}
+
+                        if (TextUtils.isEmpty(fname)) {
+                            fname = mActivity.getString(R.string.default_attachment_name);
+                        }
+
+                        // Create file in a downloads directory by default.
+                        File file = new File(
+                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname);
+                        Uri fileUri = Uri.fromFile(file);
+                        if (TextUtils.isEmpty(mimeType)) {
+                            MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+                            String ext = MimeTypeMap.getFileExtensionFromUrl(fileUri.toString());
+                            if (mimeTypeMap.hasExtension(ext)) {
+                                mimeType = mimeTypeMap.getMimeTypeFromExtension(ext);
+                            } else {
+                                mimeType = "*/*";
+                            }
+                        }
+
+                        try {
+                            FileOutputStream fos = new FileOutputStream(file);
+                            fos.write(Base64.decode((String) data.get("val"), Base64.DEFAULT));
+                            fos.close();
+
+                            Intent intent = new Intent();
+                            intent.setAction(android.content.Intent.ACTION_VIEW);
+                            intent.setDataAndType(fileUri, mimeType);
+                            Log.d(TAG, "Starting activity for '" + fileUri + "'; mime=" + mimeType);
+                            mActivity.startActivity(intent);
+                        } catch (IOException ex) {
+                            Log.e(TAG, "Failed to save attachment to storage", ex);
+                        }
+                        break;
                 }
             }
         }));
@@ -293,6 +375,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             holder.mText.setClickable(true);
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
         }
+
         if (holder.mSelected != null) {
             if (mSelectedItems != null && mSelectedItems.get(position)) {
                 // Log.d(TAG, "Visible item " + position);
@@ -443,6 +526,21 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     private StoredMessage getMessage(int position) {
         mCursor.moveToPosition(mCursor.getCount() - position - 1);
         return StoredMessage.readMessage(mCursor);
+    }
+
+    /**
+     * Checks if the app has permission to write to device storage
+     *
+     * If the app does not has permission then the user will be prompted to grant permission.
+     */
+    public void verifyStoragePermissions() {
+        // Check if we have write permission
+        if (!UiUtils.checkPermission(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            // We don't have permission so prompt the user
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                mActivity.requestPermissions(PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+            }
+        }
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {

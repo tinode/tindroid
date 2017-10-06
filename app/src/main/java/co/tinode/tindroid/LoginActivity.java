@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 
 import android.Manifest;
-import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.content.Intent;
