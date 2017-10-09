@@ -20,6 +20,30 @@
         android:paddingLeft="6sp"
         android:paddingStart="6sp" tools:ignore="RtlSymmetry">
 
+        <android.support.v7.widget.AppCompatImageButton
+            android:id="@+id/attachImage"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="0.1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/send_image_button_hint"
+            android:paddingLeft="6sp"
+            android:paddingRight="6sp"
+            android:tint="?attr/colorAccent"
+            app:srcCompat="@drawable/ic_photo"/>
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:id="@+id/attachFile"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="0.1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/send_file_button_hint"
+            android:paddingLeft="6sp"
+            android:paddingRight="6sp"
+            android:tint="?attr/colorAccent"
+            app:srcCompat="@drawable/ic_attach"/>
+
         <EditText
             android:id="@+id/editMessage"
             android:layout_width="match_parent"

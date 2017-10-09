@@ -9,6 +9,9 @@
     <string name="password_hint">Password: alice123, bob123,…</string>
     <string name="new_message_hint">Type a message</string>
     <string name="send_message_button_hint">Send message</string>
+    <string name="send_image_button_hint">Send image</string>
+    <string name="send_file_button_hint">Send file</string>
+
     <string name="sign_in">Sign In</string>
     <string name="tinode_url">https://github.com/tinode/</string>
     <string name="app_description">Tinode Demo Chat</string>
@@ -71,7 +74,8 @@
     <string name="action_delete_group">Delete conversation…</string>
 
     <string name="avatar">Avatar picture</string>
-    <string name="select_image">Select Image</string>
+    <string name="select_image">Select image</string>
+    <string name="select_file">Select file</string>
     <string name="image_is_missing">Image is missing</string>
     <string name="passwords_dont_match">Passwords don\'t match</string>
     <string name="error_login_failed">Login failed: </string>
@@ -169,4 +173,5 @@
     <string name="default_attachment_name">tinode_file_attachment</string>
     <string name="download_attachment">save</string>
     <string name="broken_image">Unknown or invalid image format</string>
+    <string name="file_manager_not_found">File manager not found</string>
 </resources>

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -38,6 +39,8 @@ import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
 
+import static android.app.Activity.RESULT_OK;
+
 /**
  * Fragment handling message display and message sending.
  */
@@ -46,6 +49,9 @@ public class MessagesFragment extends Fragment {
 
     private static final int MESSAGES_TO_LOAD = 20;
     private static final int MESSAGES_QUERY_ID = 100;
+
+    private static final int ACTION_ATTACH_FILE = 100;
+    private static final int ACTION_ATTACH_IMAGE = 101;
 
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     // private static final int RECV_DELAY = 500;
@@ -120,6 +126,22 @@ public class MessagesFragment extends Fragment {
             public void onClick(View v) {
                 sendMessage();
                 runLoader();
+            }
+        });
+
+        // Send image button
+        getActivity().findViewById(R.id.attachImage).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openFileSelector("image/*", R.string.select_image, ACTION_ATTACH_IMAGE);
+            }
+        });
+
+        // Send file button
+        getActivity().findViewById(R.id.attachFile).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openFileSelector("*/*", R.string.select_file, ACTION_ATTACH_FILE);
             }
         });
 
@@ -208,10 +230,6 @@ public class MessagesFragment extends Fragment {
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_attach: {
-                // TODO: implement attaching media to message
-                return true;
-            }
             case R.id.action_clear: {
                 // TODO: implement Topic.deleteMessages
                 return true;
@@ -298,6 +316,51 @@ public class MessagesFragment extends Fragment {
                 // Message is successfully queued, clear text from the input field and redraw the list.
                 inputField.setText("");
             }
+        }
+    }
+
+    void openFileSelector(String mimeType, int title, int resultCode) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType(mimeType);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        try {
+            startActivityForResult(
+                    Intent.createChooser(intent, getActivity().getString(title)), resultCode);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case ACTION_ATTACH_FILE: {
+                    // Get the Uri of the selected file
+                    Uri uri = data.getData();
+                    Log.d(TAG, "File Uri: " + uri.toString());
+                    break;
+                }
+                case ACTION_ATTACH_IMAGE: {
+                    Uri uri = data.getData();
+                    Log.d(TAG, "File Uri: " + uri.toString());
+                    break;
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public void sendImage() {
+        if (mTopic != null) {
+
+        }
+    }
+
+    public void sendFile() {
+        if (mTopic != null) {
+
         }
     }
 

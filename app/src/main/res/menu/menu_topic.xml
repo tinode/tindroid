@@ -12,13 +12,7 @@
             android:icon="@drawable/ic_offline"
             app:showAsAction="always" />
     </group>
-
-    <item
-        android:id="@+id/action_attach"
-        android:orderInCategory="100"
-        android:title="@string/action_attach"
-        android:icon="@drawable/ic_attach"
-        app:showAsAction="always" />
+    
     <item
         android:id="@+id/action_view_contact"
         android:orderInCategory="101"
