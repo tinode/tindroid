@@ -101,7 +101,11 @@ public class SpanFormatter {
                             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
                             Bitmap bmp = null;
                             try {
-                                byte[] bits = Base64.decode((String) data.get("val"), Base64.DEFAULT);
+                                Object val = data.get("val");
+                                // If the message is unsent, the bits could be raw byte[] as opposed to
+                                // base64-encoded.
+                                byte[] bits = (val instanceof String) ?
+                                    Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
                                 bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                                 // Scale bitmap for display density.
                                 float width = bmp.getWidth() * metrics.density;
@@ -113,11 +117,12 @@ public class SpanFormatter {
 
                                 bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
 
-                            } catch (NullPointerException | IllegalArgumentException | ClassCastException ignored) {
-                                // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
+                            } catch (NullPointerException | IllegalArgumentException | ClassCastException ex) {
+                                Log.e(TAG, "Broken Image", ex);
                             }
 
                             if (bmp == null) {
+                                // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
                                 span = new ImageSpan(ctx, R.drawable.ic_broken_image);
                             } else {
                                 span = new ImageSpan(ctx, bmp);

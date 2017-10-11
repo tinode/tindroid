@@ -27,7 +27,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -343,11 +342,8 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname);
                         Uri fileUri = Uri.fromFile(file);
                         if (TextUtils.isEmpty(mimeType)) {
-                            MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-                            String ext = MimeTypeMap.getFileExtensionFromUrl(fileUri.toString());
-                            if (mimeTypeMap.hasExtension(ext)) {
-                                mimeType = mimeTypeMap.getMimeTypeFromExtension(ext);
-                            } else {
+                            mimeType = UiUtils.getMimeType(fileUri);
+                            if (mimeType == null) {
                                 mimeType = "*/*";
                             }
                         }

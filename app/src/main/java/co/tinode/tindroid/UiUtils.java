@@ -8,6 +8,7 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -24,7 +25,9 @@ import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.ContactsContract;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -43,6 +46,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
@@ -55,6 +59,8 @@ import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -934,5 +940,103 @@ public class UiUtils {
             });
             return null;
         }
+    }
+
+    public static String getPath(Context context, Uri uri) {
+        // DocumentProvider
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
+                DocumentsContract.isDocumentUri(context, uri)) {
+            final String docId = DocumentsContract.getDocumentId(uri);
+            switch (uri.getAuthority()) {
+                case "com.android.externalstorage.documents": {
+                    // ExternalStorageProvider
+                    final String[] split = docId.split(":");
+                    final String type = split[0];
+
+                    if ("primary".equalsIgnoreCase(type)) {
+                        return Environment.getExternalStorageDirectory() + "/" + split[1];
+                    }
+                    // TODO handle non-primary volumes
+                }
+                break;
+                case "com.android.providers.downloads.documents": {
+                    // DownloadsProvider
+
+                    final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
+                            Long.valueOf(docId));
+                    return getDataColumn(context, contentUri, null, null);
+                }
+                case "com.android.providers.media.documents": {
+                    // MediaProvider
+
+                    final String[] split = docId.split(":");
+                    final String type = split[0];
+                    Uri contentUri = null;
+                    if ("image".equals(type)) {
+                        contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                    } else if ("video".equals(type)) {
+                        contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                    } else if ("audio".equals(type)) {
+                        contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                    }
+                    final String selection = "_id=?";
+                    final String[] selectionArgs = new String[]{split[1]};
+                    return getDataColumn(context, contentUri, selection, selectionArgs);
+                }
+                default:
+                    Log.d(TAG, "Unknown content authority " + uri.getAuthority());
+            }
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            // MediaStore (and general)
+            // Return the remote address
+            if ("com.google.android.apps.photos.content".equals(uri.getAuthority())) {
+                return uri.getLastPathSegment();
+            }
+            return getDataColumn(context, uri, null, null);
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            // File
+            return uri.getPath();
+        }
+        return null;
+    }
+
+    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = { column };
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+    public static String bytesToHumanSize(long bytes) {
+        if (bytes <= 0) {
+            return "0 Bytes";
+        }
+
+        String[] sizes = new String[] {"Bytes", "KB", "MB", "GB", "TB"};
+        int bucket = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
+        double count = bytes / Math.pow(1024, bucket);
+        int roundTo = bucket > 0 ? (count < 10 ? 2 : (count < 100 ? 1 : 0)) : 0;
+        NumberFormat fmt = DecimalFormat.getInstance();
+        fmt.setMaximumFractionDigits(roundTo);
+        return fmt.format(count) + " " + sizes[bucket];
+    }
+
+    public static String getMimeType(Uri uri) {
+        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+        String ext = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+        if (mimeTypeMap.hasExtension(ext)) {
+            return mimeTypeMap.getMimeTypeFromExtension(ext);
+        }
+        return null;
     }
 }

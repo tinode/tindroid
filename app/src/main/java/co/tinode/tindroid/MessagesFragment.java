@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -28,6 +30,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -37,6 +44,7 @@ import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
@@ -52,6 +60,8 @@ public class MessagesFragment extends Fragment {
 
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
+
+    private static final long MAX_ATTACHMENT_SIZE = 1 << 17;
 
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     // private static final int RECV_DELAY = 500;
@@ -124,8 +134,7 @@ public class MessagesFragment extends Fragment {
         getActivity().findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMessage();
-                runLoader();
+                sendText();
             }
         });
 
@@ -151,7 +160,7 @@ public class MessagesFragment extends Fragment {
                 new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                sendMessage();
+                sendText();
                 return true;
             }
         });
@@ -287,36 +296,29 @@ public class MessagesFragment extends Fragment {
         mMessagesAdapter.notifyDataSetChanged();
     }
 
-    public void sendMessage() {
+    private boolean sendMessage(Drafty content) {
         if (mTopic != null) {
-            final Activity activity = getActivity();
-            final TextView inputField = (TextView) activity.findViewById(R.id.editMessage);
-            String message = inputField.getText().toString().trim();
-            // notifyDataSetChanged();
-            if (!message.equals("")) {
-                try {
-                    PromisedReply<ServerMessage> reply = mTopic.publish(message);
-                    runLoader(); // Shows pending message
-                    reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                            // Updates message list.
-                            runLoader();
-                            return null;
-                        }
-                    }, mFailureListener);
-                } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "sendMessage -- NotConnectedException", ignored);
-                } catch (Exception ignored) {
-                    Log.d(TAG, "sendMessage -- Exception", ignored);
-                    Toast.makeText(activity, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Message is successfully queued, clear text from the input field and redraw the list.
-                inputField.setText("");
+            try {
+                PromisedReply<ServerMessage> reply = mTopic.publish(content);
+                runLoader(); // Shows pending message
+                reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        // Updates message list with "delivered" icon.
+                        runLoader();
+                        return null;
+                    }
+                }, mFailureListener);
+            } catch (NotConnectedException ignored) {
+                Log.d(TAG, "sendMessage -- NotConnectedException", ignored);
+            } catch (Exception ignored) {
+                Log.d(TAG, "sendMessage -- Exception", ignored);
+                Toast.makeText(getActivity(), R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
+                return false;
             }
+            return true;
         }
+        return false;
     }
 
     void openFileSelector(String mimeType, int title, int resultCode) {
@@ -327,7 +329,6 @@ public class MessagesFragment extends Fragment {
             startActivityForResult(
                     Intent.createChooser(intent, getActivity().getString(title)), resultCode);
         } catch (android.content.ActivityNotFoundException ex) {
-            // Potentially direct the user to the Market with a Dialog
             Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
         }
     }
@@ -336,15 +337,76 @@ public class MessagesFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
-                case ACTION_ATTACH_FILE: {
-                    // Get the Uri of the selected file
-                    Uri uri = data.getData();
-                    Log.d(TAG, "File Uri: " + uri.toString());
-                    break;
-                }
+                case ACTION_ATTACH_FILE:
                 case ACTION_ATTACH_IMAGE: {
-                    Uri uri = data.getData();
-                    Log.d(TAG, "File Uri: " + uri.toString());
+                    try {
+                        final Activity activity = getActivity();
+                        Uri uri = data.getData();
+                        String fname = null;
+                        Long fsize = 0L;
+                        String mimeType = activity.getContentResolver().getType(uri);
+                        if (mimeType == null) {
+                            mimeType = UiUtils.getMimeType(uri);
+                            String path = UiUtils.getPath(activity, uri);
+                            if (path != null) {
+                                File file = new File(path);
+                                fname = file.getName();
+                            }
+                        } else {
+                            Cursor cursor = activity.getContentResolver().query(uri, null, null, null, null);
+                            if (cursor != null) {
+                                cursor.moveToFirst();
+                                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                                cursor.close();
+                            }
+                        }
+
+                        if (fsize > MAX_ATTACHMENT_SIZE) {
+                            Toast.makeText(activity, activity.getString(R.string.attachment_too_large,
+                                    UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE)),
+                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            InputStream is = null;
+                            ByteArrayOutputStream baos = null;
+                            try {
+                                is = activity.getContentResolver().openInputStream(uri);
+                                if (is == null) {
+                                    return;
+                                }
+
+                                baos = new ByteArrayOutputStream();
+                                byte[] buffer = new byte[1024];
+                                int len;
+                                while ((len = is.read(buffer)) > 0) {
+                                    baos.write(buffer, 0, len);
+                                }
+
+                                byte[] bits = baos.toByteArray();
+                                if (requestCode == ACTION_ATTACH_FILE) {
+                                    sendFile(mimeType, bits, fname);
+                                } else {
+                                    BitmapFactory.Options options = new BitmapFactory.Options();
+                                    options.inJustDecodeBounds = true;
+                                    InputStream bais = new ByteArrayInputStream(bits);
+                                    BitmapFactory.decodeStream(bais, null, options);
+                                    bais.close();
+                                    sendImage(mimeType, bits, options.outWidth, options.outHeight, fname);
+                                }
+                            } catch (IOException e) {
+                                Log.e(TAG, "Failed to attach file", e);
+                            } finally {
+                                if (is != null) {
+                                    is.close();
+                                }
+                                if (baos != null) {
+                                    baos.close();
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to open file", e);
+                    }
                     break;
                 }
             }
@@ -352,16 +414,29 @@ public class MessagesFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    public void sendImage() {
-        if (mTopic != null) {
-
+    public void sendText() {
+        final Activity activity = getActivity();
+        final TextView inputField = (TextView) activity.findViewById(R.id.editMessage);
+        String message = inputField.getText().toString().trim();
+        // notifyDataSetChanged();
+        if (!message.equals("")) {
+            if (sendMessage(Drafty.parse(message))) {
+                // Message is successfully queued, clear text from the input field and redraw the list.
+                inputField.setText("");
+            }
         }
     }
 
-    public void sendFile() {
-        if (mTopic != null) {
+    public void sendImage(String mimeType, byte[] bits, int width, int height, String fname) {
+        Drafty content = Drafty.parse(" ");
+        content.insertImage(0, mimeType, bits, width, height, fname);
+        sendMessage(content);
+    }
 
-        }
+    public void sendFile(String mimeType, byte[] bits, String fname) {
+        Drafty content = new Drafty();
+        content.attachFile(mimeType, bits, fname);
+        sendMessage(content);
     }
 
     public void sendReadNotification() {
