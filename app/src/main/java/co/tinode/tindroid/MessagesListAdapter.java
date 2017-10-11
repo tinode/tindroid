@@ -12,7 +12,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
@@ -54,6 +56,9 @@ import co.tinode.tinodesdk.model.Subscription;
 public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapter.ViewHolder> {
     private static final String TAG = "MessagesListAdapter";
 
+    private static final int MESSAGES_TO_LOAD = 20;
+    private static final int MESSAGES_QUERY_ID = 100;
+
     private static final int VIEWTYPE_FULL_LEFT = 0;
     private static final int VIEWTYPE_SIMPLE_LEFT = 1;
     private static final int VIEWTYPE_FULL_AVATAR = 2;
@@ -69,7 +74,9 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private AppCompatActivity mActivity;
+    private MessageActivity mActivity;
+    private RecyclerView mRecyclerView;
+
     private Cursor mCursor;
     private String mTopicName;
     private ActionMode.Callback mSelectionModeCallback;
@@ -77,12 +84,18 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     private SparseBooleanArray mSelectedItems = null;
 
-    public MessagesListAdapter(AppCompatActivity context) {
+    private int mPagesToLoad;
+    private MessageLoaderCallbacks mLoaderCallbacks;
+    private SwipeRefreshLayout mRefresher;
+
+    public MessagesListAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
         mActivity = context;
         setHasStableIds(true);
+        mLoaderCallbacks = new MessageLoaderCallbacks();
+        mRefresher = refresher;
+        mPagesToLoad = 1;
 
-        // Change
         mSelectionModeCallback = new ActionMode.Callback() {
             @Override
             public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
@@ -132,6 +145,13 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 return false;
             }
         };
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+
+        mRecyclerView = recyclerView;
     }
 
     private int[] getSelectedArray() {
@@ -187,12 +207,14 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 topic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        runLoader();
                         mActivity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 // Update message list.
                                 notifyDataSetChanged();
-                                //Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
+                                updateSelectionMode();
+                                Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
                             }
                         });
                         return null;
@@ -290,6 +312,15 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             @Override
             public void onClick(String type, Map<String, Object> data) {
                 Log.d(TAG, "Click on spanned");
+
+                if (mSelectedItems != null) {
+                    int pos = holder.getAdapterPosition();
+                    toggleSelectionAt(pos);
+                    notifyItemChanged(pos);
+                    updateSelectionMode();
+                    return;
+                }
+
                 switch (type) {
                     case "LN":
                         String url = null;
@@ -313,7 +344,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
                         Bundle args = new Bundle();
                         try {
-                            args.putByteArray("image", Base64.decode((String) data.get("val"), Base64.DEFAULT));
+                            Object val = data.get("val");
+                            args.putByteArray("image", val instanceof String ?
+                                    Base64.decode((String) val, Base64.DEFAULT) :
+                                    (byte[]) val);
                             args.putString("mime", (String) data.get("mime"));
                             args.putString("name", (String) data.get("name"));
                         } catch (ClassCastException ignored) {}
@@ -349,8 +383,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                         }
 
                         try {
+                            Object val = data.get("val");
                             FileOutputStream fos = new FileOutputStream(file);
-                            fos.write(Base64.decode((String) data.get("val"), Base64.DEFAULT));
+                            fos.write(val instanceof String ?
+                                    Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val);
                             fos.close();
 
                             Intent intent = new Intent();
@@ -358,7 +394,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                             intent.setDataAndType(fileUri, mimeType);
                             Log.d(TAG, "Starting activity for '" + fileUri + "'; mime=" + mimeType);
                             mActivity.startActivity(intent);
-                        } catch (IOException ex) {
+                        } catch (NullPointerException | ClassCastException | IOException ex) {
                             Log.e(TAG, "Failed to save attachment to storage", ex);
                         }
                         break;
@@ -423,7 +459,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             }
         }
 
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+        View.OnLongClickListener longClicker = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 int pos = holder.getAdapterPosition();
@@ -439,7 +475,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
                 return true;
             }
-        });
+        };
+
+        holder.mText.setOnLongClickListener(longClicker);
+        holder.itemView.setOnLongClickListener(longClicker);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -536,6 +575,66 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 mActivity.requestPermissions(PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
             }
+        }
+    }
+
+    void runLoader() {
+        LoaderManager lm = mActivity.getSupportLoaderManager();
+        final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
+        if (loader != null && !loader.isReset()) {
+            lm.restartLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
+        } else {
+            lm.initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
+        }
+    }
+
+    boolean loadNextPage() {
+        if (getItemCount() == mPagesToLoad * MESSAGES_TO_LOAD) {
+            mPagesToLoad++;
+            runLoader();
+            return true;
+        }
+
+        return false;
+    }
+
+    private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            if (id == MESSAGES_QUERY_ID) {
+                return new MessageDb.Loader(mActivity, mTopicName, mPagesToLoad, MESSAGES_TO_LOAD);
+            }
+            return null;
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader,
+                                   Cursor cursor) {
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                // Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
+                swapCursor(mTopicName, cursor);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                swapCursor(null, null);
+            }
+        }
+
+        private void swapCursor(final String topicName, final Cursor cursor) {
+            MessagesListAdapter.this.swapCursor(topicName, cursor);
+            mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mRefresher.setRefreshing(false);
+                        notifyDataSetChanged();
+                        if (cursor != null)
+                            mRecyclerView.scrollToPosition(cursor.getCount() - 1);
+                    }
+                });
         }
     }
 

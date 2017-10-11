@@ -38,7 +38,6 @@ import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -56,7 +55,6 @@ public class MessagesFragment extends Fragment {
     private static final String TAG = "MessageFragment";
 
     private static final int MESSAGES_TO_LOAD = 20;
-    private static final int MESSAGES_QUERY_ID = 100;
 
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
@@ -70,8 +68,6 @@ public class MessagesFragment extends Fragment {
     private MessagesListAdapter mMessagesAdapter;
     private RecyclerView mMessageList;
     private SwipeRefreshLayout mRefresher;
-    private MessageLoaderCallbacks mLoaderCallbacks;
-    private int mPagesToLoad;
 
     private String mTopicName = null;
     protected Topic<VCard, String> mTopic;
@@ -107,17 +103,15 @@ public class MessagesFragment extends Fragment {
         mMessageList = (RecyclerView) activity.findViewById(R.id.messages_container);
         mMessageList.setLayoutManager(lm);
 
-        mMessagesAdapter = new MessagesListAdapter(activity);
+        mRefresher = (SwipeRefreshLayout) activity.findViewById(R.id.swipe_refresher);
+
+        mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
         mMessageList.setAdapter(mMessagesAdapter);
 
-        mRefresher = (SwipeRefreshLayout) activity.findViewById(R.id.swipe_refresher);
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if (mMessagesAdapter.getItemCount() == mPagesToLoad * MESSAGES_TO_LOAD) {
-                    mPagesToLoad++;
-                    runLoader();
-                } else if (!StoredTopic.isAllDataLoaded(mTopic)) {
+                if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
                     Log.d(TAG, "Calling server for more data");
                     mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build());
                 } else {
@@ -125,8 +119,6 @@ public class MessagesFragment extends Fragment {
                 }
             }
         });
-
-        mLoaderCallbacks = new MessageLoaderCallbacks();
 
         mFailureListener = new UiUtils.ToastFailureListener(getActivity());
 
@@ -212,7 +204,6 @@ public class MessagesFragment extends Fragment {
             }
         }, READ_DELAY, READ_DELAY);
 
-        mPagesToLoad = 1;
         mRefresher.setRefreshing(false);
 
         runLoader();
@@ -294,6 +285,10 @@ public class MessagesFragment extends Fragment {
 
     public void notifyDataSetChanged() {
         mMessagesAdapter.notifyDataSetChanged();
+    }
+
+    void runLoader() {
+        mMessagesAdapter.runLoader();
     }
 
     private boolean sendMessage(Drafty content) {
@@ -442,59 +437,6 @@ public class MessagesFragment extends Fragment {
     public void sendReadNotification() {
         if (mTopic != null) {
             mTopic.noteRead();
-        }
-    }
-
-    void runLoader() {
-        LoaderManager lm = getActivity().getSupportLoaderManager();
-        final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
-        if (loader != null && !loader.isReset()) {
-            lm.restartLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
-        } else {
-            lm.initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
-        }
-    }
-
-    private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
-
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            if (id == MESSAGES_QUERY_ID) {
-                return new MessageDb.Loader(getActivity(), mTopicName, mPagesToLoad, MESSAGES_TO_LOAD);
-            }
-            return null;
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Cursor> loader,
-                                   Cursor cursor) {
-            if (loader.getId() == MESSAGES_QUERY_ID) {
-                // Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
-                swapCursor(mTopicName, cursor);
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
-            if (loader.getId() == MESSAGES_QUERY_ID) {
-                swapCursor(null, null);
-            }
-        }
-
-        private void swapCursor(final String topicName, final Cursor cursor) {
-            mMessagesAdapter.swapCursor(topicName, cursor);
-            Activity activity = getActivity();
-            if (activity != null) {
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mRefresher.setRefreshing(false);
-                        notifyDataSetChanged();
-                        if (cursor != null)
-                        mMessageList.scrollToPosition(cursor.getCount() - 1);
-                    }
-                });
-            }
         }
     }
 }
