@@ -1229,7 +1229,6 @@ public class Tinode {
                         if (node.has("topic")) {
                             msg.meta = mapper.readValue(node.traverse(),
                                     getTypeOfMetaPacket(node.get("topic").asText()));
-                            Log.d(TAG, "parse meta - OK" + msg.meta.ts);
                         } else {
                             Log.d(TAG, "parse meta - FAILED");
                         }

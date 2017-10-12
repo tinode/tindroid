@@ -176,4 +176,5 @@
     <string name="broken_image">Unknown or invalid image format</string>
     <string name="file_manager_not_found">File manager not found</string>
     <string name="attachment_too_large">The file size %1$s exceeds the %2$s limit.</string>
+    <string name="failed_to_attach">Failed to send file</string>
 </resources>

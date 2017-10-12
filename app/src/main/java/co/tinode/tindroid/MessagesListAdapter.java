@@ -126,11 +126,9 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
                 switch (menuItem.getItemId()) {
                     case R.id.action_delete:
-                        Log.d(TAG, "Delete selected items");
                         sendDeleteMessages(getSelectedArray());
                         return true;
                     case R.id.action_copy:
-                        Log.d(TAG, "Copy selected item to clipboard");
                         copyMessageText(getSelectedArray());
                         return true;
                     case R.id.action_send_now:
@@ -214,7 +212,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                                 // Update message list.
                                 notifyDataSetChanged();
                                 updateSelectionMode();
-                                Log.d(TAG, "sendDeleteMessages -- {ctrl} received");
                             }
                         });
                         return null;
@@ -311,8 +308,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                 new SpanFormatter.ClickListener() {
             @Override
             public void onClick(String type, Map<String, Object> data) {
-                Log.d(TAG, "Click on spanned");
-
                 if (mSelectedItems != null) {
                     int pos = holder.getAdapterPosition();
                     toggleSelectionAt(pos);
@@ -335,29 +330,28 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                         break;
 
                     case "IM":
-                        Log.d(TAG, "Inline image click");
-                        if (data == null) {
-                            // Invalid image
-                            Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
-                            break;
+                        Bundle args = new Bundle();
+                        if (data != null) {
+                            try {
+                                Object val = data.get("val");
+                                args.putByteArray("image", val instanceof String ?
+                                        Base64.decode((String) val, Base64.DEFAULT) :
+                                        (byte[]) val);
+                                args.putString("mime", (String) data.get("mime"));
+                                args.putString("name", (String) data.get("name"));
+                            } catch (ClassCastException ignored) {
+                            }
                         }
 
-                        Bundle args = new Bundle();
-                        try {
-                            Object val = data.get("val");
-                            args.putByteArray("image", val instanceof String ?
-                                    Base64.decode((String) val, Base64.DEFAULT) :
-                                    (byte[]) val);
-                            args.putString("mime", (String) data.get("mime"));
-                            args.putString("name", (String) data.get("name"));
-                        } catch (ClassCastException ignored) {}
                         if (args.getByteArray("image") != null) {
-                            ((MessageActivity) mActivity).showFragment("view_image", true, args);
+                            mActivity.showFragment("view_image", true, args);
+                        } else {
+                            Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
                         }
+
                         break;
 
                     case "EX":
-                        Log.d(TAG, "Download attachment");
                         verifyStoragePermissions();
 
                         String fname = null;
@@ -392,10 +386,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                             Intent intent = new Intent();
                             intent.setAction(android.content.Intent.ACTION_VIEW);
                             intent.setDataAndType(fileUri, mimeType);
-                            Log.d(TAG, "Starting activity for '" + fileUri + "'; mime=" + mimeType);
                             mActivity.startActivity(intent);
                         } catch (NullPointerException | ClassCastException | IOException ex) {
                             Log.e(TAG, "Failed to save attachment to storage", ex);
+                            Toast.makeText(mActivity, R.string.failed_to_attach, Toast.LENGTH_SHORT).show();
                         }
                         break;
                 }
@@ -539,7 +533,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     void swapCursor(final String topicName, final Cursor cursor) {
-        if (mCursor == cursor) {
+        if (mCursor != null && mCursor == cursor) {
             return;
         }
 
@@ -555,6 +549,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         if (oldCursor != null) {
             oldCursor.close();
         }
+
         // Log.d(TAG, "swapped cursor, topic=" + mTopicName);
     }
 
@@ -612,7 +607,6 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         public void onLoadFinished(Loader<Cursor> loader,
                                    Cursor cursor) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
-                // Log.d(TAG, "Got cursor with itemcount=" + cursor.getCount());
                 swapCursor(mTopicName, cursor);
             }
         }

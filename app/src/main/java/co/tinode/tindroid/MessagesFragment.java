@@ -188,8 +188,6 @@ public class MessagesFragment extends Fragment {
             mMessagesAdapter.swapCursor(mTopicName, null);
         }
 
-        Log.d(TAG, "Resumed with topic=" + mTopicName);
-
         mTopic = Cache.getTinode().getTopic(mTopicName);
 
         ((TextView) getActivity().findViewById(R.id.editMessage))
