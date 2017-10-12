@@ -140,14 +140,16 @@ public class Connection {
      *
      */
     public void disconnect() {
+        // Actually close the socket
+        if (mWsClient != null) {
+            mWsClient.close();
+        }
+
         if (autoreconnect) {
             autoreconnect = false;
             // Make sure we are not waiting to reconnect
             backoff.wakeUp();
         }
-
-        // Actually close the socket
-        mWsClient.close();
     }
 
     /**
@@ -171,7 +173,6 @@ public class Connection {
 
         @Override
         public void onOpen(ServerHandshake handshakedata) {
-
             try {
                 getSocket().setSoTimeout(0);
             } catch (SocketException ignored) {}
@@ -209,21 +210,25 @@ public class Connection {
 
             mListener.onDisconnect(remote, code, reason);
 
-            // Don't try to reconnect of code is -1.
-            if (autoreconnect && code != -1) {
-                while (!isConnected()) {
-                    backoff.doSleep();
+            // The onClose is called while ws readystate is still OPEN. Therefore discard the client.
+            mWsClient = null;
+            if (autoreconnect) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (!isConnected()) {
+                            backoff.doSleep();
 
-                    // Check if an explicit disconnect has been requested.
-                    if (!autoreconnect) {
-                        reconnecting = false;
-                        break;
+                            // Check if an explicit disconnect has been requested.
+                            if (!autoreconnect) {
+                                reconnecting = false;
+                                break;
+                            }
+
+                            connectSocket();
+                        }
                     }
-
-                    Log.d(TAG, "Connection: autoreconnecting " + backoff.getAttemptCount());
-                    connectSocket();
-                }
-                Log.d(TAG, "RE-CONNECTED!");
+                }).start();
             }
         }
 

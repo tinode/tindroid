@@ -323,6 +323,24 @@ public class Tinode {
         return connected;
     }
 
+    /**
+     * If websocket is valid and not connected, force an immediate reconnect attempt.
+     * If it's not initialized or already connected do nothing.
+     *
+     * @return true if it actually attempted to reconnect, false otherwise.
+     * @throws IOException thrown from {@link .TinodeWSClient#connect(boolean)}
+     */
+    public boolean reconnectNow() throws IOException {
+        if (mConnection == null || mConnection.isConnected()) {
+            // If the connection is live, return a resolved promise
+            return false;
+        }
+
+        mConnection.connect(true);
+
+        return true;
+    }
+
     private void handleDisconnect(boolean byServer, int code, String reason) {
         mFutures.clear();
 
