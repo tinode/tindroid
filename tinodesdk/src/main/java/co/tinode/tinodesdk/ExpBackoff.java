@@ -6,9 +6,9 @@ import java.util.Random;
  * Exponential backoff for reconnects.
  */
 public class ExpBackoff {
-    // Minimum delay = 1 second
-    private static final long BASE_SLEEP_MS = 1000;
-    // Maximum delay 2^11 = 2000 seconds
+    // Minimum delay = 500ms, expected ~1000ms;
+    private static final int BASE_SLEEP_MS = 500;
+    // Maximum delay 2^11 ~ 2000 seconds
     private static final int MAX_SHIFT = 11;
 
     private final Random random = new Random();
@@ -29,7 +29,7 @@ public class ExpBackoff {
             attempt = MAX_SHIFT;
         }
 
-        long delay = BASE_SLEEP_MS * Math.max(1, random.nextInt(1 << attempt));
+        long delay = BASE_SLEEP_MS * (1 << attempt) + random.nextInt(BASE_SLEEP_MS * (1 << attempt));
         attempt++;
 
         return delay;
@@ -46,8 +46,6 @@ public class ExpBackoff {
             Thread.sleep(getNextDelay());
             result = true;
         } catch (InterruptedException e) {
-            // Per Java spec calling it here even if it seems to be counterintuitive.
-            currentThread.interrupt();
             result = false;
         } finally {
             currentThread = null;
@@ -64,9 +62,11 @@ public class ExpBackoff {
     }
 
     public boolean wakeUp() {
+        reset();
         if (currentThread != null) {
             currentThread.interrupt();
+            return true;
         }
-        return currentThread != null;
+        return false;
     }
 }

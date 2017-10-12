@@ -231,7 +231,6 @@ public class Tinode {
      * @throws IOException if connection call has failed
      */
     public PromisedReply<ServerMessage> connect(String hostName, boolean tls) throws URISyntaxException, IOException {
-
         if (mConnection != null && mConnection.isConnected()) {
             // If the connection is live, return a resolved promise
             return new PromisedReply<>((ServerMessage) null);
@@ -249,7 +248,6 @@ public class Tinode {
             @Override
             protected void onConnect(final boolean autoreconnected) {
                 try {
-                    // FIXME: this is broken when autoreconnect = true
                     // Connection established, send handshake, inform listener on success
                     PromisedReply<ServerMessage> future = hello().thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
@@ -268,6 +266,7 @@ public class Tinode {
                                     if (mListener != null) {
                                         mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
                                     }
+
                                     return null;
                                 }
                             }, null);
@@ -328,7 +327,7 @@ public class Tinode {
      * If it's not initialized or already connected do nothing.
      *
      * @return true if it actually attempted to reconnect, false otherwise.
-     * @throws IOException thrown from {@link .TinodeWSClient#connect(boolean)}
+     * @throws IOException thrown from {@link Connection#connect(boolean)}
      */
     public boolean reconnectNow() throws IOException {
         if (mConnection == null || mConnection.isConnected()) {
@@ -400,7 +399,6 @@ public class Tinode {
                     if (pkt.ctrl.code >= 200 && pkt.ctrl.code < 400) {
                         r.resolve(pkt);
                     } else {
-                        // Log.d(TAG, "Rejecting packet");
                         r.reject(new ServerResponseException(pkt.ctrl.code, pkt.ctrl.text));
                     }
                 }
@@ -434,13 +432,11 @@ public class Tinode {
         } else if (pkt.pres != null) {
             Topic topic = getTopic(pkt.pres.topic);
             if (topic != null) {
-                // Log.d(TAG, "Routing pres to " + topic.getName());
                 topic.routePres(pkt.pres);
                 // For P2P topics presence is addressed to 'me' only. Forward it to the actual topic, if it's found.
                 if (TOPIC_ME.equals(pkt.pres.topic) && Topic.getTopicTypeByName(pkt.pres.src) == Topic.TopicType.P2P) {
                     Topic forwardTo = getTopic(pkt.pres.src);
                     if (forwardTo != null) {
-                        // Log.d(TAG, "Also forwarding pres to " + forwardTo.getName());
                         forwardTo.routePres(pkt.pres);
                     }
                 }
@@ -730,7 +726,6 @@ public class Tinode {
 
         if (isAuthenticated()) {
             // Don't try to login again if we are logged in.
-            // Log.d(TAG, "Already authenticated");
             return new PromisedReply<>((ServerMessage) null);
         }
 
@@ -761,7 +756,27 @@ public class Tinode {
 
                             return null;
                         }
-                    }, null);
+                    },
+                    new PromisedReply.FailureListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                            if (err instanceof ServerResponseException) {
+                                ServerResponseException sre = (ServerResponseException) err;
+                                if (sre.getCode() >= 400) {
+                                    mLoginCredentials = null;
+                                    mAuthToken = null;
+                                    mAuthTokenExpires = null;
+                                }
+
+                                mConnAuth = false;
+
+                                if (mListener != null) {
+                                    mListener.onLogin(sre.getCode(), sre.getMessage());
+                                }
+                            }
+                            return null;
+                        }
+                    });
             return future;
         } catch (JsonProcessingException e) {
             return null;

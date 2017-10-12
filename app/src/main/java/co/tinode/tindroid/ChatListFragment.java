@@ -1,11 +1,9 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -19,6 +17,9 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import java.io.IOException;
 
 /**
  * View with contacts.
@@ -101,11 +102,24 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
             case R.id.action_settings:
                 ((ContactsActivity)getActivity()).showAccountInfoFragment();
-                break;
+                return true;
+
             case R.id.action_about:
                 DialogFragment about = new AboutDialogFragment();
                 about.show(getFragmentManager(), "about");
                 return true;
+
+            case R.id.action_offline:
+                try {
+                    Cache.getTinode().reconnectNow();
+                } catch (IOException ex) {
+                    Log.d(TAG, "Reconnect failure", ex);
+                    String cause = ex.getCause().getMessage();
+                    Activity activity = getActivity();
+                    Toast.makeText(activity, activity.getString(R.string.error_connection_failed) + cause,
+                            Toast.LENGTH_SHORT).show();
+                }
+                break;
         }
         return false;
     }

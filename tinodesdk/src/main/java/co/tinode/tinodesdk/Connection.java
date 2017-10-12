@@ -24,7 +24,7 @@ import javax.net.ssl.SSLSocketFactory;
  * A thinly wrapped websocket connection.
  */
 public class Connection {
-    private static final String TAG = "tinodesdk.Connection";
+    private static final String TAG = "Connection";
     private static int CONNECTION_TIMEOUT = 3000; // in milliseconds
 
     private WebSocketClient mWsClient;
@@ -78,38 +78,48 @@ public class Connection {
         autoreconnect = false;
     }
 
-    private void connectSocket() {
+    private void socketConnectionRunnable(final WebSocketClient ws) {
+        try {
+            SSLSocket s = null;
+            if (useTls) {
+                SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                s = (SSLSocket) factory.createSocket(mEndpoint.getHost(), mEndpoint.getPort());
+                s.setSoTimeout(CONNECTION_TIMEOUT);
+                ws.setSocket(s);
+            }
+            ws.connect();
+            if (s != null) {
+                String host = s.getSession().getPeerHost();
+                if (!host.equals(mEndpoint.getHost())) {
+                    String reason = "Host '" + host + "' does not match '" + mEndpoint.getHost() + "'";
+                    ws.close(-1, "SSL: " + reason);
+                    throw new SSLPeerUnverifiedException(reason);
+                }
+            }
+            mWsClient = ws;
+
+        } catch (IOException e) {
+            Log.d(TAG, "socketConnectionRunnable exception!", e);
+            if (mListener != null) {
+                mListener.onError(e);
+            }
+        }
+    }
+
+    private void connectSocket(boolean noNewThread) {
         Map<String,String> headers = new HashMap<>();
         headers.put("X-Tinode-APIKey", mApiKey);
         final WebSocketClient ws = new TinodeWSClient(mEndpoint, headers, CONNECTION_TIMEOUT);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SSLSocket s = null;
-                    if (useTls) {
-                        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                        s = (SSLSocket) factory.createSocket(mEndpoint.getHost(), mEndpoint.getPort());
-                        s.setSoTimeout(CONNECTION_TIMEOUT);
-                        ws.setSocket(s);
-                    }
-                    ws.connect();
-                    if (s != null) {
-                        String host = s.getSession().getPeerHost();
-                        if (!host.equals(mEndpoint.getHost())) {
-                            String reason = "Host '" + host + "' does not match '" + mEndpoint.getHost() + "'";
-                            ws.close(-1, "SSL: " + reason);
-                            throw new SSLPeerUnverifiedException(reason);
-                        }
-                    }
-                    mWsClient = ws;
-
-                } catch (IOException e) {
-                    Log.d(TAG, "Caught Exception!", e);
-                    mListener.onError(e);
+        if (noNewThread) {
+            socketConnectionRunnable(ws);
+        } else {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    socketConnectionRunnable(ws);
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     /**
@@ -129,7 +139,7 @@ public class Connection {
             backoff.wakeUp();
         } else {
             // Create new socket and try to connect it.
-            connectSocket();
+            connectSocket(false);
         }
 
         return true;
@@ -179,11 +189,12 @@ public class Connection {
             
             backoff.reset();
 
-            if (mListener != null) {
-                mListener.onConnect(reconnecting);
-            }
-
+            boolean r = reconnecting;
             reconnecting = false;
+
+            if (mListener != null) {
+                mListener.onConnect(r);
+            }
         }
 
         @Override
@@ -220,12 +231,12 @@ public class Connection {
                             backoff.doSleep();
 
                             // Check if an explicit disconnect has been requested.
-                            if (!autoreconnect) {
+                            if (!autoreconnect || isConnected()) {
                                 reconnecting = false;
                                 break;
                             }
 
-                            connectSocket();
+                            connectSocket(true);
                         }
                     }
                 }).start();
