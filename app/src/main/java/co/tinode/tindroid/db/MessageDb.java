@@ -204,6 +204,7 @@ public class MessageDb implements BaseColumns {
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
                 (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
+                " AND " + COLUMN_NAME_STATUS + "!=" + BaseDb.STATUS_DELETED +
                 " ORDER BY " + COLUMN_NAME_TS +
                 (limit > 0 ? " LIMIT " + limit : "");
 
@@ -225,6 +226,7 @@ public class MessageDb implements BaseColumns {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_STATUS + "!=" + BaseDb.STATUS_DELETED +
                 " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
 
         // Log.d(TAG, "Sql=[" + sql + "]");
@@ -259,12 +261,12 @@ public class MessageDb implements BaseColumns {
      * @return number of deleted messages
      */
     public static boolean delete(SQLiteDatabase db, long topicId, int before, boolean soft) {
-        if (!soft) {
-            return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    (before != -1 ? " AND " + COLUMN_NAME_SEQ + "<=" + before : ""), null) > 0;
-        } else {
-            return TopicDb.updateClear(db, topicId, before);
+        if (soft) {
+            TopicDb.updateClear(db, topicId, before);
         }
+
+        return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                (before != -1 ? " AND " + COLUMN_NAME_SEQ + "<=" + before : ""), null) > 0;
     }
 
     /**
@@ -273,7 +275,7 @@ public class MessageDb implements BaseColumns {
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
      * @param list    maximum seq value to delete, inclusive.
-     * @param soft    mark messages as deleted but do not actually delete them
+     * @param soft    ignored. teher is no value in keeping soft-deleted messages locally
      * @return number of deleted messages
      */
     public static boolean delete(SQLiteDatabase db, long topicId, int[] list, boolean soft) {
@@ -285,16 +287,8 @@ public class MessageDb implements BaseColumns {
         sb.deleteCharAt(0);
         String ids = sb.toString();
 
-        if (!soft) {
-            return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
-        } else {
-            ContentValues values = new ContentValues(1);
-            values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED);
-            return db.update(TABLE_NAME, values,
-                    COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                            " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
-        }
+        return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
     }
 
     /**

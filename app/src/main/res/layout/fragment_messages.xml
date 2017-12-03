@@ -51,7 +51,7 @@
             android:layout_weight="1"
             android:hint="@string/new_message_hint"
             android:imeOptions="actionSend"
-            android:inputType="text"/>
+            android:inputType="textShortMessage"/>
 
         <android.support.v7.widget.AppCompatImageButton
             android:id="@+id/chatSendButton"
