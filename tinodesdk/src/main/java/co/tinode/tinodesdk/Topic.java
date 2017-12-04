@@ -14,6 +14,7 @@ import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MetaSetSub;
+import co.tinode.tinodesdk.model.MsgDelRange;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -1306,6 +1307,9 @@ public class Topic<Pu,Pr> implements LocalData {
             }
             routeMetaSub(meta);
         }
+        if (meta.del != null) {
+            routeMetaDel(meta.del.clear, meta.del.delseq);
+        }
 
         if (mListener != null) {
             mListener.onMeta(meta);
@@ -1365,6 +1369,18 @@ public class Topic<Pu,Pr> implements LocalData {
         }
     }
 
+    protected void routeMetaDel(int clear, MsgDelRange[] delseq) {
+        this.setClear(clear);
+        if (mStore != null) {
+            for (MsgDelRange range : delseq) {
+                mStore.msgDelete(this, range.low, range.hi == null ? range.low + 1 : range.hi);
+            }
+        }
+
+        if (mListener != null) {
+            mListener.onData(null);
+        }
+    }
 
     protected void routeData(MsgServerData data) {
         if (data.seq > mDesc.seq) {
@@ -1385,15 +1401,15 @@ public class Topic<Pu,Pr> implements LocalData {
     }
 
     protected void routePres(MsgServerPres pres) {
-        Subscription<Pu,Pr> sub = getSubscription(pres.src);
-        if (sub != null) {
-            // FIXME(gene): add actual handler
-            MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
-            if (what == MsgServerPres.What.ON) {
-                sub.online = true;
-            } else if (what == MsgServerPres.What.OFF) {
-                sub.online = false;
+        MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
+
+        if (what == MsgServerPres.What.ON || what == MsgServerPres.What.OFF) {
+            Subscription sub = getSubscription(pres.src);
+            if (sub != null) {
+                sub.online = (what == MsgServerPres.What.ON);
             }
+        } else if (what == MsgServerPres.What.DEL) {
+            routeMetaDel(pres.clear, pres.delseq);
         }
 
         if (mListener != null) {
