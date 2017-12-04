@@ -256,17 +256,15 @@ public class MessageDb implements BaseColumns {
      *
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
-     * @param before  maximum seq value to delete, inclusive.
+     * @param fromId  minimum seq value to delete, inclusive (closed).
+     * @param toId maximum seq value to delete, exclusive (open)
      * @param soft    mark messages as deleted but do not actually delete them
      * @return number of deleted messages
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int before, boolean soft) {
-        if (soft) {
-            TopicDb.updateClear(db, topicId, before);
-        }
-
+    public static boolean delete(SQLiteDatabase db, long topicId, int fromId, int toId, boolean soft) {
         return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                (before != -1 ? " AND " + COLUMN_NAME_SEQ + "<=" + before : ""), null) > 0;
+                (fromId >0 ? " AND " + COLUMN_NAME_SEQ + ">=" + fromId : "") +
+                (toId != -1 ? " AND " + COLUMN_NAME_SEQ + "<" + toId : ""), null) > 0;
     }
 
     /**

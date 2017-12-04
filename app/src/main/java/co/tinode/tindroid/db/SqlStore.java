@@ -95,7 +95,7 @@ class SqlStore implements Storage {
             try {
                 db.beginTransaction();
 
-                MessageDb.delete(db, st.id, -1, false);
+                MessageDb.delete(db, st.id, 0, -1, false);
                 SubscriberDb.deleteForTopic(db, st.id);
                 TopicDb.delete(db, st.id);
 
@@ -271,9 +271,9 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgMarkToDelete(Topic topic, int before) {
+    public boolean msgMarkToDelete(Topic topic, int fromId, int toId) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, before, true);
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId, true);
     }
 
     @Override
@@ -283,9 +283,9 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgDelete(Topic topic, int before) {
+    public boolean msgDelete(Topic topic, int fromId, int toId) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, before, false);
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId, false);
     }
 
     @Override

@@ -11,6 +11,7 @@ public class MsgServerMeta<Pu, Pr> {
     public Date ts;
     public Description<Pu,Pr> desc;
     public Subscription<Pu,Pr>[] sub;
+    public DelValues del;
 
     public MsgServerMeta() {
     }

@@ -73,11 +73,11 @@ public interface Storage {
     /** Message delivered to the server and received a real seq ID */
     boolean msgDelivered(Topic topic, long id, Date timestamp, int seq);
     /** Mark messages for deletion */
-    boolean msgMarkToDelete(Topic topic, int before);
+    boolean msgMarkToDelete(Topic topic, int fromId, int toId);
     /** Mark messages for deletion by seq ID list */
     boolean msgMarkToDelete(Topic topic, int[] list);
     /** Delete messages */
-    boolean msgDelete(Topic topic, int before);
+    boolean msgDelete(Topic topic, int fromId, int toId);
     /** Delete messages */
     boolean msgDelete(Topic topic, int[] list);
     /** Set recv value for a given subscriber */

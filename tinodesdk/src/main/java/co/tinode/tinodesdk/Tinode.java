@@ -77,7 +77,7 @@ public class Tinode {
     private static final long NOTE_RECV_DELAY = 300L;
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.13";
+    private static final String VERSION = "0.14";
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
@@ -917,20 +917,23 @@ public class Tinode {
     }
 
     /**
-     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int, boolean)} instead.
+     * Low-level request to delete all messages from the topic with ids in the given range.
+     * Use {@link Topic#delMessages(int, int, boolean)} instead.
      *
      * @param topicName name of the topic to inform
-     * @param before delete all messages with ids below this
+     * @param fromId minimum ID to delete, inclusive (closed)
+     * @param toId maximum ID to delete, exclusive (open)
      * @return PromisedReply of the reply ctrl or meta message
      */
     @SuppressWarnings("WeakerAccess")
-    public PromisedReply<ServerMessage> delMessage(final String topicName, final int before, final boolean hard) {
-        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, before, hard));
+    public PromisedReply<ServerMessage> delMessage(final String topicName, final int fromId,
+                                                   final int toId, final boolean hard) {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, fromId, toId, hard));
         return sendDeleteMessage(msg);
     }
 
     /**
-     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int, boolean)} instead.
+     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int[], boolean)} instead.
      *
      * @param topicName name of the topic to inform
      * @param list delete all messages with ids in this list

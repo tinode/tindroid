@@ -976,24 +976,23 @@ public class Topic<Pu,Pr> implements LocalData {
     }
 
     /**
-     * Delete messages with seq value up to <b>before</b>.
+     * Delete all messages in the topic.
      *
-     * @param before delete messages with id up to this
      * @param hard hard-delete messages
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> delMessages(final int before, final boolean hard) throws Exception {
+    public PromisedReply<ServerMessage> delMessages(final int fromId, final int toId, final boolean hard) throws Exception {
         if (mStore != null) {
-            mStore.msgMarkToDelete(this, before);
+            mStore.msgMarkToDelete(this, fromId, toId);
         }
         if (mAttached) {
-            return mTinode.delMessage(getName(), before, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                     if (mStore != null) {
-                        mStore.msgDelete(Topic.this, before);
+                        mStore.msgDelete(Topic.this, fromId, toId);
                     }
                     return null;
                 }

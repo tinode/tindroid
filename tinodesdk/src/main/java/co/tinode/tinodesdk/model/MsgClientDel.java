@@ -20,46 +20,47 @@ public class MsgClientDel {
     public String id;
     public String topic;
     public String what;
-    public Integer before;
-    public int[] list;
+    public MsgDelRange[] delseq;
     public String user;
     public Boolean hard;
 
     public MsgClientDel() {}
 
-    private MsgClientDel(String id, String topic, String what, int before, int[] list, String user, boolean hard) {
+    private MsgClientDel(String id, String topic, String what, MsgDelRange[] ranges, String user, boolean hard) {
         this.id = id;
         this.topic = topic;
         this.what = what;
         // null value will cause the field to be skipped during serialization instead of sending 0/null/[].
-        this.before = (what.equals(STR_MSG) && before > 0) ? before : null;
-        this.list = (what.equals(STR_MSG) && this.before == null) ? list : null;
+        this.delseq = what.equals(STR_MSG) ? ranges : null;
         this.user = what.equals(STR_SUB) ? user : null;
         this.hard = hard ? true : null;
     }
 
     /**
-     * Delete messages with seq IDs from the list.
+     * Delete messages with ids in the list
      */
-    public MsgClientDel(String id, String topic) {
-        this(id, topic, STR_TOPIC, 0, null, null, false);
-    }
-
-    public MsgClientDel(String id, String topic, int before, boolean hard) {
-        this(id, topic, STR_MSG, before, null, null, hard);
+    public MsgClientDel(String id, String topic, int[] list, boolean hard) {
+        this(id, topic, STR_MSG, MsgDelRange.arrayToRanges(list), null, hard);
     }
 
     /**
-     * Delete messages with seq IDs from the list.
+     * Delete all messages in the range
      */
-    public MsgClientDel(String id, String topic, int[] list, boolean hard) {
-        this(id, topic, STR_MSG, 0, list, null, hard);
+    public MsgClientDel(String id, String topic, int fromId, int toId, boolean hard) {
+        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(fromId, toId)}, null, hard);
+    }
+
+    /**
+     * Delete topic
+     */
+    public MsgClientDel(String id, String topic) {
+        this(id, topic, STR_TOPIC, null, null, false);
     }
 
     /**
      * Delete subscription of the given user. The server will reject request if the <i>user</i> is null.
      */
     public MsgClientDel(String id, String topic, String user) {
-        this(id, topic, STR_SUB, 0, null, user, false);
+        this(id, topic, STR_SUB, null, user, false);
     }
 }

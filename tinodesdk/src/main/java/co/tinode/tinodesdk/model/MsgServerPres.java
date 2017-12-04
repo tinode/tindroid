@@ -10,7 +10,8 @@ public class MsgServerPres {
     public String src;
     public String what;
     public Integer seq;
-    public int[] list;
+    public Integer clear;
+    public MsgDelRange[] delseq;
     public String ua;
     public String act;
     public String tgt;

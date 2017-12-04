@@ -13,10 +13,12 @@ public class MsgGetMeta {
     private static final int DESC_SET = 0x01;
     private static final int SUB_SET = 0x02;
     private static final int DATA_SET = 0x04;
+    private static final int DEL_SET = 0x08;
 
     public static final String DESC = "desc";
     public static final String SUB = "sub";
     public static final String DATA = "data";
+    public static final String DEL = "del";
 
     @JsonIgnore
     private int mSet = 0;
@@ -25,12 +27,13 @@ public class MsgGetMeta {
     public MetaGetDesc desc;
     public MetaGetSub sub;
     public MetaGetData data;
+    public MetaGetData del;
 
     /**
      * Generate query to get everything
      */
     public MsgGetMeta() {
-        this.what = DESC + " " + SUB + " " + DATA;
+        this.what = DESC + " " + SUB + " " + DATA + " " + DEL;
     }
 
     /**
@@ -40,10 +43,11 @@ public class MsgGetMeta {
      * @param sub request subscriptions
      * @param data request data messages
      */
-    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data) {
+    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data, MetaGetData del) {
         this.desc = desc;
         this.sub = sub;
         this.data = data;
+        this.del = del;
         buildWhat();
     }
 
@@ -57,7 +61,8 @@ public class MsgGetMeta {
         return "[" + what + "]" +
                 " desc=[" + (desc != null ? desc.toString() : "null") + "]," +
                 " sub=[" + (sub != null? sub.toString() : "null") + "]," +
-                " data=[" + (data != null ? data.toString() : "null") + "]";
+                " data=[" + (data != null ? data.toString() : "null") + "]," +
+                " del=[" + (del != null ? del.toString() : "null") + "]";
     }
 
 
@@ -91,6 +96,14 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    public void setDel(Integer since, Integer limit) {
+        if (since != null || limit != null) {
+            data = new MetaGetData(since, null, limit);
+        }
+        mSet |= DEL_SET;
+        buildWhat();
+    }
+
     @JsonIgnore
     private void buildWhat() {
         List<String> parts = new LinkedList<>();
@@ -104,6 +117,9 @@ public class MsgGetMeta {
         }
         if (data != null || (mSet & DATA_SET) != 0) {
             parts.add(DATA);
+        }
+        if (del != null || (mSet & DEL_SET) != 0) {
+            parts.add(DEL);
         }
 
         if (!parts.isEmpty()) {
@@ -125,5 +141,9 @@ public class MsgGetMeta {
 
     public static MsgGetMeta sub() {
         return new MsgGetMeta(SUB);
+    }
+
+    public static MsgGetMeta del() {
+        return new MsgGetMeta(DEL);
     }
 }
