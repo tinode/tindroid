@@ -147,6 +147,7 @@ public class MessageActivity extends AppCompatActivity {
                                 .withGetDesc()
                                 .withGetSub()
                                 .withGetData()
+                                .withGetDel()
                                 .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {

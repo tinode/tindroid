@@ -72,14 +72,14 @@ public interface Storage {
     long msgSend(Topic topic, Drafty data);
     /** Message delivered to the server and received a real seq ID */
     boolean msgDelivered(Topic topic, long id, Date timestamp, int seq);
-    /** Mark messages for deletion */
+    /** Mark messages for deletion by range */
     boolean msgMarkToDelete(Topic topic, int fromId, int toId);
     /** Mark messages for deletion by seq ID list */
     boolean msgMarkToDelete(Topic topic, int[] list);
     /** Delete messages */
-    boolean msgDelete(Topic topic, int fromId, int toId);
+    boolean msgDelete(Topic topic, int delId, int fromId, int toId);
     /** Delete messages */
-    boolean msgDelete(Topic topic, int[] list);
+    boolean msgDelete(Topic topic, int delId, int[] list);
     /** Set recv value for a given subscriber */
     boolean msgRecvByRemote(Subscription sub, int recv);
     /** Set read value for a given subscriber */

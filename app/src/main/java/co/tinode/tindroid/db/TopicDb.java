@@ -69,9 +69,13 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_SEQ = "seq";
     /**
-     * Minimum message id available
+     * Highest known ID of a delete transaction
      */
     public static final String COLUMN_NAME_CLEAR = "clear";
+    /**
+     * ID of the last applied delete transaction
+     */
+    public static final String COLUMN_NAME_MAX_DEL = "max_del";
     /**
      * Access mode, string
      */
@@ -119,14 +123,15 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_RECV = 9;
     static final int COLUMN_IDX_SEQ = 10;
     static final int COLUMN_IDX_CLEAR = 11;
-    static final int COLUMN_IDX_ACCESSMODE = 12;
-    static final int COLUMN_IDX_DEFACS = 13;
-    static final int COLUMN_IDX_LASTUSED = 14;
-    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 15;
-    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 16;
-    static final int COLUMN_IDX_SERIALIZED_TYPES = 17;
-    static final int COLUMN_IDX_PUBLIC = 18;
-    static final int COLUMN_IDX_PRIVATE = 19;
+    static final int COLUMN_IDX_MAX_DEL = 12;
+    static final int COLUMN_IDX_ACCESSMODE = 13;
+    static final int COLUMN_IDX_DEFACS = 14;
+    static final int COLUMN_IDX_LASTUSED = 15;
+    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
+    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
+    static final int COLUMN_IDX_SERIALIZED_TYPES = 18;
+    static final int COLUMN_IDX_PUBLIC = 19;
+    static final int COLUMN_IDX_PRIVATE = 20;
 
     /**
      * SQL statement to create Messages table
@@ -146,6 +151,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_RECV + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
                     COLUMN_NAME_CLEAR + " INT," +
+                    COLUMN_NAME_MAX_DEL + " INT," +
                     COLUMN_NAME_ACCESSMODE + " TEXT," +
                     COLUMN_NAME_DEFACS + " TEXT," +
                     COLUMN_NAME_LASTUSED + " INT," +
@@ -202,6 +208,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_RECV, topic.getRecv());
         values.put(COLUMN_NAME_SEQ, topic.getSeq());
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
+        values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
         values.put(COLUMN_NAME_SERIALIZED_TYPES, topic.getSerializedTypes());
@@ -318,6 +325,28 @@ public class TopicDb implements BaseColumns {
         return true;
     }
 
+    /**
+     * Update cached ID of delete transaction.
+     *
+     * @return true on success
+     */
+    public static boolean msgDeleted(SQLiteDatabase db, Topic topic, int delId) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
+
+        if (delId > topic.getMaxDel()) {
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
+
+            int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
+            if (updated <= 0) {
+                return false;
+            }
+        }
+        return true;
+    }
     /**
      * Query topics.
      *

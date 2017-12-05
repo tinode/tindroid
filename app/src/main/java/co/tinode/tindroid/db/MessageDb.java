@@ -261,7 +261,7 @@ public class MessageDb implements BaseColumns {
      * @param soft    mark messages as deleted but do not actually delete them
      * @return number of deleted messages
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int fromId, int toId, boolean soft) {
+    public static boolean delete(SQLiteDatabase db, long topicId, int delId, int fromId, int toId, boolean soft) {
         return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (fromId >0 ? " AND " + COLUMN_NAME_SEQ + ">=" + fromId : "") +
                 (toId != -1 ? " AND " + COLUMN_NAME_SEQ + "<" + toId : ""), null) > 0;
@@ -276,7 +276,7 @@ public class MessageDb implements BaseColumns {
      * @param soft    ignored. teher is no value in keeping soft-deleted messages locally
      * @return number of deleted messages
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int[] list, boolean soft) {
+    public static boolean delete(SQLiteDatabase db, long topicId, int delId, int[] list, boolean soft) {
         StringBuilder sb = new StringBuilder();
         for (int i : list) {
             sb.append(",");

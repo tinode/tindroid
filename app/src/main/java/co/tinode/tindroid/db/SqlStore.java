@@ -95,7 +95,7 @@ class SqlStore implements Storage {
             try {
                 db.beginTransaction();
 
-                MessageDb.delete(db, st.id, 0, -1, false);
+                MessageDb.delete(db, st.id, -1,0, -1, false);
                 SubscriberDb.deleteForTopic(db, st.id);
                 TopicDb.delete(db, st.id);
 
@@ -273,25 +273,56 @@ class SqlStore implements Storage {
     @Override
     public boolean msgMarkToDelete(Topic topic, int fromId, int toId) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId, true);
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, -1, fromId, toId, true);
     }
 
     @Override
     public boolean msgMarkToDelete(Topic topic, int[] list) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, list, true);
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, -1, list, true);
     }
 
     @Override
-    public boolean msgDelete(Topic topic, int fromId, int toId) {
+    public boolean msgDelete(Topic topic, int delId, int fromId, int toId) {
+        SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId, false);
+        boolean result = false;
+        try {
+            db.beginTransaction();
+
+            if (TopicDb.msgDeleted(db, topic, delId) &&
+                MessageDb.delete(mDbh.getWritableDatabase(), st.id, delId, fromId, toId, false)) {
+                db.setTransactionSuccessful();
+                result = true;
+            }
+        } catch (SQLException ex) {
+            Log.d(TAG, "Exception while deleting message range", ex);
+        } finally {
+            db.endTransaction();
+        }
+
+        return result;
     }
 
     @Override
-    public boolean msgDelete(Topic topic, int[] list) {
+    public boolean msgDelete(Topic topic, int delId, int[] list) {
+        SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, list, false);
+        boolean result = false;
+        try {
+            db.beginTransaction();
+
+            if (TopicDb.msgDeleted(db, topic, delId) &&
+                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, delId, list, false)) {
+                db.setTransactionSuccessful();
+                result = true;
+            }
+        } catch (SQLException ex) {
+            Log.d(TAG, "Exception while deleting message list", ex);
+        } finally {
+            db.endTransaction();
+        }
+        return result;
     }
 
     @Override

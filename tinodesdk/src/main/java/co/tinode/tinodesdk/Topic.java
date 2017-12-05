@@ -97,6 +97,8 @@ public class Topic<Pu,Pr> implements LocalData {
 
     protected LastSeen mLastSeen = null;
 
+    protected int mMaxDel = 0;
+
     protected Topic(Tinode tinode, Subscription<Pu,Pr> sub) {
         if (tinode == null) {
             throw new IllegalArgumentException("Tinode cannot be null");
@@ -402,6 +404,15 @@ public class Topic<Pu,Pr> implements LocalData {
     public void setClear(int clear) {
         if (clear > mDesc.clear) {
             mDesc.clear = clear;
+        }
+    }
+
+    public int getMaxDel() {
+        return mMaxDel;
+    }
+    public void setMaxDel(int max_del) {
+        if (max_del > mMaxDel) {
+            mMaxDel = max_del;
         }
     }
 
@@ -992,8 +1003,9 @@ public class Topic<Pu,Pr> implements LocalData {
             return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    if (mStore != null) {
-                        mStore.msgDelete(Topic.this, fromId, toId);
+                    Integer delId = result.ctrl.getIntParam("del");
+                    if (mStore != null && delId != null) {
+                        mStore.msgDelete(Topic.this, delId, fromId, toId);
                     }
                     return null;
                 }
@@ -1024,8 +1036,9 @@ public class Topic<Pu,Pr> implements LocalData {
             return mTinode.delMessage(getName(), list, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    if (mStore != null) {
-                        mStore.msgDelete(Topic.this, list);
+                    Integer delId = result.ctrl.getIntParam("del");
+                    if (mStore != null && delId != null) {
+                        mStore.msgDelete(Topic.this, delId, list);
                     }
                     return null;
                 }
@@ -1370,12 +1383,12 @@ public class Topic<Pu,Pr> implements LocalData {
     }
 
     protected void routeMetaDel(int clear, MsgDelRange[] delseq) {
-        this.setClear(clear);
         if (mStore != null) {
             for (MsgDelRange range : delseq) {
-                mStore.msgDelete(this, range.low, range.hi == null ? range.low + 1 : range.hi);
+                mStore.msgDelete(this, clear, range.low, range.hi == null ? range.low + 1 : range.hi);
             }
         }
+        setMaxDel(clear);
 
         if (mListener != null) {
             mListener.onData(null);
@@ -1383,10 +1396,6 @@ public class Topic<Pu,Pr> implements LocalData {
     }
 
     protected void routeData(MsgServerData data) {
-        if (data.seq > mDesc.seq) {
-            mDesc.seq = data.seq;
-        }
-
         if (mStore != null) {
             if (mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
                 noteRecv();
@@ -1394,6 +1403,7 @@ public class Topic<Pu,Pr> implements LocalData {
         } else {
             noteRecv();
         }
+        setSeq(data.seq);
 
         if (mListener != null) {
             mListener.onData(data);
@@ -1562,6 +1572,19 @@ public class Topic<Pu,Pr> implements LocalData {
 
         public MetaGetBuilder withGetSub() {
             return withGetSub(topic.getSubsUpdated(), null);
+        }
+
+        public MetaGetBuilder withGetDel(Integer since, Integer limit) {
+            meta.setDel(since, limit);
+            return this;
+        }
+
+        public MetaGetBuilder withGetLaterDel(Integer limit) {
+            return withGetDel(topic.getMaxDel() + 1, limit);
+        }
+
+        public MetaGetBuilder withGetDel() {
+            return withGetLaterDel(null);
         }
 
         public MsgGetMeta build() {

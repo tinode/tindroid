@@ -39,6 +39,7 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
         topic.setRecv(c.getInt(TopicDb.COLUMN_IDX_RECV));
         topic.setSeq(c.getInt(TopicDb.COLUMN_IDX_SEQ));
         topic.setClear(c.getInt(TopicDb.COLUMN_IDX_CLEAR));
+        topic.setMaxDel(c.getInt(TopicDb.COLUMN_IDX_MAX_DEL));
 
         topic.setSerializedTypes(c.getString(TopicDb.COLUMN_IDX_SERIALIZED_TYPES));
         topic.setPub((Pu) BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PUBLIC)));
