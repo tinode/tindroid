@@ -253,8 +253,8 @@ public class Tinode {
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                    if (!autoreconnected) {
-                                        // If this is an auto-reconnect, the promise is already resolved.
+                                    // If this is an auto-reconnect, the promise is already resolved.
+                                    if (!connected.isDone()) {
                                         connected.resolve(pkt);
                                     }
 

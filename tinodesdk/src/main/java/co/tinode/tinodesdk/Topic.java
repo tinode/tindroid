@@ -719,18 +719,14 @@ public class Topic<Pu,Pr> implements LocalData {
      */
     public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> publishPending()
             throws Exception {
-        Log.d(TAG, "publishPending");
-
         ML list = mStore.getUnsentMessages(this);
         if (list == null) {
-            Log.d(TAG, "getUnreadMessages returned null");
             return new PromisedReply<>((ServerMessage) null);
         }
 
         PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
         while (list.hasNext()) {
             final Storage.Message msg = list.next();
-            Log.d(TAG, "publishing '" + msg.getId() + "'");
             last = mTinode.publish(getName(), msg.getContent());
             last.thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
@@ -1529,6 +1525,7 @@ public class Topic<Pu,Pr> implements LocalData {
          */
         public MetaGetBuilder withGetLaterData(Integer limit) {
             Storage.Range r = topic.getCachedMessageRange();
+
             if (r == null) {
                 return withGetData(null, null, limit);
             }

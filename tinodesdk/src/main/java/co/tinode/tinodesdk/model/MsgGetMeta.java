@@ -98,7 +98,7 @@ public class MsgGetMeta {
 
     public void setDel(Integer since, Integer limit) {
         if (since != null || limit != null) {
-            data = new MetaGetData(since, null, limit);
+            del = new MetaGetData(since, null, limit);
         }
         mSet |= DEL_SET;
         buildWhat();

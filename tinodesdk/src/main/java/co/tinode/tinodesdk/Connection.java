@@ -219,7 +219,9 @@ public class Connection {
                 reconnecting = autoreconnect;
             }
 
-            mListener.onDisconnect(remote, code, reason);
+            if (mListener != null) {
+                mListener.onDisconnect(remote, code, reason);
+            }
 
             // The onClose is called while ws readystate is still OPEN. Therefore discard the client.
             mWsClient = null;
