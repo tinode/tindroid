@@ -113,7 +113,27 @@ public class MessagesFragment extends Fragment {
             public void onRefresh() {
                 if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
                     Log.d(TAG, "Calling server for more data");
-                    mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build());
+                    try {
+                        mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build())
+                                .thenApply(
+                                        new PromisedReply.SuccessListener<ServerMessage>() {
+                                            @Override
+                                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                                                mRefresher.setRefreshing(false);
+                                                return null;
+                                            }
+                                        },
+                                        new PromisedReply.FailureListener<ServerMessage>(){
+                                            @Override
+                                            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                                mRefresher.setRefreshing(false);
+                                                return null;
+                                            }
+                                        }
+                                );
+                    } catch (Exception e) {
+                        mRefresher.setRefreshing(false);
+                    }
                 } else {
                     mRefresher.setRefreshing(false);
                 }
