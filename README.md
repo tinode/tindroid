@@ -1,6 +1,7 @@
 # Tindroid chat
 
 Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software. 
+A [debug APK](https://storage.googleapis.com/tinode.co/tindroid.apk) is provided for convenience. 
 
 ## What works:
 
