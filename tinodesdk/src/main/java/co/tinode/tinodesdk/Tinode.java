@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
+import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientDel;
@@ -275,7 +276,7 @@ public class Tinode {
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                        login(mLoginCredentials.scheme, mLoginCredentials.secret);
+                                        login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
                                         return null;
                                     }
                                 }, null);
@@ -645,11 +646,22 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     protected <Pu,Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
-                                                         boolean loginNow,
-                                                         MetaSetDesc<Pu,Pr> desc) throws Exception {
-        ClientMessage msg = new ClientMessage<Pu,Pr>(
+                                                           boolean loginNow, String[] tags, MetaSetDesc<Pu,Pr> desc,
+                                                           Credential[] cred) throws Exception {
+        ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
+            // Add tags and credentials
+            if (tags != null) {
+                for (String tag : tags) {
+                    msg.acc.addTag(tag);
+                }
+            }
+            if (cred != null) {
+                for (Credential c : cred) {
+                    msg.acc.addCred(c);
+                }
+            }
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.acc.id, future);
@@ -665,6 +677,9 @@ public class Tinode {
      *
      * @param uname    user name
      * @param password password
+     * @param login use the new account for authentication
+     * @param desc account parameters, such as full name etc.
+     *
      * @return PromisedReply of the reply ctrl message
      * @throws Exception if there is no connection
      */
@@ -672,13 +687,54 @@ public class Tinode {
             String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc)
                 throws Exception {
         return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
-                login, desc);
+                login, null, desc, null);
+    }
+
+    /**
+     * Create account using a single basic authentication scheme. A connection must be established
+     * prior to calling this method.
+     *
+     * @param uname    user name
+     * @param password password
+     * @param login use the new account for authentication
+     * @param tags discovery tags
+     * @param desc account parameters, such as full name etc.
+     *
+     * @return PromisedReply of the reply ctrl message
+     * @throws Exception if there is no connection
+     */
+    public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc)
+            throws Exception {
+        return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
+                login, tags, desc, null);
+    }
+
+    /**
+     * Create account using a single basic authentication scheme. A connection must be established
+     * prior to calling this method.
+     *
+     * @param uname    user name
+     * @param password password
+     * @param login use the new account for authentication
+     * @param tags discovery tags
+     * @param desc account parameters, such as full name etc.
+     * @param cred account credential, such as email or phone
+     *
+     * @return PromisedReply of the reply ctrl message
+     * @throws Exception if there is no connection
+     */
+    public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred)
+            throws Exception {
+        return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
+                login, tags, desc, cred);
     }
 
     @SuppressWarnings("unchecked")
     protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret)
             throws Exception {
-        return account(uid, scheme, secret, false, null);
+        return account(uid, scheme, secret, false, null, null, null);
     }
 
     public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password)
@@ -696,7 +752,20 @@ public class Tinode {
      * @throws Exception if there is no connection
      */
     public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws Exception {
-        return login(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
+        return login(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password), null);
+    }
+
+    /**
+     * Send a basic login packet to the server. A connection must be established prior to calling
+     * this method. Success or failure will be reported through {@link EventListener#onLogin(int, String)}
+     *
+     * @param token server-provided security token
+     * @param creds validation credentials.
+     * @return PromisedReply of the reply ctrl message
+     * @throws Exception if there is no connection
+     */
+    public PromisedReply<ServerMessage> loginToken(String token, Credential[] creds) throws Exception {
+        return login(AuthScheme.LOGIN_TOKEN, token, creds);
     }
 
     /**
@@ -708,18 +777,18 @@ public class Tinode {
      * @throws Exception if there is no connection
      */
     public PromisedReply<ServerMessage> loginToken(String token) throws Exception {
-        return login(AuthScheme.LOGIN_TOKEN, token);
+        return loginToken(token, null);
     }
 
     protected PromisedReply<ServerMessage> login(String combined) throws Exception {
         AuthScheme auth = AuthScheme.parse(combined);
         if (auth != null) {
-            return login(auth.scheme, auth.secret);
+            return login(auth.scheme, auth.secret, null);
         }
         throw new IllegalArgumentException();
     }
 
-    protected PromisedReply<ServerMessage> login(String scheme, String secret) throws Exception {
+    protected PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds) throws Exception {
         if (mAutologin) {
             mLoginCredentials = new LoginCredentials(scheme, secret);
         }
@@ -730,6 +799,11 @@ public class Tinode {
         }
 
         ClientMessage msg = new ClientMessage(new MsgClientLogin(getNextId(), scheme, secret));
+        if (creds != null) {
+            for (Credential c : creds) {
+                msg.login.addCred(c);
+            }
+        }
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
@@ -749,11 +823,12 @@ public class Tinode {
                             loadTopics();
                             mAuthToken = (String) pkt.ctrl.params.get("token");
                             mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
-                            mConnAuth = true;
-                            if (mListener != null) {
-                                mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
+                            if (pkt.ctrl.code < 300) {
+                                mConnAuth = true;
+                                if (mListener != null) {
+                                    mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
+                                }
                             }
-
                             return null;
                         }
                     },

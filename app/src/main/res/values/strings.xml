@@ -177,4 +177,12 @@
     <string name="file_manager_not_found">File manager not found</string>
     <string name="attachment_too_large">The file size %1$s exceeds the %2$s limit.</string>
     <string name="failed_to_attach">Failed to send file</string>
+
+    <string name="email">Email</string>
+    <string name="email_required">Email required</string>
+    <string name="validate_cred">Enter confirmation code sent to you by %1$s:</string>
+    <string name="confirm">Confirm</string>
+    <string name="validation_example">E.g. 123456</string>
+    <string name="enter_confirmation_code">Enter confirmation code</string>
+    <string name="failed_credential_confirmation">Incorrect confirmation code</string>
 </resources>

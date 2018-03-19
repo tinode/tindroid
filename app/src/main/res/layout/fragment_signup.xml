@@ -15,7 +15,8 @@
         android:layout_marginTop="@dimen/activity_default_margin"
         card_view:cardElevation="@dimen/cardview_default_elevation"
         card_view:cardPreventCornerOverlap="true"
-        card_view:contentPaddingLeft="@dimen/activity_horizontal_margin">
+        card_view:contentPaddingLeft="@dimen/activity_horizontal_margin"
+        card_view:contentPaddingRight="@dimen/activity_horizontal_margin">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -99,6 +100,19 @@
                     android:layout_height="wrap_content"
                     android:ems="10"
                     android:hint="@string/full_name"
+                    android:inputType="text"/>
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <android.support.design.widget.TextInputEditText
+                    android:id="@+id/email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:hint="@string/email"
                     android:inputType="text"/>
             </android.support.design.widget.TextInputLayout>
 

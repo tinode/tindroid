@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -79,8 +80,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         final LoginActivity parent = (LoginActivity) getActivity();
 
-        EditText loginInput = (EditText) parent.findViewById(R.id.editLogin);
-        EditText passwordInput = (EditText) parent.findViewById(R.id.editPassword);
+        EditText loginInput = parent.findViewById(R.id.editLogin);
+        EditText passwordInput = parent.findViewById(R.id.editPassword);
 
         final String login = loginInput.getText().toString().trim();
         if (login.isEmpty()) {
@@ -93,7 +94,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             return;
         }
 
-        final Button signIn = (Button) parent.findViewById(R.id.signIn);
+        final Button signIn = parent.findViewById(R.id.signIn);
         signIn.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
@@ -117,7 +118,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) throws Exception {
                                     sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
 
                                     final Account acc = addAndroidAccount(
@@ -125,13 +126,24 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                             AuthScheme.basicInstance(login, password).toString(),
                                             tinode.getAuthToken());
 
-                                    // Force immediate sync, otherwise Contacts tab may be unusable.
-                                    Bundle bundle = new Bundle();
-                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+                                    if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
+                                        parent.runOnUiThread(new Runnable() {
+                                            public void run() {
+                                                signIn.setEnabled(true);
+                                                FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
+                                                trx.replace(R.id.contentFragment, new CredentialsFragment());
+                                                trx.commit();
+                                            }
+                                        });
+                                    } else {
+                                        // Force immediate sync, otherwise Contacts tab may be unusable.
+                                        Bundle bundle = new Bundle();
+                                        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+                                        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                                        ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
 
-                                    UiUtils.onLoginSuccess(parent, signIn);
+                                        UiUtils.onLoginSuccess(parent, signIn);
+                                    }
                                     return null;
                                 }
                             },

@@ -109,6 +109,12 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
             return;
         }
 
+        final String email = ((EditText) parent.findViewById(R.id.email)).getText().toString().trim();
+        if (email.isEmpty()) {
+            ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_required));
+            return;
+        }
+
         final Button signUp = (Button) parent.findViewById(R.id.signUp);
         signUp.setEnabled(false);
 
@@ -142,13 +148,17 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) throws Exception {
                                     // Flip back to login screen on success;
                                     parent.runOnUiThread(new Runnable() {
                                         public void run() {
                                             signUp.setEnabled(true);
                                             FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
-                                            trx.replace(R.id.contentFragment, new LoginFragment());
+                                            if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
+                                                trx.replace(R.id.contentFragment, new CredentialsFragment());
+                                            } else {
+                                                trx.replace(R.id.contentFragment, new LoginFragment());
+                                            }
                                             trx.commit();
                                         }
                                     });

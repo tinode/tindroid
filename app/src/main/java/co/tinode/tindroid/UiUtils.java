@@ -63,7 +63,9 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -294,7 +296,7 @@ public class UiUtils {
                     Log.e(TAG, "IOException: ", e);
                 }
 
-                boolean success = false;
+                Intent launch = new Intent(activity, LoginActivity.class);
                 if (result != null) {
                     final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
                     if (!TextUtils.isEmpty(token)) {
@@ -306,17 +308,36 @@ public class UiUtils {
                             // Connecting with synchronous calls because this is not the UI thread.
                             final Tinode tinode = Cache.getTinode();
                             tinode.connect(hostName, tls).getResult();
-                            tinode.loginToken(token).getResult();
+                            ServerMessage msg = tinode.loginToken(token).getResult();
                             // Logged in successfully. Save refreshed token for future use.
                             accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
-
-                            // Go to Contacts
-                            success = true;
+                            if (msg.ctrl.code < 300) {
+                                // Logged in successfully. Save refreshed token for future use.
+                                Log.d(TAG, "LoginWithSavedAccount succeeded, sending to contacts");
+                                // Go to Contacts
+                                launch = new Intent(activity, ContactsActivity.class);
+                            } else {
+                                Log.d(TAG, "LoginWithSavedAccount failed due to credentials, sending to login");
+                                Object obj = null;
+                                String method = "email";
+                                if (msg.ctrl.params != null && (obj = msg.ctrl.params.get("cred")) != null &&
+                                        (Collection.class.isInstance(obj))) {
+                                    Iterator it = ((Collection) obj).iterator();
+                                    if (it.hasNext()) {
+                                        Object m = it.next();
+                                        if (m instanceof String) {
+                                            method = (String) m;
+                                        }
+                                    }
+                                }
+                                launch.putExtra("credential", method);
+                            }
                         } catch (IOException ignored) {
                             // Login failed due to network error.
                             // If we have UID, go to Contacts, otherwise to Login
-                            success = BaseDb.getInstance().isReady();
-                            Log.d(TAG, "Network failure/" + (success ? "DB ready" : "DB NOT ready"));
+                            launch = new Intent(activity, BaseDb.getInstance().isReady() ?
+                                    ContactsActivity.class : LoginActivity.class);
+                            Log.d(TAG, "Network failure/" + (BaseDb.getInstance().isReady() ? "DB ready" : "DB NOT ready"));
                         } catch (Exception ignored) {
                             Log.d(TAG, "Other failure", ignored);
                             // Login failed due to invalid (expired) token
@@ -324,7 +345,7 @@ public class UiUtils {
                         }
                     }
                 }
-                activity.startActivity(new Intent(activity, success ? ContactsActivity.class : LoginActivity.class));
+                activity.startActivity(launch);
             }
         }, null);
     }

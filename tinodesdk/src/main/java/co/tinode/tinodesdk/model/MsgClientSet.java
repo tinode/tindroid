@@ -10,7 +10,7 @@ package co.tinode.tinodesdk.model;
  *  Sub *MsgSetSub `json:"sub,omitempty"`
  */
 
-public class MsgClientSet<Pu,Pr,Inv> {
+public class MsgClientSet<Pu,Pr> {
     public String id;
     public String topic;
 

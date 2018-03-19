@@ -17,6 +17,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -57,6 +58,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String FRAGMENT_LOGIN = "login";
     private static final String FRAGMENT_SIGNUP = "signup";
     private static final String FRAGMENT_SETTINGS = "settings";
+    private static final String FRAGMENT_CREDENTIALS = "cred";
 
     static final String PREFS_LAST_LOGIN = "pref_lastLogin";
 
@@ -96,9 +98,16 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Display the login form.
-        showFragment(FRAGMENT_LOGIN);
-
+        // Check if the activity show ask for credentials instead of login/password.
+        final Intent intent = getIntent();
+        String cred = intent.getStringExtra("credential");
+        if (TextUtils.isEmpty(cred)) {
+            // Display the login form.
+            showFragment(FRAGMENT_LOGIN);
+        } else {
+            // Ask for validation code
+            showFragment(FRAGMENT_CREDENTIALS);
+        }
         // Request permission to access accounts. We need access to acccounts to store the login token.
         if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
             requestAccountAccessPermission();
@@ -206,6 +215,9 @@ public class LoginActivity extends AppCompatActivity {
                     break;
                 case FRAGMENT_SIGNUP:
                     fragment = new SignUpFragment();
+                    break;
+                case FRAGMENT_CREDENTIALS:
+                    fragment = new CredentialsFragment();
                     break;
                 default:
                     throw new IllegalArgumentException();
