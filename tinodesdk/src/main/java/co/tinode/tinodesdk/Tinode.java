@@ -621,8 +621,10 @@ public class Tinode {
                             if (pkt.ctrl == null) {
                                 throw new InvalidObjectException("Unexpected type of reply packet to hello");
                             }
-                            mServerVersion = (String) pkt.ctrl.params.get("ver");
-                            mServerBuild = (String) pkt.ctrl.params.get("build");
+                            if (pkt.ctrl.params != null) {
+                                mServerVersion = (String) pkt.ctrl.params.get("ver");
+                                mServerBuild = (String) pkt.ctrl.params.get("build");
+                            }
                             return null;
                         }
                     }, null);
@@ -849,7 +851,8 @@ public class Tinode {
                                     mListener.onLogin(sre.getCode(), sre.getMessage());
                                 }
                             }
-                            return null;
+                            // The next handler is rejected as well.
+                            return new PromisedReply<>(err);
                         }
                     });
             return future;

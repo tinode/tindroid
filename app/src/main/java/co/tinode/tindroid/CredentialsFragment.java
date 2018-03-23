@@ -14,6 +14,7 @@ import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VCard;
@@ -56,16 +58,33 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         }
 
         View fragment = inflater.inflate(R.layout.fragment_validate, container, false);
-
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
 
         return fragment;
     }
 
+    @Override
+    public void onActivityCreated(Bundle unused) {
+        super.onActivityCreated(unused);
+
+        Bundle args = this.getArguments();
+        String method = args.getString("credential");
+        TextView callToAction = getActivity().findViewById(R.id.call_to_validate);
+        callToAction.setText(getString(R.string.validate_cred, method));
+    }
 
     @Override
     public void onClick(View view) {
         final LoginActivity parent = (LoginActivity) getActivity();
+
+        final Tinode tinode = Cache.getTinode();
+        String token = tinode.getAuthToken();
+        if (TextUtils.isEmpty(token)) {
+            FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
+            trx.replace(R.id.contentFragment, new LoginFragment());
+            trx.commit();
+            return;
+        }
 
         final String code = ((EditText) parent.findViewById(R.id.response)).getText().toString().trim();
         if (code.isEmpty()) {
@@ -76,11 +95,14 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         final Button confirm = parent.findViewById(R.id.confirm);
         confirm.setEnabled(false);
 
-        final Tinode tinode = Cache.getTinode();
         try {
+            Bundle args = this.getArguments();
+            String method = args.getString("credential");
+
             Credential[] cred = new Credential[1];
-            cred[0] = new Credential("email", null, code, null);
-            tinode.loginToken(tinode.getAuthToken(), cred).thenApply(
+            cred[0] = new Credential(method, null, code, null);
+
+            tinode.loginToken(token, cred).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) throws Exception {

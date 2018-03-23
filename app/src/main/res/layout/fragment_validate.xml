@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:text="@string/validate_cred"
-                android:id="@+id/appTitle"
+                android:id="@+id/call_to_validate"
                 android:layout_marginBottom="8dp"/>
 
             <android.support.design.widget.TextInputLayout

@@ -179,7 +179,9 @@
     <string name="failed_to_attach">Failed to send file</string>
 
     <string name="email">Email</string>
+    <string name="tel">Phone</string>
     <string name="email_required">Email required</string>
+    <string name="tel_required">Phone number required</string>
     <string name="validate_cred">Enter confirmation code sent to you by %1$s:</string>
     <string name="confirm">Confirm</string>
     <string name="validation_example">E.g. 123456</string>

@@ -106,7 +106,9 @@ public class LoginActivity extends AppCompatActivity {
             showFragment(FRAGMENT_LOGIN);
         } else {
             // Ask for validation code
-            showFragment(FRAGMENT_CREDENTIALS);
+            Bundle args = new Bundle();
+            args.putString("credential", cred);
+            showFragment(FRAGMENT_CREDENTIALS, args);
         }
         // Request permission to access accounts. We need access to acccounts to store the login token.
         if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
@@ -203,6 +205,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showFragment(String tag) {
+        showFragment(tag, null);
+    }
+
+    private void showFragment(String tag, Bundle args) {
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
@@ -222,6 +228,10 @@ public class LoginActivity extends AppCompatActivity {
                 default:
                     throw new IllegalArgumentException();
             }
+        }
+
+        if (args != null) {
+            fragment.setArguments(args);
         }
 
         fm.beginTransaction()
