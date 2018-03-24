@@ -23,6 +23,7 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 
@@ -141,8 +142,9 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                     }
                                     VCard vcard = new VCard(fullName, bmp);
                                     return tinode.createAccountBasic(
-                                            login, password, true,
-                                            new MetaSetDesc<VCard,String>(vcard, null));
+                                            login, password, true, null,
+                                            new MetaSetDesc<VCard,String>(vcard, null),
+                                            Credential.append(null, new Credential("email", email)));
                                 }
                             }, null)
                     .thenApply(

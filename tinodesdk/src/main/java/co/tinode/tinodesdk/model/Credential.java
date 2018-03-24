@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk.model;
 
+import java.util.Arrays;
+
 /**
  * Account credential: email, phone captcha
  */
@@ -12,6 +14,17 @@ public class Credential {
     public String resp;
     // Confirmation parameters.
     public Object params;
+
+    public static Credential[] append(Credential[] creds, Credential c) {
+        if (creds == null) {
+            creds = new Credential[1];
+        } else {
+            creds = Arrays.copyOf(creds, creds.length + 1);
+        }
+        creds[creds.length - 1] = c;
+
+        return creds;
+    }
 
     public Credential() {
     }
