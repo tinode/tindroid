@@ -3,6 +3,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
+import java.util.StringTokenizer;
 
 /**
  * Helper class for access mode parser/generator.
@@ -192,35 +193,46 @@ public class AcsHelper implements Serializable {
         if (umode == null || umode.length() == 0) {
             return val;
         }
-        char sign = umode.charAt(0);
+
         int m0;
-        if (sign == '+' || sign == '-') {
-            if (umode.length() < 2) {
-                throw new IllegalArgumentException();
+        char action = umode.charAt(0);
+        if (action == '+' || action == '-') {
+            Integer val0 = val != null ? val : 0;
+            StringTokenizer parts = new StringTokenizer(umode, "-+", true);
+            while (parts.hasMoreTokens()) {
+                action = parts.nextToken().charAt(0);
+                if (parts.hasMoreTokens()) {
+                    m0 = decode(parts.nextToken());
+                } else {
+                    break;
+                }
+
+                if (m0 == MODE_INVALID) {
+                    throw new IllegalArgumentException();
+                }
+                if (m0 == MODE_NONE) {
+                    continue;
+                }
+
+                if (action == '+') {
+                    val0 |= m0;
+                } else if (action == '-') {
+                    val0 &= ~m0;
+                }
             }
-            m0 = decode(umode.substring(1));
+            val = val0;
+
         } else {
             m0 = decode(umode);
-        }
-
-        if (m0 == MODE_INVALID) {
-            throw new IllegalArgumentException();
-        }
-        if (m0 == MODE_NONE) {
-            return val;
+            if (m0 == MODE_INVALID) {
+                throw new IllegalArgumentException();
+            }
         }
 
         if (val == null) {
             val = MODE_NONE;
         }
 
-        if (sign == '+') {
-            val |= m0;
-        } else if (sign == '-') {
-            val &= ~m0;
-        } else {
-            val = m0;
-        }
 
         return val;
     }

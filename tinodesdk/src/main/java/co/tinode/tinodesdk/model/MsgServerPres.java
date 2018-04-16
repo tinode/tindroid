@@ -15,7 +15,7 @@ public class MsgServerPres {
     public String ua;
     public String act;
     public String tgt;
-    public AccessChange acs;
+    public AccessChange dacs;
 
     public MsgServerPres() {
     }
