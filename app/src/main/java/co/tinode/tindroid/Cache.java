@@ -44,6 +44,14 @@ public class Cache {
         return sTinode;
     }
 
+    // Invalidate and reinitialize existing cache.
+    public static void invalidate() {
+        if (sTinode != null) {
+            sTinode.logout();
+            sTinode = null;
+        }
+    }
+
     /**
      * Keep counter of visible activities
      *
