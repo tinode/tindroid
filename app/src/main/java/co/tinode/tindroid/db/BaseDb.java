@@ -65,7 +65,6 @@ public class BaseDb extends SQLiteOpenHelper {
     public static BaseDb getInstance() {
         if (sInstance == null) {
             sInstance = new BaseDb(TindroidApp.getAppContext());
-            sInstance.mAcc = AccountDb.getActiveAccount(sInstance.getReadableDatabase());
             sInstance.mStore = new SqlStore(sInstance);
         }
         return sInstance;

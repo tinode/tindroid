@@ -69,7 +69,7 @@ public class AccountInfoFragment extends Fragment {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            getFragmentManager().popBackStack();
+                getFragmentManager().popBackStack();
             }
         });
         return fragment;
@@ -243,7 +243,9 @@ public class AccountInfoFragment extends Fragment {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Cache.getTinode().logout();
+                        Cache.invalidate();
+                        startActivity(new Intent(activity, LoginActivity.class));
+                        activity.finish();
                     }
                 })
                 .show();
