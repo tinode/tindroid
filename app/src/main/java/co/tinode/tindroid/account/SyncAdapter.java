@@ -91,6 +91,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(final Account account, final Bundle extras, String authority,
                               ContentProviderClient provider, final SyncResult syncResult) {
         //Log.i(TAG, "Beginning network synchronization");
+        final Tinode tinode = Cache.getTinode();
         try {
             Log.i(TAG, "Starting sync for account " + account.name);
 
@@ -106,8 +107,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 invisibleGroupId = ContactsManager.createInvisibleTinodeGroup(mContext, account);
                 setInvisibleGroupId(account, invisibleGroupId);
             }
-
-            final Tinode tinode = Cache.getTinode();
 
             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
             String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
@@ -126,6 +125,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_ME, meta);
             if (future.waitResult()) {
                 ServerMessage<?,VCard,String> pkt = future.getResult();
+                tinode.disconnect();
                 // Fetch the list of updated contacts. Group subscriptions will be stored in
                 // the address book but as invisible contacts (members of invisible group)
                 Collection<Subscription<VCard, String>> updated = new ArrayList<>();
@@ -143,9 +143,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         } catch (IOException e) {
             e.printStackTrace();
             syncResult.stats.numIoExceptions++;
+            tinode.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
             syncResult.stats.numAuthExceptions++;
+            tinode.disconnect();
         }
         Log.i(TAG, "Network synchronization complete");
     }

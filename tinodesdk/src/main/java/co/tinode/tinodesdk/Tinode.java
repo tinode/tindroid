@@ -865,9 +865,15 @@ public class Tinode {
         mAutologin = state;
     }
 
-    public void logout() {
+    public void disconnect() {
         setAutologin(false);
-        mConnection.disconnect();
+        if (mConnection != null) {
+            mConnection.disconnect();
+        }
+    }
+
+    public void logout() {
+        disconnect();
         mMyUid = null;
 
         if (mStore != null) {

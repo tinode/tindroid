@@ -11,6 +11,8 @@ import java.util.Date;
 public class Description<Pu,Pr> implements Serializable {
     public Date created;
     public Date updated;
+    public Date touched;
+
     public Defacs defacs;
     public Acs acs;
     public int seq;
@@ -40,6 +42,10 @@ public class Description<Pu,Pr> implements Serializable {
         }
         if (desc.updated != null && (updated == null || updated.before(desc.updated))) {
             updated = desc.updated;
+            changed ++;
+        }
+        if (desc.touched != null && (touched == null || touched.before(desc.touched))) {
+            touched = desc.touched;
             changed ++;
         }
 
