@@ -16,6 +16,7 @@ public class Subscription<Pu,Pr> implements LocalData, Serializable {
     public String user;
     public Date updated;
     public Date deleted;
+    public Date touched;
 
     public Acs acs;
     public int read;
@@ -56,6 +57,10 @@ public class Subscription<Pu,Pr> implements LocalData, Serializable {
             changed ++;
         } else if (pub == null && sub.pub != null) {
             pub = sub.pub;
+        }
+
+        if ((sub.touched != null) && (touched == null || touched.before(sub.touched))) {
+            touched = sub.touched;
         }
 
         if (sub.acs != null) {
