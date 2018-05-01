@@ -95,7 +95,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         UiUtils.setupToolbar(this, null, null, false);
 
-        MeTopic<VCard, String, String> me = tinode.getMeTopic();
+        MeTopic<VCard, String> me = tinode.getMeTopic();
         if (me == null) {
             // The very first launch of the app.
             me = new MeTopic<>(tinode, mMeTopicListener);
@@ -235,5 +235,11 @@ public class ContactsActivity extends AppCompatActivity implements
         trx.addToBackStack(FRAGMENT_EDIT_ACCOUNT)
                 .show(fragment)
                 .commit();
+    }
+
+    public void selectTab(final int pageIndex) {
+        FragmentManager fm = getSupportFragmentManager();
+        ContactsFragment contacts = (ContactsFragment) fm.findFragmentByTag(FRAGMENT_CONTACTS);
+        contacts.selectTab(pageIndex);
     }
 }

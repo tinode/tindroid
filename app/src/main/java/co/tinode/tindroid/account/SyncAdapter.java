@@ -125,7 +125,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_ME, meta);
             if (future.waitResult()) {
                 ServerMessage<?,VCard,String> pkt = future.getResult();
-                tinode.disconnect();
                 // Fetch the list of updated contacts. Group subscriptions will be stored in
                 // the address book but as invisible contacts (members of invisible group)
                 Collection<Subscription<VCard, String>> updated = new ArrayList<>();
@@ -143,11 +142,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         } catch (IOException e) {
             e.printStackTrace();
             syncResult.stats.numIoExceptions++;
-            tinode.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
             syncResult.stats.numAuthExceptions++;
-            tinode.disconnect();
         }
         Log.i(TAG, "Network synchronization complete");
     }

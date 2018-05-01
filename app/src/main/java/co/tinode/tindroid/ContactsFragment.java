@@ -20,6 +20,9 @@ import android.view.ViewGroup;
 public class ContactsFragment extends Fragment {
     private static final String TAG = "ContactsFragment";
 
+    public static final int TAB_CHATS = 0;
+    public static final int TAB_CONTACTS = 1;
+
     public ContactsFragment() {}
 
     @Override
@@ -38,10 +41,10 @@ public class ContactsFragment extends Fragment {
 
         ((AppCompatActivity) getActivity()).setSupportActionBar((Toolbar) fragment.findViewById(R.id.toolbar));
 
-        TabLayout tabLayout = (TabLayout) fragment.findViewById(R.id.tabsContacts);
+        TabLayout tabLayout = fragment.findViewById(R.id.tabsContacts);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
-        final ViewPager viewPager = (ViewPager) fragment.findViewById(R.id.tabPager);
+        final ViewPager viewPager = fragment.findViewById(R.id.tabPager);
         final PagerAdapter adapter = new PagerAdapter(getChildFragmentManager(), tabLayout.getTabCount());
         viewPager.setAdapter(adapter);
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
@@ -62,6 +65,15 @@ public class ContactsFragment extends Fragment {
         return fragment;
     }
 
+    public void selectTab(int pageIndex) {
+        final TabLayout tabLayout = getActivity().findViewById(R.id.tabsContacts);
+        final ViewPager viewPager = getActivity().findViewById(R.id.tabPager);
+        if (tabLayout != null && viewPager != null) {
+            tabLayout.setScrollPosition(pageIndex, 0f, true);
+            viewPager.setCurrentItem(pageIndex);
+        }
+    }
+
     private class PagerAdapter extends FragmentStatePagerAdapter {
         int mNumOfTabs;
         Fragment mChatList;
@@ -75,12 +87,12 @@ public class ContactsFragment extends Fragment {
         @Override
         public Fragment getItem(int position) {
             switch (position) {
-                case 0:
+                case TAB_CHATS:
                     if (mChatList == null) {
                         mChatList = new ChatListFragment();
                     }
                     return mChatList;
-                case 1:
+                case TAB_CONTACTS:
                     if (mContacts == null) {
                         mContacts = new ContactListFragment();
                     }

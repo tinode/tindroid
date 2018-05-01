@@ -5,7 +5,7 @@ android {
 
     defaultConfig {
         applicationId "co.tinode.tindroid"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"

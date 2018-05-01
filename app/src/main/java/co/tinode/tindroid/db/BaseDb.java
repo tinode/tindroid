@@ -65,6 +65,7 @@ public class BaseDb extends SQLiteOpenHelper {
     public static BaseDb getInstance() {
         if (sInstance == null) {
             sInstance = new BaseDb(TindroidApp.getAppContext());
+            sInstance.mAcc = AccountDb.getActiveAccount(sInstance.getReadableDatabase());
             sInstance.mStore = new SqlStore(sInstance);
         }
         return sInstance;
@@ -194,6 +195,11 @@ public class BaseDb extends SQLiteOpenHelper {
                 throw new IllegalStateException("Illegal account assignment");
             }
         }
+    }
+
+    public void logout() {
+        AccountDb.deactivateAll(sInstance.getWritableDatabase());
+        setUid(null);
     }
 
     public boolean isReady() {

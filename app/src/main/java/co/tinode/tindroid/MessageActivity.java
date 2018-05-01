@@ -63,7 +63,7 @@ public class MessageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -135,7 +135,7 @@ public class MessageActivity extends AppCompatActivity {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
-            Log.e(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+            Log.i(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
             mTopic = new Topic<>(tinode, mTopicName, null);
         }
         mTopic.setListener(new TListener());
@@ -225,8 +225,11 @@ public class MessageActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
+        if (mTopic == null || !mTopic.isValid()) {
+            return false;
+        }
 
+        int id = item.getItemId();
         switch (id) {
             case R.id.action_view_contact: {
                 showFragment(FRAGMENT_INFO, false, null);
@@ -412,5 +415,4 @@ public class MessageActivity extends AppCompatActivity {
 
         }
     }
-
 }

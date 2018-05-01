@@ -27,6 +27,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
@@ -79,7 +80,7 @@ public class AccountInfoFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        MeTopic<VCard, String, String> me = (MeTopic<VCard, String, String>) Cache.getTinode().getMeTopic();
+        MeTopic<VCard, String> me = Cache.getTinode().getMeTopic();
         if (me != null) {
             final AppCompatActivity activity = (AppCompatActivity) getActivity();
 
@@ -195,7 +196,7 @@ public class AccountInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditAccountTitle() {
-        final MeTopic<VCard, String, String> me = (MeTopic<VCard, String, String>) Cache.getTinode().getMeTopic();
+        final MeTopic<VCard, String> me = Cache.getTinode().getMeTopic();
         VCard pub = me.getPub();
         final String title = pub == null ? null : pub.fn;
         final Activity activity = getActivity();
@@ -243,6 +244,7 @@ public class AccountInfoFragment extends Fragment {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        BaseDb.getInstance().logout();
                         Cache.invalidate();
                         startActivity(new Intent(activity, LoginActivity.class));
                         activity.finish();
@@ -253,7 +255,7 @@ public class AccountInfoFragment extends Fragment {
 
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        final MeTopic<VCard, ?, ?> me = (MeTopic<VCard, ?, ?>) Cache.getTinode().getMeTopic();
+        final MeTopic<VCard, ?> me = Cache.getTinode().getMeTopic();
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
             UiUtils.updateAvatar(getActivity(), me, data);
         }

@@ -85,7 +85,9 @@ public class Topic<Pu,Pr> implements LocalData {
     // to the first few digits of sqrt(2)
     protected Date mSubsUpdated = null;
 
+    // The topic is subscribed/online.
     protected boolean mAttached = false;
+
     protected Listener<Pu,Pr> mListener = null;
 
     // Timestamp of the last key press that the server was notified of, milliseconds
@@ -565,8 +567,12 @@ public class Topic<Pu,Pr> implements LocalData {
         }
 
         final String topicName = getName();
+        final boolean newTopic;
         if (mTinode.getTopic(topicName) == null) {
             mTinode.registerTopic(this);
+            newTopic = true;
+        } else {
+            newTopic = false;
         }
 
         if (!mTinode.isConnected()) {
@@ -601,7 +607,18 @@ public class Topic<Pu,Pr> implements LocalData {
                         }
                         return null;
                     }
-                }, null);
+                }, new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                        if (newTopic && err instanceof ServerResponseException) {
+                            ServerResponseException sre = (ServerResponseException) err;
+                            if (sre.getCode() >= 400 && sre.getCode() < 500) {
+                                mTinode.unregisterTopic(topicName);
+                            }
+                        }
+                        return null;
+                    }
+                });
     }
 
     public MetaGetBuilder getMetaGetBuilder() {
@@ -1202,8 +1219,14 @@ public class Topic<Pu,Pr> implements LocalData {
         return mSubs != null ? mSubs.values() : null;
     }
 
+    // Check if topic is subscribed/online.
     public boolean isAttached() {
         return mAttached;
+    }
+
+    // Check if topic is valid;
+    public boolean isValid() {
+        return mStore != null;
     }
 
     /**

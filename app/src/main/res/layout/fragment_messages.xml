@@ -84,4 +84,20 @@
 
     </android.support.v4.widget.SwipeRefreshLayout>
 
+    <TextView
+        android:id="@+id/blockingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="1dp"
+        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_alignLeft="@+id/swipe_refresher"
+        android:layout_alignTop="@+id/swipe_refresher"
+        android:layout_alignRight="@+id/swipe_refresher"
+        android:layout_alignBottom="@+id/swipe_refresher"
+        android:layout_alignStart="@+id/swipe_refresher"
+        android:layout_alignEnd="@+id/swipe_refresher"
+        android:visibility="gone"
+        android:text="@string/topic_not_found_or_invalid"/>
+
 </RelativeLayout>

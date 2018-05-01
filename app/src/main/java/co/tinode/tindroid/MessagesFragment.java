@@ -81,7 +81,6 @@ public class MessagesFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -97,13 +96,12 @@ public class MessagesFragment extends Fragment {
         final MessageActivity activity = (MessageActivity) getActivity();
 
         LinearLayoutManager lm = new LinearLayoutManager(activity);
-        // lm.setReverseLayout(true);
         lm.setStackFromEnd(true);
 
-        mMessageList = (RecyclerView) activity.findViewById(R.id.messages_container);
+        mMessageList = activity.findViewById(R.id.messages_container);
         mMessageList.setLayoutManager(lm);
 
-        mRefresher = (SwipeRefreshLayout) activity.findViewById(R.id.swipe_refresher);
+        mRefresher = activity.findViewById(R.id.swipe_refresher);
 
         mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
         mMessageList.setAdapter(mMessagesAdapter);
@@ -111,6 +109,11 @@ public class MessagesFragment extends Fragment {
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                if (mTopic == null || !mTopic.isValid()) {
+                    mRefresher.setRefreshing(false);
+                    return;
+                }
+
                 if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
                     Log.d(TAG, "Calling server for more data");
                     try {
@@ -209,22 +212,32 @@ public class MessagesFragment extends Fragment {
         }
 
         mTopic = Cache.getTinode().getTopic(mTopicName);
+        final Activity activity = getActivity();
+        if (mTopic != null && mTopic.isValid()) {
+            // Log.d(TAG, "Topic is NOT NULL and VALID");
+            setHasOptionsMenu(true);
+            activity.findViewById(R.id.blockingMessage).setVisibility(View.GONE);
 
-        ((TextView) getActivity().findViewById(R.id.editMessage))
-                .setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+            ((TextView) activity.findViewById(R.id.editMessage))
+                    .setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
 
-        // Check periodically if all messages were read;
-        mNoteTimer = new Timer();
-        mNoteTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                sendReadNotification();
-            }
-        }, READ_DELAY, READ_DELAY);
+            // Check periodically if all messages were read;
+            mNoteTimer = new Timer();
+            mNoteTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    sendReadNotification();
+                }
+            }, READ_DELAY, READ_DELAY);
 
-        mRefresher.setRefreshing(false);
+            mRefresher.setRefreshing(false);
 
-        runLoader();
+            runLoader();
+        } else {
+            // Log.d(TAG, "Topic is null or invalid");
+            setHasOptionsMenu(false);
+            activity.findViewById(R.id.blockingMessage).setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -232,8 +245,10 @@ public class MessagesFragment extends Fragment {
         super.onPause();
 
         // Stop reporting read messages
-        mNoteTimer.cancel();
-        mNoteTimer = null;
+        if (mNoteTimer != null) {
+            mNoteTimer.cancel();
+            mNoteTimer = null;
+        }
     }
 
     @Override

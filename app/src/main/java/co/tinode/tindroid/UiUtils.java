@@ -45,6 +45,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -143,23 +144,32 @@ public class UiUtils {
 
     static void setupToolbar(final Activity activity, final VCard pub,
                              final String topicName, final boolean online) {
-        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
         }
-        if (pub != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+    /*
+        Menu menu = toolbar.getMenu();
+        for (int i = 0; i < menu.size(); i++) {
+            Log.d(TAG, "Hiding menu item");
+            MenuItem mi = menu.getItem(i);
+            mi.setVisible(false);
+            mi.setEnabled(false);
+        }
+    */
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (pub != null) {
                     toolbar.setTitle(" " + pub.fn);
                     constructToolbarLogo(activity, pub.getBitmap(), pub.fn, topicName, online);
+                } else {
+                    toolbar.setTitle(R.string.app_name);
+                    toolbar.setLogo(null);
                 }
-            });
-
-        } else {
-            toolbar.setLogo(null);
-            toolbar.setTitle(R.string.app_name);
-        }
+            }
+        });
     }
 
     // 0. [Avatar or LetterTileDrawable] 1. [Online indicator] 2. [Typing indicator]

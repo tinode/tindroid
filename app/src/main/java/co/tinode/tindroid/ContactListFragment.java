@@ -479,7 +479,7 @@ public class ContactListFragment extends ListFragment {
     }
 
     /**
-     * Refresh single row in the list view. Row is identieid by the item ID
+     * Refresh single row in the list view. Row is identified by the item ID
      *
      * @param id id of the row to refresh
      * @return true if it was refreshed, false otherwise (i.e. the item

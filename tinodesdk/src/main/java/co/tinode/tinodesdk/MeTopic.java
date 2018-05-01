@@ -16,7 +16,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * MeTopic handles invites and manages contact list
  */
-public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
+public class MeTopic<Pu, Pr> extends Topic<Pu, Pr> {
     private static final String TAG = "MeTopic";
 
     public MeTopic(Tinode tinode, Listener<Pu, Pr> l) {
