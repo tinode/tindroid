@@ -115,7 +115,7 @@ public class MessagesFragment extends Fragment {
                 }
 
                 if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
-                    Log.d(TAG, "Calling server for more data");
+                    // Log.d(TAG, "Calling server for more data");
                     try {
                         mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build())
                                 .thenApply(
@@ -214,12 +214,14 @@ public class MessagesFragment extends Fragment {
         mTopic = Cache.getTinode().getTopic(mTopicName);
         final Activity activity = getActivity();
         if (mTopic != null && mTopic.isValid()) {
-            // Log.d(TAG, "Topic is NOT NULL and VALID");
+            // Log.d(TAG, "Topic is NOT NULL and VALID " + mTopic.getName());
             setHasOptionsMenu(true);
             activity.findViewById(R.id.blockingMessage).setVisibility(View.GONE);
 
-            ((TextView) activity.findViewById(R.id.editMessage))
-                    .setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+            TextView editMessage = activity.findViewById(R.id.editMessage);
+
+            editMessage.setEnabled(true);
+            editMessage.setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
 
             // Check periodically if all messages were read;
             mNoteTimer = new Timer();
@@ -237,6 +239,7 @@ public class MessagesFragment extends Fragment {
             // Log.d(TAG, "Topic is null or invalid");
             setHasOptionsMenu(false);
             activity.findViewById(R.id.blockingMessage).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.editMessage).setEnabled(false);
         }
     }
 
@@ -372,7 +375,7 @@ public class MessagesFragment extends Fragment {
                         Uri uri = data.getData();
                         String fname = null;
                         Long fsize = 0L;
-                        String mimeType = activity.getContentResolver().getType(uri);
+                        String mimeType = (uri != null ? activity.getContentResolver().getType(uri) : null);
                         if (mimeType == null) {
                             mimeType = UiUtils.getMimeType(uri);
                             String path = UiUtils.getPath(activity, uri);

@@ -295,7 +295,6 @@ public class UiUtils {
             @Override
             public void run(AccountManagerFuture<Bundle> future) {
                 Bundle result = null;
-
                 try {
                     result = future.getResult(); // This blocks until the future is ready.
                 } catch (OperationCanceledException e) {
@@ -1064,6 +1063,10 @@ public class UiUtils {
     }
 
     public static String getMimeType(Uri uri) {
+        if (uri == null) {
+            return null;
+        }
+
         MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
         String ext = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
         if (mimeTypeMap.hasExtension(ext)) {
