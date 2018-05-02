@@ -616,7 +616,8 @@ public class Topic<Pu,Pr> implements LocalData {
                                 mTinode.unregisterTopic(topicName);
                             }
                         }
-                        return null;
+                        // Rethrow exception to trigger the next failure handler.
+                        throw err;
                     }
                 });
     }

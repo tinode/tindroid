@@ -40,6 +40,7 @@ public class MessageActivity extends AppCompatActivity {
     private static final String TAG = "MessageActivity";
 
     static final String FRAGMENT_MESSAGES = "msg";
+    static final String FRAGMENT_INVALID ="invalid";
     static final String FRAGMENT_INFO = "info";
     static final String FRAGMENT_ADD_TOPIC = "add_topic";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
@@ -72,7 +73,7 @@ public class MessageActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (isFragmentVisible(FRAGMENT_EDIT_MEMBERS)) {
                     showFragment(FRAGMENT_INFO, false, null);
-                } else if (!isFragmentVisible(FRAGMENT_MESSAGES)) {
+                } else if (!isFragmentVisible(FRAGMENT_MESSAGES) && !isFragmentVisible(FRAGMENT_INVALID)) {
                     showFragment(FRAGMENT_MESSAGES, false, null);
                 } else {
                     Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
@@ -98,7 +99,7 @@ public class MessageActivity extends AppCompatActivity {
         final Intent intent = getIntent();
 
         // Check if the activity was launched by internally-generated intent.
-        String oldTopicName = mTopicName;
+        final String oldTopicName = mTopicName;
         mTopicName = intent.getStringExtra("topic");
 
         if (TextUtils.isEmpty(mTopicName)) {
@@ -153,6 +154,8 @@ public class MessageActivity extends AppCompatActivity {
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                                 mTopicName, mTopic.getOnline());
+                        showFragment(FRAGMENT_MESSAGES, false, null);
+
                         mMessageSender.resume();
                         // Submit unsent messages for processing.
                         mMessageSender.submit(new Runnable() {
@@ -166,18 +169,23 @@ public class MessageActivity extends AppCompatActivity {
                         });
                         return null;
                     }
-                }, mFailureListener);
+                }, new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                        showFragment(FRAGMENT_INVALID, false, null);
+                        return null;
+                    }
+                });
             } catch (NotConnectedException ignored) {
                 Log.d(TAG, "Offline mode, ignore");
             } catch (Exception ex) {
                 Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "something went wrong", ex);
             }
-        }
-
-
-        if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
-            showFragment(FRAGMENT_MESSAGES, false, null);
+        } else {
+            if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
+                showFragment(FRAGMENT_MESSAGES, false, null);
+            }
         }
     }
 
@@ -268,6 +276,9 @@ public class MessageActivity extends AppCompatActivity {
                     break;
                 case FRAGMENT_VIEW_IMAGE:
                     fragment = new ImageViewFragment();
+                    break;
+                case FRAGMENT_INVALID:
+                    fragment = new InvalidTopicFragment();
                     break;
             }
         }

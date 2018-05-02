@@ -9,8 +9,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -64,14 +62,11 @@ public class MessagesFragment extends Fragment {
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     // private static final int RECV_DELAY = 500;
     private static final int READ_DELAY = 1000;
-
+    protected Topic<VCard, String> mTopic;
     private MessagesListAdapter mMessagesAdapter;
     private RecyclerView mMessageList;
     private SwipeRefreshLayout mRefresher;
-
     private String mTopicName = null;
-    protected Topic<VCard, String> mTopic;
-
     private Timer mNoteTimer = null;
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -109,11 +104,6 @@ public class MessagesFragment extends Fragment {
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if (mTopic == null || !mTopic.isValid()) {
-                    mRefresher.setRefreshing(false);
-                    return;
-                }
-
                 if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
                     // Log.d(TAG, "Calling server for more data");
                     try {
@@ -126,7 +116,7 @@ public class MessagesFragment extends Fragment {
                                                 return null;
                                             }
                                         },
-                                        new PromisedReply.FailureListener<ServerMessage>(){
+                                        new PromisedReply.FailureListener<ServerMessage>() {
                                             @Override
                                             public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                                                 mRefresher.setRefreshing(false);
@@ -173,17 +163,18 @@ public class MessagesFragment extends Fragment {
         // Send message on Enter
         editor.setOnEditorActionListener(
                 new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                sendText();
-                return true;
-            }
-        });
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        sendText();
+                        return true;
+                    }
+                });
 
         // Send notification on key presses
         editor.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
 
             @SuppressWarnings("unchecked")
             @Override
@@ -194,7 +185,8 @@ public class MessagesFragment extends Fragment {
             }
 
             @Override
-            public void afterTextChanged(Editable editable) {}
+            public void afterTextChanged(Editable editable) {
+            }
         });
     }
 
@@ -212,35 +204,23 @@ public class MessagesFragment extends Fragment {
         }
 
         mTopic = Cache.getTinode().getTopic(mTopicName);
-        final Activity activity = getActivity();
-        if (mTopic != null && mTopic.isValid()) {
-            // Log.d(TAG, "Topic is NOT NULL and VALID " + mTopic.getName());
-            setHasOptionsMenu(true);
-            activity.findViewById(R.id.blockingMessage).setVisibility(View.GONE);
 
-            TextView editMessage = activity.findViewById(R.id.editMessage);
+        setHasOptionsMenu(true);
 
-            editMessage.setEnabled(true);
-            editMessage.setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+        ((TextView) getActivity().findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
 
-            // Check periodically if all messages were read;
-            mNoteTimer = new Timer();
-            mNoteTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    sendReadNotification();
-                }
-            }, READ_DELAY, READ_DELAY);
+        // Check periodically if all messages were read;
+        mNoteTimer = new Timer();
+        mNoteTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                sendReadNotification();
+            }
+        }, READ_DELAY, READ_DELAY);
 
-            mRefresher.setRefreshing(false);
+        mRefresher.setRefreshing(false);
 
-            runLoader();
-        } else {
-            // Log.d(TAG, "Topic is null or invalid");
-            setHasOptionsMenu(false);
-            activity.findViewById(R.id.blockingMessage).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.editMessage).setEnabled(false);
-        }
+        runLoader();
     }
 
     @Override
@@ -248,10 +228,8 @@ public class MessagesFragment extends Fragment {
         super.onPause();
 
         // Stop reporting read messages
-        if (mNoteTimer != null) {
-            mNoteTimer.cancel();
-            mNoteTimer = null;
-        }
+        mNoteTimer.cancel();
+        mNoteTimer = null;
     }
 
     @Override
