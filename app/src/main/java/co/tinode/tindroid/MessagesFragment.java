@@ -208,10 +208,12 @@ public class MessagesFragment extends Fragment {
 
         Activity activity = getActivity();
         if (mTopic.getAccessMode().isWriter()) {
+            Log.i(TAG, "Topic is Writer " + mTopic.getName());
             ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
         } else {
+            Log.i(TAG, "Topic is NOT writer " + mTopic.getName());
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
         }

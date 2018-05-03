@@ -82,6 +82,12 @@ public class Acs implements Serializable {
             }
             if (am.mode != null) {
                 change += mode.merge(am.mode) ? 1 : 0;
+            } else {
+                AcsHelper m2 = AcsHelper.and(want, given);
+                if (m2 != null) {
+                    change += m2.equals(mode) ? 0 : 1;
+                    mode = m2;
+                }
             }
         }
         return change > 0;
@@ -98,6 +104,12 @@ public class Acs implements Serializable {
             }
             if (am.get("mode") != null) {
                 change += mode.merge(new AcsHelper(am.get("mode"))) ? 1 : 0;
+            } else {
+                AcsHelper m2 = AcsHelper.and(want, given);
+                if (m2 != null) {
+                    change += m2.equals(mode) ? 0 : 1;
+                    mode = m2;
+                }
             }
         }
         return change > 0;

@@ -36,6 +36,10 @@ public class AcsHelper implements Serializable {
         a = ah != null ? ah.a : null;
     }
 
+    public AcsHelper(Integer a) {
+        this.a = a;
+    }
+
     @Override
     public String toString() {
         return a == null ? "" : encode(a);
@@ -245,5 +249,12 @@ public class AcsHelper implements Serializable {
             }
         }
         return false;
+    }
+
+    public static AcsHelper and(AcsHelper a1, AcsHelper a2) {
+        if (a1 != null && !a1.isInvalid() && a2 != null && !a2.isInvalid()) {
+            return new AcsHelper(a1.a & a2.a);
+        }
+        return null;
     }
 }
