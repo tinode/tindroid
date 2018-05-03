@@ -202,12 +202,19 @@ public class MessagesFragment extends Fragment {
         if (mTopicName != null && !mTopicName.equals(oldTopicName)) {
             mMessagesAdapter.swapCursor(mTopicName, null);
         }
-
         mTopic = Cache.getTinode().getTopic(mTopicName);
 
         setHasOptionsMenu(true);
 
-        ((TextView) getActivity().findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+        Activity activity = getActivity();
+        if (mTopic.getAccessMode().isWriter()) {
+            ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
+        } else {
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+        }
 
         // Check periodically if all messages were read;
         mNoteTimer = new Timer();

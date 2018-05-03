@@ -134,10 +134,12 @@ public class MessageActivity extends AppCompatActivity {
         mTopic = tinode.getTopic(mTopicName);
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
+            showFragment(FRAGMENT_MESSAGES, false, null);
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.i(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
             mTopic = new Topic<>(tinode, mTopicName, null);
+            showFragment(FRAGMENT_INVALID, false, null);
         }
         mTopic.setListener(new TListener());
 
@@ -181,10 +183,6 @@ public class MessageActivity extends AppCompatActivity {
             } catch (Exception ex) {
                 Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "something went wrong", ex);
-            }
-        } else {
-            if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
-                showFragment(FRAGMENT_MESSAGES, false, null);
             }
         }
     }

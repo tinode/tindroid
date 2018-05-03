@@ -191,4 +191,5 @@
     <string name="addByIdHint">Enter topic or user ID</string>
     <string name="failed_empty_id">ID is required</string>
     <string name="topic_not_found_or_invalid">Topic not found or invalid</string>
+    <string name="sending_disabled">Not available</string>
 </resources>
