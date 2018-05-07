@@ -12,6 +12,7 @@ public class MsgServerMeta<Pu, Pr> {
     public Description<Pu,Pr> desc;
     public Subscription<Pu,Pr>[] sub;
     public DelValues del;
+    public String[] tags;
 
     public MsgServerMeta() {
     }

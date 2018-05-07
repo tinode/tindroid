@@ -38,7 +38,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version.
      */
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     /**
      * Filename for SQLite file.
      */
@@ -166,6 +166,29 @@ public class BaseDb extends SQLiteOpenHelper {
             if (parts.length == 2) {
                 result = new Defacs(parts[0], parts[1]);
             }
+        }
+        return result;
+    }
+
+    static String serializeTags(String[] tags) {
+        String result = null;
+        if (tags != null) {
+            StringBuilder sb = new StringBuilder();
+            for (String tag : tags) {
+                if (sb.length() > 0) {
+                    sb.append(',');
+                }
+                sb.append(tag);
+            }
+            result = sb.toString();
+        }
+        return result;
+    }
+
+    static String[] deserializeTags(String m) {
+        String[] result = null;
+        if (m != null && m.length() > 0) {
+            result = m.split(",");
         }
         return result;
     }

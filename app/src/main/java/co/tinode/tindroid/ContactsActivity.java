@@ -17,7 +17,6 @@ import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.Subscription;
@@ -95,7 +94,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         UiUtils.setupToolbar(this, null, null, false);
 
-        MeTopic<VCard, String> me = tinode.getMeTopic();
+        MeTopic<VCard> me = tinode.getMeTopic();
         if (me == null) {
             // The very first launch of the app.
             me = new MeTopic<>(tinode, mMeTopicListener);
@@ -121,7 +120,7 @@ public class ContactsActivity extends AppCompatActivity implements
                 /* offline - ignored */
                 Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
             } catch (Exception err) {
-                Log.i(TAG, "Subscription failed " + err.getMessage());
+                Log.i(TAG, "Subscription failed", err);
                 Toast.makeText(this,
                         "Failed to attach", Toast.LENGTH_LONG).show();
             }
@@ -179,7 +178,7 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.activityVisible(focus);
     }
 
-    private class MeListener extends Topic.Listener<VCard, String> {
+    private class MeListener extends Topic.Listener<VCard,Object> {
 
         @Override
         public void onInfo(MsgServerInfo info) {
@@ -198,14 +197,14 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onMetaSub(final Subscription<VCard, String> sub) {
+        public void onMetaSub(final Subscription<VCard,Object> sub) {
             if (sub.pub != null) {
                 sub.pub.constructBitmap();
             }
         }
 
         @Override
-        public void onMetaDesc(final Description<VCard, String> desc) {
+        public void onMetaDesc(final Description<VCard, Object> desc) {
             if (desc.pub != null) {
                 desc.pub.constructBitmap();
             }
@@ -218,7 +217,7 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onContUpdate(final Subscription<VCard, String> sub) {
+        public void onContUpdate(final Subscription<VCard, Object> sub) {
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
         }

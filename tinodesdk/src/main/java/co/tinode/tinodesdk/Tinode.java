@@ -1159,7 +1159,7 @@ public class Tinode {
 
         Topic<Pu,Pr> topic;
         if (TOPIC_ME.equals(meta.topic)) {
-            topic = new MeTopic<>(this, meta.desc);
+            topic = new MeTopic(this, meta.desc);
         } else {
             topic = new Topic<>(this, meta.topic, meta.desc);
         }
@@ -1177,6 +1177,14 @@ public class Tinode {
         return (MeTopic) getTopic(TOPIC_ME);
     }
 
+    /**
+     * Obtain a 'fnd' topic ({@link FndTopic}).
+     *
+     * @return 'me' topic or null if 'me' has never been subscribed to
+     */
+    public FndTopic getFndTopic() {
+        return (FndTopic) getTopic(TOPIC_FND);
+    }
     /**
      * Obtain an existing topic by name
      *

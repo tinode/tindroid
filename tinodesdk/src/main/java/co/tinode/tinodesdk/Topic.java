@@ -85,6 +85,9 @@ public class Topic<Pu,Pr> implements LocalData {
     // to the first few digits of sqrt(2)
     protected Date mSubsUpdated = null;
 
+    // Tags: user and topic discovery
+    protected String[] mTags;
+
     // The topic is subscribed/online.
     protected boolean mAttached = false;
 
@@ -362,6 +365,25 @@ public class Topic<Pu,Pr> implements LocalData {
                 mListener.onSubsUpdated();
             }
         }
+
+        if (meta.tags != null) {
+            update(meta.tags);
+            if (mListener != null) {
+                mListener.onMetaTags(mTags);
+            }
+        }
+    }
+
+    /**
+     * Update topic parameters from a tags array.
+     *
+     * @param tags updated topic  tags
+     */
+    protected void update(String[] tags) {
+        this.mTags = tags;
+        if (mStore != null) {
+            mStore.topicUpdate(this);
+        }
     }
 
     /**
@@ -434,6 +456,13 @@ public class Topic<Pu,Pr> implements LocalData {
         if (recv > mDesc.recv) {
             mDesc.recv = recv;
         }
+    }
+
+    public String[] getTags() {
+        return mTags;
+    }
+    public void setTags(String[] tags) {
+        mTags = tags;
     }
 
     public Pu getPub() {
@@ -547,10 +576,10 @@ public class Topic<Pu,Pr> implements LocalData {
         MsgSetMeta<Pu,Pr> mset = null;
         if (isNew() && (mDesc.pub != null || mDesc.priv != null)) {
             // If this is a new topic, sync topic description
-            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null);
+            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, null);
         }
         return subscribe(mset, getMetaGetBuilder()
-                .withGetDesc().withGetData().withGetSub().build());
+                .withGetDesc().withGetData().withGetSub().withGetTags().build());
     }
 
     /**
@@ -803,7 +832,7 @@ public class Topic<Pu,Pr> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<Pu,Pr> desc) throws Exception {
-        return setMeta(new MsgSetMeta<>(desc, null));
+        return setMeta(new MsgSetMeta<>(desc, null, null));
     }
 
     /**
@@ -838,7 +867,7 @@ public class Topic<Pu,Pr> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) throws Exception {
-        return setMeta(new MsgSetMeta<Pu,Pr>(null, sub));
+        return setMeta(new MsgSetMeta<Pu,Pr>(null, sub, null));
     }
 
     /**
@@ -1343,7 +1372,9 @@ public class Topic<Pu,Pr> implements LocalData {
         if (meta.del != null) {
             routeMetaDel(meta.del.clear, meta.del.delseq);
         }
-
+        if (meta.tags != null) {
+            routeMetaTags(meta.tags);
+        }
         if (mListener != null) {
             mListener.onMeta(meta);
         }
@@ -1414,6 +1445,15 @@ public class Topic<Pu,Pr> implements LocalData {
             mListener.onData(null);
         }
     }
+
+    protected void routeMetaTags(String[] tags) {
+        update(tags);
+
+        if (mListener != null) {
+            mListener.onMetaTags(tags);
+        }
+    }
+
 
     protected void routeData(MsgServerData data) {
         if (mStore != null) {
@@ -1508,6 +1548,8 @@ public class Topic<Pu,Pr> implements LocalData {
         public void onMetaSub(Subscription<PPu,PPr> sub) {}
         /** {meta what="desc"} message received */
         public void onMetaDesc(Description<PPu,PPr> desc) {}
+        /** {meta what="tags"} message received */
+        public void onMetaTags(String[] tags) {}
         /** {meta what="sub"} message received and all subs were processed */
         public void onSubsUpdated() {}
         /** {pres} received */
@@ -1606,6 +1648,11 @@ public class Topic<Pu,Pr> implements LocalData {
 
         public MetaGetBuilder withGetDel() {
             return withGetLaterDel(null);
+        }
+
+        public MetaGetBuilder withGetTags() {
+            meta.setTags();
+            return this;
         }
 
         public MsgGetMeta build() {

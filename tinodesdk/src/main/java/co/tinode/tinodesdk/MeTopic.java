@@ -9,21 +9,23 @@ import java.util.Date;
 import java.util.List;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * MeTopic handles invites and manages contact list
+ * MeTopic manages contact list. MeTopic::Private is unused.
  */
-public class MeTopic<Pu, Pr> extends Topic<Pu, Pr> {
+public class MeTopic<Pu> extends Topic<Pu,Object> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<Pu, Pr> l) {
+    public MeTopic(Tinode tinode, Listener<Pu,Object> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
-    protected MeTopic(Tinode tinode, Description<Pu, Pr> desc) {
+    protected MeTopic(Tinode tinode, Description<Pu,Object> desc) {
         super(tinode, Tinode.TOPIC_ME, desc);
     }
 
@@ -33,37 +35,48 @@ public class MeTopic<Pu, Pr> extends Topic<Pu, Pr> {
     }
 
     @Override
-    public void setTypes(Class<?> typeOfPu, Class<?> typeOfPr) {
-        this.setTypes(Tinode.getTypeFactory().constructType(typeOfPu),
-                Tinode.getTypeFactory().constructType(typeOfPr));
-    }
-
-    @Override
-    protected void addSubToCache(Subscription<Pu, Pr> sub) {
+    protected void addSubToCache(Subscription sub) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void removeSubFromCache(Subscription<Pu, Pr> sub) {
+    protected void removeSubFromCache(Subscription sub) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Subscription<Pu, Pr> getSubscription(String key) {
+    public PromisedReply<ServerMessage> publish(Drafty content) throws Exception {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Collection<Subscription<Pu, Pr>> getSubscriptions() {
+    public PromisedReply<ServerMessage> publish(String content) throws Exception {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void routeMetaSub(MsgServerMeta<Pu, Pr> meta) {
+    @SuppressWarnings("unchecked")
+    public Subscription getSubscription(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Collection<Subscription<Pu,Object>> getSubscriptions() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Object getPriv() {
+        return null;
+    }
+    public void setPriv(Object priv) { /* do nothing */ }
+
+    @Override
+    @SuppressWarnings("un-checked")
+    protected void routeMetaSub(MsgServerMeta<Pu,Object> meta) {
         // Log.d(TAG, "Me:routeMetaSub");
-        for (Subscription<Pu, Pr> sub : meta.sub) {
+        for (Subscription sub : meta.sub) {
             // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
-            Topic<Pu, Pr> topic = mTinode.getTopic(sub.topic);
+            Topic topic = mTinode.getTopic(sub.topic);
             if (topic != null) {
                 // This is an existing topic.
                 if (sub.deleted != null) {

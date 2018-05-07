@@ -102,6 +102,10 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_SERIALIZED_TYPES = "stypes";
     /**
+     * Topic tags, array of strings.
+     */
+    public static final String COLUMN_NAME_TAGS = "tags";
+    /**
      * Public topic description, blob
      */
     public static final String COLUMN_NAME_PUBLIC = "pub";
@@ -130,8 +134,9 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
     static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
     static final int COLUMN_IDX_SERIALIZED_TYPES = 18;
-    static final int COLUMN_IDX_PUBLIC = 19;
-    static final int COLUMN_IDX_PRIVATE = 20;
+    static final int COLUMN_IDX_TAGS = 19;
+    static final int COLUMN_IDX_PUBLIC = 20;
+    static final int COLUMN_IDX_PRIVATE = 21;
 
     /**
      * SQL statement to create Messages table
@@ -158,6 +163,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_MIN_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_MAX_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_SERIALIZED_TYPES + " TEXT," +
+                    COLUMN_NAME_TAGS + " TEXT," +
                     COLUMN_NAME_PUBLIC + " BLOB," +
                     COLUMN_NAME_PRIVATE + " BLOB)";
     /**
@@ -212,6 +218,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
         values.put(COLUMN_NAME_SERIALIZED_TYPES, topic.getSerializedTypes());
+        values.put(COLUMN_NAME_TAGS, BaseDb.serializeTags(topic.getTags()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
@@ -261,6 +268,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
+        values.put(COLUMN_NAME_TAGS, BaseDb.serializeTags(topic.getTags()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 

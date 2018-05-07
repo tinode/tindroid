@@ -14,11 +14,13 @@ public class MsgGetMeta {
     private static final int SUB_SET = 0x02;
     private static final int DATA_SET = 0x04;
     private static final int DEL_SET = 0x08;
+    private static final int TAGS_SET = 0x10;
 
     public static final String DESC = "desc";
     public static final String SUB = "sub";
     public static final String DATA = "data";
     public static final String DEL = "del";
+    public static final String TAGS = "tags";
 
     @JsonIgnore
     private int mSet = 0;
@@ -33,7 +35,7 @@ public class MsgGetMeta {
      * Generate query to get everything
      */
     public MsgGetMeta() {
-        this.what = DESC + " " + SUB + " " + DATA + " " + DEL;
+        this.what = DESC + " " + SUB + " " + DATA + " " + DEL + " " + TAGS;
     }
 
     /**
@@ -43,11 +45,14 @@ public class MsgGetMeta {
      * @param sub request subscriptions
      * @param data request data messages
      */
-    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data, MetaGetData del) {
+    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data, MetaGetData del, Boolean tags) {
         this.desc = desc;
         this.sub = sub;
         this.data = data;
         this.del = del;
+        if (tags != null && tags) {
+            this.mSet |= TAGS_SET;
+        }
         buildWhat();
     }
 
@@ -62,7 +67,8 @@ public class MsgGetMeta {
                 " desc=[" + (desc != null ? desc.toString() : "null") + "]," +
                 " sub=[" + (sub != null? sub.toString() : "null") + "]," +
                 " data=[" + (data != null ? data.toString() : "null") + "]," +
-                " del=[" + (del != null ? del.toString() : "null") + "]";
+                " del=[" + (del != null ? del.toString() : "null") + "]" +
+                " tags=[" + ((mSet & TAGS_SET) != 0 ? "set" : "null") + "]";
     }
 
 
@@ -104,6 +110,11 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    public void setTags() {
+        mSet |= TAGS_SET;
+        buildWhat();
+    }
+
     @JsonIgnore
     private void buildWhat() {
         List<String> parts = new LinkedList<>();
@@ -120,6 +131,9 @@ public class MsgGetMeta {
         }
         if (del != null || (mSet & DEL_SET) != 0) {
             parts.add(DEL);
+        }
+        if ((mSet & TAGS_SET) != 0) {
+            parts.add(TAGS);
         }
 
         if (!parts.isEmpty()) {
@@ -145,5 +159,9 @@ public class MsgGetMeta {
 
     public static MsgGetMeta del() {
         return new MsgGetMeta(DEL);
+    }
+
+    public static MsgGetMeta tags() {
+        return new MsgGetMeta(TAGS);
     }
 }

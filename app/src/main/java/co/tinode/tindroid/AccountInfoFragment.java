@@ -32,6 +32,7 @@ import co.tinode.tindroid.media.VCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.Topic;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -80,7 +81,7 @@ public class AccountInfoFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        MeTopic<VCard, String> me = Cache.getTinode().getMeTopic();
+        MeTopic<VCard> me = Cache.getTinode().getMeTopic();
         if (me != null) {
             final AppCompatActivity activity = (AppCompatActivity) getActivity();
 
@@ -196,7 +197,7 @@ public class AccountInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditAccountTitle() {
-        final MeTopic<VCard, String> me = Cache.getTinode().getMeTopic();
+        final MeTopic<VCard> me = (MeTopic<VCard>) Cache.getTinode().getMeTopic();
         VCard pub = me.getPub();
         final String title = pub == null ? null : pub.fn;
         final Activity activity = getActivity();
@@ -205,14 +206,14 @@ public class AccountInfoFragment extends Fragment {
         final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_account, null);
         builder.setView(editor).setTitle(R.string.edit_account);
 
-        final EditText titleEditor = (EditText) editor.findViewById(R.id.editTitle);
+        final EditText titleEditor = editor.findViewById(R.id.editTitle);
         titleEditor.setText(title);
 
         builder
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        UiUtils.updateTitle(getActivity(), me, titleEditor.getText().toString(), null);
+                        UiUtils.updateTitle(getActivity(), (Topic) me, titleEditor.getText().toString(), null);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -255,7 +256,7 @@ public class AccountInfoFragment extends Fragment {
 
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        final MeTopic<VCard, ?> me = Cache.getTinode().getMeTopic();
+        final MeTopic me = Cache.getTinode().getMeTopic();
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
             UiUtils.updateAvatar(getActivity(), me, data);
         }
