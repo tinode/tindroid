@@ -2,7 +2,6 @@ package co.tinode.tinodesdk;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerMeta;
@@ -10,10 +9,10 @@ import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 // Public is not used for Fnd, Private is a String.
-public class FndTopic<Pu> extends Topic<Pu,List<String>> {
+public class FndTopic<Pu> extends Topic<Pu,String> {
     private static final String TAG = "FndTopic";
 
-    public FndTopic(Tinode tinode, Listener<Pu,List<String>> l) {
+    public FndTopic(Tinode tinode, Listener<Pu,String> l) {
         super(tinode, Tinode.TOPIC_FND, l);
     }
 
@@ -40,7 +39,7 @@ public class FndTopic<Pu> extends Topic<Pu,List<String>> {
      * @param sub subscription to add to cache
      */
     @Override
-    protected void addSubToCache(Subscription<Pu, List<String>> sub) {
+    protected void addSubToCache(Subscription<Pu,String> sub) {
         if (mSubs == null) {
             mSubs = new HashMap<>();
         }
@@ -76,7 +75,7 @@ public class FndTopic<Pu> extends Topic<Pu,List<String>> {
     }
 
     @Override
-    public Collection<Subscription<Pu,List<String>>> getSubscriptions() {
+    public Collection<Subscription<Pu,String>> getSubscriptions() {
         return mSubs != null ? mSubs.values() : null;
     }
 }
