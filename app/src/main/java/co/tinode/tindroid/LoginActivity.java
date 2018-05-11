@@ -144,7 +144,7 @@ public class LoginActivity extends AppCompatActivity {
                                            @NonNull final int[] grantResults) {
         //
         if (requestCode == PERMISSIONS_REQUEST_GET_ACCOUNTS) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
                 Log.d(TAG, "Access granted");
             } else {
