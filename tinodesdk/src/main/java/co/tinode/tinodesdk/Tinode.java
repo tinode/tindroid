@@ -78,7 +78,7 @@ public class Tinode {
     private static final long NOTE_RECV_DELAY = 300L;
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.14";
+    private static final String VERSION = "0.15";
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
