@@ -1442,7 +1442,7 @@ public class Tinode {
          * @param msg message to be processed
          */
         @SuppressWarnings("unused, WeakerAccess")
-        public void onMessage(ServerMessage<?, ?, ?> msg) {
+        public void onMessage(ServerMessage<?, ?> msg) {
         }
 
         /**

@@ -49,14 +49,14 @@ public class ContactsManager {
      * sync request.
      */
     public static synchronized Date updateContacts(Context context, Account account,
-                                                   Collection<Subscription<VCard, String>> rawContacts,
+                                                   Collection<Subscription<VCard,?>> rawContacts,
                                                    Date lastSyncMarker, long invisibleGroupId) {
         Log.d(TAG, "ContactsManager got batch, count=" + rawContacts.size());
 
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
-        for (final Subscription<VCard, String> rawContact : rawContacts) {
+        for (final Subscription<VCard,?> rawContact : rawContacts) {
 
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
@@ -118,7 +118,7 @@ public class ContactsManager {
      * @param batchOperation allow us to batch together multiple operations
      *                       into a single provider call
      */
-    public static void addContact(Context context, Account account, Subscription<VCard, String> rawContact,
+    public static void addContact(Context context, Account account, Subscription<VCard,?> rawContact,
                                   long invisibleGroupId, BatchOperation batchOperation) {
         if (rawContact.pub == null) {
             return;
@@ -128,7 +128,6 @@ public class ContactsManager {
         String note;
         try {
             vc = rawContact.pub;
-            note = rawContact.priv;
         } catch (ClassCastException e) {
             return;
         }
@@ -150,7 +149,6 @@ public class ContactsManager {
                 .addPhone(vc.getPhoneByType(VCard.ContactType.HOME), Phone.TYPE_HOME)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.WORK), Phone.TYPE_WORK)
                 .addIm(rawContact.topic)
-                .addNote(note)
                 .addAvatar(vc.photo != null ? vc.photo.data : null)
                 .addToInvisibleGroup(invisibleGroupId);
 
@@ -179,14 +177,13 @@ public class ContactsManager {
      * @param batchOperation allow us to batch together multiple operations
      *                       into a single provider call
      */
-    public static void updateContact(Context context, ContentResolver resolver, Subscription<VCard, String> rawContact,
+    public static void updateContact(Context context, ContentResolver resolver, Subscription<VCard,?> rawContact,
                                      long rawContactId, BatchOperation batchOperation) {
         boolean existingCellPhone = false;
         boolean existingHomePhone = false;
         boolean existingWorkPhone = false;
         boolean existingEmail = false;
         boolean existingAvatar = false;
-        boolean existingNote = false;
 
         final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[]{String.valueOf(rawContactId)}, null);
@@ -200,7 +197,6 @@ public class ContactsManager {
         String note;
         try {
             vc = rawContact.pub;
-            note = rawContact.priv;
         } catch (ClassCastException e) {
             return;
         }
@@ -248,10 +244,6 @@ public class ContactsManager {
                         existingAvatar = true;
                         contactOp.updateAvatar(vc.photo != null ? vc.photo.data : null, uri);
                         break;
-                    case Note.CONTENT_ITEM_TYPE:
-                        existingNote = true;
-                        contactOp.updateNote(note, c.getString(DataQuery.COLUMN_NOTE), uri);
-                        break;
 
                 }
             } // while
@@ -277,10 +269,6 @@ public class ContactsManager {
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
             contactOp.addAvatar(vc.photo != null ? vc.photo.data : null);
-        }
-        // Add the avatar if we didn't update the existing avatar
-        if (!existingNote) {
-            contactOp.addNote(note);
         }
 
         // If we don't have a status profile, then create one.  This could
@@ -330,7 +318,7 @@ public class ContactsManager {
         return -1;
     }
 
-    public static Subscription<VCard, String> getStoredSubscription(ContentResolver resolver, String uid) {
+    public static Subscription<VCard,?> getStoredSubscription(ContentResolver resolver, String uid) {
         long id = lookupRawContact(resolver, uid);
         Log.d(TAG, "getStoredSubscription for '" + uid + "' lookupRawContact returned " + id);
         return getRawContact(resolver, id);
@@ -349,13 +337,12 @@ public class ContactsManager {
      * @param rawContactId the unique ID for the local contact
      * @return a User object containing info on that contact
      */
-    private static Subscription<VCard, String> getRawContact(ContentResolver resolver, long rawContactId) {
+    private static Subscription<VCard,?> getRawContact(ContentResolver resolver, long rawContactId) {
         if (rawContactId <= 0) {
             return null;
         }
 
         VCard vcard = new VCard();
-        String note = null;
 
         final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[]{String.valueOf(rawContactId)}, null);
@@ -387,9 +374,6 @@ public class ContactsManager {
                     case Email.CONTENT_ITEM_TYPE:
                         vcard.addEmail(c.getString(DataQuery.COLUMN_EMAIL_ADDRESS), VCard.TYPE_OTHER);
                         break;
-                    case Note.CONTENT_ITEM_TYPE:
-                        note = c.getString(DataQuery.COLUMN_EMAIL_ADDRESS);
-                        break;
                     case Photo.CONTENT_ITEM_TYPE:
                         vcard.photo = new AvatarPhoto(c.getBlob(DataQuery.COLUMN_AVATAR_IMAGE));
                         break;
@@ -399,10 +383,8 @@ public class ContactsManager {
             c.close();
         }
 
-        Subscription<VCard, String> rawContact = new Subscription<>();
+        Subscription<VCard,?> rawContact = new Subscription<>();
         rawContact.pub = vcard;
-        rawContact.priv = note;
-
         return rawContact;
     }
 

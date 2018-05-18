@@ -77,9 +77,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
 
             // Fetch locally stored contacts
-            Subscription<VCard, String> sender = ContactsManager.getStoredSubscription(getContentResolver(),
+            Subscription<VCard,?> sender = ContactsManager.getStoredSubscription(getContentResolver(),
                     data.get("xfrom"));
-            Subscription<VCard, String> topic = ContactsManager.getStoredSubscription(getContentResolver(),
+            Subscription<VCard,?> topic = ContactsManager.getStoredSubscription(getContentResolver(),
                     topicName);
 
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);

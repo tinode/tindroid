@@ -236,16 +236,6 @@ public class ContactOperations {
         return this;
     }
 
-    public ContactOperations addNote(String note) {
-        mValues.clear();
-        if (!TextUtils.isEmpty(note)) {
-            mValues.put(Note.NOTE, note);
-            mValues.put(Note.MIMETYPE, Note.CONTENT_ITEM_TYPE);
-            addInsertOp();
-        }
-        return this;
-    }
-
     /**
      * Updates contact's email
      *
