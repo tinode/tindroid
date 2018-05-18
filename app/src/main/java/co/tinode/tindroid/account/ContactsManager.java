@@ -27,7 +27,6 @@ import java.util.List;
 import co.tinode.tindroid.media.AvatarPhoto;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.media.VCard;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -65,7 +64,7 @@ public class ContactsManager {
                 currentSyncMarker = rawContact.updated;
             }
 
-            long rawContactId = lookupRawContact(resolver, rawContact.topic);
+            long rawContactId = lookupRawContact(resolver, rawContact.user);
             if (rawContact.deleted != null) {
                 if (rawContactId > 0) {
                     deleteContact(context, rawContactId, batchOperation);
@@ -132,28 +131,20 @@ public class ContactsManager {
             return;
         }
 
-        boolean aggregate = false;
-        // If this contact is a group topic, add it to invisble group. Otherwise keep it visible.
-        if (Topic.getTopicTypeByName(rawContact.topic) != Topic.TopicType.GRP) {
-            invisibleGroupId = -1;
-            aggregate = true;
-        }
-
         // Initiate adding data to contacts provider
         final ContactOperations contactOp = ContactOperations.createNewContact(
-                context, rawContact.topic, account.name, aggregate, batchOperation);
+                context, rawContact.user, account.name, true, batchOperation);
 
         contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
                 .addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.HOME), Phone.TYPE_HOME)
                 .addPhone(vc.getPhoneByType(VCard.ContactType.WORK), Phone.TYPE_WORK)
-                .addIm(rawContact.topic)
-                .addAvatar(vc.photo != null ? vc.photo.data : null)
-                .addToInvisibleGroup(invisibleGroupId);
+                .addIm(rawContact.user)
+                .addAvatar(vc.photo != null ? vc.photo.data : null);
 
         // Actually create our status profile.
-        contactOp.addProfileAction(rawContact.topic);
+        contactOp.addProfileAction(rawContact.user);
     }
 
     /**
@@ -274,7 +265,7 @@ public class ContactsManager {
         // If we don't have a status profile, then create one.  This could
         // happen for contacts that were created on the client - we don't
         // create the status profile until after the first sync...
-        final String serverId = rawContact.topic;
+        final String serverId = rawContact.user;
         final long profileId = lookupProfile(resolver, serverId);
         if (profileId <= 0) {
             contactOp.addProfileAction(serverId);
@@ -402,13 +393,7 @@ public class ContactsManager {
                                             BatchOperation batchOperation) {
         final ContentValues values = new ContentValues();
         final ContentResolver resolver = context.getContentResolver();
-        final String uid = rawContact.topic;
-        VCard vc;
-        try {
-            vc = (VCard) rawContact.pub;
-        } catch (ClassCastException e) {
-            return;
-        }
+        final String uid = rawContact.user;
 
         // Look up the user's data row
         final long profileId = lookupProfile(resolver, uid);

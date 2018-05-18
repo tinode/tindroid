@@ -27,7 +27,7 @@ public class FndTopic extends Topic<String,String> {
     }
 
     /**
-     * Add subscription to cache. Needs to be overriden in FndTopic because it keeps subs indexed
+     * Add subscription to cache. Needs to be overridden in FndTopic because it keeps subs indexed
      * by either user or topic value.
      *
      * @param sub subscription to add to cache

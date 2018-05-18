@@ -52,9 +52,8 @@ public class ContactOperations {
      * @return instance of ContactOperations
      */
     public static ContactOperations createNewContact(Context context, String uid,
-                                                     String accountName, boolean aggregate,
-                                                     BatchOperation batchOperation) {
-        return new ContactOperations(context, uid, accountName, aggregate, batchOperation);
+                                                     String accountName, BatchOperation batchOperation) {
+        return new ContactOperations(context, uid, accountName, batchOperation);
     }
 
     /**
@@ -77,7 +76,7 @@ public class ContactOperations {
         mBatchOperation = batchOperation;
     }
 
-    public ContactOperations(Context context, String uid, String accountName, boolean aggregate,
+    public ContactOperations(Context context, String uid, String accountName,
                              BatchOperation batchOperation) {
         this(context, batchOperation);
         mBackReference = mBatchOperation.size();
@@ -85,9 +84,7 @@ public class ContactOperations {
         mValues.put(RawContacts.SOURCE_ID, uid);
         mValues.put(RawContacts.ACCOUNT_TYPE, Utils.ACCOUNT_TYPE);
         mValues.put(RawContacts.ACCOUNT_NAME, accountName);
-        if (!aggregate) {
-            mValues.put(RawContacts.AGGREGATION_MODE, RawContacts.AGGREGATION_MODE_DISABLED);
-        }
+
         ContentProviderOperation.Builder builder =
                 newInsertCpo(RawContacts.CONTENT_URI, true).withValues(mValues);
         mBatchOperation.add(builder.build());

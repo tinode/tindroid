@@ -117,7 +117,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             tinode.loginToken(token).getResult();
 
             // Don't care if it's resolved or rejected
-            tinode.subscribe(Tinode.TOPIC_ME, null, null).waitResult();
+            tinode.subscribe(Tinode.TOPIC_FND, null, null).waitResult();
 
             final MsgGetMeta meta = MsgGetMeta.sub();
             // FIXME(gene): The following is commented out for debugging
@@ -125,12 +125,16 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
             if (future.waitResult()) {
                 ServerMessage<VCard,?> pkt = future.getResult();
+                if (pkt.meta == null || pkt.meta.sub == null) {
+                    // Server did not return any contacts.
+                    return;
+                }
                 // Fetch the list of updated contacts. Group subscriptions will be stored in
                 // the address book but as invisible contacts (members of invisible group)
                 Collection<Subscription<VCard,?>> updated = new ArrayList<>();
                 for (Subscription<VCard,?> sub : pkt.meta.sub) {
-                    // Log.d(TAG, "updating contact " + sub.topic);
-                    if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
+                    Log.d(TAG, "updating contact, user=" + sub.user);
+                    if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
                         //Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
                         updated.add(sub);
                     }
