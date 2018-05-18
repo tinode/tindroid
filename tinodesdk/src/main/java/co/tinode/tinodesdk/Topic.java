@@ -902,7 +902,7 @@ public class Topic<Pu,Pr> implements LocalData {
 
         final AcsHelper mode = uid == null ? mDesc.acs.getWantHelper() : sub.acs.getGivenHelper();
         if (mode.update(update)) {
-            return setSubscription(new MetaSetSub(uid, mode.toString(), null))
+            return setSubscription(new MetaSetSub(uid, mode.toString()))
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         @SuppressWarnings("unchecked")
@@ -925,12 +925,11 @@ public class Topic<Pu,Pr> implements LocalData {
      *
      * @param uid ID of the user to invite to topic
      * @param mode access mode granted to user
-     * @param invite content opf the invite message
      *
      * @throws NotConnectedException if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
-    public PromisedReply<ServerMessage> invite(String uid, String mode, Object invite)  throws Exception {
+    public PromisedReply<ServerMessage> invite(String uid, String mode)  throws Exception {
 
         final Subscription<Pu,Pr> sub;
         if (getSubscription(uid) != null) {
@@ -963,7 +962,7 @@ public class Topic<Pu,Pr> implements LocalData {
             throw new NotSynchronizedException();
         }
 
-        return setSubscription(new MetaSetSub(uid, mode, invite)).thenApply(
+        return setSubscription(new MetaSetSub(uid, mode)).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
@@ -998,7 +997,7 @@ public class Topic<Pu,Pr> implements LocalData {
 
         if (ban) {
             // Banning someone means the mode is set to 'N' but subscription is persisted.
-            return invite(uid, "N", null);
+            return invite(uid, "N");
         }
 
         if (isNew()) {

@@ -181,9 +181,8 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    final String inviteText = getActivity().getString(R.string.invitation_text);
                     for (ChipInterface chip : mChipsInput.getSelectedChipList()) {
-                        topic.invite((String) chip.getId(), null /* use default */, inviteText);
+                        topic.invite((String) chip.getId(), null /* use default */);
                     }
 
                     Intent intent = new Intent(activity, MessageActivity.class);

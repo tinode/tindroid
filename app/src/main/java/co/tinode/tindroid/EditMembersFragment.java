@@ -124,7 +124,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
                 mTopic.eject(key, false).thenApply(null, mFailureListener);
             }
             for (ChipInterface chip : list) {
-                mTopic.invite((String) chip.getId(), null /* use default */, inviteText).thenApply(null, mFailureListener);
+                mTopic.invite((String) chip.getId(), null /* use default */).thenApply(null, mFailureListener);
             }
 
             ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_INFO, false, null);

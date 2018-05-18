@@ -649,7 +649,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     protected <Pu,Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
                                                            boolean loginNow, String[] tags, MetaSetDesc<Pu,Pr> desc,
-                                                           Credential[] cred) throws Exception {
+                                                           Credential[] cred) {
         ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
@@ -836,7 +836,7 @@ public class Tinode {
                     },
                     new PromisedReply.FailureListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                        public PromisedReply<ServerMessage> onFailure(Exception err) {
                             if (err instanceof ServerResponseException) {
                                 ServerResponseException sre = (ServerResponseException) err;
                                 if (sre.getCode() >= 400) {
@@ -1180,10 +1180,11 @@ public class Tinode {
     /**
      * Obtain a 'fnd' topic ({@link FndTopic}).
      *
-     * @return 'me' topic or null if 'me' has never been subscribed to
+     * @return 'fnd' topic or null if 'fnd' has never been subscribed to
      */
     public FndTopic getFndTopic() {
-        return (FndTopic) getTopic(TOPIC_FND);
+        // Either I or Java really has problems with generics.
+        return (FndTopic) ((Topic) getTopic(TOPIC_FND));
     }
     /**
      * Obtain an existing topic by name

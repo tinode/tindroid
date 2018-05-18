@@ -7,13 +7,11 @@ package co.tinode.tinodesdk.model;
 public class MetaSetSub {
     public String user;
     public String mode;
-    public Object info;
 
     public MetaSetSub() {}
 
-    public MetaSetSub(String user, String mode, Object info) {
+    public MetaSetSub(String user, String mode) {
         this.user = user;
         this.mode = mode;
-        this.info = info;
     }
 }

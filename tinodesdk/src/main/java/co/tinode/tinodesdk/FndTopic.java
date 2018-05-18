@@ -9,10 +9,10 @@ import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 // Public is not used for Fnd, Private is a String.
-public class FndTopic<Pu> extends Topic<Pu,String> {
+public class FndTopic extends Topic<String,String> {
     private static final String TAG = "FndTopic";
 
-    public FndTopic(Tinode tinode, Listener<Pu,String> l) {
+    public FndTopic(Tinode tinode, Listener<String,String> l) {
         super(tinode, Tinode.TOPIC_FND, l);
     }
 
@@ -26,20 +26,14 @@ public class FndTopic<Pu> extends Topic<Pu,String> {
         throw new UnsupportedOperationException();
     }
 
-    public Pu getPub() {
-        return null;
-    }
-    public void setPub(Object pub) {
-        /* do nothing */
-    }
-
     /**
-     * Add subscription to cache. Needs to be overriden in MeTopic because it keeps subs indexed by topic.
+     * Add subscription to cache. Needs to be overriden in FndTopic because it keeps subs indexed
+     * by either user or topic value.
      *
      * @param sub subscription to add to cache
      */
     @Override
-    protected void addSubToCache(Subscription<Pu,String> sub) {
+    protected void addSubToCache(Subscription sub) {
         if (mSubs == null) {
             mSubs = new HashMap<>();
         }
@@ -75,7 +69,8 @@ public class FndTopic<Pu> extends Topic<Pu,String> {
     }
 
     @Override
-    public Collection<Subscription<Pu,String>> getSubscriptions() {
+    @SuppressWarnings("unchecked")
+    public Collection getSubscriptions() {
         return mSubs != null ? mSubs.values() : null;
     }
 }
