@@ -94,11 +94,10 @@ public class ContactsActivity extends AppCompatActivity implements
 
         UiUtils.setupToolbar(this, null, null, false);
 
-        MeTopic<VCard> me = tinode.getMeTopic();
+        MeTopic me = tinode.getMeTopic();
         if (me == null) {
             // The very first launch of the app.
-            me = new MeTopic<>(tinode, mMeTopicListener);
-            me.setTypes(VCard.class, String.class);
+            me = new MeTopic(tinode, mMeTopicListener);
             Log.d(TAG, "Initialized NEW 'me' topic");
         } else {
             me.setListener(mMeTopicListener);
@@ -158,13 +157,6 @@ public class ContactsActivity extends AppCompatActivity implements
         return mChatListAdapter;
     }
 
-    /*
-    protected Subscription<VCard, String> getContactByPos(int pos) {
-        MeTopic<VCard, String, String> me = Cache.getTinode().getMeTopic();
-        return me.getSubscription(mContactIndex.get(pos));
-    }
-    */
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Enable options menu by returning true
@@ -178,7 +170,7 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.activityVisible(focus);
     }
 
-    private class MeListener extends Topic.Listener<VCard,Object> {
+    private class MeListener extends Topic.Listener<VCard,String> {
 
         @Override
         public void onInfo(MsgServerInfo info) {
@@ -197,7 +189,7 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onMetaSub(final Subscription<VCard,Object> sub) {
+        public void onMetaSub(final Subscription<String> sub) {
             if (sub.pub != null) {
                 sub.pub.constructBitmap();
             }

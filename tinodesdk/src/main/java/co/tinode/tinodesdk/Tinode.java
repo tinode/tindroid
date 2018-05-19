@@ -82,7 +82,7 @@ public class Tinode {
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
-    private static TypeFactory sTypeFactory;
+    protected static TypeFactory sTypeFactory;
 
     protected JavaType mTypeOfMetaPacket;
 
@@ -1152,16 +1152,16 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    protected <Pu,Pr> Topic maybeCreateTopic(MsgServerMeta<Pu,Pr> meta) {
+    protected Topic maybeCreateTopic(MsgServerMeta meta) {
         if (meta.desc == null) {
             return null;
         }
 
-        Topic<Pu,Pr> topic;
+        Topic topic;
         if (TOPIC_ME.equals(meta.topic)) {
             topic = new MeTopic(this, meta.desc);
         } else {
-            topic = new Topic<>(this, meta.topic, meta.desc);
+            topic = new Topic(this, meta.topic, meta.desc);
         }
 
         registerTopic(topic);
@@ -1226,7 +1226,7 @@ public class Tinode {
      * @return existing topic or null if no such topic was found
      */
     @SuppressWarnings("unchecked")
-    public <Pu,Pr,T> Topic<Pu,Pr> getTopic(String name) {
+    public Topic getTopic(String name) {
         if (name == null) {
             return null;
         }
@@ -1271,8 +1271,8 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    <Pu> User<Pu> getUser(String uid) {
-        User<Pu> user = (User<Pu>) mUsers.get(uid);
+    User getUser(String uid) {
+        User user = mUsers.get(uid);
         if (user == null && mStore != null) {
             user = mStore.userGet(uid);
             if (user != null) {
@@ -1291,10 +1291,10 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    <Pu> void updateUser(Subscription<Pu,?> sub) {
-        User<Pu> user = mUsers.get(sub.user);
+    void updateUser(Subscription sub) {
+        User user = mUsers.get(sub.user);
         if (user == null) {
-            user = new User<>(sub);
+            user = new User(sub);
             mUsers.put(sub.user, user);
         } else {
             user.merge(sub);
@@ -1305,10 +1305,10 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    <Pu> void updateUser(String uid, Description<Pu,?> desc) {
-        User<Pu> user = mUsers.get(uid);
+    void updateUser(String uid, Description desc) {
+        User user = mUsers.get(uid);
         if (user == null) {
-            user = new User<>(uid, desc);
+            user = new User(uid, desc);
             mUsers.put(uid, user);
         } else {
             user.merge(desc);
@@ -1356,6 +1356,7 @@ public class Tinode {
                         break;
                     case "meta":
                         if (node.has("topic")) {
+                            Log.d(TAG, "Type of meta packet" + getTypeOfMetaPacket(node.get("topic").asText()));
                             msg.meta = mapper.readValue(node.traverse(),
                                     getTypeOfMetaPacket(node.get("topic").asText()));
                         } else {
@@ -1442,7 +1443,7 @@ public class Tinode {
          * @param msg message to be processed
          */
         @SuppressWarnings("unused, WeakerAccess")
-        public void onMessage(ServerMessage<?, ?> msg) {
+        public void onMessage(ServerMessage msg) {
         }
 
         /**
@@ -1489,7 +1490,7 @@ public class Tinode {
          * @param meta meta message to process
          */
         @SuppressWarnings("unused, WeakerAccess")
-        public void onMetaMessage(MsgServerMeta<?, ?> meta) {
+        public void onMetaMessage(MsgServerMeta meta) {
         }
 
         /**

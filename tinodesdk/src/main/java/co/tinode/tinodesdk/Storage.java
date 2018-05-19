@@ -41,11 +41,11 @@ public interface Storage {
     boolean setRecv(Topic topic, int recv);
 
     /** Add subscription in a generic topic. The subscription is received from the server. */
-    <Pu,Pr> long subAdd(Topic topic, Subscription<Pu,Pr> sub);
+    <S> long subAdd(Topic topic, Subscription<S> sub);
     /** Update subscription in a generic topic */
-    <Pu,Pr> boolean subUpdate(Topic topic, Subscription<Pu,Pr> sub);
+    <S> boolean subUpdate(Topic topic, Subscription<S> sub);
     /** Add a new subscriber to topic. The new subscriber is being added locally. */
-    <Pu,Pr> long subNew(Topic topic, Subscription<Pu,Pr> sub);
+    <S> long subNew(Topic topic, Subscription<S> sub);
     /** Delete existing subscription */
     boolean subDelete(Topic topic, Subscription sub);
 
@@ -53,11 +53,11 @@ public interface Storage {
     Collection<Subscription> getSubscriptions(Topic topic);
 
     /** Read user description */
-    <Pu> User<Pu> userGet(String uid);
+    User userGet(String uid);
     /** Insert new user */
-    <Pu> long userAdd(User<Pu> user);
+    long userAdd(User user);
     /** Update existing user */
-    <Pu> boolean userUpdate(User<Pu> user);
+    boolean userUpdate(User user);
 
     // Message received
     long msgReceived(Topic topic, Subscription sub, MsgServerData msg);

@@ -133,7 +133,7 @@ public class ContactsManager {
 
         // Initiate adding data to contacts provider
         final ContactOperations contactOp = ContactOperations.createNewContact(
-                context, rawContact.user, account.name, true, batchOperation);
+                context, rawContact.user, account.name, batchOperation);
 
         contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
                 .addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null)

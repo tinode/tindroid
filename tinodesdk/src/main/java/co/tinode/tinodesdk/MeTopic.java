@@ -14,18 +14,19 @@ import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.VCard;
 
 /**
  * MeTopic manages contact list. MeTopic::Private is unused.
  */
-public class MeTopic<Pu> extends Topic<Pu,Object> {
+public class MeTopic extends Topic<VCard,Object,String> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<Pu,Object> l) {
+    public MeTopic(Tinode tinode, Listener<VCard,Object,String> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
-    protected MeTopic(Tinode tinode, Description<Pu,Object> desc) {
+    protected MeTopic(Tinode tinode, Description<VCard,Object> desc) {
         super(tinode, Tinode.TOPIC_ME, desc);
     }
 
@@ -35,7 +36,7 @@ public class MeTopic<Pu> extends Topic<Pu,Object> {
     }
 
     @Override
-    protected void addSubToCache(Subscription sub) {
+    protected void addSubToCache(Subscription<String> sub) {
         throw new UnsupportedOperationException();
     }
 
@@ -61,7 +62,7 @@ public class MeTopic<Pu> extends Topic<Pu,Object> {
     }
 
     @Override
-    public Collection<Subscription<Pu,Object>> getSubscriptions() {
+    public Collection<Subscription<String>> getSubscriptions() {
         throw new UnsupportedOperationException();
     }
 
@@ -72,7 +73,7 @@ public class MeTopic<Pu> extends Topic<Pu,Object> {
 
     @Override
     @SuppressWarnings("un-checked")
-    protected void routeMetaSub(MsgServerMeta<Pu,Object> meta) {
+    protected void routeMetaSub(MsgServerMeta<VCard,Object,String> meta) {
         // Log.d(TAG, "Me:routeMetaSub");
         for (Subscription sub : meta.sub) {
             // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);

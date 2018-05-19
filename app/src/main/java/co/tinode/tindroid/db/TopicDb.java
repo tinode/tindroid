@@ -245,8 +245,8 @@ public class TopicDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     @SuppressWarnings("unchecked")
-    public static <Pu,Pr,T> boolean update(SQLiteDatabase db, Topic<Pu,Pr> topic) {
-        StoredTopic<Pu,Pr,T> st = (StoredTopic<Pu,Pr,T>) topic.getLocal();
+    public static <Pu,Pr> boolean update(SQLiteDatabase db, Topic<Pu,Pr> topic) {
+        StoredTopic<Pu,Pr> st = (StoredTopic<Pu,Pr>) topic.getLocal();
         if (st == null) {
             return false;
         }

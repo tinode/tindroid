@@ -8,7 +8,7 @@ import java.util.Date;
 /**
  * Topic description as deserialized from the server packet.
  */
-public class Description<Pu,Pr> implements Serializable {
+public class Description<P,R> implements Serializable {
     public Date created;
     public Date updated;
     public Date touched;
@@ -21,9 +21,9 @@ public class Description<Pu,Pr> implements Serializable {
     public int recv;
     public int clear;
     @JsonProperty("public")
-    public Pu pub;
+    public P pub;
     @JsonProperty("private")
-    public Pr priv;
+    public R priv;
 
     public Description() {
     }
@@ -33,7 +33,7 @@ public class Description<Pu,Pr> implements Serializable {
      *
      * @param desc object to copy.
      */
-    public boolean merge(Description<Pu,Pr> desc) {
+    public boolean merge(Description<P,R> desc) {
         int changed = 0;
 
         if (created == null && desc.created != null) {
@@ -98,7 +98,7 @@ public class Description<Pu,Pr> implements Serializable {
     /**
      * Merge subscription into a description
      */
-    public boolean merge(Subscription<Pu,Pr> sub) {
+    public boolean merge(Subscription sub) {
         int changed = 0;
 
         if (sub.updated != null && (updated == null || updated.before(sub.updated))) {
@@ -127,17 +127,21 @@ public class Description<Pu,Pr> implements Serializable {
         }
 
         if (sub.pub != null) {
-            pub = sub.pub;
+            try {
+                pub = (P) sub.pub;
+            } catch (ClassCastException ignored) {}
         }
 
         if (sub.priv != null) {
-            priv = sub.priv;
+            try {
+                priv = (R) sub.priv;
+            } catch (ClassCastException ignored) {}
         }
 
         return changed > 0;
     }
 
-    public boolean merge(MetaSetDesc<Pu,Pr> desc) {
+    public boolean merge(MetaSetDesc<P,R> desc) {
         int changed = 0;
 
         if (desc.defacs != null) {

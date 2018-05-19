@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk;
 
+import com.fasterxml.jackson.databind.JavaType;
+
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -8,12 +10,21 @@ import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-// Public is not used for Fnd, Private is a String.
-public class FndTopic extends Topic<String,String> {
+import static co.tinode.tinodesdk.Tinode.sTypeFactory;
+
+// Public and Private are strings, but Subscriptions are VCard and Array.
+// Using Object as the lowest common denominator.
+public class FndTopic extends Topic<String,String,String[]> {
     private static final String TAG = "FndTopic";
 
-    public FndTopic(Tinode tinode, Listener<String,String> l) {
+    public FndTopic(Tinode tinode, Listener l) {
         super(tinode, Tinode.TOPIC_FND, l);
+    }
+
+    @Override
+    public JavaType getTypeOfMetaPacket() {
+        sTypeFactory.constructParametricType(MsgServerMeta.class, String.class, String[].class);
+        return null;
     }
 
     @Override
@@ -65,7 +76,7 @@ public class FndTopic extends Topic<String,String> {
     @Override
     @SuppressWarnings("unchecked")
     public Subscription getSubscription(String key) {
-        return mSubs != null ? mSubs.get(key) : null;
+        return mSubs != null ? (Subscription) mSubs.get(key) : null;
     }
 
     @Override

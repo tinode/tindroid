@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
-import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;

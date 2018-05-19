@@ -12,7 +12,7 @@ import co.tinode.tinodesdk.Topic;
 /**
  * Subscription to topic.
  */
-public class Subscription<Pu,Pr> implements LocalData, Serializable {
+public class Subscription<S> implements LocalData, Serializable {
     public String user;
     public Date updated;
     public Date deleted;
@@ -22,14 +22,14 @@ public class Subscription<Pu,Pr> implements LocalData, Serializable {
     public int read;
     public int recv;
     @JsonProperty("private")
-    public Pr priv;
+    public S priv;
     public Boolean online;
 
     public String topic;
     public int seq;
     public int clear;
     @JsonProperty("public")
-    public Pu pub;
+    public VCard pub;
     public LastSeen seen;
 
     // Local values
@@ -39,7 +39,7 @@ public class Subscription<Pu,Pr> implements LocalData, Serializable {
     public Subscription() {
     }
 
-    public boolean merge(Subscription<Pu,Pr> sub) {
+    public boolean merge(Subscription<S> sub) {
         int changed = 0;
 
         if (user == null && sub.user != null && !sub.user.equals("")) {

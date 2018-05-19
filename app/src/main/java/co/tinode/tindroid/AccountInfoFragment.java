@@ -61,7 +61,7 @@ public class AccountInfoFragment extends Fragment {
 
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_account_info, container, false);
-        Toolbar toolbar = (Toolbar) fragment.findViewById(R.id.toolbar);
+        Toolbar toolbar = fragment.findViewById(R.id.toolbar);
         activity.setSupportActionBar(toolbar);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
@@ -85,8 +85,8 @@ public class AccountInfoFragment extends Fragment {
         if (me != null) {
             final AppCompatActivity activity = (AppCompatActivity) getActivity();
 
-            final AppCompatImageView avatar = (AppCompatImageView) activity.findViewById(R.id.imageAvatar);
-            final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
+            final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
+            final TextView title = activity.findViewById(R.id.topicTitle);
             title.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
