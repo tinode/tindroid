@@ -1188,6 +1188,16 @@ public class Tinode {
         return new ComTopic(this, name, l);
     }
 
+    @SuppressWarnings("unchecked")
+    Topic newTopic(Subscription sub) {
+        if (TOPIC_ME.equals(sub.topic)) {
+            return new MeTopic(this, (MeTopic.MeListener)null);
+        } else if (TOPIC_FND.equals(sub.topic)) {
+            return new FndTopic(this, null);
+        }
+        return new ComTopic(this, sub);
+    }
+
     @SuppressWarnings("unchecked, UnusedReturnValue")
     protected Topic maybeCreateTopic(MsgServerMeta meta) {
         if (meta.desc == null) {
@@ -1250,10 +1260,10 @@ public class Tinode {
             return null;
         }
         ArrayList<T> result = new ArrayList<>();
-        for (Topic t : mTopics.values()) {
+        for (T t : (Collection<T>) mTopics.values()) {
             if (t.getTopicType().compare(type) &&
                     (updated == null || updated.before(t.getUpdated()))) {
-                result.add((T) t);
+                result.add(t);
             }
         }
         return result;

@@ -180,8 +180,6 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onPres(MsgServerPres pres) {
-            Log.d(TAG, "onPres, what=" + pres.what + ", topic=" + pres.topic);
-
             if (pres.what.equals("msg")) {
                 datasetChanged();
             } else if (pres.what.equals("off") || pres.what.equals("on")) {

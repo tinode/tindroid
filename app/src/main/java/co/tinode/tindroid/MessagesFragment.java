@@ -67,6 +67,8 @@ public class MessagesFragment extends Fragment {
     private SwipeRefreshLayout mRefresher;
     private String mTopicName = null;
     private Timer mNoteTimer = null;
+    private String mMessageToSend = null;
+
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     public MessagesFragment() {
@@ -197,7 +199,7 @@ public class MessagesFragment extends Fragment {
         Bundle bundle = getArguments();
         String oldTopicName = mTopicName;
         mTopicName = bundle.getString("topic");
-        String messageToSend = bundle.getString("messageText");
+        mMessageToSend = bundle.getString("messageText");
 
         if (mTopicName != null && !mTopicName.equals(oldTopicName)) {
             mMessagesAdapter.swapCursor(mTopicName, null);
@@ -205,18 +207,6 @@ public class MessagesFragment extends Fragment {
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
 
         setHasOptionsMenu(true);
-
-        Activity activity = getActivity();
-        if (mTopic.getAccessMode().isWriter()) {
-            Log.i(TAG, "Topic is Writer " + mTopic.getName());
-            ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
-        } else {
-            Log.i(TAG, "Topic is NOT writer " + mTopic.getName());
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
-        }
 
         // Check periodically if all messages were read;
         mNoteTimer = new Timer();
@@ -457,6 +447,21 @@ public class MessagesFragment extends Fragment {
     public void sendReadNotification() {
         if (mTopic != null) {
             mTopic.noteRead();
+        }
+    }
+
+    public void topicSubscribed() {
+        Activity activity = getActivity();
+        if (mTopic.getAccessMode().isWriter()) {
+            Log.i(TAG, "Topic is Writer " + mTopic.getName());
+            ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(mMessageToSend) ? "" : mMessageToSend);
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
+            mMessageToSend = null;
+        } else {
+            Log.i(TAG, "Topic is NOT writer " + mTopic.getName());
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
         }
     }
 }

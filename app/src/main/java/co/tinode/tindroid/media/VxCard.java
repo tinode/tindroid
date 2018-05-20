@@ -46,6 +46,8 @@ public class VxCard extends VCard {
     }
 
     public void constructBitmap() {
-        avatar = new AvatarPhoto(photo.data);
+        if (photo != null) {
+            avatar = new AvatarPhoto(photo.data);
+        }
     }
 }

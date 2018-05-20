@@ -75,7 +75,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public void setPriv(PrivateType priv) { /* do nothing */ }
 
     @Override
-    @SuppressWarnings("un-checked")
+    @SuppressWarnings("unchecked")
     protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
         // Log.d(TAG, "Me:routeMetaSub");
         for (Subscription sub : meta.sub) {
@@ -96,9 +96,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 }
             } else if (sub.deleted == null) {
                 // This is a new topic. Register it and write to DB.
-                mTinode.registerTopic(new Topic<>(mTinode, sub));
+                mTinode.registerTopic(mTinode.newTopic(sub));
             }
-
 
             if (mListener != null) {
                 mListener.onMetaSub(sub);

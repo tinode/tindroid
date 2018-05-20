@@ -141,7 +141,7 @@ public class MessageActivity extends AppCompatActivity {
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.i(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
-            mTopic = new ComTopic<>(tinode, mTopicName, (ComTopic.ComListener<VxCard>)null);
+            mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
             showFragment(FRAGMENT_INVALID, false, null);
         }
         mTopic.setListener(new TListener());
@@ -160,7 +160,14 @@ public class MessageActivity extends AppCompatActivity {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                                 mTopicName, mTopic.getOnline());
                         showFragment(FRAGMENT_MESSAGES, false, null);
-
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                                        .findFragmentByTag(FRAGMENT_MESSAGES);
+                                fragmsg.topicSubscribed();
+                            }
+                        });
                         mMessageSender.resume();
                         // Submit unsent messages for processing.
                         mMessageSender.submit(new Runnable() {
@@ -187,6 +194,10 @@ public class MessageActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "something went wrong", ex);
             }
+        } else {
+            MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                    .findFragmentByTag(FRAGMENT_MESSAGES);
+            fragmsg.topicSubscribed();
         }
     }
 
