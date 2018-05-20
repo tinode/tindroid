@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Combined server message
  */
-public class ServerMessage<Pu,Pr,S> implements Serializable {
+public class ServerMessage<DP,DR,SP,SR> implements Serializable {
     public static final int STATUS_CONTINUE               = 100; // RFC 7231, 6.2.1
     public static final int STATUS_SWITCHING_PROTOCOLS    = 101; // RFC 7231, 6.2.2
     public static final int STATUS_PROCESSING             = 102; // RFC 2518, 10.1
@@ -45,7 +45,7 @@ public class ServerMessage<Pu,Pr,S> implements Serializable {
     public static int STATUS_HTTP_VERSION_NOT_SUPPORTED = 505; // RFC 7231, 6.6.6
 
     public MsgServerData data;
-    public MsgServerMeta<Pu,Pr,S> meta;
+    public MsgServerMeta<DP,DR,SP,SR> meta;
     public MsgServerCtrl ctrl;
     public MsgServerPres pres;
     public MsgServerInfo info;
@@ -54,7 +54,7 @@ public class ServerMessage<Pu,Pr,S> implements Serializable {
     public ServerMessage(MsgServerData data) {
         this.data = data;
     }
-    public ServerMessage(MsgServerMeta<Pu,Pr,S> meta) {
+    public ServerMessage(MsgServerMeta<DP,DR,SP,SR> meta) {
         this.meta = meta;
     }
     public ServerMessage(MsgServerCtrl ctrl) {

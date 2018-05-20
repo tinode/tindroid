@@ -38,11 +38,11 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version.
      */
-    public static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
     /**
      * Filename for SQLite file.
      */
-    public static final String DATABASE_NAME = "base.db";
+    private static final String DATABASE_NAME = "base.db";
 
     private static BaseDb sInstance = null;
 

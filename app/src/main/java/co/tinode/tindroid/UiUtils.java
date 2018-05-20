@@ -45,7 +45,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -75,7 +74,7 @@ import java.util.TimerTask;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -84,6 +83,7 @@ import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
@@ -142,7 +142,7 @@ public class UiUtils {
     private static final int LOGO_LAYER_ONLINE = 1;
     private static final int LOGO_LAYER_TYPING = 2;
 
-    static void setupToolbar(final Activity activity, final VCard pub,
+    static void setupToolbar(final Activity activity, final VxCard pub,
                              final String topicName, final boolean online) {
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
@@ -753,17 +753,18 @@ public class UiUtils {
         builder.show();
     }
 
-    static boolean updateAvatar(final Activity activity, final Topic<VCard, ?> topic, final Intent data) {
+    static <T extends Topic<VxCard,PrivateType,?,?>> boolean updateAvatar(final Activity activity,
+                                                                          final T topic, final Intent data) {
         Bitmap bmp = UiUtils.extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
             return false;
         }
-        VCard pub = topic.getPub();
+        VxCard pub = topic.getPub();
         if (pub != null) {
             pub = pub.copy();
         } else {
-            pub = new VCard();
+            pub = new VxCard();
         }
 
         pub.setBitmap(bmp);
@@ -779,12 +780,13 @@ public class UiUtils {
         return true;
     }
 
-    static boolean updateTitle(final Activity activity, Topic<VCard, String> topic, String title, String priv) {
-        VCard pub = null;
+    static <T extends Topic<VxCard,PrivateType,?,?>> boolean updateTitle(final Activity activity,
+                                                                         T topic, String title, String comment) {
+        VxCard pub = null;
         if (title != null) {
             pub = topic.getPub();
             if (pub == null) {
-                pub = new VCard();
+                pub = new VxCard();
             } else {
                 pub = pub.copy();
             }
@@ -795,15 +797,17 @@ public class UiUtils {
             }
         }
 
-        if (priv != null) {
-            String oldPriv = topic.getPriv();
-            if (priv.equals(oldPriv)) {
-                priv = null;
+        if (comment != null) {
+            String oldComment = topic.getPriv().getComment();
+            if (comment.equals(oldComment)) {
+                comment = null;
             }
         }
 
-        if (pub != null || priv != null) {
+        if (pub != null || comment != null) {
             try {
+                PrivateType priv = new PrivateType();
+                priv.setComment(comment);
                 topic.setDescription(pub, priv).thenApply(null, new ToastFailureListener(activity));
             } catch (NotConnectedException ignored) {
                 Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();

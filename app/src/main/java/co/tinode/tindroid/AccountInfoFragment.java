@@ -28,7 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -81,7 +81,7 @@ public class AccountInfoFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        MeTopic<VCard> me = Cache.getTinode().getMeTopic();
+        MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
         if (me != null) {
             final AppCompatActivity activity = (AppCompatActivity) getActivity();
 
@@ -101,7 +101,7 @@ public class AccountInfoFragment extends Fragment {
                 }
             });
 
-            VCard pub = me.getPub();
+            VxCard pub = me.getPub();
             if (pub != null) {
                 if (!TextUtils.isEmpty(pub.fn)) {
                     title.setText(pub.fn);
@@ -197,8 +197,8 @@ public class AccountInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditAccountTitle() {
-        final MeTopic<VCard> me = (MeTopic<VCard>) Cache.getTinode().getMeTopic();
-        VCard pub = me.getPub();
+        final MeTopic<VxCard> me = (MeTopic<VxCard>) Cache.getTinode().getMeTopic();
+        VxCard pub = me.getPub();
         final String title = pub == null ? null : pub.fn;
         final Activity activity = getActivity();
 

@@ -191,7 +191,7 @@ public class TopicDb implements BaseColumns {
      * @return ID of the newly added message
      */
     @SuppressWarnings("WeakerAccess")
-    public static <Pu,Pr,T> long insert(SQLiteDatabase db, Topic<Pu,Pr> topic) {
+    public static long insert(SQLiteDatabase db, Topic topic) {
         // Log.d(TAG, "Creating topic " + topic.getName());
 
         // Convert topic description to a map of values
@@ -228,7 +228,7 @@ public class TopicDb implements BaseColumns {
 
         long id = db.insert(TABLE_NAME, null, values);
         if (id > 0) {
-            StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
+            StoredTopic st = new StoredTopic();
             st.id = id;
             st.lastUsed = lastUsed;
             topic.setLocal(st);
@@ -245,8 +245,8 @@ public class TopicDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     @SuppressWarnings("unchecked")
-    public static <Pu,Pr> boolean update(SQLiteDatabase db, Topic<Pu,Pr> topic) {
-        StoredTopic<Pu,Pr> st = (StoredTopic<Pu,Pr>) topic.getLocal();
+    public static boolean update(SQLiteDatabase db, Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
             return false;
         }
@@ -349,9 +349,7 @@ public class TopicDb implements BaseColumns {
             values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
 
             int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
-            if (updated <= 0) {
-                return false;
-            }
+            return updated > 0;
         }
         return true;
     }
@@ -380,9 +378,9 @@ public class TopicDb implements BaseColumns {
      * @return Subscription
      */
     @SuppressWarnings("unchecked, WeakerAccess")
-    protected static <Pu,Pr> Topic<Pu,Pr> readOne(Tinode tinode, Cursor c) {
+    protected static Topic readOne(Tinode tinode, Cursor c) {
         // Instantiate topic of an appropriate class ('me' or group)
-        Topic<Pu,Pr> topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
+        Topic topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
         StoredTopic.deserialize(topic, c);
         return topic;
     }
@@ -394,8 +392,8 @@ public class TopicDb implements BaseColumns {
      * @param name Name of the topic to read
      * @return Subscription
      */
-    protected static <Pu,Pr> Topic<Pu,Pr> readOne(SQLiteDatabase db, Tinode tinode, String name) {
-        Topic<Pu,Pr> topic = null;
+    protected static Topic readOne(SQLiteDatabase db, Tinode tinode, String name) {
+        Topic topic = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +

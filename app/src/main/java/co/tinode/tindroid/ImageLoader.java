@@ -1,19 +1,4 @@
 package co.tinode.tindroid;
-/*
- * Copyright (C) 2013 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -50,7 +35,7 @@ public abstract class ImageLoader {
 
     private LruCache<String, Bitmap> mBitmapCache;
 
-    protected ImageLoader(Context context, int imageSize, FragmentManager fm) {
+    ImageLoader(Context context, int imageSize, FragmentManager fm) {
         mResources = context.getResources();
         mImageSize = imageSize;
 
@@ -82,10 +67,11 @@ public abstract class ImageLoader {
      */
     public static void cancelWork(ImageView imageView) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancel(true);
             if (BuildConfig.DEBUG) {
-                final Object bitmapData = bitmapWorkerTask.data;
+                final Object bitmapData = bitmapWorkerTask.mData;
                 Log.d(TAG, "cancelWork - cancelled work for " + bitmapData);
             }
         }
@@ -101,7 +87,7 @@ public abstract class ImageLoader {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 
         if (bitmapWorkerTask != null) {
-            final Object bitmapData = bitmapWorkerTask.data;
+            final Object bitmapData = bitmapWorkerTask.mData;
             if (bitmapData == null || !bitmapData.equals(data)) {
                 bitmapWorkerTask.cancel(true);
                 if (BuildConfig.DEBUG) {
@@ -392,11 +378,11 @@ public abstract class ImageLoader {
      * The actual AsyncTask that will asynchronously process the image.
      */
     private class BitmapWorkerTask extends AsyncTask<Object, Void, Bitmap> {
-        private final WeakReference<ImageView> imageViewReference;
-        private Object data;
+        private final WeakReference<ImageView> mImageViewReference;
+        private Object mData;
 
-        public BitmapWorkerTask(ImageView imageView) {
-            imageViewReference = new WeakReference<ImageView>(imageView);
+        BitmapWorkerTask(ImageView imageView) {
+            mImageViewReference = new WeakReference<>(imageView);
         }
 
         /**
@@ -405,8 +391,8 @@ public abstract class ImageLoader {
         @Override
         protected Bitmap doInBackground(Object... params) {
 
-            data = params[0];
-            final String dataString = String.valueOf(data);
+            mData = params[0];
+            final String dataString = String.valueOf(mData);
 
             Bitmap bitmap = null;
 
@@ -467,7 +453,7 @@ public abstract class ImageLoader {
          * points to this task as well. Returns null otherwise.
          */
         private ImageView getAttachedImageView() {
-            final ImageView imageView = imageViewReference.get();
+            final ImageView imageView = mImageViewReference.get();
             final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 
             if (this == bitmapWorkerTask) {

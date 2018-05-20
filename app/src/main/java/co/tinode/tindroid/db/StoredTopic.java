@@ -11,7 +11,7 @@ import co.tinode.tinodesdk.Topic;
 /**
  * Representation of a topic stored in a database;
  */
-public class StoredTopic<Pu,Pr> implements LocalData.Payload {
+public class StoredTopic implements LocalData.Payload {
     private static final String TAG = "StoredTopic";
 
     public long id;
@@ -24,8 +24,8 @@ public class StoredTopic<Pu,Pr> implements LocalData.Payload {
     }
 
     @SuppressWarnings("unchecked")
-    protected static <Pu,Pr> void deserialize(Topic<Pu,Pr> topic, Cursor c) {
-        StoredTopic<Pu,Pr> st = new StoredTopic<>();
+    protected static void deserialize(Topic topic, Cursor c) {
+        StoredTopic st = new StoredTopic();
 
         st.id = c.getLong(TopicDb.COLUMN_IDX_ID);
         st.status = c.getInt(TopicDb.COLUMN_IDX_STATUS);

@@ -29,8 +29,9 @@ public class ImageViewFragment extends Fragment {
 
         Bundle bundle = getArguments();
         byte[] bits = bundle.getByteArray("image");
-        Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-
-        ((ImageView) getActivity().findViewById(R.id.image)).setImageDrawable(new BitmapDrawable(getResources(), bmp));
+        if (bits != null) {
+            Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+            ((ImageView) getActivity().findViewById(R.id.image)).setImageDrawable(new BitmapDrawable(getResources(), bmp));
+        }
     }
 }

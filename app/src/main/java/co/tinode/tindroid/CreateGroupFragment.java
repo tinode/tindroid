@@ -22,7 +22,8 @@ import com.pchmn.materialchips.model.ChipInterface;
 
 import java.util.List;
 
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
@@ -49,7 +50,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
     public CreateGroupFragment() {
         mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
             @Override
-            public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
+            public PromisedReply<ServerMessage> onFailure(final Exception err) {
                 final Activity activity = getActivity();
                 activity.runOnUiThread(new Runnable() {
                     @Override
@@ -174,8 +175,8 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle) {
-        final Topic<VCard,String> topic = new Topic<>(Cache.getTinode(), null);
-        topic.setPub(new VCard(title, avatar));
+        final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), (Topic.Listener) null);
+        topic.setPub(new VxCard(title, avatar));
         topic.setPriv(subtitle);
         try {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {

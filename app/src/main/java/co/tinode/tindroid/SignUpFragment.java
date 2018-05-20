@@ -20,7 +20,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Credential;
@@ -140,10 +140,10 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                         // If image is not loaded, the drawable is a vector.
                                         // Ignore it.
                                     }
-                                    VCard vcard = new VCard(fullName, bmp);
+                                    VxCard vcard = new VxCard(fullName, bmp);
                                     return tinode.createAccountBasic(
                                             login, password, true, null,
-                                            new MetaSetDesc<VCard,String>(vcard, null),
+                                            new MetaSetDesc<VxCard,String>(vcard, null),
                                             Credential.append(null, new Credential("email", email)));
                                 }
                             }, null)

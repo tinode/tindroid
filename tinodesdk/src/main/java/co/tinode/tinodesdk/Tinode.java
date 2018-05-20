@@ -1147,8 +1147,10 @@ public class Tinode {
     public Topic newTopic(String name, Topic.Listener l) {
         if (TOPIC_ME.equals(name)) {
             return new MeTopic(this, l);
+        } else if (TOPIC_FND.equals(name)) {
+            return new FndTopic(this, l);
         }
-        return new Topic(this, name, l);
+        return new ComTopic(this, name, l);
     }
 
     @SuppressWarnings("unchecked")
@@ -1160,8 +1162,10 @@ public class Tinode {
         Topic topic;
         if (TOPIC_ME.equals(meta.topic)) {
             topic = new MeTopic(this, meta.desc);
+        } else if (TOPIC_FND.equals(meta.topic)) {
+            topic = new FndTopic(this, null);
         } else {
-            topic = new Topic(this, meta.topic, meta.desc);
+            topic = new ComTopic(this, meta.topic, meta.desc);
         }
 
         registerTopic(topic);
@@ -1202,18 +1206,19 @@ public class Tinode {
      * @param type type of topics to return.
      * @param updated return topics with update timestamp after this
      */
-    public List<Topic> getFilteredTopics(Topic.TopicType type, Date updated) {
+    @SuppressWarnings("unchecked")
+    public <T extends Topic> List<T> getFilteredTopics(Topic.TopicType type, Date updated) {
         if (type == Topic.TopicType.ANY && updated == null) {
-            return getTopics();
+            return (List<T>) getTopics();
         }
         if (type == Topic.TopicType.UNKNOWN) {
             return null;
         }
-        ArrayList<Topic> result = new ArrayList<>();
+        ArrayList<T> result = new ArrayList<>();
         for (Topic t : mTopics.values()) {
             if (t.getTopicType().compare(type) &&
                     (updated == null || updated.before(t.getUpdated()))) {
-                result.add(t);
+                result.add((T) t);
             }
         }
         return result;

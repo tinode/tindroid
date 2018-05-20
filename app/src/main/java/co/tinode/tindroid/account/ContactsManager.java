@@ -9,7 +9,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Im;
-import android.provider.ContactsContract.CommonDataKinds.Note;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
@@ -26,7 +25,7 @@ import java.util.List;
 
 import co.tinode.tindroid.media.AvatarPhoto;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -48,14 +47,14 @@ public class ContactsManager {
      * sync request.
      */
     public static synchronized Date updateContacts(Context context, Account account,
-                                                   Collection<Subscription<VCard,?>> rawContacts,
-                                                   Date lastSyncMarker, long invisibleGroupId) {
+                                                   Collection<Subscription<VxCard,?>> rawContacts,
+                                                   Date lastSyncMarker) {
         Log.d(TAG, "ContactsManager got batch, count=" + rawContacts.size());
 
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
-        for (final Subscription<VCard,?> rawContact : rawContacts) {
+        for (final Subscription<VxCard,?> rawContact : rawContacts) {
 
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
@@ -67,14 +66,14 @@ public class ContactsManager {
             long rawContactId = lookupRawContact(resolver, rawContact.user);
             if (rawContact.deleted != null) {
                 if (rawContactId > 0) {
-                    deleteContact(context, rawContactId, batchOperation);
+                    deleteContact(rawContactId, batchOperation);
                 }
             } else {
                 // Contact already exists
                 if (rawContactId > 0) {
                     updateContact(context, resolver, rawContact, rawContactId, batchOperation);
                 } else {
-                    addContact(context, account, rawContact, invisibleGroupId, batchOperation);
+                    addContact(context, account, rawContact, batchOperation);
                 }
             }
             // A sync adapter should batch operations on multiple contacts,
@@ -117,14 +116,13 @@ public class ContactsManager {
      * @param batchOperation allow us to batch together multiple operations
      *                       into a single provider call
      */
-    public static void addContact(Context context, Account account, Subscription<VCard,?> rawContact,
-                                  long invisibleGroupId, BatchOperation batchOperation) {
+    public static void addContact(Context context, Account account, Subscription<VxCard,?> rawContact,
+                                  BatchOperation batchOperation) {
         if (rawContact.pub == null) {
             return;
         }
 
-        VCard vc;
-        String note;
+        VxCard vc;
         try {
             vc = rawContact.pub;
         } catch (ClassCastException e) {
@@ -137,11 +135,11 @@ public class ContactsManager {
 
         contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
                 .addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null)
-                .addPhone(vc.getPhoneByType(VCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
-                .addPhone(vc.getPhoneByType(VCard.ContactType.HOME), Phone.TYPE_HOME)
-                .addPhone(vc.getPhoneByType(VCard.ContactType.WORK), Phone.TYPE_WORK)
+                .addPhone(vc.getPhoneByType(VxCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
+                .addPhone(vc.getPhoneByType(VxCard.ContactType.HOME), Phone.TYPE_HOME)
+                .addPhone(vc.getPhoneByType(VxCard.ContactType.WORK), Phone.TYPE_WORK)
                 .addIm(rawContact.user)
-                .addAvatar(vc.photo != null ? vc.photo.data : null);
+                .addAvatar(vc.photo);
 
         // Actually create our status profile.
         contactOp.addProfileAction(rawContact.user);
@@ -168,7 +166,7 @@ public class ContactsManager {
      * @param batchOperation allow us to batch together multiple operations
      *                       into a single provider call
      */
-    public static void updateContact(Context context, ContentResolver resolver, Subscription<VCard,?> rawContact,
+    public static void updateContact(Context context, ContentResolver resolver, Subscription<VxCard,?> rawContact,
                                      long rawContactId, BatchOperation batchOperation) {
         boolean existingCellPhone = false;
         boolean existingHomePhone = false;
@@ -184,8 +182,7 @@ public class ContactsManager {
             return;
         }
 
-        VCard vc;
-        String note;
+        VxCard vc;
         try {
             vc = rawContact.pub;
         } catch (ClassCastException e) {
@@ -215,15 +212,15 @@ public class ContactsManager {
                         if (type == Phone.TYPE_MOBILE) {
                             existingCellPhone = true;
                             contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                    vc.getPhoneByType(VCard.TYPE_MOBILE), uri);
+                                    vc.getPhoneByType(VxCard.TYPE_MOBILE), uri);
                         } else if (type == Phone.TYPE_HOME) {
                             existingHomePhone = true;
                             contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                    vc.getPhoneByType(VCard.TYPE_HOME), uri);
+                                    vc.getPhoneByType(VxCard.TYPE_HOME), uri);
                         } else if (type == Phone.TYPE_WORK) {
                             existingWorkPhone = true;
                             contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                    vc.getPhoneByType(VCard.TYPE_BUSINESS), uri);
+                                    vc.getPhoneByType(VxCard.TYPE_BUSINESS), uri);
                         }
                         break;
                     case Email.CONTENT_ITEM_TYPE:
@@ -233,7 +230,7 @@ public class ContactsManager {
                         break;
                     case Photo.CONTENT_ITEM_TYPE:
                         existingAvatar = true;
-                        contactOp.updateAvatar(vc.photo != null ? vc.photo.data : null, uri);
+                        contactOp.updateAvatar(vc.photo, uri);
                         break;
 
                 }
@@ -243,15 +240,15 @@ public class ContactsManager {
         }
         // Add the cell phone, if present and not updated above
         if (!existingCellPhone) {
-            contactOp.addPhone(vc.getPhoneByType(VCard.TYPE_MOBILE), Phone.TYPE_MOBILE);
+            contactOp.addPhone(vc.getPhoneByType(VxCard.TYPE_MOBILE), Phone.TYPE_MOBILE);
         }
         // Add the home phone, if present and not updated above
         if (!existingHomePhone) {
-            contactOp.addPhone(vc.getPhoneByType(VCard.TYPE_HOME), Phone.TYPE_HOME);
+            contactOp.addPhone(vc.getPhoneByType(VxCard.TYPE_HOME), Phone.TYPE_HOME);
         }
         // Add the work phone, if present and not updated above
         if (!existingWorkPhone) {
-            contactOp.addPhone(vc.getPhoneByType(VCard.TYPE_WORK), Phone.TYPE_WORK);
+            contactOp.addPhone(vc.getPhoneByType(VxCard.TYPE_WORK), Phone.TYPE_WORK);
         }
         // Add the email address, if present and not updated above
         if (!existingEmail) {
@@ -259,7 +256,7 @@ public class ContactsManager {
         }
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
-            contactOp.addAvatar(vc.photo != null ? vc.photo.data : null);
+            contactOp.addAvatar(vc.photo);
         }
 
         // If we don't have a status profile, then create one.  This could
@@ -309,7 +306,7 @@ public class ContactsManager {
         return -1;
     }
 
-    public static Subscription<VCard,?> getStoredSubscription(ContentResolver resolver, String uid) {
+    public static Subscription<VxCard,?> getStoredSubscription(ContentResolver resolver, String uid) {
         long id = lookupRawContact(resolver, uid);
         Log.d(TAG, "getStoredSubscription for '" + uid + "' lookupRawContact returned " + id);
         return getRawContact(resolver, id);
@@ -328,12 +325,12 @@ public class ContactsManager {
      * @param rawContactId the unique ID for the local contact
      * @return a User object containing info on that contact
      */
-    private static Subscription<VCard,?> getRawContact(ContentResolver resolver, long rawContactId) {
+    private static Subscription<VxCard,?> getRawContact(ContentResolver resolver, long rawContactId) {
         if (rawContactId <= 0) {
             return null;
         }
 
-        VCard vcard = new VCard();
+        VxCard vcard = new VxCard();
 
         final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[]{String.valueOf(rawContactId)}, null);
@@ -346,7 +343,7 @@ public class ContactsManager {
                 switch (c.getString(DataQuery.COLUMN_MIMETYPE)) {
                     case StructuredName.CONTENT_ITEM_TYPE:
                         if (vcard.n == null) {
-                            vcard.n = new VCard.Name();
+                            vcard.n = new VxCard.Name();
                         }
                         vcard.n.surname = c.getString(DataQuery.COLUMN_FAMILY_NAME);
                         vcard.n.given = c.getString(DataQuery.COLUMN_GIVEN_NAME);
@@ -355,18 +352,18 @@ public class ContactsManager {
                     case Phone.CONTENT_ITEM_TYPE:
                         final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
                         if (type == Phone.TYPE_MOBILE) {
-                            vcard.addPhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER), VCard.TYPE_MOBILE);
+                            vcard.addPhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER), VxCard.TYPE_MOBILE);
                         } else if (type == Phone.TYPE_HOME) {
-                            vcard.addPhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER), VCard.TYPE_HOME);
+                            vcard.addPhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER), VxCard.TYPE_HOME);
                         } else if (type == Phone.TYPE_WORK) {
-                            vcard.addPhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER), VCard.TYPE_WORK);
+                            vcard.addPhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER), VxCard.TYPE_WORK);
                         }
                         break;
                     case Email.CONTENT_ITEM_TYPE:
-                        vcard.addEmail(c.getString(DataQuery.COLUMN_EMAIL_ADDRESS), VCard.TYPE_OTHER);
+                        vcard.addEmail(c.getString(DataQuery.COLUMN_EMAIL_ADDRESS), VxCard.TYPE_OTHER);
                         break;
                     case Photo.CONTENT_ITEM_TYPE:
-                        vcard.photo = new AvatarPhoto(c.getBlob(DataQuery.COLUMN_AVATAR_IMAGE));
+                        vcard.setAvatar(new AvatarPhoto(c.getBlob(DataQuery.COLUMN_AVATAR_IMAGE)));
                         break;
                 }
             } // while
@@ -374,7 +371,7 @@ public class ContactsManager {
             c.close();
         }
 
-        Subscription<VCard,?> rawContact = new Subscription<>();
+        Subscription<VxCard,?> rawContact = new Subscription<>();
         rawContact.pub = vcard;
         return rawContact;
     }
@@ -419,10 +416,9 @@ public class ContactsManager {
      * to the server, and for contacts that were deleted on the server and the
      * deletion was synced to the client.
      *
-     * @param context the Authenticator Activity context
      * @param uid     the unique Id for this rawContact in contacts provider, locally issued
      */
-    private static void deleteContact(Context context, long uid, BatchOperation batchOperation) {
+    private static void deleteContact(long uid, BatchOperation batchOperation) {
         batchOperation.add(ContactOperations.newDeleteCpo(
                 ContentUris.withAppendedId(RawContacts.CONTENT_URI, uid), true).build());
     }

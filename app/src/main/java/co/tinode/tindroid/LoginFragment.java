@@ -54,7 +54,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
 
         if (!TextUtils.isEmpty(login)) {
-            TextView loginView = (TextView) fragment.findViewById(R.id.editLogin);
+            TextView loginView = fragment.findViewById(R.id.editLogin);
             if (loginView != null) {
                 loginView.setText(login);
             }
@@ -118,7 +118,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                                     sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
 
                                     final Account acc = addAndroidAccount(
@@ -149,7 +149,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                             },
                             new PromisedReply.FailureListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                public PromisedReply<ServerMessage> onFailure(Exception err) {
                                     Log.d(TAG, "Login failed", err);
                                     parent.reportError(err, signIn, R.string.error_login_failed);
                                     return null;

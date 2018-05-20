@@ -7,12 +7,12 @@ import java.util.Arrays;
 
 public class VCard implements Serializable {
 
-    protected final static String TYPE_HOME = "HOME";
-    protected final static String TYPE_WORK = "WORK";
-    protected final static String TYPE_MOBILE = "MOBILE";
-    protected final static String TYPE_PERSONAL = "PERSONAL";
-    protected final static String TYPE_BUSINESS = "BUSINESS";
-    protected final static String TYPE_OTHER = "OTHER";
+    public final static String TYPE_HOME = "HOME";
+    public final static String TYPE_WORK = "WORK";
+    public final static String TYPE_MOBILE = "MOBILE";
+    public final static String TYPE_PERSONAL = "PERSONAL";
+    public final static String TYPE_BUSINESS = "BUSINESS";
+    public final static String TYPE_OTHER = "OTHER";
     // Full name
     public String fn;
     public Name n;
@@ -102,20 +102,22 @@ public class VCard implements Serializable {
 
     public enum ContactType {HOME, WORK, MOBILE, PERSONAL, BUSINESS, OTHER}
 
-    public VCard copy() {
-        VCard dst = new VCard();
-
-        dst.fn = fn;
-        dst.n = n != null ? n.copy() : null;
-        dst.org = org;
-        dst.title = title;
-        dst.tel = Contact.copyArray(tel);
-        dst.email = Contact.copyArray(email);
-        dst.impp = Contact.copyArray(impp);
+    public static <T extends VCard> T copy(T dst, VCard src) {
+        dst.fn = src.fn;
+        dst.n = src.n != null ? src.n.copy() : null;
+        dst.org = src.org;
+        dst.title = src.title;
+        dst.tel = Contact.copyArray(src.tel);
+        dst.email = Contact.copyArray(src.email);
+        dst.impp = Contact.copyArray(src.impp);
         // Shallow copy of the photo
-        dst.photo = photo;
+        dst.photo = src.photo;
 
         return dst;
+    }
+
+    public VCard copy() {
+        return copy(new VCard(), this);
     }
 
     public static class Name implements Serializable {

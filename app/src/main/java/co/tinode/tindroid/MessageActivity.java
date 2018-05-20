@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -20,15 +21,16 @@ import android.widget.Toast;
 import java.util.Timer;
 
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -53,11 +55,9 @@ public class MessageActivity extends AppCompatActivity {
     private String mMessageText = null;
 
     private String mTopicName = null;
-    private Topic<VCard, String> mTopic = null;
+    private ComTopic<VxCard> mTopic = null;
 
     private PausableSingleThreadExecutor mMessageSender = null;
-
-    private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,8 +66,11 @@ public class MessageActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        ActionBar ab = getSupportActionBar();
+        if (ab != null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+            ab.setDisplayShowHomeEnabled(true);
+        }
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,11 +88,10 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
-
-        mFailureListener = new UiUtils.ToastFailureListener(this);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
 
@@ -99,7 +101,6 @@ public class MessageActivity extends AppCompatActivity {
         final Intent intent = getIntent();
 
         // Check if the activity was launched by internally-generated intent.
-        final String oldTopicName = mTopicName;
         mTopicName = intent.getStringExtra("topic");
 
         if (TextUtils.isEmpty(mTopicName)) {
@@ -126,19 +127,21 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         // Cancel all pending notifications addressed to the current topic
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(mTopicName, 0);
-
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(mTopicName, 0);
+        }
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
         // Get a known topic.
-        mTopic = tinode.getTopic(mTopicName);
+        mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
             showFragment(FRAGMENT_MESSAGES, false, null);
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.i(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
-            mTopic = new Topic<>(tinode, mTopicName, null);
+            mTopic = new ComTopic<>(tinode, mTopicName, (ComTopic.ComListener<VxCard>)null);
             showFragment(FRAGMENT_INVALID, false, null);
         }
         mTopic.setListener(new TListener());
@@ -153,7 +156,7 @@ public class MessageActivity extends AppCompatActivity {
                                 .withGetDel()
                                 .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                                 mTopicName, mTopic.getOnline());
                         showFragment(FRAGMENT_MESSAGES, false, null);
@@ -173,7 +176,7 @@ public class MessageActivity extends AppCompatActivity {
                     }
                 }, new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
                         showFragment(FRAGMENT_INVALID, false, null);
                         return null;
                     }
@@ -313,7 +316,7 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(runnable);
     }
 
-    private class TListener extends Topic.Listener<VCard, String> {
+    private class TListener extends ComTopic.ComListener<VxCard> {
 
         TListener() {
         }
@@ -392,7 +395,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onMetaDesc(final Description<VCard, String> desc) {
+        public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -409,7 +412,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onContUpdate(final Subscription<VCard, String> sub) {
+        public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
             onMetaDesc(null);
         }
 

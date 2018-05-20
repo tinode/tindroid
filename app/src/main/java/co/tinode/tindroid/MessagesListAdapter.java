@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -41,9 +42,10 @@ import java.util.Map;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.media.SpanFormatter;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
@@ -170,7 +172,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         for (int position : positions) {
             StoredMessage msg = getMessage(position);
             if (msg != null) {
-                Subscription<VCard, ?> sub = (Subscription<VCard, ?>) topic.getSubscription(msg.from);
+                Subscription<VxCard, ?> sub = (Subscription<VxCard, ?>) topic.getSubscription(msg.from);
                 String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
                 sb.append("\n[").append(name).append("]: ").append(msg.content).append("; ")
                         .append(UiUtils.shortDate(msg.ts));
@@ -182,7 +184,9 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             String text = sb.toString();
 
             ClipboardManager clipboard = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
-            clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("message text", text));
+            }
         }
     }
 
@@ -204,7 +208,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             try {
                 topic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         runLoader();
                         mActivity.runOnUiThread(new Runnable() {
                             @Override
@@ -301,7 +305,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        Topic<VCard,?> topic = Cache.getTinode().getTopic(mTopicName);
+        ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
         StoredMessage m = getMessage(position);
 
         holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, holder.mText.getMaxWidth(),
@@ -412,7 +416,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         }
 
         if (holder.mAvatar != null || holder.mUserName != null) {
-            Subscription<VCard,?> sub = topic != null ? topic.getSubscription(m.from) : null;
+            Subscription<VxCard,?> sub = topic != null ? topic.getSubscription(m.from) : null;
             if (sub != null && sub.pub != null) {
                 Bitmap avatar = sub.pub.getBitmap();
                 if (holder.mAvatar != null) {
@@ -489,8 +493,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
         // Pass touch event to overlay to generate a ripple
         holder.itemView.setOnTouchListener(new View.OnTouchListener(){
+            @SuppressLint("ClickableViewAccessibility")
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+
                 if (holder.mOverlay != null) {
                     holder.mOverlay.dispatchTouchEvent(MotionEvent.obtain(event));
                 }
@@ -647,12 +653,12 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             super(itemView);
 
             mViewType = viewType;
-            mAvatar = (ImageView) itemView.findViewById(R.id.avatar);
+            mAvatar = itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
-            mDeliveredIcon = (AppCompatImageView) itemView.findViewById(R.id.messageViewedIcon);
-            mText = (TextView) itemView.findViewById(R.id.messageText);
-            mMeta = (TextView) itemView.findViewById(R.id.messageMeta);
-            mUserName = (TextView) itemView.findViewById(R.id.userName);
+            mDeliveredIcon = itemView.findViewById(R.id.messageViewedIcon);
+            mText = itemView.findViewById(R.id.messageText);
+            mMeta = itemView.findViewById(R.id.messageMeta);
+            mUserName = itemView.findViewById(R.id.userName);
             mSelected = itemView.findViewById(R.id.selected);
             mOverlay = itemView.findViewById(R.id.overlay);
         }

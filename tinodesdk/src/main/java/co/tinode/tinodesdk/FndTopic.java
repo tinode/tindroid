@@ -12,9 +12,9 @@ import co.tinode.tinodesdk.model.Subscription;
 
 import static co.tinode.tinodesdk.Tinode.sTypeFactory;
 
-// Public and Private are strings, but Subscriptions are VCard and Array.
+// Topic's Public and Private are String. Subscription Public is VCard, Private is String[].
 // Using Object as the lowest common denominator.
-public class FndTopic extends Topic<String,String,String[]> {
+public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
     private static final String TAG = "FndTopic";
 
     public FndTopic(Tinode tinode, Listener l) {
@@ -76,7 +76,7 @@ public class FndTopic extends Topic<String,String,String[]> {
     @Override
     @SuppressWarnings("unchecked")
     public Subscription getSubscription(String key) {
-        return mSubs != null ? (Subscription) mSubs.get(key) : null;
+        return mSubs != null ? mSubs.get(key) : null;
     }
 
     @Override

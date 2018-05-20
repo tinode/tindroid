@@ -142,17 +142,17 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <Pu, Pr> long subAdd(Topic topic, Subscription<Pu, Pr> sub) {
+    public long subAdd(Topic topic, Subscription sub) {
         return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.STATUS_SYNCED, sub);
     }
 
     @Override
-    public <Pu, Pr> long subNew(Topic topic, Subscription<Pu, Pr> sub) {
+    public long subNew(Topic topic, Subscription sub) {
         return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.STATUS_QUEUED, sub);
     }
 
     @Override
-    public <Pu, Pr> boolean subUpdate(Topic topic, Subscription<Pu, Pr> sub) {
+    public boolean subUpdate(Topic topic, Subscription sub) {
         boolean result = false;
         StoredSubscription ss = (StoredSubscription) sub.getLocal();
         if (ss != null && ss.id > 0) {
@@ -183,17 +183,17 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public <Pu> User<Pu> userGet(String uid) {
+    public User userGet(String uid) {
         return UserDb.readOne(mDbh.getReadableDatabase(), uid);
     }
 
     @Override
-    public <Pu> long userAdd(User<Pu> user) {
+    public long userAdd(User user) {
         return UserDb.insert(mDbh.getWritableDatabase(), user);
     }
 
     @Override
-    public <Pu> boolean userUpdate(User<Pu> user) {
+    public boolean userUpdate(User user) {
         return UserDb.update(mDbh.getWritableDatabase(), user);
     }
 

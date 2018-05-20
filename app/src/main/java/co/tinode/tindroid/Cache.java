@@ -9,8 +9,9 @@ import java.util.HashMap;
 import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.PrivateType;
 
 /**
  * Shared resources.
@@ -35,7 +36,7 @@ public class Cache {
             sTinode.setOsString(Build.VERSION.RELEASE);
 
             // Default types for parsing Public, Private fields of messages
-            sTinode.setDefaultTypes(VCard.class, GenericMap.class);
+            sTinode.setDefaultTypes(VxCard.class, PrivateType.class);
             // Set device language
             sTinode.setLanguage(Locale.getDefault().getLanguage());
             sTinode.setAutologin(true);
@@ -63,15 +64,5 @@ public class Cache {
         sVisibleCount += visible ? 1 : -1;
         // Log.d(TAG, "Visible count: " + sVisibleCount);
         return sVisibleCount;
-    }
-
-    /**
-     * @return true if any activity is visible to the user
-     */
-    public static boolean isInForeground() {
-        return sVisibleCount > 0;
-    }
-
-    public static class GenericMap extends HashMap<String,String> {
     }
 }

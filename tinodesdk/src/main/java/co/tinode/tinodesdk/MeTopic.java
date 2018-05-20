@@ -10,6 +10,9 @@ import java.util.List;
 
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgServerData;
+import co.tinode.tinodesdk.model.MsgServerInfo;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -19,14 +22,14 @@ import co.tinode.tinodesdk.model.VCard;
 /**
  * MeTopic manages contact list. MeTopic::Private is unused.
  */
-public class MeTopic extends Topic<VCard,Object,String> {
+public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<VCard,Object,String> l) {
+    public MeTopic(Tinode tinode, Listener<DP,PrivateType,DP,PrivateType> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
-    protected MeTopic(Tinode tinode, Description<VCard,Object> desc) {
+    protected MeTopic(Tinode tinode, Description<DP,PrivateType> desc) {
         super(tinode, Tinode.TOPIC_ME, desc);
     }
 
@@ -36,7 +39,7 @@ public class MeTopic extends Topic<VCard,Object,String> {
     }
 
     @Override
-    protected void addSubToCache(Subscription<String> sub) {
+    protected void addSubToCache(Subscription<DP,PrivateType> sub) {
         throw new UnsupportedOperationException();
     }
 
@@ -62,18 +65,18 @@ public class MeTopic extends Topic<VCard,Object,String> {
     }
 
     @Override
-    public Collection<Subscription<String>> getSubscriptions() {
+    public Collection<Subscription<DP,PrivateType>> getSubscriptions() {
         throw new UnsupportedOperationException();
     }
 
-    public Object getPriv() {
+    public PrivateType getPriv() {
         return null;
     }
-    public void setPriv(Object priv) { /* do nothing */ }
+    public void setPriv(PrivateType priv) { /* do nothing */ }
 
     @Override
     @SuppressWarnings("un-checked")
-    protected void routeMetaSub(MsgServerMeta<VCard,Object,String> meta) {
+    protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
         // Log.d(TAG, "Me:routeMetaSub");
         for (Subscription sub : meta.sub) {
             // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
@@ -181,4 +184,16 @@ public class MeTopic extends Topic<VCard,Object,String> {
             }
         }
     }
+
+    public static class MeListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
+        /** {meta} message received */
+        public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
+        /** {meta what="sub"} message received, and this is one of the subs */
+        public void onMetaSub(Subscription<DP,PrivateType> sub) {}
+        /** {meta what="desc"} message received */
+        public void onMetaDesc(Description<DP,PrivateType> desc) {}
+        /** Called by MeTopic when topic descriptor as contact is updated */
+        public void onContUpdate(Subscription<DP,PrivateType> sub) {}
+    }
+
 }

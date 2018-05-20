@@ -19,11 +19,12 @@ import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tindroid.Cache;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -47,29 +48,12 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     private final AccountManager mAccountManager;
 
     /**
-     * Content resolver, for performing database operations.
-     */
-    private final ContentResolver mContentResolver;
-
-
-    /**
      * Constructor. Obtains handle to content resolver for later use.
      */
     public SyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
         mContext = context;
         mAccountManager = AccountManager.get(context);
-        mContentResolver = context.getContentResolver();
-    }
-
-    /**
-     * Constructor. Obtains handle to content resolver for later use.
-     */
-    public SyncAdapter(Context context, boolean autoInitialize, boolean allowParallelSyncs) {
-        super(context, autoInitialize, allowParallelSyncs);
-        mContext = context;
-        mAccountManager = AccountManager.get(context);
-        mContentResolver = context.getContentResolver();
     }
 
     /**
@@ -97,15 +81,12 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             // See if we already have a sync-state attached to this account.
             Date lastSyncMarker = getServerSyncMarker(account);
-            long invisibleGroupId = getInvisibleGroupId(account);
 
             // By default, contacts from a 3rd party provider are hidden in the contacts
             // list. So let's set the flag that causes them to be visible, so that users
             // can actually see these contacts.
             if (lastSyncMarker == null) {
                 ContactsManager.makeAccountContactsVisibile(mContext, account);
-                invisibleGroupId = ContactsManager.createInvisibleTinodeGroup(mContext, account);
-                setInvisibleGroupId(account, invisibleGroupId);
             }
 
             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
@@ -124,15 +105,15 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             // MsgGetMeta meta = new MsgGetMeta(null, new MetaGetSub(getServerSyncMarker(account), null), null);
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
             if (future.waitResult()) {
-                ServerMessage<VCard,?> pkt = future.getResult();
+                ServerMessage<?,?,VxCard,PrivateType> pkt = future.getResult();
                 if (pkt.meta == null || pkt.meta.sub == null) {
                     // Server did not return any contacts.
                     return;
                 }
                 // Fetch the list of updated contacts. Group subscriptions will be stored in
                 // the address book but as invisible contacts (members of invisible group)
-                Collection<Subscription<VCard,?>> updated = new ArrayList<>();
-                for (Subscription<VCard,?> sub : pkt.meta.sub) {
+                Collection<Subscription<VxCard,?>> updated = new ArrayList<>();
+                for (Subscription<VxCard,?> sub : pkt.meta.sub) {
                     Log.d(TAG, "updating contact, user=" + sub.user);
                     if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
                         //Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
@@ -140,7 +121,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     }
                 }
                 Date upd = ContactsManager.updateContacts(mContext, account, updated,
-                        meta.sub == null ? null : meta.sub.ims, invisibleGroupId);
+                        meta.sub == null ? null : meta.sub.ims);
                 setServerSyncMarker(account, upd);
             }
         } catch (IOException e) {
@@ -166,18 +147,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         if (marker != null) {
             mAccountManager.setUserData(account, ACCKEY_SYNC_MARKER, Long.toString(marker.getTime()));
         }
-    }
-
-    private long getInvisibleGroupId(Account account) {
-        String idString = mAccountManager.getUserData(account, ACCKEY_INVISIBLE_GROUP);
-        if (!TextUtils.isEmpty(idString)) {
-            return Long.parseLong(idString);
-        }
-        return -1;
-    }
-
-    private void setInvisibleGroupId(Account account, long id) {
-        mAccountManager.setUserData(account, ACCKEY_INVISIBLE_GROUP, Long.toString(id));
     }
 }
 

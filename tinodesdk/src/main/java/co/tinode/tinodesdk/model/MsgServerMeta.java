@@ -5,12 +5,12 @@ import java.util.Date;
 /**
  * Metadata packet
  */
-public class MsgServerMeta<P,R,S> {
+public class MsgServerMeta<DP,DR,SP,SR> {
     public String id;
     public String topic;
     public Date ts;
-    public Description<P,R> desc;
-    public Subscription<S>[] sub;
+    public Description<DP,DR> desc;
+    public Subscription<SP,SR>[] sub;
     public DelValues del;
     public String[] tags;
 

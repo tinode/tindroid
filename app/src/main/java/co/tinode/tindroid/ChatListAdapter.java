@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatImageView;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,8 +15,8 @@ import android.widget.TextView;
 import java.util.List;
 
 import co.tinode.tindroid.db.StoredTopic;
-import co.tinode.tindroid.media.VCard;
-import co.tinode.tinodesdk.Topic;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
 
 /**
  * Handling contact list.
@@ -26,7 +25,7 @@ public class ChatListAdapter extends BaseAdapter {
     private static final String TAG = "ChatListAdapter";
 
     private Context mContext;
-    private List<Topic> mTopics;
+    private List<ComTopic<VxCard>> mTopics;
     private SparseBooleanArray mSelectedItems;
 
 
@@ -38,7 +37,7 @@ public class ChatListAdapter extends BaseAdapter {
     }
 
     public void resetContent() {
-        mTopics = Cache.getTinode().getFilteredTopics(Topic.TopicType.USER, null);
+        mTopics = Cache.getTinode().getFilteredTopics(ComTopic.TopicType.USER, null);
     }
 
     @Override
@@ -68,14 +67,16 @@ public class ChatListAdapter extends BaseAdapter {
         if (item == null) {
             LayoutInflater inflater = (LayoutInflater) mContext
                     .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
-
+            if (inflater == null) {
+                return null;
+            }
             item = inflater.inflate(R.layout.contact, parent, false);
             holder = new ViewHolder();
-            holder.name = (TextView) item.findViewById(R.id.contactName);
-            holder.unreadCount = (TextView) item.findViewById(R.id.unreadCount);
-            holder.contactPriv = (TextView) item.findViewById(R.id.contactPriv);
-            holder.icon = (AppCompatImageView) item.findViewById(R.id.avatar);
-            holder.online = (AppCompatImageView) item.findViewById(R.id.online);
+            holder.name = item.findViewById(R.id.contactName);
+            holder.unreadCount = item.findViewById(R.id.unreadCount);
+            holder.contactPriv = item.findViewById(R.id.contactPriv);
+            holder.icon = item.findViewById(R.id.avatar);
+            holder.online = item.findViewById(R.id.online);
 
             item.setTag(holder);
         } else {
@@ -88,10 +89,10 @@ public class ChatListAdapter extends BaseAdapter {
     }
 
     private void bindView(int position, ViewHolder holder) {
-        final Topic<VCard,String> topic = mTopics.get(position);
+        final ComTopic<VxCard> topic = mTopics.get(position);
 
         holder.topic = topic.getName();
-        VCard pub = topic.getPub();
+        VxCard pub = topic.getPub();
         if (pub != null) {
             holder.name.setText(pub.fn);
             holder.name.setTypeface(null, Typeface.NORMAL);
@@ -99,7 +100,7 @@ public class ChatListAdapter extends BaseAdapter {
             holder.name.setText(R.string.placeholder_contact_title);
             holder.name.setTypeface(null, Typeface.ITALIC);
         }
-        holder.contactPriv.setText(topic.getPriv());
+        holder.contactPriv.setText(topic.getComment());
 
         int unread = topic.getUnreadCount();
         if (unread > 0) {

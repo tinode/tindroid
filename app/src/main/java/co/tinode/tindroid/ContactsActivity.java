@@ -10,7 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.widget.Toast;
 
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
@@ -19,6 +19,7 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -170,7 +171,7 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.activityVisible(focus);
     }
 
-    private class MeListener extends Topic.Listener<VCard,String> {
+    private class MeListener extends MeTopic.MeListener<VxCard> {
 
         @Override
         public void onInfo(MsgServerInfo info) {
@@ -189,14 +190,14 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onMetaSub(final Subscription<String> sub) {
+        public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
             if (sub.pub != null) {
                 sub.pub.constructBitmap();
             }
         }
 
         @Override
-        public void onMetaDesc(final Description<VCard, Object> desc) {
+        public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
             if (desc.pub != null) {
                 desc.pub.constructBitmap();
             }
@@ -209,7 +210,7 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onContUpdate(final Subscription<VCard, Object> sub) {
+        public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
         }
