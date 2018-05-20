@@ -84,15 +84,14 @@ public class TopicInfoFragment extends Fragment {
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
-        RecyclerView rv = (RecyclerView) activity.findViewById(R.id.groupMembers);
+        RecyclerView rv = activity.findViewById(R.id.groupMembers);
         rv.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
         rv.setAdapter(mAdapter);
         rv.setNestedScrollingEnabled(false);
-
-        // Log.d(TAG, "onActivityCreated");
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
 
@@ -152,7 +151,7 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.getTopicType() == Topic.TopicType.GRP) {
             groupMembersCard.setVisibility(View.VISIBLE);
 
-            Button button = (Button) activity.findViewById(R.id.buttonLeaveGroup);
+            Button button = activity.findViewById(R.id.buttonLeaveGroup);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -175,7 +174,7 @@ public class TopicInfoFragment extends Fragment {
                 }
             });
 
-            button = (Button) activity.findViewById(R.id.buttonAddMembers);
+            button = activity.findViewById(R.id.buttonAddMembers);
             if (!mTopic.isAdmin() && !mTopic.isOwner()) {
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.
@@ -208,8 +207,8 @@ public class TopicInfoFragment extends Fragment {
 
         if (am != null && (am.isAdmin() || am.isOwner())) {
             defaultPermissionsCard.setVisibility(View.VISIBLE);
-            final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
-            final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
+            final TextView auth = activity.findViewById(R.id.authPermissions);
+            final TextView anon = activity.findViewById(R.id.anonPermissions);
             auth.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -243,11 +242,11 @@ public class TopicInfoFragment extends Fragment {
         final PrivateType priv = mTopic.getPriv();
         final Activity activity = getActivity();
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_group, null);
+        final View editor = View.inflate(builder.getContext(), R.layout.dialog_edit_group, null);
         builder.setView(editor).setTitle(R.string.edit_topic);
 
-        final EditText titleEditor = (EditText) editor.findViewById(R.id.editTitle);
-        final EditText subtitleEditor = (EditText) editor.findViewById(R.id.editPrivate);
+        final EditText titleEditor = editor.findViewById(R.id.editTitle);
+        final EditText subtitleEditor = editor.findViewById(R.id.editPrivate);
         if (mTopic.isAdmin()) {
             if (!TextUtils.isEmpty(title)) {
                 titleEditor.setText(title);
@@ -256,8 +255,8 @@ public class TopicInfoFragment extends Fragment {
             editor.findViewById(R.id.editTitleWrapper).setVisibility(View.GONE);
         }
 
-        if (!TextUtils.isEmpty(priv.toString())) {
-            subtitleEditor.setText(priv.toString());
+        if (!TextUtils.isEmpty(priv.getComment())) {
+            subtitleEditor.setText(priv.getComment());
         }
 
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -317,8 +316,7 @@ public class TopicInfoFragment extends Fragment {
                 topicTitle;
 
         AlertDialog.Builder actionBuilder = new AlertDialog.Builder(activity);
-        final LayoutInflater inflater = LayoutInflater.from(actionBuilder.getContext());
-        final LinearLayout actions = (LinearLayout) inflater.inflate(R.layout.dialog_member_actions, null);
+        final LinearLayout actions = (LinearLayout) View.inflate(activity, R.layout.dialog_member_actions, null);
         actionBuilder
                 .setTitle(TextUtils.isEmpty(title) ?
                         activity.getString(R.string.placeholder_contact_title) :
@@ -388,13 +386,13 @@ public class TopicInfoFragment extends Fragment {
     void notifyContentChanged() {
         final Activity activity = getActivity();
 
-        final AppCompatImageView avatar = (AppCompatImageView) activity.findViewById(R.id.imageAvatar);
-        final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
-        final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
-        final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
-        final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
-        final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
-        final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
+        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
+        final TextView title = activity.findViewById(R.id.topicTitle);
+        final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
+        final TextView permissions = activity.findViewById(R.id.permissions);
+        final Switch muted = activity.findViewById(R.id.switchMuted);
+        final TextView auth = activity.findViewById(R.id.authPermissions);
+        final TextView anon = activity.findViewById(R.id.anonPermissions);
 
         VxCard pub = mTopic.getPub();
         if (pub != null) {
@@ -425,9 +423,9 @@ public class TopicInfoFragment extends Fragment {
                     new LetterTileDrawable(getResources()).setIsCircular(true));
         }
 
-        String priv = mTopic.getPriv().toString();
-        if (!TextUtils.isEmpty(priv)) {
-            subtitle.setText(priv);
+        PrivateType priv = mTopic.getPriv();
+        if (!TextUtils.isEmpty(priv.getComment())) {
+            subtitle.setText(priv.getComment());
             subtitle.setTypeface(null, Typeface.NORMAL);
             subtitle.setTextIsSelectable(true);
         } else {
@@ -475,14 +473,14 @@ public class TopicInfoFragment extends Fragment {
         MemberViewHolder(View item) {
             super(item);
 
-            name = (TextView) item.findViewById(android.R.id.text1);
-            extraInfo = (TextView) item.findViewById(android.R.id.text2);
-            statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
+            name = item.findViewById(android.R.id.text1);
+            extraInfo = item.findViewById(android.R.id.text2);
+            statusContainer = item.findViewById(R.id.statusContainer);
             status = new TextView[statusContainer.getChildCount()];
             for (int i = 0; i < status.length; i++) {
                 status[i] = (TextView) statusContainer.getChildAt(i);
             }
-            icon = (AppCompatImageView) item.findViewById(android.R.id.icon);
+            icon = item.findViewById(android.R.id.icon);
         }
     }
 
