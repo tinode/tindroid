@@ -162,6 +162,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return items;
     }
 
+    @SuppressWarnings("unchecked")
     private void copyMessageText(int[] positions) {
         StringBuilder sb = new StringBuilder();
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
@@ -190,6 +191,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void sendDeleteMessages(final int[] positions) {
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
 
@@ -303,6 +305,8 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         return new ViewHolder(v, viewType);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    @SuppressWarnings("unchecked")
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
@@ -457,12 +461,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
             }
         }
 
-        View.OnLongClickListener longClicker = new View.OnLongClickListener() {
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 int pos = holder.getAdapterPosition();
-                Log.d(TAG, "Long click in position " + pos);
-
                 if (mSelectedItems == null) {
                     mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
                 }
@@ -473,34 +475,16 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
                 return true;
             }
-        };
-
-        holder.mText.setOnLongClickListener(longClicker);
-        holder.itemView.setOnLongClickListener(longClicker);
+        });
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mSelectedItems != null) {
                     int pos = holder.getAdapterPosition();
-                    Log.d(TAG, "Short click in position " + pos);
-
                     toggleSelectionAt(pos);
                     notifyItemChanged(pos);
                     updateSelectionMode();
                 }
-            }
-        });
-
-        // Pass touch event to overlay to generate a ripple
-        holder.itemView.setOnTouchListener(new View.OnTouchListener(){
-            @SuppressLint("ClickableViewAccessibility")
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                if (holder.mOverlay != null) {
-                    holder.mOverlay.dispatchTouchEvent(MotionEvent.obtain(event));
-                }
-                return false;
             }
         });
 
@@ -526,6 +510,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private boolean updateSelectionMode() {
         if (mSelectionMode != null) {
             if (mSelectedItems.size() == 0) {
@@ -638,7 +623,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
         }
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
         int mViewType;
         ImageView mAvatar;
         View mMessageBubble;
