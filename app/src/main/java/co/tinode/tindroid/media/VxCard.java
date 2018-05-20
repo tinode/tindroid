@@ -20,7 +20,7 @@ public class VxCard extends VCard {
     public VxCard(String fullName, Bitmap bmp) {
         fn = fullName;
         avatar = new AvatarPhoto(bmp);
-        photo = avatar.data;
+        photo = new Photo(avatar.data);
     }
 
     @Override
@@ -37,15 +37,15 @@ public class VxCard extends VCard {
     @JsonIgnore
     public void setBitmap(Bitmap bmp) {
         avatar = new AvatarPhoto(bmp);
-        photo = avatar.data;
+        photo = new Photo(avatar.data);
     }
     @JsonIgnore
     public void setAvatar(AvatarPhoto bmp) {
         avatar = bmp;
-        photo = avatar.data;
+        photo = new Photo(avatar.data);
     }
 
     public void constructBitmap() {
-        avatar = new AvatarPhoto(photo);
+        avatar = new AvatarPhoto(photo.data);
     }
 }

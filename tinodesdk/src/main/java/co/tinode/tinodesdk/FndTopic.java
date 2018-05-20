@@ -1,16 +1,16 @@
 package co.tinode.tinodesdk;
 
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
 
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerMeta;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
-
-import static co.tinode.tinodesdk.Tinode.sTypeFactory;
 
 // Topic's Public and Private are String. Subscription Public is VCard, Private is String[].
 // Using Object as the lowest common denominator.
@@ -21,10 +21,8 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
         super(tinode, Tinode.TOPIC_FND, l);
     }
 
-    @Override
-    public JavaType getTypeOfMetaPacket() {
-        sTypeFactory.constructParametricType(MsgServerMeta.class, String.class, String[].class);
-        return null;
+    public void setTypes(JavaType typeOfSubPu) {
+        mTinode.setFndTypeOfMetaPacket(typeOfSubPu);
     }
 
     @Override

@@ -36,7 +36,10 @@ public class Cache {
             sTinode.setOsString(Build.VERSION.RELEASE);
 
             // Default types for parsing Public, Private fields of messages
-            sTinode.setDefaultTypes(VxCard.class, PrivateType.class);
+            sTinode.setDefaultTypeOfMetaPacket(VxCard.class, PrivateType.class);
+            sTinode.setMeTypeOfMetaPacket(VxCard.class);
+            sTinode.setFndTypeOfMetaPacket(VxCard.class);
+
             // Set device language
             sTinode.setLanguage(Locale.getDefault().getLanguage());
             sTinode.setAutologin(true);

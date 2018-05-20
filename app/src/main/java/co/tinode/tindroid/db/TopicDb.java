@@ -96,11 +96,6 @@ public class TopicDb implements BaseColumns {
      * Maximum sequence ID received by the current device (self/locally-tracked), integer
      */
     public static final String COLUMN_NAME_MAX_LOCAL_SEQ = "max_local_seq";
-
-    /**
-     * Serialized types of public, private, and content
-     */
-    public static final String COLUMN_NAME_SERIALIZED_TYPES = "stypes";
     /**
      * Topic tags, array of strings.
      */
@@ -133,10 +128,9 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_LASTUSED = 15;
     static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
     static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
-    static final int COLUMN_IDX_SERIALIZED_TYPES = 18;
-    static final int COLUMN_IDX_TAGS = 19;
-    static final int COLUMN_IDX_PUBLIC = 20;
-    static final int COLUMN_IDX_PRIVATE = 21;
+    static final int COLUMN_IDX_TAGS = 18;
+    static final int COLUMN_IDX_PUBLIC = 19;
+    static final int COLUMN_IDX_PRIVATE = 20;
 
     /**
      * SQL statement to create Messages table
@@ -162,7 +156,6 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_LASTUSED + " INT," +
                     COLUMN_NAME_MIN_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_MAX_LOCAL_SEQ + " INT," +
-                    COLUMN_NAME_SERIALIZED_TYPES + " TEXT," +
                     COLUMN_NAME_TAGS + " TEXT," +
                     COLUMN_NAME_PUBLIC + " BLOB," +
                     COLUMN_NAME_PRIVATE + " BLOB)";
@@ -217,7 +210,6 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
-        values.put(COLUMN_NAME_SERIALIZED_TYPES, topic.getSerializedTypes());
         values.put(COLUMN_NAME_TAGS, BaseDb.serializeTags(topic.getTags()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
@@ -379,7 +371,7 @@ public class TopicDb implements BaseColumns {
      */
     @SuppressWarnings("unchecked, WeakerAccess")
     protected static Topic readOne(Tinode tinode, Cursor c) {
-        // Instantiate topic of an appropriate class ('me' or group)
+        // Instantiate topic of an appropriate class ('me' or 'fnd' or group)
         Topic topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
         StoredTopic.deserialize(topic, c);
         return topic;

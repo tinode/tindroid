@@ -24,14 +24,15 @@ public class VCard implements Serializable {
     public Contact[] email;
     public Contact[] impp;
     // Avatar photo. Java does not have a useful bitmap class, so keeping it as bits here.
-    public byte[] photo;
+
+    public Photo photo;
 
     public VCard() {
     }
 
     public VCard(String fullName, byte[] avatar) {
         this.fn = fullName;
-        this.photo = avatar;
+        this.photo = new Photo(avatar);
     }
 
     protected static String typeToString(ContactType tp) {
@@ -62,11 +63,11 @@ public class VCard implements Serializable {
 
     @JsonIgnore
     public byte[] getPhotoBits() {
-        return photo;
+        return photo == null ? null : photo.data;
     }
     @JsonIgnore
     public void setPhotoBits(byte[] bits) {
-        photo = bits;
+        photo = new Photo(bits);
     }
 
     public void addPhone(String phone, ContactType type) {
@@ -111,7 +112,7 @@ public class VCard implements Serializable {
         dst.email = Contact.copyArray(src.email);
         dst.impp = Contact.copyArray(src.impp);
         // Shallow copy of the photo
-        dst.photo = src.photo;
+        dst.photo = src.photo.copy();
 
         return dst;
     }
@@ -170,6 +171,24 @@ public class VCard implements Serializable {
             }
             arr[arr.length - 1] = val;
             return arr;
+        }
+    }
+
+    public static class Photo implements Serializable {
+        public byte[] data;
+        public String type;
+
+        public Photo() {}
+
+        public Photo(byte[] bits) {
+            data = bits;
+        }
+
+        public Photo copy() {
+            Photo ret = new Photo();
+            ret.data = data;
+            ret.type = type;
+            return ret;
         }
     }
 }

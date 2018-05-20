@@ -139,7 +139,7 @@ public class ContactsManager {
                 .addPhone(vc.getPhoneByType(VxCard.ContactType.HOME), Phone.TYPE_HOME)
                 .addPhone(vc.getPhoneByType(VxCard.ContactType.WORK), Phone.TYPE_WORK)
                 .addIm(rawContact.user)
-                .addAvatar(vc.photo);
+                .addAvatar(vc.photo != null? vc.photo.data : null);
 
         // Actually create our status profile.
         contactOp.addProfileAction(rawContact.user);
@@ -230,7 +230,7 @@ public class ContactsManager {
                         break;
                     case Photo.CONTENT_ITEM_TYPE:
                         existingAvatar = true;
-                        contactOp.updateAvatar(vc.photo, uri);
+                        contactOp.updateAvatar(vc.photo != null ? vc.photo.data : null, uri);
                         break;
 
                 }
@@ -256,7 +256,7 @@ public class ContactsManager {
         }
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
-            contactOp.addAvatar(vc.photo);
+            contactOp.addAvatar(vc.photo != null ? vc.photo.data : null);
         }
 
         // If we don't have a status profile, then create one.  This could

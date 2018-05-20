@@ -1,10 +1,4 @@
-/**
- * Created by gene on 06/02/16.
- */
-
 package co.tinode.tinodesdk;
-
-import android.util.Log;
 
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
@@ -24,7 +18,6 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
-import co.tinode.tinodesdk.model.VCard;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -36,7 +29,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 
 /**
  *
@@ -47,6 +39,7 @@ import java.util.Vector;
  *  @param <SP> is the type of Subscription.Public
  *  @param <SR> is the type of Subscription.Private
  */
+@SuppressWarnings("WeakerAccess, unused")
 public class Topic<DP,DR,SP,SR> implements LocalData {
     private static final String TAG = "tinodesdk.Topic";
 
@@ -55,7 +48,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         USER(0x04 | 0x08), SYSTEM(0x01 | 0x02), UNKNOWN(0x00),
         ANY(0x01 | 0x02 | 0x04 | 0x08);
 
-        private int val = 0;
+        private int val;
         TopicType(int val) {
             this.val = val;
         }
@@ -67,11 +60,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     }
 
     protected enum NoteType {READ, RECV}
-
-    protected JavaType mTypeOfMetaPacket = null;
-
-    protected String mClassNameOfPublic;
-    protected String mClassNameOfPrivate;
 
     protected Tinode mTinode;
 
@@ -115,8 +103,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
         mTinode = tinode;
 
-        mTypeOfMetaPacket   = tinode.getTypeOfMetaPacket();
-
         setName(sub.topic);
 
         mDesc   = new Description<>();
@@ -133,8 +119,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
         mTinode = tinode;
 
-        mTypeOfMetaPacket = tinode.getTypeOfMetaPacket();
-
         setName(name);
 
         mDesc   = new Description<>();
@@ -150,7 +134,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      *
      * @throws IllegalArgumentException if 'tinode' argument is null
      */
-    public Topic(Tinode tinode, String name, Listener<DP,DR,SP,SR> l) {
+    protected Topic(Tinode tinode, String name, Listener<DP,DR,SP,SR> l) {
         if (tinode == null) {
             throw new IllegalArgumentException("Tinode cannot be null");
         }
@@ -175,7 +159,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @param tinode tinode instance
      * @param l event listener, optional
      */
-    public Topic(Tinode tinode, Listener<DP,DR,SP,SR> l) {
+    protected Topic(Tinode tinode, Listener<DP,DR,SP,SR> l) {
         this(tinode, Tinode.TOPIC_NEW + tinode.nextUniqueString(), l);
     }
 
@@ -183,78 +167,51 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * Set custom types of payload: {data} as well as public and private content. Needed for
      * deserialization of server messages.
      *
-     * @param typeOfPublic type of {meta.desc.public}
-     * @param typeOfPrivate type of {meta.desc.private}
+     * @param typeOfDescPublic type of {meta.desc.public}
+     * @param typeOfDescPrivate type of {meta.desc.private}
+     * @param typeOfSubPublic type of {meta.subs[].public}
+     * @param typeOfSubPrivate type of {meta.subs[].private}
      *
      */
-    public void setTypes(JavaType typeOfPublic, JavaType typeOfPrivate) {
-        mClassNameOfPublic = typeOfPublic.toCanonical();
-        mClassNameOfPrivate = typeOfPrivate.toCanonical();
-
-        mTypeOfMetaPacket = Tinode.getTypeFactory()
-                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
+    public void setTypes(JavaType typeOfDescPublic, JavaType typeOfDescPrivate,
+                         JavaType typeOfSubPublic, JavaType typeOfSubPrivate) {
+        mTinode.setTypeOfMetaPacket(mName, typeOfDescPublic, typeOfDescPrivate,
+                typeOfSubPublic, typeOfSubPrivate);
     }
 
     /**
      * Set types of payload: {data} as well as public and private content. Needed for
      * deserialization of server messages.
      *
-     * @param typeOfPublic type of {meta.desc.public}
-     * @param typeOfPrivate type of {meta.desc.private}
+     * @param typeOfDescPublic type of {meta.desc.public}
+     * @param typeOfDescPrivate type of {meta.desc.private}
+     * @param typeOfSubPublic type of {meta.sub[].public}
+     * @param typeOfSubPrivate type of {meta.sub[].private}
      *
      */
-    public void setTypes(Class<?> typeOfPublic, Class<?> typeOfPrivate) {
+    public void setTypes(Class<?> typeOfDescPublic, Class<?> typeOfDescPrivate,
+                         Class<?> typeOfSubPublic, Class<?> typeOfSubPrivate) {
         final TypeFactory tf = Tinode.getTypeFactory();
-        setTypes(tf.constructType(typeOfPublic), tf.constructType(typeOfPrivate));
+        setTypes(tf.constructType(typeOfDescPublic), tf.constructType(typeOfDescPrivate),
+                tf.constructType(typeOfSubPublic), tf.constructType(typeOfSubPrivate));
     }
 
     /**
      * Set types of payload: {data} content as well as public and private fields of topic.
      * Type names must be generated by {@link JavaType#toCanonical()}
      *
-     * @param typeOfPublic type of {meta.desc.public}
-     * @param typeOfPrivate type of {meta.desc.private}
+     * @param typeOfDescPublic type of {meta.desc.public}
+     * @param typeOfDescPrivate type of {meta.desc.private}
+     * @param typeOfSubPublic type of {meta.desc.public}
+     * @param typeOfSubPrivate type of {meta.desc.private}
      *
      * @throws IllegalArgumentException if types cannot be parsed
      */
-    public void setTypes(String typeOfPublic, String typeOfPrivate) throws IllegalArgumentException {
+    public void setTypes(String typeOfDescPublic, String typeOfDescPrivate,
+                         String typeOfSubPublic, String typeOfSubPrivate) throws IllegalArgumentException {
         final TypeFactory tf = Tinode.getTypeFactory();
-        setTypes(tf.constructFromCanonical(typeOfPublic), tf.constructFromCanonical(typeOfPrivate));
-    }
-
-    /**
-     * Set types of payload: {data} content as well as public and private fields of topic.
-     * Type names must be generated by {@link Topic#getSerializedTypes()}.
-     *
-     * @param serialized type of {meta.desc.public}
-     *
-     * @throws IllegalArgumentException if types cannot be parsed
-     */
-    public void setSerializedTypes(String serialized) throws IllegalArgumentException {
-        // Log.d(TAG, "Serialized types: " + serialized);
-
-        if (serialized == null) {
-            return;
-        }
-
-        String[] parts = serialized.split("\\n");
-        // Log.d(TAG, "Serialized types parsed: " + Arrays.toString(parts));
-
-        if (parts.length == 2) {
-            setTypes(parts[0], parts[1]);
-        } else {
-            throw new IllegalArgumentException("Failed to parse serialized types");
-        }
-    }
-
-    /**
-     * @return Content types as a string suitable for persistent storage.
-     */
-    public String getSerializedTypes() {
-        if (mClassNameOfPrivate == null || mClassNameOfPublic == null) {
-            return null;
-        }
-        return mClassNameOfPublic + "\n" + mClassNameOfPrivate;
+        setTypes(tf.constructFromCanonical(typeOfDescPublic), tf.constructFromCanonical(typeOfDescPrivate),
+                tf.constructFromCanonical(typeOfSubPublic), tf.constructFromCanonical(typeOfSubPrivate));
     }
 
     /**
@@ -287,6 +244,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      *
      * @param sub updated topic parameters
      */
+    @SuppressWarnings("unchecked")
     protected void update(Map<String,Object> params, MetaSetSub sub) {
         // Log.d(TAG, "Topic.update(ctrl.params, MetaSetSub)");
         String user = sub.user;
@@ -306,7 +264,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
         if (user == null) {
             user = mTinode.getMyId();
-            boolean changed = false;
+            boolean changed;
             // This is an update to user's own subscription to topic (want)
             if (mDesc.acs == null) {
                 mDesc.acs = acs;
@@ -509,6 +467,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     public boolean isMuted() {
         return mDesc.acs != null && mDesc.acs.isMuted();
     }
+    @SuppressWarnings("UnusedReturnValue")
     public PromisedReply<ServerMessage> updateMuted(final boolean muted) throws Exception {
         return updateMode(null, muted ? "-P" : "+P");
     }
@@ -592,6 +551,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotConnectedException if there is no live connection to the server
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
+    @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP,DR> set, MsgGetMeta get)
             throws Exception {
 
@@ -615,8 +575,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         return mTinode.subscribe(getName(), set, get).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage msg)
-                            throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                         if (!mAttached) {
                             mAttached = true;
                             if (msg.ctrl != null) {
@@ -671,8 +630,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
             return mTinode.leave(getName(), unsub).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
-                                throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             topicLeft(unsub, result.ctrl.code, result.ctrl.text);
                             if (unsub) {
                                 mTinode.unregisterTopic(getName());
@@ -695,6 +653,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
+    @SuppressWarnings("UnusedReturnValue")
     public PromisedReply<ServerMessage> leave() throws Exception {
         return leave(false);
     }
@@ -737,7 +696,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
             return mTinode.publish(getName(), content.isPlain() ? content.toString() : content).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             processDelivery(result.ctrl, id);
                             return null;
                         }
@@ -754,8 +713,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     /**
      * Convenience method for plain text messages. Will convert message to Drafty.
      * @param content message to send
-     * @return
-     * @throws Exception
+     * @return PromisedReply
      */
     public PromisedReply<ServerMessage> publish(String content) throws Exception {
         return publish(Drafty.parse(content));
@@ -768,6 +726,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
+    @SuppressWarnings("UnusedReturnValue")
     public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> publishPending()
             throws Exception {
         ML list = mStore.getUnsentMessages(this);
@@ -782,7 +741,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
             last.thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             processDelivery(result.ctrl, msg.getId());
                             return null;
                         }
@@ -814,8 +773,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
             return mTinode.setMeta(getName(), meta).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
-                        throws Exception {
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     update(result.ctrl, meta);
                     return null;
                 }
@@ -910,7 +868,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         @SuppressWarnings("unchecked")
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             if (result.ctrl != null) {
                                 if (self) {
                                     mDesc.acs.merge((Map) result.ctrl.params);
@@ -933,6 +891,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
+    @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> invite(String uid, String mode)  throws Exception {
 
         final Subscription<SP,SR> sub;
@@ -969,7 +928,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         return setSubscription(new MetaSetSub(uid, mode)).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         if (mStore != null) {
                             mStore.subUpdate(Topic.this, sub);
                         }
@@ -1019,7 +978,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
         return mTinode.delSubscription(getName(), uid).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
-            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 if (mStore != null) {
                     mStore.subDelete(Topic.this, sub);
                 }
@@ -1048,7 +1007,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         if (mAttached) {
             return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     Integer delId = result.ctrl.getIntParam("del");
                     if (mStore != null && delId != null) {
                         mStore.msgDelete(Topic.this, delId, fromId, toId);
@@ -1081,7 +1040,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         if (mAttached) {
             return mTinode.delMessage(getName(), list, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     Integer delId = result.ctrl.getIntParam("del");
                     if (mStore != null && delId != null) {
                         mStore.msgDelete(Topic.this, delId, list);
@@ -1114,8 +1073,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         return mTinode.delTopic(getName()).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result)
-                            throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         topicLeft(true, result.ctrl.code, result.ctrl.text);
                         mTinode.unregisterTopic(getName());
                         return null;
@@ -1153,6 +1111,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     }
 
     /** Notify the server that the client read the message */
+    @SuppressWarnings("UnusedReturnValue")
     public int noteRead() {
         int result = noteReadRecv(NoteType.READ);
         if (mStore != null) {
@@ -1162,6 +1121,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     }
 
     /** Notify the server that the messages is stored on the client */
+    @SuppressWarnings("UnusedReturnValue")
     public int noteRecv() {
         int result = noteReadRecv(NoteType.RECV);
         if (mStore != null) {
@@ -1184,11 +1144,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected JavaType getTypeOfMetaPacket() {
-        return mTypeOfMetaPacket;
-    }
-
     public String getName() {
         return mName;
     }
@@ -1197,7 +1152,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         mName = name;
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings("WeakerAccess, UnusedReturnValue, unchecked")
     protected int loadSubs() {
         Collection<Subscription> subs = mStore != null ? mStore.getSubscriptions(this) : null;
         if (subs == null) {

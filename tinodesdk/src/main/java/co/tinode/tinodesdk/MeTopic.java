@@ -3,6 +3,7 @@ package co.tinode.tinodesdk;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.util.Collection;
 import java.util.Date;
@@ -33,9 +34,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         super(tinode, Tinode.TOPIC_ME, desc);
     }
 
-    @Override
-    public void setTypes(JavaType typeOfPu, JavaType typeOfPr) {
-        super.setTypes(typeOfPu, typeOfPr);
+    public void setTypes(JavaType typeOfPu) {
+        mTinode.setMeTypeOfMetaPacket(typeOfPu);
     }
 
     @Override
