@@ -32,7 +32,7 @@ public class Cache {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
 
-            sTinode = new Tinode("Tindroid", API_KEY, BaseDb.getInstance().getStore(), null);
+            sTinode = new Tinode("Tindroid/0.15", API_KEY, BaseDb.getInstance().getStore(), null);
             sTinode.setOsString(Build.VERSION.RELEASE);
 
             // Default types for parsing Public, Private fields of messages
