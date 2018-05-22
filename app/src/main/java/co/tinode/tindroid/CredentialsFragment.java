@@ -1,19 +1,10 @@
 package co.tinode.tindroid;
 
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.CheckBoxPreference;
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.preference.PreferenceManager;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,15 +12,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.media.VCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Credential;
-import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
@@ -105,7 +92,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
             tinode.loginToken(token, cred).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                         // Flip back to login screen on success;
                         parent.runOnUiThread(new Runnable() {
                                     public void run() {
@@ -120,7 +107,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                 },
                 new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
                         parent.reportError(err, confirm, R.string.failed_credential_confirmation);
                         return null;
                     }

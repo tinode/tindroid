@@ -5,11 +5,13 @@ import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import java.util.HashMap;
 import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.PrivateType;
 
 /**
  * Shared resources.
@@ -30,11 +32,14 @@ public class Cache {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
 
-            sTinode = new Tinode("Tindroid", API_KEY, BaseDb.getInstance().getStore(), null);
+            sTinode = new Tinode("Tindroid/0.15", API_KEY, BaseDb.getInstance().getStore(), null);
             sTinode.setOsString(Build.VERSION.RELEASE);
 
-            // Default types for parsing Public, Private, Content fields of messages
-            sTinode.setDefaultTypes(VCard.class, String.class);
+            // Default types for parsing Public, Private fields of messages
+            sTinode.setDefaultTypeOfMetaPacket(VxCard.class, PrivateType.class);
+            sTinode.setMeTypeOfMetaPacket(VxCard.class);
+            sTinode.setFndTypeOfMetaPacket(VxCard.class);
+
             // Set device language
             sTinode.setLanguage(Locale.getDefault().getLanguage());
             sTinode.setAutologin(true);
@@ -62,12 +67,5 @@ public class Cache {
         sVisibleCount += visible ? 1 : -1;
         // Log.d(TAG, "Visible count: " + sVisibleCount);
         return sVisibleCount;
-    }
-
-    /**
-     * @return true if any activity is visible to the user
-     */
-    public static boolean isInForeground() {
-        return sVisibleCount > 0;
     }
 }

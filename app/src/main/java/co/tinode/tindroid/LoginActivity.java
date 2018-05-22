@@ -13,7 +13,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -77,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
 
         PreferenceManager.setDefaultValues(this, R.xml.login_preferences, false);
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Handle clicks on the '<-' arrow in the toolbar.
@@ -144,7 +143,7 @@ public class LoginActivity extends AppCompatActivity {
                                            @NonNull final int[] grantResults) {
         //
         if (requestCode == PERMISSIONS_REQUEST_GET_ACCOUNTS) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
                 Log.d(TAG, "Access granted");
             } else {

@@ -5,16 +5,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Topic intiation parameters
  */
-public class MetaSetDesc<Pu,Pr> {
+public class MetaSetDesc<P,R> {
     public Defacs defacs;
     @JsonProperty("public")
-    public Pu pub;
+    public P pub;
     @JsonProperty("private")
-    public Pr priv;
+    public R priv;
 
     public MetaSetDesc() {}
 
-    public MetaSetDesc(Pu pub, Pr priv) {
+    public MetaSetDesc(P pub, R priv) {
         this.pub = pub;
         this.priv = priv;
     }

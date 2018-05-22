@@ -30,20 +30,22 @@ import android.widget.Toast;
 import java.util.Collection;
 
 import co.tinode.tindroid.db.StoredSubscription;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 import static android.app.Activity.RESULT_OK;
 
 /**
- * Topic Info fragment.
+ * Topic Info fragment: p2p or a group topic.
  */
 public class TopicInfoFragment extends Fragment {
 
@@ -52,7 +54,7 @@ public class TopicInfoFragment extends Fragment {
     private static final int ACTION_REMOVE = 4;
     private static final int ACTION_BAN = 5;
 
-    Topic<VCard, String> mTopic;
+    ComTopic<VxCard> mTopic;
     private MembersAdapter mAdapter;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -82,28 +84,27 @@ public class TopicInfoFragment extends Fragment {
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
-        RecyclerView rv = (RecyclerView) activity.findViewById(R.id.groupMembers);
+        RecyclerView rv = activity.findViewById(R.id.groupMembers);
         rv.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
         rv.setAdapter(mAdapter);
         rv.setNestedScrollingEnabled(false);
-
-        // Log.d(TAG, "onActivityCreated");
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
 
         Bundle bundle = getArguments();
         String name = bundle.getString("topic");
-        mTopic = Cache.getTinode().getTopic(name);
+        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
 
         final Activity activity = getActivity();
-        final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
-        final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
-        final TextView address = (TextView) activity.findViewById(R.id.topicAddress);
-        final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
-        final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
+        final TextView title = activity.findViewById(R.id.topicTitle);
+        final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
+        final TextView address = activity.findViewById(R.id.topicAddress);
+        final Switch muted = activity.findViewById(R.id.switchMuted);
+        final TextView permissions = activity.findViewById(R.id.permissions);
         final View groupMembersCard = activity.findViewById(R.id.groupMembersCard);
         final View defaultPermissionsCard = activity.findViewById(R.id.defaultPermissionsCard);
         final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
@@ -150,7 +151,7 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.getTopicType() == Topic.TopicType.GRP) {
             groupMembersCard.setVisibility(View.VISIBLE);
 
-            Button button = (Button) activity.findViewById(R.id.buttonLeaveGroup);
+            Button button = activity.findViewById(R.id.buttonLeaveGroup);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -173,7 +174,7 @@ public class TopicInfoFragment extends Fragment {
                 }
             });
 
-            button = (Button) activity.findViewById(R.id.buttonAddMembers);
+            button = activity.findViewById(R.id.buttonAddMembers);
             if (!mTopic.isAdmin() && !mTopic.isOwner()) {
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.
@@ -206,8 +207,8 @@ public class TopicInfoFragment extends Fragment {
 
         if (am != null && (am.isAdmin() || am.isOwner())) {
             defaultPermissionsCard.setVisibility(View.VISIBLE);
-            final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
-            final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
+            final TextView auth = activity.findViewById(R.id.authPermissions);
+            final TextView anon = activity.findViewById(R.id.anonPermissions);
             auth.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -236,16 +237,16 @@ public class TopicInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditTopicText() {
-        VCard pub = mTopic.getPub();
+        VxCard pub = mTopic.getPub();
         final String title = pub == null ? null : pub.fn;
-        final String priv = mTopic.getPriv();
+        final PrivateType priv = mTopic.getPriv();
         final Activity activity = getActivity();
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_group, null);
+        final View editor = View.inflate(builder.getContext(), R.layout.dialog_edit_group, null);
         builder.setView(editor).setTitle(R.string.edit_topic);
 
-        final EditText titleEditor = (EditText) editor.findViewById(R.id.editTitle);
-        final EditText subtitleEditor = (EditText) editor.findViewById(R.id.editPrivate);
+        final EditText titleEditor = editor.findViewById(R.id.editTitle);
+        final EditText subtitleEditor = editor.findViewById(R.id.editPrivate);
         if (mTopic.isAdmin()) {
             if (!TextUtils.isEmpty(title)) {
                 titleEditor.setText(title);
@@ -254,8 +255,8 @@ public class TopicInfoFragment extends Fragment {
             editor.findViewById(R.id.editTitleWrapper).setVisibility(View.GONE);
         }
 
-        if (!TextUtils.isEmpty(priv)) {
-            subtitleEditor.setText(priv);
+        if (!TextUtils.isEmpty(priv.getComment())) {
+            subtitleEditor.setText(priv.getComment());
         }
 
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -315,8 +316,7 @@ public class TopicInfoFragment extends Fragment {
                 topicTitle;
 
         AlertDialog.Builder actionBuilder = new AlertDialog.Builder(activity);
-        final LayoutInflater inflater = LayoutInflater.from(actionBuilder.getContext());
-        final LinearLayout actions = (LinearLayout) inflater.inflate(R.layout.dialog_member_actions, null);
+        final LinearLayout actions = (LinearLayout) View.inflate(activity, R.layout.dialog_member_actions, null);
         actionBuilder
                 .setTitle(TextUtils.isEmpty(title) ?
                         activity.getString(R.string.placeholder_contact_title) :
@@ -386,15 +386,15 @@ public class TopicInfoFragment extends Fragment {
     void notifyContentChanged() {
         final Activity activity = getActivity();
 
-        final AppCompatImageView avatar = (AppCompatImageView) activity.findViewById(R.id.imageAvatar);
-        final TextView title = (TextView) activity.findViewById(R.id.topicTitle);
-        final TextView subtitle = (TextView) activity.findViewById(R.id.topicSubtitle);
-        final TextView permissions = (TextView) activity.findViewById(R.id.permissions);
-        final Switch muted = (Switch) activity.findViewById(R.id.switchMuted);
-        final TextView auth = (TextView) activity.findViewById(R.id.authPermissions);
-        final TextView anon = (TextView) activity.findViewById(R.id.anonPermissions);
+        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
+        final TextView title = activity.findViewById(R.id.topicTitle);
+        final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
+        final TextView permissions = activity.findViewById(R.id.permissions);
+        final Switch muted = activity.findViewById(R.id.switchMuted);
+        final TextView auth = activity.findViewById(R.id.authPermissions);
+        final TextView anon = activity.findViewById(R.id.anonPermissions);
 
-        VCard pub = mTopic.getPub();
+        VxCard pub = mTopic.getPub();
         if (pub != null) {
             if (!TextUtils.isEmpty(pub.fn)) {
                 title.setText(pub.fn);
@@ -423,9 +423,9 @@ public class TopicInfoFragment extends Fragment {
                     new LetterTileDrawable(getResources()).setIsCircular(true));
         }
 
-        String priv = mTopic.getPriv();
-        if (!TextUtils.isEmpty(priv)) {
-            subtitle.setText(priv);
+        PrivateType priv = mTopic.getPriv();
+        if (!TextUtils.isEmpty(priv.getComment())) {
+            subtitle.setText(priv.getComment());
             subtitle.setTypeface(null, Typeface.NORMAL);
             subtitle.setTextIsSelectable(true);
         } else {
@@ -473,25 +473,25 @@ public class TopicInfoFragment extends Fragment {
         MemberViewHolder(View item) {
             super(item);
 
-            name = (TextView) item.findViewById(android.R.id.text1);
-            extraInfo = (TextView) item.findViewById(android.R.id.text2);
-            statusContainer = (LinearLayout) item.findViewById(R.id.statusContainer);
+            name = item.findViewById(android.R.id.text1);
+            extraInfo = item.findViewById(android.R.id.text2);
+            statusContainer = item.findViewById(R.id.statusContainer);
             status = new TextView[statusContainer.getChildCount()];
             for (int i = 0; i < status.length; i++) {
                 status[i] = (TextView) statusContainer.getChildAt(i);
             }
-            icon = (AppCompatImageView) item.findViewById(android.R.id.icon);
+            icon = item.findViewById(android.R.id.icon);
         }
     }
 
     private class MembersAdapter extends RecyclerView.Adapter<MemberViewHolder> {
 
-        private Subscription<VCard, String>[] mItems;
+        private Subscription<VxCard,PrivateType>[] mItems;
         private int mItemCount;
 
         @SuppressWarnings("unchecked")
         MembersAdapter() {
-            mItems = (Subscription<VCard, String>[]) new Subscription[8];
+            mItems = (Subscription<VxCard,PrivateType>[]) new Subscription[8];
             mItemCount = 0;
         }
 
@@ -500,7 +500,7 @@ public class TopicInfoFragment extends Fragment {
          */
         void resetContent() {
             if (mTopic != null) {
-                Collection<Subscription<VCard, String>> c = mTopic.getSubscriptions();
+                Collection<Subscription<VxCard,PrivateType>> c = mTopic.getSubscriptions();
                 if (c != null) {
                     mItemCount = c.size();
                     mItems = c.toArray(mItems);
@@ -531,7 +531,7 @@ public class TopicInfoFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(final MemberViewHolder holder, int position) {
-            final Subscription<VCard, String> sub = mItems[position];
+            final Subscription<VxCard,PrivateType> sub = mItems[position];
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
             final Activity activity = getActivity();
 
@@ -571,8 +571,8 @@ public class TopicInfoFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     int position = holder.getAdapterPosition();
-                    final Subscription<VCard, String> sub = mItems[position];
-                    VCard pub = mTopic.getPub();
+                    final Subscription<VxCard,PrivateType> sub = mItems[position];
+                    VxCard pub = mTopic.getPub();
                     showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub.user,
                             sub.acs.getGiven());
                     Log.d(TAG, "Click on '" + sub.user + "', pos=" + holder.getAdapterPosition());

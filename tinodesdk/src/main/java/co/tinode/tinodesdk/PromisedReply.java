@@ -154,7 +154,11 @@ public class PromisedReply<T> {
     private void callOnFailure(final Exception err) throws Exception {
         if (mFailure != null) {
             // Try to recover
-            handleSuccess(mFailure.onFailure(err));
+            try {
+                handleSuccess(mFailure.onFailure(err));
+            } catch (Exception ex) {
+                handleFailure(ex);
+            }
         } else {
             // Pass to the next handler
             handleFailure(err);

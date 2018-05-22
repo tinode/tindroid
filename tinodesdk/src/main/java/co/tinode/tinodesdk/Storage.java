@@ -41,11 +41,11 @@ public interface Storage {
     boolean setRecv(Topic topic, int recv);
 
     /** Add subscription in a generic topic. The subscription is received from the server. */
-    <Pu,Pr> long subAdd(Topic topic, Subscription<Pu,Pr> sub);
+    long subAdd(Topic topic, Subscription sub);
     /** Update subscription in a generic topic */
-    <Pu,Pr> boolean subUpdate(Topic topic, Subscription<Pu,Pr> sub);
+    boolean subUpdate(Topic topic, Subscription sub);
     /** Add a new subscriber to topic. The new subscriber is being added locally. */
-    <Pu,Pr> long subNew(Topic topic, Subscription<Pu,Pr> sub);
+    long subNew(Topic topic, Subscription sub);
     /** Delete existing subscription */
     boolean subDelete(Topic topic, Subscription sub);
 
@@ -53,14 +53,14 @@ public interface Storage {
     Collection<Subscription> getSubscriptions(Topic topic);
 
     /** Read user description */
-    <Pu> User<Pu> userGet(String uid);
+    User userGet(String uid);
     /** Insert new user */
-    <Pu> long userAdd(User<Pu> user);
+    long userAdd(User user);
     /** Update existing user */
-    <Pu> boolean userUpdate(User<Pu> user);
+    boolean userUpdate(User user);
 
     // Message received
-    long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
+    <DP,DR,SP,SR> long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
 
     /** Message sent. Returns database ID of the message suitable for
      * use in msgDelivered
@@ -85,7 +85,7 @@ public interface Storage {
     /** Set read value for a given subscriber */
     boolean msgReadByRemote(Subscription sub, int read);
     /** Get a list of unsent messages */
-    <R extends Iterator<Message> & Closeable> R getUnsentMessages(Topic topic);
+    <T extends Iterator<Message> & Closeable> T getUnsentMessages(Topic topic);
 
     interface Message {
         /** Get current message payload */

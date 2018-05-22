@@ -20,10 +20,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -36,7 +37,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    private Topic<?,?> mTopic;
+    private Topic<?,?,VxCard,PrivateType> mTopic;
     private HashMap<String, Boolean> mInitialMembers;
 
     private ChipsInput mChipsInput;
@@ -65,7 +66,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         final Activity activity = getActivity();
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
-        mChipsInput = (ChipsInput) activity.findViewById(R.id.groupMembers);
+        mChipsInput = activity.findViewById(R.id.groupMembers);
 
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,9 +92,9 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         Bundle bundle = getArguments();
         mTopic = Cache.getTinode().getTopic(bundle.getString("topic"));
 
-        Collection<Subscription<VCard,String>> subs = (Collection) mTopic.getSubscriptions();
+        Collection<Subscription<VxCard,PrivateType>> subs = mTopic.getSubscriptions();
         Activity activity = getActivity();
-        for (Subscription<VCard,String> sub : subs) {
+        for (Subscription<VxCard,PrivateType> sub : subs) {
             mInitialMembers.put(sub.user, true);
             mChipsInput.addChip(sub.user,
                     new BitmapDrawable(activity.getResources(), sub.pub.getBitmap()), sub.pub.fn, null);
@@ -107,13 +108,12 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
 
     private void updateContacts(final Activity activity) {
         try {
-            final String inviteText = activity.getString(R.string.invitation_text);
             final List<ChipInterface> list = (List<ChipInterface>) mChipsInput.getSelectedChipList();
             final List<ChipInterface> remove = new ArrayList<>(list.size());
             for (ChipInterface chip : list) {
                 // If the member is present in HashMap then it's unchanged, remove it from the map
                 // and from the list.
-                if (mInitialMembers.remove((String) chip.getId()) != null) {
+                if (mInitialMembers.remove(chip.getId()) != null) {
                     remove.add(chip);
                 }
             }
@@ -124,7 +124,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
                 mTopic.eject(key, false).thenApply(null, mFailureListener);
             }
             for (ChipInterface chip : list) {
-                mTopic.invite((String) chip.getId(), null /* use default */, inviteText).thenApply(null, mFailureListener);
+                mTopic.invite((String) chip.getId(), null /* use default */).thenApply(null, mFailureListener);
             }
 
             ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_INFO, false, null);

@@ -22,7 +22,7 @@ import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tindroid.UiUtils;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
@@ -77,9 +77,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
 
             // Fetch locally stored contacts
-            Subscription<VCard, String> sender = ContactsManager.getStoredSubscription(getContentResolver(),
+            Subscription<VxCard,?> sender = ContactsManager.getStoredSubscription(getContentResolver(),
                     data.get("xfrom"));
-            Subscription<VCard, String> topic = ContactsManager.getStoredSubscription(getContentResolver(),
+            Subscription<VxCard,?> topic = ContactsManager.getStoredSubscription(getContentResolver(),
                     topicName);
 
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
@@ -165,11 +165,12 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
 
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
         // MessageActivity will cancel all notifications by tag, which is just topic name.
         // All notifications receive the same id 0 because id is not used.
-        notificationManager.notify(topic, 0, notificationBuilder.build());
+        NotificationManager nm =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.notify(topic, 0, notificationBuilder.build());
+        }
     }
 }

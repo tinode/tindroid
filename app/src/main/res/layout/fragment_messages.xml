@@ -1,80 +1,42 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/message_view_bkg"
     tools:context="co.tinode.tindroid.MessagesFragment">
 
-    <LinearLayout
-        android:id="@+id/sendMessagePanel"
+    <FrameLayout
+        android:id="@+id/sendMessageFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
         android:layout_marginTop="4dp"
-        android:background="@android:color/background_light"
-        android:orientation="horizontal"
-        android:paddingLeft="6sp"
-        android:paddingStart="6sp" tools:ignore="RtlSymmetry">
+        tools:layout="@layout/fragment_send_message">
 
-        <android.support.v7.widget.AppCompatImageButton
-            android:id="@+id/attachImage"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="0.1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/send_image_button_hint"
-            android:paddingLeft="6sp"
-            android:paddingRight="6sp"
-            android:tint="?attr/colorAccent"
-            app:srcCompat="@drawable/ic_photo"/>
+        <include layout="@layout/fragment_send_message" />
 
-        <android.support.v7.widget.AppCompatImageButton
-            android:id="@+id/attachFile"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="0.1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/send_file_button_hint"
-            android:paddingLeft="6sp"
-            android:paddingRight="6sp"
-            android:tint="?attr/colorAccent"
-            app:srcCompat="@drawable/ic_attach"/>
-
-        <EditText
-            android:id="@+id/editMessage"
+        <TextView
+            android:id="@+id/sendMessageDisabled"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="@string/new_message_hint"
-            android:imeOptions="actionSend"
-            android:inputType="textShortMessage"/>
+            android:layout_height="48dp"
+            android:gravity="center_horizontal|center_vertical"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:background="@color/colorLightGray"
+            android:text="@string/sending_disabled"
+            android:visibility="gone" />
 
-        <android.support.v7.widget.AppCompatImageButton
-            android:id="@+id/chatSendButton"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="0.1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/send_message_button_hint"
-            android:paddingLeft="4sp"
-            android:paddingRight="8sp"
-            android:tint="?attr/colorAccent"
-            app:srcCompat="@drawable/ic_send"/>
-
-    </LinearLayout>
+    </FrameLayout>
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresher"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_above="@id/sendMessagePanel">
+        android:layout_above="@id/sendMessageFragment">
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/messages_container"

@@ -8,7 +8,7 @@ import java.util.Date;
 /**
  * Topic description as deserialized from the server packet.
  */
-public class Description<Pu,Pr> implements Serializable {
+public class Description<DP,DR> implements Serializable {
     public Date created;
     public Date updated;
     public Date touched;
@@ -21,9 +21,9 @@ public class Description<Pu,Pr> implements Serializable {
     public int recv;
     public int clear;
     @JsonProperty("public")
-    public Pu pub;
+    public DP pub;
     @JsonProperty("private")
-    public Pr priv;
+    public DR priv;
 
     public Description() {
     }
@@ -33,7 +33,7 @@ public class Description<Pu,Pr> implements Serializable {
      *
      * @param desc object to copy.
      */
-    public boolean merge(Description<Pu,Pr> desc) {
+    public boolean merge(Description<DP,DR> desc) {
         int changed = 0;
 
         if (created == null && desc.created != null) {
@@ -98,7 +98,7 @@ public class Description<Pu,Pr> implements Serializable {
     /**
      * Merge subscription into a description
      */
-    public boolean merge(Subscription<Pu,Pr> sub) {
+    public <SP,SR> boolean merge(Subscription<SP,SR> sub) {
         int changed = 0;
 
         if (sub.updated != null && (updated == null || updated.before(sub.updated))) {
@@ -127,17 +127,24 @@ public class Description<Pu,Pr> implements Serializable {
         }
 
         if (sub.pub != null) {
-            pub = sub.pub;
+            // This may throw a ClassCastException.
+            // This is intentional behavior to catch cases of wrong assignment.
+            pub = (DP) sub.pub;
+            changed++;
         }
 
         if (sub.priv != null) {
-            priv = sub.priv;
+            try {
+                priv = (DR) sub.priv;
+                changed++;
+            } catch (ClassCastException ignored) {}
+
         }
 
         return changed > 0;
     }
 
-    public boolean merge(MetaSetDesc<Pu,Pr> desc) {
+    public boolean merge(MetaSetDesc<DP,DR> desc) {
         int changed = 0;
 
         if (desc.defacs != null) {

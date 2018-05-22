@@ -9,8 +9,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -39,10 +37,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import co.tinode.tindroid.db.StoredTopic;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -64,15 +62,13 @@ public class MessagesFragment extends Fragment {
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     // private static final int RECV_DELAY = 500;
     private static final int READ_DELAY = 1000;
-
+    protected ComTopic<VxCard> mTopic;
     private MessagesListAdapter mMessagesAdapter;
-    private RecyclerView mMessageList;
     private SwipeRefreshLayout mRefresher;
-
     private String mTopicName = null;
-    protected Topic<VCard, String> mTopic;
-
     private Timer mNoteTimer = null;
+    private String mMessageToSend = null;
+
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     public MessagesFragment() {
@@ -81,7 +77,6 @@ public class MessagesFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -97,35 +92,34 @@ public class MessagesFragment extends Fragment {
         final MessageActivity activity = (MessageActivity) getActivity();
 
         LinearLayoutManager lm = new LinearLayoutManager(activity);
-        // lm.setReverseLayout(true);
         lm.setStackFromEnd(true);
 
-        mMessageList = (RecyclerView) activity.findViewById(R.id.messages_container);
-        mMessageList.setLayoutManager(lm);
+        RecyclerView ml = activity.findViewById(R.id.messages_container);
+        ml.setLayoutManager(lm);
 
-        mRefresher = (SwipeRefreshLayout) activity.findViewById(R.id.swipe_refresher);
+        mRefresher = activity.findViewById(R.id.swipe_refresher);
 
         mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
-        mMessageList.setAdapter(mMessagesAdapter);
+        ml.setAdapter(mMessagesAdapter);
 
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
-                    Log.d(TAG, "Calling server for more data");
+                    // Log.d(TAG, "Calling server for more data");
                     try {
                         mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build())
                                 .thenApply(
                                         new PromisedReply.SuccessListener<ServerMessage>() {
                                             @Override
-                                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                                 mRefresher.setRefreshing(false);
                                                 return null;
                                             }
                                         },
-                                        new PromisedReply.FailureListener<ServerMessage>(){
+                                        new PromisedReply.FailureListener<ServerMessage>() {
                                             @Override
-                                            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                            public PromisedReply<ServerMessage> onFailure(Exception err) {
                                                 mRefresher.setRefreshing(false);
                                                 return null;
                                             }
@@ -166,21 +160,22 @@ public class MessagesFragment extends Fragment {
             }
         });
 
-        EditText editor = (EditText) activity.findViewById(R.id.editMessage);
+        EditText editor = activity.findViewById(R.id.editMessage);
         // Send message on Enter
         editor.setOnEditorActionListener(
                 new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                sendText();
-                return true;
-            }
-        });
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        sendText();
+                        return true;
+                    }
+                });
 
         // Send notification on key presses
         editor.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
 
             @SuppressWarnings("unchecked")
             @Override
@@ -191,27 +186,27 @@ public class MessagesFragment extends Fragment {
             }
 
             @Override
-            public void afterTextChanged(Editable editable) {}
+            public void afterTextChanged(Editable editable) {
+            }
         });
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
 
         Bundle bundle = getArguments();
         String oldTopicName = mTopicName;
         mTopicName = bundle.getString("topic");
-        String messageToSend = bundle.getString("messageText");
+        mMessageToSend = bundle.getString("messageText");
 
         if (mTopicName != null && !mTopicName.equals(oldTopicName)) {
             mMessagesAdapter.swapCursor(mTopicName, null);
         }
+        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
 
-        mTopic = Cache.getTinode().getTopic(mTopicName);
-
-        ((TextView) getActivity().findViewById(R.id.editMessage))
-                .setText(TextUtils.isEmpty(messageToSend) ? "" : messageToSend);
+        setHasOptionsMenu(true);
 
         // Check periodically if all messages were read;
         mNoteTimer = new Timer();
@@ -278,7 +273,7 @@ public class MessagesFragment extends Fragment {
                 try {
                     mTopic.delete().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             Intent intent = new Intent(getActivity(), ContactsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
@@ -296,11 +291,6 @@ public class MessagesFragment extends Fragment {
         confirmBuilder.show();
     }
 
-    public void scrollTo(int position) {
-        position = position == -1 ? mMessagesAdapter.getItemCount() - 1 : position;
-        mMessageList.scrollToPosition(position);
-    }
-
     public void notifyDataSetChanged() {
         mMessagesAdapter.notifyDataSetChanged();
     }
@@ -316,7 +306,7 @@ public class MessagesFragment extends Fragment {
                 runLoader(); // Shows pending message
                 reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         // Updates message list with "delivered" icon.
                         runLoader();
                         return null;
@@ -357,7 +347,7 @@ public class MessagesFragment extends Fragment {
                         Uri uri = data.getData();
                         String fname = null;
                         Long fsize = 0L;
-                        String mimeType = activity.getContentResolver().getType(uri);
+                        String mimeType = (uri != null ? activity.getContentResolver().getType(uri) : null);
                         if (mimeType == null) {
                             mimeType = UiUtils.getMimeType(uri);
                             String path = UiUtils.getPath(activity, uri);
@@ -383,7 +373,9 @@ public class MessagesFragment extends Fragment {
                             InputStream is = null;
                             ByteArrayOutputStream baos = null;
                             try {
-                                is = activity.getContentResolver().openInputStream(uri);
+                                if (uri != null) {
+                                    is = activity.getContentResolver().openInputStream(uri);
+                                }
                                 if (is == null) {
                                     return;
                                 }
@@ -429,7 +421,7 @@ public class MessagesFragment extends Fragment {
 
     public void sendText() {
         final Activity activity = getActivity();
-        final TextView inputField = (TextView) activity.findViewById(R.id.editMessage);
+        final TextView inputField = activity.findViewById(R.id.editMessage);
         String message = inputField.getText().toString().trim();
         // notifyDataSetChanged();
         if (!message.equals("")) {
@@ -455,6 +447,21 @@ public class MessagesFragment extends Fragment {
     public void sendReadNotification() {
         if (mTopic != null) {
             mTopic.noteRead();
+        }
+    }
+
+    public void topicSubscribed() {
+        Activity activity = getActivity();
+        if (mTopic.getAccessMode().isWriter()) {
+            Log.i(TAG, "Topic is Writer " + mTopic.getName());
+            ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(mMessageToSend) ? "" : mMessageToSend);
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
+            mMessageToSend = null;
+        } else {
+            Log.i(TAG, "Topic is NOT writer " + mTopic.getName());
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
         }
     }
 }

@@ -16,7 +16,6 @@ public class AvatarPhoto implements Serializable {
     public String type;
     public String uri;
 
-    @JsonIgnore
     protected transient Bitmap mImage = null;
 
     public AvatarPhoto() {
@@ -46,7 +45,6 @@ public class AvatarPhoto implements Serializable {
         return mImage != null;
     }
 
-    @JsonIgnore
     public Bitmap getBitmap() {
         if (mImage == null) {
             constructBitmap();
@@ -54,7 +52,7 @@ public class AvatarPhoto implements Serializable {
         return mImage;
     }
 
-    protected void serializeBitmap() {
+    private void serializeBitmap() {
         if (mImage != null) {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             mImage.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);

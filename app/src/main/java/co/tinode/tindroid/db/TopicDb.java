@@ -96,11 +96,10 @@ public class TopicDb implements BaseColumns {
      * Maximum sequence ID received by the current device (self/locally-tracked), integer
      */
     public static final String COLUMN_NAME_MAX_LOCAL_SEQ = "max_local_seq";
-
     /**
-     * Serialized types of public, private, and content
+     * Topic tags, array of strings.
      */
-    public static final String COLUMN_NAME_SERIALIZED_TYPES = "stypes";
+    public static final String COLUMN_NAME_TAGS = "tags";
     /**
      * Public topic description, blob
      */
@@ -129,7 +128,7 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_LASTUSED = 15;
     static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
     static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
-    static final int COLUMN_IDX_SERIALIZED_TYPES = 18;
+    static final int COLUMN_IDX_TAGS = 18;
     static final int COLUMN_IDX_PUBLIC = 19;
     static final int COLUMN_IDX_PRIVATE = 20;
 
@@ -157,7 +156,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_LASTUSED + " INT," +
                     COLUMN_NAME_MIN_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_MAX_LOCAL_SEQ + " INT," +
-                    COLUMN_NAME_SERIALIZED_TYPES + " TEXT," +
+                    COLUMN_NAME_TAGS + " TEXT," +
                     COLUMN_NAME_PUBLIC + " BLOB," +
                     COLUMN_NAME_PRIVATE + " BLOB)";
     /**
@@ -185,7 +184,7 @@ public class TopicDb implements BaseColumns {
      * @return ID of the newly added message
      */
     @SuppressWarnings("WeakerAccess")
-    public static <Pu,Pr,T> long insert(SQLiteDatabase db, Topic<Pu,Pr> topic) {
+    public static long insert(SQLiteDatabase db, Topic topic) {
         // Log.d(TAG, "Creating topic " + topic.getName());
 
         // Convert topic description to a map of values
@@ -211,7 +210,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
-        values.put(COLUMN_NAME_SERIALIZED_TYPES, topic.getSerializedTypes());
+        values.put(COLUMN_NAME_TAGS, BaseDb.serializeTags(topic.getTags()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
@@ -221,7 +220,7 @@ public class TopicDb implements BaseColumns {
 
         long id = db.insert(TABLE_NAME, null, values);
         if (id > 0) {
-            StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
+            StoredTopic st = new StoredTopic();
             st.id = id;
             st.lastUsed = lastUsed;
             topic.setLocal(st);
@@ -238,8 +237,8 @@ public class TopicDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     @SuppressWarnings("unchecked")
-    public static <Pu,Pr,T> boolean update(SQLiteDatabase db, Topic<Pu,Pr> topic) {
-        StoredTopic<Pu,Pr,T> st = (StoredTopic<Pu,Pr,T>) topic.getLocal();
+    public static boolean update(SQLiteDatabase db, Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
             return false;
         }
@@ -261,6 +260,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
+        values.put(COLUMN_NAME_TAGS, BaseDb.serializeTags(topic.getTags()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
@@ -341,9 +341,7 @@ public class TopicDb implements BaseColumns {
             values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
 
             int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
-            if (updated <= 0) {
-                return false;
-            }
+            return updated > 0;
         }
         return true;
     }
@@ -372,9 +370,9 @@ public class TopicDb implements BaseColumns {
      * @return Subscription
      */
     @SuppressWarnings("unchecked, WeakerAccess")
-    protected static <Pu,Pr> Topic<Pu,Pr> readOne(Tinode tinode, Cursor c) {
-        // Instantiate topic of an appropriate class ('me' or group)
-        Topic<Pu,Pr> topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
+    protected static Topic readOne(Tinode tinode, Cursor c) {
+        // Instantiate topic of an appropriate class ('me' or 'fnd' or group)
+        Topic topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
         StoredTopic.deserialize(topic, c);
         return topic;
     }
@@ -386,8 +384,8 @@ public class TopicDb implements BaseColumns {
      * @param name Name of the topic to read
      * @return Subscription
      */
-    protected static <Pu,Pr> Topic<Pu,Pr> readOne(SQLiteDatabase db, Tinode tinode, String name) {
-        Topic<Pu,Pr> topic = null;
+    protected static Topic readOne(SQLiteDatabase db, Tinode tinode, String name) {
+        Topic topic = null;
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +

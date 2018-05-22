@@ -1,15 +1,10 @@
-package co.tinode.tindroid.media;
-
-import android.graphics.Bitmap;
+package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 import java.util.Arrays;
 
-/**
- * VCard - contact descriptor.
- */
 public class VCard implements Serializable {
 
     public final static String TYPE_HOME = "HOME";
@@ -28,18 +23,19 @@ public class VCard implements Serializable {
     // List of contact's email addresses
     public Contact[] email;
     public Contact[] impp;
-    // Avatar photo
-    public AvatarPhoto photo;
+    // Avatar photo. Java does not have a useful bitmap class, so keeping it as bits here.
+
+    public Photo photo;
 
     public VCard() {
     }
 
-    public VCard(String fullName, Bitmap avatar) {
+    public VCard(String fullName, byte[] avatar) {
         this.fn = fullName;
-        this.photo = new AvatarPhoto(avatar);
+        this.photo = new Photo(avatar);
     }
 
-    public static String typeToString(ContactType tp) {
+    protected static String typeToString(ContactType tp) {
         String str = null;
         switch (tp) {
             case HOME:
@@ -66,16 +62,12 @@ public class VCard implements Serializable {
     }
 
     @JsonIgnore
-    public Bitmap getBitmap() {
-        return (photo != null) ? photo.getBitmap() : null;
+    public byte[] getPhotoBits() {
+        return photo == null ? null : photo.data;
     }
     @JsonIgnore
-    public void setBitmap(Bitmap bmp) {
-        photo = new AvatarPhoto(bmp);
-    }
-
-    public boolean constructBitmap() {
-        return photo != null && photo.constructBitmap();
+    public void setPhotoBits(byte[] bits) {
+        photo = new Photo(bits);
     }
 
     public void addPhone(String phone, ContactType type) {
@@ -111,20 +103,22 @@ public class VCard implements Serializable {
 
     public enum ContactType {HOME, WORK, MOBILE, PERSONAL, BUSINESS, OTHER}
 
-    public VCard copy() {
-        VCard dst = new VCard();
-
-        dst.fn = fn;
-        dst.n = n != null ? n.copy() : null;
-        dst.org = org;
-        dst.title = title;
-        dst.tel = Contact.copyArray(tel);
-        dst.email = Contact.copyArray(email);
-        dst.impp = Contact.copyArray(impp);
+    public static <T extends VCard> T copy(T dst, VCard src) {
+        dst.fn = src.fn;
+        dst.n = src.n != null ? src.n.copy() : null;
+        dst.org = src.org;
+        dst.title = src.title;
+        dst.tel = Contact.copyArray(src.tel);
+        dst.email = Contact.copyArray(src.email);
+        dst.impp = Contact.copyArray(src.impp);
         // Shallow copy of the photo
-        dst.photo = photo;
+        dst.photo = src.photo.copy();
 
         return dst;
+    }
+
+    public VCard copy() {
+        return copy(new VCard(), this);
     }
 
     public static class Name implements Serializable {
@@ -179,4 +173,23 @@ public class VCard implements Serializable {
             return arr;
         }
     }
+
+    public static class Photo implements Serializable {
+        public byte[] data;
+        public String type;
+
+        public Photo() {}
+
+        public Photo(byte[] bits) {
+            data = bits;
+        }
+
+        public Photo copy() {
+            Photo ret = new Photo();
+            ret.data = data;
+            ret.type = type;
+            return ret;
+        }
+    }
 }
+

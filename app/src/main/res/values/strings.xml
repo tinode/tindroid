@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Tindroid</string>
     <string name="app_name_full">Tindroid Messenger</string>
-    <string name="app_version">Version 0.14</string>
-    <string name="copyright">© 2017 Tinode</string>
+    <string name="app_version">Version 0.15</string>
+    <string name="copyright">© 2014 – 2018 Tinode</string>
     <string name="tinode">Tinode</string>
 
     <string name="login_hint">Login: alice, bob, carol, dave, eve, frank</string>
@@ -63,6 +63,7 @@
     <string name="action_attach">Attach</string>
     <string name="action_new_chat">New chat</string>
     <string name="action_new_group">New group chat</string>
+    <string name="action_start_by_id">Start by ID</string>
     <string name="action_about">About</string>
     <string name="action_search">Search</string>
     <string name="action_add_contact">Add contact</string>
@@ -187,4 +188,8 @@
     <string name="validation_example">E.g. 123456</string>
     <string name="enter_confirmation_code">Enter confirmation code</string>
     <string name="failed_credential_confirmation">Incorrect confirmation code</string>
+    <string name="addByIdHint">Enter topic or user ID</string>
+    <string name="failed_empty_id">ID is required</string>
+    <string name="topic_not_found_or_invalid">Topic not found or invalid</string>
+    <string name="sending_disabled">Not available</string>
 </resources>

@@ -53,10 +53,12 @@ import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.Subscription;
 
+@SuppressWarnings("unused, WeakerAccess")
 public class Tinode {
     private static final String TAG = "tinodesdk.Tinode";
 
@@ -78,13 +80,14 @@ public class Tinode {
     private static final long NOTE_RECV_DELAY = 300L;
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.14";
+    private static final String VERSION = "0.15";
     private static final String LIBRARY = "tindroid/" + VERSION;
 
     private static ObjectMapper sJsonMapper;
-    private static TypeFactory sTypeFactory;
+    protected static TypeFactory sTypeFactory;
 
-    protected JavaType mTypeOfMetaPacket;
+    private JavaType mDefaultTypeOfMetaPacket = null;
+    private HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
 
     private MimeTypeResolver mMimeResolver = null;
 
@@ -163,6 +166,8 @@ public class Tinode {
         mApiKey = apikey;
         mListener = listener;
 
+        mTypeOfMetaPacket = new HashMap<>();
+
         mFutures = new ConcurrentHashMap<>(16, 0.75f, 4);
 
         mTopics = new HashMap<>();
@@ -197,6 +202,7 @@ public class Tinode {
         this(appname, apikey, null);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public EventListener setListener(EventListener listener) {
         EventListener oldListener = mListener;
         mListener = listener;
@@ -208,6 +214,7 @@ public class Tinode {
         mOsVersion = os;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private boolean loadTopics() {
         if (mStore != null && mStore.isReady() && !mTopicsLoaded) {
             Topic[] topics = mStore.topicGetAll(this);
@@ -330,6 +337,7 @@ public class Tinode {
      * @return true if it actually attempted to reconnect, false otherwise.
      * @throws IOException thrown from {@link Connection#connect(boolean)}
      */
+    @SuppressWarnings("UnusedReturnValue")
     public boolean reconnectNow() throws IOException {
         if (mConnection == null || mConnection.isConnected()) {
             // If the connection is live, return a resolved promise
@@ -527,13 +535,12 @@ public class Tinode {
     /**
      * Assign default types of generic parameters. Needed for packet deserialization.
      *
-     * @param typeOfPublic  - type of public values
-     * @param typeOfPrivate - type of private values
+     * @param typeOfPublic  - type of public values in Desc and Subscription.
+     * @param typeOfPrivate - type of private values in Desc and Subscription.
      */
-    @SuppressWarnings("WeakerAccess")
-    public void setDefaultTypes(JavaType typeOfPublic, JavaType typeOfPrivate) {
-        mTypeOfMetaPacket = sTypeFactory
-                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate);
+    public void setDefaultTypeOfMetaPacket(JavaType typeOfPublic, JavaType typeOfPrivate) {
+        mDefaultTypeOfMetaPacket = sTypeFactory
+                .constructParametricType(MsgServerMeta.class, typeOfPublic, typeOfPrivate, typeOfPublic, typeOfPrivate);
     }
 
     /**
@@ -542,22 +549,59 @@ public class Tinode {
      * @param typeOfPublic  - type of public values
      * @param typeOfPrivate - type of private values
      */
-    public void setDefaultTypes(Class<?> typeOfPublic,
-                                Class<?> typeOfPrivate) {
-        setDefaultTypes(sTypeFactory.constructType(typeOfPublic),
+    public void setDefaultTypeOfMetaPacket(Class<?> typeOfPublic,
+                                           Class<?> typeOfPrivate) {
+        setDefaultTypeOfMetaPacket(sTypeFactory.constructType(typeOfPublic),
                 sTypeFactory.constructType(typeOfPrivate));
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected JavaType getTypeOfMetaPacket() {
-        return mTypeOfMetaPacket;
+    private JavaType getDefaultTypeOfMetaPacket() {
+        return mDefaultTypeOfMetaPacket;
+    }
+
+    /**
+     * Assign types of generic parameters to topic type. Needed for packet deserialization.
+     *
+     * @param topicName  - name of the topic to assign type values for.
+     * @param typeOfDescPublic  - type of public values
+     * @param typeOfDescPrivate - type of private values
+     * @param typeOfSubPublic  - type of public values
+     * @param typeOfSubPrivate - type of private values
+     */
+    public void setTypeOfMetaPacket(String topicName, JavaType typeOfDescPublic, JavaType typeOfDescPrivate,
+                                    JavaType typeOfSubPublic, JavaType typeOfSubPrivate) {
+        mTypeOfMetaPacket.put(Topic.getTopicTypeByName(topicName), sTypeFactory
+                .constructParametricType(MsgServerMeta.class, typeOfDescPublic,
+                        typeOfDescPrivate, typeOfSubPublic, typeOfSubPrivate));
+    }
+
+    public void setMeTypeOfMetaPacket(JavaType typeOfDescPublic) {
+        JavaType priv = sTypeFactory.constructType(PrivateType.class);
+        mTypeOfMetaPacket.put(Topic.TopicType.ME, sTypeFactory
+                .constructParametricType(MsgServerMeta.class, typeOfDescPublic, priv, typeOfDescPublic, priv));
+    }
+
+    public void setMeTypeOfMetaPacket(Class<?> typeOfDescPublic) {
+        setMeTypeOfMetaPacket(sTypeFactory.constructType(typeOfDescPublic));
+    }
+
+    public void setFndTypeOfMetaPacket(JavaType typeOfSubPublic) {
+        mTypeOfMetaPacket.put(Topic.TopicType.FND, sTypeFactory
+                .constructParametricType(MsgServerMeta.class,
+                        sTypeFactory.constructType(String.class),
+                        sTypeFactory.constructType(String.class), typeOfSubPublic,
+                        sTypeFactory.constructType(String[].class)));
+    }
+
+    public void setFndTypeOfMetaPacket(Class<?> typeOfSubPublic) {
+        setFndTypeOfMetaPacket(sTypeFactory.constructType(typeOfSubPublic));
     }
 
     @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfMetaPacket(String topicName) {
-        Topic topic = getTopic(topicName);
-        JavaType result = (topic != null) ? topic.getTypeOfMetaPacket() : null;
-        return result != null ? result : mTypeOfMetaPacket;
+        JavaType result = mTypeOfMetaPacket.get(Topic.getTopicTypeByName(topicName));
+        return result != null ? result : getDefaultTypeOfMetaPacket();
     }
 
     protected JavaType resolveMimeType(String mimeType) {
@@ -580,7 +624,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     protected String makeUserAgent() {
         return mAppName + " (Android " + mOsVersion + "; "
-                + Locale.getDefault().toString() + ") " + LIBRARY;
+                + Locale.getDefault().toString() + "); " + LIBRARY;
     }
 
     /**
@@ -644,12 +688,11 @@ public class Tinode {
      * @param loginNow use the new account to login immediately
      * @param desc default access parameters for this account
      * @return PromisedReply of the reply ctrl message
-     * @throws Exception if there is no connection
      */
     @SuppressWarnings("WeakerAccess")
     protected <Pu,Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
                                                            boolean loginNow, String[] tags, MetaSetDesc<Pu,Pr> desc,
-                                                           Credential[] cred) throws Exception {
+                                                           Credential[] cred) {
         ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
@@ -683,11 +726,9 @@ public class Tinode {
      * @param desc account parameters, such as full name etc.
      *
      * @return PromisedReply of the reply ctrl message
-     * @throws Exception if there is no connection
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc)
-                throws Exception {
+            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc) {
         return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, null, desc, null);
     }
@@ -703,11 +744,9 @@ public class Tinode {
      * @param desc account parameters, such as full name etc.
      *
      * @return PromisedReply of the reply ctrl message
-     * @throws Exception if there is no connection
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc)
-            throws Exception {
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc) {
         return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, null);
     }
@@ -724,23 +763,19 @@ public class Tinode {
      * @param cred account credential, such as email or phone
      *
      * @return PromisedReply of the reply ctrl message
-     * @throws Exception if there is no connection
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred)
-            throws Exception {
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred) {
         return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, cred);
     }
 
     @SuppressWarnings("unchecked")
-    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret)
-            throws Exception {
+    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret) {
         return account(uid, scheme, secret, false, null, null, null);
     }
 
-    public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password)
-            throws Exception {
+    public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password) {
         return updateAccountSecret(uid, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
     }
 
@@ -836,7 +871,7 @@ public class Tinode {
                     },
                     new PromisedReply.FailureListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                        public PromisedReply<ServerMessage> onFailure(Exception err) {
                             if (err instanceof ServerResponseException) {
                                 ServerResponseException sre = (ServerResponseException) err;
                                 if (sre.getCode() >= 400) {
@@ -1147,21 +1182,35 @@ public class Tinode {
     public Topic newTopic(String name, Topic.Listener l) {
         if (TOPIC_ME.equals(name)) {
             return new MeTopic(this, l);
+        } else if (TOPIC_FND.equals(name)) {
+            return new FndTopic(this, l);
         }
-        return new Topic(this, name, l);
+        return new ComTopic(this, name, l);
     }
 
     @SuppressWarnings("unchecked")
-    protected <Pu,Pr> Topic maybeCreateTopic(MsgServerMeta<Pu,Pr> meta) {
+    Topic newTopic(Subscription sub) {
+        if (TOPIC_ME.equals(sub.topic)) {
+            return new MeTopic(this, (MeTopic.MeListener)null);
+        } else if (TOPIC_FND.equals(sub.topic)) {
+            return new FndTopic(this, null);
+        }
+        return new ComTopic(this, sub);
+    }
+
+    @SuppressWarnings("unchecked, UnusedReturnValue")
+    protected Topic maybeCreateTopic(MsgServerMeta meta) {
         if (meta.desc == null) {
             return null;
         }
 
-        Topic<Pu,Pr> topic;
+        Topic topic;
         if (TOPIC_ME.equals(meta.topic)) {
-            topic = new MeTopic<>(this, meta.desc);
+            topic = new MeTopic(this, meta.desc);
+        } else if (TOPIC_FND.equals(meta.topic)) {
+            topic = new FndTopic(this, null);
         } else {
-            topic = new Topic<>(this, meta.topic, meta.desc);
+            topic = new ComTopic(this, meta.topic, meta.desc);
         }
 
         registerTopic(topic);
@@ -1178,6 +1227,15 @@ public class Tinode {
     }
 
     /**
+     * Obtain a 'fnd' topic ({@link FndTopic}).
+     *
+     * @return 'fnd' topic or null if 'fnd' has never been subscribed to
+     */
+    public FndTopic getFndTopic() {
+        // Either I or Java really has problems with generics.
+        return (FndTopic) getTopic(TOPIC_FND);
+    }
+    /**
      * Obtain an existing topic by name
      *
      * @return a {@link Collection} of topics
@@ -1193,15 +1251,16 @@ public class Tinode {
      * @param type type of topics to return.
      * @param updated return topics with update timestamp after this
      */
-    public List<Topic> getFilteredTopics(Topic.TopicType type, Date updated) {
+    @SuppressWarnings("unchecked")
+    public <T extends Topic> List<T> getFilteredTopics(Topic.TopicType type, Date updated) {
         if (type == Topic.TopicType.ANY && updated == null) {
-            return getTopics();
+            return (List<T>) getTopics();
         }
         if (type == Topic.TopicType.UNKNOWN) {
             return null;
         }
-        ArrayList<Topic> result = new ArrayList<>();
-        for (Topic t : mTopics.values()) {
+        ArrayList<T> result = new ArrayList<>();
+        for (T t : (Collection<T>) mTopics.values()) {
             if (t.getTopicType().compare(type) &&
                     (updated == null || updated.before(t.getUpdated()))) {
                 result.add(t);
@@ -1217,7 +1276,7 @@ public class Tinode {
      * @return existing topic or null if no such topic was found
      */
     @SuppressWarnings("unchecked")
-    public <Pu,Pr,T> Topic<Pu,Pr> getTopic(String name) {
+    public Topic getTopic(String name) {
         if (name == null) {
             return null;
         }
@@ -1255,6 +1314,7 @@ public class Tinode {
      * @param oldName old name of the topic (e.g. "newXYZ" or "usrZYX")
      * @return true if topic was found by the old name
      */
+    @SuppressWarnings("UnusedReturnValue")
     synchronized boolean changeTopicName(Topic topic, String oldName) {
         boolean found = mTopics.remove(oldName) != null;
         mTopics.put(topic.getName(), topic);
@@ -1262,8 +1322,8 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    <Pu> User<Pu> getUser(String uid) {
-        User<Pu> user = (User<Pu>) mUsers.get(uid);
+    User getUser(String uid) {
+        User user = mUsers.get(uid);
         if (user == null && mStore != null) {
             user = mStore.userGet(uid);
             if (user != null) {
@@ -1282,10 +1342,10 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    <Pu> void updateUser(Subscription<Pu,?> sub) {
-        User<Pu> user = mUsers.get(sub.user);
+    void updateUser(Subscription sub) {
+        User user = mUsers.get(sub.user);
         if (user == null) {
-            user = new User<>(sub);
+            user = new User(sub);
             mUsers.put(sub.user, user);
         } else {
             user.merge(sub);
@@ -1296,10 +1356,10 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    <Pu> void updateUser(String uid, Description<Pu,?> desc) {
-        User<Pu> user = mUsers.get(uid);
+    void updateUser(String uid, Description desc) {
+        User user = mUsers.get(uid);
         if (user == null) {
-            user = new User<>(uid, desc);
+            user = new User(uid, desc);
             mUsers.put(uid, user);
         } else {
             user.merge(desc);
@@ -1433,7 +1493,7 @@ public class Tinode {
          * @param msg message to be processed
          */
         @SuppressWarnings("unused, WeakerAccess")
-        public void onMessage(ServerMessage<?, ?, ?> msg) {
+        public void onMessage(ServerMessage msg) {
         }
 
         /**
@@ -1480,7 +1540,7 @@ public class Tinode {
          * @param meta meta message to process
          */
         @SuppressWarnings("unused, WeakerAccess")
-        public void onMetaMessage(MsgServerMeta<?, ?> meta) {
+        public void onMetaMessage(MsgServerMeta meta) {
         }
 
         /**

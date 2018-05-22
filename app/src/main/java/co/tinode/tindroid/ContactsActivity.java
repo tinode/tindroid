@@ -10,16 +10,16 @@ import android.util.Log;
 import android.view.Menu;
 import android.widget.Toast;
 
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -95,11 +95,10 @@ public class ContactsActivity extends AppCompatActivity implements
 
         UiUtils.setupToolbar(this, null, null, false);
 
-        MeTopic<VCard, String, String> me = tinode.getMeTopic();
+        MeTopic me = tinode.getMeTopic();
         if (me == null) {
             // The very first launch of the app.
-            me = new MeTopic<>(tinode, mMeTopicListener);
-            me.setTypes(VCard.class, String.class);
+            me = new MeTopic(tinode, mMeTopicListener);
             Log.d(TAG, "Initialized NEW 'me' topic");
         } else {
             me.setListener(mMeTopicListener);
@@ -121,7 +120,7 @@ public class ContactsActivity extends AppCompatActivity implements
                 /* offline - ignored */
                 Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
             } catch (Exception err) {
-                Log.i(TAG, "Subscription failed " + err.getMessage());
+                Log.i(TAG, "Subscription failed", err);
                 Toast.makeText(this,
                         "Failed to attach", Toast.LENGTH_LONG).show();
             }
@@ -159,13 +158,6 @@ public class ContactsActivity extends AppCompatActivity implements
         return mChatListAdapter;
     }
 
-    /*
-    protected Subscription<VCard, String> getContactByPos(int pos) {
-        MeTopic<VCard, String, String> me = Cache.getTinode().getMeTopic();
-        return me.getSubscription(mContactIndex.get(pos));
-    }
-    */
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Enable options menu by returning true
@@ -179,7 +171,7 @@ public class ContactsActivity extends AppCompatActivity implements
         Cache.activityVisible(focus);
     }
 
-    private class MeListener extends Topic.Listener<VCard, String> {
+    private class MeListener extends MeTopic.MeListener<VxCard> {
 
         @Override
         public void onInfo(MsgServerInfo info) {
@@ -188,8 +180,6 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onPres(MsgServerPres pres) {
-            Log.d(TAG, "onPres, what=" + pres.what + ", topic=" + pres.topic);
-
             if (pres.what.equals("msg")) {
                 datasetChanged();
             } else if (pres.what.equals("off") || pres.what.equals("on")) {
@@ -198,14 +188,14 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onMetaSub(final Subscription<VCard, String> sub) {
+        public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
             if (sub.pub != null) {
                 sub.pub.constructBitmap();
             }
         }
 
         @Override
-        public void onMetaDesc(final Description<VCard, String> desc) {
+        public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
             if (desc.pub != null) {
                 desc.pub.constructBitmap();
             }
@@ -218,7 +208,7 @@ public class ContactsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onContUpdate(final Subscription<VCard, String> sub) {
+        public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
         }
@@ -235,5 +225,11 @@ public class ContactsActivity extends AppCompatActivity implements
         trx.addToBackStack(FRAGMENT_EDIT_ACCOUNT)
                 .show(fragment)
                 .commit();
+    }
+
+    public void selectTab(final int pageIndex) {
+        FragmentManager fm = getSupportFragmentManager();
+        ContactsFragment contacts = (ContactsFragment) fm.findFragmentByTag(FRAGMENT_CONTACTS);
+        contacts.selectTab(pageIndex);
     }
 }

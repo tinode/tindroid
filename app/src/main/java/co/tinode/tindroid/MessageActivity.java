@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -20,15 +21,16 @@ import android.widget.Toast;
 import java.util.Timer;
 
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.media.VCard;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -40,6 +42,7 @@ public class MessageActivity extends AppCompatActivity {
     private static final String TAG = "MessageActivity";
 
     static final String FRAGMENT_MESSAGES = "msg";
+    static final String FRAGMENT_INVALID ="invalid";
     static final String FRAGMENT_INFO = "info";
     static final String FRAGMENT_ADD_TOPIC = "add_topic";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
@@ -52,27 +55,28 @@ public class MessageActivity extends AppCompatActivity {
     private String mMessageText = null;
 
     private String mTopicName = null;
-    private Topic<VCard, String> mTopic = null;
+    private ComTopic<VxCard> mTopic = null;
 
     private PausableSingleThreadExecutor mMessageSender = null;
-
-    private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        ActionBar ab = getSupportActionBar();
+        if (ab != null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+            ab.setDisplayShowHomeEnabled(true);
+        }
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isFragmentVisible(FRAGMENT_EDIT_MEMBERS)) {
                     showFragment(FRAGMENT_INFO, false, null);
-                } else if (!isFragmentVisible(FRAGMENT_MESSAGES)) {
+                } else if (!isFragmentVisible(FRAGMENT_MESSAGES) && !isFragmentVisible(FRAGMENT_INVALID)) {
                     showFragment(FRAGMENT_MESSAGES, false, null);
                 } else {
                     Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
@@ -84,11 +88,10 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
-
-        mFailureListener = new UiUtils.ToastFailureListener(this);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
 
@@ -98,7 +101,6 @@ public class MessageActivity extends AppCompatActivity {
         final Intent intent = getIntent();
 
         // Check if the activity was launched by internally-generated intent.
-        String oldTopicName = mTopicName;
         mTopicName = intent.getStringExtra("topic");
 
         if (TextUtils.isEmpty(mTopicName)) {
@@ -125,18 +127,22 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         // Cancel all pending notifications addressed to the current topic
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(mTopicName, 0);
-
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(mTopicName, 0);
+        }
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
         // Get a known topic.
-        mTopic = tinode.getTopic(mTopicName);
+        mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
+            showFragment(FRAGMENT_MESSAGES, false, null);
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
-            Log.e(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
-            mTopic = new Topic<>(tinode, mTopicName, null);
+            Log.i(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+            mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
+            showFragment(FRAGMENT_INVALID, false, null);
         }
         mTopic.setListener(new TListener());
 
@@ -150,9 +156,18 @@ public class MessageActivity extends AppCompatActivity {
                                 .withGetDel()
                                 .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                                 mTopicName, mTopic.getOnline());
+                        showFragment(FRAGMENT_MESSAGES, false, null);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                                        .findFragmentByTag(FRAGMENT_MESSAGES);
+                                fragmsg.topicSubscribed();
+                            }
+                        });
                         mMessageSender.resume();
                         // Submit unsent messages for processing.
                         mMessageSender.submit(new Runnable() {
@@ -166,18 +181,23 @@ public class MessageActivity extends AppCompatActivity {
                         });
                         return null;
                     }
-                }, mFailureListener);
+                }, new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        showFragment(FRAGMENT_INVALID, false, null);
+                        return null;
+                    }
+                });
             } catch (NotConnectedException ignored) {
                 Log.d(TAG, "Offline mode, ignore");
             } catch (Exception ex) {
                 Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "something went wrong", ex);
             }
-        }
-
-
-        if (oldTopicName == null || !oldTopicName.equals(mTopicName)) {
-            showFragment(FRAGMENT_MESSAGES, false, null);
+        } else {
+            MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                    .findFragmentByTag(FRAGMENT_MESSAGES);
+            fragmsg.topicSubscribed();
         }
     }
 
@@ -225,8 +245,11 @@ public class MessageActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
+        if (mTopic == null || !mTopic.isValid()) {
+            return false;
+        }
 
+        int id = item.getItemId();
         switch (id) {
             case R.id.action_view_contact: {
                 showFragment(FRAGMENT_INFO, false, null);
@@ -266,6 +289,9 @@ public class MessageActivity extends AppCompatActivity {
                 case FRAGMENT_VIEW_IMAGE:
                     fragment = new ImageViewFragment();
                     break;
+                case FRAGMENT_INVALID:
+                    fragment = new InvalidTopicFragment();
+                    break;
             }
         }
         if (fragment == null) {
@@ -301,7 +327,7 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(runnable);
     }
 
-    private class TListener extends Topic.Listener<VCard, String> {
+    private class TListener extends ComTopic.ComListener<VxCard> {
 
         TListener() {
         }
@@ -380,7 +406,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onMetaDesc(final Description<VCard, String> desc) {
+        public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -397,7 +423,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onContUpdate(final Subscription<VCard, String> sub) {
+        public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
             onMetaDesc(null);
         }
 
@@ -412,5 +438,4 @@ public class MessageActivity extends AppCompatActivity {
 
         }
     }
-
 }

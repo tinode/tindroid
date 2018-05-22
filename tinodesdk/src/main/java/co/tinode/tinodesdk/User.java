@@ -8,11 +8,11 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Information about specific user
  */
-public class User<Pu> implements LocalData {
+public class User<P> implements LocalData {
 
     public Date updated;
     public String uid;
-    public Pu pub;
+    public P pub;
 
     private Payload mLocal = null;
 
@@ -23,7 +23,7 @@ public class User<Pu> implements LocalData {
         this.uid = uid;
     }
 
-    public User(Subscription<Pu,?> sub) {
+    public User(Subscription<P,?> sub) {
         if (sub.user != null && sub.user.length() > 0) {
             uid = sub.user;
             updated = sub.updated;
@@ -33,13 +33,15 @@ public class User<Pu> implements LocalData {
         }
     }
 
-    public User(String uid, Description<Pu,?> desc) {
+    public User(String uid, Description<P,?> desc) {
         this.uid = uid;
         updated = desc.updated;
-        pub = desc.pub;
+        try {
+            pub = desc.pub;
+        } catch (ClassCastException ignored) {}
     }
 
-    public boolean merge(User<Pu> user) {
+    public boolean merge(User<P> user) {
         boolean changed = false;
 
         if ((user.updated != null) && (updated == null || updated.before(user.updated))) {
@@ -58,7 +60,7 @@ public class User<Pu> implements LocalData {
         return changed;
     }
 
-    public boolean merge(Subscription<Pu, ?> sub) {
+    public boolean merge(Subscription<P,?> sub) {
         boolean changed = false;
 
         if ((sub.updated != null) && (updated == null || updated.before(sub.updated))) {
@@ -77,21 +79,21 @@ public class User<Pu> implements LocalData {
         return changed;
     }
 
-    public boolean merge(Description<Pu,?> desc) {
+    public boolean merge(Description<P,?> desc) {
         boolean changed = false;
+        try {
+            if ((desc.updated != null) && (updated == null || updated.before(desc.updated))) {
 
-        if ((desc.updated != null) && (updated == null || updated.before(desc.updated))) {
-            updated = desc.updated;
-
-            if (desc.pub != null) {
+                if (desc.pub != null) {
+                    pub = desc.pub;
+                }
+                updated = desc.updated;
+                changed = true;
+            } else if (pub == null && desc.pub != null) {
                 pub = desc.pub;
+                changed = true;
             }
-
-            changed = true;
-        } else if (pub == null && desc.pub != null) {
-            pub = desc.pub;
-            changed = true;
-        }
+        } catch (ClassCastException ignored) {}
 
         return changed;
     }

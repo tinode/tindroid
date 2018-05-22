@@ -11,7 +11,7 @@ import co.tinode.tinodesdk.Topic;
 /**
  * Representation of a topic stored in a database;
  */
-public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
+public class StoredTopic implements LocalData.Payload {
     private static final String TAG = "StoredTopic";
 
     public long id;
@@ -24,8 +24,8 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
     }
 
     @SuppressWarnings("unchecked")
-    protected static <Pu,Pr,T> void deserialize(Topic<Pu,Pr> topic, Cursor c) {
-        StoredTopic<Pu,Pr,T> st = new StoredTopic<>();
+    protected static void deserialize(Topic topic, Cursor c) {
+        StoredTopic st = new StoredTopic();
 
         st.id = c.getLong(TopicDb.COLUMN_IDX_ID);
         st.status = c.getInt(TopicDb.COLUMN_IDX_STATUS);
@@ -41,9 +41,9 @@ public class StoredTopic<Pu,Pr,T> implements LocalData.Payload {
         topic.setClear(c.getInt(TopicDb.COLUMN_IDX_CLEAR));
         topic.setMaxDel(c.getInt(TopicDb.COLUMN_IDX_MAX_DEL));
 
-        topic.setSerializedTypes(c.getString(TopicDb.COLUMN_IDX_SERIALIZED_TYPES));
-        topic.setPub((Pu) BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PUBLIC)));
-        topic.setPriv((Pr) BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PRIVATE)));
+        topic.setTags(BaseDb.deserializeTags(c.getString(TopicDb.COLUMN_IDX_TAGS)));
+        topic.setPub(BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PUBLIC)));
+        topic.setPriv(BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PRIVATE)));
 
         topic.setAccessMode(BaseDb.deserializeMode(c.getString(TopicDb.COLUMN_IDX_ACCESSMODE)));
         topic.setDefacs(BaseDb.deserializeDefacs(c.getString(TopicDb.COLUMN_IDX_DEFACS)));

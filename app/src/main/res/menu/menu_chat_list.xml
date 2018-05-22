@@ -25,16 +25,24 @@
         android:title="@string/action_new_group"
         android:icon="@drawable/ic_group_add"
         app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_add_by_id"
+        android:orderInCategory="102"
+        android:title="@string/action_start_by_id"
+        android:icon="@drawable/ic_add"
+        app:showAsAction="ifRoom"/>
+
     <item
         android:id="@+id/action_settings"
-        android:orderInCategory="102"
+        android:orderInCategory="103"
         android:title="@string/action_settings"
         android:icon="@drawable/ic_settings"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_about"
-        android:orderInCategory="103"
+        android:orderInCategory="104"
         android:title="@string/action_about"
         android:icon="@drawable/ic_info"
         app:showAsAction="never" />

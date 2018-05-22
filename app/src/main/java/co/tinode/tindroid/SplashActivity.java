@@ -28,7 +28,6 @@ public class SplashActivity extends AppCompatActivity {
 
         // Initialize database helper with global context.
         String uid = BaseDb.getInstance().getUid();
-
         if (!TextUtils.isEmpty(uid)) {
             final AccountManager accountManager = AccountManager.get(this);
             // If uid is non-null, get account to use it to login by saved token

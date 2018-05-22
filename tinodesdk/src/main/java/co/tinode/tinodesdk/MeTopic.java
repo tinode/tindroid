@@ -3,67 +3,84 @@ package co.tinode.tinodesdk;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgServerData;
+import co.tinode.tinodesdk.model.MsgServerInfo;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.VCard;
 
 /**
- * MeTopic handles invites and manages contact list
+ * MeTopic manages contact list. MeTopic::Private is unused.
  */
-public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
+public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private static final String TAG = "MeTopic";
 
-    public MeTopic(Tinode tinode, Listener<Pu, Pr> l) {
+    public MeTopic(Tinode tinode, Listener<DP,PrivateType,DP,PrivateType> l) {
         super(tinode, Tinode.TOPIC_ME, l);
     }
 
-    protected MeTopic(Tinode tinode, Description<Pu, Pr> desc) {
+    protected MeTopic(Tinode tinode, Description<DP,PrivateType> desc) {
         super(tinode, Tinode.TOPIC_ME, desc);
     }
 
-    @Override
-    public void setTypes(JavaType typeOfPu, JavaType typeOfPr) {
-        super.setTypes(typeOfPu, typeOfPr);
+    public void setTypes(JavaType typeOfPu) {
+        mTinode.setMeTypeOfMetaPacket(typeOfPu);
     }
 
     @Override
-    public void setTypes(Class<?> typeOfPu, Class<?> typeOfPr) {
-        this.setTypes(Tinode.getTypeFactory().constructType(typeOfPu),
-                Tinode.getTypeFactory().constructType(typeOfPr));
-    }
-
-    @Override
-    protected void addSubToCache(Subscription<Pu, Pr> sub) {
+    protected void addSubToCache(Subscription<DP,PrivateType> sub) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void removeSubFromCache(Subscription<Pu, Pr> sub) {
+    protected void removeSubFromCache(Subscription sub) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Subscription<Pu, Pr> getSubscription(String key) {
+    public PromisedReply<ServerMessage> publish(Drafty content) throws Exception {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Collection<Subscription<Pu, Pr>> getSubscriptions() {
+    public PromisedReply<ServerMessage> publish(String content) throws Exception {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void routeMetaSub(MsgServerMeta<Pu, Pr> meta) {
+    @SuppressWarnings("unchecked")
+    public Subscription getSubscription(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Collection<Subscription<DP,PrivateType>> getSubscriptions() {
+        throw new UnsupportedOperationException();
+    }
+
+    public PrivateType getPriv() {
+        return null;
+    }
+    public void setPriv(PrivateType priv) { /* do nothing */ }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
         // Log.d(TAG, "Me:routeMetaSub");
-        for (Subscription<Pu, Pr> sub : meta.sub) {
+        for (Subscription sub : meta.sub) {
             // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
-            Topic<Pu, Pr> topic = mTinode.getTopic(sub.topic);
+            Topic topic = mTinode.getTopic(sub.topic);
             if (topic != null) {
                 // This is an existing topic.
                 if (sub.deleted != null) {
@@ -79,9 +96,8 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
                 }
             } else if (sub.deleted == null) {
                 // This is a new topic. Register it and write to DB.
-                mTinode.registerTopic(new Topic<>(mTinode, sub));
+                mTinode.registerTopic(mTinode.newTopic(sub));
             }
-
 
             if (mListener != null) {
                 mListener.onMetaSub(sub);
@@ -167,4 +183,16 @@ public class MeTopic<Pu, Pr, T> extends Topic<Pu, Pr> {
             }
         }
     }
+
+    public static class MeListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
+        /** {meta} message received */
+        public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
+        /** {meta what="sub"} message received, and this is one of the subs */
+        public void onMetaSub(Subscription<DP,PrivateType> sub) {}
+        /** {meta what="desc"} message received */
+        public void onMetaDesc(Description<DP,PrivateType> desc) {}
+        /** Called by MeTopic when topic descriptor as contact is updated */
+        public void onContUpdate(Subscription<DP,PrivateType> sub) {}
+    }
+
 }

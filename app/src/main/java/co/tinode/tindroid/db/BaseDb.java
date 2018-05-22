@@ -38,11 +38,11 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version.
      */
-    public static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
     /**
      * Filename for SQLite file.
      */
-    public static final String DATABASE_NAME = "base.db";
+    private static final String DATABASE_NAME = "base.db";
 
     private static BaseDb sInstance = null;
 
@@ -65,6 +65,7 @@ public class BaseDb extends SQLiteOpenHelper {
     public static BaseDb getInstance() {
         if (sInstance == null) {
             sInstance = new BaseDb(TindroidApp.getAppContext());
+            sInstance.mAcc = AccountDb.getActiveAccount(sInstance.getReadableDatabase());
             sInstance.mStore = new SqlStore(sInstance);
         }
         return sInstance;
@@ -169,6 +170,29 @@ public class BaseDb extends SQLiteOpenHelper {
         return result;
     }
 
+    static String serializeTags(String[] tags) {
+        String result = null;
+        if (tags != null) {
+            StringBuilder sb = new StringBuilder();
+            for (String tag : tags) {
+                if (sb.length() > 0) {
+                    sb.append(',');
+                }
+                sb.append(tag);
+            }
+            result = sb.toString();
+        }
+        return result;
+    }
+
+    static String[] deserializeTags(String m) {
+        String[] result = null;
+        if (m != null && m.length() > 0) {
+            result = m.split(",");
+        }
+        return result;
+    }
+
     static boolean updateCounter(SQLiteDatabase db, String table, String column, long id, int counter) {
         ContentValues values = new ContentValues();
         values.put(column, counter);
@@ -194,6 +218,11 @@ public class BaseDb extends SQLiteOpenHelper {
                 throw new IllegalStateException("Illegal account assignment");
             }
         }
+    }
+
+    public void logout() {
+        AccountDb.deactivateAll(sInstance.getWritableDatabase());
+        setUid(null);
     }
 
     public boolean isReady() {

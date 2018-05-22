@@ -8,17 +8,15 @@ import java.util.Date;
 public class TinodeAccount {
     private String Uid;
     private String Name;
-    private String Other;
 
     private boolean mDeleted;
     private boolean mUpdated;
     private Date mSyncState;
     //public Bitmap Photo;
 
-    public TinodeAccount(String uid, String name, String other) {
+    public TinodeAccount(String uid, String name) {
         Uid = uid;
         Name = name;
-        Other = other;
     }
 
     public String getDisplayName() {
@@ -31,10 +29,6 @@ public class TinodeAccount {
 
     public String getUid() {
         return Uid;
-    }
-
-    public String getOther() {
-        return Other;
     }
 
     public void setDeleted() {
