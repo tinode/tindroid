@@ -19,7 +19,7 @@ import co.tinode.tinodesdk.model.PrivateType;
 public class Cache {
     private static final String TAG = "Cache";
 
-    //public static String sHost = "api.tinode.co"; // remote host
+    // public static String sHost = "api.tinode.co"; // remote host
     public static final String HOST_NAME = "10.0.2.2:6060"; // local host
 
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";

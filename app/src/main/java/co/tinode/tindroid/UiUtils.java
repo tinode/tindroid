@@ -103,7 +103,8 @@ public class UiUtils {
     static final int COLOR_MESSAGE_BUBBLE = 0xffc5e1a5;
     static final int COLOR_META_BUBBLE = 0xFFCFD8DC;
     private static final String TAG = "UiUtils";
-    private static final int BITMAP_SIZE = 128;
+    private static final int AVATAR_SIZE = 128;
+    private static final int MAX_BITMAP_SIZE = 1024;
     // Material colors, shade #200.
     // TODO(gene): maybe move to resource file
     private static final Colorizer[] sColorizer = {
@@ -148,15 +149,6 @@ public class UiUtils {
         if (toolbar == null) {
             return;
         }
-    /*
-        Menu menu = toolbar.getMenu();
-        for (int i = 0; i < menu.size(); i++) {
-            Log.d(TAG, "Hiding menu item");
-            MenuItem mi = menu.getItem(i);
-            mi.setVisible(false);
-            mi.setEnabled(false);
-        }
-    */
 
         activity.runOnUiThread(new Runnable() {
             @Override
@@ -446,20 +438,40 @@ public class UiUtils {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
-            width = width * BITMAP_SIZE / height;
-            height = BITMAP_SIZE;
+            width = width * AVATAR_SIZE / height;
+            height = AVATAR_SIZE;
             // Sanity check
-            width = width > 1024 ? 1024 : width;
+            width = width > MAX_BITMAP_SIZE ? MAX_BITMAP_SIZE : width;
         } else {
-            height = height * BITMAP_SIZE / width;
-            width = BITMAP_SIZE;
-            height = height > 1024 ? 1024 : height;
+            height = height * AVATAR_SIZE / width;
+            width = AVATAR_SIZE;
+            height = height > MAX_BITMAP_SIZE ? MAX_BITMAP_SIZE : height;
         }
         // Scale up or down.
         bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
         // Chop the square from the middle.
-        return Bitmap.createBitmap(bmp, (width - BITMAP_SIZE)/2, (height - BITMAP_SIZE)/2,
-                BITMAP_SIZE, BITMAP_SIZE);
+        return Bitmap.createBitmap(bmp, (width - AVATAR_SIZE)/2, (height - AVATAR_SIZE)/2,
+                AVATAR_SIZE, AVATAR_SIZE);
+    }
+
+    public static Bitmap scaleBitmap(Bitmap bmp) {
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        boolean changed = false;
+        if (width >= height) {
+            if (width > MAX_BITMAP_SIZE) {
+                changed = true;
+                height = height * MAX_BITMAP_SIZE / width;
+                width = MAX_BITMAP_SIZE;
+            }
+        } else {
+            if (height > MAX_BITMAP_SIZE) {
+                changed = true;
+                width = width * MAX_BITMAP_SIZE / height;
+                height = MAX_BITMAP_SIZE;
+            }
+        }
+        return changed ? Bitmap.createScaledBitmap(bmp, width, height, true) : bmp;
     }
 
     public static Bitmap extractBitmap(final Activity activity, final Intent data) {
@@ -977,6 +989,7 @@ public class UiUtils {
         }
     }
 
+    // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
     public static String getPath(Context context, Uri uri) {
         // DocumentProvider
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&

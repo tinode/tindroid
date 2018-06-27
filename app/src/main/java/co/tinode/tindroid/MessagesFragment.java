@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.v4.app.Fragment;
@@ -28,20 +29,25 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
@@ -57,7 +63,10 @@ public class MessagesFragment extends Fragment {
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
 
-    private static final long MAX_ATTACHMENT_SIZE = 1 << 17;
+    // Maximum size of file to send in-band. 256KB.
+    private static final long MAX_INBAND_ATTACHMENT_SIZE = 1 << 17;
+    // Maximum size of file to upload. 8MB.
+    private static final long MAX_ATTACHMENT_SIZE = 1 << 23;
 
     // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
     // private static final int RECV_DELAY = 500;
@@ -340,13 +349,13 @@ public class MessagesFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
-                case ACTION_ATTACH_FILE:
-                case ACTION_ATTACH_IMAGE: {
+                case ACTION_ATTACH_IMAGE:
+                case ACTION_ATTACH_FILE: {
                     try {
                         final Activity activity = getActivity();
                         Uri uri = data.getData();
-                        String fname = null;
-                        Long fsize = 0L;
+                        final String fname;
+                        final Long fsize;
                         String mimeType = (uri != null ? activity.getContentResolver().getType(uri) : null);
                         if (mimeType == null) {
                             mimeType = UiUtils.getMimeType(uri);
@@ -354,6 +363,10 @@ public class MessagesFragment extends Fragment {
                             if (path != null) {
                                 File file = new File(path);
                                 fname = file.getName();
+                                fsize = file.length();
+                            } else {
+                                fname = null;
+                                fsize = 0L;
                             }
                         } else {
                             Cursor cursor = activity.getContentResolver().query(uri, null, null, null, null);
@@ -362,10 +375,19 @@ public class MessagesFragment extends Fragment {
                                 fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                                 fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
                                 cursor.close();
+                            } else {
+                                fname = null;
+                                fsize = 0L;
                             }
                         }
 
+                        if (requestCode == ACTION_ATTACH_IMAGE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                            // TODO: resize image
+                            // bmp = UiUtils.scaleBitmap(bmp);
+                        }
+
                         if (fsize > MAX_ATTACHMENT_SIZE) {
+                            // Too large to upload.
                             Toast.makeText(activity, activity.getString(R.string.attachment_too_large,
                                     UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE)),
                                     Toast.LENGTH_LONG).show();
@@ -380,23 +402,55 @@ public class MessagesFragment extends Fragment {
                                     return;
                                 }
 
-                                baos = new ByteArrayOutputStream();
-                                byte[] buffer = new byte[1024];
-                                int len;
-                                while ((len = is.read(buffer)) > 0) {
-                                    baos.write(buffer, 0, len);
-                                }
-
-                                byte[] bits = baos.toByteArray();
-                                if (requestCode == ACTION_ATTACH_FILE) {
-                                    sendFile(mimeType, bits, fname);
+                                if (fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                                    // Upload then send message with a link.
+                                    LargeFileHelper lfh = Cache.getTinode().getFileUploader();
+                                    final String fMime = mimeType;
+                                    lfh.uploadFuture(is, fsize, new LargeFileHelper.FileHelperProgress() {
+                                        @Override
+                                        public void onProgress(long progress, long size) {
+                                            Log.d(TAG, "Progress: " + progress + ", size="+size);
+                                        }
+                                    }).thenApply(new PromisedReply.SuccessListener<MsgServerCtrl>() {
+                                        @Override
+                                        public PromisedReply<MsgServerCtrl> onSuccess(MsgServerCtrl ctrl) {
+                                            try {
+                                                sendAttachment(fMime, fname, new URL(ctrl.getStringParam("url")), fsize);
+                                            } catch (MalformedURLException ex) {
+                                                Log.d(TAG, "Failed to upload", ex);
+                                                Toast.makeText(activity, "Failed to upload file" + ex.getMessage(),
+                                                        Toast.LENGTH_LONG).show();
+                                            }
+                                            return null;
+                                        }
+                                    }, new PromisedReply.FailureListener<MsgServerCtrl>() {
+                                        @Override
+                                        public PromisedReply<MsgServerCtrl> onFailure(Exception ex) {
+                                            Log.d(TAG, "Failed to upload 2", ex);
+                                            Toast.makeText(activity, "Failed to upload file "+ex.getMessage(),
+                                                    Toast.LENGTH_LONG).show();
+                                            return null;
+                                        }
+                                    });
                                 } else {
-                                    BitmapFactory.Options options = new BitmapFactory.Options();
-                                    options.inJustDecodeBounds = true;
-                                    InputStream bais = new ByteArrayInputStream(bits);
-                                    BitmapFactory.decodeStream(bais, null, options);
-                                    bais.close();
-                                    sendImage(mimeType, bits, options.outWidth, options.outHeight, fname);
+                                    baos = new ByteArrayOutputStream();
+                                    byte[] buffer = new byte[1024];
+                                    int len;
+                                    while ((len = is.read(buffer)) > 0) {
+                                        baos.write(buffer, 0, len);
+                                    }
+
+                                    byte[] bits = baos.toByteArray();
+                                    if (requestCode == ACTION_ATTACH_FILE) {
+                                        sendFile(mimeType, bits, fname);
+                                    } else {
+                                        BitmapFactory.Options options = new BitmapFactory.Options();
+                                        options.inJustDecodeBounds = true;
+                                        InputStream bais = new ByteArrayInputStream(bits);
+                                        BitmapFactory.decodeStream(bais, null, options);
+                                        bais.close();
+                                        sendImage(mimeType, bits, options.outWidth, options.outHeight, fname);
+                                    }
                                 }
                             } catch (IOException e) {
                                 Log.e(TAG, "Failed to attach file", e);
@@ -432,17 +486,27 @@ public class MessagesFragment extends Fragment {
         }
     }
 
+    // Send image in-band
     public void sendImage(String mimeType, byte[] bits, int width, int height, String fname) {
         Drafty content = Drafty.parse(" ");
         content.insertImage(0, mimeType, bits, width, height, fname);
         sendMessage(content);
     }
 
+    // send file in-band
     public void sendFile(String mimeType, byte[] bits, String fname) {
         Drafty content = new Drafty();
         content.attachFile(mimeType, bits, fname);
         sendMessage(content);
     }
+
+    // send file in-band
+    public void sendAttachment(String mimeType, String fname, URL refUrl, long size) {
+        Drafty content = new Drafty();
+        content.attachFile(mimeType, fname, refUrl, size);
+        sendMessage(content);
+    }
+
 
     public void sendReadNotification() {
         if (mTopic != null) {
@@ -464,4 +528,38 @@ public class MessagesFragment extends Fragment {
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
         }
     }
+/*
+    private static class FileUploader extends AsyncTask<Void,Long,MsgServerCtrl> {
+        private final LargeFileHelper.FileHelperProgress mProgress;
+        private final long mSize;
+
+        FileUploader(LargeFileHelper.FileHelperProgress p, long size) {
+            mProgress = p;
+            mSize = size;
+        }
+
+        @Override
+        protected MsgServerCtrl doInBackground(Void... voids) {
+            LargeFileHelper lfh = Cache.getTinode().getFileUploader();
+            try {
+                return lfh.upload(is, mSize, new LargeFileHelper.FileHelperProgress() {
+                    public void onProgress(long progress, long size) {
+                        publishProgress();
+                    }
+                });
+            } catch(Exception ex) {
+                mFailure = ex;
+            }
+            return null;
+        }
+
+        protected void onProgressUpdate(Long... progress) {
+            mProgress.onProgress(progress[0], mSize);
+        }
+
+        protected void onPostExecute(MsgServerCtrl ctrl) {
+            sendAttachment(String mimeType, String fname, URL refUrl, long size);
+        }
+    }
+*/
 }

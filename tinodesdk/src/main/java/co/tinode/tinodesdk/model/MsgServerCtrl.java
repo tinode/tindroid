@@ -23,4 +23,9 @@ public class MsgServerCtrl {
     public Integer getIntParam(String key) {
         return params != null ? (Integer) params.get(key) : null;
     }
+
+    @JsonIgnore
+    public String getStringParam(String key) {
+        return params != null ? (String) params.get(key) : null;
+    }
 }

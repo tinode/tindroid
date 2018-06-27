@@ -4,6 +4,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -398,6 +399,26 @@ public class Drafty implements Serializable {
      * @param fname name of the file to suggest to the receiver
      */
     public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname) {
+        return insertImage(at, mime, bits, width, height, fname, null, 0);
+    }
+
+    /**
+     * Insert inline image
+     *
+     * @param at location to insert image at
+     * @param mime Content-type, such as 'image/jpeg'.
+     * @param bits Content as an array of bytes
+     * @param width image width in pixels
+     * @param height image height in pixels
+     * @param fname name of the file to suggest to the receiver.
+     * @param refurl Reference to full/extended image.
+     * @param size file size hint (in bytes) as reported by the client.
+     */
+    public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname, URL refurl, long size) {
+        if (bits == null && refurl == null) {
+            throw new IllegalArgumentException("Either image bits or reference URL must not be null.");
+        }
+
         if (txt == null || txt.length() < at + 1 || at < 0) {
             throw new IndexOutOfBoundsException("Invalid insertion position");
         }
@@ -415,24 +436,64 @@ public class Drafty implements Serializable {
         fmt[fmt.length - 1] = new Style(at, 1, ent.length - 1);
 
         Map<String,Object> data = new HashMap<>();
-        data.put("mime", mime);
-        data.put("val", bits);
+        if (mime != null && !mime.equals("")) {
+            data.put("mime", mime);
+        }
+        if (bits != null) {
+            data.put("val", bits);
+        }
         data.put("width", width);
         data.put("height", height);
-        data.put("name", fname);
+        if (fname != null && !fname.equals("")) {
+            data.put("name", fname);
+        }
+        if (refurl != null) {
+            data.put("ref", refurl.toString());
+        }
+        if (size > 0) {
+            data.put("size", size);
+        }
         ent[ent.length - 1] = new Entity("IM", data);
 
         return this;
     }
 
     /**
-     * Attach file to a drafty object.
+     * Attach file to a drafty object in-band.
      *
      * @param mime Content-type, such as 'text/plain'.
      * @param bits Content as an array of bytes.
      * @param fname Optional file name to suggest to the receiver.
      */
     public Drafty attachFile(String mime, byte[] bits, String fname) {
+        return attachFile(mime, bits, fname, null, bits.length);
+    }
+
+    /**
+     * Attach file to a drafty object as a reference.
+     *
+     * @param mime Content-type, such as 'text/plain'.
+     * @param fname Optional file name to suggest to the receiver
+     * @param refurl Content as an array of bytes.
+     * @param size size of the attachment (untrusted).
+     */
+    public Drafty attachFile(String mime, String fname, URL refurl, long size) {
+        return attachFile(mime, null, fname, refurl, size);
+    }
+
+    /**
+     * Attach file to a drafty object.
+     *
+     * @param mime Content-type, such as 'text/plain'.
+     * @param fname Optional file name to suggest to the receiver.
+     * @param bits File content to include inline.
+     * @param refurl Reference to full/extended file content.
+     * @param size file size hint as reported by the client.
+     */
+    protected Drafty attachFile(String mime, byte[] bits, String fname, URL refurl, long size) {
+        if (bits == null && refurl == null) {
+            throw new IllegalArgumentException("Either file bits or reference URL must not be null.");
+        }
 
         if (fmt == null) {
             fmt = new Style[1];
@@ -448,9 +509,21 @@ public class Drafty implements Serializable {
         fmt[fmt.length - 1] = new Style(-1, 1, ent.length - 1);
 
         Map<String,Object> data = new HashMap<>();
-        data.put("mime", mime);
-        data.put("val", bits);
-        data.put("name", fname);
+        if (mime != null && !mime.equals("")) {
+            data.put("mime", mime);
+        }
+        if (bits != null) {
+            data.put("val", bits);
+        }
+        if (fname != null && !fname.equals("")) {
+            data.put("name", fname);
+        }
+        if (refurl != null) {
+            data.put("ref", refurl.toString());
+        }
+        if (size > 0) {
+            data.put("size", size);
+        }
         ent[ent.length - 1] = new Entity("EX", data);
 
         return this;

@@ -16,8 +16,10 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
 import java.io.InvalidObjectException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,6 +99,7 @@ public class Tinode {
 
     private String mApiKey = null;
     private String mServerHost = null;
+    private boolean mUseTLS;
 
     private String mDeviceToken = null;
     private String mLanguage = null;
@@ -239,6 +242,8 @@ public class Tinode {
      * @throws IOException if connection call has failed
      */
     public PromisedReply<ServerMessage> connect(String hostName, boolean tls) throws URISyntaxException, IOException {
+        mUseTLS = tls;
+
         if (mConnection != null && mConnection.isConnected()) {
             // If the connection is live, return a resolved promise
             return new PromisedReply<>((ServerMessage) null);
@@ -627,6 +632,13 @@ public class Tinode {
                 + Locale.getDefault().toString() + "); " + LIBRARY;
     }
 
+    public LargeFileHelper getFileUploader() {
+        URL url = null;
+        try {
+            url = new URL((mUseTLS ? "https://" : "http://") + mServerHost + "/v" + PROTOVERSION + "/file/u");
+        } catch (MalformedURLException ignored) {}
+        return new LargeFileHelper(url, getApiKey(), getAuthToken());
+    }
     /**
      * Set device token for push notifications
      * @param token device token
