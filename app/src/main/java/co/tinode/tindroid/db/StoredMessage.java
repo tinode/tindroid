@@ -60,7 +60,7 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     }
 
     @Override
-    public Map<String, String> getHeader() {
+    public Map<String, Object> getHeader() {
         return head;
     }
 }

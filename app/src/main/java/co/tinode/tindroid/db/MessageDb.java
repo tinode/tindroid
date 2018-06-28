@@ -174,7 +174,7 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_SENDER, msg.from);
         values.put(COLUMN_NAME_TS, msg.ts.getTime());
         values.put(COLUMN_NAME_SEQ, msg.seq);
-        values.put(COLUMN_NAME_MIME, msg.getHeader("mime"));
+        values.put(COLUMN_NAME_MIME, (String) msg.getHeader("mime"));
         values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
         return db.insert(TABLE_NAME, null, values);

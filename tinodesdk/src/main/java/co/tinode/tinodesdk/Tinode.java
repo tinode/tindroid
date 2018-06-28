@@ -637,7 +637,7 @@ public class Tinode {
         try {
             url = new URL((mUseTLS ? "https://" : "http://") + mServerHost + "/v" + PROTOVERSION + "/file/u");
         } catch (MalformedURLException ignored) {}
-        return new LargeFileHelper(url, getApiKey(), getAuthToken());
+        return new LargeFileHelper(url, getApiKey(), getAuthToken(), makeUserAgent());
     }
     /**
      * Set device token for push notifications

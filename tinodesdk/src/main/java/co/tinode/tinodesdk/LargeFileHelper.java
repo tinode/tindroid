@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,49 +18,81 @@ import java.net.URL;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
 public class LargeFileHelper {
+    private static final int BUFFER_SIZE = 65536;
+    private static final String TWO_HYPHENS = "--";
+    private static final String BOUNDARY = "*****" + Long.toString(System.currentTimeMillis()) + "*****";
+    private static final String LINE_END = "\r\n";
+
     private URL mUrlUpload;
     private String mHost;
     private String mApiKey;
     private String mAuthToken;
+    private String mUserAgent;
 
     private boolean mCancel = false;
 
-    public LargeFileHelper(URL urlUpload, String apikey, String authToken) {
+    public LargeFileHelper(URL urlUpload, String apikey, String authToken, String userAgent) {
         mUrlUpload = urlUpload;
         mHost = mUrlUpload.getHost();
         mApiKey = apikey;
         mAuthToken = authToken;
+        mUserAgent = userAgent;
     }
 
     // Upload file out of band. This should not be called on the UI thread.
-    public MsgServerCtrl upload(InputStream in, long size, FileHelperProgress progress) throws IOException {
+    public MsgServerCtrl upload(InputStream in, String filename, String mimetype, long size,
+                                FileHelperProgress progress) throws IOException {
         mCancel = false;
-        HttpURLConnection urlConnection = null;
-        MsgServerCtrl ctrl = null;
+        HttpURLConnection conn = null;
+        MsgServerCtrl ctrl;
         try {
-            urlConnection = (HttpURLConnection) mUrlUpload.openConnection();
-            urlConnection.setDoOutput(true);
-            urlConnection.setRequestProperty("X-Tinode-APIKey", mApiKey);
-            urlConnection.setRequestProperty("Authorization", "Token " + mAuthToken);
-            urlConnection.setChunkedStreamingMode(0);
+            conn = (HttpURLConnection) mUrlUpload.openConnection();
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.setUseCaches(false);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Connection", "Keep-Alive");
+            conn.setRequestProperty("User-Agent", mUserAgent);
+            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);
+            conn.setRequestProperty("X-Tinode-APIKey", mApiKey);
+            conn.setRequestProperty("Authorization", "Token " + mAuthToken);
 
-            OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
+            out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
+            // Content-Disposition: form-data; name="file"; filename="1519014549699.pdf"
+            out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"" + LINE_END);
+            // Content-Type: application/pdf
+            out.writeBytes("Content-Type: " + mimetype + LINE_END);
+            out.writeBytes("Content-Transfer-Encoding: binary" + LINE_END);
+            out.writeBytes(LINE_END);
+
             copyStream(in, out, size, progress);
+
+            out.writeBytes(LINE_END);
+            out.writeBytes(TWO_HYPHENS + BOUNDARY + TWO_HYPHENS + LINE_END);
+            out.flush();
             out.close();
 
-            InputStream resp = new BufferedInputStream(urlConnection.getInputStream());
+            if (conn.getResponseCode() != 200) {
+                throw new IOException("Failed to upload: " + conn.getResponseMessage() +
+                        " (" + conn.getResponseCode() + ")");
+            }
+
+            InputStream resp = new BufferedInputStream(conn.getInputStream());
             ctrl = readServerResponse(resp);
             resp.close();
         } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
+            if (conn != null) {
+                conn.disconnect();
             }
         }
         return ctrl;
     }
 
-    // Uploads the file using Runnable, returns PromisedReply.
+    // Uploads the file using Runnable, returns PromisedReply. Safe to call on UI thread.
     public PromisedReply<MsgServerCtrl> uploadFuture(final InputStream in,
+                                                     final String filename,
+                                                     final String mimetype,
                                                      final long size,
                                                      final FileHelperProgress progress) {
         final PromisedReply<MsgServerCtrl> result = new PromisedReply<>();
@@ -67,7 +100,7 @@ public class LargeFileHelper {
             @Override
             public void run() {
                 try {
-                    result.resolve(upload(in, size, progress));
+                    result.resolve(upload(in, filename, mimetype, size, progress));
                 } catch (Exception ex) {
                     try {
                         result.reject(ex);
@@ -79,6 +112,7 @@ public class LargeFileHelper {
         return result;
     }
 
+    // Download file from the given URL if the URL's host is the default host. Should not be called on the UI thread.
     public long download(String downloadFrom, OutputStream out, FileHelperProgress progress) throws IOException {
         URL url = new URL(downloadFrom);
         long size = 0;
@@ -101,7 +135,7 @@ public class LargeFileHelper {
         }
     }
 
-    // Downloads the file using Runnable, returns PromisedReply.
+    // Downloads the file using Runnable, returns PromisedReply. Safe to call on UI thread.
     public PromisedReply<Long> downloadFuture(final String downloadFrom,
                                                  final OutputStream out,
                                                  final FileHelperProgress progress) {
@@ -128,7 +162,7 @@ public class LargeFileHelper {
     }
 
     private int copyStream(InputStream in, OutputStream out, long size, FileHelperProgress p) throws IOException {
-        byte[] buffer = new byte[4096];
+        byte[] buffer = new byte[BUFFER_SIZE];
         int len, sent = 0;
         while ((len = in.read(buffer)) != -1) {
             sent += len;

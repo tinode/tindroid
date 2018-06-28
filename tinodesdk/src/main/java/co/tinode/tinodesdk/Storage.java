@@ -93,7 +93,7 @@ public interface Storage {
         /** Get current message unique ID */
         long getId();
         /** Get current message header */
-        Map<String,String> getHeader();
+        Map<String,Object> getHeader();
     }
 
     /**

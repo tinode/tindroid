@@ -351,12 +351,17 @@ public class MessagesFragment extends Fragment {
             switch (requestCode) {
                 case ACTION_ATTACH_IMAGE:
                 case ACTION_ATTACH_FILE: {
+                    Uri uri = data.getData();
+                    if (uri == null) {
+                        Log.d(TAG, "Received null URI");
+                        break;
+                    }
+                    final Activity activity = getActivity();
+                    final String fname;
+                    final Long fsize;
+                    String mimeType = activity.getContentResolver().getType(uri);
+
                     try {
-                        final Activity activity = getActivity();
-                        Uri uri = data.getData();
-                        final String fname;
-                        final Long fsize;
-                        String mimeType = (uri != null ? activity.getContentResolver().getType(uri) : null);
                         if (mimeType == null) {
                             mimeType = UiUtils.getMimeType(uri);
                             String path = UiUtils.getPath(activity, uri);
@@ -392,21 +397,18 @@ public class MessagesFragment extends Fragment {
                                     UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE)),
                                     Toast.LENGTH_LONG).show();
                         } else {
-                            InputStream is = null;
+                            final InputStream is = activity.getContentResolver().openInputStream(uri);
+                            if (is == null) {
+                                break;
+                            }
+
                             ByteArrayOutputStream baos = null;
                             try {
-                                if (uri != null) {
-                                    is = activity.getContentResolver().openInputStream(uri);
-                                }
-                                if (is == null) {
-                                    return;
-                                }
-
                                 if (fsize > MAX_INBAND_ATTACHMENT_SIZE) {
                                     // Upload then send message with a link.
-                                    LargeFileHelper lfh = Cache.getTinode().getFileUploader();
                                     final String fMime = mimeType;
-                                    lfh.uploadFuture(is, fsize, new LargeFileHelper.FileHelperProgress() {
+                                    Cache.getTinode().getFileUploader().uploadFuture(is, fname, fMime, fsize,
+                                            new LargeFileHelper.FileHelperProgress() {
                                         @Override
                                         public void onProgress(long progress, long size) {
                                             Log.d(TAG, "Progress: " + progress + ", size="+size);
@@ -416,7 +418,8 @@ public class MessagesFragment extends Fragment {
                                         public PromisedReply<MsgServerCtrl> onSuccess(MsgServerCtrl ctrl) {
                                             try {
                                                 sendAttachment(fMime, fname, new URL(ctrl.getStringParam("url")), fsize);
-                                            } catch (MalformedURLException ex) {
+                                                is.close();
+                                            } catch (IOException ex) {
                                                 Log.d(TAG, "Failed to upload", ex);
                                                 Toast.makeText(activity, "Failed to upload file" + ex.getMessage(),
                                                         Toast.LENGTH_LONG).show();
@@ -427,6 +430,9 @@ public class MessagesFragment extends Fragment {
                                         @Override
                                         public PromisedReply<MsgServerCtrl> onFailure(Exception ex) {
                                             Log.d(TAG, "Failed to upload 2", ex);
+                                            try {
+                                                is.close();
+                                            } catch (IOException ignored) {}
                                             Toast.makeText(activity, "Failed to upload file "+ex.getMessage(),
                                                     Toast.LENGTH_LONG).show();
                                             return null;
@@ -454,10 +460,8 @@ public class MessagesFragment extends Fragment {
                                 }
                             } catch (IOException e) {
                                 Log.e(TAG, "Failed to attach file", e);
+                                is.close();
                             } finally {
-                                if (is != null) {
-                                    is.close();
-                                }
                                 if (baos != null) {
                                     baos.close();
                                 }
