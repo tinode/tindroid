@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -474,10 +475,10 @@ public class Drafty implements Serializable {
      *
      * @param mime Content-type, such as 'text/plain'.
      * @param fname Optional file name to suggest to the receiver
-     * @param refurl Content as an array of bytes.
+     * @param refurl reference to content location. If URL is relative, assume current server.
      * @param size size of the attachment (untrusted).
      */
-    public Drafty attachFile(String mime, String fname, URL refurl, long size) {
+    public Drafty attachFile(String mime, String fname, String refurl, long size) {
         return attachFile(mime, null, fname, refurl, size);
     }
 
@@ -490,7 +491,7 @@ public class Drafty implements Serializable {
      * @param refurl Reference to full/extended file content.
      * @param size file size hint as reported by the client.
      */
-    protected Drafty attachFile(String mime, byte[] bits, String fname, URL refurl, long size) {
+    protected Drafty attachFile(String mime, byte[] bits, String fname, String refurl, long size) {
         if (bits == null && refurl == null) {
             throw new IllegalArgumentException("Either file bits or reference URL must not be null.");
         }
@@ -519,7 +520,7 @@ public class Drafty implements Serializable {
             data.put("name", fname);
         }
         if (refurl != null) {
-            data.put("ref", refurl.toString());
+            data.put("ref", refurl);
         }
         if (size > 0) {
             data.put("size", size);
@@ -527,6 +528,22 @@ public class Drafty implements Serializable {
         ent[ent.length - 1] = new Entity("EX", data);
 
         return this;
+    }
+
+    /**
+     * Extract attachment references for use in message header.
+     *
+     * @return string array of attachment references or null if no attachments with references found.
+     */
+    public String[] getEntReferences() {
+        Vector<String> result = new Vector<>();
+        for (Entity anEnt : ent) {
+            Object ref = anEnt.data.get("ref");
+            if (ref != null) {
+                result.add((String) ref);
+            }
+        }
+        return result.size() > 0 ? result.toArray(new String[]{}) : null;
     }
 
     /**

@@ -417,7 +417,7 @@ public class MessagesFragment extends Fragment {
                                         @Override
                                         public PromisedReply<MsgServerCtrl> onSuccess(MsgServerCtrl ctrl) {
                                             try {
-                                                sendAttachment(fMime, fname, new URL(ctrl.getStringParam("url")), fsize);
+                                                sendAttachment(fMime, fname, ctrl.getStringParam("url"), fsize);
                                                 is.close();
                                             } catch (IOException ex) {
                                                 Log.d(TAG, "Failed to upload", ex);
@@ -505,7 +505,7 @@ public class MessagesFragment extends Fragment {
     }
 
     // send file in-band
-    public void sendAttachment(String mimeType, String fname, URL refUrl, long size) {
+    public void sendAttachment(String mimeType, String fname, String refUrl, long size) {
         Drafty content = new Drafty();
         content.attachFile(mimeType, fname, refUrl, size);
         sendMessage(content);

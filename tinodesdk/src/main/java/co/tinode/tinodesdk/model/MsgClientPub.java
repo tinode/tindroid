@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,7 @@ public class MsgClientPub {
     public String id;
     public String topic;
     public Boolean noecho;
-    public Map<String, String> head;
+    public Map<String, Object> head;
     public Object content;
 
     public MsgClientPub() {
@@ -24,15 +26,20 @@ public class MsgClientPub {
         this.noecho = noecho ? true : null;
         this.content = content;
         if (content instanceof Drafty) {
+            Drafty d = (Drafty) content;
             setHeader("mime", Drafty.MIME_TYPE);
+            setHeader("attachments", d.getEntReferences());
         }
     }
 
     @JsonIgnore
-    public String setHeader(String key, String value) {
-        if (this.head == null) {
-            this.head = new HashMap<>();
+    public Object setHeader(String key, Object value) {
+        if (value != null) {
+            if (this.head == null) {
+                this.head = new HashMap<>();
+            }
+            return this.head.put(key, value);
         }
-        return this.head.put(key, value);
+        return null;
     }
 }
