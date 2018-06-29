@@ -18,8 +18,8 @@ import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -336,6 +336,15 @@ public class Tinode {
     }
 
     /**
+     * Get configured server address as an URL.
+     * @return Server URL.
+     * @throws MalformedURLException thrown if server address is not yet configured.
+     */
+    public URL getBaseUrl() throws MalformedURLException {
+        return new URL((mUseTLS ? "https://" : "http://") + mServerHost + "/v" + PROTOVERSION + "/");
+    }
+
+    /**
      * If websocket is valid and not connected, force an immediate reconnect attempt.
      * If it's not initialized or already connected do nothing.
      *
@@ -635,7 +644,7 @@ public class Tinode {
     public LargeFileHelper getFileUploader() {
         URL url = null;
         try {
-            url = new URL((mUseTLS ? "https://" : "http://") + mServerHost + "/v" + PROTOVERSION + "/file/u");
+            url = new URL(getBaseUrl(), "./file/u");
         } catch (MalformedURLException ignored) {}
         return new LargeFileHelper(url, getApiKey(), getAuthToken(), makeUserAgent());
     }

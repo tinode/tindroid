@@ -16,6 +16,7 @@
     <color name="colorDangerDark">#B71C1C</color>
 
     <color name="colorLightGray">#eeeeee</color>
+    <color name="colorGray">#cccccc</color>
 
     <color name="colorFacebookPrimary">#3B5998</color>
     <color name="colorFacebookDark">#2f4779</color>

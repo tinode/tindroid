@@ -55,9 +55,12 @@ import android.widget.Toast;
 
 import com.pchmn.materialchips.model.Chip;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -576,6 +579,18 @@ public class UiUtils {
 
         // If the decoding failed, returns null
         return null;
+    }
+
+    public static ByteArrayInputStream bitmapToStream(Bitmap bmp, String mimeType) {
+        Bitmap.CompressFormat fmt;
+        if ("image/jpeg".equals(mimeType)) {
+            fmt = Bitmap.CompressFormat.JPEG;
+        } else {
+            fmt = Bitmap.CompressFormat.PNG;
+        }
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bmp.compress(fmt, 70, bos);
+        return new ByteArrayInputStream(bos.toByteArray());
     }
 
     /**

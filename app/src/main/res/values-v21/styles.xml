@@ -11,4 +11,10 @@
         <item name="android:textAllCaps">true</item>
         <item name="android:fontFeatureSettings">smcp</item>
     </style>
+
+    <style name="ProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal">
+        <item name="android:progressBackgroundTint">@color/colorButtonNormal</item>
+        <item name="android:progressTint">@color/colorAccent</item>
+        <item name="android:minHeight">12dip</item>
+    </style>
 </resources>

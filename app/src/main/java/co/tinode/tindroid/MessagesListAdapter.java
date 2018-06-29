@@ -37,6 +37,8 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
 import co.tinode.tindroid.db.MessageDb;
@@ -333,7 +335,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                             }
                         } catch (ClassCastException ignored) {}
                         if (url != null) {
-                            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                            try {
+                                url = new URL(Cache.getTinode().getBaseUrl(), url).toString();
+                                mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                            } catch (MalformedURLException ignored) {}
                         }
                         break;
 
@@ -386,10 +391,18 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
 
                         try {
                             Object val = data.get("val");
-                            FileOutputStream fos = new FileOutputStream(file);
-                            fos.write(val instanceof String ?
-                                    Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val);
-                            fos.close();
+                            if (val != null) {
+                                FileOutputStream fos = new FileOutputStream(file);
+                                fos.write(val instanceof String ?
+                                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val);
+                                fos.close();
+                            } else {
+                                Object ref = data.get("ref");
+                                if (ref != null && ref instanceof String) {
+                                    url = new URL(Cache.getTinode().getBaseUrl(), (String) ref).toString();
+                                    // FIXME: use LargeFileHelper.download to fetch the data from URL.
+                                }
+                            }
 
                             Intent intent = new Intent();
                             intent.setAction(android.content.Intent.ACTION_VIEW);

@@ -28,7 +28,7 @@
     </style>
 
     <style name="searchTextHighlight">
-        <item name="android:textColor">?attr/colorAccent</item>
+        <item name="android:textColor">@color/colorAccent</item>
         <item name="android:textStyle">bold</item>
     </style>
 
@@ -63,4 +63,7 @@
         <item name="android:textSize">11sp</item>
     </style>
 
+    <style name="ProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal">
+        <item name="android:minHeight">12dip</item>
+    </style>
 </resources>

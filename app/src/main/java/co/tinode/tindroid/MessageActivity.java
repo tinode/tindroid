@@ -350,7 +350,7 @@ public class MessageActivity extends AppCompatActivity {
             MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                     findFragmentByTag(FRAGMENT_MESSAGES);
             if (fragment != null && fragment.isVisible()) {
-                fragment.runLoader();
+                fragment.runMessageLoader();
             }
         }
 

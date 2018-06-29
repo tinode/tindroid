@@ -18,7 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bubble_r_z"
-            android:layout_gravity="right"
+            android:layout_gravity="end"
             android:orientation="vertical">
 
             <TextView
@@ -59,7 +59,6 @@
                     tools:ignore="SmallSp"/>
 
             </LinearLayout>
-
         </LinearLayout>
     </LinearLayout>
 
