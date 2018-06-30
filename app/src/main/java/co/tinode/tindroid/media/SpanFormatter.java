@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.support.v7.content.res.AppCompatResources;
 import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -123,7 +124,7 @@ public class SpanFormatter {
 
                             if (bmp == null) {
                                 // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-                                span = new ImageSpan(ctx, R.drawable.ic_broken_image);
+                                span = new ImageSpan(AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image));
                             } else {
                                 span = new ImageSpan(ctx, bmp);
                             }
@@ -154,7 +155,8 @@ public class SpanFormatter {
                                 text.append(" ");
                             }
                             // Insert document icon
-                            span = new ImageSpan(ctx, R.drawable.ic_insert_drive_file, ImageSpan.ALIGN_BOTTOM);
+                            span = new ImageSpan(AppCompatResources.getDrawable(ctx, R.drawable.ic_insert_drive_file),
+                                    ImageSpan.ALIGN_BOTTOM);
                             Rect bounds = ((ImageSpan) span).getDrawable().getBounds();
                             text.setSpan(span, offset, offset + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             text.setSpan(new SubscriptSpan(), offset, offset + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -181,7 +183,8 @@ public class SpanFormatter {
                             substr = new SpannableStringBuilder(" ")
                                     .append(ctx.getResources().getString(R.string.download_attachment));
                             // Insert 'download file' icon
-                            substr.setSpan(new ImageSpan(ctx, R.drawable.ic_file_download, ImageSpan.ALIGN_BOTTOM),
+                            substr.setSpan(new ImageSpan(AppCompatResources.getDrawable(ctx, R.drawable.ic_file_download),
+                                            ImageSpan.ALIGN_BOTTOM),
                                     0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             // Make line clickable
                             span = new ClickableSpan() {

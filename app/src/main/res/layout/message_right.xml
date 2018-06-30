@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:maxWidth="280dp"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-                android:textColor="?android:attr/textColorPrimary"/>
+                android:textColor="@color/colorTextPrimary"/>
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -40,7 +40,7 @@
                     android:layout_height="wrap_content"
                     android:paddingLeft="4sp"
                     android:paddingRight="4sp"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="@color/colorTextSecondary"
                     tools:text="Jun 11 22:17"
                     android:textSize="11sp" tools:ignore="SmallSp"/>
 
@@ -54,7 +54,7 @@
                     android:paddingRight="3sp"
                     android:paddingStart="5sp"
                     android:alpha="0.5"
-                    android:tint="?android:attr/textColorSecondary"
+                    android:tint="@color/colorTextSecondary"
                     tools:src="@drawable/ic_visibility"
                     tools:ignore="SmallSp"/>
 

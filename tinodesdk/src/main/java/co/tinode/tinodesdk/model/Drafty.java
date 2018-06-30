@@ -536,6 +536,10 @@ public class Drafty implements Serializable {
      * @return string array of attachment references or null if no attachments with references found.
      */
     public String[] getEntReferences() {
+        if (ent == null) {
+            return null;
+        }
+        
         Vector<String> result = new Vector<>();
         for (Entity anEnt : ent) {
             Object ref = anEnt.data.get("ref");
