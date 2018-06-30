@@ -539,7 +539,7 @@ public class Drafty implements Serializable {
         if (ent == null) {
             return null;
         }
-        
+
         Vector<String> result = new Vector<>();
         for (Entity anEnt : ent) {
             Object ref = anEnt.data.get("ref");

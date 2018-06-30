@@ -44,7 +44,6 @@
                     android:layout_height="48sp"
                     android:layout_alignBottom="@id/imageAvatar"
                     android:layout_alignParentEnd="true"
-                    android:layout_alignParentRight="true"
                     android:layout_margin="2sp"
                     android:background="@drawable/pill_counter"
                     android:drawableTop="@drawable/ic_add_a_photo"
