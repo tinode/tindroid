@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -410,7 +411,10 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                             mActivity.startActivity(intent);
                         } catch (NullPointerException | ClassCastException | IOException ex) {
                             Log.e(TAG, "Failed to save attachment to storage", ex);
-                            Toast.makeText(mActivity, R.string.failed_to_attach, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                        } catch (ActivityNotFoundException ex) {
+                            Log.i(TAG, "No application can handle downloaded file ", ex);
+                            Toast.makeText(mActivity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
                         }
                         break;
                 }
@@ -578,13 +582,18 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
     }
 
     void runLoader() {
-        LoaderManager lm = mActivity.getSupportLoaderManager();
-        final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
-        if (loader != null && !loader.isReset()) {
-            lm.restartLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
-        } else {
-            lm.initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
-        }
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final LoaderManager lm = mActivity.getSupportLoaderManager();
+                final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
+                if (loader != null && !loader.isReset()) {
+                    lm.restartLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
+                } else {
+                    lm.initLoader(MESSAGES_QUERY_ID, null, mLoaderCallbacks);
+                }
+            }
+        });
     }
 
     boolean loadNextPage() {

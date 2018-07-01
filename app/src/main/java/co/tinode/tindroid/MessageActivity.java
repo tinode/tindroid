@@ -347,7 +347,7 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onData(MsgServerData data) {
-            MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+            final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                     findFragmentByTag(FRAGMENT_MESSAGES);
             if (fragment != null && fragment.isVisible()) {
                 fragment.runMessageLoader();

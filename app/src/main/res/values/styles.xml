@@ -63,8 +63,9 @@
         <item name="android:textSize">11sp</item>
     </style>
 
-    <style name="ProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal">
+    <style name="ProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
         <item name="android:minHeight">12dip</item>
+        <item name="android:background">@color/colorLightGray</item>
     </style>
 
 </resources>

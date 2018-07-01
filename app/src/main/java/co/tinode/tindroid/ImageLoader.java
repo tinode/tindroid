@@ -14,7 +14,11 @@ import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.widget.ImageView;
 
-import java.io.FileDescriptor;
+import com.google.android.gms.common.util.IOUtils;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -118,30 +122,34 @@ public abstract class ImageLoader {
     }
 
     /**
-     * Decode and sample down a bitmap from a file input stream to the requested width and height.
+     * Decode and sample down a bitmap from an input stream to the requested width and height.
+     * It was orifinally decoded from a AssetFileDescriptior, but it's buggy in API 19.
      *
-     * @param fileDescriptor The file descriptor to read from
-     * @param reqWidth       The requested width of the resulting bitmap
-     * @param reqHeight      The requested height of the resulting bitmap
+     * @param is         Bitmap bits as an input stream.
+     * @param reqWidth   The requested width of the resulting bitmap
+     * @param reqHeight  The requested height of the resulting bitmap
      * @return A bitmap sampled down from the original with the same aspect ratio and dimensions
      * that are equal to or greater than the requested width and height
      */
-    public static Bitmap decodeSampledBitmapFromDescriptor(
-            FileDescriptor fileDescriptor, int reqWidth, int reqHeight) {
+    public static Bitmap decodeSampledBitmapFromStream(
+            InputStream is, int reqWidth, int reqHeight) throws IOException {
 
-        // First decode with inJustDecodeBounds=true to check dimensions
+        // First decode with inJustDecodeBounds=true to check dimensions.
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
 
+        // Must copy into memory otherwise the stream cannot be reset.
+        InputStream bais = new ByteArrayInputStream(IOUtils.toByteArray(is));
+
+        BitmapFactory.decodeStream(bais, null, options);
         // Calculate inSampleSize
         options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+        bais.reset();
+        return BitmapFactory.decodeStream(bais, null, options);
     }
-
     /**
      * Calculate an inSampleSize for use in a {@link BitmapFactory.Options} object when decoding
      * bitmaps using the decode* methods from {@link BitmapFactory}. This implementation calculates

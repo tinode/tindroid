@@ -53,11 +53,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.common.util.IOUtils;
 import com.pchmn.materialchips.model.Chip;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -550,14 +553,13 @@ public class UiUtils {
 
             // Gets a FileDescriptor from the AssetFileDescriptor. A BitmapFactory object can
             // decode the contents of a file pointed to by a FileDescriptor into a Bitmap.
-            FileDescriptor fileDescriptor = afd.getFileDescriptor();
-            if (fileDescriptor != null) {
+            if (afd != null) {
                 // Decodes a Bitmap from the image pointed to by the FileDescriptor, and scales it
                 // to the specified width and height
-                return ImageLoader.decodeSampledBitmapFromDescriptor(
-                        fileDescriptor, imageSize, imageSize);
+                return ImageLoader.decodeSampledBitmapFromStream(
+                        new BufferedInputStream(new FileInputStream(afd.getFileDescriptor())), imageSize, imageSize);
             }
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             // If the file pointed to by the thumbnail URI doesn't exist, or the file can't be
             // opened in "read" mode, ContentResolver.openAssetFileDescriptor throws a
             // FileNotFoundException.

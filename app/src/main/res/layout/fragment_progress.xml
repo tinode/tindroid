@@ -11,8 +11,8 @@
         style="@style/ProgressBar"
         android:layout_width="80dp"
         android:layout_height="12dp"
-        android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp"
+        android:layout_marginTop="4dp"
         android:progress="33"
         />
 
@@ -22,8 +22,8 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_weight="0.1"
-        android:background="@color/white_transparency"
         android:contentDescription="@string/action_cancel"
-        android:paddingLeft="4sp"
-        android:paddingRight="8sp"/>
+        android:background="@android:color/transparent"
+        android:paddingStart="4sp"
+        android:paddingEnd="8sp"/>
 </android.support.v7.widget.LinearLayoutCompat>

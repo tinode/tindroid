@@ -8,13 +8,19 @@ import co.tinode.tinodesdk.model.VCard;
 
 
 /**
- * VCard - contact descriptor. Adds avatar conversion from bits to Android bitmap and back.
+ * VxCard - contact descriptor.
+ * Adds avatar conversion from bits to Android bitmap and back.
  */
 public class VxCard extends VCard {
     @JsonIgnore
     public AvatarPhoto avatar;
 
     public VxCard() {
+    }
+
+    public VxCard(String fullName, byte[] avatar) {
+        super(fullName, avatar);
+        constructBitmap();
     }
 
     public VxCard(String fullName, Bitmap bmp) {
@@ -32,6 +38,9 @@ public class VxCard extends VCard {
 
     @JsonIgnore
     public Bitmap getBitmap() {
+        if (avatar == null) {
+            constructBitmap();
+        }
         return (avatar != null) ? avatar.getBitmap() : null;
     }
     @JsonIgnore

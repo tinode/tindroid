@@ -6,15 +6,14 @@
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
     </style>
 
-    <style name="sectionTitleStyle"  parent="@android:style/TextAppearance.DeviceDefault.Medium">
+    <style name="sectionTitleStyle" parent="@android:style/TextAppearance.DeviceDefault.Medium">
         <item name="android:textColor">@color/colorPrimaryDark</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:fontFeatureSettings">smcp</item>
     </style>
 
-    <style name="ProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal">
-        <item name="android:progressBackgroundTint">@color/colorButtonNormal</item>
-        <item name="android:progressTint">@color/colorAccent</item>
+    <style name="ProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
         <item name="android:minHeight">12dip</item>
+        <item name="android:background">@color/colorLightGray</item>
     </style>
 </resources>
