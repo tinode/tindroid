@@ -413,7 +413,7 @@ public class MessagesListAdapter extends RecyclerView.Adapter<MessagesListAdapte
                             Log.e(TAG, "Failed to save attachment to storage", ex);
                             Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
                         } catch (ActivityNotFoundException ex) {
-                            Log.i(TAG, "No application can handle downloaded file ", ex);
+                            Log.i(TAG, "No application can handle downloaded file ");
                             Toast.makeText(mActivity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
                         }
                         break;

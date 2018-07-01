@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+            android:opacity="opaque">
 
-    <item android:drawable="@color/colorSplashScreenBackground" />
+    <item android:drawable="@color/colorSplashScreenBackground"
+          android:gravity="fill" />
 
-    <item android:gravity="center"
-          android:width="128dp"
-          android:height="128dp"
-          android:drawable="@drawable/logo_src"/>
+    <item>
+        <bitmap
+            android:src="@drawable/logo_src"
+            android:width="128dp"
+            android:height="128dp"
+            android:gravity="center"/>
+    </item>
 
 </layer-list>
