@@ -175,7 +175,12 @@ public class ContactListFragment extends ListFragment {
             @Override
             public void onChange(boolean selfChange) {
                 // Content changed, refresh data
-                getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+                    }
+                });
             }
         };
     }

@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -23,6 +24,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.io.File;
+import java.net.URI;
 import java.util.Map;
 import java.util.Timer;
 
@@ -372,11 +375,13 @@ public class MessageActivity extends AppCompatActivity {
                 Cursor c = mDownloadMgr.query(query);
                 if (c.moveToFirst()) {
                     if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
-                        Uri fileUri = Uri.parse(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+                        URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
                         String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
                         intent = new Intent();
                         intent.setAction(android.content.Intent.ACTION_VIEW);
-                        intent.setDataAndType(fileUri, mimeType);
+                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                                "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         try {
                             startActivity(intent);
                         } catch (ActivityNotFoundException ignored) {

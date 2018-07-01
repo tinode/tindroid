@@ -195,4 +195,5 @@
     <string name="failed_to_download">Failed to save downloaded file</string>
     <string name="failed_to_open_file">No application can view the file of this type</string>
     <string name="download_title">Tindroid download</string>
+    <string name="some_permissions_missing">Some permissions missing.</string>
 </resources>

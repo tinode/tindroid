@@ -252,6 +252,7 @@
                             android:fontFamily="monospace"
                             android:textIsSelectable="true"
                             android:typeface="monospace"
+                            android:background="@drawable/dotted_line"
                             tools:text="RWPD"/>
 
                     </LinearLayout>
@@ -275,6 +276,7 @@
                             android:fontFamily="monospace"
                             android:textIsSelectable="true"
                             android:typeface="monospace"
+                            android:background="@drawable/dotted_line"
                             tools:text="RWPD"/>
 
                     </LinearLayout>
