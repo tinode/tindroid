@@ -14,6 +14,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
@@ -203,5 +205,12 @@ public class LargeFileHelper {
 
     public interface FileHelperProgress {
         void onProgress(long sent, long size);
+    }
+
+    public Map<String,String> headers() {
+        Map<String,String> headers = new HashMap<>();
+        headers.put("X-Tinode-APIKey", mApiKey);
+        headers.put("Authorization", "Token " + mAuthToken);
+        return headers;
     }
 }

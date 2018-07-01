@@ -1283,6 +1283,22 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         return getTopicTypeByName(mName);
     }
 
+    public boolean isMeType() {
+        return getTopicType() == TopicType.ME;
+    }
+
+    public boolean isP2PType() {
+        return getTopicType() == TopicType.P2P;
+    }
+
+    public boolean isFndType() {
+        return getTopicType() == TopicType.FND;
+    }
+
+    public boolean isGrpType() {
+        return getTopicType() == TopicType.GRP;
+    }
+
     public static boolean getIsNewByName(String name) {
         return name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
                                                     // synced with the server

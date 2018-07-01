@@ -12,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -113,15 +114,12 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         ml.setLayoutManager(lm);
 
         mRefresher = activity.findViewById(R.id.swipe_refresher);
-
         mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
         ml.setAdapter(mMessagesAdapter);
-
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
-                    // Log.d(TAG, "Calling server for more data");
                     try {
                         mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build())
                                 .thenApply(
@@ -216,9 +214,6 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         mTopicName = bundle.getString("topic");
         mMessageToSend = bundle.getString("messageText");
 
-        if (mTopicName != null && !mTopicName.equals(oldTopicName)) {
-            mMessagesAdapter.swapCursor(mTopicName, null);
-        }
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
 
         setHasOptionsMenu(true);
@@ -234,7 +229,14 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
 
         mRefresher.setRefreshing(false);
 
-        runMessageLoader();
+        if (mTopicName != null) {
+            mMessagesAdapter.swapCursor(mTopicName, null,  !mTopicName.equals(oldTopicName));
+            mMessagesAdapter.runLoader();
+        }
+    }
+
+    void runMessagesLoader() {
+        mMessagesAdapter.runLoader();
     }
 
     @Override
@@ -310,20 +312,16 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         mMessagesAdapter.notifyDataSetChanged();
     }
 
-    void runMessageLoader() {
-        mMessagesAdapter.runLoader();
-    }
-
     private boolean sendMessage(Drafty content) {
         if (mTopic != null) {
             try {
                 PromisedReply<ServerMessage> reply = mTopic.publish(content);
-                runMessageLoader(); // Shows pending message
+                mMessagesAdapter.runLoader(); // Shows pending message
                 reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         // Updates message list with "delivered" icon.
-                        runMessageLoader();
+                        mMessagesAdapter.runLoader();
                         return null;
                     }
                 }, mFailureListener);
@@ -411,6 +409,10 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
 
     public void topicSubscribed() {
         Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         if (mTopic.getAccessMode().isWriter()) {
             Log.i(TAG, "Topic is Writer " + mTopic.getName());
             ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(mMessageToSend) ? "" : mMessageToSend);
@@ -424,13 +426,14 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         }
     }
 
+    @NonNull
     @Override
     public Loader<UploadResult> onCreateLoader(int id, Bundle args) {
         return new FileUploader(getActivity(), args, null);
     }
 
     @Override
-    public void onLoadFinished(Loader<UploadResult> loader, UploadResult data) {
+    public void onLoadFinished(@NonNull Loader<UploadResult> loader, UploadResult data) {
         if (data.data != null) {
             sendMessage(data.data);
         } else if (data.error != null) {
@@ -440,7 +443,7 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
-    public void onLoaderReset(Loader<UploadResult> loader) {
+    public void onLoaderReset(@NonNull Loader<UploadResult> loader) {
     }
 
     private static class FileUploader extends AsyncTaskLoader<UploadResult> {
@@ -455,7 +458,7 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
 
         @Override
         public UploadResult loadInBackground() {
-            UploadResult result = new UploadResult(null, null);
+            UploadResult result = new UploadResult();
             final Uri uri = Uri.parse(mArgs.getString("uri"));
             if (uri == null) {
                 Log.d(TAG, "Received null URI");
@@ -583,9 +586,7 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         Drafty data;
         String error;
 
-        UploadResult(Drafty d, String e) {
-            data = d;
-            error = e;
+        UploadResult() {
         }
     }
 }

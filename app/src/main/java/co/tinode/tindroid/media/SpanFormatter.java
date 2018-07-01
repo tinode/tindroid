@@ -3,33 +3,27 @@ package co.tinode.tindroid.media;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.support.v7.content.res.AppCompatResources;
-import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
-import android.text.style.LineHeightSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SubscriptSpan;
-import android.text.style.TextAppearanceSpan;
 import android.text.style.TypefaceSpan;
 import android.text.style.URLSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
 import java.util.Map;
 
@@ -124,7 +118,9 @@ public class SpanFormatter {
 
                             if (bmp == null) {
                                 // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-                                span = new ImageSpan(AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image));
+                                Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                                icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+                                span = new ImageSpan(icon);
                             } else {
                                 span = new ImageSpan(ctx, bmp);
                             }
@@ -155,8 +151,9 @@ public class SpanFormatter {
                                 text.append(" ");
                             }
                             // Insert document icon
-                            span = new ImageSpan(AppCompatResources.getDrawable(ctx, R.drawable.ic_insert_drive_file),
-                                    ImageSpan.ALIGN_BOTTOM);
+                            Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_insert_drive_file);
+                            icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+                            span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
                             Rect bounds = ((ImageSpan) span).getDrawable().getBounds();
                             text.setSpan(span, offset, offset + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             text.setSpan(new SubscriptSpan(), offset, offset + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -183,9 +180,11 @@ public class SpanFormatter {
                             substr = new SpannableStringBuilder(" ")
                                     .append(ctx.getResources().getString(R.string.download_attachment));
                             // Insert 'download file' icon
-                            substr.setSpan(new ImageSpan(AppCompatResources.getDrawable(ctx, R.drawable.ic_file_download),
-                                            ImageSpan.ALIGN_BOTTOM),
-                                    0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file_download);
+                            icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+                            substr.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, 1,
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
                             // Make line clickable
                             span = new ClickableSpan() {
                                 @Override

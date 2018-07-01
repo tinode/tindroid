@@ -1,11 +1,16 @@
 package co.tinode.tindroid;
 
+import android.app.DownloadManager;
 import android.app.NotificationManager;
+import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -18,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.Map;
 import java.util.Timer;
 
 import co.tinode.tindroid.account.Utils;
@@ -59,6 +65,9 @@ public class MessageActivity extends AppCompatActivity {
 
     private PausableSingleThreadExecutor mMessageSender = null;
 
+    private DownloadManager mDownloadMgr = null;
+    private long mDownloadId = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +94,10 @@ public class MessageActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mDownloadMgr = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        registerReceiver(onNotificationClick, new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED));
 
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
@@ -122,8 +135,6 @@ public class MessageActivity extends AppCompatActivity {
             Log.e(TAG, "Activity resumed with an empty topic name");
             finish();
             return;
-        } else {
-            Log.d(TAG, "Activity resumed with topic=" + mTopicName);
         }
 
         // Cancel all pending notifications addressed to the current topic
@@ -203,7 +214,6 @@ public class MessageActivity extends AppCompatActivity {
 
     @Override
     public void onPause() {
-        Log.d(TAG, "onPause");
         super.onPause();
         mMessageSender.pause();
         if (mTypingAnimationTimer != null) {
@@ -231,6 +241,8 @@ public class MessageActivity extends AppCompatActivity {
         super.onDestroy();
 
         mMessageSender.shutdownNow();
+        unregisterReceiver(onComplete);
+        unregisterReceiver(onNotificationClick);
     }
 
     @Override
@@ -327,6 +339,62 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(runnable);
     }
 
+    public void startDownload(Uri uri, String fname, String mime, Map<String,String> headers) {
+        Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                .mkdirs();
+
+        DownloadManager.Request req = new DownloadManager.Request(uri);
+        if (headers != null) {
+            for (Map.Entry<String,String> entry : headers.entrySet()) {
+                req.addRequestHeader(entry.getKey(), entry.getValue());
+            }
+        }
+
+        mDownloadId = mDownloadMgr.enqueue(
+                req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
+                        DownloadManager.Request.NETWORK_MOBILE)
+                .setMimeType(mime)
+                .setAllowedOverRoaming(false)
+                .setTitle(fname)
+                .setDescription(getString(R.string.download_title))
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setVisibleInDownloadsUi(true)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fname));
+    }
+
+    BroadcastReceiver onComplete=new BroadcastReceiver() {
+        public void onReceive(Context ctx, Intent intent) {
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction()) &&
+                intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0) == mDownloadId) {
+                DownloadManager.Query query = new DownloadManager.Query();
+                query.setFilterById(mDownloadId);
+                Cursor c = mDownloadMgr.query(query);
+                if (c.moveToFirst()) {
+                    if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
+                        Uri fileUri = Uri.parse(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+                        String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
+                        intent = new Intent();
+                        intent.setAction(android.content.Intent.ACTION_VIEW);
+                        intent.setDataAndType(fileUri, mimeType);
+                        try {
+                            startActivity(intent);
+                        } catch (ActivityNotFoundException ignored) {
+                            startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                        }
+                    }
+                }
+                c.close();
+            }
+        }
+    };
+
+    BroadcastReceiver onNotificationClick=new BroadcastReceiver() {
+        public void onReceive(Context ctxt, Intent intent) {
+            Log.d(TAG, "onNotificationClick" + intent.getExtras());
+        }
+    };
+
     private class TListener extends ComTopic.ComListener<VxCard> {
 
         TListener() {
@@ -336,13 +404,6 @@ public class MessageActivity extends AppCompatActivity {
         public void onSubscribe(int code, String text) {
             // Topic name may change after subscription, i.e. new -> grpXXX
             mTopicName = mTopic.getName();
-            /*
-            MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
-                    findFragmentByTag(FRAGMENT_MESSAGES);
-            if (fragment != null && fragment.isVisible()) {
-                fragment.runLoader();
-            }
-            */
         }
 
         @Override
@@ -350,7 +411,7 @@ public class MessageActivity extends AppCompatActivity {
             final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                     findFragmentByTag(FRAGMENT_MESSAGES);
             if (fragment != null && fragment.isVisible()) {
-                fragment.runMessageLoader();
+                fragment.runMessagesLoader();
             }
         }
 

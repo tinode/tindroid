@@ -205,10 +205,12 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        if (am != null && (am.isAdmin() || am.isOwner())) {
+        if (am != null && (am.isAdmin() || am.isOwner()) && !mTopic.isP2PType()) {
             defaultPermissionsCard.setVisibility(View.VISIBLE);
             final TextView auth = activity.findViewById(R.id.authPermissions);
+            auth.setText(mTopic.getAuthAcsStr());
             final TextView anon = activity.findViewById(R.id.anonPermissions);
+            anon.setText(mTopic.getAnonAcsStr());
             auth.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
