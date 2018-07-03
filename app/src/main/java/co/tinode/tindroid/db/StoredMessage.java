@@ -4,9 +4,11 @@ package co.tinode.tindroid.db;
 import android.database.Cursor;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
@@ -30,6 +32,11 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         content = m.content;
     }
 
+    public StoredMessage(MsgServerData m, int status) {
+        this(m);
+        this.status = status;
+    }
+
     public static StoredMessage readMessage(Cursor c) {
         StoredMessage msg = new StoredMessage();
 
@@ -38,11 +45,20 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         msg.userId = c.getLong(MessageDb.COLUMN_IDX_USER_ID);
         msg.status = c.getInt(MessageDb.COLUMN_IDX_STATUS);
         msg.from = c.getString(MessageDb.COLUMN_IDX_SENDER);
-        msg.seq = c.getInt(MessageDb.COLUMN_IDX_SEQ);
         msg.ts = new Date(c.getLong(MessageDb.COLUMN_IDX_TS));
-        msg.content = BaseDb.deserialize(c.getBlob(MessageDb.COLUMN_IDX_CONTENT));
+        msg.seq = c.getInt(MessageDb.COLUMN_IDX_SEQ);
+        String mime = c.getString(MessageDb.COLUMN_IDX_MIME);
+        if (mime != null) {
+            msg.head = new HashMap<>();
+            msg.head.put("mime", mime);
+        }
+        msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
 
         return msg;
+    }
+
+    public static int readSeqId(Cursor c) {
+        return c.getInt(0);
     }
 
     public boolean isMine() {

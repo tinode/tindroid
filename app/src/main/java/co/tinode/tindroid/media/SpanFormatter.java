@@ -129,15 +129,17 @@ public class SpanFormatter {
                             // Insert inline image
                             text.setSpan(span, style.getOffset(), style.getOffset() + style.length(),
                                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            span = new ClickableSpan() {
-                                @Override
-                                public void onClick(View widget) {
-                                    clicker.onClick("IM", valid ? data : null);
-                                }
-                            };
-                            // Make image clickable
-                            text.setSpan(span, style.getOffset(), style.getOffset() + style.length(),
-                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            if (clicker != null) {
+                                span = new ClickableSpan() {
+                                    @Override
+                                    public void onClick(View widget) {
+                                        clicker.onClick("IM", valid ? data : null);
+                                    }
+                                };
+                                // Make image clickable
+                                text.setSpan(span, style.getOffset(), style.getOffset() + style.length(),
+                                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
                             span = null;
                         }
                         break;
@@ -150,6 +152,7 @@ public class SpanFormatter {
                                 offset = 0;
                                 text.append(" ");
                             }
+
                             // Insert document icon
                             Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_insert_drive_file);
                             icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
@@ -173,31 +176,33 @@ public class SpanFormatter {
                             substr.setSpan(new TypefaceSpan("monospace"), 0, substr.length(),
                                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             text.append(substr);
-                            text.append("\n");
 
-                            // Insert clickable [_ save] line
-                            // Build string
-                            substr = new SpannableStringBuilder(" ")
-                                    .append(ctx.getResources().getString(R.string.download_attachment));
-                            // Insert 'download file' icon
-                            icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file_download);
-                            icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
-                            substr.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, 1,
-                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            if (clicker != null) {
+                                // Insert linebreak then a clickable [_ save] line
+                                text.append("\n");
+                                // Build the icon with a clicker.
+                                substr = new SpannableStringBuilder(" ")
+                                        .append(ctx.getResources().getString(R.string.download_attachment));
+                                // Insert 'download file' icon
+                                icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file_download);
+                                icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+                                substr.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, 1,
+                                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-                            // Make line clickable
-                            span = new ClickableSpan() {
-                                @Override
-                                public void onClick(View widget) {
-                                    clicker.onClick("EX", data);
-                                }
-                            };
-                            substr.setSpan(span, 1, substr.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            // Move line right to make it appear under the file name.
-                            substr.setSpan(new LeadingMarginSpan.Standard(bounds.width()), 0, substr.length(),
-                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                // Make line clickable
+                                span = new ClickableSpan() {
+                                    @Override
+                                    public void onClick(View widget) {
+                                        clicker.onClick("EX", data);
+                                    }
+                                };
+                                substr.setSpan(span, 1, substr.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                // Move line right to make it appear under the file name.
+                                substr.setSpan(new LeadingMarginSpan.Standard(bounds.width()), 0, substr.length(),
+                                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-                            text.append(substr);
+                                text.append(substr);
+                            }
                             span = null;
                         }
                         break;

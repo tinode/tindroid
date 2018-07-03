@@ -46,7 +46,7 @@ public class UserDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_DELETED = "deleted";
     /**
-     * Public user description, (what's shown in 'me' topic) blob
+     * Public user description, (what's shown in 'me' topic), serialized as TEXT
      */
     public static final String COLUMN_NAME_PUBLIC = "pub";
 
@@ -69,7 +69,7 @@ public class UserDb implements BaseColumns {
                     COLUMN_NAME_UID + " TEXT," +
                     COLUMN_NAME_UPDATED + " INT," +
                     COLUMN_NAME_DELETED + " INT," +
-                    COLUMN_NAME_PUBLIC + " BLOB)";
+                    COLUMN_NAME_PUBLIC + " TEXT)";
     /**
      * Add index on account_id-topic name, in descending order
      */

@@ -14,7 +14,9 @@ import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.app.SupportActivity;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -60,10 +62,13 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment handling message display and message sending.
  */
-public class MessagesFragment extends Fragment implements LoaderManager.LoaderCallbacks<MessagesFragment.UploadResult> {
+public class MessagesFragment extends Fragment
+        implements LoaderManager.LoaderCallbacks<MessagesFragment.UploadResult> {
     private static final String TAG = "MessageFragment";
 
     private static final int MESSAGES_TO_LOAD = 20;
+
+    private static final int ASYNC_TASK_UPLOADER = 101;
 
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
@@ -73,10 +78,6 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
     // Maximum size of file to upload. 8MB.
     private static final long MAX_ATTACHMENT_SIZE = 1 << 23;
 
-    private static final int ASYNC_TASK_UPLOADER = 100;
-
-    // Delay before sending out a RECEIVED notification to be sure we are not sending too many.
-    // private static final int RECV_DELAY = 500;
     private static final int READ_DELAY = 1000;
     protected ComTopic<VxCard> mTopic;
     private MessagesListAdapter mMessagesAdapter;
@@ -280,6 +281,9 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
     // Confirmation dialog "Do you really want to do X?"
     private void showDeleteTopicConfirmationDialog() {
         final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
         confirmBuilder.setNegativeButton(android.R.string.cancel, null);
         confirmBuilder.setMessage(R.string.confirm_delete_topic);
@@ -312,6 +316,60 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         mMessagesAdapter.notifyDataSetChanged();
     }
 
+    void openFileSelector(String mimeType, int title, int resultCode) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType(mimeType);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        try {
+            startActivityForResult(
+                    Intent.createChooser(intent, getActivity().getString(title)), resultCode);
+        } catch (ActivityNotFoundException ex) {
+            Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult, resultCode="+resultCode + ", requestCode=" + requestCode);
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case ACTION_ATTACH_IMAGE:
+                case ACTION_ATTACH_FILE: {
+                    final Bundle args = new Bundle();
+                    args.putParcelable("uri", data.getData());
+                    args.putInt("requestCode", requestCode);
+                    final FragmentActivity activity = getActivity();
+                    if (activity == null) {
+                        return;
+                    }
+
+                    final LoaderManager lm = activity.getSupportLoaderManager();
+                    final Loader<UploadResult> loader = lm.getLoader(ASYNC_TASK_UPLOADER);
+                    if (loader != null && !loader.isReset()) {
+                        lm.restartLoader(ASYNC_TASK_UPLOADER, args, this).forceLoad();
+                    } else {
+                        lm.initLoader(ASYNC_TASK_UPLOADER, args, this).forceLoad();
+                    }
+                    break;
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public void sendText() {
+        final Activity activity = getActivity();
+        final TextView inputField = activity.findViewById(R.id.editMessage);
+        String message = inputField.getText().toString().trim();
+        // notifyDataSetChanged();
+        if (!message.equals("")) {
+            if (sendMessage(Drafty.parse(message))) {
+                // Message is successfully queued, clear text from the input field and redraw the list.
+                inputField.setText("");
+            }
+        }
+    }
+
     private boolean sendMessage(Drafty content) {
         if (mTopic != null) {
             try {
@@ -337,48 +395,6 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         return false;
     }
 
-    void openFileSelector(String mimeType, int title, int resultCode) {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType(mimeType);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        try {
-            startActivityForResult(
-                    Intent.createChooser(intent, getActivity().getString(title)), resultCode);
-        } catch (ActivityNotFoundException ex) {
-            Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case ACTION_ATTACH_IMAGE:
-                case ACTION_ATTACH_FILE: {
-                    Bundle args = new Bundle();
-                    args.putParcelable("uri", data.getData());
-                    args.putInt("requestCode", requestCode);
-                    getActivity().getSupportLoaderManager().initLoader(ASYNC_TASK_UPLOADER, args, this);
-                    break;
-                }
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    public void sendText() {
-        final Activity activity = getActivity();
-        final TextView inputField = activity.findViewById(R.id.editMessage);
-        String message = inputField.getText().toString().trim();
-        // notifyDataSetChanged();
-        if (!message.equals("")) {
-            if (sendMessage(Drafty.parse(message))) {
-                // Message is successfully queued, clear text from the input field and redraw the list.
-                inputField.setText("");
-            }
-        }
-    }
-
     // Send image in-band
     public static Drafty draftyImage(String mimeType, byte[] bits, int width, int height, String fname) {
         Drafty content = Drafty.parse(" ");
@@ -395,6 +411,7 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
 
     // Send file as a link.
     public static Drafty draftyAttachment(String mimeType, String fname, String refUrl, long size) {
+        Log.d(TAG, "draftyAttachment " + refUrl);
         Drafty content = new Drafty();
         content.attachFile(mimeType, fname, refUrl, size);
         return content;
@@ -459,7 +476,8 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
         @Override
         public UploadResult loadInBackground() {
             UploadResult result = new UploadResult();
-            final Uri uri = Uri.parse(mArgs.getString("uri"));
+
+            final Uri uri = mArgs.getParcelable("uri");
             if (uri == null) {
                 Log.d(TAG, "Received null URI");
                 result.error = "Null URI";
@@ -468,42 +486,54 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
 
             final int requestCode = mArgs.getInt("requestCode");
 
-            String fname;
-            Long fsize;
-            int imageWidth = 0, imageHeight = 0;
-
             final Context activity = getContext();
             final ContentResolver resolver = getContext().getContentResolver();
 
-            String mimeType = resolver.getType(uri);
             InputStream is = null;
             ByteArrayOutputStream baos = null;
             try {
+                String fname = null;
+                Long fsize = 0L;
+                int imageWidth = 0, imageHeight = 0;
+
+                String mimeType = resolver.getType(uri);
                 if (mimeType == null) {
                     mimeType = UiUtils.getMimeType(uri);
+                }
+
+                Cursor cursor = resolver.query(uri, null, null, null, null);
+                if (cursor != null) {
+                    cursor.moveToFirst();
+                    fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                    Log.d(TAG, "Got file data from cursor: fname=" + fname + ", size=" + fsize);
+                    cursor.close();
+                }
+
+                // Still no size? Try opening directly.
+                if (fsize == 0) {
                     String path = UiUtils.getPath(getContext(), uri);
                     if (path != null) {
                         File file = new File(path);
-                        fname = file.getName();
+                        if (fname == null) {
+                            fname = file.getName();
+                        }
                         fsize = file.length();
-                    } else {
-                        fname = null;
-                        fsize = 0L;
-                    }
-                } else {
-                    Cursor cursor = resolver.query(uri, null, null, null, null);
-                    if (cursor != null) {
-                        cursor.moveToFirst();
-                        fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                        fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
-                        cursor.close();
-                    } else {
-                        fname = null;
-                        fsize = 0L;
                     }
                 }
 
+                if (fsize == 0) {
+                    Log.d(TAG, "File size is zero "+uri);
+                    result.error = activity.getString(R.string.invalid_file);
+                    return result;
+                }
+
+                if (fname == null) {
+                    fname = activity.getString(R.string.default_attachment_name);
+                }
+
                 if (requestCode == ACTION_ATTACH_IMAGE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                    Log.d(TAG, "Attaching large image size="+fsize);
                     is = resolver.openInputStream(uri);
                     // Resize image to ensure it's under the maximum in-band size.
                     Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
@@ -517,6 +547,7 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
                 }
 
                 if (fsize > MAX_ATTACHMENT_SIZE) {
+                    Log.d(TAG, "File is too big, size="+fsize);
                     result.error = activity.getString(R.string.attachment_too_large,
                             UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
                 } else {
@@ -525,6 +556,8 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
                     }
 
                     if (requestCode == ACTION_ATTACH_FILE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                        Log.d(TAG, "File is medium size, sending as attachment, size="+fsize);
+
                         // Upload then send message with a link.
                         MsgServerCtrl ctrl = Cache.getTinode().getFileUploader().upload(is, fname, mimeType, fsize,
                                 new LargeFileHelper.FileHelperProgress() {
@@ -538,6 +571,8 @@ public class MessagesFragment extends Fragment implements LoaderManager.LoaderCa
                                 });
                         result.data = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
                     } else {
+                        Log.d(TAG, "Attaching image or small file inline, size="+fsize);
+
                         baos = new ByteArrayOutputStream();
                         byte[] buffer = new byte[16384];
                         int len;

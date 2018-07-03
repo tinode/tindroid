@@ -19,6 +19,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.view.ActionMode;
+import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -32,6 +33,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.media.SpanFormatter;
@@ -95,6 +98,8 @@ public class MessagesListAdapter
 
     private int mPagesToLoad;
     private SwipeRefreshLayout mRefresher;
+
+    private SpanClicker mSpanFormatterClicker = null;
 
     public MessagesListAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
@@ -151,6 +156,8 @@ public class MessagesListAdapter
                 return false;
             }
         };
+
+        mSpanFormatterClicker = new SpanClicker();
     }
 
     @Override
@@ -316,82 +323,23 @@ public class MessagesListAdapter
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+
         StoredMessage m = getMessage(position);
 
+        // Disable attachment clicker.
+        boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED) && (m.content.getEntReferences() != null);
+
+        mSpanFormatterClicker.setPosition(position);
         holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, holder.mText.getMaxWidth(),
-                new SpanFormatter.ClickListener() {
-            @Override
-            public void onClick(String type, Map<String, Object> data) {
-                if (mSelectedItems != null) {
-                    int pos = holder.getAdapterPosition();
-                    toggleSelectionAt(pos);
-                    notifyItemChanged(pos);
-                    updateSelectionMode();
-                    return;
-                }
-
-                switch (type) {
-                    case "LN":
-                        String url = null;
-                        try {
-                            if (data != null) {
-                                url = (String) data.get("url");
-                            }
-                        } catch (ClassCastException ignored) {}
-                        if (url != null) {
-                            try {
-                                url = new URL(Cache.getTinode().getBaseUrl(), url).toString();
-                                mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                            } catch (MalformedURLException ignored) {}
-                        }
-                        break;
-
-                    case "IM":
-                        Bundle args = new Bundle();
-                        if (data != null) {
-                            try {
-                                Object val = data.get("val");
-                                args.putByteArray("image", val instanceof String ?
-                                        Base64.decode((String) val, Base64.DEFAULT) :
-                                        (byte[]) val);
-                                args.putString("mime", (String) data.get("mime"));
-                                args.putString("name", (String) data.get("name"));
-                            } catch (ClassCastException ignored) {
-                            }
-                        }
-
-                        if (args.getByteArray("image") != null) {
-                            mActivity.showFragment("view_image", true, args);
-                        } else {
-                            Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
-                        }
-
-                        break;
-
-                    case "EX":
-                        verifyStoragePermissions();
-
-                        String fname = null;
-                        String mimeType = null;
-                        try {
-                            fname = (String) data.get("name");
-                            mimeType = (String) data.get("mime");
-                        } catch (ClassCastException ignored) {}
-
-                        if (TextUtils.isEmpty(fname)) {
-                            fname = mActivity.getString(R.string.default_attachment_name);
-                        }
-
-                        downloadAttachment(data, fname, mimeType);
-                        break;
-                }
-            }
-        }));
+                disableEnt ? null : mSpanFormatterClicker));
         if (SpanFormatter.hasClickableSpans(m.content)) {
             holder.mText.setLinksClickable(true);
             holder.mText.setFocusable(true);
             holder.mText.setClickable(true);
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
+        }
+        if (holder.mProgressInclude != null) {
+            holder.mProgressInclude.setVisibility(disableEnt ? View.VISIBLE : View.GONE);
         }
 
         if (holder.mSelected != null) {
@@ -561,9 +509,9 @@ public class MessagesListAdapter
                 final LoaderManager lm = mActivity.getSupportLoaderManager();
                 final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
                 if (loader != null && !loader.isReset()) {
-                    lm.restartLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this);
+                    lm.restartLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this).forceLoad();
                 } else {
-                    lm.initLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this);
+                    lm.initLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this).forceLoad();
                 }
             }
         });
@@ -620,6 +568,9 @@ public class MessagesListAdapter
         TextView mUserName;
         View mSelected;
         View mOverlay;
+        View mProgressInclude;
+        ProgressBar mProgress;
+        AppCompatImageButton mCancelProgress;
 
         ViewHolder(View itemView, int viewType) {
             super(itemView);
@@ -633,6 +584,9 @@ public class MessagesListAdapter
             mUserName = itemView.findViewById(R.id.userName);
             mSelected = itemView.findViewById(R.id.selected);
             mOverlay = itemView.findViewById(R.id.overlay);
+            mProgressInclude = itemView.findViewById(R.id.progressInclide);
+            mProgress = itemView.findViewById(R.id.attachmentProgress);
+            mCancelProgress = itemView.findViewById(R.id.cancelAttachmentProgress);
         }
     }
 
@@ -694,6 +648,80 @@ public class MessagesListAdapter
                 try {
                     fos.close();
                 } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    class SpanClicker implements SpanFormatter.ClickListener {
+        private int mPosition = -1;
+
+        void setPosition(int pos) {
+            mPosition = pos;
+        }
+
+        @Override
+        public void onClick(String type, Map<String, Object> data) {
+            if (mSelectedItems != null) {
+                toggleSelectionAt(mPosition);
+                notifyItemChanged(mPosition);
+                updateSelectionMode();
+                return;
+            }
+
+            switch (type) {
+                case "LN":
+                    String url = null;
+                    try {
+                        if (data != null) {
+                            url = (String) data.get("url");
+                        }
+                    } catch (ClassCastException ignored) {}
+                    if (url != null) {
+                        try {
+                            url = new URL(Cache.getTinode().getBaseUrl(), url).toString();
+                            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                        } catch (MalformedURLException ignored) {}
+                    }
+                    break;
+
+                case "IM":
+                    Bundle args = new Bundle();
+                    if (data != null) {
+                        try {
+                            Object val = data.get("val");
+                            args.putByteArray("image", val instanceof String ?
+                                    Base64.decode((String) val, Base64.DEFAULT) :
+                                    (byte[]) val);
+                            args.putString("mime", (String) data.get("mime"));
+                            args.putString("name", (String) data.get("name"));
+                        } catch (ClassCastException ignored) {
+                        }
+                    }
+
+                    if (args.getByteArray("image") != null) {
+                        mActivity.showFragment("view_image", true, args);
+                    } else {
+                        Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
+                    }
+
+                    break;
+
+                case "EX":
+                    verifyStoragePermissions();
+
+                    String fname = null;
+                    String mimeType = null;
+                    try {
+                        fname = (String) data.get("name");
+                        mimeType = (String) data.get("mime");
+                    } catch (ClassCastException ignored) {}
+
+                    if (TextUtils.isEmpty(fname)) {
+                        fname = mActivity.getString(R.string.default_attachment_name);
+                    }
+
+                    downloadAttachment(data, fname, mimeType);
+                    break;
             }
         }
     }

@@ -91,7 +91,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
                     COLUMN_NAME_MIME + " TEXT," +
-                    COLUMN_NAME_CONTENT + " BLOB)";
+                    COLUMN_NAME_CONTENT + " TEXT)";
     /**
      * SQL statement to drop Messages table.
      */
@@ -146,38 +146,46 @@ public class MessageDb implements BaseColumns {
             return msg.id;
         }
 
-        if (msg.topicId <= 0) {
-            msg.topicId = TopicDb.getId(db, msg.topic);
-        }
-        if (msg.userId <= 0) {
-            msg.userId = UserDb.getId(db, msg.from);
+        db.beginTransaction();
+        try {
+            if (msg.topicId <= 0) {
+                msg.topicId = TopicDb.getId(db, msg.topic);
+            }
+            if (msg.userId <= 0) {
+                msg.userId = UserDb.getId(db, msg.from);
+            }
+
+            if (msg.userId <= 0 || msg.topicId <= 0) {
+                Log.d(TAG, "Failed to insert message " + msg.seq);
+                return -1;
+            }
+
+            int status;
+            if (msg.seq == 0) {
+                msg.seq = TopicDb.getNextUnsentSeq(db, topic);
+                status = msg.status == BaseDb.STATUS_UNDEFINED ? BaseDb.STATUS_QUEUED : msg.status;
+            } else {
+                status = BaseDb.STATUS_SYNCED;
+            }
+
+            // Convert message to a map of values
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
+            values.put(COLUMN_NAME_USER_ID, msg.userId);
+            values.put(COLUMN_NAME_STATUS, status);
+            values.put(COLUMN_NAME_SENDER, msg.from);
+            values.put(COLUMN_NAME_TS, msg.ts.getTime());
+            values.put(COLUMN_NAME_SEQ, msg.seq);
+            values.put(COLUMN_NAME_MIME, (String) msg.getHeader("mime"));
+            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
+
+            msg.id = db.insert(TABLE_NAME, null, values);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
 
-        if (msg.userId <= 0 || msg.topicId <= 0) {
-            Log.d(TAG, "Failed to insert message " + msg.seq);
-            return -1;
-        }
-
-        int status;
-        if (msg.seq == 0) {
-            msg.seq = getNextUnsentId(db, msg.topicId);
-            status = BaseDb.STATUS_QUEUED;
-        } else {
-            status = BaseDb.STATUS_SYNCED;
-        }
-
-        // Convert message to a map of values
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
-        values.put(COLUMN_NAME_USER_ID, msg.userId);
-        values.put(COLUMN_NAME_STATUS, status);
-        values.put(COLUMN_NAME_SENDER, msg.from);
-        values.put(COLUMN_NAME_TS, msg.ts.getTime());
-        values.put(COLUMN_NAME_SEQ, msg.seq);
-        values.put(COLUMN_NAME_MIME, (String) msg.getHeader("mime"));
-        values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
-
-        return db.insert(TABLE_NAME, null, values);
+        return msg.id;
     }
 
     static boolean delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
@@ -204,7 +212,7 @@ public class MessageDb implements BaseColumns {
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
                 (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
-                " AND " + COLUMN_NAME_STATUS + "!=" + BaseDb.STATUS_DELETED +
+                " AND " + COLUMN_NAME_STATUS + "<" + BaseDb.STATUS_DELETED_HARD +
                 " ORDER BY " + COLUMN_NAME_TS +
                 (limit > 0 ? " LIMIT " + limit : "");
 
@@ -226,7 +234,7 @@ public class MessageDb implements BaseColumns {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "!=" + BaseDb.STATUS_DELETED +
+                " AND " + COLUMN_NAME_STATUS + "<" + BaseDb.STATUS_DELETED_HARD +
                 " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
 
         // Log.d(TAG, "Sql=[" + sql + "]");
@@ -244,11 +252,110 @@ public class MessageDb implements BaseColumns {
     public static Cursor queryUnsent(SQLiteDatabase db, long topicId) {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
-                COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " + COLUMN_NAME_SEQ + "<=0 " +
+                COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_QUEUED +
                 "ORDER BY " + COLUMN_NAME_TS;
         // Log.d(TAG, "Sql=[" + sql + "]");
 
         return db.rawQuery(sql, null);
+    }
+
+    /**
+     * Query messages marked for deletion but not deleted yet.
+     *
+     * @param db      database to select from;
+     * @param topicId Tinode topic ID (topics._id) to select from;
+     * @param hard    if true to return hard-deleted messages, soft-deleted otherwise.
+     * @return cursor with the message seqIDs
+     */
+    public static Cursor queryDeleted(SQLiteDatabase db, long topicId, boolean hard) {
+        int status = hard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT;
+
+        String sql = "SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_STATUS + "=" + status +
+                " ORDER BY " + COLUMN_NAME_TS;
+
+        // Log.d(TAG, "Sql=[" + sql + "]");
+
+        return db.rawQuery(sql, null);
+    }
+
+    /**
+     * Mark sent messages as deleted without actually deleting them. Delete unsent messages.
+     *
+     * @param db            Database to use.
+     * @param doDelete      delete messages instead of marking them deleted.
+     * @param topicId       Tinode topic ID to delete messages from.
+     * @param fromId        minimum seq value to delete, inclusive (closed).
+     * @param toId          maximum seq value to delete, exclusive (open).
+     * @param list          list of message IDs to delete.
+     * @param markAsHard    mark messages as hard-deleted.
+     * @return true if some messages were updated or deleted, false otherwise
+     */
+    private static boolean deleteOrMarkDeleted(SQLiteDatabase db, boolean doDelete, long topicId, int fromId, int toId, int[] list, boolean markAsHard) {
+        int affected = 0;
+        db.beginTransaction();
+        String messageSelector;
+        if (list != null) {
+            StringBuilder sb = new StringBuilder();
+            for (int i : list) {
+                sb.append(",");
+                sb.append(i);
+            }
+            sb.deleteCharAt(0);
+            messageSelector = COLUMN_NAME_SEQ + " IN (" + sb.toString() + ")";
+        } else {
+            messageSelector = (fromId > 0 ? COLUMN_NAME_SEQ + ">=" + fromId : "") +
+                    (toId != -1 ? COLUMN_NAME_SEQ + "<" + toId : "");
+        }
+
+        try {
+            if (!doDelete) {
+                // Mark sent messages as deleted
+                ContentValues values = new ContentValues();
+                values.put(COLUMN_NAME_STATUS, markAsHard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT);
+                affected = db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                        " AND " + messageSelector +
+                        " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_SYNCED, null);
+            }
+            // Unsent messages are deleted.
+            affected += db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND " + messageSelector +
+                    // Either delete all messages or just unsent messages.
+                    (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_QUEUED), null);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        return affected > 0;
+    }
+
+    /**
+     * Mark sent messages as deleted without actually deleting them. Delete unsent messages.
+     *
+     * @param db            Database to use.
+     * @param topicId       Tinode topic ID to delete messages from.
+     * @param list          list of message IDs to delete.
+     * @param markAsHard    mark messages as hard-deleted.
+     * @return true if some messages were updated or deleted, false otherwise
+     */
+    public static boolean markDeleted(SQLiteDatabase db, long topicId, int[] list, boolean markAsHard) {
+        return deleteOrMarkDeleted(db, false, topicId, Integer.MAX_VALUE, 0, list, markAsHard);
+    }
+
+    /**
+     * Mark sent messages as deleted without actually deleting them. Delete unsent messages.
+     *
+     * @param db            Database to use.
+     * @param topicId       Tinode topic ID to delete messages from.
+     * @param fromId        minimum seq value to delete, inclusive (closed).
+     * @param toId          maximum seq value to delete, exclusive (open).
+     * @param markAsHard    mark messages as hard-deleted.
+     * @return true if some messages were updated or deleted, false otherwise
+     */
+    public static boolean markDeleted(SQLiteDatabase db, long topicId, int fromId, int toId, boolean markAsHard) {
+        return deleteOrMarkDeleted(db, false, topicId, fromId, toId, null, markAsHard);
     }
 
     /**
@@ -257,14 +364,11 @@ public class MessageDb implements BaseColumns {
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
      * @param fromId  minimum seq value to delete, inclusive (closed).
-     * @param toId maximum seq value to delete, exclusive (open)
-     * @param soft    mark messages as deleted but do not actually delete them
+     * @param toId    maximum seq value to delete, exclusive (open)
      * @return number of deleted messages
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int delId, int fromId, int toId, boolean soft) {
-        return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                (fromId >0 ? " AND " + COLUMN_NAME_SEQ + ">=" + fromId : "") +
-                (toId != -1 ? " AND " + COLUMN_NAME_SEQ + "<" + toId : ""), null) > 0;
+    public static boolean delete(SQLiteDatabase db, long topicId, int fromId, int toId) {
+        return deleteOrMarkDeleted(db, true, topicId, fromId, toId, null, false);
     }
 
     /**
@@ -273,20 +377,10 @@ public class MessageDb implements BaseColumns {
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
      * @param list    maximum seq value to delete, inclusive.
-     * @param soft    ignored. teher is no value in keeping soft-deleted messages locally
      * @return number of deleted messages
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int delId, int[] list, boolean soft) {
-        StringBuilder sb = new StringBuilder();
-        for (int i : list) {
-            sb.append(",");
-            sb.append(i);
-        }
-        sb.deleteCharAt(0);
-        String ids = sb.toString();
-
-        return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_SEQ + " IN (" + ids + ")", null) > 0;
+    public static boolean delete(SQLiteDatabase db, long topicId, int[] list) {
+        return deleteOrMarkDeleted(db, true, topicId, Integer.MAX_VALUE, 0, list, false);
     }
 
     /**
@@ -300,10 +394,13 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Get negative ID to be used as seq for unsent messages.
+     * Get locally-unique ID of the message (content of _ID field).
+     *
+     * @param cursor Cursor to query
+     * @return _id of the message at the current position.
      */
-    public static int getNextUnsentId(SQLiteDatabase db, long topicId) {
-        return -1;
+    public static long getSeqId(Cursor cursor) {
+        return cursor.getLong(0);
     }
 
     public static class Loader extends AsyncTaskLoader<Cursor> {

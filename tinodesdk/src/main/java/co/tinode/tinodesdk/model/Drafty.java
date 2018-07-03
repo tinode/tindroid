@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -372,6 +371,27 @@ public class Drafty implements Serializable {
         return ent;
     }
 
+    /**
+     * Extract attachment references for use in message header.
+     *
+     * @return string array of attachment references or null if no attachments with references found.
+     */
+    @JsonIgnore
+    public String[] getEntReferences() {
+        if (ent == null) {
+            return null;
+        }
+
+        ArrayList<String> result = new ArrayList<>();
+        for (Entity anEnt : ent) {
+            Object ref = anEnt.data.get("ref");
+            if (ref != null) {
+                result.add((String) ref);
+            }
+        }
+        return result.size() > 0 ? result.toArray(new String[]{}) : null;
+    }
+
     @JsonIgnore
     public Entity getEntity(Style style) {
         if (ent != null) {
@@ -528,26 +548,6 @@ public class Drafty implements Serializable {
         ent[ent.length - 1] = new Entity("EX", data);
 
         return this;
-    }
-
-    /**
-     * Extract attachment references for use in message header.
-     *
-     * @return string array of attachment references or null if no attachments with references found.
-     */
-    public String[] getEntReferences() {
-        if (ent == null) {
-            return null;
-        }
-
-        Vector<String> result = new Vector<>();
-        for (Entity anEnt : ent) {
-            Object ref = anEnt.data.get("ref");
-            if (ref != null) {
-                result.add((String) ref);
-            }
-        }
-        return result.size() > 0 ? result.toArray(new String[]{}) : null;
     }
 
     /**

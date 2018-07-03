@@ -5,7 +5,7 @@
         <shape xmlns:android="http://schemas.android.com/apk/res/android"
                android:shape="line">
             <stroke
-                android:width="2dp"
+                android:width="1.4sp"
                 android:color="@color/colorDivider"
                 android:dashGap="4dp"
                 android:dashWidth="2dp"/>

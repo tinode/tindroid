@@ -30,6 +30,11 @@
                     android:textColor="@color/colorTextPrimary"
                     tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
 
+
+                <include layout="@layout/fragment_progress"
+                         android:id="@+id/progressInclide"
+                         android:visibility="gone"/>
+
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

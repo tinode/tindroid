@@ -94,7 +94,7 @@ class SqlStore implements Storage {
             try {
                 db.beginTransaction();
 
-                MessageDb.delete(db, st.id, -1,0, -1, false);
+                MessageDb.delete(db, st.id, 0, -1);
                 SubscriberDb.deleteForTopic(db, st.id);
                 TopicDb.delete(db, st.id);
 
@@ -270,15 +270,15 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgMarkToDelete(Topic topic, int fromId, int toId) {
+    public boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, -1, fromId, toId, true);
+        return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, fromId, toId, markAsHard);
     }
 
     @Override
-    public boolean msgMarkToDelete(Topic topic, int[] list) {
+    public boolean msgMarkToDelete(Topic topic, int[] list, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, -1, list, true);
+        return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, list, markAsHard);
     }
 
     @Override
@@ -290,7 +290,7 @@ class SqlStore implements Storage {
             db.beginTransaction();
 
             if (TopicDb.msgDeleted(db, topic, delId) &&
-                MessageDb.delete(mDbh.getWritableDatabase(), st.id, delId, fromId, toId, false)) {
+                MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId)) {
                 db.setTransactionSuccessful();
                 result = true;
             }
@@ -312,7 +312,7 @@ class SqlStore implements Storage {
             db.beginTransaction();
 
             if (TopicDb.msgDeleted(db, topic, delId) &&
-                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, delId, list, false)) {
+                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, list)) {
                 db.setTransactionSuccessful();
                 result = true;
             }
@@ -346,7 +346,7 @@ class SqlStore implements Storage {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends Iterator<Message> & Closeable> R getUnsentMessages(Topic topic) {
+    public <R extends Iterator<Message> & Closeable> R getQueuedMessages(Topic topic) {
         MessageList list = null;
         StoredTopic st = (StoredTopic)topic.getLocal();
         if (st != null && st.id > 0) {
@@ -356,6 +356,24 @@ class SqlStore implements Storage {
             }
         }
         return (R) list;
+    }
+
+    @Override
+    public int[] getQueuedMessageDeletes(Topic topic, boolean hard) {
+        StoredTopic st = (StoredTopic)topic.getLocal();
+        int[] list = null;
+        if (st != null && st.id > 0) {
+            Cursor c = MessageDb.queryDeleted(mDbh.getReadableDatabase(), st.id, hard);
+            if (c != null && c.moveToFirst()) {
+                list = new int[c.getCount()];
+                int i = 0;
+                do {
+                    list[i++] = StoredMessage.readSeqId(c);
+                } while(c.moveToNext());
+                c.close();
+            }
+        }
+        return list;
     }
 
     private static class MessageList implements Iterator<Message>, Closeable {

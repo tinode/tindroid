@@ -324,7 +324,7 @@ public class SubscriberDb implements BaseColumns {
 
         // From user table
         s.user = c.getString(JOIN_USER_COLUMN_IDX_UID);
-        s.pub = BaseDb.deserialize(c.getBlob(JOIN_USER_COLUMN_IDX_PUBLIC));
+        s.pub = BaseDb.deserialize(c.getString(JOIN_USER_COLUMN_IDX_PUBLIC));
 
         // From topic table
         s.topic = c.getString(JOIN_TOPIC_COLUMN_IDX_TOPIC);

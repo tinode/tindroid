@@ -2,6 +2,7 @@
 <android.support.v7.widget.LinearLayoutCompat
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="start">
@@ -13,11 +14,12 @@
         android:layout_height="12dp"
         android:layout_marginBottom="4dp"
         android:layout_marginTop="4dp"
-        android:progress="33"
+        android:layout_marginStart="30dp"
+        tools:progress="33"
         />
 
     <android.support.v7.widget.AppCompatImageButton
-        android:id="@+id/chatSendButton"
+        android:id="@+id/cancelAttachmentProgress"
         app:srcCompat="@drawable/ic_close"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -26,4 +28,5 @@
         android:background="@android:color/transparent"
         android:paddingStart="4sp"
         android:paddingEnd="8sp"/>
+
 </android.support.v7.widget.LinearLayoutCompat>

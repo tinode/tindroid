@@ -546,6 +546,14 @@ public class Tinode {
         return (obj instanceof String) && obj.equals("\u2421");
     }
 
+    public static String jsonSerialize(Object o) throws JsonProcessingException {
+        return sJsonMapper.writeValueAsString(o);
+    }
+
+    public static <T> T jsonDeserialize(String input, String canonicalName) throws IOException {
+        return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
+    }
+
     /**
      * Assign default types of generic parameters. Needed for packet deserialization.
      *

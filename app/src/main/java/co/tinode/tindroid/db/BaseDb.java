@@ -8,6 +8,11 @@ import android.os.Build;
 import android.provider.BaseColumns;
 import android.util.Log;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+
+import org.json.JSONObject;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,6 +22,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
 import co.tinode.tindroid.TindroidApp;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Defacs;
 
@@ -26,19 +32,25 @@ import co.tinode.tinodesdk.model.Defacs;
 public class BaseDb extends SQLiteOpenHelper {
     private static final String TAG = "BaseDb";
 
-    // Object not yet sent to the server
-    public static final int STATUS_QUEUED = 0;
-    // Object received by the server
-    public static final int STATUS_SYNCED = 1;
-    // Object deleted
-    public static final int STATUS_DELETED = 2;
-    // Object rejected
-    public static final int STATUS_REJECTED = 3;
+    // Status undefined/not set.
+    public static final int STATUS_UNDEFINED = 0;
+    // Object is not ready to be sent to the server.
+    public static final int STATUS_DRAFT = 1;
+    // Object is ready but not yet sent to the server
+    public static final int STATUS_QUEUED = 2;
+    // Object is received by the server
+    public static final int STATUS_SYNCED = 3;
+    // Object is hard-deleted
+    public static final int STATUS_DELETED_HARD = 4;
+    // Object is soft-deleted
+    public static final int STATUS_DELETED_SOFT = 5;
+    // Object is rejected by the server.
+    public static final int STATUS_REJECTED = 6;
 
     /**
-     * Schema version.
+     * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
     /**
      * Filename for SQLite file.
      */
@@ -71,49 +83,36 @@ public class BaseDb extends SQLiteOpenHelper {
         return sInstance;
     }
 
-    static byte[] serialize(Object obj) {
+    /**
+     * Serializes object as "canonical_class_name;json_representation of content".
+     *
+     * @param obj object to serialize
+     * @return string representation of the object.
+     */
+    static String serialize(Object obj) {
         if (obj != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutput objout = null;
             try {
-                objout = new ObjectOutputStream(baos);
-                objout.writeObject(obj);
-                objout.flush();
-                return baos.toByteArray();
-            } catch (IOException ex) {
+                return obj.getClass().getCanonicalName() + ";" + Tinode.jsonSerialize(obj);
+            } catch (JsonProcessingException ex) {
                 Log.e(TAG, "Failed to serialize", ex);
-            } finally {
-                try {
-                    baos.close();
-                    if (objout != null) {
-                        objout.close();
-                    }
-                } catch (IOException ex) {
-                    Log.e(TAG, "Failed to close in serialize", ex);
-                }
             }
         }
         return null;
     }
 
-    static <T> T deserialize(byte[] bytes) {
-        if (bytes != null) {
-            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            ObjectInput objin = null;
+    /**
+     * Parses serialized class from "canonical_class_name;json_representation of content".
+     * @param input string to parse
+     * @param <T> type of the prased object
+     * @return parsed object or null
+     */
+    static <T> T deserialize(String input) {
+        if (input != null) {
             try {
-                objin = new ObjectInputStream(bais);
-                return (T) objin.readObject();
-            } catch (IOException | ClassNotFoundException | ClassCastException ex) {
+                String[] parts = input.split(";", 2);
+                return Tinode.jsonDeserialize(parts[1], parts[0]);
+            } catch (IOException | ClassCastException ex) {
                 Log.e(TAG, "Failed to de-serialize", ex);
-            } finally {
-                try {
-                    bais.close();
-                    if (objin != null) {
-                        objin.close();
-                    }
-                } catch (IOException ex) {
-                    Log.e(TAG, "Failed to close in de-serialize", ex);
-                }
             }
         }
         return null;

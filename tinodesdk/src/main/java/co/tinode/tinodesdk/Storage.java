@@ -73,9 +73,9 @@ public interface Storage {
     /** Message delivered to the server and received a real seq ID */
     boolean msgDelivered(Topic topic, long id, Date timestamp, int seq);
     /** Mark messages for deletion by range */
-    boolean msgMarkToDelete(Topic topic, int fromId, int toId);
+    boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard);
     /** Mark messages for deletion by seq ID list */
-    boolean msgMarkToDelete(Topic topic, int[] list);
+    boolean msgMarkToDelete(Topic topic, int[] list, boolean markAsHard);
     /** Delete messages */
     boolean msgDelete(Topic topic, int delId, int fromId, int toId);
     /** Delete messages */
@@ -85,7 +85,9 @@ public interface Storage {
     /** Set read value for a given subscriber */
     boolean msgReadByRemote(Subscription sub, int read);
     /** Get a list of unsent messages */
-    <T extends Iterator<Message> & Closeable> T getUnsentMessages(Topic topic);
+    <T extends Iterator<Message> & Closeable> T getQueuedMessages(Topic topic);
+    /** Get a list of pending delete message seq Ids */
+    int[] getQueuedMessageDeletes(Topic topic, boolean hard);
 
     interface Message {
         /** Get current message payload */

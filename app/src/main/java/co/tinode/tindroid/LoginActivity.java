@@ -23,7 +23,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -133,7 +133,7 @@ public class LoginActivity extends AppCompatActivity {
         // Check the SDK version and whether the permission is already granted or not.
         // Result will be returned in onRequestPermissionsResult
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Vector<String> permissions = new Vector<>();
+            ArrayList<String> permissions = new ArrayList<>();
 
             if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
                 permissions.add(Manifest.permission.GET_ACCOUNTS);

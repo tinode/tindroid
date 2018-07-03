@@ -719,24 +719,56 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         return publish(Drafty.parse(content));
     }
     /**
-     * Re-send pending messages. Processing will stop on the first error.
+     * Re-send pending messages, delete messages marked for deletion.
+     * Processing will stop on the first error.
      *
-     * @return {@link PromisedReply} of the last sent message.
+     * @return {@link PromisedReply} of the last sent command.
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
     @SuppressWarnings("UnusedReturnValue")
-    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> publishPending()
+    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncPending()
             throws Exception {
-        ML list = mStore.getUnsentMessages(this);
-        if (list == null) {
-            return new PromisedReply<>((ServerMessage) null);
+        PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
+        if (mStore == null) {
+            return last;
         }
 
-        PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
-        while (list.hasNext()) {
-            final Storage.Message msg = list.next();
+        // Get soft-deleted message IDs.
+        final int[] toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
+        if (toSoftDelete != null) {
+            last = mTinode.delMessage(getName(), toSoftDelete, true);
+            last.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    Integer delId = result.ctrl.getIntParam("del");
+                    mStore.msgDelete(Topic.this, delId, toSoftDelete);
+                    return null;
+                }
+            }, null);
+        }
+
+        // Get hard-deleted message IDs.
+        final int[] toHardDelete = mStore.getQueuedMessageDeletes(this, false);
+        if (toHardDelete != null) {
+            last = mTinode.delMessage(getName(), toHardDelete, true);
+            last.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    Integer delId = result.ctrl.getIntParam("del");
+                    mStore.msgDelete(Topic.this, delId, toHardDelete);
+                    return null;
+                }
+            }, null);
+        }
+
+        ML toSend = mStore.getQueuedMessages(this);
+        if (toSend == null) {
+            return last;
+        }
+        while (toSend.hasNext()) {
+            final Storage.Message msg = toSend.next();
             last = mTinode.publish(getName(), msg.getContent());
             last.thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
@@ -749,7 +781,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
 
         try {
-            list.close();
+            toSend.close();
         } catch (IOException ignored) {}
 
         return last;
@@ -1002,7 +1034,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      */
     public PromisedReply<ServerMessage> delMessages(final int fromId, final int toId, final boolean hard) throws Exception {
         if (mStore != null) {
-            mStore.msgMarkToDelete(this, fromId, toId);
+            mStore.msgMarkToDelete(this, fromId, toId, hard);
         }
         if (mAttached) {
             return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -1035,8 +1067,9 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      */
     public PromisedReply<ServerMessage> delMessages(final int[] list, final boolean hard) throws Exception {
         if (mStore != null) {
-            mStore.msgMarkToDelete(this, list);
+            mStore.msgMarkToDelete(this, list, hard);
         }
+
         if (mAttached) {
             return mTinode.delMessage(getName(), list, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override

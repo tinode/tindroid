@@ -20,6 +20,8 @@ import co.tinode.tinodesdk.Topic;
 public class TopicDb implements BaseColumns {
     private static final String TAG = "TopicsDb";
 
+    private static final int UNSENT_ID_START = 2000000000;
+
     /**
      * The name of the main table.
      */
@@ -97,15 +99,19 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_MAX_LOCAL_SEQ = "max_local_seq";
     /**
+     * Seq ID to use for the next pending message.
+     */
+    public static final String COLUMN_NAME_NEXT_UNSENT_SEQ = "next_unsent_seq";
+    /**
      * Topic tags, array of strings.
      */
     public static final String COLUMN_NAME_TAGS = "tags";
     /**
-     * Public topic description, blob
+     * Public topic description, serialized as TEXT
      */
     public static final String COLUMN_NAME_PUBLIC = "pub";
     /**
-     * Private topic description, blob
+     * Private topic description, serialized as TEXT
      */
     public static final String COLUMN_NAME_PRIVATE = "priv";
 
@@ -128,9 +134,10 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_LASTUSED = 15;
     static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
     static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
-    static final int COLUMN_IDX_TAGS = 18;
-    static final int COLUMN_IDX_PUBLIC = 19;
-    static final int COLUMN_IDX_PRIVATE = 20;
+    static final int COLUMN_IDX_NEXT_UNSENT_SEQ =18;
+    static final int COLUMN_IDX_TAGS = 19;
+    static final int COLUMN_IDX_PUBLIC = 20;
+    static final int COLUMN_IDX_PRIVATE = 21;
 
     /**
      * SQL statement to create Messages table
@@ -156,9 +163,10 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_LASTUSED + " INT," +
                     COLUMN_NAME_MIN_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_MAX_LOCAL_SEQ + " INT," +
+                    COLUMN_NAME_NEXT_UNSENT_SEQ + " INT," +
                     COLUMN_NAME_TAGS + " TEXT," +
-                    COLUMN_NAME_PUBLIC + " BLOB," +
-                    COLUMN_NAME_PRIVATE + " BLOB)";
+                    COLUMN_NAME_PUBLIC + " TEXT," +
+                    COLUMN_NAME_PRIVATE + " TEXT)";
     /**
      * Add index on account_id-topic name, in descending order
      */
@@ -217,12 +225,14 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
         values.put(COLUMN_NAME_MIN_LOCAL_SEQ, 0);
         values.put(COLUMN_NAME_MAX_LOCAL_SEQ, 0);
+        values.put(COLUMN_NAME_NEXT_UNSENT_SEQ, UNSENT_ID_START);
 
         long id = db.insert(TABLE_NAME, null, values);
         if (id > 0) {
             StoredTopic st = new StoredTopic();
             st.id = id;
             st.lastUsed = lastUsed;
+            st.nextUnsentId = UNSENT_ID_START;
             topic.setLocal(st);
         }
 
@@ -429,6 +439,19 @@ public class TopicDb implements BaseColumns {
             // topic not round
             return -1;
         }
+    }
+
+    public static int getNextUnsentSeq(SQLiteDatabase db, Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st != null) {
+            st.nextUnsentId ++;
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_MAX_DEL, st.nextUnsentId);
+            db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
+            return st.nextUnsentId;
+        }
+
+        throw new IllegalArgumentException("Stored topic undefined " + topic.getName());
     }
 
     @SuppressWarnings("WeakerAccess")

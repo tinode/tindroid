@@ -19,6 +19,7 @@ public class StoredTopic implements LocalData.Payload {
     public int minLocalSeq;
     public int maxLocalSeq;
     public int status;
+    public int nextUnsentId;
 
     public StoredTopic() {
     }
@@ -32,6 +33,7 @@ public class StoredTopic implements LocalData.Payload {
         st.lastUsed = new Date(c.getLong(TopicDb.COLUMN_IDX_LASTUSED));
         st.minLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MIN_LOCAL_SEQ);
         st.maxLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MAX_LOCAL_SEQ);
+        st.nextUnsentId = c.getInt(TopicDb.COLUMN_IDX_NEXT_UNSENT_SEQ);
 
         topic.setUpdated(new Date(c.getLong(TopicDb.COLUMN_IDX_UPDATED)));
 
@@ -42,8 +44,8 @@ public class StoredTopic implements LocalData.Payload {
         topic.setMaxDel(c.getInt(TopicDb.COLUMN_IDX_MAX_DEL));
 
         topic.setTags(BaseDb.deserializeTags(c.getString(TopicDb.COLUMN_IDX_TAGS)));
-        topic.setPub(BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PUBLIC)));
-        topic.setPriv(BaseDb.deserialize(c.getBlob(TopicDb.COLUMN_IDX_PRIVATE)));
+        topic.setPub(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PUBLIC)));
+        topic.setPriv(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PRIVATE)));
 
         topic.setAccessMode(BaseDb.deserializeMode(c.getString(TopicDb.COLUMN_IDX_ACCESSMODE)));
         topic.setDefacs(BaseDb.deserializeDefacs(c.getString(TopicDb.COLUMN_IDX_DEFACS)));
