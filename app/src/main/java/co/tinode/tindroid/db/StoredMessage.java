@@ -47,11 +47,6 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         msg.from = c.getString(MessageDb.COLUMN_IDX_SENDER);
         msg.ts = new Date(c.getLong(MessageDb.COLUMN_IDX_TS));
         msg.seq = c.getInt(MessageDb.COLUMN_IDX_SEQ);
-        String mime = c.getString(MessageDb.COLUMN_IDX_MIME);
-        if (mime != null) {
-            msg.head = new HashMap<>();
-            msg.head.put("mime", mime);
-        }
         msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
 
         return msg;

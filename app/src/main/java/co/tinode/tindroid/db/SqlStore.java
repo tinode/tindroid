@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
@@ -227,8 +228,7 @@ class SqlStore implements Storage {
         return msg.id;
     }
 
-    @Override
-    public long msgSend(Topic topic, Drafty data) {
+    private long insertMessage(Topic topic, Drafty data, int initialStatus) {
         StoredMessage msg = new StoredMessage();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 
@@ -238,6 +238,7 @@ class SqlStore implements Storage {
         // Set seq to zero. MessageDb will assign a unique temporary (nagative int) seq.
         // The temp seq will be updated later, when the message is received by the server.
         msg.seq = 0;
+        msg.status = initialStatus;
         msg.content = data;
 
         msg.topicId = StoredTopic.getId(topic);
@@ -247,6 +248,25 @@ class SqlStore implements Storage {
         msg.userId = mMyId;
 
         return MessageDb.insert(db, topic, msg);
+    }
+
+    @Override
+    public long msgDraft(Topic topic, Drafty data) {
+        return insertMessage(topic, data, BaseDb.STATUS_DRAFT);
+    }
+
+    @Override
+    public long msgSend(Topic topic, Drafty data) {
+        return insertMessage(topic, data, BaseDb.STATUS_UNDEFINED);
+    }
+
+    @Override
+    public boolean msgReady(Topic topic, long id, Drafty data) {
+        return MessageDb.markReady(mDbh.getWritableDatabase(), id, data);
+    }
+
+    public boolean msgDiscard(Topic topic, long id) {
+        return MessageDb.delete(mDbh.getWritableDatabase(), id);
     }
 
     @Override
@@ -385,7 +405,7 @@ class SqlStore implements Storage {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             mCursor.close();
         }
 

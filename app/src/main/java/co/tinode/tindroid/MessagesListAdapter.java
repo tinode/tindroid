@@ -42,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import co.tinode.tindroid.db.BaseDb;
@@ -99,7 +100,7 @@ public class MessagesListAdapter
     private int mPagesToLoad;
     private SwipeRefreshLayout mRefresher;
 
-    private SpanClicker mSpanFormatterClicker = null;
+    private SpanClicker mSpanFormatterClicker;
 
     public MessagesListAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
@@ -273,6 +274,7 @@ public class MessagesListAdapter
         return itemType;
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // create a new view
@@ -319,9 +321,23 @@ public class MessagesListAdapter
     }
 
     @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position, List<Object> payload) {
+        if (payload != null && !payload.isEmpty()) {
+            Float progress = (Float) payload.get(0);
+            Log.d(TAG, "Progress at start=" + progress + ", end=" + payload.get(payload.size() - 1));
+            holder.mProgress.setProgress((int) (progress * 100));
+            return;
+        }
+
+        onBindViewHolder(holder, position);
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     @SuppressWarnings("unchecked")
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
+
         ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
 
         StoredMessage m = getMessage(position);
@@ -396,6 +412,7 @@ public class MessagesListAdapter
             @Override
             public boolean onLongClick(View v) {
                 int pos = holder.getAdapterPosition();
+
                 if (mSelectedItems == null) {
                     mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
                 }

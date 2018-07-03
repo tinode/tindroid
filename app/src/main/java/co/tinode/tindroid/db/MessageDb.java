@@ -67,10 +67,6 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_SEQ = "seq";
     /**
-     * Content MIME type
-     */
-    private static final String COLUMN_NAME_MIME = "mime";
-    /**
      * Serialized message content
      */
     private static final String COLUMN_NAME_CONTENT = "content";
@@ -90,7 +86,6 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
-                    COLUMN_NAME_MIME + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
     /**
      * SQL statement to drop Messages table.
@@ -133,8 +128,7 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_SENDER = 4;
     static final int COLUMN_IDX_TS = 5;
     static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_MIME = 7;
-    static final int COLUMN_IDX_CONTENT = 8;
+    static final int COLUMN_IDX_CONTENT = 7;
 
     /**
      * Save message to DB
@@ -176,7 +170,6 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_SENDER, msg.from);
             values.put(COLUMN_NAME_TS, msg.ts.getTime());
             values.put(COLUMN_NAME_SEQ, msg.seq);
-            values.put(COLUMN_NAME_MIME, (String) msg.getHeader("mime"));
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
             msg.id = db.insert(TABLE_NAME, null, values);
@@ -186,6 +179,16 @@ public class MessageDb implements BaseColumns {
         }
 
         return msg.id;
+    }
+
+    static boolean markReady(SQLiteDatabase db, long msgId, Object content) {
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_QUEUED);
+        if (content != null) {
+            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(content));
+        }
+
+        return db.update(TABLE_NAME, values, _ID + "=" + msgId, null) > 0;
     }
 
     static boolean delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
@@ -322,8 +325,8 @@ public class MessageDb implements BaseColumns {
             // Unsent messages are deleted.
             affected += db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
                     " AND " + messageSelector +
-                    // Either delete all messages or just unsent messages.
-                    (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_QUEUED), null);
+                    // Either delete all messages or just unsent+draft messages.
+                    (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -384,6 +387,17 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Delete messages by database ID.
+     *
+     * @param db      Database to use.
+     * @param msgId   Database ID of the message (_id).
+     * @return true on success, false on failure
+     */
+    static boolean delete(SQLiteDatabase db, long msgId) {
+        return db.delete(TABLE_NAME, _ID + "=" + msgId, null) > 0;
+    }
+
+    /**
      * Get locally-unique ID of the message (content of _ID field).
      *
      * @param cursor Cursor to query
@@ -399,7 +413,7 @@ public class MessageDb implements BaseColumns {
      * @param cursor Cursor to query
      * @return _id of the message at the current position.
      */
-    public static long getSeqId(Cursor cursor) {
+    public static long getId(Cursor cursor) {
         return cursor.getLong(0);
     }
 

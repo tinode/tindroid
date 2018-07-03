@@ -16,7 +16,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.app.SupportActivity;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -44,15 +43,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
+
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -80,8 +86,11 @@ public class MessagesFragment extends Fragment
 
     private static final int READ_DELAY = 1000;
     protected ComTopic<VxCard> mTopic;
+
+    private LinearLayoutManager mMessageViewLayoutManager;
     private MessagesListAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
+
     private String mTopicName = null;
     private Timer mNoteTimer = null;
     private String mMessageToSend = null;
@@ -108,11 +117,14 @@ public class MessagesFragment extends Fragment
 
         final MessageActivity activity = (MessageActivity) getActivity();
 
-        LinearLayoutManager lm = new LinearLayoutManager(activity);
-        lm.setStackFromEnd(true);
+        mMessageViewLayoutManager = new LinearLayoutManager(activity);
+        mMessageViewLayoutManager.setStackFromEnd(true);
 
         RecyclerView ml = activity.findViewById(R.id.messages_container);
-        ml.setLayoutManager(lm);
+        ml.setLayoutManager(mMessageViewLayoutManager);
+
+        // This needs to be rebound on activity creation.
+        FileUploader.setProgressHandler(new UploadProgress());
 
         mRefresher = activity.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
@@ -338,6 +350,7 @@ public class MessagesFragment extends Fragment
                     final Bundle args = new Bundle();
                     args.putParcelable("uri", data.getData());
                     args.putInt("requestCode", requestCode);
+                    args.putString("topic", mTopicName);
                     final FragmentActivity activity = getActivity();
                     if (activity == null) {
                         return;
@@ -446,7 +459,7 @@ public class MessagesFragment extends Fragment
     @NonNull
     @Override
     public Loader<UploadResult> onCreateLoader(int id, Bundle args) {
-        return new FileUploader(getActivity(), args, null);
+        return new FileUploader(getActivity(), args);
     }
 
     @Override
@@ -464,19 +477,27 @@ public class MessagesFragment extends Fragment
     }
 
     private static class FileUploader extends AsyncTaskLoader<UploadResult> {
-        private final LargeFileHelper.FileHelperProgress mProgress;
+        private static WeakReference<UploadProgress> sProgress;
         private final Bundle mArgs;
 
-        FileUploader(Activity activity, Bundle args, LargeFileHelper.FileHelperProgress progress) {
+        FileUploader(Activity activity, Bundle args) {
             super(activity);
-            mProgress = progress;
             mArgs = args;
+        }
+
+        static void setProgressHandler(UploadProgress progress) {
+            sProgress = new WeakReference<>(progress);
+        }
+
+        @Override
+        public void onStartLoading() {
+            forceLoad();
         }
 
         @Override
         public UploadResult loadInBackground() {
-            UploadResult result = new UploadResult();
-
+            final UploadResult result = new UploadResult();
+            Storage store = BaseDb.getInstance().getStore();
             final Uri uri = mArgs.getParcelable("uri");
             if (uri == null) {
                 Log.d(TAG, "Received null URI");
@@ -485,9 +506,11 @@ public class MessagesFragment extends Fragment
             }
 
             final int requestCode = mArgs.getInt("requestCode");
+            final String topicName = mArgs.getString("topic");
 
             final Context activity = getContext();
             final ContentResolver resolver = getContext().getContentResolver();
+            final Topic topic = Cache.getTinode().getTopic(topicName);
 
             InputStream is = null;
             ByteArrayOutputStream baos = null;
@@ -558,13 +581,17 @@ public class MessagesFragment extends Fragment
                     if (requestCode == ACTION_ATTACH_FILE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
                         Log.d(TAG, "File is medium size, sending as attachment, size="+fsize);
 
-                        // Upload then send message with a link.
+                        // Create message draft.
+                        result.msgId = store.msgDraft(topic, draftyAttachment(mimeType, fname, uri.toString(), -1));
+
+                        // Upload then send message with a link. This is a long-running blocking call.
                         MsgServerCtrl ctrl = Cache.getTinode().getFileUploader().upload(is, fname, mimeType, fsize,
                                 new LargeFileHelper.FileHelperProgress() {
                                     @Override
                                     public void onProgress(long progress, long size) {
-                                        if (mProgress != null) {
-                                            mProgress.onProgress(progress, size);
+                                        UploadProgress p = sProgress.get();
+                                        if (p != null) {
+                                            p.onProgress(result.msgId, progress, size);
                                         }
                                         Log.d(TAG, "Progress: " + progress + ", size=" + size);
                                     }
@@ -583,6 +610,7 @@ public class MessagesFragment extends Fragment
                         byte[] bits = baos.toByteArray();
                         if (requestCode == ACTION_ATTACH_FILE) {
                             result.data = draftyFile(mimeType, bits, fname);
+                            result.msgId = store.msgDraft(topic, result.data);
                         } else {
                             if (imageWidth == 0) {
                                 BitmapFactory.Options options = new BitmapFactory.Options();
@@ -595,6 +623,7 @@ public class MessagesFragment extends Fragment
                                 imageHeight = options.outHeight;
                             }
                             result.data = draftyImage(mimeType, bits, imageWidth, imageHeight, fname);
+                            result.msgId = store.msgDraft(topic, result.data);
                         }
                     }
                 }
@@ -613,6 +642,17 @@ public class MessagesFragment extends Fragment
                     } catch (IOException ignored) {}
                 }
             }
+            if (result.msgId > 0) {
+                if (result.data != null) {
+                    // Success: mark message as ready for delivery.
+                    store.msgReady(topic, result.msgId, result.data);
+                } else {
+                    // Failure: discard draft.
+                    store.msgDiscard(topic, result.msgId);
+                    result.msgId = -1;
+                }
+            }
+
             return result;
         }
     }
@@ -620,8 +660,37 @@ public class MessagesFragment extends Fragment
     static class UploadResult {
         Drafty data;
         String error;
+        long msgId = -1;
 
         UploadResult() {
+        }
+    }
+
+    private class UploadProgress {
+
+        UploadProgress() {
+        }
+
+        void onProgress(final long msgId, final long progress, final long total) {
+            int first = mMessageViewLayoutManager.findFirstVisibleItemPosition();
+            int last = mMessageViewLayoutManager.findLastVisibleItemPosition();
+            for (int i=first; i<=last; i++) {
+                if (mMessagesAdapter.getItemId(i) == msgId) {
+                    Activity activity = getActivity();
+                    if (activity == null) {
+                        break;
+                    }
+                    final int position = i;
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Float ratio = total > 0 ? (float) progress/ total : (float) progress;
+                            mMessagesAdapter.notifyItemChanged(position, ratio);
+                        }
+                    });
+                    break;
+                }
+            }
         }
     }
 }

@@ -59,18 +59,53 @@ public interface Storage {
     /** Update existing user */
     boolean userUpdate(User user);
 
-    // Message received
-    <DP,DR,SP,SR> long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
-
-    /** Message sent. Returns database ID of the message suitable for
-     * use in msgDelivered
+    /**
+     * Message received from the server.
+     */
+    long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
+    /**
+     * Save message to database as draft.
+     *
+     * @param topic topic which sent the message
+     * @param data message data to save
+     * @return database ID of the message suitable for use in
+     *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
+     */
+    long msgDraft(Topic topic, Drafty data);
+    /**
+     * Save message to DB as queued or synced.
+     *
      * @param topic topic which sent the message
      * @param data message data to save
      * @return database ID of the message suitable for use in
      *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
      */
     long msgSend(Topic topic, Drafty data);
-    /** Message delivered to the server and received a real seq ID */
+
+    /**
+     * Message is ready to be sent to the server.
+     *
+     * @param topic topic which sent the message
+     * @param id database ID of the message.
+     * @param data updated content of the message.
+     * @return true on success, false otherwise
+     */
+    boolean msgReady(Topic topic, long id, Drafty data);
+
+    /**
+     * Delete message by database id.
+     */
+    boolean msgDiscard(Topic topic, long id);
+
+    /**
+     * Message delivered to the server and received a real seq ID.
+     *
+     * @param topic topic which sent the message.
+     * @param id database ID of the message.
+     * @param timestamp server timestamp.
+     * @param seq server-issued message seqId.
+     * @return true on success, false otherwise     *
+     */
     boolean msgDelivered(Topic topic, long id, Date timestamp, int seq);
     /** Mark messages for deletion by range */
     boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard);
