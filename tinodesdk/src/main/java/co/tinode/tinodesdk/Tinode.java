@@ -550,8 +550,12 @@ public class Tinode {
         return sJsonMapper.writeValueAsString(o);
     }
 
-    public static <T> T jsonDeserialize(String input, String canonicalName) throws IOException {
-        return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
+    public static <T> T jsonDeserialize(String input, String canonicalName) {
+        try {
+            return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     /**
@@ -870,59 +874,56 @@ public class Tinode {
                 msg.login.addCred(c);
             }
         }
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.login.id, future);
-            future = future.thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                            if (pkt.ctrl == null) {
-                                throw new InvalidObjectException("Unexpected type of reply packet in login");
-                            }
-                            mMyUid = (String) pkt.ctrl.params.get("user");
-                            if (mStore != null) {
-                                mStore.setMyUid(mMyUid);
-                            }
-                            // If topics were not loaded earlier, load them now.
-                            loadTopics();
-                            mAuthToken = (String) pkt.ctrl.params.get("token");
-                            mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
-                            if (pkt.ctrl.code < 300) {
-                                mConnAuth = true;
-                                if (mListener != null) {
-                                    mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
-                                }
-                            }
-                            return null;
-                        }
-                    },
-                    new PromisedReply.FailureListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onFailure(Exception err) {
-                            if (err instanceof ServerResponseException) {
-                                ServerResponseException sre = (ServerResponseException) err;
-                                if (sre.getCode() >= 400) {
-                                    mLoginCredentials = null;
-                                    mAuthToken = null;
-                                    mAuthTokenExpires = null;
-                                }
 
-                                mConnAuth = false;
-
-                                if (mListener != null) {
-                                    mListener.onLogin(sre.getCode(), sre.getMessage());
-                                }
-                            }
-                            // The next handler is rejected as well.
-                            return new PromisedReply<>(err);
+        send(Tinode.getJsonMapper().writeValueAsString(msg));
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.login.id, future);
+        future = future.thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                        if (pkt.ctrl == null) {
+                            throw new InvalidObjectException("Unexpected type of reply packet in login");
                         }
-                    });
-            return future;
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+                        mMyUid = (String) pkt.ctrl.params.get("user");
+                        if (mStore != null) {
+                            mStore.setMyUid(mMyUid);
+                        }
+                        // If topics were not loaded earlier, load them now.
+                        loadTopics();
+                        mAuthToken = (String) pkt.ctrl.params.get("token");
+                        mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
+                        if (pkt.ctrl.code < 300) {
+                            mConnAuth = true;
+                            if (mListener != null) {
+                                mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
+                            }
+                        }
+                        return null;
+                    }
+                },
+                new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        if (err instanceof ServerResponseException) {
+                            ServerResponseException sre = (ServerResponseException) err;
+                            if (sre.getCode() >= 400) {
+                                mLoginCredentials = null;
+                                mAuthToken = null;
+                                mAuthTokenExpires = null;
+                            }
+
+                            mConnAuth = false;
+
+                            if (mListener != null) {
+                                mListener.onLogin(sre.getCode(), sre.getMessage());
+                            }
+                        }
+                        // The next handler is rejected as well.
+                        return new PromisedReply<>(err);
+                    }
+                });
+        return future;
     }
 
     public void setAutologin(boolean state) {
@@ -958,13 +959,10 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.sub.id, future);
-            return future;
-        } catch (JsonProcessingException e) {
-            Log.i(TAG, "Failed to serialize message", e);
-            return null;
-        }
+        } catch (JsonProcessingException ignored) { }
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.sub.id, future);
+        return future;
     }
 
     /**
@@ -979,12 +977,10 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.leave.id, future);
-            return future;
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+        } catch (JsonProcessingException ignored) { }
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.leave.id, future);
+        return future;
     }
 
 
@@ -1001,13 +997,10 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.pub.id, future);
-            return future;
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to send message", e);
-            return null;
-        }
+        } catch (JsonProcessingException ignored) { }
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.pub.id, future);
+        return future;
     }
 
     /**
@@ -1022,12 +1015,10 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientGet(getNextId(), topicName, query));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.get.id, future);
-            return future;
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+        } catch (JsonProcessingException ignored) {}
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.get.id, future);
+        return future;
     }
 
     /**
@@ -1044,24 +1035,19 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.set.id, future);
-            return future;
-        } catch (Exception e) {
-            return null;
-        }
+        } catch (JsonProcessingException ignored) {}
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.set.id, future);
+        return future;
     }
 
     private PromisedReply<ServerMessage> sendDeleteMessage(ClientMessage msg) {
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.del.id, future);
-            return future;
-        } catch (Exception e) {
-            return null;
-        }
-
+        } catch (JsonProcessingException ignored) {}
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.del.id, future);
+        return future;
     }
 
     /**
@@ -1076,8 +1062,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delMessage(final String topicName, final int fromId,
                                                    final int toId, final boolean hard) {
-        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, fromId, toId, hard));
-        return sendDeleteMessage(msg);
+        return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, fromId, toId, hard)));
     }
 
     /**
@@ -1089,8 +1074,7 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delMessage(final String topicName, final List<Integer> list, final boolean hard) {
-        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard));
-        return sendDeleteMessage(msg);
+        return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard)));
     }
 
     /**
@@ -1104,12 +1088,10 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.del.id, future);
-            return future;
-        } catch (Exception unused) {
-            return null;
-        }
+        } catch (JsonProcessingException ignored) {}
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.del.id, future);
+        return future;
     }
 
     /**
@@ -1124,12 +1106,10 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, user));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.del.id, future);
-            return future;
-        } catch (Exception unused) {
-            return null;
-        }
+        } catch (JsonProcessingException ignored) { }
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        mFutures.put(msg.del.id, future);
+        return future;
     }
 
     /**
@@ -1145,10 +1125,9 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     protected void note(String topicName, String what, int seq) {
         try {
-            send(Tinode.getJsonMapper().writeValueAsString(new
-                    ClientMessage(new MsgClientNote(topicName, what, seq))));
-        } catch (JsonProcessingException ignored) {
-        }
+            send(Tinode.getJsonMapper().writeValueAsString(
+                    new ClientMessage(new MsgClientNote(topicName, what, seq))));
+        } catch (JsonProcessingException ignored) { }
     }
 
     /**

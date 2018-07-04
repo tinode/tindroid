@@ -122,7 +122,11 @@ public interface Storage {
     boolean msgReadByRemote(Subscription sub, int read);
     /** Get a list of unsent messages */
     <T extends Iterator<Message> & Closeable> T getQueuedMessages(Topic topic);
-    /** Get a list of pending delete message seq Ids */
+    /**
+     * Get a list of pending delete message seq Ids.
+     * @param topic topic where the messages were deleted.
+     * @param hard set to <b>true</b> to fetch hard-deleted messages, soft-deleted otherwise.
+     */
     List<Integer> getQueuedMessageDeletes(Topic topic, boolean hard);
 
     interface Message {

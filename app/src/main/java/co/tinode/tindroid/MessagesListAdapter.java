@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -212,34 +213,31 @@ public class MessagesListAdapter
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
         final Storage store = BaseDb.getInstance().getStore();
         if (topic != null) {
-            ArrayList<Integer> list = new ArrayList<>();
+            ArrayList<Integer> toDelete = new ArrayList<>();
             int i = 0;
             int discarded = 0;
             while (i < positions.length) {
-                int pos = positions[i];
+                int pos = positions[i++];
                 StoredMessage msg = getMessage(pos);
                 if (msg != null) {
                     if (msg.status == BaseDb.STATUS_SYNCED) {
-                        list.add(msg.seq);
-                        i++;
+                        toDelete.add(msg.seq);
                     } else {
-                        store.msgDiscard(topic, msg.id);
+                        store.msgDiscard(topic, msg.getId());
                         discarded ++;
                     }
                 }
             }
 
-            if (!list.isEmpty()) {
+            if (!toDelete.isEmpty()) {
                 try {
-                    topic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    topic.delMessages(toDelete, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             runLoader();
                             mActivity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    // Update message list.
-                                    notifyDataSetChanged();
                                     updateSelectionMode();
                                 }
                             });
@@ -253,7 +251,7 @@ public class MessagesListAdapter
                     Toast.makeText(mActivity, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
                 }
             } else if (discarded > 0) {
-                notifyDataSetChanged();
+                runLoader();
                 updateSelectionMode();
             }
         }
@@ -338,7 +336,6 @@ public class MessagesListAdapter
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position, List<Object> payload) {
         if (payload != null && !payload.isEmpty()) {
             Float progress = (Float) payload.get(0);
-            Log.d(TAG, "Progress at start=" + progress + ", end=" + payload.get(payload.size() - 1));
             holder.mProgress.setProgress((int) (progress * 100));
             return;
         }
@@ -356,7 +353,8 @@ public class MessagesListAdapter
         StoredMessage m = getMessage(position);
 
         // Disable attachment clicker.
-        boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED) && (m.content.getEntReferences() != null);
+        boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED || m.status == BaseDb.STATUS_DRAFT) &&
+                (m.content.getEntReferences() != null);
 
         mSpanFormatterClicker.setPosition(position);
         holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, holder.mText.getMaxWidth(),
@@ -407,7 +405,7 @@ public class MessagesListAdapter
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
-                if (m.seq <= 0) {
+                if (m.status <= BaseDb.STATUS_QUEUED) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
                 } else if (topic != null) {
                     if (topic.msgReadCount(m.seq) > 0) {
@@ -450,10 +448,25 @@ public class MessagesListAdapter
         });
     }
 
+    // Must match position-to-item of getItemId.
+    StoredMessage getMessage(int position) {
+        if (mCursor != null) {
+            if (mCursor.moveToPosition(position)) {
+                return StoredMessage.readMessage(mCursor);
+            }
+        }
+        return null;
+    }
+
     @Override
+    // Must match position-to-item of getMessage.
     public long getItemId(int position) {
-        mCursor.moveToPosition(position);
-        return MessageDb.getLocalId(mCursor);
+        if (mCursor != null) {
+            if (mCursor.moveToPosition(position)) {
+                return MessageDb.getLocalId(mCursor);
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -506,15 +519,10 @@ public class MessagesListAdapter
                     mRefresher.setRefreshing(false);
                     notifyDataSetChanged();
                     if (cursor != null)
-                        mRecyclerView.scrollToPosition(cursor.getCount() - 1);
+                        mRecyclerView.scrollToPosition(0);
                 }
             });
         }
-    }
-
-    private StoredMessage getMessage(int position) {
-        mCursor.moveToPosition(mCursor.getCount() - position - 1);
-        return StoredMessage.readMessage(mCursor);
     }
 
     /**

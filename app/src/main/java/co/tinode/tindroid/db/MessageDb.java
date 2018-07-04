@@ -8,8 +8,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.AsyncTaskLoader;
+import android.text.TextUtils;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -175,6 +177,9 @@ public class MessageDb implements BaseColumns {
 
             msg.id = db.insert(TABLE_NAME, null, values);
             db.setTransactionSuccessful();
+            Log.d(TAG, "Inserted message " + msg.id);
+        } catch (Exception ex) {
+            Log.e(TAG, "Insert failed", ex);
         } finally {
             db.endTransaction();
         }
@@ -197,8 +202,9 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
         values.put(COLUMN_NAME_TS, timestamp.getTime());
         values.put(COLUMN_NAME_SEQ, seq);
-
-        return db.update(TABLE_NAME, values, _ID + "=" + msgId, null) > 0;
+        int updated = db.update(TABLE_NAME, values, _ID + "=" + msgId, null);
+        Log.d(TAG, "Marking message as SYNCED, msgId=" + msgId + ", updated_count="+updated);
+        return updated > 0;
     }
 
     /**
@@ -216,7 +222,7 @@ public class MessageDb implements BaseColumns {
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
                 (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
-                " AND " + COLUMN_NAME_STATUS + "<" + BaseDb.STATUS_DELETED_HARD +
+                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY " + COLUMN_NAME_TS +
                 (limit > 0 ? " LIMIT " + limit : "");
 
@@ -238,7 +244,7 @@ public class MessageDb implements BaseColumns {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "<" + BaseDb.STATUS_DELETED_HARD +
+                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
 
         // Log.d(TAG, "Sql=[" + sql + "]");
@@ -247,7 +253,7 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Query messages which has not been sent yet.
+     * Query messages which are ready for sending but has not been sent yet.
      *
      * @param db      database to select from;
      * @param topicId Tinode topic ID (topics._id) to select from
@@ -258,7 +264,7 @@ public class MessageDb implements BaseColumns {
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_QUEUED +
-                "ORDER BY " + COLUMN_NAME_TS;
+                " ORDER BY " + COLUMN_NAME_TS;
         // Log.d(TAG, "Sql=[" + sql + "]");
 
         return db.rawQuery(sql, null);
@@ -311,8 +317,18 @@ public class MessageDb implements BaseColumns {
             sb.deleteCharAt(0);
             messageSelector = COLUMN_NAME_SEQ + " IN (" + sb.toString() + ")";
         } else {
-            messageSelector = (fromId > 0 ? COLUMN_NAME_SEQ + ">=" + fromId : "") +
-                    (toId != -1 ? COLUMN_NAME_SEQ + "<" + toId : "");
+            ArrayList<String> parts = new ArrayList<>();
+            if (fromId > 0) {
+                parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
+            }
+            if (toId != -1) {
+                parts.add(COLUMN_NAME_SEQ + "<" + toId);
+            }
+            messageSelector = TextUtils.join(" AND ", parts);
+        }
+
+        if (!TextUtils.isEmpty(messageSelector)) {
+            messageSelector = " AND " + messageSelector;
         }
 
         try {
@@ -321,15 +337,17 @@ public class MessageDb implements BaseColumns {
                 ContentValues values = new ContentValues();
                 values.put(COLUMN_NAME_STATUS, markAsHard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT);
                 affected = db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                        " AND " + messageSelector +
+                        messageSelector +
                         " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_SYNCED, null);
             }
             // Unsent messages are deleted.
             affected += db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    " AND " + messageSelector +
+                    messageSelector +
                     // Either delete all messages or just unsent+draft messages.
                     (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
             db.setTransactionSuccessful();
+        } catch (SQLException ex) {
+            Log.d(TAG, "Delete failed", ex);
         } finally {
             db.endTransaction();
         }

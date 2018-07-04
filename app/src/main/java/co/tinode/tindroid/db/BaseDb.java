@@ -40,6 +40,8 @@ public class BaseDb extends SQLiteOpenHelper {
     public static final int STATUS_QUEUED = 2;
     // Object is received by the server
     public static final int STATUS_SYNCED = 3;
+    // Meta-status: object should be visible in the UI
+    public static final int STATUS_VISIBLE = 3;
     // Object is hard-deleted
     public static final int STATUS_DELETED_HARD = 4;
     // Object is soft-deleted
@@ -111,7 +113,7 @@ public class BaseDb extends SQLiteOpenHelper {
             try {
                 String[] parts = input.split(";", 2);
                 return Tinode.jsonDeserialize(parts[1], parts[0]);
-            } catch (IOException | ClassCastException ex) {
+            } catch (ClassCastException ex) {
                 Log.e(TAG, "Failed to de-serialize", ex);
             }
         }

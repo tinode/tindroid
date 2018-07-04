@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk;
 
+import android.util.Log;
+
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Defacs;
@@ -739,27 +741,27 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         // Get soft-deleted message IDs.
         final List<Integer> toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
         if (toSoftDelete != null) {
-            last = mTinode.delMessage(getName(), toSoftDelete, true);
-            last.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            last = mTinode.delMessage(getName(), toSoftDelete, true)
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    Integer delId = result.ctrl.getIntParam("del");
-                    mStore.msgDelete(Topic.this, delId, toSoftDelete);
-                    return null;
+                        Integer delId = result.ctrl.getIntParam("del");
+                        mStore.msgDelete(Topic.this, delId, toSoftDelete);
+                        return null;
                 }
             }, null);
         }
 
         // Get hard-deleted message IDs.
-        final List<Integer> toHardDelete = mStore.getQueuedMessageDeletes(this, false);
+        final List<Integer> toHardDelete = mStore.getQueuedMessageDeletes(this, true);
         if (toHardDelete != null) {
-            last = mTinode.delMessage(getName(), toHardDelete, true);
-            last.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            last = mTinode.delMessage(getName(), toHardDelete, true)
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    Integer delId = result.ctrl.getIntParam("del");
-                    mStore.msgDelete(Topic.this, delId, toHardDelete);
-                    return null;
+                        Integer delId = result.ctrl.getIntParam("del");
+                        mStore.msgDelete(Topic.this, delId, toHardDelete);
+                        return null;
                 }
             }, null);
         }
@@ -768,22 +770,27 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         if (toSend == null) {
             return last;
         }
-        while (toSend.hasNext()) {
-            final Storage.Message msg = toSend.next();
-            last = mTinode.publish(getName(), msg.getContent());
-            last.thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            processDelivery(result.ctrl, msg.getId());
-                            return null;
-                        }
-                    }, null);
-        }
 
         try {
-            toSend.close();
-        } catch (IOException ignored) {}
+            while (toSend.hasNext()) {
+                Storage.Message msg = toSend.next();
+                final long msgId = msg.getId();
+                last = mTinode.publish(getName(), msg.getContent())
+                        .thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    Log.d(TAG, "Processing delivery msgId="+ msgId);
+                                    processDelivery(result.ctrl, msgId);
+                                    return null;
+                                }
+                            }, null);
+            }
+        } finally {
+            try {
+                toSend.close();
+            } catch (IOException ignored) {}
+        }
 
         return last;
     }
@@ -925,7 +932,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply<ServerMessage> invite(String uid, String mode)  throws Exception {
+    public PromisedReply<ServerMessage> invite(String uid, String mode) throws Exception {
 
         final Subscription<SP,SR> sub;
         if (getSubscription(uid) != null) {

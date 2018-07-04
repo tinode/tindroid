@@ -254,7 +254,8 @@ class SqlStore implements Storage {
 
     @Override
     public long msgDraft(Topic topic, Drafty data) {
-        return insertMessage(topic, data, BaseDb.STATUS_DRAFT);
+        long id= insertMessage(topic, data, BaseDb.STATUS_DRAFT);
+        return id;
     }
 
     @Override
@@ -281,10 +282,11 @@ class SqlStore implements Storage {
             if (MessageDb.delivered(mDbh.getWritableDatabase(), messageDbId, timestamp, seq) &&
                     TopicDb.msgReceived(db, topic, timestamp, seq)) {
                 db.setTransactionSuccessful();
+                Log.d(TAG, "msgDelivered -- SUCCESS");
                 result = true;
             }
         } catch (SQLException ex) {
-            Log.d(TAG, "Exception while inserting message", ex);
+            Log.d(TAG, "Exception while updating message", ex);
         } finally {
             db.endTransaction();
         }

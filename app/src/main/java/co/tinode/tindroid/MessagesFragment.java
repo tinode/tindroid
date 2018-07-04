@@ -50,6 +50,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 
@@ -90,6 +91,7 @@ public class MessagesFragment extends Fragment
     private LinearLayoutManager mMessageViewLayoutManager;
     private MessagesListAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
+    private UploadProgress mUploadProgress;
 
     private String mTopicName = null;
     private Timer mNoteTimer = null;
@@ -119,12 +121,16 @@ public class MessagesFragment extends Fragment
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity);
         mMessageViewLayoutManager.setStackFromEnd(true);
+        mMessageViewLayoutManager.setReverseLayout(true);
 
         RecyclerView ml = activity.findViewById(R.id.messages_container);
         ml.setLayoutManager(mMessageViewLayoutManager);
 
+        // Creating strong reference from this FRagment, otherwise it will be immediately garbage collected.
+        mUploadProgress = new UploadProgress();
         // This needs to be rebound on activity creation.
-        FileUploader.setProgressHandler(new UploadProgress());
+        FileUploader.setProgressHandler(mUploadProgress);
+        Log.d(TAG, "onActivityCreated set progress");
 
         mRefresher = activity.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
@@ -244,7 +250,7 @@ public class MessagesFragment extends Fragment
 
         if (mTopicName != null) {
             mMessagesAdapter.swapCursor(mTopicName, null,  !mTopicName.equals(oldTopicName));
-            mMessagesAdapter.runLoader();
+            runMessagesLoader();
         }
     }
 
@@ -342,7 +348,6 @@ public class MessagesFragment extends Fragment
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d(TAG, "onActivityResult, resultCode="+resultCode + ", requestCode=" + requestCode);
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case ACTION_ATTACH_IMAGE:
@@ -387,12 +392,12 @@ public class MessagesFragment extends Fragment
         if (mTopic != null) {
             try {
                 PromisedReply<ServerMessage> reply = mTopic.publish(content);
-                mMessagesAdapter.runLoader(); // Shows pending message
+                runMessagesLoader(); // Shows pending message
                 reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         // Updates message list with "delivered" icon.
-                        mMessagesAdapter.runLoader();
+                        runMessagesLoader();
                         return null;
                     }
                 }, mFailureListener);
@@ -456,6 +461,22 @@ public class MessagesFragment extends Fragment
         }
     }
 
+    private int findItemPositionById(long id) {
+        int position = -1;
+        final int first = mMessageViewLayoutManager.findFirstVisibleItemPosition();
+        final int last = mMessageViewLayoutManager.findLastVisibleItemPosition();
+        if (last == RecyclerView.NO_POSITION) {
+            return position;
+        }
+
+        for (int i = first; i <= last; i++) {
+            if (mMessagesAdapter.getItemId(i) == id) {
+                position = i;
+            }
+        }
+        return position;
+    }
+
     @NonNull
     @Override
     public Loader<UploadResult> onCreateLoader(int id, Bundle args) {
@@ -463,19 +484,45 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<UploadResult> loader, UploadResult data) {
-        final Activity activity = getActivity();
-
-        Log.d(TAG, "onLoadFinished: data.msgId=" + data.msgId + ", data.error=" + data.error);
+    public void onLoadFinished(@NonNull Loader<UploadResult> loader, final UploadResult data) {
+        final FragmentActivity activity = getActivity();
+        if (activity != null) {
+            // Kill the loader otherwise it will keep uploading the same file whenever the activity
+            // is created.
+            activity.getSupportLoaderManager().destroyLoader(loader.getId());
+        }
 
         if (data.msgId > 0) {
             try {
-                mTopic.syncPending();
+                mTopic.syncPending().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        if (activity != null && result != null) {
+                            Log.d(TAG, "onLoadFinished - onSuccess " + result.ctrl.id);
+                            activity.runOnUiThread(new Runnable() {
+                                   @Override
+                                   public void run() {
+                                       int pos = findItemPositionById(data.msgId);
+                                       if (pos >= 0) {
+                                           runMessagesLoader();
+                                           StoredMessage m = mMessagesAdapter.getMessage(pos);
+                                           Log.d(TAG, "onLoadFinished - Item changed at " +
+                                                   data.msgId + ", status=" + m.status);
+                                           mMessagesAdapter.notifyItemChanged(pos);
+                                       }
+                                   }
+                               }
+                            );
+                        }
+                        return null;
+                    }
+                }, null);
             } catch (Exception ex) {
                 Log.d(TAG, "Failed to sync", ex);
                 Toast.makeText(activity, R.string.failed_to_send_message, Toast.LENGTH_LONG).show();
             }
         } else if (data.error != null) {
+            notifyDataSetChanged();
             Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();
         }
     }
@@ -499,6 +546,7 @@ public class MessagesFragment extends Fragment
 
         @Override
         public void onStartLoading() {
+            forceLoad();
         }
 
         @Override
@@ -515,12 +563,12 @@ public class MessagesFragment extends Fragment
             final int requestCode = mArgs.getInt("requestCode");
             final String topicName = mArgs.getString("topic");
 
-            Log.d(TAG, "loadInBackground topic=" + topicName + ", uri=" + uri);
             final Context activity = getContext();
             final ContentResolver resolver = getContext().getContentResolver();
             final Topic topic = Cache.getTinode().getTopic(topicName);
 
             Drafty content = null;
+            boolean success = false;
             InputStream is = null;
             ByteArrayOutputStream baos = null;
             try {
@@ -592,20 +640,30 @@ public class MessagesFragment extends Fragment
 
                         // Create message draft.
                         result.msgId = store.msgDraft(topic, draftyAttachment(mimeType, fname, uri.toString(), -1));
+                        UploadProgress start = sProgress.get();
+                        if (start != null) {
+                            start.onStart(result.msgId);
+                            // This assignment is needed to ensure that the loader does not keep
+                            // a strong reference to activity while potentially slow upload process
+                            // is running.
+                            start = null;
+                        }
 
                         // Upload then send message with a link. This is a long-running blocking call.
                         MsgServerCtrl ctrl = Cache.getTinode().getFileUploader().upload(is, fname, mimeType, fsize,
                                 new LargeFileHelper.FileHelperProgress() {
                                     @Override
                                     public void onProgress(long progress, long size) {
-                                        UploadProgress p = sProgress.get();
+                                        final UploadProgress p = sProgress.get();
                                         if (p != null) {
                                             p.onProgress(result.msgId, progress, size);
                                         }
-                                        Log.d(TAG, "Progress: " + progress + ", size=" + size);
                                     }
                                 });
-                        content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
+                        success = (ctrl.code == 200);
+                        if (success) {
+                            content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
+                        }
                     } else {
                         Log.d(TAG, "Attaching image or small file inline, size="+fsize);
 
@@ -630,7 +688,13 @@ public class MessagesFragment extends Fragment
                                 imageWidth = options.outWidth;
                                 imageHeight = options.outHeight;
                             }
-                            result.msgId = store.msgDraft(topic, draftyImage(mimeType, bits, imageWidth, imageHeight, fname));
+                            result.msgId = store.msgDraft(topic, draftyImage(mimeType, bits,
+                                    imageWidth, imageHeight, fname));
+                        }
+                        success = true;
+                        UploadProgress start = sProgress.get();
+                        if (start != null) {
+                            start.onStart(result.msgId);
                         }
                     }
                 }
@@ -651,7 +715,7 @@ public class MessagesFragment extends Fragment
             }
 
             if (result.msgId > 0) {
-                if (content != null) {
+                if (success) {
                     // Success: mark message as ready for delivery. It's OK for content to be null.
                     store.msgReady(topic, result.msgId, content);
                 } else {
@@ -678,26 +742,36 @@ public class MessagesFragment extends Fragment
         UploadProgress() {
         }
 
+        void onStart(final long msgId) {
+            runMessagesLoader();
+        }
+
         void onProgress(final long msgId, final long progress, final long total) {
-            int first = mMessageViewLayoutManager.findFirstVisibleItemPosition();
-            int last = mMessageViewLayoutManager.findLastVisibleItemPosition();
-            for (int i=first; i<=last; i++) {
-                if (mMessagesAdapter.getItemId(i) == msgId) {
-                    Activity activity = getActivity();
-                    if (activity == null) {
-                        break;
-                    }
-                    final int position = i;
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Float ratio = total > 0 ? (float) progress/ total : (float) progress;
-                            mMessagesAdapter.notifyItemChanged(position, ratio);
-                        }
-                    });
-                    break;
-                }
+            // DEBUG
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            // debug
+
+            final int position = findItemPositionById(msgId);
+            if (position < 0) {
+                return;
+            }
+
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+
+            final Float ratio = total > 0 ? (float) progress / total : (float) progress;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mMessagesAdapter.notifyItemChanged(position, ratio);
+                }
+            });
         }
     }
 }
