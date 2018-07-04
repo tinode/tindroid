@@ -446,7 +446,7 @@ public class TopicDb implements BaseColumns {
         if (st != null) {
             st.nextUnsentId ++;
             ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_MAX_DEL, st.nextUnsentId);
+            values.put(COLUMN_NAME_NEXT_UNSENT_SEQ, st.nextUnsentId);
             db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
             return st.nextUnsentId;
         }
