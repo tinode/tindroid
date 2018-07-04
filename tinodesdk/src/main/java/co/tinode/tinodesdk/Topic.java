@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -736,7 +737,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
 
         // Get soft-deleted message IDs.
-        final int[] toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
+        final List<Integer> toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
         if (toSoftDelete != null) {
             last = mTinode.delMessage(getName(), toSoftDelete, true);
             last.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -750,7 +751,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
 
         // Get hard-deleted message IDs.
-        final int[] toHardDelete = mStore.getQueuedMessageDeletes(this, false);
+        final List<Integer> toHardDelete = mStore.getQueuedMessageDeletes(this, false);
         if (toHardDelete != null) {
             last = mTinode.delMessage(getName(), toHardDelete, true);
             last.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -1065,7 +1066,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> delMessages(final int[] list, final boolean hard) throws Exception {
+    public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) throws Exception {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, list, hard);
         }

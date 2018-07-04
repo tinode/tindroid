@@ -42,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +57,7 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -208,40 +210,51 @@ public class MessagesListAdapter
     @SuppressWarnings("unchecked")
     private void sendDeleteMessages(final int[] positions) {
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
-
+        final Storage store = BaseDb.getInstance().getStore();
         if (topic != null) {
-            int[] list = new int[positions.length];
+            ArrayList<Integer> list = new ArrayList<>();
             int i = 0;
+            int discarded = 0;
             while (i < positions.length) {
                 int pos = positions[i];
                 StoredMessage msg = getMessage(pos);
                 if (msg != null) {
-                    list[i] = msg.seq;
-                    i++;
+                    if (msg.status == BaseDb.STATUS_SYNCED) {
+                        list.add(msg.seq);
+                        i++;
+                    } else {
+                        store.msgDiscard(topic, msg.id);
+                        discarded ++;
+                    }
                 }
             }
 
-            try {
-                topic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        runLoader();
-                        mActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // Update message list.
-                                notifyDataSetChanged();
-                                updateSelectionMode();
-                            }
-                        });
-                        return null;
-                    }
-                }, null);
-            } catch (NotConnectedException ignored) {
-                Log.d(TAG, "sendDeleteMessages -- NotConnectedException");
-            } catch (Exception ignored) {
-                Log.d(TAG, "sendDeleteMessages -- Exception", ignored);
-                Toast.makeText(mActivity, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
+            if (!list.isEmpty()) {
+                try {
+                    topic.delMessages(list, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            runLoader();
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Update message list.
+                                    notifyDataSetChanged();
+                                    updateSelectionMode();
+                                }
+                            });
+                            return null;
+                        }
+                    }, null);
+                } catch (NotConnectedException ignored) {
+                    Log.d(TAG, "sendDeleteMessages -- NotConnectedException");
+                } catch (Exception ignored) {
+                    Log.d(TAG, "sendDeleteMessages -- Exception", ignored);
+                    Toast.makeText(mActivity, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
+                }
+            } else if (discarded > 0) {
+                notifyDataSetChanged();
+                updateSelectionMode();
             }
         }
     }

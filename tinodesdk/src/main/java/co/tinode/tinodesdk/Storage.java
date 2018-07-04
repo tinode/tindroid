@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import co.tinode.tinodesdk.model.Drafty;
@@ -110,11 +111,11 @@ public interface Storage {
     /** Mark messages for deletion by range */
     boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard);
     /** Mark messages for deletion by seq ID list */
-    boolean msgMarkToDelete(Topic topic, int[] list, boolean markAsHard);
+    boolean msgMarkToDelete(Topic topic, List<Integer> list, boolean markAsHard);
     /** Delete messages */
     boolean msgDelete(Topic topic, int delId, int fromId, int toId);
     /** Delete messages */
-    boolean msgDelete(Topic topic, int delId, int[] list);
+    boolean msgDelete(Topic topic, int delId, List<Integer> list);
     /** Set recv value for a given subscriber */
     boolean msgRecvByRemote(Subscription sub, int recv);
     /** Set read value for a given subscriber */
@@ -122,7 +123,7 @@ public interface Storage {
     /** Get a list of unsent messages */
     <T extends Iterator<Message> & Closeable> T getQueuedMessages(Topic topic);
     /** Get a list of pending delete message seq Ids */
-    int[] getQueuedMessageDeletes(Topic topic, boolean hard);
+    List<Integer> getQueuedMessageDeletes(Topic topic, boolean hard);
 
     interface Message {
         /** Get current message payload */

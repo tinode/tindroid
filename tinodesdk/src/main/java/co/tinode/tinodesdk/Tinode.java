@@ -1081,14 +1081,14 @@ public class Tinode {
     }
 
     /**
-     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(int[], boolean)} instead.
+     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(List, boolean)} instead.
      *
      * @param topicName name of the topic to inform
      * @param list delete all messages with ids in this list
      * @return PromisedReply of the reply ctrl or meta message
      */
     @SuppressWarnings("WeakerAccess")
-    public PromisedReply<ServerMessage> delMessage(final String topicName, final int[] list, final boolean hard) {
+    public PromisedReply<ServerMessage> delMessage(final String topicName, final List<Integer> list, final boolean hard) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard));
         return sendDeleteMessage(msg);
     }

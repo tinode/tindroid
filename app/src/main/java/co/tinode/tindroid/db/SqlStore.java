@@ -7,9 +7,11 @@ import android.util.Log;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
@@ -296,7 +298,7 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgMarkToDelete(Topic topic, int[] list, boolean markAsHard) {
+    public boolean msgMarkToDelete(Topic topic, List<Integer> list, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, list, markAsHard);
     }
@@ -324,7 +326,7 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgDelete(Topic topic, int delId, int[] list) {
+    public boolean msgDelete(Topic topic, int delId, List<Integer> list) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
         boolean result = false;
@@ -379,16 +381,16 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public int[] getQueuedMessageDeletes(Topic topic, boolean hard) {
+    public List<Integer> getQueuedMessageDeletes(Topic topic, boolean hard) {
         StoredTopic st = (StoredTopic)topic.getLocal();
-        int[] list = null;
+        List<Integer> list = null;
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryDeleted(mDbh.getReadableDatabase(), st.id, hard);
             if (c != null && c.moveToFirst()) {
-                list = new int[c.getCount()];
+                list = new ArrayList<>(c.getCount());
                 int i = 0;
                 do {
-                    list[i++] = StoredMessage.readSeqId(c);
+                    list.add(StoredMessage.readSeqId(c));
                 } while(c.moveToNext());
                 c.close();
             }

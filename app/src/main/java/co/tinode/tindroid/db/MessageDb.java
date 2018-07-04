@@ -11,6 +11,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import java.util.Date;
+import java.util.List;
 
 import co.tinode.tinodesdk.Topic;
 
@@ -296,7 +297,8 @@ public class MessageDb implements BaseColumns {
      * @param markAsHard    mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
-    private static boolean deleteOrMarkDeleted(SQLiteDatabase db, boolean doDelete, long topicId, int fromId, int toId, int[] list, boolean markAsHard) {
+    private static boolean deleteOrMarkDeleted(SQLiteDatabase db, boolean doDelete, long topicId,
+                                               int fromId, int toId, List<Integer> list, boolean markAsHard) {
         int affected = 0;
         db.beginTransaction();
         String messageSelector;
@@ -343,7 +345,7 @@ public class MessageDb implements BaseColumns {
      * @param markAsHard    mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
-    public static boolean markDeleted(SQLiteDatabase db, long topicId, int[] list, boolean markAsHard) {
+    public static boolean markDeleted(SQLiteDatabase db, long topicId, List<Integer> list, boolean markAsHard) {
         return deleteOrMarkDeleted(db, false, topicId, Integer.MAX_VALUE, 0, list, markAsHard);
     }
 
@@ -382,7 +384,7 @@ public class MessageDb implements BaseColumns {
      * @param list    maximum seq value to delete, inclusive.
      * @return number of deleted messages
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int[] list) {
+    public static boolean delete(SQLiteDatabase db, long topicId, List<Integer> list) {
         return deleteOrMarkDeleted(db, true, topicId, Integer.MAX_VALUE, 0, list, false);
     }
 

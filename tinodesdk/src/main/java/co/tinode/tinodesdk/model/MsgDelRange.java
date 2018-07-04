@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * MsgDelRange is either an individual ID (hi=0 || hi==null) or a range of deleted IDs, low end inclusive (closed),
@@ -48,22 +50,22 @@ public class MsgDelRange {
         }
     }
 
-    public static MsgDelRange[] arrayToRanges(int[] list) {
-        if (list == null || list.length == 0) {
+    public static MsgDelRange[] listToRanges(final List<Integer> list) {
+        if (list == null || list.size() == 0) {
             return null;
         }
 
         // Make sure the IDs are sorted in ascending order.
-        Arrays.sort(list);
+        Collections.sort(list);
 
         ArrayList<MsgDelRange> ranges = new ArrayList<>();
-        MsgDelRange curr = new MsgDelRange(list[0]);
+        MsgDelRange curr = new MsgDelRange(list.get(0));
         ranges.add(curr);
-        for (int i = 1; i < list.length; i++) {
-            if (!curr.tryExtending(list[i])) {
+        for (int i = 1; i < list.size(); i++) {
+            if (!curr.tryExtending(list.get(i))) {
                 curr.normalize();
                 // Start a new range
-                curr = new MsgDelRange(list[i]);
+                curr = new MsgDelRange(list.get(i));
                 ranges.add(curr);
             }
         }

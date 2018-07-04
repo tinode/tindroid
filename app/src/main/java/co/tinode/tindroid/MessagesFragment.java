@@ -359,9 +359,9 @@ public class MessagesFragment extends Fragment
                     final LoaderManager lm = activity.getSupportLoaderManager();
                     final Loader<UploadResult> loader = lm.getLoader(ASYNC_TASK_UPLOADER);
                     if (loader != null && !loader.isReset()) {
-                        lm.restartLoader(ASYNC_TASK_UPLOADER, args, this).forceLoad();
+                        lm.restartLoader(ASYNC_TASK_UPLOADER, args, this);
                     } else {
-                        lm.initLoader(ASYNC_TASK_UPLOADER, args, this).forceLoad();
+                        lm.initLoader(ASYNC_TASK_UPLOADER, args, this);
                     }
                     break;
                 }
@@ -464,10 +464,18 @@ public class MessagesFragment extends Fragment
 
     @Override
     public void onLoadFinished(@NonNull Loader<UploadResult> loader, UploadResult data) {
-        if (data.data != null) {
-            sendMessage(data.data);
+        final Activity activity = getActivity();
+
+        Log.d(TAG, "onLoadFinished: data.msgId=" + data.msgId + ", data.error=" + data.error);
+
+        if (data.msgId > 0) {
+            try {
+                mTopic.syncPending();
+            } catch (Exception ex) {
+                Log.d(TAG, "Failed to sync", ex);
+                Toast.makeText(activity, R.string.failed_to_send_message, Toast.LENGTH_LONG).show();
+            }
         } else if (data.error != null) {
-            Activity activity = getActivity();
             Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();
         }
     }
@@ -491,7 +499,6 @@ public class MessagesFragment extends Fragment
 
         @Override
         public void onStartLoading() {
-            forceLoad();
         }
 
         @Override
@@ -508,10 +515,12 @@ public class MessagesFragment extends Fragment
             final int requestCode = mArgs.getInt("requestCode");
             final String topicName = mArgs.getString("topic");
 
+            Log.d(TAG, "loadInBackground topic=" + topicName + ", uri=" + uri);
             final Context activity = getContext();
             final ContentResolver resolver = getContext().getContentResolver();
             final Topic topic = Cache.getTinode().getTopic(topicName);
 
+            Drafty content = null;
             InputStream is = null;
             ByteArrayOutputStream baos = null;
             try {
@@ -596,7 +605,7 @@ public class MessagesFragment extends Fragment
                                         Log.d(TAG, "Progress: " + progress + ", size=" + size);
                                     }
                                 });
-                        result.data = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
+                        content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
                     } else {
                         Log.d(TAG, "Attaching image or small file inline, size="+fsize);
 
@@ -609,8 +618,7 @@ public class MessagesFragment extends Fragment
 
                         byte[] bits = baos.toByteArray();
                         if (requestCode == ACTION_ATTACH_FILE) {
-                            result.data = draftyFile(mimeType, bits, fname);
-                            result.msgId = store.msgDraft(topic, result.data);
+                            result.msgId = store.msgDraft(topic, draftyFile(mimeType, bits, fname));
                         } else {
                             if (imageWidth == 0) {
                                 BitmapFactory.Options options = new BitmapFactory.Options();
@@ -622,8 +630,7 @@ public class MessagesFragment extends Fragment
                                 imageWidth = options.outWidth;
                                 imageHeight = options.outHeight;
                             }
-                            result.data = draftyImage(mimeType, bits, imageWidth, imageHeight, fname);
-                            result.msgId = store.msgDraft(topic, result.data);
+                            result.msgId = store.msgDraft(topic, draftyImage(mimeType, bits, imageWidth, imageHeight, fname));
                         }
                     }
                 }
@@ -642,10 +649,11 @@ public class MessagesFragment extends Fragment
                     } catch (IOException ignored) {}
                 }
             }
+
             if (result.msgId > 0) {
-                if (result.data != null) {
-                    // Success: mark message as ready for delivery.
-                    store.msgReady(topic, result.msgId, result.data);
+                if (content != null) {
+                    // Success: mark message as ready for delivery. It's OK for content to be null.
+                    store.msgReady(topic, result.msgId, content);
                 } else {
                     // Failure: discard draft.
                     store.msgDiscard(topic, result.msgId);
@@ -658,7 +666,6 @@ public class MessagesFragment extends Fragment
     }
 
     static class UploadResult {
-        Drafty data;
         String error;
         long msgId = -1;
 
