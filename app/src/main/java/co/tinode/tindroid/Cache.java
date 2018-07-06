@@ -45,6 +45,9 @@ public class Cache {
             // Set device language
             sTinode.setLanguage(Locale.getDefault().getLanguage());
             sTinode.setAutologin(true);
+
+            // Keep in app to prevent garbage collection.
+            TindroidApp.retainTinodeCache(sTinode);
         }
 
         sTinode.setDeviceToken(FirebaseInstanceId.getInstance().getToken());

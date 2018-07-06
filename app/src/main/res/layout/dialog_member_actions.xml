@@ -8,7 +8,7 @@
               android:paddingRight="@dimen/dialog_padding_right"
               android:paddingStart="@dimen/dialog_padding_left">
 
-    <TextView
+    <android.support.v7.widget.AppCompatTextView
         android:id="@+id/buttonViewProfile"
         style="@style/textSecondary"
         android:background="?android:attr/selectableItemBackground"
@@ -22,7 +22,7 @@
         android:gravity="center_vertical"
         android:text="@string/view_profile"/>
 
-    <TextView
+    <android.support.v7.widget.AppCompatTextView
         android:id="@+id/buttonSendMessage"
         style="@style/textSecondary"
         android:background="?android:attr/selectableItemBackground"
@@ -37,7 +37,7 @@
         android:text="@string/send_message"/>
 
 
-    <TextView
+    <android.support.v7.widget.AppCompatTextView
         android:id="@+id/buttonPermissions"
         style="@style/textSecondary"
         android:background="?android:attr/selectableItemBackground"
@@ -52,7 +52,7 @@
         android:text="@string/change_permissions"/>
 
 
-    <TextView
+    <android.support.v7.widget.AppCompatTextView
         android:id="@+id/buttonMakeOwner"
         style="@style/textSecondary"
         android:background="?android:attr/selectableItemBackground"
@@ -66,7 +66,7 @@
         android:gravity="center_vertical"
         android:text="@string/make_owner"/>
 
-    <TextView
+    <android.support.v7.widget.AppCompatTextView
         android:id="@+id/buttonRemove"
         style="@style/textSecondary"
         android:background="?android:attr/selectableItemBackground"
@@ -80,7 +80,7 @@
         android:gravity="center_vertical"
         android:text="@string/remove_from_group"/>
 
-    <TextView
+    <android.support.v7.widget.AppCompatTextView
         android:id="@+id/buttonBlock"
         style="@style/textSecondary"
         android:background="?android:attr/selectableItemBackground"

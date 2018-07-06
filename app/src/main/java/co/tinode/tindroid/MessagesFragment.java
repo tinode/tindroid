@@ -135,7 +135,7 @@ public class MessagesFragment extends Fragment
                 }
             }
         };
-        mMessageViewLayoutManager.setStackFromEnd(true);
+        // mMessageViewLayoutManager.setStackFromEnd(true);
         mMessageViewLayoutManager.setReverseLayout(true);
 
         RecyclerView ml = activity.findViewById(R.id.messages_container);

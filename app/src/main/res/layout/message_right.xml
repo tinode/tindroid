@@ -48,7 +48,7 @@
                     tools:text="Jun 11 22:17"
                     android:textSize="11sp" tools:ignore="SmallSp"/>
 
-                <android.support.v7.widget.AppCompatImageView
+                <ImageView
                     android:id="@+id/messageViewedIcon"
                     android:layout_width="18sp"
                     android:layout_height="11sp"

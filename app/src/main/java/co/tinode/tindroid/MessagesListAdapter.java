@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -15,7 +16,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.view.ActionMode;
@@ -169,6 +172,8 @@ public class MessagesListAdapter
         };
 
         mSpanFormatterClicker = new SpanClicker();
+
+        verifyStoragePermissions();
     }
 
     @Override
@@ -292,7 +297,6 @@ public class MessagesListAdapter
         return itemType;
     }
 
-    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // create a new view
@@ -343,7 +347,7 @@ public class MessagesListAdapter
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position, List<Object> payload) {
         if (payload != null && !payload.isEmpty()) {
             Float progress = (Float) payload.get(0);
-            holder.mProgress.setProgress((int) (progress * 100));
+            holder.mProgressBar.setProgress((int) (progress * 100));
             return;
         }
 
@@ -375,11 +379,16 @@ public class MessagesListAdapter
         if (holder.mProgressInclude != null) {
             if (disableEnt) {
                 final long msgId = m.getId();
+                holder.mProgressResult.setVisibility(View.GONE);
+                holder.mProgress.setVisibility(View.VISIBLE);
                 holder.mProgressInclude.setVisibility(View.VISIBLE);
                 holder.mCancelProgress.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Log.d(TAG, "Upload for msgId=" + msgId + " is cancelled " + cancelUpload(msgId));
+                        if (cancelUpload(msgId)) {
+                            holder.mProgress.setVisibility(View.GONE);
+                            holder.mProgressResult.setVisibility(View.VISIBLE);
+                        }
                     }
                 });
             } else {
@@ -554,7 +563,7 @@ public class MessagesListAdapter
         if (!UiUtils.checkPermission(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             // We don't have permission so prompt the user
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                mActivity.requestPermissions(PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+                ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
             }
         }
     }
@@ -564,7 +573,6 @@ public class MessagesListAdapter
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG, "Running message loader on UI thread");
                 final LoaderManager lm = mActivity.getSupportLoaderManager();
                 final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
                 if (loader != null && !loader.isReset()) {
@@ -626,8 +634,10 @@ public class MessagesListAdapter
         View mSelected;
         View mOverlay;
         View mProgressInclude;
-        ProgressBar mProgress;
+        ProgressBar mProgressBar;
         AppCompatImageButton mCancelProgress;
+        View mProgress;
+        View mProgressResult;
 
         ViewHolder(View itemView, int viewType) {
             super(itemView);
@@ -642,8 +652,10 @@ public class MessagesListAdapter
             mSelected = itemView.findViewById(R.id.selected);
             mOverlay = itemView.findViewById(R.id.overlay);
             mProgressInclude = itemView.findViewById(R.id.progressInclide);
-            mProgress = itemView.findViewById(R.id.attachmentProgress);
-            mCancelProgress = itemView.findViewById(R.id.cancelAttachmentProgress);
+            mProgress = itemView.findViewById(R.id.progressPanel);
+            mProgressBar = itemView.findViewById(R.id.attachmentProgressBar);
+            mCancelProgress = itemView.findViewById(R.id.attachmentProgressCancel);
+            mProgressResult = itemView.findViewById(R.id.progressResult);
         }
     }
 
@@ -698,8 +710,14 @@ public class MessagesListAdapter
 
                 Intent intent = new Intent();
                 intent.setAction(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(fileUri, mimeType);
-                mActivity.startActivity(intent);
+                intent.setDataAndType(FileProvider.getUriForFile(mActivity,
+                        "co.tinode.tindroid.provider", file), mimeType);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                try {
+                    mActivity.startActivity(intent);
+                } catch (ActivityNotFoundException ignored) {
+                    mActivity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                }
 
             } else {
                 Object ref = data.get("ref");

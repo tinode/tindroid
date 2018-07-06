@@ -59,7 +59,7 @@
             android:hint="@string/password_hint"/>
     </android.support.design.widget.TextInputLayout>
 
-    <android.support.v7.widget.AppCompatButton
+    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/sign_in"

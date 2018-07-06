@@ -12,7 +12,7 @@
     android:paddingLeft="4dp"
     android:paddingRight="4dp">
 
-    <android.support.v7.widget.AppCompatImageView
+    <ImageView
         android:id="@android:id/icon"
         android:layout_width="48sp"
         android:layout_height="48sp"
@@ -20,13 +20,13 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginRight="5dp"
+        android:contentDescription="avatar"
         android:layout_marginEnd="5dp" />
 
-    <android.support.v7.widget.AppCompatImageButton
+    <ImageButton
         android:id="@+id/optionsMenu"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         app:srcCompat="@drawable/ic_more_vert"
         android:tint="@color/colorTextSecondary"

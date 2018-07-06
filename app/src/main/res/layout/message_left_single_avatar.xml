@@ -13,7 +13,7 @@
         android:paddingLeft="2dp"
         android:paddingRight="2dp">
 
-        <android.support.v7.widget.AppCompatImageView
+        <ImageView
             android:id="@+id/avatar"
             android:layout_width="30dp"
             android:layout_height="30dp"

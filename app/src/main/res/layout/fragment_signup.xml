@@ -177,7 +177,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <android.support.v7.widget.AppCompatButton
+            <Button
                 android:id="@+id/continueFb"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -186,7 +186,7 @@
                 android:text="@string/continue_fb"
                 android:textColor="@color/white"/>
 
-            <android.support.v7.widget.AppCompatButton
+            <Button
                 android:id="@+id/continueGoog"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

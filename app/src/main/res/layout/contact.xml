@@ -23,7 +23,7 @@
             android:layout_height="48sp"
             app:srcCompat="@drawable/ic_person_circle" />
 
-        <android.support.v7.widget.AppCompatImageView
+        <ImageView
             android:id="@+id/online"
             android:layout_width="16sp"
             android:layout_height="16sp"

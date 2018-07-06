@@ -46,7 +46,7 @@
                         android:contentDescription="@string/avatar"
                         app:srcCompat="@drawable/ic_person_circle"/>
 
-                    <android.support.v7.widget.AppCompatButton
+                    <Button
                         android:id="@+id/uploadAvatar"
                         android:layout_width="48sp"
                         android:layout_height="48sp"
@@ -182,7 +182,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                        <android.support.v7.widget.AppCompatButton
+                        <Button
                             android:id="@+id/buttonChangePassword"
                             style="?attr/buttonBarButtonStyle"
                             android:layout_width="wrap_content"
@@ -194,7 +194,7 @@
                             android:text="@string/change_password"
                             android:textColor="@color/colorTextPrimary"/>
 
-                        <android.support.v7.widget.AppCompatButton
+                        <Button
                             android:id="@+id/buttonLogout"
                             style="?attr/buttonBarButtonStyle"
                             android:layout_width="wrap_content"

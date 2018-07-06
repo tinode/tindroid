@@ -1,34 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.LinearLayoutCompat
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="start">
+    android:layout_width="wrap_content"
+    android:layout_marginStart="26dp">
 
-    <ProgressBar
-        android:id="@+id/attachmentProgress"
-        style="@style/ProgressBar"
-        android:layout_width="80dp"
-        android:layout_height="12dp"
-        android:layout_marginBottom="2dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginStart="26dp"
-        android:paddingLeft="2dp"
-        android:paddingRight="2dp"
-        tools:progress="33"
-        />
-
-    <android.support.v7.widget.AppCompatImageButton
-        android:id="@+id/cancelAttachmentProgress"
-        app:srcCompat="@drawable/ic_close"
+    <android.support.v7.widget.LinearLayoutCompat
+        android:id="@+id/progressPanel"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="0.1"
-        android:contentDescription="@string/action_cancel"
-        android:background="@android:color/transparent"
-        android:paddingStart="4sp"
-        android:paddingEnd="8sp"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="start">
 
-</android.support.v7.widget.LinearLayoutCompat>
+        <ProgressBar
+            android:id="@+id/attachmentProgressBar"
+            style="@style/ProgressBar"
+            android:layout_width="80dp"
+            android:layout_height="12dp"
+            android:layout_marginBottom="2dp"
+            android:layout_marginTop="2dp"
+            android:paddingLeft="2dp"
+            android:paddingRight="2dp"
+            tools:progress="33"
+            />
+
+        <ImageButton
+            android:id="@+id/attachmentProgressCancel"
+            app:srcCompat="@drawable/ic_close"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="0.1"
+            android:contentDescription="@string/action_cancel"
+            android:background="@android:color/transparent"
+            android:paddingStart="4sp"
+            android:paddingEnd="8sp"/>
+
+    </android.support.v7.widget.LinearLayoutCompat>
+
+    <TextView
+        android:id="@+id/progressResult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cancelled"
+        android:visibility="gone" />
+
+</FrameLayout>
