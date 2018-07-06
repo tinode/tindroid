@@ -721,6 +721,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     public PromisedReply<ServerMessage> publish(String content) throws Exception {
         return publish(Drafty.parse(content));
     }
+
     /**
      * Re-send pending messages, delete messages marked for deletion.
      * Processing will stop on the first error.
@@ -731,7 +732,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotConnectedException if there is no connection to server
      */
     @SuppressWarnings("UnusedReturnValue")
-    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncPending()
+    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncAll()
             throws Exception {
         PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
         if (mStore == null) {
@@ -793,6 +794,51 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
 
         return last;
+    }
+
+    /**
+     * Try to sync one message.
+     *
+     * @return {@link PromisedReply} resolved on result of the operation.
+     *
+     * @throws NotSubscribedException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to server
+     */
+    public PromisedReply<ServerMessage> syncOne(long msgDatabaseId) {
+        PromisedReply<ServerMessage> result = new PromisedReply<>((ServerMessage) null);
+        if (mStore == null) {
+            return result;
+        }
+
+        final Storage.Message m = mStore.getMessageById(this, msgDatabaseId);
+        if (m != null) {
+            try {
+                if (m.isDeleted()) {
+                    result = mTinode.delMessage(getName(), m.getSeqId(), m.isDeleted(true))
+                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    Integer delId = result.ctrl.getIntParam("del");
+                                    mStore.msgDelete(Topic.this, delId, m.getSeqId(), m.getSeqId() + 1);
+                                    return null;
+                                }
+                            }, null);
+                } else if (m.isReady()) {
+                    result = mTinode.publish(getName(), m.getContent())
+                            .thenApply(
+                                    new PromisedReply.SuccessListener<ServerMessage>() {
+                                        @Override
+                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                            Log.d(TAG, "Processing delivery msgId=" + m.getId());
+                                            processDelivery(result.ctrl, m.getId());
+                                            return null;
+                                        }
+                                    }, null);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return result;
     }
 
     /**

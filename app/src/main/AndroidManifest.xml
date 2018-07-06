@@ -117,6 +117,11 @@
             </intent-filter>
         </service>
 
+        <!--provider
+            android:name=".db.MessageProvider"
+            android:authorities="co.tinode.tindroid.provider"
+            android:exported="false" /-->
+
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="co.tinode.tindroid.provider"

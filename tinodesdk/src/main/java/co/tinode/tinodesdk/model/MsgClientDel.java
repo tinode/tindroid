@@ -53,6 +53,13 @@ public class MsgClientDel {
     }
 
     /**
+     * Delete one message.
+     */
+    public MsgClientDel(String id, String topic, int seqId, boolean hard) {
+        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(seqId)}, null, hard);
+    }
+
+    /**
      * Delete topic
      */
     public MsgClientDel(String id, String topic) {

@@ -6,13 +6,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
@@ -253,23 +251,27 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public long msgDraft(Topic topic, Drafty data) {
-        long id= insertMessage(topic, data, BaseDb.STATUS_DRAFT);
-        return id;
-    }
-
-    @Override
     public long msgSend(Topic topic, Drafty data) {
         return insertMessage(topic, data, BaseDb.STATUS_UNDEFINED);
     }
 
     @Override
-    public boolean msgReady(Topic topic, long id, Drafty data) {
-        return MessageDb.markReady(mDbh.getWritableDatabase(), id, data);
+    public long msgDraft(Topic topic, Drafty data) {
+        return insertMessage(topic, data, BaseDb.STATUS_DRAFT);
     }
 
-    public boolean msgDiscard(Topic topic, long id) {
-        return MessageDb.delete(mDbh.getWritableDatabase(), id);
+    @Override
+    public boolean msgDraftUpdate(Topic topic, long messageDbId, Drafty data) {
+        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId, BaseDb.STATUS_UNDEFINED, data);
+    }
+
+    @Override
+    public boolean msgReady(Topic topic, long messageDbId, Drafty data) {
+        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId, BaseDb.STATUS_QUEUED, data);
+    }
+
+    public boolean msgDiscard(Topic topic, long messageDbId) {
+        return MessageDb.delete(mDbh.getWritableDatabase(), messageDbId);
     }
 
     @Override
@@ -366,6 +368,17 @@ class SqlStore implements Storage {
             result = SubscriberDb.updateRead(mDbh.getWritableDatabase(), ss.id, read);
         }
         return result;
+    }
+
+    @Override
+    public <T extends Storage.Message> T getMessageById(Topic topic, long dbMessageId) {
+        Storage.Message msg = null;
+        Cursor c = MessageDb.getMessageById(mDbh.getReadableDatabase(), dbMessageId);
+        if (c != null && c.moveToFirst()) {
+            msg = StoredMessage.readMessage(c);
+            c.close();
+        }
+        return (T) msg;
     }
 
     @SuppressWarnings("unchecked")

@@ -26,6 +26,7 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Base64;
 import android.util.Log;
+import android.util.LongSparseArray;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -43,7 +44,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -103,6 +103,10 @@ public class MessagesListAdapter
     private int mPagesToLoad;
     private SwipeRefreshLayout mRefresher;
 
+    // This is a map of message IDs to their corresponding loader IDs.
+    // This is needed for upload cancellations.
+    private LongSparseArray<Integer> mLoaders = null;
+
     private SpanClicker mSpanFormatterClicker;
 
     public MessagesListAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
@@ -110,8 +114,11 @@ public class MessagesListAdapter
 
         mActivity = context;
         setHasStableIds(true);
+
         mRefresher = refresher;
         mPagesToLoad = 1;
+
+        mLoaders = new LongSparseArray<>();
 
         mSelectionModeCallback = new ActionMode.Callback() {
             @Override
@@ -350,7 +357,7 @@ public class MessagesListAdapter
 
         ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
 
-        StoredMessage m = getMessage(position);
+        final StoredMessage m = getMessage(position);
 
         // Disable attachment clicker.
         boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED || m.status == BaseDb.STATUS_DRAFT) &&
@@ -366,7 +373,19 @@ public class MessagesListAdapter
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
         }
         if (holder.mProgressInclude != null) {
-            holder.mProgressInclude.setVisibility(disableEnt ? View.VISIBLE : View.GONE);
+            if (disableEnt) {
+                final long msgId = m.getId();
+                holder.mProgressInclude.setVisibility(View.VISIBLE);
+                holder.mCancelProgress.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.d(TAG, "Upload for msgId=" + msgId + " is cancelled " + cancelUpload(msgId));
+                    }
+                });
+            } else {
+                holder.mProgressInclude.setVisibility(View.GONE);
+                holder.mCancelProgress.setOnClickListener(null);
+            }
         }
 
         if (holder.mSelected != null) {
@@ -461,7 +480,7 @@ public class MessagesListAdapter
     @Override
     // Must match position-to-item of getMessage.
     public long getItemId(int position) {
-        if (mCursor != null) {
+        if (mCursor != null && !mCursor.isClosed()) {
             if (mCursor.moveToPosition(position)) {
                 return MessageDb.getLocalId(mCursor);
             }
@@ -530,7 +549,7 @@ public class MessagesListAdapter
      *
      * If the app does not has permission then the user will be prompted to grant permission.
      */
-    public void verifyStoragePermissions() {
+    private void verifyStoragePermissions() {
         // Check if we have write permission
         if (!UiUtils.checkPermission(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             // We don't have permission so prompt the user
@@ -540,16 +559,18 @@ public class MessagesListAdapter
         }
     }
 
+    // Run loader on UI thread
     void runLoader() {
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.d(TAG, "Running message loader on UI thread");
                 final LoaderManager lm = mActivity.getSupportLoaderManager();
                 final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
                 if (loader != null && !loader.isReset()) {
-                    lm.restartLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this).forceLoad();
+                    lm.restartLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this);
                 } else {
-                    lm.initLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this).forceLoad();
+                    lm.initLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this);
                 }
             }
         });
@@ -567,7 +588,6 @@ public class MessagesListAdapter
 
     @NonNull
     @Override
-    @SuppressWarnings("unchecked")
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if (id == MESSAGES_QUERY_ID) {
             return new MessageDb.Loader(mActivity, mTopicName, mPagesToLoad, MESSAGES_TO_LOAD);
@@ -588,7 +608,6 @@ public class MessagesListAdapter
 
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-
         switch (loader.getId()) {
             case MESSAGES_QUERY_ID:
                 swapCursor(null, null, true);
@@ -626,6 +645,25 @@ public class MessagesListAdapter
             mProgress = itemView.findViewById(R.id.attachmentProgress);
             mCancelProgress = itemView.findViewById(R.id.cancelAttachmentProgress);
         }
+    }
+
+    void addLoaderMapping(Long msgId, int loaderId) {
+        mLoaders.put(msgId, loaderId);
+    }
+
+    Integer getLoaderMapping(Long msgId) {
+        return mLoaders.get(msgId);
+    }
+
+    private boolean cancelUpload(long msgId) {
+        Integer loaderId = mLoaders.get(msgId);
+        if (loaderId != null) {
+            mActivity.getSupportLoaderManager().destroyLoader(loaderId);
+            // Change mapping to force background loading process to return early.
+            addLoaderMapping(msgId, -1);
+            return true;
+        }
+        return false;
     }
 
     private void downloadAttachment(Map<String,Object> data, String fname, String mimeType) {

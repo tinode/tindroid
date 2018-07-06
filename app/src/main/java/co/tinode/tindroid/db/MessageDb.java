@@ -7,7 +7,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -31,19 +31,14 @@ public class MessageDb implements BaseColumns {
     private static final String TAG = "MessageDb";
 
     /**
-     * Content provider authority.
-     */
-    private static final String CONTENT_AUTHORITY = "co.tinode.tindroid";
-
-    /**
-     * Base URI. (content://co.tinode.tindroid)
-     */
-    private static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
-
-    /**
      * The name of the main table.
      */
-    private static final String TABLE_NAME = "messages";
+    static final String TABLE_NAME = "messages";
+
+    /**
+     * Content URI for retrieving messages (content://co.tinode.tindroid/messages)
+     */
+    static final Uri CONTENT_URI = Uri.withAppendedPath(BaseDb.BASE_CONTENT_URI, TABLE_NAME);
 
     /**
      * Topic ID, references topics._ID
@@ -114,16 +109,6 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_TOPIC_ID + "," +
                     COLUMN_NAME_TS + " DESC)";
 
-    /**
-     * Path component for "message"-type resources..
-     */
-    private static final String PATH_MESSAGES = "messages";
-    /**
-     * URI for "messages" resource.
-     */
-    public static final Uri CONTENT_URI =
-            BASE_CONTENT_URI.buildUpon().appendPath(PATH_MESSAGES).build();
-
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_TOPIC_ID = 1;
     static final int COLUMN_IDX_USER_ID = 2;
@@ -175,9 +160,8 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_SEQ, msg.seq);
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
-            msg.id = db.insert(TABLE_NAME, null, values);
+            msg.id = db.insertOrThrow(TABLE_NAME, null, values);
             db.setTransactionSuccessful();
-            Log.d(TAG, "Inserted message " + msg.id);
         } catch (Exception ex) {
             Log.e(TAG, "Insert failed", ex);
         } finally {
@@ -187,14 +171,19 @@ public class MessageDb implements BaseColumns {
         return msg.id;
     }
 
-    static boolean markReady(SQLiteDatabase db, long msgId, Object content) {
+    static boolean updateStatusAndContent(SQLiteDatabase db, long msgId, int status, Object content) {
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_QUEUED);
+        if (status != BaseDb.STATUS_UNDEFINED) {
+            values.put(COLUMN_NAME_STATUS, status);
+        }
         if (content != null) {
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(content));
         }
 
-        return db.update(TABLE_NAME, values, _ID + "=" + msgId, null) > 0;
+        if (values.size() > 0) {
+            return db.update(TABLE_NAME, values, _ID + "=" + msgId, null) > 0;
+        }
+        return false;
     }
 
     static boolean delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
@@ -238,7 +227,7 @@ public class MessageDb implements BaseColumns {
      * @param topicId   Tinode topic ID (topics._id) to select from
      * @param pageCount number of pages to return
      * @param pageSize  number of messages per page
-     * @return cursor with the messages
+     * @return cursor with the messages.
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
         String sql = "SELECT * FROM " + TABLE_NAME +
@@ -246,6 +235,21 @@ public class MessageDb implements BaseColumns {
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
+
+        // Log.d(TAG, "Sql=[" + sql + "]");
+
+        return db.rawQuery(sql, null);
+    }
+
+    /**
+     * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
+     *
+     * @param db     database to select from;
+     * @param msgId  _id of the message to retrieve.
+     * @return cursor with the message.
+     */
+    public static Cursor getMessageById(SQLiteDatabase db, long msgId) {
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE _id=" + msgId;
 
         // Log.d(TAG, "Sql=[" + sql + "]");
 
@@ -424,7 +428,7 @@ public class MessageDb implements BaseColumns {
      * @return _id of the message at the current position.
      */
     public static long getLocalId(Cursor cursor) {
-        return cursor.getLong(0);
+        return cursor.isClosed() ? -1 : cursor.getLong(0);
     }
 
     /**
@@ -437,9 +441,8 @@ public class MessageDb implements BaseColumns {
         return cursor.getLong(0);
     }
 
-    public static class Loader extends AsyncTaskLoader<Cursor> {
+    public static class Loader extends CursorLoader {
         SQLiteDatabase mDb;
-        private Cursor mCursor;
 
         private long topicId;
         private int pageCount;
@@ -457,74 +460,6 @@ public class MessageDb implements BaseColumns {
         @Override
         public Cursor loadInBackground() {
             return query(mDb, topicId, pageCount, pageSize);
-        }
-
-        /* Runs on the UI thread */
-        @Override
-        public void deliverResult(Cursor cursor) {
-            if (isReset()) {
-                // An async query came in while the loader is stopped
-                if (cursor != null) {
-                    cursor.close();
-                }
-                return;
-            }
-            Cursor oldCursor = mCursor;
-            mCursor = cursor;
-
-            if (isStarted()) {
-                super.deliverResult(cursor);
-            }
-
-            if (oldCursor != null && oldCursor != cursor && !oldCursor.isClosed()) {
-                oldCursor.close();
-            }
-        }
-
-        /**
-         * Starts an asynchronous load of the contacts list data. When the result is ready the callbacks
-         * will be called on the UI thread. If a previous load has been completed and is still valid
-         * the result may be passed to the callbacks immediately.
-         * <p/>
-         * Must be called from the UI thread
-         */
-        @Override
-        protected void onStartLoading() {
-            if (mCursor != null) {
-                deliverResult(mCursor);
-            }
-            if (takeContentChanged() || mCursor == null) {
-                forceLoad();
-            }
-        }
-
-        /**
-         * Must be called from the UI thread
-         */
-        @Override
-        protected void onStopLoading() {
-            // Attempt to cancel the current load task if possible.
-            cancelLoad();
-        }
-
-        @Override
-        public void onCanceled(Cursor cursor) {
-            if (cursor != null && !cursor.isClosed()) {
-                cursor.close();
-            }
-        }
-
-        @Override
-        protected void onReset() {
-            super.onReset();
-
-            // Ensure the loader is stopped
-            onStopLoading();
-
-            if (mCursor != null && !mCursor.isClosed()) {
-                mCursor.close();
-            }
-            mCursor = null;
         }
     }
 }

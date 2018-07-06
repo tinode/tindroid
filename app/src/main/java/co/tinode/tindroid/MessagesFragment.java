@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
@@ -75,8 +76,6 @@ public class MessagesFragment extends Fragment
 
     private static final int MESSAGES_TO_LOAD = 20;
 
-    private static final int ASYNC_TASK_UPLOADER = 101;
-
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
 
@@ -91,6 +90,9 @@ public class MessagesFragment extends Fragment
     private LinearLayoutManager mMessageViewLayoutManager;
     private MessagesListAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
+
+    // It cannot be local.
+    @SuppressWarnings("FieldCanBeLocal")
     private UploadProgress mUploadProgress;
 
     private String mTopicName = null;
@@ -119,14 +121,27 @@ public class MessagesFragment extends Fragment
 
         final MessageActivity activity = (MessageActivity) getActivity();
 
-        mMessageViewLayoutManager = new LinearLayoutManager(activity);
+        mMessageViewLayoutManager = new LinearLayoutManager(activity) {
+            @Override
+            public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+                // This is a hack for IndexOutOfBoundsException: Inconsistency detected. Invalid view holder adapter positionViewHolder
+                // It happens when two uploads are started at the same time.
+                // See discussion here:
+                // https://stackoverflow.com/questions/31759171/recyclerview-and-java-lang-indexoutofboundsexception-inconsistency-detected-in
+                try {
+                    super.onLayoutChildren(recycler, state);
+                } catch (IndexOutOfBoundsException e) {
+                    Log.e("probe", "meet a IOOBE in RecyclerView");
+                }
+            }
+        };
         mMessageViewLayoutManager.setStackFromEnd(true);
         mMessageViewLayoutManager.setReverseLayout(true);
 
         RecyclerView ml = activity.findViewById(R.id.messages_container);
         ml.setLayoutManager(mMessageViewLayoutManager);
 
-        // Creating strong reference from this FRagment, otherwise it will be immediately garbage collected.
+        // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
         mUploadProgress = new UploadProgress();
         // This needs to be rebound on activity creation.
         FileUploader.setProgressHandler(mUploadProgress);
@@ -268,6 +283,14 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        mUploadProgress = null;
+    }
+
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_topic, menu);
@@ -361,13 +384,9 @@ public class MessagesFragment extends Fragment
                         return;
                     }
 
-                    final LoaderManager lm = activity.getSupportLoaderManager();
-                    final Loader<UploadResult> loader = lm.getLoader(ASYNC_TASK_UPLOADER);
-                    if (loader != null && !loader.isReset()) {
-                        lm.restartLoader(ASYNC_TASK_UPLOADER, args, this);
-                    } else {
-                        lm.initLoader(ASYNC_TASK_UPLOADER, args, this);
-                    }
+                    // Must use unique ID for each upload. Otherwise trouble.
+                    activity.getSupportLoaderManager().initLoader(Cache.getUniqueCounter(), args, this);
+
                     break;
                 }
             }
@@ -429,7 +448,6 @@ public class MessagesFragment extends Fragment
 
     // Send file as a link.
     public static Drafty draftyAttachment(String mimeType, String fname, String refUrl, long size) {
-        Log.d(TAG, "draftyAttachment " + refUrl);
         Drafty content = new Drafty();
         content.attachFile(mimeType, fname, refUrl, size);
         return content;
@@ -449,13 +467,11 @@ public class MessagesFragment extends Fragment
         }
 
         if (mTopic.getAccessMode().isWriter()) {
-            Log.i(TAG, "Topic is Writer " + mTopic.getName());
             ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(mMessageToSend) ? "" : mMessageToSend);
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
             mMessageToSend = null;
         } else {
-            Log.i(TAG, "Topic is NOT writer " + mTopic.getName());
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
         }
@@ -469,9 +485,10 @@ public class MessagesFragment extends Fragment
             return position;
         }
 
-        for (int i = first; i <= last; i++) {
+        for (int i = first; i <= last && !isDetached(); i++) {
             if (mMessagesAdapter.getItemId(i) == id) {
                 position = i;
+                break;
             }
         }
         return position;
@@ -492,23 +509,26 @@ public class MessagesFragment extends Fragment
             activity.getSupportLoaderManager().destroyLoader(loader.getId());
         }
 
+        // Avoid processing the same result twice;
+        if (data.processed) {
+            return;
+        } else {
+            data.processed = true;
+        }
+
         if (data.msgId > 0) {
             try {
-                mTopic.syncPending().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                mTopic.syncOne(data.msgId).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         if (activity != null && result != null) {
-                            Log.d(TAG, "onLoadFinished - onSuccess " + result.ctrl.id);
+                            // Log.d(TAG, "onLoadFinished - onSuccess " + result.ctrl.id);
                             activity.runOnUiThread(new Runnable() {
                                    @Override
                                    public void run() {
                                        int pos = findItemPositionById(data.msgId);
                                        if (pos >= 0) {
                                            runMessagesLoader();
-                                           StoredMessage m = mMessagesAdapter.getMessage(pos);
-                                           Log.d(TAG, "onLoadFinished - Item changed at " +
-                                                   data.msgId + ", status=" + m.status);
-                                           mMessagesAdapter.notifyItemChanged(pos);
                                        }
                                    }
                                }
@@ -522,7 +542,7 @@ public class MessagesFragment extends Fragment
                 Toast.makeText(activity, R.string.failed_to_send_message, Toast.LENGTH_LONG).show();
             }
         } else if (data.error != null) {
-            notifyDataSetChanged();
+            runMessagesLoader();
             Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();
         }
     }
@@ -534,6 +554,7 @@ public class MessagesFragment extends Fragment
     private static class FileUploader extends AsyncTaskLoader<UploadResult> {
         private static WeakReference<UploadProgress> sProgress;
         private final Bundle mArgs;
+        private UploadResult mResult = null;
 
         FileUploader(Activity activity, Bundle args) {
             super(activity);
@@ -546,194 +567,238 @@ public class MessagesFragment extends Fragment
 
         @Override
         public void onStartLoading() {
-            forceLoad();
+            if (mResult != null) {
+                deliverResult(mResult);
+            } else {
+                Storage store = BaseDb.getInstance().getStore();
+                // Create blank message here to avoid the crash.
+                long msgId = store.msgDraft(Cache.getTinode().getTopic(mArgs.getString("topic")), new Drafty());
+                mArgs.putLong("msgId", msgId);
+                UploadProgress p = sProgress.get();
+                if (p != null) {
+                    p.onStart(msgId);
+                }
+                forceLoad();
+            }
         }
 
+        @Nullable
         @Override
         public UploadResult loadInBackground() {
-            final UploadResult result = new UploadResult();
-            Storage store = BaseDb.getInstance().getStore();
-            final Uri uri = mArgs.getParcelable("uri");
-            if (uri == null) {
-                Log.d(TAG, "Received null URI");
-                result.error = "Null URI";
+            // Don't upload again if upload was completed already.
+            if (mResult == null) {
+                mResult = doUpload(getId(), getContext(), mArgs, sProgress);
+            }
+            return mResult;
+        }
+    }
+
+    private static Bundle getFileDetails(final Context context, Uri uri) {
+        final ContentResolver resolver = context.getContentResolver();
+        String fname = null;
+        Long fsize = 0L;
+
+        String mimeType = resolver.getType(uri);
+        if (mimeType == null) {
+            mimeType = UiUtils.getMimeType(uri);
+        }
+
+        Cursor cursor = resolver.query(uri, null, null, null, null);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+            fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+            cursor.close();
+        }
+
+        // Still no size? Try opening directly.
+        if (fsize == 0) {
+            String path = UiUtils.getPath(context, uri);
+            if (path != null) {
+                File file = new File(path);
+                if (fname == null) {
+                    fname = file.getName();
+                }
+                fsize = file.length();
+            }
+        }
+
+        Bundle result = new Bundle();
+        result.putString("mime", mimeType);
+        result.putString("name", fname);
+        result.putLong("size", fsize);
+        return result;
+    }
+
+
+    private static UploadResult doUpload(final int loaderId, final Context context, final Bundle args,
+                                 final WeakReference<UploadProgress> callbackProgress) {
+
+        final UploadResult result = new UploadResult();
+        Storage store = BaseDb.getInstance().getStore();
+
+        final int requestCode = args.getInt("requestCode");
+        final String topicName = args.getString("topic");
+        final Uri uri = args.getParcelable("uri");
+        result.msgId = args.getLong("msgId");
+
+        if (uri == null) {
+            Log.d(TAG, "Received null URI");
+            result.error = "Null URI";
+            return result;
+        }
+
+        final Topic topic = Cache.getTinode().getTopic(topicName);
+
+        Drafty content = null;
+        boolean success = false;
+        InputStream is = null;
+        ByteArrayOutputStream baos = null;
+        try {
+            int imageWidth = 0, imageHeight = 0;
+
+            Bundle fileDetails = getFileDetails(context, uri);
+            String fname = fileDetails.getString("name");
+            Long fsize = fileDetails.getLong("size");
+            String mimeType = fileDetails.getString("mime");
+
+            if (fsize == 0) {
+                Log.d(TAG, "File size is zero "+uri);
+                result.error = context.getString(R.string.invalid_file);
                 return result;
             }
 
-            final int requestCode = mArgs.getInt("requestCode");
-            final String topicName = mArgs.getString("topic");
+            if (fname == null) {
+                fname = context.getString(R.string.default_attachment_name);
+            }
 
-            final Context activity = getContext();
-            final ContentResolver resolver = getContext().getContentResolver();
-            final Topic topic = Cache.getTinode().getTopic(topicName);
+            final ContentResolver resolver = context.getContentResolver();
+            if (requestCode == ACTION_ATTACH_IMAGE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                is = resolver.openInputStream(uri);
+                // Resize image to ensure it's under the maximum in-band size.
+                Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
+                bmp = UiUtils.scaleBitmap(bmp);
+                imageWidth = bmp.getWidth();
+                imageHeight = bmp.getHeight();
+                is.close();
 
-            Drafty content = null;
-            boolean success = false;
-            InputStream is = null;
-            ByteArrayOutputStream baos = null;
-            try {
-                String fname = null;
-                Long fsize = 0L;
-                int imageWidth = 0, imageHeight = 0;
+                is = UiUtils.bitmapToStream(bmp, mimeType);
+                fsize = (long) is.available();
+            }
 
-                String mimeType = resolver.getType(uri);
-                if (mimeType == null) {
-                    mimeType = UiUtils.getMimeType(uri);
-                }
-
-                Cursor cursor = resolver.query(uri, null, null, null, null);
-                if (cursor != null) {
-                    cursor.moveToFirst();
-                    fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                    fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
-                    Log.d(TAG, "Got file data from cursor: fname=" + fname + ", size=" + fsize);
-                    cursor.close();
-                }
-
-                // Still no size? Try opening directly.
-                if (fsize == 0) {
-                    String path = UiUtils.getPath(getContext(), uri);
-                    if (path != null) {
-                        File file = new File(path);
-                        if (fname == null) {
-                            fname = file.getName();
-                        }
-                        fsize = file.length();
-                    }
-                }
-
-                if (fsize == 0) {
-                    Log.d(TAG, "File size is zero "+uri);
-                    result.error = activity.getString(R.string.invalid_file);
-                    return result;
-                }
-
-                if (fname == null) {
-                    fname = activity.getString(R.string.default_attachment_name);
-                }
-
-                if (requestCode == ACTION_ATTACH_IMAGE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
-                    Log.d(TAG, "Attaching large image size="+fsize);
+            if (fsize > MAX_ATTACHMENT_SIZE) {
+                Log.d(TAG, "File is too big, size="+fsize);
+                result.error = context.getString(R.string.attachment_too_large,
+                        UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
+            } else {
+                if (is == null) {
                     is = resolver.openInputStream(uri);
-                    // Resize image to ensure it's under the maximum in-band size.
-                    Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
-                    bmp = UiUtils.scaleBitmap(bmp);
-                    imageWidth = bmp.getWidth();
-                    imageHeight = bmp.getHeight();
-                    is.close();
-
-                    is = UiUtils.bitmapToStream(bmp, mimeType);
-                    fsize = (long) is.available();
                 }
 
-                if (fsize > MAX_ATTACHMENT_SIZE) {
-                    Log.d(TAG, "File is too big, size="+fsize);
-                    result.error = activity.getString(R.string.attachment_too_large,
-                            UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
-                } else {
-                    if (is == null) {
-                        is = resolver.openInputStream(uri);
+                if (requestCode == ACTION_ATTACH_FILE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+
+                    // Update draft with file data.
+                    store.msgDraftUpdate(topic, result.msgId, draftyAttachment(mimeType, fname, uri.toString(), -1));
+
+                    UploadProgress start = callbackProgress.get();
+                    if (start != null) {
+                        start.onStart(result.msgId);
+                        // This assignment is needed to ensure that the loader does not keep
+                        // a strong reference to activity while potentially slow upload process
+                        // is running.
+                        start = null;
                     }
 
-                    if (requestCode == ACTION_ATTACH_FILE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
-                        Log.d(TAG, "File is medium size, sending as attachment, size="+fsize);
-
-                        // Create message draft.
-                        result.msgId = store.msgDraft(topic, draftyAttachment(mimeType, fname, uri.toString(), -1));
-                        UploadProgress start = sProgress.get();
-                        if (start != null) {
-                            start.onStart(result.msgId);
-                            // This assignment is needed to ensure that the loader does not keep
-                            // a strong reference to activity while potentially slow upload process
-                            // is running.
-                            start = null;
-                        }
-
-                        // Upload then send message with a link. This is a long-running blocking call.
-                        MsgServerCtrl ctrl = Cache.getTinode().getFileUploader().upload(is, fname, mimeType, fsize,
-                                new LargeFileHelper.FileHelperProgress() {
-                                    @Override
-                                    public void onProgress(long progress, long size) {
-                                        final UploadProgress p = sProgress.get();
-                                        if (p != null) {
-                                            p.onProgress(result.msgId, progress, size);
+                    // Upload then send message with a link. This is a long-running blocking call.
+                    final LargeFileHelper uploader = Cache.getTinode().getFileUploader();
+                    MsgServerCtrl ctrl = uploader.upload(is, fname, mimeType, fsize,
+                            new LargeFileHelper.FileHelperProgress() {
+                                @Override
+                                public void onProgress(long progress, long size) {
+                                    UploadProgress p = callbackProgress.get();
+                                    if (p != null) {
+                                        if (!p.onProgress(loaderId, result.msgId, progress, size)) {
+                                            uploader.cancel();
                                         }
                                     }
-                                });
-                        success = (ctrl.code == 200);
-                        if (success) {
-                            content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
-                        }
+                                }
+                            });
+                    success = (ctrl != null && ctrl.code == 200);
+                    if (success) {
+                        content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
+                    }
+                } else {
+                    baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[16384];
+                    int len;
+                    while ((len = is.read(buffer)) > 0) {
+                        baos.write(buffer, 0, len);
+                    }
+
+                    byte[] bits = baos.toByteArray();
+                    if (requestCode == ACTION_ATTACH_FILE) {
+                        store.msgDraftUpdate(topic, result.msgId, draftyFile(mimeType, bits, fname));
                     } else {
-                        Log.d(TAG, "Attaching image or small file inline, size="+fsize);
+                        if (imageWidth == 0) {
+                            BitmapFactory.Options options = new BitmapFactory.Options();
+                            options.inJustDecodeBounds = true;
+                            InputStream bais = new ByteArrayInputStream(bits);
+                            BitmapFactory.decodeStream(bais, null, options);
+                            bais.close();
 
-                        baos = new ByteArrayOutputStream();
-                        byte[] buffer = new byte[16384];
-                        int len;
-                        while ((len = is.read(buffer)) > 0) {
-                            baos.write(buffer, 0, len);
+                            imageWidth = options.outWidth;
+                            imageHeight = options.outHeight;
                         }
-
-                        byte[] bits = baos.toByteArray();
-                        if (requestCode == ACTION_ATTACH_FILE) {
-                            result.msgId = store.msgDraft(topic, draftyFile(mimeType, bits, fname));
-                        } else {
-                            if (imageWidth == 0) {
-                                BitmapFactory.Options options = new BitmapFactory.Options();
-                                options.inJustDecodeBounds = true;
-                                InputStream bais = new ByteArrayInputStream(bits);
-                                BitmapFactory.decodeStream(bais, null, options);
-                                bais.close();
-
-                                imageWidth = options.outWidth;
-                                imageHeight = options.outHeight;
-                            }
-                            result.msgId = store.msgDraft(topic, draftyImage(mimeType, bits,
-                                    imageWidth, imageHeight, fname));
-                        }
-                        success = true;
-                        UploadProgress start = sProgress.get();
-                        if (start != null) {
-                            start.onStart(result.msgId);
-                        }
+                        store.msgDraftUpdate(topic, result.msgId,
+                                draftyImage(mimeType, bits, imageWidth, imageHeight, fname));
+                    }
+                    success = true;
+                    UploadProgress start = callbackProgress.get();
+                    if (start != null) {
+                        start.onStart(result.msgId);
                     }
                 }
-            } catch (IOException ex) {
-                Log.e(TAG, "Failed to attach file", ex);
-                result.error = ex.getMessage();
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException ignored) {}
-                }
-                if (baos != null) {
-                    try {
-                        baos.close();
-                    } catch (IOException ignored) {}
-                }
             }
-
-            if (result.msgId > 0) {
-                if (success) {
-                    // Success: mark message as ready for delivery. It's OK for content to be null.
-                    store.msgReady(topic, result.msgId, content);
-                } else {
-                    // Failure: discard draft.
-                    store.msgDiscard(topic, result.msgId);
-                    result.msgId = -1;
-                }
+        } catch (IOException | NullPointerException ex) {
+            Log.e(TAG, "Failed to attach file", ex);
+            result.error = ex.getMessage();
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ignored) {}
             }
-
-            return result;
+            if (baos != null) {
+                try {
+                    baos.close();
+                } catch (IOException ignored) {}
+            }
         }
+
+        if (result.msgId > 0) {
+            if (success) {
+                // Success: mark message as ready for delivery. If content==null it won't be saved.
+                store.msgReady(topic, result.msgId, content);
+            } else {
+                // Failure: discard draft.
+                store.msgDiscard(topic, result.msgId);
+                result.msgId = -1;
+            }
+        }
+
+        return result;
     }
 
     static class UploadResult {
         String error;
         long msgId = -1;
+        boolean processed = false;
 
         UploadResult() {
+        }
+
+        public String toString() {
+            return "msgId=" + msgId + ", error='" + error + "'";
         }
     }
 
@@ -743,35 +808,49 @@ public class MessagesFragment extends Fragment
         }
 
         void onStart(final long msgId) {
+            // Reload the cursor.
             runMessagesLoader();
         }
 
-        void onProgress(final long msgId, final long progress, final long total) {
-            // DEBUG
+        // Returns true to continue the upload, false to cancel.
+        boolean onProgress(final int loaderId, final long msgId, final long progress, final long total) {
+            // DEBUG -- slow down the upload progress.
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             // debug
 
-            final int position = findItemPositionById(msgId);
-            if (position < 0) {
-                return;
+
+            // Check for cancellation.
+            Integer oldLoaderId = mMessagesAdapter.getLoaderMapping(msgId);
+            if (oldLoaderId == null) {
+                mMessagesAdapter.addLoaderMapping(msgId, loaderId);
+            } else if (oldLoaderId != loaderId) {
+                // Loader id has changed, cancel.
+                return false;
             }
 
             Activity activity = getActivity();
             if (activity == null) {
-                return;
+                return true;
             }
 
-            final Float ratio = total > 0 ? (float) progress / total : (float) progress;
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mMessagesAdapter.notifyItemChanged(position, ratio);
+                    final int position = findItemPositionById(msgId);
+                    if (position < 0) {
+                        return;
+                    }
+                    mMessagesAdapter.notifyItemChanged(position,
+                            total > 0 ? (float) progress / total : (float) progress);
                 }
             });
+
+            return true;
         }
     }
 }

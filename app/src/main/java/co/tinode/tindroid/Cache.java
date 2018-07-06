@@ -28,6 +28,8 @@ public class Cache {
 
     private static int sVisibleCount = 0;
 
+    private static int sUniqueCounter = 100;
+
     public static Tinode getTinode() {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
@@ -49,7 +51,7 @@ public class Cache {
         return sTinode;
     }
 
-    // Invalidate and reinitialize existing cache.
+    // Invalidate existing cache.
     public static void invalidate() {
         if (sTinode != null) {
             sTinode.logout();
@@ -63,9 +65,13 @@ public class Cache {
      * @param visible true if some activity became visible
      * @return
      */
-    public static int activityVisible(boolean visible) {
+    public static int activityVisible_REMOVE(boolean visible) {
         sVisibleCount += visible ? 1 : -1;
         // Log.d(TAG, "Visible count: " + sVisibleCount);
         return sVisibleCount;
+    }
+
+    public static int getUniqueCounter() {
+        return ++sUniqueCounter;
     }
 }

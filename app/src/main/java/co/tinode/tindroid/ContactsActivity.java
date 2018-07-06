@@ -164,12 +164,14 @@ public class ContactsActivity extends AppCompatActivity implements
         return true;
     }
 
+    /*
     @Override
     public void onWindowFocusChanged(boolean focus) {
         super.onWindowFocusChanged(focus);
 
         Cache.activityVisible(focus);
     }
+    */
 
     private class MeListener extends MeTopic.MeListener<VxCard> {
 

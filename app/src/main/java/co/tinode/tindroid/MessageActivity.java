@@ -193,7 +193,7 @@ public class MessageActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 try {
-                                    mTopic.syncPending();
+                                    mTopic.syncAll();
                                 } catch (Exception ignored) {
                                 }
                             }

@@ -665,7 +665,13 @@ public class Tinode {
      * @param token device token
      */
     public void setDeviceToken(String token) {
-        mDeviceToken = token;
+        if (mDeviceToken == null) {
+            // Initial assignment of the token.
+            mDeviceToken = token;
+        } else {
+            mDeviceToken = token;
+            // TODO: send {hi} with the new token.
+        }
     }
 
     /**
@@ -1072,9 +1078,19 @@ public class Tinode {
      * @param list delete all messages with ids in this list
      * @return PromisedReply of the reply ctrl or meta message
      */
-    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delMessage(final String topicName, final List<Integer> list, final boolean hard) {
         return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard)));
+    }
+
+    /**
+     * Low-level request to delete one message from a topic. Use {@link Topic#delMessages(List, boolean)} instead.
+     *
+     * @param topicName name of the topic to inform
+     * @param seqId seqID of the message to delete.
+     * @return PromisedReply of the reply ctrl or meta message
+     */
+    public PromisedReply<ServerMessage> delMessage(final String topicName, final int seqId, final boolean hard) {
+        return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, seqId, hard)));
     }
 
     /**

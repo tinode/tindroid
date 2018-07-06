@@ -20,10 +20,10 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     public long userId;
     public int status;
 
-    public StoredMessage() {
+    StoredMessage() {
     }
 
-    public StoredMessage(MsgServerData m) {
+    StoredMessage(MsgServerData m) {
         topic = m.topic;
         head = m.head;
         from = m.from;
@@ -71,7 +71,32 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     }
 
     @Override
-    public Map<String, Object> getHeader() {
-        return head;
+    public int getSeqId() {
+        return seq;
+    }
+
+    @Override
+    public boolean isDraft() {
+        return status == BaseDb.STATUS_DRAFT;
+    }
+
+    @Override
+    public boolean isReady() {
+        return status == BaseDb.STATUS_QUEUED;
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return status == BaseDb.STATUS_DELETED_SOFT || status == BaseDb.STATUS_DELETED_HARD;
+    }
+
+    @Override
+    public boolean isDeleted(boolean hard) {
+        return hard ? status == BaseDb.STATUS_DELETED_HARD : status == BaseDb.STATUS_DELETED_SOFT;
+    }
+
+    @Override
+    public boolean isSynced() {
+        return status == BaseDb.STATUS_SYNCED;
     }
 }

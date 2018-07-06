@@ -158,7 +158,7 @@ public class LargeFileHelper {
         return result;
     }
 
-    //Try to cancel an ongoing upload or download.
+    // Try to cancel an ongoing upload or download.
     public void cancel() {
         mCancel = true;
     }
