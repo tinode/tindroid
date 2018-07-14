@@ -119,7 +119,6 @@
     <string name="address">Address</string>
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
-    <string name="permissions_list">Permissions: %1$s</string>
     <string name="close">Close</string>
 
     <string name="invitation_text">Join my group!</string>

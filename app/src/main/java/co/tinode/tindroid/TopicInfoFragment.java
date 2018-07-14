@@ -549,8 +549,7 @@ public class TopicInfoFragment extends Fragment {
                 Log.d(TAG, "Pub is null for " + sub.user);
             }
             holder.name.setText(title);
-            holder.extraInfo.setText(
-                    getString(R.string.permissions_list, sub.acs.getGiven() + "/" + sub.acs.getWant()));
+            holder.extraInfo.setText(sub.acs.getMode());
 
             int i = 0;
             UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.acs, ss.status);
