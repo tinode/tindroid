@@ -200,16 +200,28 @@ class SqlStore implements Storage {
 
     @Override
     public long msgReceived(Topic topic, Subscription sub, MsgServerData m) {
-        StoredSubscription ss = (StoredSubscription) sub.getLocal();
+        SQLiteDatabase db = mDbh.getWritableDatabase();
+        long topicId, userId;
+        StoredSubscription ss = sub != null ? (StoredSubscription) sub.getLocal() : null;
         if (ss == null) {
-           return -1;
+            Log.d(TAG, "Message from an unknown subscriber " + m.from);
+            StoredTopic st = (StoredTopic) topic.getLocal();
+            topicId = st.id;
+            userId = UserDb.getId(db, m.from);
+        } else {
+            topicId = ss.topicId;
+            userId = ss.userId;
+        }
+
+        if (topicId < 0 || userId < 0) {
+            Log.d(TAG, "Failed to save message, topicId=" + topicId + ", userId=" + userId);
+            return -1;
         }
 
         StoredMessage msg = new StoredMessage(m);
-        msg.topicId = ss.topicId;
-        msg.userId = ss.userId;
+        msg.topicId = topicId;
+        msg.userId = userId;
 
-        SQLiteDatabase db = mDbh.getWritableDatabase();
         try {
             db.beginTransaction();
 

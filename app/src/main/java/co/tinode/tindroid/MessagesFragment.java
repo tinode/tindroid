@@ -760,8 +760,10 @@ public class MessagesFragment extends Fragment
                 }
             }
         } catch (IOException | NullPointerException ex) {
-            Log.e(TAG, "Failed to attach file", ex);
             result.error = ex.getMessage();
+            if (!"cancelled".equals(result.error)) {
+                Log.e(TAG, "Failed to attach file", ex);
+            }
         } finally {
             if (is != null) {
                 try {

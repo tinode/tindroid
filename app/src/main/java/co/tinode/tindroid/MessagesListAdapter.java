@@ -275,11 +275,11 @@ public class MessagesListAdapter
         StoredMessage m = getMessage(position);
         Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
 
-        // Logic for less vertical spacing between subsequent messages from the same sender vs different senders;
-        // Cursor holds items in reverse order.
+        // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
+        // Zero item position is on the bottom of the screen.
         long nextFrom = -2;
-        if (position < getItemCount() - 1) {
-            nextFrom = getMessage(position + 1).userId;
+        if (position > 0) {
+            nextFrom = getMessage(position - 1).userId;
         }
 
         final boolean isMine = m.isMine();
