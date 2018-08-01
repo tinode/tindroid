@@ -37,6 +37,7 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.User;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -104,7 +105,7 @@ public class TopicInfoFragment extends Fragment {
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
         final TextView address = activity.findViewById(R.id.topicAddress);
         final Switch muted = activity.findViewById(R.id.switchMuted);
-        final TextView permissions = activity.findViewById(R.id.permissions);
+
         final View groupMembersCard = activity.findViewById(R.id.groupMembersCard);
         final View defaultPermissionsCard = activity.findViewById(R.id.defaultPermissionsCard);
         final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
@@ -148,8 +149,21 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
+        Acs am = mTopic.getAccessMode();
+
         if (mTopic.getTopicType() == Topic.TopicType.GRP) {
             groupMembersCard.setVisibility(View.VISIBLE);
+
+            activity.findViewById(R.id.singleUserPermissions).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.p2pPermissions).setVisibility(View.GONE);
+            TextView myPermissions = activity.findViewById(R.id.permissions);
+            myPermissions.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
+                            UiUtils.ACTION_UPDATE_SELF_SUB, false);
+                }
+            });
 
             Button button = activity.findViewById(R.id.buttonLeaveGroup);
             button.setOnClickListener(new View.OnClickListener() {
@@ -184,7 +198,8 @@ public class TopicInfoFragment extends Fragment {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS, true, null);
+                        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS,
+                                true, null);
                     }
                 });
             }
@@ -192,18 +207,37 @@ public class TopicInfoFragment extends Fragment {
             mAdapter.resetContent();
         } else {
             groupMembersCard.setVisibility(View.GONE);
+
+            activity.findViewById(R.id.singleUserPermissions).setVisibility(View.GONE);
+            activity.findViewById(R.id.p2pPermissions).setVisibility(View.VISIBLE);
+
+            TextView myPermissions = activity.findViewById(R.id.userOne);
+            final String permissionOne = mTopic.getAccessMode().getWant();
+            myPermissions.setText(permissionOne);
+            myPermissions.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    UiUtils.showEditPermissions(activity, mTopic, permissionOne, null,
+                            UiUtils.ACTION_UPDATE_SELF_SUB, true);
+                }
+            });
+
+            VxCard two = mTopic.getPub();
+            ((TextView) activity.findViewById(R.id.userTwoLabel)).setText(two != null && two.fn != null ?
+                    two.fn : mTopic.getName());
+            TextView otherPermissions = activity.findViewById(R.id.userTwo);
+            final String permissionTwo = mTopic.getSubscription(mTopic.getName()).acs.getGiven();
+            otherPermissions.setText(permissionTwo);
+            otherPermissions.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    UiUtils.showEditPermissions(activity, mTopic, permissionTwo, mTopic.getName(),
+                            UiUtils.ACTION_UPDATE_SUB, true);
+                }
+            });
         }
 
         address.setText(mTopic.getName());
-
-        Acs am = mTopic.getAccessMode();
-        permissions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getMode(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, false);
-            }
-        });
 
         if (am != null && (am.isAdmin() || am.isOwner()) && !mTopic.isP2PType()) {
             defaultPermissionsCard.setVisibility(View.VISIBLE);

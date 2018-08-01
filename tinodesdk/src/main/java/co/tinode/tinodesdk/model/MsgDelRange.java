@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * MsgDelRange is either an individual ID (hi=0 || hi==null) or a range of deleted IDs, low end inclusive (closed),
- * high-end exclusive (open): [low .. hi), e.g. 1..5 -> 1, 2, 3, 4
+ * high-end exclusive (open): [low .. hi), e.g. 1..5 &rarr; 1, 2, 3, 4
  */
 @SuppressWarnings("WeakerAccess")
 public class MsgDelRange {

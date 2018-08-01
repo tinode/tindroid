@@ -3,7 +3,7 @@ package co.tinode.tinodesdk.model;
 /**
  * Metadata update packet
  *
- * 	topic metadata, new topic & new subscriptions only
+ * 	topic metadata, new topic &amp; new subscriptions only
  *  Desc *MsgSetDesc `json:"desc,omitempty"`
  *
  *  Subscription parameters

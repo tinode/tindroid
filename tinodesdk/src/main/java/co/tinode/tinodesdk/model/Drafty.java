@@ -16,29 +16,34 @@ import java.util.regex.Pattern;
 
 
 /**
- Basic parser and formatter for very simple rich text. Mostly targeted at
- mobile use cases similar to Telegram and WhatsApp.
+ <p>Basic parser and formatter for very simple rich text. Mostly targeted at
+ mobile use cases similar to Telegram and WhatsApp.</p>
 
- Supports:
- *abc* -> <b>abc</b>
- _abc_ -> <i>abc</i>
- ~abc~ -> <del>abc</del>
- `abc` -> <tt>abc</tt>
+ <p>Supports:</p>
+ <ul>
+ <li>*abc* &rarr; <b>abc</b></li>
+ <li>_abc_ &rarr; <i>abc</i></li>
+ <li>~abc~ &rarr; <span style="text-decoration:line-through">abc</span></li>
+ <li>`abc` &rarr; <tt>abc</tt></li>
+ </ul>
 
- Nested formatting is supported, e.g. *abc _def_* -> <b>abc <i>def</i></b>
+ <p>Nested formatting is supported, e.g. *abc _def_* &rarr; <b>abc <i>def</i></b></p>
 
- URLs, @mentions, and #hashtags are extracted.
+ <p>URLs, @mentions, and #hashtags are extracted.</p>
 
- JSON data representation is similar to Draft.js raw formatting.
+ <p>JSON data representation is similar to Draft.js raw formatting.</p>
 
- Text:
+ <p>Sample text:</p>
+ <pre>
      this is *bold*, `code` and _italic_, ~strike~
      combined *bold and _italic_*
      an url: https://www.example.com/abc#fragment and another _www.tinode.co_
      this is a @mention and a #hashtag in a string
      second #hashtag
+ </pre>
 
- Sample JSON representation of the text above:
+ <p>JSON representation of the sample text above:</p>
+ <pre>
  {
     "txt":  "this is bold, code and italic, strike combined bold and italic an url: https://www.example.com/abc#fragment " +
             "and another www.tinode.co this is a @mention and a #hashtag in a string second #hashtag",
@@ -57,6 +62,7 @@ import java.util.regex.Pattern;
         { "tp":"HT", "data":{ "val":"hashtag" } }
     ]
  }
+ </pre>
  */
 
 public class Drafty implements Serializable {

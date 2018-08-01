@@ -265,7 +265,7 @@ public class PromisedReply<T> {
      * <b>after</b> thenApply is called. It can be safely called multiple times on
      * the same instance.
      *
-     * @return result of the execution (what was passed to {@link #resolve(T)})
+     * @return result of the execution (what was passed to {@link #resolve(Object)})
      * @throws Exception if the promise was rejected, throw an exception
      */
     public T getResult() throws Exception {

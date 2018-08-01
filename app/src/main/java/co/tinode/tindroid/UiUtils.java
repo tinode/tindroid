@@ -699,8 +699,10 @@ public class UiUtils {
         builder
                 .setView(editor)
                 .setTitle(R.string.edit_permissions);
-        final LinkedHashMap<Character, Integer> checks = new LinkedHashMap<>(7);
-        checks.put('O', R.string.permission_owner);
+        final LinkedHashMap<Character, Integer> checks = new LinkedHashMap<>(8);
+        if (!noOwner) {
+            checks.put('O', R.string.permission_owner);
+        }
         checks.put('J', R.string.permission_join);
         checks.put('R', R.string.permission_read);
         checks.put('W', R.string.permission_write);
@@ -745,31 +747,48 @@ public class UiUtils {
                     PromisedReply reply = null;
                     switch (what) {
                         case ACTION_UPDATE_SELF_SUB:
+                            Log.d(TAG, "Update self sub: " + newAcsStr);
                             reply = topic.updateMode(null, newAcsStr.toString());
                             break;
                         case ACTION_UPDATE_SUB:
+                            Log.d(TAG, "Update other sub: " + newAcsStr);
                             reply = topic.updateMode(uid, newAcsStr.toString());
                             break;
                         case ACTION_UPDATE_AUTH:
+                            Log.d(TAG, "Update auth: " + newAcsStr);
                             reply = topic.updateDefAcs(newAcsStr.toString(), null);
                             break;
                         case ACTION_UPDATE_ANON:
+                            Log.d(TAG, "Update anon: " + newAcsStr);
                             reply = topic.updateDefAcs(null, newAcsStr.toString());
+                            break;
+                        default:
+                            Log.d(TAG, "Unknown action " + what);
                     }
 
+                    Log.d(TAG, "Reply is " + reply);
                     if (reply != null) {
-                        ((PromisedReply<ServerMessage>) reply).thenApply(null, new PromisedReply.FailureListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                                activity.runOnUiThread(new Runnable() {
+                        ((PromisedReply<ServerMessage>) reply).thenApply(
+                                new PromisedReply.SuccessListener<ServerMessage>() {
+                                     @Override
+                                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                         Log.d(TAG, "Successful update");
+                                         return null;
+                                     }
+                                 },
+                                new PromisedReply.FailureListener<ServerMessage>() {
                                     @Override
-                                    public void run() {
-                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                        activity.runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Log.d(TAG, "Failed", err);
+                                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                        return null;
                                     }
                                 });
-                                return null;
-                            }
-                        });
                     }
                 } catch (NotConnectedException ignored) {
                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();

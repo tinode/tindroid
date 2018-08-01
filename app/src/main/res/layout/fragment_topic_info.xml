@@ -180,8 +180,7 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    >
+                    android:layout_height="wrap_content">
 
                     <TextView
                         style="@style/textPrimary"
@@ -203,6 +202,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/singleUserPermissions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
@@ -223,8 +223,66 @@
                         android:typeface="monospace"
                         android:background="@drawable/dotted_line"
                         tools:text="RWPD"/>
-
                 </LinearLayout>
+
+                <RelativeLayout
+                    android:id="@+id/p2pPermissions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/permissionTitle"
+                        style="@style/textPrimary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/permissions"
+                        tools:text="Permissions" />
+
+                    <TextView
+                        style="@style/textPrimary"
+                        android:layout_below="@id/permissionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/yourPermissions"/>
+
+                    <TextView
+                        android:id="@+id/userOne"
+                        style="@style/textPrimarySmall"
+                        android:layout_below="@id/permissionTitle"
+                        android:layout_alignParentEnd="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textIsSelectable="true"
+                        android:typeface="monospace"
+                        android:background="@drawable/dotted_line"
+                        tools:text="RWPD"/>
+
+                    <TextView
+                        android:id="@+id/userTwoLabel"
+                        style="@style/textPrimary"
+                        android:layout_below="@id/userOne"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text=""
+                        tools:text="John Doe"/>
+
+                    <TextView
+                        android:id="@+id/userTwo"
+                        style="@style/textPrimarySmall"
+                        android:layout_below="@id/userOne"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:fontFamily="monospace"
+                        android:textIsSelectable="true"
+                        android:typeface="monospace"
+                        android:background="@drawable/dotted_line"
+                        tools:text="RWPD"/>
+
+                </RelativeLayout>
             </LinearLayout>
         </android.support.v7.widget.CardView>
 
@@ -259,6 +317,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginStart="16dp"
                         android:text="@string/auth_permissions"/>
 
                     <TextView
@@ -283,6 +342,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginStart="16dp"
                         android:text="@string/anon_permissions"/>
 
                     <TextView
