@@ -47,12 +47,4 @@ public class MsgServerPres {
             return What.UNKNOWN;
         }
     }
-
-    public class AccessChange {
-        public String want;
-        public String given;
-
-        public AccessChange() {
-        }
-    }
 }

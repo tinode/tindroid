@@ -12,20 +12,15 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 @JsonInclude(NON_DEFAULT)
 public class MetaGetSub {
+    public String user;
     public Date ims;
     public Integer limit;
 
     public MetaGetSub() {}
 
-    public MetaGetSub(Date ims, Integer limit) {
+    public MetaGetSub(String user, Date ims, Integer limit) {
+        this.user = user;
         this.ims = ims;
         this.limit = limit;
     }
-
-    /*
-    @Override
-    public String toString() {
-        return "ims=" + ims + ", limit=" + limit;
-    }
-    */
 }

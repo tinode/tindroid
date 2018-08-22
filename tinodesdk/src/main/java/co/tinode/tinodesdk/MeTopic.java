@@ -3,22 +3,19 @@ package co.tinode.tinodesdk;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.MsgServerData;
-import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
-import co.tinode.tinodesdk.model.VCard;
 
 /**
  * MeTopic manages contact list. MeTopic::Private is unused.
@@ -122,6 +119,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
                 case OFF: // topic went offline
                     topic.setOnline(false);
+                    topic.setLastSeen(new Date());
                     break;
 
                 case MSG: // new message received
@@ -129,7 +127,13 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     break;
 
                 case UPD: // pub/priv updated
-                    this.getMeta(getMetaGetBuilder().withGetSub().build());
+                    this.getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                    break;
+
+                case ACS: // access mode changed
+                    if (topic.updateAccessMode(pres.dacs) && mStore != null) {
+                        mStore.topicUpdate(topic);
+                    }
                     break;
 
                 case UA: // user agent changed
@@ -156,7 +160,13 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         } else {
             switch (what) {
                 case ACS:
-                    this.getMeta(getMetaGetBuilder().withGetSub().build());
+                    Acs acs = new Acs();
+                    acs.update(pres.dacs);
+                    if (acs.isModeDefined()) {
+                        getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                    } else {
+                        Log.d(TAG, "Unexpected access mode in presence: '" + pres.dacs.want + "'/'" + pres.dacs.given + "'");
+                    }
                     break;
                 default:
                     Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);

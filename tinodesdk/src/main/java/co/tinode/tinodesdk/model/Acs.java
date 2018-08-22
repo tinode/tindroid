@@ -35,6 +35,16 @@ public class Acs implements Serializable {
         }
     }
 
+    public Acs(AccessChange ac) {
+        if (ac != null) {
+            given = new AcsHelper("N");
+            given.update(ac.given);
+            want = new AcsHelper("N");
+            want.update(ac.want);
+            mode = AcsHelper.and(want, given);
+        }
+    }
+
     private void assign(String g, String w, String m) {
         this.given = new AcsHelper(g);
         this.want = new AcsHelper(w);
@@ -115,6 +125,34 @@ public class Acs implements Serializable {
         return change > 0;
     }
 
+    public boolean update(AccessChange ac) {
+        int change = 0;
+        if (ac != null) {
+            if (ac.given != null) {
+                if (given != null) {
+                    change += given.update(ac.given) ? 1 : 0;
+                } else {
+                    given = new AcsHelper(ac.given);
+                    change += given.isDefined() ? 1 : 0;
+                }
+            }
+            if (ac.want != null) {
+                if (want != null) {
+                    change += want.update(ac.want) ? 1 : 0;
+                } else {
+                    want = new AcsHelper(ac.want);
+                    change += want.isDefined() ? 1 : 0;
+                }
+            }
+            AcsHelper m2 = AcsHelper.and(want, given);
+            if (m2 != null) {
+                change += m2.equals(mode) ? 0 : 1;
+                mode = m2;
+            }
+        }
+        return change > 0;
+    }
+
     public boolean equals(Acs am) {
         return am != null && mode.equals(am.mode) && want.equals(am.want) && mode.equals(am.mode);
     }
@@ -159,5 +197,11 @@ public class Acs implements Serializable {
     }
     public boolean isInvalid() {
         return mode.isInvalid();
+    }
+
+    @Override
+    public String toString() {
+        return "G:" + (given != null ? given.toString() : "null") +
+                ";W:"+ (want != null ? want.toString() : "null");
     }
 }

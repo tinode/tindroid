@@ -86,9 +86,9 @@ public class MsgGetMeta {
         buildWhat();
     }
 
-    public void setSub(Date ims, Integer limit) {
-        if (ims != null || limit != null) {
-            sub = new MetaGetSub(ims, limit);
+    public void setSub(String user, Date ims, Integer limit) {
+        if (user!= null || ims != null || limit != null) {
+            sub = new MetaGetSub(user, ims, limit);
         }
         mSet |= SUB_SET;
         buildWhat();

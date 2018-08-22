@@ -2,6 +2,7 @@ package co.tinode.tinodesdk;
 
 import android.util.Log;
 
+import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Defacs;
@@ -456,6 +457,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     public void setAccessMode(Acs mode) {
         mDesc.acs = mode;
     }
+    public boolean updateAccessMode(AccessChange ac) {
+        if (mDesc.acs == null) {
+            mDesc.acs = new Acs();
+        }
+        return mDesc.acs.update(ac);
+    }
+
     //public void setAccessMode(String mode) {
     //    mDesc = new Acs(mode);
     //}
@@ -531,6 +539,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
     protected void setLastSeen(Date when, String ua) {
         mLastSeen = new LastSeen(when, ua);
+    }
+    protected void setLastSeen(Date when) {
+        if (mLastSeen != null) {
+            mLastSeen.when = when;
+        } else {
+            mLastSeen = new LastSeen(when);
+        }
     }
 
     /**
@@ -679,6 +694,17 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
     }
 
+    protected PromisedReply<ServerMessage> publish(final Drafty content, final long msgId) throws Exception {
+        return mTinode.publish(getName(), content.isPlain() ? content.toString() : content).thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        processDelivery(result.ctrl, msgId);
+                        return null;
+                    }
+                }, null);
+    }
+
     /**
      * Publish message to a topic. It will attempt to publish regardless of subscription status.
      *
@@ -687,7 +713,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
-    public PromisedReply<ServerMessage> publish(Drafty content) throws Exception {
+    public PromisedReply<ServerMessage> publish(final Drafty content) throws Exception {
         final long id;
         if (mStore != null) {
             id = mStore.msgSend(this, content);
@@ -696,21 +722,15 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
 
         if (mAttached) {
-            return mTinode.publish(getName(), content.isPlain() ? content.toString() : content).thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            processDelivery(result.ctrl, id);
-                            return null;
-                        }
-                    }, null);
+            return publish(content, id);
+        } else {
+            return subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                    return publish(content, id);
+                }
+            }, null);
         }
-
-        if (mTinode.isConnected()) {
-            throw new NotSubscribedException();
-        }
-
-        throw new NotConnectedException();
     }
 
     /**
@@ -1453,40 +1473,45 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
     }
 
-    protected void routeMetaSub(MsgServerMeta<DP,DR,SP,SR> meta) {
+    protected void processSub(Subscription<SP,SR> newsub) {
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
-        for (Subscription<SP,SR> newsub : meta.sub) {
-            Subscription<SP,SR> sub;
 
-            if (newsub.deleted != null) {
+        Subscription<SP,SR> sub;
+
+        if (newsub.deleted != null) {
+            if (mStore != null) {
+                mStore.subDelete(this, newsub);
+            }
+            removeSubFromCache(newsub);
+
+            sub = newsub;
+        } else {
+            sub = getSubscription(newsub.user);
+            if (sub != null) {
+                sub.merge(newsub);
                 if (mStore != null) {
-                    mStore.subDelete(this, newsub);
+                    mStore.subUpdate(this, sub);
                 }
-                removeSubFromCache(newsub);
-
-                sub = newsub;
             } else {
-                sub = getSubscription(newsub.user);
-                if (sub != null) {
-                    sub.merge(newsub);
-                    if (mStore != null) {
-                        mStore.subUpdate(this, sub);
-                    }
-                } else {
-                    sub = newsub;
-                    addSubToCache(sub);
-                    if (mStore != null) {
-                        mStore.subAdd(this, sub);
-                    }
+                sub = newsub;
+                addSubToCache(sub);
+                if (mStore != null) {
+                    mStore.subAdd(this, sub);
                 }
-
-                mTinode.updateUser(sub);
             }
 
-            if (mListener != null) {
-                mListener.onMetaSub(sub);
-            }
+            mTinode.updateUser(sub);
+        }
+
+        if (mListener != null) {
+            mListener.onMetaSub(sub);
+        }
+    }
+
+    protected void routeMetaSub(MsgServerMeta<DP,DR,SP,SR> meta) {
+        for (Subscription<SP,SR> newsub : meta.sub) {
+            processSub(newsub);
         }
 
         if (mListener != null) {
@@ -1533,14 +1558,55 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
     protected void routePres(MsgServerPres pres) {
         MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
+        Subscription<SP,SR> sub;
+        switch (what) {
+            case ON:
+            case OFF:
+                sub = getSubscription(pres.src);
+                if (sub != null) {
+                    sub.online = (what == MsgServerPres.What.ON);
+                }
+                break;
 
-        if (what == MsgServerPres.What.ON || what == MsgServerPres.What.OFF) {
-            Subscription sub = getSubscription(pres.src);
-            if (sub != null) {
-                sub.online = (what == MsgServerPres.What.ON);
-            }
-        } else if (what == MsgServerPres.What.DEL) {
-            routeMetaDel(pres.clear, pres.delseq);
+            case DEL:
+                routeMetaDel(pres.clear, pres.delseq);
+                break;
+
+            case ACS:
+                sub = getSubscription(pres.src);
+                Log.d(TAG, "sub is " + sub);
+                if (sub == null) {
+                    Acs acs = new Acs();
+                    acs.update(pres.dacs);
+                    if (acs.isModeDefined()) {
+                        getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                    }
+                } else {
+                    // Update to an existing subscription.
+                    sub.updateAccessMode(pres.dacs);
+                    if (sub.user.equals(mTinode.getMyId())) {
+                        if (updateAccessMode(pres.dacs) && mStore != null) {
+                            mStore.topicUpdate(this);
+                        }
+                    }
+                    Log.d(TAG, "sub.acs = " + sub.acs.toString());
+                    // User left topic.
+                    if (!sub.acs.isModeDefined()) {
+                        Log.d(TAG, "sub.acs NOT DEFINED");
+                        if (isP2PType()) {
+                            Log.d(TAG, "P2P, calling leave()");
+                            // If the second user unsubscribed from the topic, then the topic is no longer usable.
+                            try {
+                                leave();
+                            } catch (Exception ignored) { }
+                        }
+                        sub.deleted = new Date();
+                        processSub(sub);
+                    }
+                }
+                break;
+            default:
+                Log.d(TAG, "Unknown presence update: " + pres.what);
         }
 
         if (mListener != null) {
@@ -1550,7 +1616,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
     protected void routeInfo(MsgServerInfo info) {
         if (!info.what.equals(Tinode.NOTE_KP)) {
-            Subscription sub = getSubscription(info.from);
+            Subscription<SP,SR> sub = getSubscription(info.from);
             if (sub != null) {
                 switch (info.what) {
                     case Tinode.NOTE_RECV:
@@ -1689,13 +1755,21 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
             return withGetDesc(topic.getUpdated());
         }
 
-        public MetaGetBuilder withGetSub(Date ims, Integer limit) {
-            meta.setSub(ims, limit);
+        public MetaGetBuilder withGetSub(String user, Date ims, Integer limit) {
+            meta.setSub(user, ims, limit);
             return this;
         }
 
+        public MetaGetBuilder withGetSub(Date ims, Integer limit) {
+            return withGetSub(null, ims, limit);
+        }
+
         public MetaGetBuilder withGetSub() {
-            return withGetSub(topic.getSubsUpdated(), null);
+            return withGetSub(null, topic.getSubsUpdated(), null);
+        }
+
+        public MetaGetBuilder withGetSub(String user) {
+            return withGetSub(user, topic.getSubsUpdated(), null);
         }
 
         public MetaGetBuilder withGetDel(Integer since, Integer limit) {

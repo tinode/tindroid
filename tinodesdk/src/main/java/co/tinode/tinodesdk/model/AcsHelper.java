@@ -190,7 +190,7 @@ public class AcsHelper implements Serializable {
      *
      * @param val value to change.
      * @param umode change to the value, '+' or '-' followed by the letter(s) being set or unset,
-     *              or an explicit new value.
+     *              or an explicit new value: "+JS-WR" or just "JSA"
      * @return updated value.
      */
     private static Integer update(Integer val, String umode) {
@@ -227,8 +227,8 @@ public class AcsHelper implements Serializable {
             val = val0;
 
         } else {
-            m0 = decode(umode);
-            if (m0 == MODE_INVALID) {
+            val = decode(umode);
+            if (val == MODE_INVALID) {
                 throw new IllegalArgumentException();
             }
         }

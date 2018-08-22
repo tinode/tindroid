@@ -8,6 +8,7 @@ import java.util.Date;
 
 import co.tinode.tinodesdk.LocalData;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.User;
 
 /**
  * Subscription to topic.
@@ -140,6 +141,12 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
         return changed > 0;
     }
 
+    public void updateAccessMode(AccessChange ac) {
+        if (acs == null) {
+            acs = new Acs();
+        }
+        acs.update(ac);
+    }
     @Override
     @JsonIgnore
     public void setLocal(Payload value) {
