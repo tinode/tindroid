@@ -25,8 +25,6 @@ A [debug APK](https://storage.googleapis.com/tinode.co/tindroid.apk) is provided
 
 ## Does not work yet:
 
-* Deleting messages.
-* Video and audio is not handled inline.
 * No end-to-end encryption.
 
 ## Dependencies on the SDK side (otherwise plain Java):
