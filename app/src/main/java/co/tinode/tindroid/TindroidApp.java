@@ -12,10 +12,11 @@ import co.tinode.tinodesdk.Tinode;
 public class TindroidApp extends Application {
 
     private static TindroidApp sContext;
+    // The Tinode cache is linked from here so it's never garbage collected.
+    @SuppressWarnings("unused, FieldCanBeLocal")
     private static Tinode sTinodeCache;
 
     public TindroidApp() {
-        Log.d("TindroidApp", "INSTANTIATED");
         sContext = this;
     }
 

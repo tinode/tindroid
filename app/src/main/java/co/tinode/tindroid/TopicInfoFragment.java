@@ -157,6 +157,7 @@ public class TopicInfoFragment extends Fragment {
             activity.findViewById(R.id.singleUserPermissions).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.p2pPermissions).setVisibility(View.GONE);
             TextView myPermissions = activity.findViewById(R.id.permissions);
+            myPermissions.setText(mTopic.getAccessMode().getWant());
             myPermissions.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -212,12 +213,11 @@ public class TopicInfoFragment extends Fragment {
             activity.findViewById(R.id.p2pPermissions).setVisibility(View.VISIBLE);
 
             TextView myPermissions = activity.findViewById(R.id.userOne);
-            final String permissionOne = mTopic.getAccessMode().getWant();
-            myPermissions.setText(permissionOne);
+            myPermissions.setText(mTopic.getAccessMode().getWant());
             myPermissions.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    UiUtils.showEditPermissions(activity, mTopic, permissionOne, null,
+                    UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
                             UiUtils.ACTION_UPDATE_SELF_SUB, true);
                 }
             });

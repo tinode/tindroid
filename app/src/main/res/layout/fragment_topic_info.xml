@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:descendantFocusability="afterDescendants"
     tools:context="co.tinode.tindroid.TopicInfoFragment">
 
     <LinearLayout
@@ -219,9 +220,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="monospace"
-                        android:textIsSelectable="true"
+                        android:textIsSelectable="false"
                         android:typeface="monospace"
                         android:background="@drawable/dotted_line"
+                        android:focusable="true"
+                        android:focusableInTouchMode="false"
+                        android:clickable="true"
                         tools:text="RWPD"/>
                 </LinearLayout>
 
@@ -254,9 +258,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="monospace"
-                        android:textIsSelectable="true"
+                        android:textIsSelectable="false"
                         android:typeface="monospace"
                         android:background="@drawable/dotted_line"
+                        android:focusable="true"
+                        android:focusableInTouchMode="false"
+                        android:clickable="true"
                         tools:text="RWPD"/>
 
                     <TextView
@@ -277,9 +284,12 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:fontFamily="monospace"
-                        android:textIsSelectable="true"
+                        android:textIsSelectable="false"
                         android:typeface="monospace"
                         android:background="@drawable/dotted_line"
+                        android:focusable="true"
+                        android:focusableInTouchMode="false"
+                        android:clickable="true"
                         tools:text="RWPD"/>
 
                 </RelativeLayout>
@@ -326,9 +336,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="monospace"
-                        android:textIsSelectable="true"
+                        android:textIsSelectable="false"
                         android:typeface="monospace"
                         android:background="@drawable/dotted_line"
+                        android:focusable="true"
+                        android:focusableInTouchMode="false"
+                        android:clickable="true"
                         tools:text="RWPD"/>
 
                 </LinearLayout>
@@ -351,9 +364,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="monospace"
-                        android:textIsSelectable="true"
+                        android:textIsSelectable="false"
                         android:typeface="monospace"
                         android:background="@drawable/dotted_line"
+                        android:focusable="true"
+                        android:focusableInTouchMode="false"
+                        android:clickable="true"
                         tools:text="RWPD"/>
 
                 </LinearLayout>

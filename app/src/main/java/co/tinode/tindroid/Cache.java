@@ -62,18 +62,6 @@ public class Cache {
         }
     }
 
-    /**
-     * Keep counter of visible activities
-     *
-     * @param visible true if some activity became visible
-     * @return
-     */
-    public static int activityVisible_REMOVE(boolean visible) {
-        sVisibleCount += visible ? 1 : -1;
-        // Log.d(TAG, "Visible count: " + sVisibleCount);
-        return sVisibleCount;
-    }
-
     public static int getUniqueCounter() {
         return ++sUniqueCounter;
     }
