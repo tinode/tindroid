@@ -18,6 +18,7 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -318,10 +319,20 @@ public class ContactListFragment extends ListFragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Receive updates when the Contacts db is changed
-        getActivity().getContentResolver().registerContentObserver(ContactsQuery.CONTENT_URI, true, mContactsObserver);
-        // Refresh data
-        getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        try {
+            // Receive updates when the Contacts db is changed
+            activity.getContentResolver().registerContentObserver(ContactsQuery.CONTENT_URI, true, mContactsObserver);
+            // Refresh data
+            getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+        } catch (SecurityException ex) {
+            Log.d(TAG, "Missing permission", ex);
+        }
     }
 
     @Override

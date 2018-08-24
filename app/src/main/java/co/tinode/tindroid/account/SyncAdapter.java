@@ -114,7 +114,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 // the address book but as invisible contacts (members of invisible group)
                 Collection<Subscription<VxCard,?>> updated = new ArrayList<>();
                 for (Subscription<VxCard,?> sub : pkt.meta.sub) {
-                    Log.d(TAG, "updating contact, user=" + sub.user);
                     if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
                         //Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
                         updated.add(sub);
