@@ -144,6 +144,11 @@ public class LoginActivity extends AppCompatActivity {
             if (!UiUtils.checkPermission(this, Manifest.permission.WRITE_CONTACTS)) {
                 permissions.add(Manifest.permission.WRITE_CONTACTS);
             }
+
+            // Prevent requesting permission if the requested list is empty
+            if (permissions.isEmpty())
+                return;
+
             ActivityCompat.requestPermissions(this,
                     permissions.toArray(new String[]{}), PERMISSIONS_REQUEST_ID);
         }
