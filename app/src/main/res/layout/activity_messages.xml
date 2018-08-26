@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MessageActivity">
 
-    <include layout="@layout/toolbar" />
+    <include
+        android:id="@+id/messages_toolbar"
+        layout="@layout/toolbar" />
 
     <FrameLayout
         android:id="@+id/contentFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/messages_toolbar"
         tools:layout="@layout/fragment_messages" />
 
-</LinearLayout>
+    <ProgressBar
+        android:id="@+id/messages_progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone"/>
+
+</RelativeLayout>

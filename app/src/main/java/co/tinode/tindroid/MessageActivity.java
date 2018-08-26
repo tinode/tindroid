@@ -22,6 +22,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.File;
@@ -76,11 +77,14 @@ public class MessageActivity extends AppCompatActivity {
     private DownloadManager mDownloadMgr = null;
     private long mDownloadId = -1;
 
+    private ProgressBar mProgressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages);
 
+        mProgressBar = findViewById(R.id.messages_progress_bar);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar ab = getSupportActionBar();
@@ -109,6 +113,8 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
+
+        setProgressIndicator(true);
     }
 
     @Override
@@ -209,7 +215,9 @@ public class MessageActivity extends AppCompatActivity {
                 });
             } catch (NotConnectedException ignored) {
                 Log.d(TAG, "Offline mode, ignore");
+                setProgressIndicator(false);
             } catch (Exception ex) {
+                setProgressIndicator(false);
                 Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "something went wrong", ex);
             }
@@ -371,6 +379,23 @@ public class MessageActivity extends AppCompatActivity {
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fname));
     }
 
+    /**
+     * Show progress indicator based on current status
+     * @param active should be true to show progress indicator
+     */
+    public void setProgressIndicator(final boolean active) {
+        Log.d(TAG, "setProgressIndicator() called with: active = [" + active + "]");
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mProgressBar.setVisibility(active ? View.VISIBLE : View.GONE);
+            }
+        });
+    }
+
     BroadcastReceiver onComplete=new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction()) &&
@@ -474,6 +499,7 @@ public class MessageActivity extends AppCompatActivity {
                     }
                 }
             });
+            setProgressIndicator(false);
         }
 
         @Override
