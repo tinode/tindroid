@@ -167,6 +167,7 @@ public class MessageActivity extends AppCompatActivity {
 
         if (!mTopic.isAttached()) {
             try {
+                setProgressIndicator(true);
                 mTopic.subscribe(null,
                         mTopic.getMetaGetBuilder()
                                 .withGetDesc()
@@ -182,6 +183,7 @@ public class MessageActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                setProgressIndicator(false);
                                 MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                                         .findFragmentByTag(FRAGMENT_MESSAGES);
                                 fragmsg.topicSubscribed();
@@ -203,13 +205,16 @@ public class MessageActivity extends AppCompatActivity {
                 }, new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        setProgressIndicator(false);
                         showFragment(FRAGMENT_INVALID, false, null);
                         return null;
                     }
                 });
             } catch (NotConnectedException ignored) {
                 Log.d(TAG, "Offline mode, ignore");
+                setProgressIndicator(false);
             } catch (Exception ex) {
+                setProgressIndicator(false);
                 Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "something went wrong", ex);
             }
@@ -369,6 +374,27 @@ public class MessageActivity extends AppCompatActivity {
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setVisibleInDownloadsUi(true)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fname));
+    }
+
+    /**
+     * Show progress indicator based on current status
+     * @param active should be true to show progress indicator
+     */
+    public void setProgressIndicator(final boolean active) {
+        Log.d(TAG, "setProgressIndicator() called with: active = [" + active + "]");
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                MessagesFragment fragMsg = (MessagesFragment) getSupportFragmentManager()
+                        .findFragmentByTag(FRAGMENT_MESSAGES);
+                if (fragMsg != null) {
+                    fragMsg.setProgressIndicator(active);
+                }
+            }
+        });
     }
 
     BroadcastReceiver onComplete=new BroadcastReceiver() {

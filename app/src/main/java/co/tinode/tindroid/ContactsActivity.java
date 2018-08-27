@@ -8,14 +8,16 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -108,22 +110,43 @@ public class ContactsActivity extends AppCompatActivity implements
         if (!me.isAttached()) {
             try {
                 Log.d(TAG, "Trying to subscribe to me");
+                setProgressIndicator(true);
                 me.subscribe(null, me
                         .getMetaGetBuilder()
                         .withGetDesc()
                         .withGetSub()
                         .withGetData()
-                        .build());
+                        .build())
+                        .thenApply(new PromisedReply.SuccessListener() {
+                            @Override
+                            public PromisedReply onSuccess(Object result) throws Exception {
+                                Log.d(TAG, "onSuccess() called with: result = [" + result + "]");
+                                setProgressIndicator(false);
+                                return null;
+                            }
+                        }, new PromisedReply.FailureListener() {
+                            @Override
+                            public PromisedReply onFailure(Exception err) throws Exception {
+                                Log.d(TAG, "onFailure() called with: err = [" + err + "]");
+                                setProgressIndicator(false);
+                                return null;
+                            }
+                        });
             } catch (NotSynchronizedException ignored) {
+                setProgressIndicator(false);
                 /* */
             } catch (NotConnectedException ignored) {
                 /* offline - ignored */
+                setProgressIndicator(false);
                 Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
             } catch (Exception err) {
                 Log.i(TAG, "Subscription failed", err);
+                setProgressIndicator(false);
                 Toast.makeText(this,
                         "Failed to attach", Toast.LENGTH_LONG).show();
             }
+        } else {
+            Log.d(TAG, "onResume() called: topic is attached");
         }
     }
 
@@ -154,6 +177,26 @@ public class ContactsActivity extends AppCompatActivity implements
         }
     }
 
+    /**
+     * Show progress indicator based on current status
+     * @param active should be true to show progress indicator
+     */
+    public void setProgressIndicator(final boolean active) {
+        Log.d(TAG, "setProgressIndicator() called with: active = [" + active + "]");
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ProgressBar progressBar = findViewById(R.id.toolbar_progress_bar);
+                if (progressBar != null) {
+                    progressBar.setVisibility(active ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
+    }
+
     protected ChatListAdapter getChatListAdapter() {
         return mChatListAdapter;
     }
@@ -182,6 +225,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onPres(MsgServerPres pres) {
+            Log.d(TAG, "onPres() called with: pres = [" + pres + "]");
             if (pres.what.equals("msg")) {
                 datasetChanged();
             } else if (pres.what.equals("off") || pres.what.equals("on")) {
@@ -191,6 +235,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
+            Log.d(TAG, "onMetaSub() called with: sub = [" + sub + "]");
             if (sub.pub != null) {
                 sub.pub.constructBitmap();
             }
@@ -198,6 +243,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
+            Log.d(TAG, "onMetaDesc() called with: desc = [" + desc + "]");
             if (desc.pub != null) {
                 desc.pub.constructBitmap();
             }
@@ -205,12 +251,13 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onSubsUpdated() {
-            Log.d(TAG, "onSubsUpdated: datasetChanged");
+            Log.d(TAG, "onSubsUpdated() called");
             datasetChanged();
         }
 
         @Override
         public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
+            Log.d(TAG, "onContUpdate() called with: sub = [" + sub + "]");
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
         }

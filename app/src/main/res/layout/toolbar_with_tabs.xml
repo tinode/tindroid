@@ -12,7 +12,16 @@
         android:background="?attr/colorPrimary"
         android:contentInsetStartWithNavigation="4dp"
         app:contentInsetStartWithNavigation="4dp"
-        app:popupTheme="@style/AppTheme.PopupOverlay"/>
+        app:popupTheme="@style/AppTheme.PopupOverlay">
+
+        <ProgressBar
+            android:id="@+id/toolbar_progress_bar"
+            android:layout_width="24dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="16dp"
+            android:visibility="gone" />
+
+    </android.support.v7.widget.Toolbar>
 
     <android.support.design.widget.TabLayout
         android:id="@+id/tabsContacts"

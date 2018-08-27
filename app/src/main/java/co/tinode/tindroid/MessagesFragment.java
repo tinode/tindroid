@@ -38,23 +38,18 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
-
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -549,6 +544,13 @@ public class MessagesFragment extends Fragment
 
     @Override
     public void onLoaderReset(@NonNull Loader<UploadResult> loader) {
+    }
+
+    public void setProgressIndicator(boolean active) {
+        if (!isAdded()) {
+            return;
+        }
+        mRefresher.setRefreshing(active);
     }
 
     private static class FileUploader extends AsyncTaskLoader<UploadResult> {
