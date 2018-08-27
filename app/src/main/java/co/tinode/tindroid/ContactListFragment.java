@@ -769,7 +769,7 @@ public class ContactListFragment extends ListFragment {
             }
 
             // Clear the icon then load the thumbnail from photoUri in a background worker thread
-            LetterTileDrawable tile = new LetterTileDrawable(getResources())
+            LetterTileDrawable tile = new LetterTileDrawable(requireContext())
                     .setIsCircular(true)
                     .setLetterAndColor(displayName, line2)
                     .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON);

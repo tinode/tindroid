@@ -53,17 +53,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.android.gms.common.util.IOUtils;
 import com.pchmn.materialchips.model.Chip;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -182,7 +178,7 @@ public class UiUtils {
         if (avatar != null) {
             avatarDrawable = new RoundImageDrawable(avatar);
         } else {
-            avatarDrawable = new LetterTileDrawable(activity.getResources())
+            avatarDrawable = new LetterTileDrawable(activity)
                     .setLetterAndColor(name, uid)
                     .setContactTypeAndColor(Topic.getTopicTypeByName(uid) == Topic.TopicType.P2P ?
                             LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP);
@@ -507,7 +503,7 @@ public class UiUtils {
         if (bmp != null) {
             icon.setImageDrawable(new RoundImageDrawable(bmp));
         } else {
-            LetterTileDrawable drawable = new LetterTileDrawable(context.getResources());
+            LetterTileDrawable drawable = new LetterTileDrawable(context);
             drawable.setContactTypeAndColor(
                     Topic.getTopicTypeByName(address) == Topic.TopicType.P2P ?
                             LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP)
