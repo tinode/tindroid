@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Tindroid</string>
     <string name="app_name_full">Tindroid Messenger</string>
-    <string name="app_version">Version 0.15</string>
+    <string name="app_version">Version</string>
     <string name="copyright">© 2014 – 2018 Tinode</string>
     <string name="tinode">Tinode</string>
 

@@ -7,8 +7,9 @@ android {
         applicationId "co.tinode.tindroid"
         minSdkVersion 19
         targetSdkVersion 27
-        versionCode 1
-        versionName "1.0"
+
+        versionCode 150500
+        versionName "0.15.5"
     }
 
     buildTypes {
