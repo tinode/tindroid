@@ -22,7 +22,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.File;
@@ -77,14 +76,11 @@ public class MessageActivity extends AppCompatActivity {
     private DownloadManager mDownloadMgr = null;
     private long mDownloadId = -1;
 
-    private ProgressBar mProgressBar;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages);
 
-        mProgressBar = findViewById(R.id.messages_progress_bar);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar ab = getSupportActionBar();
@@ -113,8 +109,6 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
-
-        setProgressIndicator(true);
     }
 
     @Override
@@ -173,6 +167,7 @@ public class MessageActivity extends AppCompatActivity {
 
         if (!mTopic.isAttached()) {
             try {
+                setProgressIndicator(true);
                 mTopic.subscribe(null,
                         mTopic.getMetaGetBuilder()
                                 .withGetDesc()
@@ -188,6 +183,7 @@ public class MessageActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                setProgressIndicator(false);
                                 MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                                         .findFragmentByTag(FRAGMENT_MESSAGES);
                                 fragmsg.topicSubscribed();
@@ -209,6 +205,7 @@ public class MessageActivity extends AppCompatActivity {
                 }, new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        setProgressIndicator(false);
                         showFragment(FRAGMENT_INVALID, false, null);
                         return null;
                     }
@@ -391,7 +388,11 @@ public class MessageActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mProgressBar.setVisibility(active ? View.VISIBLE : View.GONE);
+                MessagesFragment fragMsg = (MessagesFragment) getSupportFragmentManager()
+                        .findFragmentByTag(FRAGMENT_MESSAGES);
+                if (fragMsg != null) {
+                    fragMsg.setProgressIndicator(active);
+                }
             }
         });
     }
@@ -499,7 +500,6 @@ public class MessageActivity extends AppCompatActivity {
                     }
                 }
             });
-            setProgressIndicator(false);
         }
 
         @Override
