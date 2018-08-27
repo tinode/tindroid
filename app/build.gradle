@@ -8,8 +8,8 @@ android {
         minSdkVersion 19
         targetSdkVersion 27
 
-        versionCode 150500
-        versionName "0.15.5"
+        versionCode gitVersionCode()
+        versionName gitVersionName()
     }
 
     buildTypes {
@@ -27,6 +27,16 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
+}
+
+static def gitVersionCode() {
+    def process = "git rev-list --count HEAD".execute()
+    return process.text.toInteger()
+}
+
+static def gitVersionName() {
+    def process = "git describe --tags".execute()
+    return process.text.trim()
 }
 
 dependencies {
