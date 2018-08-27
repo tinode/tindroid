@@ -414,7 +414,7 @@ public class MessagesListAdapter
                         holder.mAvatar.setImageDrawable(new RoundImageDrawable(avatar));
                     } else {
                         holder.mAvatar.setImageDrawable(
-                                new LetterTileDrawable(mActivity.getResources())
+                                new LetterTileDrawable(mActivity)
                                         .setLetterAndColor(sub.pub.fn, sub.user)
                                         .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON));
                     }

@@ -37,7 +37,6 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.User;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -446,7 +445,7 @@ public class TopicInfoFragment extends Fragment {
                 avatar.setImageDrawable(new RoundImageDrawable(bmp));
             } else {
                 avatar.setImageDrawable(
-                        new LetterTileDrawable(getResources())
+                        new LetterTileDrawable(requireContext())
                                 .setIsCircular(true)
                                 .setContactTypeAndColor(
                                         mTopic.getTopicType() == Topic.TopicType.P2P ?
@@ -456,7 +455,7 @@ public class TopicInfoFragment extends Fragment {
             }
         } else {
             avatar.setImageDrawable(
-                    new LetterTileDrawable(getResources()).setIsCircular(true));
+                    new LetterTileDrawable(requireContext()).setIsCircular(true));
         }
 
         PrivateType priv = mTopic.getPriv();

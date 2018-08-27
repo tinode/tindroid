@@ -1,16 +1,19 @@
 package co.tinode.tindroid.widgets;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
 
 import co.tinode.tindroid.R;
@@ -60,7 +63,8 @@ public class LetterTileDrawable extends Drawable {
     private Character mLetter = null;
     private int mHashCode = 0;
 
-    public LetterTileDrawable(final Resources res) {
+    public LetterTileDrawable(final Context context) {
+        Resources res = context.getResources();
         if (sColorsLight == null) {
             sColorsLight = res.obtainTypedArray(R.array.letter_tile_colors_light);
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
@@ -68,10 +72,8 @@ public class LetterTileDrawable extends Drawable {
             sTileFontColorLight = res.getColor(R.color.letter_tile_text_color_light);
             sTileFontColorDark = res.getColor(R.color.letter_tile_text_color_dark);
             sLetterToTileRatio = 0.75f;
-            DEFAULT_PERSON_AVATAR = BitmapFactory.decodeResource(res,
-                    R.drawable.ic_person_white);
-            DEFAULT_GROUP_AVATAR = BitmapFactory.decodeResource(res,
-                    R.drawable.ic_group_white);
+            DEFAULT_PERSON_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_person_white);
+            DEFAULT_GROUP_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_group_white);
             // sPaint.setTypeface(Typeface.create(
             //         res.getString(R.string.letter_tile_letter_font_family), Typeface.NORMAL));
             sPaint.setTextAlign(Align.CENTER);
@@ -81,6 +83,28 @@ public class LetterTileDrawable extends Drawable {
         mPaint.setFilterBitmap(true);
         mPaint.setDither(true);
         mColor = sDefaultColor;
+    }
+
+    /**
+     * Attempt to create a drawable from the given vector drawable resource id, and the convert drawable
+     * to bitmap
+     * @param context
+     * @param drawableId vector drawable resource id
+     * @return
+     */
+    private static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            drawable = (DrawableCompat.wrap(drawable)).mutate();
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
     }
 
     private static Bitmap getBitmapForContactType(int contactType) {
