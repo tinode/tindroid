@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
-import android.util.Log;
 import android.util.SparseArray;
 
 import com.google.i18n.phonenumbers.NumberParseException;

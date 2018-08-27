@@ -5,22 +5,10 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.BaseColumns;
 import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-
-import org.json.JSONObject;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tinodesdk.Tinode;
@@ -225,8 +213,8 @@ public class BaseDb extends SQLiteOpenHelper {
             if (mAcc == null) {
                 mAcc = AccountDb.addOrActivateAccount(sInstance.getReadableDatabase(), uid);
             } else if (!mAcc.uid.equals(uid)) {
-                // It won't work if the account is switched on a live DB.
-                throw new IllegalStateException("Illegal account assignment");
+                AccountDb.deactivateAll(sInstance.getWritableDatabase());
+                mAcc = AccountDb.addOrActivateAccount(sInstance.getReadableDatabase(), uid);
             }
         }
     }

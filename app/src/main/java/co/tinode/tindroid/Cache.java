@@ -5,7 +5,6 @@ import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
-import java.util.HashMap;
 import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
@@ -26,15 +25,14 @@ public class Cache {
 
     private static Tinode sTinode;
 
-    private static int sVisibleCount = 0;
-
     private static int sUniqueCounter = 100;
 
     public static Tinode getTinode() {
         if (sTinode == null) {
             Log.d(TAG, "Tinode instantiated");
 
-            sTinode = new Tinode("Tindroid/0.15", API_KEY, BaseDb.getInstance().getStore(), null);
+            sTinode = new Tinode("Tindroid/" + TindroidApp.getAppVersion(), API_KEY,
+                    BaseDb.getInstance().getStore(), null);
             sTinode.setOsString(Build.VERSION.RELEASE);
 
             // Default types for parsing Public, Private fields of messages

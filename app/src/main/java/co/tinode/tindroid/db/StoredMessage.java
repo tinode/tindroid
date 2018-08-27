@@ -4,11 +4,8 @@ package co.tinode.tindroid.db;
 import android.database.Cursor;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
-import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**

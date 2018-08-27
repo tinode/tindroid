@@ -23,8 +23,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import co.tinode.tindroid.media.AvatarPhoto;
 import co.tinode.tindroid.R;
+import co.tinode.tindroid.media.AvatarPhoto;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
 

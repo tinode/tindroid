@@ -198,4 +198,7 @@
     <string name="invalid_file">Unable to attach this file</string>
     <string name="cancelled">cancelled</string>
     <string name="yourPermissions">Yours</string>
+    <string name="login_rejected">Login rejected</string>
+    <string name="email_rejected">Email rejected</string>
+    <string name="invalid_confirmation_code">Invalid code</string>
 </resources>

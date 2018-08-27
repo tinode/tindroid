@@ -1,8 +1,6 @@
 package co.tinode.tinodesdk.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Date;
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Parameter of GetMeta.

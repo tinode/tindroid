@@ -65,7 +65,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -321,19 +320,8 @@ public class UiUtils {
                                 launch = new Intent(activity, ContactsActivity.class);
                             } else {
                                 Log.d(TAG, "LoginWithSavedAccount failed due to credentials, sending to login");
-                                Object obj = null;
-                                String method = "email";
-                                if (msg.ctrl.params != null && (obj = msg.ctrl.params.get("cred")) != null &&
-                                        (Collection.class.isInstance(obj))) {
-                                    Iterator it = ((Collection) obj).iterator();
-                                    if (it.hasNext()) {
-                                        Object m = it.next();
-                                        if (m instanceof String) {
-                                            method = (String) m;
-                                        }
-                                    }
-                                }
-                                launch.putExtra("credential", method);
+                                Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
+                                launch.putExtra("credential", it.next());
                             }
                         } catch (IOException ignored) {
                             // Login failed due to network error.

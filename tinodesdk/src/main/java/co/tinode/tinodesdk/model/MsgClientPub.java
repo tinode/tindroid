@@ -2,8 +2,6 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import org.json.JSONObject;
-
 import java.util.HashMap;
 import java.util.Map;
 

@@ -1,7 +1,5 @@
 package co.tinode.tinodesdk;
 
-import android.util.Log;
-
 import java.util.Random;
 
 /**

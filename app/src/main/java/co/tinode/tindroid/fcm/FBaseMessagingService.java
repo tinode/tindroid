@@ -20,10 +20,10 @@ import java.util.Map;
 import co.tinode.tindroid.ContactsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tindroid.UiUtils;
-import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.account.ContactsManager;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 

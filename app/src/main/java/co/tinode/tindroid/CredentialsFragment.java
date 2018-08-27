@@ -25,7 +25,15 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class CredentialsFragment extends Fragment implements View.OnClickListener{
     private static final String TAG = "CredentialsFragment";
 
+    private static final String ARG_KEY = "method";
+
     public CredentialsFragment() {
+    }
+
+    public void setMethod(String method) {
+        Bundle args = new Bundle();
+        args.putString(ARG_KEY, method);
+        setArguments(args);
     }
 
     @Override
@@ -46,6 +54,14 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
 
         View fragment = inflater.inflate(R.layout.fragment_validate, container, false);
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
+        fragment.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentTransaction trx = getActivity().getSupportFragmentManager().beginTransaction();
+                trx.replace(R.id.contentFragment, new LoginFragment());
+                trx.commit();
+            }
+        });
 
         return fragment;
     }
@@ -54,8 +70,8 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
     public void onActivityCreated(Bundle unused) {
         super.onActivityCreated(unused);
 
-        Bundle args = this.getArguments();
-        String method = args.getString("credential");
+        Bundle args = getArguments();
+        String method = args.getString(ARG_KEY);
         TextView callToAction = getActivity().findViewById(R.id.call_to_validate);
         callToAction.setText(getString(R.string.validate_cred, method));
     }
@@ -84,7 +100,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
 
         try {
             Bundle args = this.getArguments();
-            String method = args.getString("credential");
+            String method = args.getString(ARG_KEY);
 
             Credential[] cred = new Credential[1];
             cred[0] = new Credential(method, null, code, null);
@@ -93,15 +109,20 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
-                        // Flip back to login screen on success;
-                        parent.runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        confirm.setEnabled(true);
-                                        FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
-                                        trx.replace(R.id.contentFragment, new LoginFragment());
-                                        trx.commit();
-                                    }
-                                });
+                        if (msg.ctrl.code >= 300) {
+                            // Credential still unconfirmed.
+                            parent.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    confirm.setEnabled(true);
+                                    ((EditText) parent.findViewById(R.id.response))
+                                            .setError(getText(R.string.invalid_confirmation_code));
+                                }
+                            });
+                        } else {
+                            // Login succeeded.
+                            UiUtils.onLoginSuccess(parent, confirm);
+                        }
                         return null;
                     }
                 },
@@ -109,6 +130,11 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         parent.reportError(err, confirm, R.string.failed_credential_confirmation);
+                        // Something went wrong like a duplicate credential or expired token.
+                        // Go back to login, nothing we can do here.
+                        FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
+                        trx.replace(R.id.contentFragment, new LoginFragment());
+                        trx.commit();
                         return null;
                     }
                 });
@@ -117,6 +143,5 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
             Log.e(TAG, "Something went wrong", e);
             confirm.setEnabled(true);
         }
-
     }
 }

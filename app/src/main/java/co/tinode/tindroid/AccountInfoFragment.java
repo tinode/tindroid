@@ -34,7 +34,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.Topic;
 
 import static android.app.Activity.RESULT_OK;
 

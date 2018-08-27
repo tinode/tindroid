@@ -19,13 +19,16 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.util.Iterator;
+
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Credential;
-import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -116,14 +119,14 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
             return;
         }
 
-        final Button signUp = (Button) parent.findViewById(R.id.signUp);
+        final Button signUp = parent.findViewById(R.id.signUp);
         signUp.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
         final String fullName = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
-        final ImageView avatar = (ImageView) parent.findViewById(R.id.imageAvatar);
+        final ImageView avatar = parent.findViewById(R.id.imageAvatar);
         final Tinode tinode = Cache.getTinode();
         try {
             // This is called on the websocket thread.
@@ -150,16 +153,23 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
                                     // Flip back to login screen on success;
                                     parent.runOnUiThread(new Runnable() {
                                         public void run() {
-                                            signUp.setEnabled(true);
                                             FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
                                             if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
-                                                trx.replace(R.id.contentFragment, new CredentialsFragment());
+                                                signUp.setEnabled(true);
+                                                CredentialsFragment cf = new CredentialsFragment();
+                                                Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
+                                                if (it != null) {
+                                                    cf.setMethod(it.next());
+                                                }
+                                                trx.replace(R.id.contentFragment, cf);
                                             } else {
-                                                trx.replace(R.id.contentFragment, new LoginFragment());
+                                                // We are requesting immediate login with the new account.
+                                                // If the action succeeded, assume we have logged in.
+                                                UiUtils.onLoginSuccess(parent, signUp);
                                             }
                                             trx.commit();
                                         }
@@ -169,7 +179,26 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                             },
                             new PromisedReply.FailureListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                                public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                    final String cause = ((ServerResponseException)err).getReason();
+                                    if (cause != null) {
+                                        parent.runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                signUp.setEnabled(true);
+                                                switch (cause) {
+                                                    case "auth":
+                                                        // Invalid login
+                                                        ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.login_rejected));
+                                                        break;
+                                                    case "email":
+                                                        // Duplicate email:
+                                                        ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_rejected));
+                                                        break;
+                                                }
+                                            }
+                                        });
+                                    }
                                     parent.reportError(err, signUp, R.string.error_new_account_failed);
                                     return null;
                                 }

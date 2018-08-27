@@ -18,8 +18,9 @@ import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +39,7 @@ import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientDel;
 import co.tinode.tinodesdk.model.MsgClientGet;
@@ -57,7 +59,6 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.Subscription;
 
 @SuppressWarnings("unused, WeakerAccess")
@@ -422,7 +423,8 @@ public class Tinode {
                     if (pkt.ctrl.code >= 200 && pkt.ctrl.code < 400) {
                         r.resolve(pkt);
                     } else {
-                        r.reject(new ServerResponseException(pkt.ctrl.code, pkt.ctrl.text));
+                        r.reject(new ServerResponseException(pkt.ctrl.code, pkt.ctrl.text,
+                                pkt.ctrl.getStringParam("what")));
                     }
                 }
             }
@@ -731,7 +733,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     protected <Pu,Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
                                                            boolean loginNow, String[] tags, MetaSetDesc<Pu,Pr> desc,
-                                                           Credential[] cred) {
+                                                           Credential[] cred) throws Exception {
         ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
@@ -749,6 +751,19 @@ public class Tinode {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
             PromisedReply<ServerMessage> future = new PromisedReply<>();
             mFutures.put(msg.acc.id, future);
+            if (loginNow) {
+                future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
+                        try {
+                            loginSuccessful(pkt.ctrl);
+                        } catch (Exception ex) {
+                            Log.d(TAG, "Exception while parsing server response", ex);
+                        }
+                        return null;
+                    }
+                }, null);
+            }
             return future;
         } catch (JsonProcessingException e) {
             return null;
@@ -767,7 +782,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc) {
+            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc) throws Exception {
         return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, null, desc, null);
     }
@@ -785,7 +800,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc) {
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc) throws Exception {
         return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, null);
     }
@@ -804,17 +819,17 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred) {
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred) throws Exception {
         return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, cred);
     }
 
     @SuppressWarnings("unchecked")
-    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret) {
+    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret) throws Exception {
         return account(uid, scheme, secret, false, null, null, null);
     }
 
-    public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password) {
+    public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password) throws Exception {
         return updateAccountSecret(uid, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
     }
 
@@ -864,6 +879,25 @@ public class Tinode {
         throw new IllegalArgumentException();
     }
 
+    private void loginSuccessful(final MsgServerCtrl ctrl) throws InvalidObjectException, ParseException {
+        if (ctrl == null) {
+            throw new InvalidObjectException("Unexpected type of reply packet");
+        }
+        mMyUid = ctrl.getStringParam("user");
+        if (mStore != null) {
+            mStore.setMyUid(mMyUid);
+        }
+        // If topics were not loaded earlier, load them now.
+        loadTopics();
+        mAuthToken = ctrl.getStringParam("token");
+        mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires"));
+        if (ctrl.code < 300) {
+            mConnAuth = true;
+            if (mListener != null) {
+                mListener.onLogin(ctrl.code, ctrl.text);
+            }
+        }
+    }
     protected PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds) throws Exception {
         if (mAutologin) {
             mLoginCredentials = new LoginCredentials(scheme, secret);
@@ -888,23 +922,7 @@ public class Tinode {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                        if (pkt.ctrl == null) {
-                            throw new InvalidObjectException("Unexpected type of reply packet in login");
-                        }
-                        mMyUid = (String) pkt.ctrl.params.get("user");
-                        if (mStore != null) {
-                            mStore.setMyUid(mMyUid);
-                        }
-                        // If topics were not loaded earlier, load them now.
-                        loadTopics();
-                        mAuthToken = (String) pkt.ctrl.params.get("token");
-                        mAuthTokenExpires = sDateFormat.parse((String) pkt.ctrl.params.get("expires"));
-                        if (pkt.ctrl.code < 300) {
-                            mConnAuth = true;
-                            if (mListener != null) {
-                                mListener.onLogin(pkt.ctrl.code, pkt.ctrl.text);
-                            }
-                        }
+                        loginSuccessful(pkt.ctrl);
                         return null;
                     }
                 },
@@ -913,7 +931,8 @@ public class Tinode {
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
-                            if (sre.getCode() >= 400) {
+                            final int code = sre.getCode();
+                            if (code >= 400 && code < 500) {
                                 mLoginCredentials = null;
                                 mAuthToken = null;
                                 mAuthTokenExpires = null;

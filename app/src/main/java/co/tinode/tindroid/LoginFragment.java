@@ -22,6 +22,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.Iterator;
+
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -118,7 +120,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
                                     sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
 
                                     final Account acc = addAndroidAccount(
@@ -131,7 +133,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                             public void run() {
                                                 signIn.setEnabled(true);
                                                 FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
-                                                trx.replace(R.id.contentFragment, new CredentialsFragment());
+                                                CredentialsFragment cf = new CredentialsFragment();
+                                                Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
+                                                if (it != null) {
+                                                    cf.setMethod(it.next());
+                                                }
+                                                trx.replace(R.id.contentFragment, cf);
                                                 trx.commit();
                                             }
                                         });

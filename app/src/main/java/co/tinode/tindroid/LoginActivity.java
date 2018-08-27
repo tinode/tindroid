@@ -57,10 +57,10 @@ public class LoginActivity extends AppCompatActivity {
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
 
-    private static final String FRAGMENT_LOGIN = "login";
-    private static final String FRAGMENT_SIGNUP = "signup";
-    private static final String FRAGMENT_SETTINGS = "settings";
-    private static final String FRAGMENT_CREDENTIALS = "cred";
+    static final String FRAGMENT_LOGIN = "login";
+    static final String FRAGMENT_SIGNUP = "signup";
+    static final String FRAGMENT_SETTINGS = "settings";
+    static final String FRAGMENT_CREDENTIALS = "cred";
 
     static final String PREFS_LAST_LOGIN = "pref_lastLogin";
 
@@ -109,7 +109,7 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             // Ask for validation code
             Bundle args = new Bundle();
-            args.putString("credential", cred);
+            args.putString("method", cred);
             showFragment(FRAGMENT_CREDENTIALS, args);
         }
 
@@ -222,7 +222,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void showFragment(String tag) {
+    void showFragment(String tag) {
         showFragment(tag, null);
     }
 

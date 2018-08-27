@@ -43,14 +43,28 @@
                     android:inputType="text"/>
             </android.support.design.widget.TextInputLayout>
 
-            <Button
-                android:id="@+id/confirm"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:text="@string/confirm"
-                android:textSize="16sp"/>
+                android:layout_gravity="center_horizontal">
+                <Button
+                    android:id="@+id/cancel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@android:string/cancel"
+                    android:textSize="16sp"/>
+
+                <Button
+                    android:id="@+id/confirm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/confirm"
+                    android:textSize="16sp"/>
+            </LinearLayout>
         </LinearLayout>
+
     </android.support.v7.widget.CardView>
 
 </LinearLayout>

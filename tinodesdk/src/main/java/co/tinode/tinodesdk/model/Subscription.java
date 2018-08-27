@@ -7,8 +7,6 @@ import java.io.Serializable;
 import java.util.Date;
 
 import co.tinode.tinodesdk.LocalData;
-import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.User;
 
 /**
  * Subscription to topic.

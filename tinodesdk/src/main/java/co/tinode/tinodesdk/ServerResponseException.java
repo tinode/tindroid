@@ -5,10 +5,12 @@ package co.tinode.tinodesdk;
  */
 public class ServerResponseException extends Exception {
     private int code;
+    private String reason;
 
-    ServerResponseException(int code, String text) {
+    ServerResponseException(int code, String text, String reason) {
         super(text);
         this.code = code;
+        this.reason = reason;
     }
 
     @Override
@@ -18,5 +20,9 @@ public class ServerResponseException extends Exception {
 
     public int getCode() {
         return code;
+    }
+
+    public String getReason() {
+        return reason;
     }
 }

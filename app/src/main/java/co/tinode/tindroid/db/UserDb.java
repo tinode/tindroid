@@ -4,15 +4,11 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
-import android.util.Log;
 
 import java.util.Date;
 
-import co.tinode.tinodesdk.model.Subscription;
 import co.tinode.tinodesdk.User;
-
-import static co.tinode.tindroid.R.string.tinode;
-import static co.tinode.tindroid.db.TopicDb.COLUMN_IDX_TOPIC;
+import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Local cash of known users
