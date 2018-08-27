@@ -88,6 +88,7 @@ public class ContactsActivity extends AppCompatActivity implements
      * onResume restores subscription to 'me' topic and sets listener.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
 
