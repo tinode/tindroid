@@ -16,6 +16,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -115,7 +116,22 @@ public class ContactsActivity extends AppCompatActivity implements
                         .withGetDesc()
                         .withGetSub()
                         .withGetData()
-                        .build());
+                        .build())
+                        .thenApply(new PromisedReply.SuccessListener() {
+                            @Override
+                            public PromisedReply onSuccess(Object result) throws Exception {
+                                Log.d(TAG, "onSuccess() called with: result = [" + result + "]");
+                                setProgressIndicator(false);
+                                return null;
+                            }
+                        }, new PromisedReply.FailureListener() {
+                            @Override
+                            public PromisedReply onFailure(Exception err) throws Exception {
+                                Log.d(TAG, "onFailure() called with: err = [" + err + "]");
+                                setProgressIndicator(false);
+                                return null;
+                            }
+                        });
             } catch (NotSynchronizedException ignored) {
                 setProgressIndicator(false);
                 /* */
@@ -129,6 +145,8 @@ public class ContactsActivity extends AppCompatActivity implements
                 Toast.makeText(this,
                         "Failed to attach", Toast.LENGTH_LONG).show();
             }
+        } else {
+            Log.d(TAG, "onResume() called: topic is attached");
         }
     }
 
@@ -235,7 +253,6 @@ public class ContactsActivity extends AppCompatActivity implements
         public void onSubsUpdated() {
             Log.d(TAG, "onSubsUpdated() called");
             datasetChanged();
-            setProgressIndicator(false);
         }
 
         @Override
