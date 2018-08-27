@@ -160,6 +160,7 @@ public class MessageActivity extends AppCompatActivity {
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.i(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+            UiUtils.setupToolbar(this, null, mTopicName, false);
             mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
             showFragment(FRAGMENT_INVALID, false, null);
         }

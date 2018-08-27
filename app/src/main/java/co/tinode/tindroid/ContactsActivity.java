@@ -169,6 +169,7 @@ public class ContactsActivity extends AppCompatActivity implements
     }
 
     @Override
+    @SuppressWarnings("unckecked")
     public void onStop() {
         super.onStop();
 
