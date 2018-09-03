@@ -1,4 +1,4 @@
-# Tindroid chat
+# Tindroid: Tinode Android client. 
 
 Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software. 
 A [debug APK](https://storage.googleapis.com/tinode.co/tindroid.apk) is provided for convenience. 
