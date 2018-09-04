@@ -1,7 +1,13 @@
-# Tindroid: Tinode Android client. 
+# Tindroid: Tinode Android client.
 
-Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software. 
-A [debug APK](https://storage.googleapis.com/tinode.co/tindroid.apk) is provided for convenience. 
+Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software.
+A [debug APK](https://storage.googleapis.com/tinode.co/tindroid.apk) is provided for convenience.
+
+## Getting support
+
+* Read [client-side](http://tinode.github.io/java-api/) and [server-side](https://github.com/tinode/chat/blob/master/docs/API.md) API documentation.
+* For support, general questions, discussions post to [https://groups.google.com/d/forum/tinode](https://groups.google.com/d/forum/tinode).
+* For bugs and feature requests [open an issue](https://github.com/tinode/tindroid/issues/new).
 
 ## What works:
 

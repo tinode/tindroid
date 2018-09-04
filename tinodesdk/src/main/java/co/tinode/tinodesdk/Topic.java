@@ -1555,6 +1555,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
             mListener.onData(data);
         }
     }
+    protected void allMessagesReceived(Integer count) {
+        if (mListener != null) {
+            mListener.onAllMessagesReceived(count);
+        }
+    }
 
     protected void routePres(MsgServerPres pres) {
         MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
@@ -1665,7 +1670,9 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
          * Process {data} message.
          * @param data data packet
          */
-        public void onData(MsgServerData data) { }
+        public void onData(MsgServerData data) {}
+        /** All requested data messages received. */
+        public void onAllMessagesReceived(Integer count) {}
 
         /** {info} message received */
         public void onInfo(MsgServerInfo info) {}

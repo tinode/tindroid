@@ -428,6 +428,13 @@ public class Tinode {
                     }
                 }
             }
+
+            if ("data".equals(pkt.ctrl.getStringParam("what"))) {
+                Topic topic = getTopic(pkt.ctrl.topic);
+                if (topic != null) {
+                    topic.allMessagesReceived(pkt.ctrl.getIntParam("count"));
+                }
+            }
         } else if (pkt.meta != null) {
             Topic topic = getTopic(pkt.meta.topic);
             if (topic != null) {
