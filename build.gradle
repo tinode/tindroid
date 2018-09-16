@@ -19,6 +19,7 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        // Used by com.github.pchmn:MaterialChipsInput
         maven { url "https://jitpack.io" }
         google()
     }
