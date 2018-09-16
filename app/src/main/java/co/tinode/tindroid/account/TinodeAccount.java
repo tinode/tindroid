@@ -12,7 +12,6 @@ public class TinodeAccount {
     private boolean mDeleted;
     private boolean mUpdated;
     private Date mSyncState;
-    //public Bitmap Photo;
 
     public TinodeAccount(String uid, String name) {
         Uid = uid;

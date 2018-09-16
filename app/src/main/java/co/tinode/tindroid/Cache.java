@@ -3,7 +3,9 @@ package co.tinode.tindroid;
 import android.os.Build;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import java.util.Locale;
 
@@ -47,8 +49,19 @@ public class Cache {
             // Keep in app to prevent garbage collection.
             TindroidApp.retainTinodeCache(sTinode);
         }
-
+        /*
         sTinode.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
+        // getToken is deprecated. Replacing with the following monstrosity.
+        */
+        FirebaseInstanceId
+                .getInstance()
+                .getInstanceId()
+                .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+            @Override
+            public void onSuccess(InstanceIdResult instanceIdResult) {
+                sTinode.setDeviceToken(instanceIdResult.getToken());
+            }
+        });
         return sTinode;
     }
 

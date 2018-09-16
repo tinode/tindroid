@@ -173,4 +173,14 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             nm.notify(topic, 0, notificationBuilder.build());
         }
     }
+
+    @Override
+    public void onNewToken(final String refreshedToken) {
+        super.onNewToken(refreshedToken);
+        Log.d(TAG, "Refreshed token: " + refreshedToken);
+
+        // TODO: send token to the server.
+
+        // The token is currently retrieved in co.tinode.tindroid.Cache.
+    }
 }

@@ -104,17 +104,9 @@
         </service>
 
         <!-- FCM handling -->
-        <service
-            android:name=".fcm.FBaseMessagingService">
+        <service android:name=".fcm.FBaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".fcm.FBaseInstanceIDService">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
         </service>
 
