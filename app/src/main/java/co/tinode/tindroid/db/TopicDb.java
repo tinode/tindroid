@@ -322,7 +322,6 @@ public class TopicDb implements BaseColumns {
 
         if (values.size() > 0) {
             int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
-            Log.d(TAG, "Topic.msgReceived returned " + updated);
             if (updated <= 0) {
                 return false;
             }

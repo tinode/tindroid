@@ -1,12 +1,15 @@
 package co.tinode.tindroid;
 
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -50,6 +53,8 @@ public class TindroidApp extends Application {
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(br,
                 new IntentFilter("FCM_REFRESH_TOKEN"));
+
+        createNotificationChannel();
     }
 
     public static Context getAppContext() {
@@ -62,5 +67,18 @@ public class TindroidApp extends Application {
 
     public static void retainTinodeCache(Tinode tinode) {
         sTinodeCache = tinode;
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel on API 26+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("new_message",
+                    getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(getString(R.string.notification_channel_description));
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            if (nm != null) {
+                nm.createNotificationChannel(channel);
+            }
+        }
     }
 }

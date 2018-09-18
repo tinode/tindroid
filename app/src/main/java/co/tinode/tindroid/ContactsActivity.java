@@ -227,7 +227,6 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onPres(MsgServerPres pres) {
-            Log.d(TAG, "onPres() called with: pres = [" + pres + "]");
             if (pres.what.equals("msg")) {
                 datasetChanged();
             } else if (pres.what.equals("off") || pres.what.equals("on")) {
@@ -237,7 +236,6 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
-            Log.d(TAG, "onMetaSub() called with: sub = [" + sub + "]");
             if (sub.pub != null) {
                 sub.pub.constructBitmap();
             }
@@ -245,7 +243,6 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
-            Log.d(TAG, "onMetaDesc() called with: desc = [" + desc + "]");
             if (desc.pub != null) {
                 desc.pub.constructBitmap();
             }
@@ -253,13 +250,11 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onSubsUpdated() {
-            Log.d(TAG, "onSubsUpdated() called");
             datasetChanged();
         }
 
         @Override
         public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
-            Log.d(TAG, "onContUpdate() called with: sub = [" + sub + "]");
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
         }

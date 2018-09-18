@@ -201,4 +201,6 @@
     <string name="login_rejected">Login rejected</string>
     <string name="email_rejected">Email rejected</string>
     <string name="invalid_confirmation_code">Invalid code</string>
+    <string name="notification_channel_name">New mesage</string>
+    <string name="notification_channel_description">New message was received</string>
 </resources>

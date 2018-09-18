@@ -313,8 +313,8 @@ public class UiUtils {
                             ServerMessage msg = tinode.loginToken(token).getResult();
                             // Logged in successfully. Save refreshed token for future use.
                             accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
-                            if (msg.ctrl.code < 300) {
-                                // Logged in successfully. Save refreshed token for future use.
+                            if (msg == null || msg.ctrl.code < 300) {
+                                // Logged in successfully.
                                 Log.d(TAG, "LoginWithSavedAccount succeeded, sending to contacts");
                                 // Go to Contacts
                                 launch = new Intent(activity, ContactsActivity.class);

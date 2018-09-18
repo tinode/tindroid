@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -162,7 +163,12 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
         int background = ContextCompat.getColor(this, R.color.colorNotificationBackground);
 
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+        NotificationCompat.Builder notificationBuilder =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
+                        new NotificationCompat.Builder(this, "new_message") :
+                        new NotificationCompat.Builder(this);
+
+        notificationBuilder
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
