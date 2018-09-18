@@ -43,7 +43,7 @@ public class Cache {
             sTinode.setFndTypeOfMetaPacket(VxCard.class);
 
             // Set device language
-            sTinode.setLanguage(Locale.getDefault().getLanguage());
+            sTinode.setLanguage(Locale.getDefault().toString());
             sTinode.setAutologin(true);
 
             // Keep in app to prevent garbage collection.

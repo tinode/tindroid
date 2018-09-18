@@ -36,7 +36,8 @@ static def gitVersionCode() {
 
 static def gitVersionName() {
     def process = "git describe --tags".execute()
-    return process.text.trim()
+    // Remove trailing CR and remove leading 'v' as in 'v1.2.3'
+    return process.text.trim().substring(1)
 }
 
 dependencies {

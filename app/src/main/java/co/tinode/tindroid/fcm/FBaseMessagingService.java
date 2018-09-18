@@ -9,6 +9,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -69,6 +70,11 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "FCM data payload: " + data);
 
             topicName = data.get("topic");
+            if (topicName == null) {
+                Log.w(TAG, "NULL topic in a push notification");
+                return;
+            }
+
             String visibleTopic = UiUtils.getVisibleTopic();
             if (visibleTopic != null && visibleTopic.equals(topicName)) {
                 // No need to display a notification if we are in the topic already.
@@ -81,6 +87,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     data.get("xfrom"));
             Subscription<VxCard,?> topic = ContactsManager.getStoredSubscription(getContentResolver(),
                     topicName);
+            if (topic == null || sender == null) {
+                Log.w(TAG, "Unknown sender or topic in a push notification");
+                return;
+            }
 
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
 
@@ -179,7 +189,11 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         super.onNewToken(refreshedToken);
         Log.d(TAG, "Refreshed token: " + refreshedToken);
 
-        // TODO: send token to the server.
+        // Send token to the server.
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+        Intent intent = new Intent("FCM_REFRESH_TOKEN");
+        intent.putExtra("token", refreshedToken);
+        lbm.sendBroadcast(intent);
 
         // The token is currently retrieved in co.tinode.tindroid.Cache.
     }

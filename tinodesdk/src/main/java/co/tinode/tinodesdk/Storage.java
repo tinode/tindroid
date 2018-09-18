@@ -17,6 +17,9 @@ public interface Storage {
     String getMyUid();
     void setMyUid(String uid);
 
+    String getDeviceToken();
+    void updateDeviceToken(String token);
+
     void logout();
 
     // Server time minus local time

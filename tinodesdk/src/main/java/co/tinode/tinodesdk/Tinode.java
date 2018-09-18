@@ -180,6 +180,7 @@ public class Tinode {
         mStore = store;
         if (mStore != null) {
             mMyUid = mStore.getMyUid();
+            mDeviceToken = mStore.getDeviceToken();
         }
         // If mStore is fully initialized, this will load topics, otherwise noop
         loadTopics();
@@ -674,12 +675,20 @@ public class Tinode {
      * @param token device token
      */
     public void setDeviceToken(String token) {
-        if (mDeviceToken == null) {
-            // Initial assignment of the token.
+        if (token == null) {
+            return;
+        }
+
+        if (mDeviceToken == null || !mDeviceToken.equals(token)) {
+            // Token changed
             mDeviceToken = token;
-        } else {
-            mDeviceToken = token;
-            // TODO: send {hi} with the new token.
+            if (isConnected() && isAuthenticated()) {
+                ClientMessage msg = new ClientMessage(new MsgClientHi(null, null,null,
+                        mDeviceToken, null));
+                try {
+                    send(Tinode.getJsonMapper().writeValueAsString(msg));
+                } catch (JsonProcessingException ignored) {}
+            }
         }
     }
 
@@ -890,7 +899,18 @@ public class Tinode {
         if (ctrl == null) {
             throw new InvalidObjectException("Unexpected type of reply packet");
         }
-        mMyUid = ctrl.getStringParam("user");
+
+        String newUid = ctrl.getStringParam("user");
+        if (mMyUid != null && !mMyUid.equals(newUid)) {
+            logout();
+            if (mListener != null) {
+                mListener.onLogin(400, "UID mismatch");
+            }
+            return;
+        }
+
+        mMyUid = newUid;
+
         if (mStore != null) {
             mStore.setMyUid(mMyUid);
         }
@@ -905,6 +925,7 @@ public class Tinode {
             }
         }
     }
+
     protected PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds) throws Exception {
         if (mAutologin) {
             mLoginCredentials = new LoginCredentials(scheme, secret);

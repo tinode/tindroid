@@ -14,12 +14,13 @@ import android.provider.BaseColumns;
  *  last_active -- 1 if the account was used for last login, 0 otherwise
  */
 public class AccountDb implements BaseColumns {
-    public static final String TABLE_NAME = "accounts";
-    public static final String COLUMN_NAME_UID = "uid";
-    public static final String COLUMN_NAME_ACTIVE = "last_active";
+    static final String TABLE_NAME = "accounts";
+    private static final String COLUMN_NAME_UID = "uid";
+    private static final String COLUMN_NAME_ACTIVE = "last_active";
+    private static final String COLUMN_NAME_DEVICE_ID = "device_id";
 
-    public static final String INDEX_UID = "accounts_uid";
-    public static final String INDEX_ACTIVE = "accounts_active";
+    private static final String INDEX_UID = "accounts_uid";
+    private static final String INDEX_ACTIVE = "accounts_active";
 
     /**
      * Statement to create account table - mapping of account UID to long id
@@ -28,7 +29,8 @@ public class AccountDb implements BaseColumns {
             "CREATE TABLE " + TABLE_NAME + " (" +
                     _ID + " INTEGER PRIMARY KEY," +
                     COLUMN_NAME_UID + " TEXT," +
-                    COLUMN_NAME_ACTIVE + " INTEGER)";
+                    COLUMN_NAME_ACTIVE + " INTEGER," +
+                    COLUMN_NAME_DEVICE_ID + " TEXT)";
     /**
      * Add index on account name
      */
@@ -122,5 +124,25 @@ public class AccountDb implements BaseColumns {
 
     static void deactivateAll(SQLiteDatabase db) {
         db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_NAME_ACTIVE + "=0");
+    }
+
+    static boolean updateDeviceToken(SQLiteDatabase db, String token) {
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_DEVICE_ID, token);
+        return db.update(TABLE_NAME, values, COLUMN_NAME_ACTIVE + "=1", null) > 0;
+    }
+
+    static String getDeviceToken(SQLiteDatabase db) {
+        String token = null;
+        Cursor c = db.query(
+                TABLE_NAME,
+                new String[]{COLUMN_NAME_DEVICE_ID},
+                COLUMN_NAME_ACTIVE + "=1",
+                null, null, null, null);
+        if (c.moveToFirst()) {
+            token = c.getString(0);
+        }
+        c.close();
+        return token;
     }
 }

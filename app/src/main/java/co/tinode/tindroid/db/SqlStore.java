@@ -46,6 +46,16 @@ class SqlStore implements Storage {
     }
 
     @Override
+    public void updateDeviceToken(String token) {
+        AccountDb.updateDeviceToken(mDbh.getWritableDatabase(), token);
+    }
+
+    @Override
+    public String getDeviceToken() {
+        return AccountDb.getDeviceToken(mDbh.getReadableDatabase());
+    }
+
+    @Override
     public void setTimeAdjustment(long adj) {
         mTimeAdjustment = adj;
     }

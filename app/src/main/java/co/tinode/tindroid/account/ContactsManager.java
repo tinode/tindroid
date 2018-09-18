@@ -307,6 +307,10 @@ public class ContactsManager {
     }
 
     public static Subscription<VxCard,?> getStoredSubscription(ContentResolver resolver, String uid) {
+        if (uid == null) {
+            return null;
+        }
+
         long id = lookupRawContact(resolver, uid);
         Log.d(TAG, "getStoredSubscription for '" + uid + "' lookupRawContact returned " + id);
         return getRawContact(resolver, id);
