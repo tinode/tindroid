@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.util.Map;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -46,6 +48,7 @@ public class ContactsActivity extends AppCompatActivity implements
     private ChatListAdapter mChatListAdapter;
 
     private MeListener mMeTopicListener = null;
+    private MeTopic mMeTopic = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,60 +97,67 @@ public class ContactsActivity extends AppCompatActivity implements
 
         final Tinode tinode = Cache.getTinode();
 
-        tinode.setListener(new UiUtils.EventListener(this, tinode.isConnected()));
+        tinode.setListener(new ContactsEventListener(tinode.isConnected()));
 
         UiUtils.setupToolbar(this, null, null, false);
 
-        MeTopic me = tinode.getMeTopic();
-        if (me == null) {
-            // The very first launch of the app.
-            me = new MeTopic(tinode, mMeTopicListener);
-            Log.d(TAG, "Initialized NEW 'me' topic");
-        } else {
-            me.setListener(mMeTopicListener);
-            Log.d(TAG, "Loaded existing 'me' topic");
-        }
-
-        if (!me.isAttached()) {
-            try {
-                Log.d(TAG, "Trying to subscribe to me");
-                setProgressIndicator(true);
-                me.subscribe(null, me
-                        .getMetaGetBuilder()
-                        .withGetDesc()
-                        .withGetSub()
-                        .withGetData()
-                        .build())
-                        .thenApply(new PromisedReply.SuccessListener() {
-                            @Override
-                            public PromisedReply onSuccess(Object result) throws Exception {
-                                Log.d(TAG, "onSuccess() called with: result = [" + result + "]");
-                                setProgressIndicator(false);
-                                return null;
-                            }
-                        }, new PromisedReply.FailureListener() {
-                            @Override
-                            public PromisedReply onFailure(Exception err) throws Exception {
-                                Log.d(TAG, "onFailure() called with: err = [" + err + "]");
-                                setProgressIndicator(false);
-                                return null;
-                            }
-                        });
-            } catch (NotSynchronizedException ignored) {
-                setProgressIndicator(false);
-                /* */
-            } catch (NotConnectedException ignored) {
-                /* offline - ignored */
-                setProgressIndicator(false);
-                Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
-            } catch (Exception err) {
-                Log.i(TAG, "Subscription failed", err);
-                setProgressIndicator(false);
-                Toast.makeText(this,
-                        "Failed to attach", Toast.LENGTH_LONG).show();
+        if (mMeTopic == null) {
+            mMeTopic = tinode.getMeTopic();
+            if (mMeTopic == null) {
+                // The very first launch of the app.
+                mMeTopic = new MeTopic<>(tinode, mMeTopicListener);
+                Log.d(TAG, "Initialized NEW 'me' topic");
+            } else {
+                mMeTopic.setListener(mMeTopicListener);
+                Log.d(TAG, "Loaded existing 'me' topic");
             }
         } else {
+            mMeTopic.setListener(mMeTopicListener);
+        }
+
+
+        if (!mMeTopic.isAttached()) {
+            topicAttach();
+        } else {
             Log.d(TAG, "onResume() called: topic is attached");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void topicAttach() {
+        try {
+            Log.d(TAG, "Trying to subscribe to me");
+            setProgressIndicator(true);
+            mMeTopic.subscribe(null, mMeTopic
+                    .getMetaGetBuilder()
+                    .withGetDesc()
+                    .withGetSub()
+                    .build())
+                    .thenApply(new PromisedReply.SuccessListener() {
+                        @Override
+                        public PromisedReply onSuccess(Object result) throws Exception {
+                            setProgressIndicator(false);
+                            return null;
+                        }
+                    }, new PromisedReply.FailureListener() {
+                        @Override
+                        public PromisedReply onFailure(Exception err) throws Exception {
+                            setProgressIndicator(false);
+                            return null;
+                        }
+                    });
+        } catch (NotSynchronizedException ignored) {
+            setProgressIndicator(false);
+            /* */
+        } catch (NotConnectedException ignored) {
+            /* offline - ignored */
+            setProgressIndicator(false);
+            Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
+        } catch (Exception err) {
+            Log.i(TAG, "Subscription failed", err);
+            setProgressIndicator(false);
+            Toast.makeText(this,
+                    "Failed to attach", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -172,10 +182,8 @@ public class ContactsActivity extends AppCompatActivity implements
     @SuppressWarnings("unckecked")
     public void onStop() {
         super.onStop();
-
-        MeTopic me = Cache.getTinode().getMeTopic();
-        if (me != null) {
-            me.setListener(null);
+        if (mMeTopic != null) {
+            mMeTopic.setListener(null);
         }
     }
 
@@ -184,7 +192,6 @@ public class ContactsActivity extends AppCompatActivity implements
      * @param active should be true to show progress indicator
      */
     public void setProgressIndicator(final boolean active) {
-        Log.d(TAG, "setProgressIndicator() called with: active = [" + active + "]");
         if (isFinishing() || isDestroyed()) {
             return;
         }
@@ -208,15 +215,6 @@ public class ContactsActivity extends AppCompatActivity implements
         // Enable options menu by returning true
         return true;
     }
-
-    /*
-    @Override
-    public void onWindowFocusChanged(boolean focus) {
-        super.onWindowFocusChanged(focus);
-
-        Cache.activityVisible(focus);
-    }
-    */
 
     private class MeListener extends MeTopic.MeListener<VxCard> {
 
@@ -277,5 +275,17 @@ public class ContactsActivity extends AppCompatActivity implements
         FragmentManager fm = getSupportFragmentManager();
         ContactsFragment contacts = (ContactsFragment) fm.findFragmentByTag(FRAGMENT_CONTACTS);
         contacts.selectTab(pageIndex);
+    }
+
+    private class ContactsEventListener extends UiUtils.EventListener {
+        ContactsEventListener(boolean online) {
+            super(ContactsActivity.this, online);
+        }
+
+        @Override
+        public void onLogin(int code, String txt) {
+            super.onLogin(code, txt);
+            topicAttach();
+        }
     }
 }

@@ -140,7 +140,6 @@ public class MessagesFragment extends Fragment
         mUploadProgress = new UploadProgress();
         // This needs to be rebound on activity creation.
         FileUploader.setProgressHandler(mUploadProgress);
-        Log.d(TAG, "onActivityCreated set progress");
 
         mRefresher = activity.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);

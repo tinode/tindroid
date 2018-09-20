@@ -901,7 +901,6 @@ public class UiUtils {
         public void onConnect(int code, String reason, Map<String, Object> params) {
             // Show that we are connected
             setOnlineStatus(true);
-
         }
 
         @Override

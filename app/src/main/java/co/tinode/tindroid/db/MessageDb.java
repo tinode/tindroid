@@ -192,7 +192,6 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_TS, timestamp.getTime());
         values.put(COLUMN_NAME_SEQ, seq);
         int updated = db.update(TABLE_NAME, values, _ID + "=" + msgId, null);
-        Log.d(TAG, "Marking message as SYNCED, msgId=" + msgId + ", updated_count="+updated);
         return updated > 0;
     }
 

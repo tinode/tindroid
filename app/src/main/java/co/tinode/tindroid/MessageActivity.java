@@ -117,7 +117,7 @@ public class MessageActivity extends AppCompatActivity {
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
-        tinode.setListener(new UiUtils.EventListener(this, tinode.isConnected()));
+        tinode.setListener(new MessageEventListener(tinode.isConnected()));
 
         final Intent intent = getIntent();
 
@@ -167,58 +167,7 @@ public class MessageActivity extends AppCompatActivity {
         mTopic.setListener(new TListener());
 
         if (!mTopic.isAttached()) {
-            try {
-                setProgressIndicator(true);
-                mTopic.subscribe(null,
-                        mTopic.getMetaGetBuilder()
-                                .withGetDesc()
-                                .withGetSub()
-                                .withGetData()
-                                .withGetDel()
-                                .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                                mTopicName, mTopic.getOnline());
-                        showFragment(FRAGMENT_MESSAGES, false, null);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                setProgressIndicator(false);
-                                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
-                                        .findFragmentByTag(FRAGMENT_MESSAGES);
-                                fragmsg.topicSubscribed();
-                            }
-                        });
-                        mMessageSender.resume();
-                        // Submit pending messages for processing: publish queued, delete marked for deletion.
-                        mMessageSender.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    mTopic.syncAll();
-                                } catch (Exception ignored) {
-                                }
-                            }
-                        });
-                        return null;
-                    }
-                }, new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        setProgressIndicator(false);
-                        showFragment(FRAGMENT_INVALID, false, null);
-                        return null;
-                    }
-                });
-            } catch (NotConnectedException ignored) {
-                Log.d(TAG, "Offline mode, ignore");
-                setProgressIndicator(false);
-            } catch (Exception ex) {
-                setProgressIndicator(false);
-                Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "something went wrong", ex);
-            }
+            topicAttach();
         } else {
             MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                     .findFragmentByTag(FRAGMENT_MESSAGES);
@@ -247,6 +196,61 @@ public class MessageActivity extends AppCompatActivity {
                     Log.e(TAG, "something went wrong in Topic.leave", ex);
                 }
             }
+        }
+    }
+
+    private void topicAttach() {
+        try {
+            setProgressIndicator(true);
+            mTopic.subscribe(null,
+                    mTopic.getMetaGetBuilder()
+                            .withGetDesc()
+                            .withGetSub()
+                            .withGetData()
+                            .withGetDel()
+                            .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
+                            mTopicName, mTopic.getOnline());
+                    showFragment(FRAGMENT_MESSAGES, false, null);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setProgressIndicator(false);
+                            MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                                    .findFragmentByTag(FRAGMENT_MESSAGES);
+                            fragmsg.topicSubscribed();
+                        }
+                    });
+                    mMessageSender.resume();
+                    // Submit pending messages for processing: publish queued, delete marked for deletion.
+                    mMessageSender.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                mTopic.syncAll();
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    });
+                    return null;
+                }
+            }, new PromisedReply.FailureListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onFailure(Exception err) {
+                    setProgressIndicator(false);
+                    showFragment(FRAGMENT_INVALID, false, null);
+                    return null;
+                }
+            });
+        } catch (NotConnectedException ignored) {
+            Log.d(TAG, "Offline mode, ignore");
+            setProgressIndicator(false);
+        } catch (Exception ex) {
+            setProgressIndicator(false);
+            Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "something went wrong", ex);
         }
     }
 
@@ -382,7 +386,6 @@ public class MessageActivity extends AppCompatActivity {
      * @param active should be true to show progress indicator
      */
     public void setProgressIndicator(final boolean active) {
-        Log.d(TAG, "setProgressIndicator() called with: active = [" + active + "]");
         if (isFinishing() || isDestroyed()) {
             return;
         }
@@ -583,4 +586,15 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
+    private class MessageEventListener extends UiUtils.EventListener {
+        MessageEventListener(boolean online) {
+            super(MessageActivity.this, online);
+        }
+
+        @Override
+        public void onLogin(int code, String txt) {
+            super.onLogin(code, txt);
+            topicAttach();
+        }
+    }
 }

@@ -306,7 +306,6 @@ class SqlStore implements Storage {
             if (MessageDb.delivered(mDbh.getWritableDatabase(), messageDbId, timestamp, seq) &&
                     TopicDb.msgReceived(db, topic, timestamp, seq)) {
                 db.setTransactionSuccessful();
-                Log.d(TAG, "msgDelivered -- SUCCESS");
                 result = true;
             }
         } catch (SQLException ex) {
