@@ -126,7 +126,6 @@ public class ContactsActivity extends AppCompatActivity implements
     @SuppressWarnings("unchecked")
     private void topicAttach() {
         try {
-            Log.d(TAG, "Trying to subscribe to me");
             setProgressIndicator(true);
             mMeTopic.subscribe(null, mMeTopic
                     .getMetaGetBuilder()
