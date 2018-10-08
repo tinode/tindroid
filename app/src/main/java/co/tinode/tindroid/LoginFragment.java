@@ -63,6 +63,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         }
 
         fragment.findViewById(R.id.signIn).setOnClickListener(this);
+        fragment.findViewById(R.id.forgotPassword).setOnClickListener(this);
 
         return fragment;
     }
@@ -76,11 +77,19 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     /**
-     * Login button pressed.
+     * Either [Signin] or [Forgot password] pressed.
      * @param v ignored
      */
     public void onClick(View v) {
         final LoginActivity parent = (LoginActivity) getActivity();
+        if (parent == null) {
+            return;
+        }
+
+        if (v.getId() == R.id.forgotPassword) {
+            parent.showFragment(LoginActivity.FRAGMENT_RESET);
+            return;
+        }
 
         EditText loginInput = parent.findViewById(R.id.editLogin);
         EditText passwordInput = parent.findViewById(R.id.editPassword);
@@ -100,11 +109,10 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         signIn.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+        final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
         final Tinode tinode = Cache.getTinode();
         try {
-            Log.d(TAG, "CONNECTING");
             // This is called on the websocket thread.
             tinode.connect(hostName, tls)
                     .thenApply(
@@ -158,13 +166,13 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 @Override
                                 public PromisedReply<ServerMessage> onFailure(Exception err) {
                                     Log.d(TAG, "Login failed", err);
-                                    parent.reportError(err, signIn, R.string.error_login_failed);
+                                    parent.reportError(err, signIn, 0, R.string.error_login_failed);
                                     return null;
                                 }
                             });
         } catch (Exception err) {
             Log.e(TAG, "Something went wrong", err);
-            parent.reportError(err, signIn, R.string.error_login_failed);
+            parent.reportError(err, signIn, 0, R.string.error_login_failed);
         }
     }
 

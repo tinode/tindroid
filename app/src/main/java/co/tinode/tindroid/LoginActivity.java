@@ -6,6 +6,7 @@ import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -28,10 +30,12 @@ import java.util.ArrayList;
 import co.tinode.tinodesdk.Tinode;
 
 /**
- * LoginActivity is a FrameLayout which switches between three fragments:
+ * LoginActivity is a FrameLayout which switches between fragments:
  *  - LoginFragment
  *  - SignUpFragment
  *  - LoginSettingsFragment
+ *  - PasswordResetFragment
+ *  - CredentialsFragment
  *
  *  1. If connection to the server is already established and authenticated, launch ContactsActivity
  *  2. If no connection to the server, get the last used account:
@@ -60,6 +64,7 @@ public class LoginActivity extends AppCompatActivity {
     static final String FRAGMENT_LOGIN = "login";
     static final String FRAGMENT_SIGNUP = "signup";
     static final String FRAGMENT_SETTINGS = "settings";
+    static final String FRAGMENT_RESET = "reset";
     static final String FRAGMENT_CREDENTIALS = "cred";
 
     static final String PREFS_LAST_LOGIN = "pref_lastLogin";
@@ -101,8 +106,14 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         // Check if the activity show ask for credentials instead of login/password.
+
         final Intent intent = getIntent();
-        String cred = intent.getStringExtra("credential");
+        final String alAction = intent.getAction();
+        final Uri alUri = intent.getData();
+        final String cred = intent.getStringExtra("credential");
+
+        Log.d(TAG, "Login app link: action="+alAction + ", uri="+alUri+", cred="+cred);
+
         if (TextUtils.isEmpty(cred)) {
             // Display the login form.
             showFragment(FRAGMENT_LOGIN);
@@ -174,23 +185,32 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-    void reportError(final Exception err, final Button button, final int errId) {
-        String message = err.getMessage();
-        Log.i(TAG, getText(errId) + " " + message, err);
+    void reportError(final Exception err, final Button button, final int attachTo, final int errId) {
+        String message = getText(errId).toString();
+        String errMessage = err != null ? err.getMessage() : "";
 
-        Throwable cause = err;
-        while ((cause = cause.getCause()) != null) {
-            message = cause.getMessage();
+        Log.i(TAG, message + " (" + errMessage + ")", err);
+
+        if (err != null) {
+            Throwable cause = err;
+            while ((cause = cause.getCause()) != null) {
+                errMessage = cause.getMessage();
+            }
         }
-        final String finalMessage = message;
+        final String finalMessage = message +
+                (errMessage != null ? " (" + errMessage + ")" : "");
 
+        final EditText field = attachTo != 0 ? (EditText) findViewById(attachTo) : null;
         runOnUiThread(new Runnable() {
             public void run() {
                 if (button != null) {
                     button.setEnabled(true);
                 }
-                Toast.makeText(LoginActivity.this,
-                        getText(errId) + " " + finalMessage, Toast.LENGTH_LONG).show();
+                if (field != null) {
+                    field.setError(finalMessage);
+                } else {
+                    Toast.makeText(LoginActivity.this, finalMessage, Toast.LENGTH_LONG).show();
+                }
             }
         });
     }
@@ -239,6 +259,9 @@ public class LoginActivity extends AppCompatActivity {
                     break;
                 case FRAGMENT_SIGNUP:
                     fragment = new SignUpFragment();
+                    break;
+                case FRAGMENT_RESET:
+                    fragment = new PasswordResetFragment();
                     break;
                 case FRAGMENT_CREDENTIALS:
                     fragment = new CredentialsFragment();

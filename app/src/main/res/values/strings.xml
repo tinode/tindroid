@@ -1,19 +1,22 @@
 <resources>
+    <string name="asset_statements" translatable="false">[{ \"include\": \"https://api.tinode.co/.well-known/assetlinks.json\" }]</string>
+    <string name="tinode_url" translatable="false">https://github.com/tinode/</string>
+    <string name="default_host_name" translatable="false">10.0.2.2:6060</string>
+
     <string name="app_name">Tindroid</string>
     <string name="app_name_full">Tindroid Messenger</string>
     <string name="app_version">Version</string>
     <string name="copyright">© 2014 – 2018 Tinode</string>
     <string name="tinode">Tinode</string>
 
-    <string name="login_hint">Login: alice, bob, carol, dave, eve, frank</string>
-    <string name="password_hint">Password: alice123, bob123,…</string>
+    <string name="login_hint">Login</string>
+    <string name="password_hint">Password</string>
     <string name="new_message_hint">Type a message</string>
     <string name="send_message_button_hint">Send message</string>
     <string name="send_image_button_hint">Send image</string>
     <string name="send_file_button_hint">Send file</string>
 
     <string name="sign_in">Sign In</string>
-    <string name="tinode_url">https://github.com/tinode/</string>
     <string name="app_description">Tinode Demo Chat</string>
     <string name="action_signup">Sign Up</string>
     <string name="sign_up">Sign Up</string>
@@ -36,7 +39,6 @@
     <string name="settings_host_name_summary">Change server address</string>
     <string name="settings_use_tls_summary">Use secure connection</string>
     <string name="settings_wire_transport_summary">Select wire transport</string>
-    <string name="default_host_name">10.0.2.2:6060</string>
 
     <!-- access mode definitions -->
     <string name="modeReadable">can join</string>
@@ -111,7 +113,7 @@
     <string name="group_members">Group Members</string>
     <string name="name_required">Topic name required</string>
     <string name="no_members">No group members</string>
-    <string name="letter_tile_font_family">sans-serif-medium</string>
+    <string name="letter_tile_font_family" translatable="false">sans-serif-medium</string>
     <string name="add_one_member">Add at least one group member</string>
     <string name="failed_to_create_topic">Failed to create topic</string>
     <string name="add_members">Add members</string>
@@ -184,7 +186,7 @@
     <string name="tel_required">Phone number required</string>
     <string name="validate_cred">Enter confirmation code sent to you by %1$s:</string>
     <string name="confirm">Confirm</string>
-    <string name="validation_example">E.g. 123456</string>
+    <string name="validation_example">Numbers only</string>
     <string name="enter_confirmation_code">Enter confirmation code</string>
     <string name="failed_credential_confirmation">Incorrect confirmation code</string>
     <string name="addByIdHint">Enter topic or user ID</string>
@@ -203,4 +205,11 @@
     <string name="invalid_confirmation_code">Invalid code</string>
     <string name="notification_channel_name">New mesage</string>
     <string name="notification_channel_description">New message was received</string>
+    <string name="request_pass_reset">Request password reset by %1$s:</string>
+    <string name="validated_address_to_use">Validated %1$s to use</string>
+    <string name="request">Request</string>
+    <string name="forgot_password">Forgot password</string>
+    <string name="enter_valid_address">Enter valid %1$s</string>
+    <string name="invalid_or_unknown_credential">Invalid or unknown address</string>
+    <string name="password_reset_message_sent">Message with instructions sent</string>
 </resources>

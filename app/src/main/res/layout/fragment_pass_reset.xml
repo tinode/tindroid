@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="co.tinode.tindroid.CredentialsFragment">
+    tools:context="co.tinode.tindroid.PasswordResetFragment">
 
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
@@ -23,14 +23,15 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/callToReset"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/validate_cred"
-                android:id="@+id/call_to_validate"
+                android:text="@string/request_pass_reset"
                 android:layout_marginBottom="8dp"/>
 
             <android.support.design.widget.TextInputLayout
+                android:id="@+id/responseHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -39,21 +40,19 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:hint="@string/validation_example"
                     android:inputType="text"/>
             </android.support.design.widget.TextInputLayout>
 
             <LinearLayout
-                style="?android:attr/buttonBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal">
+                android:layout_gravity="center_horizontal"
+                style="?android:attr/buttonBarStyle">
                 <Button
                     android:id="@+id/cancel"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
+                    style="?android:attr/buttonBarButtonStyle"
                     android:text="@android:string/cancel"
                     android:textSize="16sp"/>
 
@@ -62,8 +61,7 @@
                     style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:text="@string/confirm"
+                    android:text="@string/request"
                     android:textSize="16sp"/>
             </LinearLayout>
         </LinearLayout>

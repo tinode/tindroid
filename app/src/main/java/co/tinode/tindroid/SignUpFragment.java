@@ -96,6 +96,9 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
 
     public void onSignUp() {
         final LoginActivity parent = (LoginActivity) getActivity();
+        if (parent == null) {
+            return;
+        }
 
         final String login = ((EditText) parent.findViewById(R.id.newLogin)).getText().toString().trim();
         if (login.isEmpty()) {
@@ -199,7 +202,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                             }
                                         });
                                     }
-                                    parent.reportError(err, signUp, R.string.error_new_account_failed);
+                                    parent.reportError(err, signUp, 0, R.string.error_new_account_failed);
                                     return null;
                                 }
                             });

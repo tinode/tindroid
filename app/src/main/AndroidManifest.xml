@@ -18,15 +18,15 @@
     <!-- Creating and storing tinode credentials in the AccountManager -->
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
     <!-- Accessing Tinode-authenticated accounts -->
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
-    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
     <!-- Make current user discoverable by other users -->
-    <uses-permission android:name="android.permission.READ_PROFILE" />
+    <uses-permission android:name="android.permission.READ_PROFILE"/>
     <!-- Check if account sync is enabled -->
-    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
     <!-- Enable sync if it's disabled -->
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
 
     <application
         android:name="co.tinode.tindroid.TindroidApp"
@@ -36,12 +36,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements"/>
+
         <activity
             android:name=".SplashActivity"
             android:theme="@style/SplashTheme">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
@@ -49,6 +53,20 @@
             android:name=".LoginActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme">
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <!-- This is a catch-all URL pattern.
+                Retarded Android is unable to parse URLs with fragments -->
+                <data
+                    android:scheme="https"
+                    android:host="api.tinode.co"
+                    />
+            </intent-filter>
+
         </activity>
 
         <activity
@@ -65,12 +83,7 @@
             android:name=".MessageActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="adjustResize" >
-            <intent-filter android:icon="@mipmap/ic_launcher">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.item/vnd.tinode.profile" />
-            </intent-filter>
+            android:windowSoftInputMode="adjustResize">
         </activity>
 
         <activity
@@ -79,28 +92,32 @@
             android:theme="@style/AppTheme">
         </activity>
 
-        <service android:name=".account.TinodeAccountService"
+        <service
+            android:name=".account.TinodeAccountService"
             android:exported="false">
             <!-- Required filter used by the system to launch the account service. -->
             <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator" />
+                <action android:name="android.accounts.AccountAuthenticator"/>
             </intent-filter>
             <!-- This points to an XMLf ile which describes the account service. -->
-            <meta-data android:name="android.accounts.AccountAuthenticator"
-                       android:resource="@xml/authenticator" />
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator"/>
         </service>
 
-        <service android:name=".account.SyncService" android:exported="false">
+        <service
+            android:name=".account.SyncService"
+            android:exported="false">
             <intent-filter>
-                <action android:name="android.content.SyncAdapter" />
+                <action android:name="android.content.SyncAdapter"/>
             </intent-filter>
 
             <meta-data
                 android:name="android.content.SyncAdapter"
-                android:resource="@xml/syncadapter" />
+                android:resource="@xml/syncadapter"/>
             <meta-data
                 android:name="android.provider.CONTACTS_STRUCTURE"
-                android:resource="@xml/contacts_source" />
+                android:resource="@xml/contacts_source"/>
         </service>
 
         <!-- FCM handling -->

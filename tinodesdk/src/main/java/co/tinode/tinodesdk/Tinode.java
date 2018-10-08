@@ -887,6 +887,10 @@ public class Tinode {
         return loginToken(token, null);
     }
 
+    public PromisedReply<ServerMessage> requestResetSecret(String scheme, String method, String value) throws Exception {
+        return login(AuthScheme.LOGIN_RESET, AuthScheme.encodeResetSecret(scheme, method, value), null);
+    }
+
     protected PromisedReply<ServerMessage> login(String combined) throws Exception {
         AuthScheme auth = AuthScheme.parse(combined);
         if (auth != null) {

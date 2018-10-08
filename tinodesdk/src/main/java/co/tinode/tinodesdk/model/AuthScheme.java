@@ -12,6 +12,7 @@ import java.util.StringTokenizer;
 public class AuthScheme implements Serializable {
     public static final String LOGIN_BASIC = "basic";
     public static final String LOGIN_TOKEN = "token";
+    public static final String LOGIN_RESET = "reset";
 
     public String scheme;
     public String secret;
@@ -51,6 +52,21 @@ public class AuthScheme implements Serializable {
             }
             password = password == null ? "" : password;
             return Base64Variants.getDefaultVariant().encode((uname + ":" + password).getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException ignored) {}
+        return null;
+    }
+
+    public static String encodeResetSecret(String scheme, String method, String value) {
+        // Join parts using ":" then base64-encode.
+        if (scheme == null || method == null || value == null) {
+            throw new IllegalArgumentException("illegal 'null' parameter");
+        }
+        if (scheme.contains(":") || method.contains(":") || value.contains(":")) {
+            throw new IllegalArgumentException("illegal character ':' in parameter");
+        }
+        try {
+            return Base64Variants.getDefaultVariant().encode((scheme + ":" + method + ":" + value)
+                    .getBytes("UTF-8"));
         } catch (UnsupportedEncodingException ignored) {}
         return null;
     }

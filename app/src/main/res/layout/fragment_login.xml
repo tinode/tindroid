@@ -13,7 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:src="@mipmap/ic_launcher"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:id="@+id/imageLogo"
         android:layout_alignParentTop="true"
@@ -60,12 +59,22 @@
     </android.support.design.widget.TextInputLayout>
 
     <Button
+        android:id="@+id/signIn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/sign_in"
-        android:id="@+id/signIn"
         android:layout_below="@+id/editPasswordWrapper"
         android:textSize="@dimen/button_text"
         android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/forgotPassword"
+        style="?android:buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/forgot_password"
+        android:layout_below="@+id/signIn"
+        android:layout_centerHorizontal="true"
+        />
 
 </RelativeLayout>
