@@ -31,6 +31,8 @@ import co.tinode.tindroid.widgets.RoundImageDrawable;
 public abstract class ImageLoader {
     private static final String TAG = "ImageLoader";
     private static final float MEMORY_PERCENT = 0.1f;
+    private static final int DEFAULT_IMAGE_SIZE = 24;
+
     private final Object mPauseWorkLock = new Object();
     private Bitmap mLoadingBitmap;
     private boolean mPauseWork = false;
@@ -41,7 +43,7 @@ public abstract class ImageLoader {
 
     ImageLoader(Context context, int imageSize, FragmentManager fm) {
         mResources = context.getResources();
-        mImageSize = imageSize;
+        mImageSize = imageSize > 0 ? imageSize : DEFAULT_IMAGE_SIZE;
 
         final RetainFragment mRetainFragment = findOrCreateRetainFragment(fm);
 
@@ -87,7 +89,7 @@ public abstract class ImageLoader {
      * Returns false if the work in progress deals with the same data. The work is not
      * stopped in that case.
      */
-    public static boolean cancelPotentialWork(Object data, ImageView imageView) {
+    private static boolean cancelPotentialWork(Object data, ImageView imageView) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 
         if (bitmapWorkerTask != null) {
