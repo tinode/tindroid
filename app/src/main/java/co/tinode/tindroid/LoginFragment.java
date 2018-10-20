@@ -2,10 +2,12 @@ package co.tinode.tindroid;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
@@ -41,11 +43,17 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         setHasOptionsMenu(true);
 
-        final ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity == null) {
+            return null;
+        }
+
+        final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(false);
         }
@@ -178,7 +186,11 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
 
     private Account addAndroidAccount(final String uid, final String secret, final String token) {
-        final AccountManager am = AccountManager.get(getActivity().getBaseContext());
+        final Activity a = getActivity();
+        if (a == null) {
+            return null;
+        }
+        final AccountManager am = AccountManager.get(a.getBaseContext());
         final Account acc = Utils.createAccount(uid);
         am.addAccountExplicitly(acc, secret, null);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

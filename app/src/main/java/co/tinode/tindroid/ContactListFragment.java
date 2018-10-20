@@ -713,16 +713,6 @@ public class ContactListFragment extends ListFragment {
 
             Utils.ContactHolder extra = (mPhEmImData != null ? mPhEmImData.get(holder.contact_id) : null);
 
-            /*
-            if (mPhEmImData == null) {
-                Log.d(TAG, "mPhEmImData is NULL while processing " + holder.contact_id);
-            } else if (extra == null) {
-                Log.d(TAG, "Extra is NULL while processing " + holder.contact_id);
-            } else if (extra.getImCount() <= 0) {
-                Log.d(TAG, "extra.getImCount() <= 0 while processing " + holder.contact_id);
-            }
-            */
-
             if (extra != null && extra.getImCount() > 0) {
                 holder.inviteButton.setVisibility(View.GONE);
             } else {

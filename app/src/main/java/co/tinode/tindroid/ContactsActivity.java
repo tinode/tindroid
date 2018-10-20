@@ -44,7 +44,6 @@ public class ContactsActivity extends AppCompatActivity implements
     static final String FRAGMENT_CONTACTS = "contacts";
     static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
 
-
     private ChatListAdapter mChatListAdapter;
 
     private MeListener mMeTopicListener = null;
@@ -101,63 +100,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         UiUtils.setupToolbar(this, null, null, false);
 
-        if (mMeTopic == null) {
-            mMeTopic = tinode.getMeTopic();
-            if (mMeTopic == null) {
-                // The very first launch of the app.
-                mMeTopic = new MeTopic<>(tinode, mMeTopicListener);
-                Log.d(TAG, "Initialized NEW 'me' topic");
-            } else {
-                mMeTopic.setListener(mMeTopicListener);
-                Log.d(TAG, "Loaded existing 'me' topic");
-            }
-        } else {
-            mMeTopic.setListener(mMeTopicListener);
-        }
-
-
-        if (!mMeTopic.isAttached()) {
-            topicAttach();
-        } else {
-            Log.d(TAG, "onResume() called: topic is attached");
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void topicAttach() {
-        try {
-            setProgressIndicator(true);
-            mMeTopic.subscribe(null, mMeTopic
-                    .getMetaGetBuilder()
-                    .withGetDesc()
-                    .withGetSub()
-                    .build())
-                    .thenApply(new PromisedReply.SuccessListener() {
-                        @Override
-                        public PromisedReply onSuccess(Object result) throws Exception {
-                            setProgressIndicator(false);
-                            return null;
-                        }
-                    }, new PromisedReply.FailureListener() {
-                        @Override
-                        public PromisedReply onFailure(Exception err) throws Exception {
-                            setProgressIndicator(false);
-                            return null;
-                        }
-                    });
-        } catch (NotSynchronizedException ignored) {
-            setProgressIndicator(false);
-            /* */
-        } catch (NotConnectedException ignored) {
-            /* offline - ignored */
-            setProgressIndicator(false);
-            Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception err) {
-            Log.i(TAG, "Subscription failed", err);
-            setProgressIndicator(false);
-            Toast.makeText(this,
-                    "Failed to attach", Toast.LENGTH_LONG).show();
-        }
+        UiUtils.attachMeTopic(this, mMeTopicListener);
     }
 
     private void datasetChanged() {
@@ -178,31 +121,12 @@ public class ContactsActivity extends AppCompatActivity implements
     }
 
     @Override
-    @SuppressWarnings("unckecked")
+    @SuppressWarnings("unchecked")
     public void onStop() {
         super.onStop();
         if (mMeTopic != null) {
             mMeTopic.setListener(null);
         }
-    }
-
-    /**
-     * Show progress indicator based on current status
-     * @param active should be true to show progress indicator
-     */
-    public void setProgressIndicator(final boolean active) {
-        if (isFinishing() || isDestroyed()) {
-            return;
-        }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ProgressBar progressBar = findViewById(R.id.toolbar_progress_bar);
-                if (progressBar != null) {
-                    progressBar.setVisibility(active ? View.VISIBLE : View.GONE);
-                }
-            }
-        });
     }
 
     protected ChatListAdapter getChatListAdapter() {
@@ -284,7 +208,7 @@ public class ContactsActivity extends AppCompatActivity implements
         @Override
         public void onLogin(int code, String txt) {
             super.onLogin(code, txt);
-            topicAttach();
+            UiUtils.attachMeTopic(ContactsActivity.this, mMeTopicListener);
         }
     }
 }

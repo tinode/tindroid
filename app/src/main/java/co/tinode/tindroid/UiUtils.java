@@ -51,6 +51,7 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.pchmn.materialchips.model.Chip;
@@ -79,7 +80,9 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -146,6 +149,10 @@ public class UiUtils {
 
     static void setupToolbar(final Activity activity, final VxCard pub,
                              final String topicName, final boolean online) {
+        if (activity.isDestroyed() || activity.isFinishing()) {
+            return;
+        }
+
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
@@ -168,7 +175,7 @@ public class UiUtils {
     // 0. [Avatar or LetterTileDrawable] 1. [Online indicator] 2. [Typing indicator]
     private static void constructToolbarLogo(final Activity activity, Bitmap avatar, String name,
                                              String uid, boolean online) {
-        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
         }
@@ -210,7 +217,7 @@ public class UiUtils {
             return null;
         }
         Drawable logo = toolbar.getLogo();
-        if (logo == null || !(logo instanceof LayerDrawable)) {
+        if (!(logo instanceof LayerDrawable)) {
             return null;
         }
 
@@ -226,6 +233,10 @@ public class UiUtils {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
+                if (activity.isDestroyed() || activity.isFinishing()) {
+                    return;
+                }
+
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -239,12 +250,12 @@ public class UiUtils {
     }
 
     static void toolbarSetOnline(final Activity activity, boolean online) {
-        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
         }
         Drawable logo = toolbar.getLogo();
-        if (logo == null || !(logo instanceof LayerDrawable)) {
+        if (!(logo instanceof LayerDrawable)) {
             return;
         }
 
@@ -323,14 +334,14 @@ public class UiUtils {
                                 Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
                                 launch.putExtra("credential", it.next());
                             }
-                        } catch (IOException ignored) {
+                        } catch (IOException ex) {
                             // Login failed due to network error.
                             // If we have UID, go to Contacts, otherwise to Login
                             launch = new Intent(activity, BaseDb.getInstance().isReady() ?
                                     ContactsActivity.class : LoginActivity.class);
                             Log.d(TAG, "Network failure/" + (BaseDb.getInstance().isReady() ? "DB ready" : "DB NOT ready"));
-                        } catch (Exception ignored) {
-                            Log.d(TAG, "Other failure", ignored);
+                        } catch (Exception ex) {
+                            Log.d(TAG, "Other failure", ex);
                             // Login failed due to invalid (expired) token
                             accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                         }
@@ -369,11 +380,15 @@ public class UiUtils {
         return account;
     }
 
-    public static void setConnectedStatus(final Activity activity, final boolean online) {
+    private static void setConnectedStatus(final Activity activity, final boolean online) {
+        if (activity.isDestroyed() || activity.isFinishing()) {
+            return;
+        }
+
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+                final Toolbar toolbar = activity.findViewById(R.id.toolbar);
                 if (toolbar != null) {
                     Menu menu = toolbar.getMenu();
                     if (menu != null) {
@@ -389,7 +404,7 @@ public class UiUtils {
     }
 
     // Date formatter for messages
-    public static String shortDate(Date date) {
+    static String shortDate(Date date) {
         if (date != null) {
             Calendar now = Calendar.getInstance();
             Calendar then = Calendar.getInstance();
@@ -409,8 +424,12 @@ public class UiUtils {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public static void requestAvatar(Fragment fragment) {
-        Activity activity = fragment.getActivity();
+    static void requestAvatar(Fragment fragment) {
+        final Activity activity = fragment.getActivity();
+        if (activity == null) {
+            return;
+        }
+
         if (!checkPermission(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
             ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
                     READ_EXTERNAL_STORAGE_PERMISSION);
@@ -424,7 +443,7 @@ public class UiUtils {
         }
     }
 
-    public static Bitmap scaleSquareBitmap(Bitmap bmp) {
+    static Bitmap scaleSquareBitmap(Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
@@ -444,7 +463,7 @@ public class UiUtils {
                 AVATAR_SIZE, AVATAR_SIZE);
     }
 
-    public static Bitmap scaleBitmap(Bitmap bmp) {
+    static Bitmap scaleBitmap(Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         boolean changed = false;
@@ -464,7 +483,7 @@ public class UiUtils {
         return changed ? Bitmap.createScaledBitmap(bmp, width, height, true) : bmp;
     }
 
-    public static Bitmap extractBitmap(final Activity activity, final Intent data) {
+    static Bitmap extractBitmap(final Activity activity, final Intent data) {
         try {
             return MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
                     data.getData());
@@ -473,12 +492,12 @@ public class UiUtils {
         }
     }
 
-    public static boolean acceptAvatar(final ImageView avatar, final Bitmap bmp) {
+    static boolean acceptAvatar(final ImageView avatar, final Bitmap bmp) {
         avatar.setImageDrawable(new RoundImageDrawable(scaleSquareBitmap(bmp)));
         return true;
     }
 
-    public static boolean acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
+    static boolean acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
         final Bitmap bmp = extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
@@ -487,7 +506,7 @@ public class UiUtils {
         return acceptAvatar(avatar, bmp);
     }
 
-    public static void assignBitmap(Context context, ImageView icon, Bitmap bmp, String name, String address) {
+    static void assignBitmap(Context context, ImageView icon, Bitmap bmp, String name, String address) {
         if (bmp != null) {
             icon.setImageDrawable(new RoundImageDrawable(bmp));
         } else {
@@ -512,7 +531,7 @@ public class UiUtils {
      * @return A Bitmap containing the contact's image, resized to fit the provided image size. If
      * no thumbnail exists, returns null.
      */
-    public static Bitmap loadContactPhotoThumbnail(Fragment fragment, String photoData, int imageSize) {
+    static Bitmap loadContactPhotoThumbnail(Fragment fragment, String photoData, int imageSize) {
 
         // Ensures the Fragment is still added to an activity. As this method is called in a
         // background thread, there's the possibility the Fragment is no longer attached and
@@ -523,17 +542,15 @@ public class UiUtils {
 
         // Instantiates an AssetFileDescriptor. Given a content Uri pointing to an image file, the
         // ContentResolver can return an AssetFileDescriptor for the file.
-        AssetFileDescriptor afd = null;
 
         // This "try" block catches an Exception if the file descriptor returned from the Contacts
         // Provider doesn't point to an existing file.
-        try {
-            Uri thumbUri = Uri.parse(photoData);
+        Uri thumbUri = Uri.parse(photoData);
+        try (AssetFileDescriptor afd = fragment.getActivity().getContentResolver().openAssetFileDescriptor(thumbUri, "r")) {
 
             // Retrieves a file descriptor from the Contacts Provider. To learn more about this
             // feature, read the reference documentation for
             // ContentResolver#openAssetFileDescriptor.
-            afd = fragment.getActivity().getContentResolver().openAssetFileDescriptor(thumbUri, "r");
 
             // Gets a FileDescriptor from the AssetFileDescriptor. A BitmapFactory object can
             // decode the contents of a file pointed to by a FileDescriptor into a Bitmap.
@@ -551,23 +568,16 @@ public class UiUtils {
                 Log.d(TAG, "Contact photo thumbnail not found for contact " + photoData
                         + ": " + e.toString());
             }
-        } finally {
-            // If an AssetFileDescriptor was returned, try to close it
-            if (afd != null) {
-                try {
-                    afd.close();
-                } catch (IOException unused) {
-                    // Closing a file descriptor might cause an IOException if the file is
-                    // already closed. Nothing extra is needed to handle this.
-                }
-            }
         }
+        // If an AssetFileDescriptor was returned, try to close it
+        // Closing a file descriptor might cause an IOException if the file is
+        // already closed. Nothing extra is needed to handle this.
 
         // If the decoding failed, returns null
         return null;
     }
 
-    public static ByteArrayInputStream bitmapToStream(Bitmap bmp, String mimeType) {
+    static ByteArrayInputStream bitmapToStream(Bitmap bmp, String mimeType) {
         Bitmap.CompressFormat fmt;
         if ("image/jpeg".equals(mimeType)) {
             fmt = Bitmap.CompressFormat.JPEG;
@@ -586,18 +596,23 @@ public class UiUtils {
      *
      * @return The preferred height in pixels, based on the current theme.
      */
-    public static int getListPreferredItemHeight(Fragment fragment) {
+    static int getListPreferredItemHeight(Fragment fragment) {
         final TypedValue typedValue = new TypedValue();
 
+        final Activity activity = fragment.getActivity();
+        if (activity == null) {
+            return -1;
+        }
+
         // Resolve list item preferred height theme attribute into typedValue
-        fragment.getActivity().getTheme().resolveAttribute(
+        activity.getTheme().resolveAttribute(
                 android.R.attr.listPreferredItemHeight, typedValue, true);
 
         // Create a new DisplayMetrics object
         final DisplayMetrics metrics = new android.util.DisplayMetrics();
 
         // Populate the DisplayMetrics
-        fragment.getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         // Return theme value based on DisplayMetrics
         return (int) typedValue.getDimension(metrics);
@@ -620,7 +635,7 @@ public class UiUtils {
         return sColorizerDark[index % sColorizerDark.length];
     }
 
-    public static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
+    static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
         ArrayList<AccessModeLabel> result = new ArrayList<>(2);
         if (acs != null) {
             if (acs.isModeDefined()) {
@@ -652,7 +667,7 @@ public class UiUtils {
         }
 
         return !result.isEmpty() ?
-                result.toArray(new AccessModeLabel[result.size()]) : null;
+                result.toArray(new AccessModeLabel[0]) : null;
     }
 
     static List<Chip> createChipsInputFilteredList(Cursor cursor) {
@@ -763,6 +778,10 @@ public class UiUtils {
                                 new PromisedReply.FailureListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                        if (activity.isFinishing() || activity.isDestroyed()) {
+                                            return null;
+                                        }
+
                                         activity.runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
@@ -854,6 +873,60 @@ public class UiUtils {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
+    static void attachMeTopic(final Activity activity, Topic.Listener l) {
+        try {
+            setProgressIndicator(activity, true);
+            Cache.attachMeTopic(l)
+                    .thenApply(new PromisedReply.SuccessListener() {
+                        @Override
+                        public PromisedReply onSuccess(Object result) throws Exception {
+                            UiUtils.setProgressIndicator(activity, false);
+                            return null;
+                        }
+                    }, new PromisedReply.FailureListener() {
+                        @Override
+                        public PromisedReply onFailure(Exception err) throws Exception {
+                            UiUtils.setProgressIndicator(activity, false);
+                            return null;
+                        }
+                    });
+        } catch (NotSynchronizedException ignored) {
+            setProgressIndicator(activity,false);
+            /* */
+        } catch (NotConnectedException ignored) {
+            /* offline - ignored */
+            setProgressIndicator(activity,false);
+            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+        } catch (Exception err) {
+            Log.i(TAG, "Subscription failed", err);
+            setProgressIndicator(activity,false);
+            Toast.makeText(activity, R.string.failed_to_attach, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Show or hide progress indicator in the toolbar.
+     *
+     * @param activity activity making the call.
+     * @param active show when true, hide when false.
+     */
+     private static void setProgressIndicator(final Activity activity, final boolean active) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ProgressBar progressBar = activity.findViewById(R.id.toolbar_progress_bar);
+                if (progressBar != null) {
+                    progressBar.setVisibility(active ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
+    }
+
     interface ContactsQuery {
         String[] PROJECTION = {
                 ContactsContract.Data._ID,
@@ -888,19 +961,19 @@ public class UiUtils {
     }
 
     public static class EventListener extends Tinode.EventListener {
-        private AppCompatActivity mActivity = null;
-        private Boolean mOnline = null;
+        private AppCompatActivity mActivity;
+        private Boolean mConnected;
 
-        public EventListener(AppCompatActivity owner, Boolean online) {
+        EventListener(AppCompatActivity owner, Boolean connected) {
             super();
             mActivity = owner;
-            mOnline = online;
+            mConnected = connected;
         }
 
         @Override
         public void onConnect(int code, String reason, Map<String, Object> params) {
             // Show that we are connected
-            setOnlineStatus(true);
+            setConnected(true);
         }
 
         @Override
@@ -911,15 +984,16 @@ public class UiUtils {
             } else {
                 Log.d(TAG, "Tinode error: " + code);
             }
-            setOnlineStatus(false);
+            setConnected(false);
         }
 
-        private void setOnlineStatus(final boolean online) {
-            if (mActivity != null && (mOnline == null || online != mOnline)) {
-                mOnline = online;
-                UiUtils.setConnectedStatus(mActivity, online);
+        private void setConnected(final boolean connected) {
+            if (mActivity != null &&
+                    (mConnected == null || connected != mConnected)) {
+                mConnected = connected;
+                setConnectedStatus(mActivity, connected);
             } else {
-                mOnline = null;
+                mConnected = null;
             }
         }
     }
@@ -935,10 +1009,10 @@ public class UiUtils {
     }
 
     public static class AccessModeLabel {
-        public int nameId;
+        int nameId;
         public int color;
 
-        public AccessModeLabel(int nameId, int color) {
+        AccessModeLabel(int nameId, int color) {
             this.nameId = nameId;
             this.color = color;
         }
@@ -949,11 +1023,12 @@ public class UiUtils {
         private ContactsLoaderResultReceiver mReceiver;
         private int mLoaderId = -1;
 
-        public ContactsLoaderCallback(Activity activity, ContactsLoaderResultReceiver receiver) {
+        ContactsLoaderCallback(Activity activity, ContactsLoaderResultReceiver receiver) {
             mActivity = activity;
             mReceiver = receiver;
         }
 
+        @NonNull
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             mLoaderId = id;
@@ -971,14 +1046,14 @@ public class UiUtils {
         }
 
         @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
             // This swaps the new cursor into the adapter.
             Log.d(TAG, "delivered cursor with items: " + data.getCount());
             mReceiver.receiveResult(mLoaderId, data);
         }
 
         @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
+        public void onLoaderReset(@NonNull Loader<Cursor> loader) {
             // When the loader is being reset, clear the cursor from the adapter. This allows the
             // cursor resources to be freed.
             mReceiver.receiveResult(mLoaderId, null);
@@ -988,12 +1063,16 @@ public class UiUtils {
     static class ToastFailureListener extends PromisedReply.FailureListener<ServerMessage> {
         private Activity mActivity;
 
-        public ToastFailureListener(Activity activity) {
+        ToastFailureListener(Activity activity) {
             mActivity = activity;
         }
 
         @Override
-        public PromisedReply<ServerMessage> onFailure(final Exception err) throws Exception {
+        public PromisedReply<ServerMessage> onFailure(final Exception err) {
+            if (mActivity.isFinishing() || mActivity.isDestroyed()) {
+                return null;
+            }
+
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -1009,49 +1088,54 @@ public class UiUtils {
     }
 
     // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
-    public static String getPath(Context context, Uri uri) {
+    static String getPath(Context context, Uri uri) {
         // DocumentProvider
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
                 DocumentsContract.isDocumentUri(context, uri)) {
             final String docId = DocumentsContract.getDocumentId(uri);
-            switch (uri.getAuthority()) {
-                case "com.android.externalstorage.documents": {
-                    // ExternalStorageProvider
-                    final String[] split = docId.split(":");
-                    final String type = split[0];
+            String authority = uri.getAuthority();
+            if (authority != null) {
+                switch (authority) {
+                    case "com.android.externalstorage.documents": {
+                        // ExternalStorageProvider
+                        final String[] split = docId.split(":");
+                        final String type = split[0];
 
-                    if ("primary".equalsIgnoreCase(type)) {
-                        return Environment.getExternalStorageDirectory() + "/" + split[1];
+                        if ("primary".equalsIgnoreCase(type)) {
+                            return Environment.getExternalStorageDirectory() + "/" + split[1];
+                        }
+                        // TODO handle non-primary volumes
                     }
-                    // TODO handle non-primary volumes
-                }
-                break;
-                case "com.android.providers.downloads.documents": {
-                    // DownloadsProvider
+                    break;
+                    case "com.android.providers.downloads.documents": {
+                        // DownloadsProvider
 
-                    final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
-                            Long.valueOf(docId));
-                    return getDataColumn(context, contentUri, null, null);
-                }
-                case "com.android.providers.media.documents": {
-                    // MediaProvider
-
-                    final String[] split = docId.split(":");
-                    final String type = split[0];
-                    Uri contentUri = null;
-                    if ("image".equals(type)) {
-                        contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                    } else if ("video".equals(type)) {
-                        contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                    } else if ("audio".equals(type)) {
-                        contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                        final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
+                                Long.valueOf(docId));
+                        return getDataColumn(context, contentUri, null, null);
                     }
-                    final String selection = "_id=?";
-                    final String[] selectionArgs = new String[]{split[1]};
-                    return getDataColumn(context, contentUri, selection, selectionArgs);
+                    case "com.android.providers.media.documents": {
+                        // MediaProvider
+
+                        final String[] split = docId.split(":");
+                        final String type = split[0];
+                        Uri contentUri = null;
+                        if ("image".equals(type)) {
+                            contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                        } else if ("video".equals(type)) {
+                            contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                        } else if ("audio".equals(type)) {
+                            contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                        }
+                        final String selection = "_id=?";
+                        final String[] selectionArgs = new String[]{split[1]};
+                        return getDataColumn(context, contentUri, selection, selectionArgs);
+                    }
+                    default:
+                        Log.d(TAG, "Unknown content authority " + uri.getAuthority());
                 }
-                default:
-                    Log.d(TAG, "Unknown content authority " + uri.getAuthority());
+            } else {
+                Log.d(TAG, "URI has no content authority " + uri);
             }
         } else if ("content".equalsIgnoreCase(uri.getScheme())) {
             // MediaStore (and general)
@@ -1068,23 +1152,18 @@ public class UiUtils {
     }
 
     private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
-        Cursor cursor = null;
         final String column = "_data";
         final String[] projection = { column };
-        try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
+        try (Cursor cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 final int index = cursor.getColumnIndexOrThrow(column);
                 return cursor.getString(index);
             }
-        } finally {
-            if (cursor != null)
-                cursor.close();
         }
         return null;
     }
 
-    public static String bytesToHumanSize(long bytes) {
+    static String bytesToHumanSize(long bytes) {
         if (bytes <= 0) {
             return "0 Bytes";
         }
@@ -1098,7 +1177,7 @@ public class UiUtils {
         return fmt.format(count) + " " + sizes[bucket];
     }
 
-    public static String getMimeType(Uri uri) {
+    static String getMimeType(Uri uri) {
         if (uri == null) {
             return null;
         }

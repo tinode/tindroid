@@ -14,7 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * Pager fragment fragment for Contacts fragments in ContactsActivity.
+ * Pager fragment for Chats and Contacts fragments in ContactsActivity.
  */
 public class ContactsFragment extends Fragment {
     private static final String TAG = "ContactsFragment";

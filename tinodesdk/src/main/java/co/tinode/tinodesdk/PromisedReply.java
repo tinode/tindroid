@@ -105,10 +105,8 @@ public class PromisedReply<T> {
      * @param success called when the promise is resolved
      * @param failure called when the promise is rejected
      * @return promise for chaining
-     * @throws Exception
      */
-    public PromisedReply<T> thenApply(SuccessListener<T> success, FailureListener<T> failure)
-            throws Exception {
+    public PromisedReply<T> thenApply(SuccessListener<T> success, FailureListener<T> failure) {
         synchronized (this) {
 
             if (mNextPromise != null) {
@@ -140,7 +138,7 @@ public class PromisedReply<T> {
     }
 
     private void callOnSuccess(final T result) throws Exception {
-        PromisedReply<T> ret = null;
+        PromisedReply<T> ret;
         try {
             ret = (mSuccess != null ? mSuccess.onSuccess(result) : null);
         } catch (Exception e) {
@@ -230,7 +228,7 @@ public class PromisedReply<T> {
     }
 
     public void reject(final Exception err) throws Exception {
-        Log.d(TAG, "REJECTING promise " + this);
+        Log.d(TAG, "REJECTING promise " + this, err);
         synchronized (this) {
             if (mState == State.WAITING) {
                 mState = State.REJECTED;
@@ -252,9 +250,9 @@ public class PromisedReply<T> {
      * Wait for promise resolution.
      *
      * @return true if the promise was resolved, false otherwise
-     * @throws Exception
+     * @throws InterruptedException if waiting was interrupted
      */
-    public boolean waitResult() throws Exception {
+    public boolean waitResult() throws InterruptedException {
         // Wait for the promise to resolve
         mDoneSignal.await();
         return isResolved();
@@ -266,7 +264,7 @@ public class PromisedReply<T> {
      * the same instance.
      *
      * @return result of the execution (what was passed to {@link #resolve(Object)})
-     * @throws Exception if the promise was rejected, throw an exception
+     * @throws Exception if the promise was rejected or waiting was interrupted.
      */
     public T getResult() throws Exception {
         // Wait for the promise to resolve
@@ -297,25 +295,5 @@ public class PromisedReply<T> {
     }
     public static abstract class FailureListener<U> {
         public abstract PromisedReply<U> onFailure(Exception err) throws Exception;
-    }
-
-    /**
-     * Class with methods to handle successful and failed resolution of the promise.
-     * @param <R> promise type
-     */
-    public static class Handler<R> {
-        /**
-         * Default do nothing success handler.
-         * @param result value passed to resolve()
-         * @return always null which is treated as "the same result"
-         * @throws Exception
-         */
-        public PromisedReply<R> onSuccess(R result) throws Exception {
-            return null;
-        }
-
-        public PromisedReply<R> onFailure(Exception err) throws Exception {
-            throw err;
-        }
     }
 }

@@ -37,6 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -248,9 +249,9 @@ public class MessageActivity extends AppCompatActivity {
             Log.d(TAG, "Offline mode, ignore");
             setProgressIndicator(false);
         } catch (Exception ex) {
+            Log.e(TAG, "something went wrong", ex);
             setProgressIndicator(false);
             Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "something went wrong", ex);
         }
     }
 
@@ -550,10 +551,11 @@ public class MessageActivity extends AppCompatActivity {
         private ReentrantLock pauseLock = new ReentrantLock();
         private Condition unpaused = pauseLock.newCondition();
 
-        public PausableSingleThreadExecutor() {
+        PausableSingleThreadExecutor() {
             super(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         }
 
+        @Override
         protected void beforeExecute(Thread t, Runnable r) {
             super.beforeExecute(t, r);
             pauseLock.lock();
@@ -566,7 +568,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
 
-        public void pause() {
+        void pause() {
             pauseLock.lock();
             try {
                 isPaused = true;
@@ -575,7 +577,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
 
-        public void resume() {
+        void resume() {
             pauseLock.lock();
             try {
                 isPaused = false;
@@ -594,6 +596,8 @@ public class MessageActivity extends AppCompatActivity {
         @Override
         public void onLogin(int code, String txt) {
             super.onLogin(code, txt);
+
+            UiUtils.attachMeTopic(MessageActivity.this, null);
             topicAttach();
         }
     }
