@@ -84,6 +84,7 @@ import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
@@ -887,7 +888,15 @@ public class UiUtils {
                     }, new PromisedReply.FailureListener() {
                         @Override
                         public PromisedReply onFailure(Exception err) throws Exception {
+                            Log.d(TAG, "Error subscribing to 'me' topic", err);
                             UiUtils.setProgressIndicator(activity, false);
+                            if (err instanceof ServerResponseException) {
+                                ServerResponseException sre = (ServerResponseException) err;
+                                if (sre.getCode() == 404) {
+                                    Cache.getTinode().logout();
+                                    activity.startActivity(new Intent(activity, LoginActivity.class));
+                                }
+                            }
                             return null;
                         }
                     });

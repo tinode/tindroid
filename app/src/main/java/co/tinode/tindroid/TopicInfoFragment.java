@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatImageView;
@@ -420,6 +421,9 @@ public class TopicInfoFragment extends Fragment {
 
     void notifyContentChanged() {
         final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
 
         final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
         final TextView title = activity.findViewById(R.id.topicTitle);
@@ -459,7 +463,7 @@ public class TopicInfoFragment extends Fragment {
         }
 
         PrivateType priv = mTopic.getPriv();
-        if (!TextUtils.isEmpty(priv.getComment())) {
+        if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
             subtitle.setText(priv.getComment());
             subtitle.setTypeface(null, Typeface.NORMAL);
             subtitle.setTextIsSelectable(true);
@@ -482,12 +486,14 @@ public class TopicInfoFragment extends Fragment {
         // unpaused and did not have time to re-subscribe.
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
             final MessageActivity activity = (MessageActivity) getActivity();
-            activity.submitForExecution(new Runnable() {
-                @Override
-                public void run() {
-                UiUtils.updateAvatar(activity, mTopic, data);
-                }
-            });
+            if (activity != null) {
+                activity.submitForExecution(new Runnable() {
+                    @Override
+                    public void run() {
+                        UiUtils.updateAvatar(activity, mTopic, data);
+                    }
+                });
+            }
         }
     }
 
@@ -557,15 +563,16 @@ public class TopicInfoFragment extends Fragment {
             return StoredSubscription.getId(mItems[i]);
         }
 
+        @NonNull
         @Override
-        public MemberViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        public MemberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             // create a new view
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.group_member, parent, false);
             return new MemberViewHolder(v);
         }
 
         @Override
-        public void onBindViewHolder(final MemberViewHolder holder, int position) {
+        public void onBindViewHolder(@NonNull final MemberViewHolder holder, int position) {
             final Subscription<VxCard,PrivateType> sub = mItems[position];
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
             final Activity activity = getActivity();
