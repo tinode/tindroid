@@ -6,7 +6,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.0'
+        classpath 'com.android.tools.build:gradle:3.2.1'
 
         // For FCM push notifications
         classpath 'com.google.gms:google-services:3.2.0'
@@ -18,10 +18,10 @@ buildscript {
 
 allprojects {
     repositories {
-        jcenter()
+        google()
         // Used by com.github.pchmn:MaterialChipsInput
         maven { url "https://jitpack.io" }
-        google()
+        jcenter()
     }
 }
 
