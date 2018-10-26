@@ -56,6 +56,10 @@ The `contacts.vcf` contains a list of contacts which can be used for testing. Pu
 
   `adb push contacts.vcf /sdcard/contacts.vcf`
 
+## Translations
+
+Pull requests with translations are welcome. See [Russian translation](app/src/main/res/values-ru/strings.xml) as an example.
+
 
 ## Screenshots
 <img src="android-contacts-1.png" alt="App screenshot - contacts" width="270" /> <img src="android-chat-1.png" alt="App screenshot - chat" width="270" /> <img src="android-topic-info-1.png" alt="App screenshot - chat settings" width="270" />
