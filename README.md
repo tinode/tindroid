@@ -46,7 +46,7 @@ to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org
 * [MaterialChipsInput](https://github.com/pchmn/MaterialChipsInput) widget for group chat member selection.
 This implementation is buggy and inflexible, should be replaced ASAP. Google should have provided this widget.
 * [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications.
-In order to compile the app you need to [generate your own](https://developers.google.com/mobile/add)
+In order to compile the app you need to [download your own](https://developers.google.com/android/guides/google-services-plugin)
 config file `google-services.json`. Once downloaded, copy it to the `./app/` folder. The
 config file contains Google-provided passwords and as such cannot be shared. If you don't do it the
 app will crash with non-obvious exceptions. The Google-provided server key must be copied to `tinode.conf`, see

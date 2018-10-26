@@ -4,10 +4,10 @@
     <string name="default_host_name" translatable="false">10.0.2.2:6060</string>
 
     <string name="app_name">Tindroid</string>
-    <string name="app_name_full">Tindroid Messenger</string>
+    <string name="app_name_full" translatable="false">Tindroid Messenger</string>
     <string name="app_version">Version</string>
-    <string name="copyright">© 2014 – 2018 Tinode</string>
-    <string name="tinode">Tinode</string>
+    <string name="copyright" translatable="false">© 2014 – 2018 Tinode</string>
+    <string name="tinode" translatable="false">Tinode</string>
 
     <string name="login_hint">Login</string>
     <string name="password_hint">Password</string>
@@ -17,22 +17,22 @@
     <string name="send_file_button_hint">Send file</string>
 
     <string name="sign_in">Sign In</string>
-    <string name="app_description">Tinode Demo Chat</string>
+    <string name="app_description" translatable="false">Tinode Demo Chat</string>
     <string name="action_signup">Sign Up</string>
     <string name="sign_up">Sign Up</string>
     <string name="login_new">Login</string>
     <string name="password_new">Password</string>
     <string name="password_repeat">Repeat password</string>
     <string name="full_name">Full name, e.g. John Doe</string>
-    <string name="tinode_logo">Tinode Logo</string>
+    <string name="tinode_logo" translatable="false">Tinode Logo</string>
     <string name="upload_avatar">Upload avatar picture</string>
     <string name="continue_fb">Continue with Facebook</string>
     <string name="continue_goog">Continue with Google</string>
     <string name="or">OR</string>
     <string name="action_cancel">Cancel</string>
     <string name="transport_default">default</string>
-    <string name="transport_websocket">websocket</string>
-    <string name="transport_long_polling">long polling</string>
+    <string name="transport_websocket" translatable="false">websocket</string>
+    <string name="transport_long_polling" translatable="false">long polling</string>
     <string name="settings_host_name">Host name</string>
     <string name="settings_use_tls">Use TLS</string>
     <string name="settings_wire_transport">Wire transport</string>
@@ -173,7 +173,7 @@
     <string name="join">Join</string>
     <string name="ignore">Ignore</string>
 
-    <string name="default_attachment_name">tinode_file_attachment</string>
+    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
     <string name="download_attachment">save</string>
     <string name="broken_image">Unknown or invalid image format</string>
     <string name="file_manager_not_found">File manager not found</string>
