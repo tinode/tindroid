@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
 import android.support.v7.content.res.AppCompatResources;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -132,7 +133,7 @@ public class SpanFormatter {
                             if (clicker != null) {
                                 span = new ClickableSpan() {
                                     @Override
-                                    public void onClick(View widget) {
+                                    public void onClick(@NonNull View widget) {
                                         clicker.onClick("IM", valid ? data : null);
                                     }
                                 };
@@ -145,6 +146,15 @@ public class SpanFormatter {
                         break;
                     case "EX":
                         if (data != null) {
+                            try {
+                                String mimeType = (String) data.get("mime");
+                                if ("application/json".equals(mimeType)) {
+                                    // Skip JSON attachments.
+                                    // They are not meant to be user-visible.
+                                    continue;
+                                }
+                            } catch (NullPointerException | ClassCastException ignored) {
+                            }
                             if (text.length() > 0) {
                                 offset = text.length() + 1;
                                 text.append("\n ");
@@ -192,7 +202,7 @@ public class SpanFormatter {
                                 // Make line clickable
                                 span = new ClickableSpan() {
                                     @Override
-                                    public void onClick(View widget) {
+                                    public void onClick(@NonNull View widget) {
                                         clicker.onClick("EX", data);
                                     }
                                 };
@@ -234,6 +244,7 @@ public class SpanFormatter {
                     continue;
                 }
                 switch (ent.tp) {
+                    case "BN":
                     case "LN":
                     case "MN":
                     case "HT":

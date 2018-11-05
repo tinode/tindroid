@@ -1,5 +1,6 @@
 package co.tinode.tinodesdk.model;
 
+import android.util.Log;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -8,8 +9,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,11 +72,15 @@ import java.util.regex.Pattern;
 
 public class Drafty implements Serializable {
     public static final String MIME_TYPE = "text/x-drafty";
+    public static final String JSON_MIME_TYPE = "application/json";
+
     private static final String TAG = "Drafty";
+
+    private static final int MAX_FORM_ELEMENTS = 8;
 
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end
-    private static final String INLINE_STYLE_NAME[] = {"ST", "EM", "DL", "CO" };
+    private static final String INLINE_STYLE_NAME[] = {"ST", "EM", "DL", "CO"};
     private static final Pattern INLINE_STYLE_RE[] = {
             Pattern.compile("(?<=^|\\W)\\*([^\\s*]+)\\*(?=$|\\W)"),    // bold *bo*
             Pattern.compile("(?<=^|[\\W_])_([^\\s_]+)_(?=$|[\\W_])"),  // italic _it_
@@ -132,6 +141,53 @@ public class Drafty implements Serializable {
         this.ent = ent;
     }
 
+    @SuppressWarnings("unchecked")
+    protected Drafty(Map<String,Object> src) {
+        if (src == null) {
+            return;
+        }
+
+        try {
+            txt = (String) src.get("txt");
+            List styles = (List) src.get("fmt");
+            if (styles != null) {
+
+                fmt = new Style[styles.size()];
+                Iterator iter = styles.iterator();
+                for (int i = 0; i < styles.size(); i++) {
+                    Map<String, Object> st = (Map<String, Object>) iter.next();
+                    fmt[i] = new Style();
+                    if (st.containsKey("at")) {
+                        fmt[i].at = (int) st.get("at");
+                    }
+                    if (st.containsKey("len")) {
+                        fmt[i].len = (int) st.get("len");
+                    }
+                    if (st.containsKey("tp")) {
+                        fmt[i].tp = (String) st.get("tp");
+                    }
+                    if (st.containsKey("key")) {
+                        fmt[i].key = (Integer) st.get("key");
+                    }
+                }
+            }
+            List entities = (List) src.get("ent");
+            if (entities != null) {
+                ent = new Entity[entities.size()];
+                Iterator iter = entities.iterator();
+                for (int i = 0; i < entities.size(); i++) {
+                    Map<String, Object> en = (Map<String, Object>) iter.next();
+                    ent[i] = new Entity();
+                    ent[i].tp = (String) en.get("tp");
+                    ent[i].data = (Map<String, Object>) en.get("data");
+                }
+            }
+
+        } catch (ClassCastException | NullPointerException ex) {
+            Log.d(TAG, "Failed to parse Drafty from Map", ex);
+        }
+    }
+
     // Detect starts and ends of formatting spans. Unformatted spans are
     // ignored at this stage.
     private static List<Span> spannify(String original, Pattern re, String type) {
@@ -139,10 +195,10 @@ public class Drafty implements Serializable {
         Matcher matcher = re.matcher(original);
         while (matcher.find()) {
             Span s = new Span();
-            s.start = matcher.start(0);     // 'hello *world*'
-                                            //        ^ group(zero) -> index of the opening markup character
-            s.end = matcher.end(1);         // group(one) -> index of the closing markup character
-            s.text = matcher.group(1);      // text without of the markup
+            s.start = matcher.start(0);  // 'hello *world*'
+                                                // ^ group(zero) -> index of the opening markup character
+            s.end = matcher.end(1);      // group(one) -> index of the closing markup character
+            s.text = matcher.group(1);          // text without of the markup
             s.type = type;
             spans.add(s);
         }
@@ -191,7 +247,6 @@ public class Drafty implements Serializable {
 
         return chunks;
     }
-
 
     private static List<Span> toTree(List<Span> spans) {
         if (spans == null || spans.isEmpty()) {
@@ -363,8 +418,8 @@ public class Drafty implements Serializable {
         }
 
         return new Drafty(text.toString(),
-                fmt.size() > 0 ? fmt.toArray(new Style[fmt.size()]) : null,
-                refs.size() > 0 ? refs.toArray(new Entity[refs.size()]) : null);
+                fmt.size() > 0 ? fmt.toArray(new Style[0]) : null,
+                refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
     }
 
     @JsonIgnore
@@ -415,6 +470,20 @@ public class Drafty implements Serializable {
         return txt != null ? txt : "";
     }
 
+    // Make sure Drafty is properly initialized for entity insertion.
+    private void prepareForEntity(int at, int len) {
+        if (fmt == null) {
+            fmt = new Style[1];
+        } else {
+            fmt = Arrays.copyOf(fmt, fmt.length + 1);
+        }
+        if (ent == null) {
+            ent = new Entity[1];
+        } else {
+            ent = Arrays.copyOf(ent, ent.length + 1);
+        }
+        fmt[fmt.length - 1] = new Style(at, len, ent.length - 1);
+    }
     /**
      * Insert inline image
      *
@@ -449,18 +518,8 @@ public class Drafty implements Serializable {
         if (txt == null || txt.length() < at + 1 || at < 0) {
             throw new IndexOutOfBoundsException("Invalid insertion position");
         }
-        if (fmt == null) {
-            fmt = new Style[1];
-        } else {
-            fmt = Arrays.copyOf(fmt, fmt.length + 1);
-        }
-        if (ent == null) {
-            ent = new Entity[1];
-        } else {
-            ent = Arrays.copyOf(ent, ent.length + 1);
-        }
 
-        fmt[fmt.length - 1] = new Style(at, 1, ent.length - 1);
+        prepareForEntity(at, 1);
 
         Map<String,Object> data = new HashMap<>();
         if (mime != null && !mime.equals("")) {
@@ -522,20 +581,9 @@ public class Drafty implements Serializable {
             throw new IllegalArgumentException("Either file bits or reference URL must not be null.");
         }
 
-        if (fmt == null) {
-            fmt = new Style[1];
-        } else {
-            fmt = Arrays.copyOf(fmt, fmt.length + 1);
-        }
-        if (ent == null) {
-            ent = new Entity[1];
-        } else {
-            ent = Arrays.copyOf(ent, ent.length + 1);
-        }
+        prepareForEntity(-1, 1);
 
-        fmt[fmt.length - 1] = new Style(-1, 1, ent.length - 1);
-
-        Map<String,Object> data = new HashMap<>();
+        final Map<String,Object> data = new HashMap<>();
         if (mime != null && !mime.equals("")) {
             data.put("mime", mime);
         }
@@ -557,6 +605,65 @@ public class Drafty implements Serializable {
     }
 
     /**
+     * Insert an interactive form.
+     *
+     * @param at index where the object is inserted. The length of the image is always 1.
+     * @param components of form fields and data. Allowed data types are plain text and Drafty.
+     * @param formName optional name of the form.
+     * @param layout to use for representing the form, optional.
+     */
+    protected Drafty insertForm(int at, Object[] components, String formName, String layout) {
+        prepareForEntity(at, 1);
+
+        final Map<String,Object> data = new HashMap<>();
+        if (formName != null && !formName.equals("")) {
+            data.put("name", formName);
+        }
+        if (layout != null && !layout.equals("")) {
+            data.put("layout", layout);
+        }
+        if (components != null) {
+            data.put("val", components);
+        }
+        ent[ent.length - 1] = new Entity("FM", data);
+        return this;
+    }
+
+    /**
+     * Insert button into Drafty document.
+     * @param at is location where the button is inserted.
+     * @param len is the length of the text to be used as button title.
+     * @param name is an opaque ID of the button. Client should just return it to the server when the button is clicked.
+     * @param actionType is the type of the button, one of 'url' or 'pub'.
+     * @param actionValue is the value associated with the action: 'url': URL, 'pub': optional data to add to response.
+     * @param refUrl parameter required by URL buttons: url to go to on click.
+     */
+    protected Drafty insertButton(int at, int len, String name, String actionType, String actionValue, String refUrl) {
+        prepareForEntity(at, len);
+
+        if (!"url".equals(actionType) && !"pub".equals(actionType)) {
+            throw new IllegalArgumentException("Unknown action type "+actionType);
+        }
+        if ("url".equals(actionType) && refUrl == null) {
+            throw new IllegalArgumentException("URL required for URL buttons");
+        }
+
+        final Map<String,Object> data = new HashMap<>();
+        data.put("act", actionType);
+        if (name != null && !name.equals("")) {
+            data.put("name", name);
+        }
+        if (actionValue != null && !actionValue.equals("")) {
+            data.put("val", actionValue);
+        }
+        if ("url".equals(actionType)) {
+            data.put("ref", refUrl);
+        }
+        ent[ent.length - 1] = new Entity("BN", data);
+        return this;
+    }
+
+    /**
      * Check if the give Drafty can be represented by plain text.
      *
      * @return true if this Drafty has no markup other thn line breaks.
@@ -564,6 +671,150 @@ public class Drafty implements Serializable {
     @JsonIgnore
     public boolean isPlain() {
         return (ent == null && fmt == null);
+    }
+
+    // Return a tree of formatted objects for a form element (FM).
+    private <T> T forForm(String line,
+                          Span form, List<Span> alternative, Formatter<T> formatter) {
+        List elements;
+        try {
+            elements = (List) form.data.get("val");
+        } catch (ClassCastException | NullPointerException ignored) {
+            // The form does not have a valid list of components. Use alternative formatting.
+            return formatter.apply(null, null, forEach(line, form.start, form.end, alternative, formatter));
+        }
+
+        List<T> children = new LinkedList<>();
+        int count = 0;
+        for (Object el : elements) {
+            if (count++ > MAX_FORM_ELEMENTS) {
+                break;
+            }
+
+            if (el instanceof String) {
+                children.add(formatter.apply("FE", null, (String) el));
+            } else if (el instanceof Map) {
+                children.add(new Drafty((Map<String, Object>) el).format(formatter));
+            }
+        }
+
+        return formatter.apply("FM", form.data, children);
+    }
+
+    // Inverse of chunkify. Returns a tree of formatted spans.
+    private <T> List<T> forEach(String line, int start, int end, List<Span> spans, Formatter<T> formatter) {
+        List<T> result = new LinkedList<>();
+        if (spans == null) {
+            result.add(formatter.apply(null, null, line.substring(start, end)));
+            return result;
+        }
+
+        // Process ranges calling formatter for each range.
+        ListIterator<Span> iter = spans.listIterator();
+        while (iter.hasNext()) {
+            Span span = iter.next();
+            if (span.start < 0) {
+                // Throw away non-visual spans.
+                continue;
+            }
+
+            // Add un-styled range before the styled span starts.
+            if (start < span.start) {
+                result.add(formatter.apply(null, null, line.substring(start, span.start)));
+                start = span.start;
+            }
+
+            // Get all spans which are within the current span.
+            List<Span> subspans = new LinkedList<>();
+            while (iter.hasNext()) {
+                Span inner = iter.next();
+                if (inner.start < span.end) {
+                    subspans.add(inner);
+                } else {
+                    // Move back.
+                    iter.previous();
+                    break;
+                }
+            }
+
+            if (span.type.equals("FM")) {
+                result.add(forForm(line, span, subspans, formatter));
+            } else {
+                if (span.type.equals("BN")) {
+                    // Make button content unstyled.
+                    span.data = span.data != null ? span.data : new HashMap<String, Object>();
+                    String text = line.substring(span.start, span.end);
+                    span.data.put("buttonText", text);
+                    result.add(formatter.apply(span.type, span.data, text));
+                } else {
+                    result.add(formatter.apply(span.type, span.data,
+                            forEach(line, start, span.end, subspans, formatter)));
+                }
+            }
+
+            start = span.end;
+        }
+
+        // Add the last unformatted range.
+        if (start < end) {
+            result.add(formatter.apply(null, null, line.substring(start, end)));
+        }
+
+        return result;
+    }
+
+    /**
+     * Format converts Drafty object into a collection of formatted nodes.
+     * Each node contains either a formatted element or a collection of
+     * formatted elements.
+     *
+     * @param formatter is an interface with an `apply` method. It's iteratively
+     *                  applied to every node in the tree.
+     * @returns a tree of components.
+     */
+    public <T> T format(Formatter<T> formatter) {
+        if (txt == null) {
+            txt = "";
+        }
+
+        // Handle special case when all values in fmt are 0 and fmt is therefore was
+        // skipped.
+        if (fmt == null || fmt.length == 0) {
+            if (ent != null && ent.length == 1) {
+                fmt = new Style[1];
+                fmt[0] = new Style(0, 0, 0);
+            } else {
+                return formatter.apply(null, null, txt);
+            }
+        }
+
+        List<Span> spans = new ArrayList<>();
+        for (Style aFmt : fmt) {
+            spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
+        }
+        // Sort spans first by start index (asc) then by length (desc).
+        Collections.sort(spans, new Comparator<Span>() {
+            @Override
+            public int compare(Span a, Span b) {
+                if (a.start - b.start == 0) {
+                    return b.end - a.end; // longer one comes first (<0)
+                }
+                return a.start - b.start;
+            }
+        });
+
+        for (Span span : spans) {
+            if (span.type == null || span.type.equals("")) {
+                if (span.key >= 0 && span.key < ent.length) {
+                    span.type = ent[span.key].tp;
+                    span.data = ent[span.key].data;
+                } else {
+                    span.type = "HD";
+                }
+            }
+        }
+
+        return formatter.apply(null, null, forEach(txt, 0, txt.length(), spans, formatter));
     }
 
     public static class Style implements Serializable, Comparable<Style> {
@@ -645,6 +896,37 @@ public class Drafty implements Serializable {
         }
     }
 
+    interface Formatter<T> {
+        T apply(String tp, Map<String,Object> attr, String text);
+        T apply(String tp, Map<String,Object> attr, List<T> children);
+    }
+
+    // Structure representing Drafty as a tree of formatting nodes.
+    public static class TreeNode<T> {
+        private T data;
+        private List<TreeNode<T>> children;
+
+        public TreeNode() {
+        }
+
+        public TreeNode(T rootData) {
+            data = rootData;
+        }
+
+        public TreeNode<T> addNode(T data) {
+            return addNode(new TreeNode<>(data));
+        }
+
+        public TreeNode<T> addNode(TreeNode<T> node) {
+            if (children == null) {
+                children = new ArrayList<>();
+            }
+            children.add(node);
+            return node;
+        }
+    }
+
+    // ================
     // Internal classes
 
     private static class Block {
@@ -666,14 +948,13 @@ public class Drafty implements Serializable {
         }
     }
 
-
     private static class Span implements Comparable<Span> {
         int start;
         int end;
         int key;
         String text;
         String type;
-        Map<String,String> data;
+        Map<String,Object> data;
         List<Span> children;
 
         Span() {
