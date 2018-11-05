@@ -26,6 +26,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import co.tinode.tindroid.R;
@@ -35,7 +37,7 @@ import co.tinode.tinodesdk.model.Drafty;
  * Convert Drafty object into a Spanned object
  */
 
-public class SpanFormatter {
+public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
 
     public static Spanned toSpanned(final Context ctx, final Drafty content, final int viewport,
@@ -258,7 +260,42 @@ public class SpanFormatter {
         return false;
     }
 
+    @Override
+    public TreeNode apply(String tp, Map<String, Object> attr, String text) {
+        return null;
+    }
+
+    @Override
+    public TreeNode apply(String tp, Map<String, Object> attr, List<TreeNode> children) {
+        return null;
+    }
+
     public interface ClickListener {
         void onClick(String type, Map<String,Object> data);
+    }
+
+    // Structure representing Drafty as a tree of formatting nodes.
+    static class TreeNode {
+        private Object data;
+        private List<TreeNode> children;
+
+        public TreeNode() {
+        }
+
+        public TreeNode(Object rootData) {
+            data = rootData;
+        }
+
+        public TreeNode addNode(Object data) {
+            return addNode(new TreeNode(data));
+        }
+
+        public TreeNode addNode(TreeNode node) {
+            if (children == null) {
+                children = new ArrayList<>();
+            }
+            children.add(node);
+            return node;
+        }
     }
 }

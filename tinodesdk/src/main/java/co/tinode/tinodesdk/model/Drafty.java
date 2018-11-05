@@ -896,34 +896,9 @@ public class Drafty implements Serializable {
         }
     }
 
-    interface Formatter<T> {
+    public interface Formatter<T> {
         T apply(String tp, Map<String,Object> attr, String text);
         T apply(String tp, Map<String,Object> attr, List<T> children);
-    }
-
-    // Structure representing Drafty as a tree of formatting nodes.
-    public static class TreeNode<T> {
-        private T data;
-        private List<TreeNode<T>> children;
-
-        public TreeNode() {
-        }
-
-        public TreeNode(T rootData) {
-            data = rootData;
-        }
-
-        public TreeNode<T> addNode(T data) {
-            return addNode(new TreeNode<>(data));
-        }
-
-        public TreeNode<T> addNode(TreeNode<T> node) {
-            if (children == null) {
-                children = new ArrayList<>();
-            }
-            children.add(node);
-            return node;
-        }
     }
 
     // ================
