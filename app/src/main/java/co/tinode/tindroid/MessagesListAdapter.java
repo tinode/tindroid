@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +64,7 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -721,7 +723,7 @@ public class MessagesListAdapter
 
             } else {
                 Object ref = data.get("ref");
-                if (ref != null && ref instanceof String) {
+                if (ref instanceof String) {
                     LargeFileHelper lfh = Cache.getTinode().getFileUploader();
                     mActivity.startDownload(Uri.parse(new URL(Cache.getTinode().getBaseUrl(), (String) ref).toString()),
                             fname, mimeType, lfh.headers());
@@ -764,21 +766,18 @@ public class MessagesListAdapter
 
             switch (type) {
                 case "LN":
-                    String url = null;
+                    // Click on an URL
                     try {
                         if (data != null) {
-                            url = (String) data.get("url");
-                        }
-                    } catch (ClassCastException ignored) {}
-                    if (url != null) {
-                        try {
-                            url = new URL(Cache.getTinode().getBaseUrl(), url).toString();
+                            String url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url")).toString();
                             mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                        } catch (MalformedURLException ignored) {}
+                        }
+                    } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
                     }
                     break;
 
                 case "IM":
+                    // Image
                     Bundle args = new Bundle();
                     if (data != null) {
                         try {
@@ -801,6 +800,7 @@ public class MessagesListAdapter
                     break;
 
                 case "EX":
+                    // Attachment
                     verifyStoragePermissions();
 
                     String fname = null;
@@ -808,13 +808,58 @@ public class MessagesListAdapter
                     try {
                         fname = (String) data.get("name");
                         mimeType = (String) data.get("mime");
-                    } catch (ClassCastException ignored) {}
+                    } catch (ClassCastException ignored) {
+                    }
 
                     if (TextUtils.isEmpty(fname)) {
                         fname = mActivity.getString(R.string.default_attachment_name);
                     }
 
                     downloadAttachment(data, fname, mimeType);
+                    break;
+
+                case "BN":
+                    // Button
+                    if (data != null) {
+                        try {
+                            String actionType = (String) data.get("act");
+                            String actionValue = (String) data.get("val");
+                            String name = (String) data.get("name");
+                            StoredMessage msg = getMessage(mPosition);
+                            if ("pub".equals(actionType)) {
+                                Drafty newMsg = new Drafty((String) data.get("title"));
+                                Map<String,Object> json = new HashMap<>();
+                                // {"seq":6,"resp":{"yes":1}}
+                                if (!TextUtils.isEmpty(name)) {
+                                    Map<String,Object> resp = new HashMap<>();
+                                    resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
+                                    json.put("resp", resp);
+                                }
+                                if (msg != null) {
+                                    json.put("seq", "" + msg.seq);
+                                }
+                                if (!json.isEmpty()) {
+                                    newMsg.attachJSON(json);
+                                }
+                                // FIXME: send message
+                                Log.i(TAG, "Sending message " + newMsg.toString());
+
+                            } else if ("url".equals(actionType)) {
+                                String url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref")).toString();
+                                Uri uri =  Uri.parse(url);
+                                Uri.Builder builder = uri.buildUpon();
+                                if (!TextUtils.isEmpty(name)) {
+                                    builder = builder.appendQueryParameter(name,
+                                            TextUtils.isEmpty(actionValue) ? "1" : actionValue);
+                                }
+                                if (msg != null) {
+                                    builder = builder.appendQueryParameter("seq", "" + msg.seq);
+                                }
+                                builder = builder.appendQueryParameter("uid", Cache.getTinode().getMyId());
+                                mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
+                            }
+                        } catch(ClassCastException | MalformedURLException | NullPointerException ignored){ }
+                    }
                     break;
             }
         }

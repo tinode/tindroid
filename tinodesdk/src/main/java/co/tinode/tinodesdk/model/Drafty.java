@@ -604,30 +604,17 @@ public class Drafty implements Serializable {
         return this;
     }
 
-    /**
-     * Insert an interactive form.
-     *
-     * @param at index where the object is inserted. The length of the image is always 1.
-     * @param components of form fields and data. Allowed data types are plain text and Drafty.
-     * @param formName optional name of the form.
-     * @param layout to use for representing the form, optional.
-     */
-    protected Drafty insertForm(int at, Object[] components, String formName, String layout) {
-        prepareForEntity(at, 1);
+    public Drafty attachJSON(Map<String,Object> json) {
+        prepareForEntity(-1, 1);
 
-        final Map<String,Object> data = new HashMap<>();
-        if (formName != null && !formName.equals("")) {
-            data.put("name", formName);
-        }
-        if (layout != null && !layout.equals("")) {
-            data.put("layout", layout);
-        }
-        if (components != null) {
-            data.put("val", components);
-        }
-        ent[ent.length - 1] = new Entity("FM", data);
+        Map<String, Object> data = new HashMap<>();
+        data.put("mime", JSON_MIME_TYPE);
+        data.put("val", json);
+        Entity e = new Entity("EX", data);
+
         return this;
     }
+
 
     /**
      * Insert button into Drafty document.
@@ -673,34 +660,6 @@ public class Drafty implements Serializable {
         return (ent == null && fmt == null);
     }
 
-    // Return a tree of formatted objects for a form element (FM).
-    private <T> T forForm(String line,
-                          Span form, List<Span> alternative, Formatter<T> formatter) {
-        List elements;
-        try {
-            elements = (List) form.data.get("val");
-        } catch (ClassCastException | NullPointerException ignored) {
-            // The form does not have a valid list of components. Use alternative formatting.
-            return formatter.apply(null, null, forEach(line, form.start, form.end, alternative, formatter));
-        }
-
-        List<T> children = new LinkedList<>();
-        int count = 0;
-        for (Object el : elements) {
-            if (count++ > MAX_FORM_ELEMENTS) {
-                break;
-            }
-
-            if (el instanceof String) {
-                children.add(formatter.apply("FE", null, (String) el));
-            } else if (el instanceof Map) {
-                children.add(new Drafty((Map<String, Object>) el).format(formatter));
-            }
-        }
-
-        return formatter.apply("FM", form.data, children);
-    }
-
     // Inverse of chunkify. Returns a tree of formatted spans.
     private <T> List<T> forEach(String line, int start, int end, List<Span> spans, Formatter<T> formatter) {
         List<T> result = new LinkedList<>();
@@ -737,19 +696,15 @@ public class Drafty implements Serializable {
                 }
             }
 
-            if (span.type.equals("FM")) {
-                result.add(forForm(line, span, subspans, formatter));
+            if (span.type.equals("BN")) {
+                // Make button content unstyled.
+                span.data = span.data != null ? span.data : new HashMap<String, Object>();
+                String text = line.substring(span.start, span.end);
+                span.data.put("title", text);
+                result.add(formatter.apply(span.type, span.data, text));
             } else {
-                if (span.type.equals("BN")) {
-                    // Make button content unstyled.
-                    span.data = span.data != null ? span.data : new HashMap<String, Object>();
-                    String text = line.substring(span.start, span.end);
-                    span.data.put("buttonText", text);
-                    result.add(formatter.apply(span.type, span.data, text));
-                } else {
-                    result.add(formatter.apply(span.type, span.data,
-                            forEach(line, start, span.end, subspans, formatter)));
-                }
+                result.add(formatter.apply(span.type, span.data,
+                        forEach(line, start, span.end, subspans, formatter)));
             }
 
             start = span.end;

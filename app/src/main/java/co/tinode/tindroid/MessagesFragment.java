@@ -388,7 +388,7 @@ public class MessagesFragment extends Fragment
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    public void sendText() {
+    void sendText() {
         final Activity activity = getActivity();
         final TextView inputField = activity.findViewById(R.id.editMessage);
         String message = inputField.getText().toString().trim();
@@ -401,7 +401,7 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private boolean sendMessage(Drafty content) {
+    boolean sendMessage(Drafty content) {
         if (mTopic != null) {
             try {
                 PromisedReply<ServerMessage> reply = mTopic.publish(content);
@@ -414,10 +414,10 @@ public class MessagesFragment extends Fragment
                         return null;
                     }
                 }, mFailureListener);
-            } catch (NotConnectedException ignored) {
-                Log.d(TAG, "sendMessage -- NotConnectedException", ignored);
-            } catch (Exception ignored) {
-                Log.d(TAG, "sendMessage -- Exception", ignored);
+            } catch (NotConnectedException ex) {
+                Log.d(TAG, "sendMessage -- NotConnectedException", ex);
+            } catch (Exception ex) {
+                Log.d(TAG, "sendMessage -- Exception", ex);
                 Toast.makeText(getActivity(), R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
                 return false;
             }

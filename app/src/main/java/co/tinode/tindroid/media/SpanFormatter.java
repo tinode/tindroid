@@ -25,6 +25,7 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,17 @@ import co.tinode.tinodesdk.model.Drafty;
 
 public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
+
+    private final View mContainer;
+    private final int mViewport;
+    private final ClickListener mClicker;
+
+    public SpanFormatter(final View container, final int viewport, final ClickListener clicker) {
+        mContainer = container;
+        mViewport = viewport;
+        mClicker = clicker;
+    }
+
 
     public static Spanned toSpanned(final Context ctx, final Drafty content, final int viewport,
                                     final ClickListener clicker) {
@@ -83,7 +95,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         break;
                     case "LN":
                         String url = data != null ? (String) data.get("url") : null;
-                        span = url != null ? new URLSpan(url) {
+                        span = url != null ? new URLSpan("") {
                             @Override
                             public void onClick(View widget) {
                                 if (clicker != null) {
@@ -94,7 +106,13 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         break;
                     case "MN": span = null; break;
                     case "HT": span = null; break;
+                    case "HD":
+                        // Hidden text
+                        span = null;
+                        text.replace(style.getOffset(), style.getOffset() + style.length(), "");
+                        break;
                     case "IM":
+                        // Image
                         if (data != null) {
                             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
                             Bitmap bmp = null;
@@ -190,7 +208,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                             text.append(substr);
 
                             if (clicker != null) {
-                                // Insert linebreak then a clickable [_ save] line
+                                // Insert linebreak then a clickable [↓ save] line
                                 text.append("\n");
                                 // Build the icon with a clicker.
                                 substr = new SpannableStringBuilder(" ")
@@ -218,8 +236,10 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                             span = null;
                         }
                         break;
+                    case "BN":
+
                     default:
-                        // TODO(gene): report unknown style to user
+                        Log.i(TAG, "Unknown style '" + tp + "'");
                         break;
                 }
 
@@ -260,6 +280,140 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return false;
     }
 
+    private List<TreeNode> handleImage(final Context ctx, Object content, final Map<String,Object> data,
+                                             final int viewport, final ClickListener clicker) {
+        List<TreeNode> result = new ArrayList<>();
+        if (data != null) {
+            CharacterStyle span = null;
+            DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+            Bitmap bmp = null;
+            try {
+                Object val = data.get("val");
+                // If the message is unsent, the bits could be raw byte[] as opposed to
+                // base64-encoded.
+                byte[] bits = (val instanceof String) ?
+                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+                bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                // Scale bitmap for display density.
+                float width = bmp.getWidth() * metrics.density;
+                float height = bmp.getHeight() * metrics.density;
+                // Make sure the scaled bitmap is no bigger than the viewport size;
+                float scaleX = (width < viewport ? width : viewport) / width;
+                float scaleY = (height < viewport * 0.75f ? height : viewport * 0.75f) / height;
+                float scale = scaleX < scaleY ? scaleX : scaleY;
+
+                bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
+
+            } catch (NullPointerException | IllegalArgumentException | ClassCastException ex) {
+                Log.e(TAG, "Broken Image", ex);
+            }
+
+            if (bmp == null) {
+                // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
+                Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                if (icon != null) {
+                    icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+                    span = new ImageSpan(icon);
+                }
+            } else {
+                span = new ImageSpan(ctx, bmp);
+            }
+            final boolean valid = bmp != null;
+
+            // Add image span
+            result.add(new TreeNode(span, content));
+            if (clicker != null) {
+                span = new ClickableSpan() {
+                    @Override
+                    public void onClick(@NonNull View widget) {
+                        clicker.onClick("IM", valid ? data : null);
+                    }
+                };
+                // Make image clickable
+                result.add(new TreeNode(span, content));
+            }
+        }
+
+        return result;
+    }
+
+    private TreeNode apply(final String tp, final Map<String,Object> data, Object child) {
+        if (tp != null) {
+            List<TreeNode> spans = new ArrayList<>();
+            switch (tp) {
+                case "ST":
+                    spans.add(new TreeNode(new StyleSpan(Typeface.BOLD), child));
+                    break;
+                case "EM":
+                    spans.add(new TreeNode(new StyleSpan(Typeface.ITALIC), child));
+                    break;
+                case "DL":
+                    spans.add(new TreeNode(new StrikethroughSpan(), child));
+                    break;
+                case "CO":
+                    spans.add(new TreeNode(new TypefaceSpan("monospace"), child));
+                    break;
+                case "BR":
+                    spans.add(new TreeNode(null, "\n"));
+                    break;
+                case "LN":
+                    try {
+                        // We don't need to specify an URL for URLSpan
+                        // as it's not going to be used.
+                        spans.add(new TreeNode(new URLSpan("") {
+                            @Override
+                            public void onClick(View widget) {
+                                if (mClicker != null) {
+                                    mClicker.onClick("LN", data);
+                                }
+                            }
+                        }, child));
+                    } catch (ClassCastException | NullPointerException ignored) {}
+                    break;
+                case "MN": break;
+                case "HT": break;
+                case "IM":
+                    // Additional processing for images
+                    spans.addAll(handleImage(mContainer.getContext(), child, data, mViewport, mClicker));
+                    break;
+                case "BN":
+                    // Button
+                    try {
+                        spans.add(new TreeNode(new URLSpan("") {
+                            @Override
+                            public void onClick(View widget) {
+                                if (mClicker != null) {
+                                    mClicker.onClick("BN", data);
+                                }
+                            }
+                        }, child));
+                    } catch (ClassCastException | NullPointerException ignored) {}
+                    break;
+                case "FM":
+                    // Form
+                    if (data != null) {
+                        try {
+                            if (children.size() > 0) {
+                                float scale = mContainer.getContext().getResources().getDisplayMetrics().density;
+                                form.setMinimumWidth((int)(280 * scale + 0.5f));
+                                for (View view : children) {
+                                    form.addView(view);
+                                }
+                            }
+                        } catch (ClassCastException ignored) {}
+                    }
+                    break;
+                case "RW":
+                    // Form element formatting is dependent on element content.
+                    break;
+            }
+
+            return React.createElement(el, attr, values);
+        } else {
+            return values;
+        }
+    }
+
     @Override
     public TreeNode apply(String tp, Map<String, Object> attr, String text) {
         return null;
@@ -276,18 +430,36 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
     // Structure representing Drafty as a tree of formatting nodes.
     static class TreeNode {
-        private Object data;
+        CharacterStyle style;
+        CharSequence text;
         private List<TreeNode> children;
 
-        public TreeNode() {
+        public TreeNode(CharacterStyle style, List<TreeNode> children) {
+            this.style = style;
+            this.children = children;
         }
 
-        public TreeNode(Object rootData) {
-            data = rootData;
+        public TreeNode(CharacterStyle style, CharSequence text) {
+            this.style = style;
+            this.text = text;
         }
 
-        public TreeNode addNode(Object data) {
-            return addNode(new TreeNode(data));
+        @SuppressWarnings("unchecked")
+        public TreeNode(CharacterStyle style, Object content) {
+            this.style = style;
+            if (content instanceof CharSequence) {
+                this.text = (CharSequence) content;
+            } else if (content instanceof List) {
+                this.children = (List<TreeNode>) content;
+            }
+        }
+
+        public TreeNode addNode(CharacterStyle span, CharSequence text) {
+            return addNode(new TreeNode(span, text));
+        }
+
+        public TreeNode addNode(CharacterStyle span, List<TreeNode> children) {
+            return addNode(new TreeNode(span, children));
         }
 
         public TreeNode addNode(TreeNode node) {
