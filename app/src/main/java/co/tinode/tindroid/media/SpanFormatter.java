@@ -25,7 +25,7 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,18 +41,30 @@ import co.tinode.tinodesdk.model.Drafty;
 public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
 
-    private final View mContainer;
+    private final Context mContext;
     private final int mViewport;
     private final ClickListener mClicker;
 
-    public SpanFormatter(final View container, final int viewport, final ClickListener clicker) {
-        mContainer = container;
+    public SpanFormatter(final Context context, final int viewport, final ClickListener clicker) {
+        mContext = context;
         mViewport = viewport;
         mClicker = clicker;
     }
 
-
     public static Spanned toSpanned(final Context ctx, final Drafty content, final int viewport,
+                                     final ClickListener clicker) {
+        if (content == null) {
+            return new SpannedString("");
+        }
+        if (content.isPlain()) {
+            return new SpannedString(content.toString());
+        }
+        TreeNode result = content.format(new SpanFormatter(ctx, viewport, clicker));
+        Log.d(TAG, "FINAL: "+result.toString());
+        return new SpannedString("text");
+    }
+
+    public static Spanned toSpanned2(final Context ctx, final Drafty content, final int viewport,
                                     final ClickListener clicker) {
         if (content == null) {
             // Malicious user may send a message with null content.
@@ -66,15 +78,19 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             Drafty.Entity entity;
 
             for (Drafty.Style style : fmt) {
+                final Map<String,Object> data;
                 CharacterStyle span = null;
+
                 int offset = -1, length = -1;
                 String tp = style.getType();
-                entity = content.getEntity(style);
-
-                final Map<String,Object> data;
-                if (entity != null) {
-                    tp = entity.getType();
-                    data = entity.getData();
+                if (tp == null) {
+                    entity = content.getEntity(style);
+                    if (entity != null) {
+                        tp = entity.getType();
+                        data = entity.getData();
+                    } else {
+                        data = null;
+                    }
                 } else {
                     data = null;
                 }
@@ -237,7 +253,26 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         }
                         break;
                     case "BN":
-
+                        // Button
+                        span = new URLSpan("") {
+                            @Override
+                            public void onClick(View widget) {
+                                if (clicker != null) {
+                                    clicker.onClick("BN", data);
+                                }
+                            }
+                        };
+                        text.setSpan(span, style.getOffset(), style.getOffset() + style.length(),
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        text.setSpan(new BorderedSpan(ctx), style.getOffset(), style.getOffset() + style.length(),
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        break;
+                    case "FM":
+                        // Form.
+                        break;
+                    case "RW":
+                        // Logical grouping of elements, do nothing.
+                        break;
                     default:
                         Log.i(TAG, "Unknown style '" + tp + "'");
                         break;
@@ -280,9 +315,9 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return false;
     }
 
-    private List<TreeNode> handleImage(final Context ctx, Object content, final Map<String,Object> data,
+    private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data,
                                              final int viewport, final ClickListener clicker) {
-        List<TreeNode> result = new ArrayList<>();
+        TreeNode result = null;
         if (data != null) {
             CharacterStyle span = null;
             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
@@ -318,110 +353,101 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             } else {
                 span = new ImageSpan(ctx, bmp);
             }
-            final boolean valid = bmp != null;
 
             // Add image span
-            result.add(new TreeNode(span, content));
-            if (clicker != null) {
-                span = new ClickableSpan() {
+            result = new TreeNode(span, content);
+            if (clicker != null && bmp != null) {
+                // Make image clickable but wrapping it into a ClickableSpan.
+                result = new TreeNode(new ClickableSpan() {
                     @Override
                     public void onClick(@NonNull View widget) {
-                        clicker.onClick("IM", valid ? data : null);
+                        clicker.onClick("IM", data);
                     }
-                };
-                // Make image clickable
-                result.add(new TreeNode(span, content));
+                }, result);
             }
         }
 
         return result;
     }
 
-    private TreeNode apply(final String tp, final Map<String,Object> data, Object child) {
+    @Override
+    public TreeNode apply(final String tp, final Map<String,Object> data, Object content) {
+        Log.d(TAG, "/"+tp+"//" + content.getClass() + "/" + content.toString());
         if (tp != null) {
-            List<TreeNode> spans = new ArrayList<>();
+            TreeNode span = null;
             switch (tp) {
                 case "ST":
-                    spans.add(new TreeNode(new StyleSpan(Typeface.BOLD), child));
+                    span = new TreeNode(new StyleSpan(Typeface.BOLD), content);
                     break;
                 case "EM":
-                    spans.add(new TreeNode(new StyleSpan(Typeface.ITALIC), child));
+                    span = new TreeNode(new StyleSpan(Typeface.ITALIC), content);
                     break;
                 case "DL":
-                    spans.add(new TreeNode(new StrikethroughSpan(), child));
+                    span = new TreeNode(new StrikethroughSpan(), content);
                     break;
                 case "CO":
-                    spans.add(new TreeNode(new TypefaceSpan("monospace"), child));
+                    span = new TreeNode(new TypefaceSpan("monospace"), content);
                     break;
                 case "BR":
-                    spans.add(new TreeNode(null, "\n"));
+                    span = new TreeNode(null, "\n");
                     break;
                 case "LN":
                     try {
                         // We don't need to specify an URL for URLSpan
                         // as it's not going to be used.
-                        spans.add(new TreeNode(new URLSpan("") {
+                        span = new TreeNode(new URLSpan("") {
                             @Override
                             public void onClick(View widget) {
                                 if (mClicker != null) {
                                     mClicker.onClick("LN", data);
                                 }
                             }
-                        }, child));
+                        }, content);
                     } catch (ClassCastException | NullPointerException ignored) {}
                     break;
                 case "MN": break;
                 case "HT": break;
                 case "IM":
                     // Additional processing for images
-                    spans.addAll(handleImage(mContainer.getContext(), child, data, mViewport, mClicker));
+                    span = handleImage(mContext, content, data, mViewport, mClicker);
                     break;
                 case "BN":
-                    // Button
-                    try {
-                        spans.add(new TreeNode(new URLSpan("") {
-                            @Override
-                            public void onClick(View widget) {
-                                if (mClicker != null) {
-                                    mClicker.onClick("BN", data);
-                                }
+                    // Button: URLSpan wrapped into BorderedSpan.
+                    span = new TreeNode(new BorderedSpan(mContext), (CharSequence) null);
+                    span.addNode(new TreeNode(new URLSpan("") {
+                        @Override
+                        public void onClick(View widget) {
+                            if (mClicker != null) {
+                                mClicker.onClick("BN", data);
                             }
-                        }, child));
-                    } catch (ClassCastException | NullPointerException ignored) {}
+                        }
+                    }, content));
                     break;
                 case "FM":
                     // Form
-                    if (data != null) {
+                    if (content instanceof List) {
+                        // Add line breaks between form elements.
                         try {
-                            if (children.size() > 0) {
-                                float scale = mContainer.getContext().getResources().getDisplayMetrics().density;
-                                form.setMinimumWidth((int)(280 * scale + 0.5f));
-                                for (View view : children) {
-                                    form.addView(view);
-                                }
+                            span = new TreeNode();
+                            List<TreeNode> children = (List<TreeNode>) content;
+                            for (int i = 0; i < children.size(); i++) {
+                                span.addNode(children.get(i));
+                                span.addNode(new TreeNode(null, "\n"));
                             }
-                        } catch (ClassCastException ignored) {}
+                        } catch (ClassCastException ignored) { }
+
+                        if (span != null && span.isEmpty()) {
+                            span = null;
+                        }
                     }
                     break;
                 case "RW":
                     // Form element formatting is dependent on element content.
                     break;
             }
-
-            return React.createElement(el, attr, values);
-        } else {
-            return values;
+            return span;
         }
-    }
-
-    @Override
-    public TreeNode apply(String tp, Map<String, Object> attr, String text) {
-        return null;
-    }
-
-    @Override
-    public TreeNode apply(String tp, Map<String, Object> attr, List<TreeNode> children) {
-        return null;
+        return new TreeNode(null, content);
     }
 
     public interface ClickListener {
@@ -430,22 +456,30 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
     // Structure representing Drafty as a tree of formatting nodes.
     static class TreeNode {
-        CharacterStyle style;
-        CharSequence text;
+        private CharacterStyle style;
+        private CharSequence text;
         private List<TreeNode> children;
 
-        public TreeNode(CharacterStyle style, List<TreeNode> children) {
+        TreeNode() {
+            style = null;
+            text = null;
+            children = null;
+        }
+
+        private TreeNode(CharacterStyle style, List<TreeNode> children) {
             this.style = style;
+            this.text = null;
             this.children = children;
         }
 
-        public TreeNode(CharacterStyle style, CharSequence text) {
+        private TreeNode(CharacterStyle style, CharSequence text) {
             this.style = style;
             this.text = text;
+            this.children = null;
         }
 
         @SuppressWarnings("unchecked")
-        public TreeNode(CharacterStyle style, Object content) {
+        TreeNode(CharacterStyle style, Object content) {
             this.style = style;
             if (content instanceof CharSequence) {
                 this.text = (CharSequence) content;
@@ -454,20 +488,48 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             }
         }
 
-        public TreeNode addNode(CharacterStyle span, CharSequence text) {
-            return addNode(new TreeNode(span, text));
-        }
+        TreeNode addNode(TreeNode node) {
+            if (node == null) {
+                return this;
+            }
 
-        public TreeNode addNode(CharacterStyle span, List<TreeNode> children) {
-            return addNode(new TreeNode(span, children));
-        }
-
-        public TreeNode addNode(TreeNode node) {
             if (children == null) {
                 children = new ArrayList<>();
             }
             children.add(node);
-            return node;
+
+            return this;
+        }
+
+        boolean isEmpty() {
+            return (text == null || text.equals("")) &&
+                    (children == null || children.size() == 0);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder result = new StringBuilder("{");
+            if (style != null) {
+                result.append("style='").append(style.getClass().getName()).append("' ");
+            } else {
+                result.append("style=null! ");
+            }
+
+            if (text != null) {
+                result.append("text='").append(text.toString()).append("'");
+            } else if (children != null) {
+                result.append("children=[");
+                for (TreeNode child : children) {
+                    result.append("'");
+                    result.append(child.toString());
+                    result.append("',");
+                }
+                result.append("]");
+            } else {
+                result.append(" no content");
+            }
+            result.append("}");
+            return result.toString();
         }
     }
 }

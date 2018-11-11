@@ -668,6 +668,8 @@ public class Drafty implements Serializable {
             return result;
         }
 
+        Log.d(TAG, spans.toString());
+
         // Process ranges calling formatter for each range.
         ListIterator<Span> iter = spans.listIterator();
         while (iter.hasNext()) {
@@ -699,9 +701,9 @@ public class Drafty implements Serializable {
             if (span.type.equals("BN")) {
                 // Make button content unstyled.
                 span.data = span.data != null ? span.data : new HashMap<String, Object>();
-                String text = line.substring(span.start, span.end);
-                span.data.put("title", text);
-                result.add(formatter.apply(span.type, span.data, text));
+                String title = line.substring(span.start, span.end);
+                span.data.put("title", title);
+                result.add(formatter.apply(span.type, span.data, title));
             } else {
                 result.add(formatter.apply(span.type, span.data,
                         forEach(line, start, span.end, subspans, formatter)));
@@ -767,6 +769,7 @@ public class Drafty implements Serializable {
                     span.type = "HD";
                 }
             }
+            Log.d(TAG, "Span: "+span.toString());
         }
 
         return formatter.apply(null, null, forEach(txt, 0, txt.length(), spans, formatter));
@@ -786,10 +789,12 @@ public class Drafty implements Serializable {
             this.at = at;
             this.len = len;
             this.tp = tp;
+            this.key = null;
         }
 
         // Entity reference
         public Style(int at, int len, int key) {
+            this.tp = null;
             this.at = at;
             this.len = len;
             this.key = key;
@@ -797,7 +802,7 @@ public class Drafty implements Serializable {
 
         @Override
         public int compareTo(Style that) {
-            if (this.at - that.at == 0) {
+            if (this.at == that.at) {
                 return that.len - this.len; // longer one comes first (<0)
             }
             return this.at - that.at;
@@ -852,8 +857,7 @@ public class Drafty implements Serializable {
     }
 
     public interface Formatter<T> {
-        T apply(String tp, Map<String,Object> attr, String text);
-        T apply(String tp, Map<String,Object> attr, List<T> children);
+        T apply(String tp, Map<String,Object> attr, Object content);
     }
 
     // ================
@@ -912,6 +916,15 @@ public class Drafty implements Serializable {
         @Override
         public int compareTo(Span s) {
             return start - s.start;
+        }
+
+        @Override
+        public String toString() {
+            return "{" + "start=" + start + "," +
+                    "end=" + end + "," +
+                    "text=" + text + "," +
+                    "type=" + type +
+                    "}";
         }
     }
 
