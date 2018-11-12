@@ -71,6 +71,8 @@ import java.util.regex.Pattern;
  */
 
 public class Drafty implements Serializable {
+    private static int depth;
+
     public static final String MIME_TYPE = "text/x-drafty";
     public static final String JSON_MIME_TYPE = "application/json";
 
@@ -668,7 +670,8 @@ public class Drafty implements Serializable {
             return result;
         }
 
-        Log.d(TAG, spans.toString());
+        depth ++;
+        Log.d(TAG, "forEach["+depth+"]: '"+ line.substring(start, end) + "', children="+spans.toString());
 
         // Process ranges calling formatter for each range.
         ListIterator<Span> iter = spans.listIterator();
@@ -698,6 +701,10 @@ public class Drafty implements Serializable {
                 }
             }
 
+            if (subspans.size() == 0) {
+                subspans = null;
+            }
+
             if (span.type.equals("BN")) {
                 // Make button content unstyled.
                 span.data = span.data != null ? span.data : new HashMap<String, Object>();
@@ -717,6 +724,9 @@ public class Drafty implements Serializable {
             result.add(formatter.apply(null, null, line.substring(start, end)));
         }
 
+        Log.d(TAG, "forEach["+depth+"] done, result='"+ result.toString() + "'");
+        depth --;
+
         return result;
     }
 
@@ -730,6 +740,8 @@ public class Drafty implements Serializable {
      * @returns a tree of components.
      */
     public <T> T format(Formatter<T> formatter) {
+        depth = 0;
+
         if (txt == null) {
             txt = "";
         }
@@ -769,7 +781,6 @@ public class Drafty implements Serializable {
                     span.type = "HD";
                 }
             }
-            Log.d(TAG, "Span: "+span.toString());
         }
 
         return formatter.apply(null, null, forEach(txt, 0, txt.length(), spans, formatter));
