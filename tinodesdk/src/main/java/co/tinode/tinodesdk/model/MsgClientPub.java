@@ -26,7 +26,10 @@ public class MsgClientPub {
         if (content instanceof Drafty) {
             Drafty d = (Drafty) content;
             setHeader("mime", Drafty.MIME_TYPE);
-            setHeader("attachments", d.getEntReferences());
+            String[] refs = d.getEntReferences();
+            if (refs != null) {
+                setHeader("attachments", d.getEntReferences());
+            }
         }
     }
 

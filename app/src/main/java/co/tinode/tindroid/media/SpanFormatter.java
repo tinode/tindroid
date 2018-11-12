@@ -3,12 +3,12 @@ package co.tinode.tindroid.media;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.content.res.AppCompatResources;
-import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
@@ -17,6 +17,7 @@ import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
+import android.text.style.LineHeightSpan;
 import android.text.style.ParagraphStyle;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -27,6 +28,7 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,18 +42,21 @@ import co.tinode.tinodesdk.model.Drafty;
  */
 public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
+    private static final float FORM_LINE_SPACING = 1.5f;
 
-    private final Context mContext;
+    private final TextView mContainer;
     private final int mViewport;
+    private final float mFontSize;
     private final ClickListener mClicker;
 
-    private SpanFormatter(final Context context, final int viewport, final ClickListener clicker) {
-        mContext = context;
-        mViewport = viewport;
+    private SpanFormatter(final TextView container, final ClickListener clicker) {
+        mContainer = container;
+        mViewport = container.getMaxWidth();
+        mFontSize = container.getTextSize();
         mClicker = clicker;
     }
 
-    public static Spanned toSpanned(final Context ctx, final Drafty content, final int viewport,
+    public static Spanned toSpanned(final TextView container, final Drafty content,
                                      final ClickListener clicker) {
         if (content == null) {
             return new SpannedString("");
@@ -59,8 +64,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         if (content.isPlain()) {
             return new SpannedString(content.toString());
         }
-        TreeNode result = content.format(new SpanFormatter(ctx, viewport, clicker));
-        Log.d(TAG, "FINAL: "+result.toSpanned().toString());
+        TreeNode result = content.format(new SpanFormatter(container, clicker));
         return result.toSpanned();
     }
 /*
@@ -298,7 +302,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             }
 
             for (Drafty.Entity ent : entities) {
-                if (ent.tp == null) {
+                if (ent == null || ent.tp == null) {
                     continue;
                 }
                 switch (ent.tp) {
@@ -316,8 +320,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return false;
     }
 
-    private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data,
-                                             final int viewport, final ClickListener clicker) {
+    private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data) {
         TreeNode result = null;
         if (data != null) {
             CharacterStyle span = null;
@@ -334,8 +337,8 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 float width = bmp.getWidth() * metrics.density;
                 float height = bmp.getHeight() * metrics.density;
                 // Make sure the scaled bitmap is no bigger than the viewport size;
-                float scaleX = (width < viewport ? width : viewport) / width;
-                float scaleY = (height < viewport * 0.75f ? height : viewport * 0.75f) / height;
+                float scaleX = (width < mViewport ? width : mViewport) / width;
+                float scaleY = (height < mViewport * 0.75f ? height : mViewport * 0.75f) / height;
                 float scale = scaleX < scaleY ? scaleX : scaleY;
 
                 bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
@@ -357,12 +360,12 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
             // Add image span
             result = new TreeNode(span, content);
-            if (clicker != null && bmp != null) {
+            if (mClicker != null && bmp != null) {
                 // Make image clickable but wrapping it into a ClickableSpan.
                 result = new TreeNode(new ClickableSpan() {
                     @Override
                     public void onClick(@NonNull View widget) {
-                        clicker.onClick("IM", data);
+                        mClicker.onClick("IM", data);
                     }
                 }, result);
             }
@@ -371,8 +374,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return result;
     }
 
-    private TreeNode handleAttachment(final Context ctx, Object unused, final Map<String,Object> data,
-                                     final ClickListener clicker) {
+    private TreeNode handleAttachment(final Context ctx, Object unused, final Map<String,Object> data) {
         TreeNode result = new TreeNode();
         if (data != null) {
             try {
@@ -408,7 +410,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             result.addNode(new TypefaceSpan("monospace"), fname);
 
             // Add download link.
-            if (clicker != null) {
+            if (mClicker != null) {
                 // Insert linebreak then a clickable [↓ save] line
                 result.addNode("\n");
                 TreeNode saveLink = new TreeNode();
@@ -420,7 +422,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 saveLink.addNode(new TreeNode(new ClickableSpan() {
                     @Override
                     public void onClick(@NonNull View widget) {
-                        clicker.onClick("EX", data);
+                        mClicker.onClick("EX", data);
                     }
                 }, ctx.getResources().getString(R.string.download_attachment)));
                 // Add space on the left to make the link appear under the file name.
@@ -431,9 +433,35 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return result;
     }
 
+    // Button: URLSpan wrapped into LineHeightSpan and then BorderedSpan.
+    private TreeNode handleButton(final Map<String,Object> data, final Object content) {
+        TreeNode span = new TreeNode(new BorderedSpan(mContainer.getContext(), mFontSize * FORM_LINE_SPACING), (
+                CharSequence) null);
+        TreeNode lhs = new TreeNode(new LineHeightSpan() {
+            @Override
+            public void chooseHeight(CharSequence text, int start, int end,
+                                     int spanstartv, int lineHeight, Paint.FontMetricsInt fm) {
+                float height = mFontSize * FORM_LINE_SPACING;
+                int spacing = (int) ((height - mFontSize) * 0.5f);
+                fm.bottom += spacing;
+                fm.top -= spacing;
+            }
+        }, null);
+        lhs.addNode(new URLSpan("") {
+            @Override
+            public void onClick(View widget) {
+                if (mClicker != null) {
+                    Log.d(TAG, "Button click: title=" + data.get("title") +", content="+content.toString());
+                    //mClicker.onClick("BN", data);
+                }
+            }
+        }, content);
+        span.addNode(lhs);
+        return span;
+    }
+
     @Override
-    public TreeNode apply(final String tp, final Map<String,Object> data, Object content) {
-        Log.d(TAG, "/"+tp+"//" + content.getClass() + "/" + content.toString());
+    public TreeNode apply(final String tp, final Map<String,Object> data, final Object content) {
         if (tp != null) {
             TreeNode span = null;
             switch (tp) {
@@ -473,23 +501,16 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     break;
                 case "IM":
                     // Additional processing for images
-                    span = handleImage(mContext, content, data, mViewport, mClicker);
+                    span = handleImage(mContainer.getContext(), content, data);
                     break;
                 case "EX":
                     // Attachments
-                    span = handleAttachment(mContext, content, data, mClicker);
+                    span = handleAttachment(mContainer.getContext(), content, data);
                     break;
                 case "BN":
-                    // Button: URLSpan wrapped into BorderedSpan.
-                    span = new TreeNode(new BorderedSpan(mContext), (CharSequence) null);
-                    span.addNode(new URLSpan("") {
-                        @Override
-                        public void onClick(View widget) {
-                            if (mClicker != null) {
-                                mClicker.onClick("BN", data);
-                            }
-                        }
-                    }, content);
+                    // Button
+                    Log.d(TAG, "Button " + content.toString() + "==" + data.get("title"));
+                    span = handleButton(data, content);
                     break;
                 case "FM":
                     // Form
@@ -497,18 +518,24 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         // Add line breaks between form elements.
                         // Don't insert a BR after the last element.
                         try {
-                            span = new TreeNode();
                             List<TreeNode> children = (List<TreeNode>) content;
-                            for (int i = 0;i<children.size() - 1; i++) {
-                                span.addNode(children.get(i));
-                                span.addNode("\n");
+                            if (children.size() > 0) {
+                                span = new TreeNode();
+                                span.addNode(children.get(0));
+                                for (int i = 1; i < children.size(); i++) {
+                                    span.addNode("\n");
+                                    span.addNode(children.get(i));
+                                }
                             }
                         } catch (ClassCastException ex) {
                             Log.e(TAG, "Exception", ex);
                         }
 
                         if (span != null && span.isEmpty()) {
+                            Log.d(TAG, "FM: empty span");
                             span = null;
+                        } else {
+                            mContainer.setLineSpacing(mFontSize * FORM_LINE_SPACING, 0);
                         }
                     }
                     break;
@@ -558,17 +585,31 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             this.children = null;
         }
 
+        TreeNode(CharSequence content) {
+            this.text = content;
+        }
+
+        TreeNode(List<TreeNode> content) {
+            this.children = content;
+        }
+
         TreeNode(Object content) {
             assignContent(content);
         }
 
         private void assignContent(Object content) {
+            if (content == null) {
+                return;
+            }
             if (content instanceof CharSequence) {
                 this.text = (CharSequence) content;
             } else if (content instanceof List) {
                 this.children = (List<TreeNode>) content;
+            } else {
+                throw new IllegalArgumentException("Invalid content");
             }
         }
+
         @SuppressWarnings("unchecked")
         TreeNode(CharacterStyle style, Object content) {
             this.cStyle = style;
@@ -592,7 +633,14 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             children.add(node);
         }
 
-        void addNode(Object content) {
+        void addNode(CharSequence content) {
+            if (content == null) {
+                return;
+            }
+            addNode(new TreeNode(content));
+        }
+
+        void addNode(List<TreeNode> content) {
             if (content == null) {
                 return;
             }
@@ -621,20 +669,17 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         @Override
         public String toString() {
             StringBuilder result = new StringBuilder("{");
-            if (cStyle != null || pStyle != null) {
-                result.append("style='").append((cStyle != null ? cStyle : pStyle).getClass().getName()).append("' ");
-            } else {
-                result.append("style=null! ");
-            }
-
             if (text != null) {
-                result.append("text='").append(text.toString()).append("'");
+                if (text.equals("\n")) {
+                    result.append("text='BR'");
+                } else {
+                    result.append("text='").append(text.toString()).append("'");
+                }
             } else if (children != null) {
                 result.append("children=[");
                 for (TreeNode child : children) {
-                    result.append("'");
                     result.append(child.toString());
-                    result.append("',");
+                    result.append(",");
                 }
                 result.append("]");
             } else {
@@ -644,7 +689,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             return result.toString();
         }
 
-        public Spanned toSpanned() {
+        Spanned toSpanned() {
             SpannableStringBuilder spanned = new SpannableStringBuilder();
             if (text != null) {
                 spanned.append(text);

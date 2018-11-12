@@ -388,8 +388,19 @@ public class MessagesFragment extends Fragment
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    boolean sendMessage(Drafty content) {
+        MessageActivity  activity = (MessageActivity) getActivity();
+        if (activity != null) {
+            return activity.sendMessage(content);
+        }
+        return false;
+    }
+
     void sendText() {
         final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
         final TextView inputField = activity.findViewById(R.id.editMessage);
         String message = inputField.getText().toString().trim();
         // notifyDataSetChanged();
@@ -399,31 +410,6 @@ public class MessagesFragment extends Fragment
                 inputField.setText("");
             }
         }
-    }
-
-    boolean sendMessage(Drafty content) {
-        if (mTopic != null) {
-            try {
-                PromisedReply<ServerMessage> reply = mTopic.publish(content);
-                runMessagesLoader(); // Shows pending message
-                reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        // Updates message list with "delivered" icon.
-                        runMessagesLoader();
-                        return null;
-                    }
-                }, mFailureListener);
-            } catch (NotConnectedException ex) {
-                Log.d(TAG, "sendMessage -- NotConnectedException", ex);
-            } catch (Exception ex) {
-                Log.d(TAG, "sendMessage -- Exception", ex);
-                Toast.makeText(getActivity(), R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
-                return false;
-            }
-            return true;
-        }
-        return false;
     }
 
     // Send image in-band

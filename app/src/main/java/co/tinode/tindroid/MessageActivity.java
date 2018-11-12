@@ -42,6 +42,7 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -348,9 +349,42 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
+    boolean sendMessage(Drafty content) {
+        if (mTopic != null) {
+            try {
+                PromisedReply<ServerMessage> reply = mTopic.publish(content);
+                runMessagesLoader(); // Shows pending message
+                reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        // Updates message list with "delivered" icon.
+                        runMessagesLoader();
+                        return null;
+                    }
+                }, new UiUtils.ToastFailureListener(this));
+            } catch (NotConnectedException ex) {
+                Log.d(TAG, "sendMessage -- NotConnectedException", ex);
+            } catch (Exception ex) {
+                Log.d(TAG, "sendMessage -- Exception", ex);
+                Toast.makeText(this, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public void sendKeyPress() {
         if (mTopic != null) {
             mTopic.noteKeyPress();
+        }
+    }
+
+    void runMessagesLoader() {
+        final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+                findFragmentByTag(FRAGMENT_MESSAGES);
+        if (fragment != null && fragment.isVisible()) {
+            fragment.runMessagesLoader();
         }
     }
 
@@ -449,11 +483,7 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onData(MsgServerData data) {
-            final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
-                    findFragmentByTag(FRAGMENT_MESSAGES);
-            if (fragment != null && fragment.isVisible()) {
-                fragment.runMessagesLoader();
-            }
+            runMessagesLoader();
         }
 
         @Override

@@ -370,7 +370,7 @@ public class MessagesListAdapter
                 (m.content.getEntReferences() != null);
 
         mSpanFormatterClicker.setPosition(position);
-        holder.mText.setText(SpanFormatter.toSpanned(mActivity, m.content, holder.mText.getMaxWidth(),
+        holder.mText.setText(SpanFormatter.toSpanned(holder.mText, m.content,
                 disableEnt ? null : mSpanFormatterClicker));
         if (SpanFormatter.hasClickableSpans(m.content)) {
             holder.mText.setLinksClickable(true);
@@ -841,8 +841,8 @@ public class MessagesListAdapter
                                 if (!json.isEmpty()) {
                                     newMsg.attachJSON(json);
                                 }
-                                // FIXME: send message
-                                Log.i(TAG, "Sending message " + newMsg.toString());
+                                Log.d(TAG, "Button click: title=" + data.get("title"));
+                                // mActivity.sendMessage(newMsg);
 
                             } else if ("url".equals(actionType)) {
                                 String url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref")).toString();

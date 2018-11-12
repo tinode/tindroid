@@ -447,9 +447,11 @@ public class Drafty implements Serializable {
 
         ArrayList<String> result = new ArrayList<>();
         for (Entity anEnt : ent) {
-            Object ref = anEnt.data.get("ref");
-            if (ref != null) {
-                result.add((String) ref);
+            if (anEnt != null && anEnt.data != null) {
+                Object ref = anEnt.data.get("ref");
+                if (ref != null) {
+                    result.add((String) ref);
+                }
             }
         }
         return result.size() > 0 ? result.toArray(new String[]{}) : null;
@@ -671,7 +673,6 @@ public class Drafty implements Serializable {
         }
 
         depth ++;
-        Log.d(TAG, "forEach["+depth+"]: '"+ line.substring(start, end) + "', children="+spans.toString());
 
         // Process ranges calling formatter for each range.
         ListIterator<Span> iter = spans.listIterator();
@@ -708,9 +709,11 @@ public class Drafty implements Serializable {
             if (span.type.equals("BN")) {
                 // Make button content unstyled.
                 span.data = span.data != null ? span.data : new HashMap<String, Object>();
+                Log.d(TAG, "BN " + span.data.toString());
                 String title = line.substring(span.start, span.end);
                 span.data.put("title", title);
                 result.add(formatter.apply(span.type, span.data, title));
+                Log.d(TAG, "BN " + span.data.toString());
             } else {
                 result.add(formatter.apply(span.type, span.data,
                         forEach(line, start, span.end, subspans, formatter)));
@@ -724,7 +727,6 @@ public class Drafty implements Serializable {
             result.add(formatter.apply(null, null, line.substring(start, end)));
         }
 
-        Log.d(TAG, "forEach["+depth+"] done, result='"+ result.toString() + "'");
         depth --;
 
         return result;
@@ -774,7 +776,7 @@ public class Drafty implements Serializable {
 
         for (Span span : spans) {
             if (span.type == null || span.type.equals("")) {
-                if (span.key >= 0 && span.key < ent.length) {
+                if (span.key >= 0 && span.key < ent.length && ent[span.key] != null) {
                     span.type = ent[span.key].tp;
                     span.data = ent[span.key].data;
                 } else {
