@@ -451,8 +451,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             @Override
             public void onClick(View widget) {
                 if (mClicker != null) {
-                    Log.d(TAG, "Button click: title=" + data.get("title") +", content="+content.toString());
-                    //mClicker.onClick("BN", data);
+                    mClicker.onClick("BN", data);
                 }
             }
         }, content);
@@ -509,7 +508,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     break;
                 case "BN":
                     // Button
-                    Log.d(TAG, "Button " + content.toString() + "==" + data.get("title"));
                     span = handleButton(data, content);
                     break;
                 case "FM":

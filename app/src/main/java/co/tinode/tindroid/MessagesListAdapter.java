@@ -841,8 +841,7 @@ public class MessagesListAdapter
                                 if (!json.isEmpty()) {
                                     newMsg.attachJSON(json);
                                 }
-                                Log.d(TAG, "Button click: title=" + data.get("title"));
-                                // mActivity.sendMessage(newMsg);
+                                mActivity.sendMessage(newMsg);
 
                             } else if ("url".equals(actionType)) {
                                 String url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref")).toString();

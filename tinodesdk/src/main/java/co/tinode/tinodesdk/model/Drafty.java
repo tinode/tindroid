@@ -709,11 +709,9 @@ public class Drafty implements Serializable {
             if (span.type.equals("BN")) {
                 // Make button content unstyled.
                 span.data = span.data != null ? span.data : new HashMap<String, Object>();
-                Log.d(TAG, "BN " + span.data.toString());
                 String title = line.substring(span.start, span.end);
                 span.data.put("title", title);
                 result.add(formatter.apply(span.type, span.data, title));
-                Log.d(TAG, "BN " + span.data.toString());
             } else {
                 result.add(formatter.apply(span.type, span.data,
                         forEach(line, start, span.end, subspans, formatter)));
@@ -761,8 +759,15 @@ public class Drafty implements Serializable {
 
         List<Span> spans = new ArrayList<>();
         for (Style aFmt : fmt) {
-            spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
+            if (aFmt.tp == null || "".equals(aFmt.tp)) {
+                if (aFmt.key != null) {
+                    spans.add(new Span(aFmt.at, aFmt.at + aFmt.len, aFmt.key));
+                }
+            } else {
+                spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
+            }
         }
+
         // Sort spans first by start index (asc) then by length (desc).
         Collections.sort(spans, new Comparator<Span>() {
             @Override
@@ -935,8 +940,8 @@ public class Drafty implements Serializable {
         public String toString() {
             return "{" + "start=" + start + "," +
                     "end=" + end + "," +
-                    "text=" + text + "," +
-                    "type=" + type +
+                    "type=" + type + "," +
+                    "data=" + (data != null ? data.toString() : "null") +
                     "}";
         }
     }
