@@ -1,7 +1,5 @@
 package co.tinode.tinodesdk.model;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
@@ -11,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -71,8 +68,6 @@ import java.util.regex.Pattern;
  */
 
 public class Drafty implements Serializable {
-    private static int depth;
-
     public static final String MIME_TYPE = "text/x-drafty";
     public static final String JSON_MIME_TYPE = "application/json";
 
@@ -141,53 +136,6 @@ public class Drafty implements Serializable {
         this.txt = text;
         this.fmt = fmt;
         this.ent = ent;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected Drafty(Map<String,Object> src) {
-        if (src == null) {
-            return;
-        }
-
-        try {
-            txt = (String) src.get("txt");
-            List styles = (List) src.get("fmt");
-            if (styles != null) {
-
-                fmt = new Style[styles.size()];
-                Iterator iter = styles.iterator();
-                for (int i = 0; i < styles.size(); i++) {
-                    Map<String, Object> st = (Map<String, Object>) iter.next();
-                    fmt[i] = new Style();
-                    if (st.containsKey("at")) {
-                        fmt[i].at = (int) st.get("at");
-                    }
-                    if (st.containsKey("len")) {
-                        fmt[i].len = (int) st.get("len");
-                    }
-                    if (st.containsKey("tp")) {
-                        fmt[i].tp = (String) st.get("tp");
-                    }
-                    if (st.containsKey("key")) {
-                        fmt[i].key = (Integer) st.get("key");
-                    }
-                }
-            }
-            List entities = (List) src.get("ent");
-            if (entities != null) {
-                ent = new Entity[entities.size()];
-                Iterator iter = entities.iterator();
-                for (int i = 0; i < entities.size(); i++) {
-                    Map<String, Object> en = (Map<String, Object>) iter.next();
-                    ent[i] = new Entity();
-                    ent[i].tp = (String) en.get("tp");
-                    ent[i].data = (Map<String, Object>) en.get("data");
-                }
-            }
-
-        } catch (ClassCastException | NullPointerException ex) {
-            Log.d(TAG, "Failed to parse Drafty from Map", ex);
-        }
     }
 
     // Detect starts and ends of formatting spans. Unformatted spans are
@@ -496,7 +444,8 @@ public class Drafty implements Serializable {
      * @param bits Content as an array of bytes
      * @param width image width in pixels
      * @param height image height in pixels
-     * @param fname name of the file to suggest to the receiver
+     * @param fname name of the file to suggest to the receiver.
+     * @return 'this' Drafty object.
      */
     public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname) {
         return insertImage(at, mime, bits, width, height, fname, null, 0);
@@ -513,6 +462,8 @@ public class Drafty implements Serializable {
      * @param fname name of the file to suggest to the receiver.
      * @param refurl Reference to full/extended image.
      * @param size file size hint (in bytes) as reported by the client.
+     *
+     * @return 'this' Drafty object.
      */
     public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname, URL refurl, long size) {
         if (bits == null && refurl == null) {
@@ -554,6 +505,7 @@ public class Drafty implements Serializable {
      * @param mime Content-type, such as 'text/plain'.
      * @param bits Content as an array of bytes.
      * @param fname Optional file name to suggest to the receiver.
+     * @return 'this' Drafty object.
      */
     public Drafty attachFile(String mime, byte[] bits, String fname) {
         return attachFile(mime, bits, fname, null, bits.length);
@@ -566,6 +518,7 @@ public class Drafty implements Serializable {
      * @param fname Optional file name to suggest to the receiver
      * @param refurl reference to content location. If URL is relative, assume current server.
      * @param size size of the attachment (untrusted).
+     * @return 'this' Drafty object.
      */
     public Drafty attachFile(String mime, String fname, String refurl, long size) {
         return attachFile(mime, null, fname, refurl, size);
@@ -579,6 +532,8 @@ public class Drafty implements Serializable {
      * @param bits File content to include inline.
      * @param refurl Reference to full/extended file content.
      * @param size file size hint as reported by the client.
+     *
+     * @return 'this' Drafty object.
      */
     protected Drafty attachFile(String mime, byte[] bits, String fname, String refurl, long size) {
         if (bits == null && refurl == null) {
@@ -608,13 +563,20 @@ public class Drafty implements Serializable {
         return this;
     }
 
+    /**
+     * Attach object as json. Intended to be used as a form response.
+     *
+     * @param json object to attach.
+     * @return 'this' Drafty object.
+     */
     public Drafty attachJSON(Map<String,Object> json) {
         prepareForEntity(-1, 1);
 
         Map<String, Object> data = new HashMap<>();
         data.put("mime", JSON_MIME_TYPE);
         data.put("val", json);
-        Entity e = new Entity("EX", data);
+
+        ent[ent.length - 1] = new Entity("EX", data);
 
         return this;
     }
@@ -628,6 +590,8 @@ public class Drafty implements Serializable {
      * @param actionType is the type of the button, one of 'url' or 'pub'.
      * @param actionValue is the value associated with the action: 'url': URL, 'pub': optional data to add to response.
      * @param refUrl parameter required by URL buttons: url to go to on click.
+     *
+     * @return 'this' Drafty object.
      */
     protected Drafty insertButton(int at, int len, String name, String actionType, String actionValue, String refUrl) {
         prepareForEntity(at, len);
@@ -672,14 +636,15 @@ public class Drafty implements Serializable {
             return result;
         }
 
-        depth ++;
-
         // Process ranges calling formatter for each range.
         ListIterator<Span> iter = spans.listIterator();
         while (iter.hasNext()) {
             Span span = iter.next();
-            if (span.start < 0) {
-                // Throw away non-visual spans.
+
+            if (span.start < 0 && span.type.equals("EX")) {
+                // This is different from JS SDK. JS ignores these spans here.
+                // JS uses Drafty.attachments() to get attachments.
+                result.add(formatter.apply(span.type, span.data, null));
                 continue;
             }
 
@@ -725,8 +690,6 @@ public class Drafty implements Serializable {
             result.add(formatter.apply(null, null, line.substring(start, end)));
         }
 
-        depth --;
-
         return result;
     }
 
@@ -740,8 +703,6 @@ public class Drafty implements Serializable {
      * @returns a tree of components.
      */
     public <T> T format(Formatter<T> formatter) {
-        depth = 0;
-
         if (txt == null) {
             txt = "";
         }
@@ -759,10 +720,15 @@ public class Drafty implements Serializable {
 
         List<Span> spans = new ArrayList<>();
         for (Style aFmt : fmt) {
+            if (aFmt.len < 0) {
+                aFmt.len = 0;
+            }
+            if (aFmt.at < -1) {
+                aFmt.at = -1;
+            }
             if (aFmt.tp == null || "".equals(aFmt.tp)) {
-                if (aFmt.key != null) {
-                    spans.add(new Span(aFmt.at, aFmt.at + aFmt.len, aFmt.key));
-                }
+                spans.add(new Span(aFmt.at, aFmt.at + aFmt.len,
+                        aFmt.key != null ? aFmt.key : 0));
             } else {
                 spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
             }
@@ -791,6 +757,12 @@ public class Drafty implements Serializable {
         }
 
         return formatter.apply(null, null, forEach(txt, 0, txt.length(), spans, formatter));
+    }
+
+    private String toPlainText() {
+        return "{txt: '" + txt + "'," +
+                "fmt: " + Arrays.toString(fmt) + "," +
+                "ent: " + Arrays.toString(ent) + "}";
     }
 
     public static class Style implements Serializable, Comparable<Style> {

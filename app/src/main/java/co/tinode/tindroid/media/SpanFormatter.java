@@ -67,7 +67,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         TreeNode result = content.format(new SpanFormatter(container, clicker));
         return result.toSpanned();
     }
-    
+
     public static boolean hasClickableSpans(final Drafty content) {
         if (content != null) {
             Drafty.Entity[] entities = content.getEntities();
@@ -132,16 +132,18 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 span = new ImageSpan(ctx, bmp);
             }
 
-            // Add image span
-            result = new TreeNode(span, content);
             if (mClicker != null && bmp != null) {
-                // Make image clickable but wrapping it into a ClickableSpan.
+                // Make image clickable but wrapping ImageSpan into a ClickableSpan.
                 result = new TreeNode(new ClickableSpan() {
                     @Override
                     public void onClick(@NonNull View widget) {
                         mClicker.onClick("IM", data);
                     }
-                }, result);
+                }, (CharSequence) null);
+                result.addNode(new TreeNode(span, content));
+            } else {
+                // Just create an image span
+                result = new TreeNode(span, content);
             }
         }
 
@@ -202,7 +204,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 // Add space on the left to make the link appear under the file name.
                 result.addNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink);
             }
-            span = null;
         }
         return result;
     }
@@ -300,11 +301,10 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                                 }
                             }
                         } catch (ClassCastException ex) {
-                            Log.e(TAG, "Exception", ex);
+                            Log.i(TAG, "Exception", ex);
                         }
 
                         if (span != null && span.isEmpty()) {
-                            Log.d(TAG, "FM: empty span");
                             span = null;
                         } else {
                             mContainer.setLineSpacing(mFontSize * FORM_LINE_SPACING, 0);
@@ -361,22 +361,24 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             this.text = content;
         }
 
-        TreeNode(List<TreeNode> content) {
-            this.children = content;
-        }
-
         TreeNode(Object content) {
             assignContent(content);
         }
 
+        @SuppressWarnings("unchecked")
         private void assignContent(Object content) {
             if (content == null) {
                 return;
             }
             if (content instanceof CharSequence) {
-                this.text = (CharSequence) content;
+                text = (CharSequence) content;
             } else if (content instanceof List) {
-                this.children = (List<TreeNode>) content;
+                children = (List<TreeNode>) content;
+            } else if (content instanceof TreeNode) {
+                if (children == null) {
+                    children = new ArrayList<>();
+                }
+                children.add((TreeNode) content);
             } else {
                 throw new IllegalArgumentException("Invalid content");
             }
@@ -406,13 +408,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         }
 
         void addNode(CharSequence content) {
-            if (content == null) {
-                return;
-            }
-            addNode(new TreeNode(content));
-        }
-
-        void addNode(List<TreeNode> content) {
             if (content == null) {
                 return;
             }
