@@ -666,7 +666,7 @@ public class Tinode {
     public LargeFileHelper getFileUploader() {
         URL url = null;
         try {
-            url = new URL(getBaseUrl(), "./file/u");
+            url = new URL(getBaseUrl(), "./file/u/");
         } catch (MalformedURLException ignored) {}
         return new LargeFileHelper(url, getApiKey(), getAuthToken(), makeUserAgent());
     }

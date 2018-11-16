@@ -49,15 +49,14 @@ public class LargeFileHelper {
         MsgServerCtrl ctrl;
         try {
             conn = (HttpURLConnection) mUrlUpload.openConnection();
-            conn.setDoInput(true);
             conn.setDoOutput(true);
             conn.setUseCaches(false);
-            conn.setRequestMethod("POST");
             conn.setRequestProperty("Connection", "Keep-Alive");
             conn.setRequestProperty("User-Agent", mUserAgent);
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);
             conn.setRequestProperty("X-Tinode-APIKey", mApiKey);
             conn.setRequestProperty("Authorization", "Token " + mAuthToken);
+            conn.setChunkedStreamingMode(0);
 
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
             out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
