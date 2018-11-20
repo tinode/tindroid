@@ -63,7 +63,7 @@ import co.tinode.tinodesdk.model.Subscription;
 
 @SuppressWarnings("unused, WeakerAccess")
 public class Tinode {
-    private static final String TAG = "tinodesdk.Tinode";
+    private static final String TAG = "Tinode";
 
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
