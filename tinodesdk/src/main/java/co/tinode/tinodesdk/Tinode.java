@@ -338,6 +338,14 @@ public class Tinode {
     }
 
     /**
+     * Probe connection to the server by sending a test packet.
+     * It does not check connection for validity before sending. Use {@link #isConnected} first.
+     */
+    public void networkProbe() {
+        mConnection.send("1");
+    }
+
+    /**
      * Get configured server address as an URL.
      * @return Server URL.
      * @throws MalformedURLException thrown if server address is not yet configured.
@@ -401,6 +409,11 @@ public class Tinode {
 
         if (mListener != null) {
             mListener.onRawMessage(message);
+        }
+
+        if (message.length() == 1 && message.charAt(0) == '0') {
+            // This is a network probe. No further processing is necessary.
+            return;
         }
 
         ServerMessage pkt = parseServerMessageFromJson(message);
@@ -501,41 +514,86 @@ public class Tinode {
         }
     }
 
+    /**
+     * Get API key that was used for configuring this Tinode instance.
+     * @return API key
+     */
     public String getApiKey() {
         return mApiKey;
     }
 
+    /**
+     * Get internet address of the server that this Tinode instance was configured with.
+     * @return server internet address
+     */
     public String getServerHost() {
         return mServerHost;
     }
 
+    /**
+     * Get ID of the current logged in user.
+     * @return user ID of the current user.
+     */
     public String getMyId() {
          return mMyUid;
     }
+
+    /**
+     * Check if the given user ID belong to the current logged in user.
+     * @param uid ID of the user to check.
+     * @return true if the ID belong to the current user, false otherwise.
+     */
     public boolean isMe(String uid) {
         return mMyUid != null && mMyUid.equals(uid);
     }
 
+    /**
+     * Get server-provided authentication token.
+     * @return authentication token
+     */
     public String getAuthToken() {
         return mAuthToken;
     }
 
+    /**
+     * Get expiration time of the authentication token, see {@link #getAuthToken()}
+     * @return time when the token expires or null.
+     */
     public Date getAuthTokenExpiration() {
         return mAuthTokenExpires;
     }
 
+    /**
+     * Check if the current session is authenticated.
+     * @return true if the session is authenticated, false otherwise.
+     */
     public boolean isAuthenticated() {
         return mConnAuth;
     }
 
+
+    /**
+     * Get the protocol version of the server that was reported at the last connection.
+     * @return server protocol version.
+     */
     public String getServerVersion() {
         return mServerVersion;
     }
 
+    /**
+     * Get server build stamp reported at the last connection
+     * @return server build stamp.
+     */
     public String getServerBuild() {
         return mServerBuild;
     }
 
+    /**
+     * Check if connection is in a connected state.
+     * Does not check if the network is actually alive.
+     *
+     * @return true if connection is initialized and in connected state, false otherwise.
+     */
     public boolean isConnected() {
         return mConnection != null && mConnection.isConnected();
     }
@@ -556,10 +614,22 @@ public class Tinode {
         return (obj instanceof String) && obj.equals("\u2421");
     }
 
+    /**
+     * Convert object to JSON string. Exported for convenience.
+     * @param o object to convert
+     * @return JSON as string.
+     * @throws JsonProcessingException if object cannot be converted
+     */
     public static String jsonSerialize(Object o) throws JsonProcessingException {
         return sJsonMapper.writeValueAsString(o);
     }
 
+    /**
+     * Convert JSON to an object. Exported for convenience.
+     * @param input JSON string to parse
+     * @param canonicalName name of the class to generate from JSON.
+     * @return converted object.
+     */
     public static <T> T jsonDeserialize(String input, String canonicalName) {
         try {
             return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
@@ -663,6 +733,10 @@ public class Tinode {
                 + Locale.getDefault().toString() + "); " + LIBRARY;
     }
 
+    /**
+     * Get {@link LargeFileHelper} object initialized for use with file uploading.
+     * @return LargeFileHelper object.
+     */
     public LargeFileHelper getFileUploader() {
         URL url = null;
         try {
@@ -709,7 +783,7 @@ public class Tinode {
      * @throws IOException if there is no connection
      */
     @SuppressWarnings("WeakerAccess")
-    public PromisedReply<ServerMessage> hello() throws Exception {
+    public PromisedReply<ServerMessage> hello() {
         ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION,
                 makeUserAgent(), mDeviceToken, mLanguage));
         try {
