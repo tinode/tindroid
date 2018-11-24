@@ -700,7 +700,7 @@ public class Drafty implements Serializable {
      *
      * @param formatter is an interface with an `apply` method. It's iteratively
      *                  applied to every node in the tree.
-     * @returns a tree of components.
+     * @return a tree of components.
      */
     public <T> T format(Formatter<T> formatter) {
         if (txt == null) {

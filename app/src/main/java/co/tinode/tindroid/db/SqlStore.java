@@ -210,7 +210,7 @@ class SqlStore implements Storage {
 
     @Override
     public long msgReceived(Topic topic, Subscription sub, MsgServerData m) {
-        SQLiteDatabase db = mDbh.getWritableDatabase();
+        final SQLiteDatabase db = mDbh.getWritableDatabase();
         long topicId, userId;
         StoredSubscription ss = sub != null ? (StoredSubscription) sub.getLocal() : null;
         if (ss == null) {
@@ -218,6 +218,14 @@ class SqlStore implements Storage {
             StoredTopic st = (StoredTopic) topic.getLocal();
             topicId = st.id;
             userId = UserDb.getId(db, m.from);
+            if (userId < 0) {
+                // Create a placeholder user to satisfy the foreign key constraint.
+                if (sub != null) {
+                    userId = UserDb.insert(db, sub);
+                } else {
+                    userId = UserDb.insert(db, m.from, m.ts, null);
+                }
+            }
         } else {
             topicId = ss.topicId;
             userId = ss.userId;
@@ -228,7 +236,7 @@ class SqlStore implements Storage {
             return -1;
         }
 
-        StoredMessage msg = new StoredMessage(m);
+        final StoredMessage msg = new StoredMessage(m);
         msg.topicId = topicId;
         msg.userId = userId;
 

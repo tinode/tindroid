@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,8 +26,12 @@ import android.support.v7.view.ActionMode;
 import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.text.style.StyleSpan;
 import android.util.Base64;
 import android.util.Log;
 import android.util.LongSparseArray;
@@ -424,6 +429,16 @@ public class MessagesListAdapter
 
                 if (holder.mUserName != null) {
                     holder.mUserName.setText(sub.pub.fn);
+                }
+            } else {
+                if (holder.mAvatar != null) {
+                    holder.mAvatar.setImageResource(R.drawable.ic_person_circle);
+                }
+                if (holder.mUserName != null) {
+                    Spannable span = new SpannableString(mActivity.getString(R.string.user_not_found));
+                    span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(),
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    holder.mUserName.setText(span);
                 }
             }
         }
