@@ -154,7 +154,7 @@ public class Acs implements Serializable {
     }
 
     public boolean equals(Acs am) {
-        return am != null && mode.equals(am.mode) && want.equals(am.want) && mode.equals(am.mode);
+        return am != null && mode.equals(am.mode) && want.equals(am.want) && given.equals(am.given);
     }
 
     public boolean isReader() {
