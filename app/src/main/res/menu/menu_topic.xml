@@ -19,12 +19,14 @@
         android:title="@string/action_view_contact"
         android:icon="@drawable/ic_info"
         app:showAsAction="ifRoom" />
+
     <item
         android:id="@+id/action_clear"
         android:orderInCategory="102"
         android:title="@string/action_clear_messages"
         android:icon="@drawable/ic_close"
         app:showAsAction="never" />
+
     <item
         android:id="@+id/action_mute"
         android:orderInCategory="103"
@@ -33,8 +35,23 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_delete"
+        android:id="@+id/action_unmute"
         android:orderInCategory="104"
+        android:title="@string/action_unmute"
+        android:icon="@drawable/ic_notifications"
+        android:visible="false"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_leave"
+        android:orderInCategory="105"
+        android:title="@string/action_leave_topic"
+        android:icon="@drawable/ic_exit"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_delete"
+        android:orderInCategory="106"
         android:title="@string/action_delete_group"
         android:icon="@drawable/ic_delete"
         app:showAsAction="never" />

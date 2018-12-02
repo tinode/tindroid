@@ -80,7 +80,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
-import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -1078,7 +1077,7 @@ public class UiUtils {
 
         @Override
         public PromisedReply<ServerMessage> onFailure(final Exception err) {
-            if (mActivity.isFinishing() || mActivity.isDestroyed()) {
+            if (mActivity == null || mActivity.isFinishing() || mActivity.isDestroyed()) {
                 return null;
             }
 

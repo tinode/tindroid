@@ -25,12 +25,12 @@
         android:icon="@drawable/ic_copy"
         android:orderInCategory="102"
         android:title="@string/action_copy"
-        app:showAsAction="always"/>
+        app:showAsAction="ifRoom"/>
     <item
         android:id="@+id/action_delete"
         android:icon="@drawable/ic_delete"
         android:orderInCategory="103"
         android:title="@string/action_delete"
-        app:showAsAction="always"/>
+        app:showAsAction="ifRoom"/>
 
 </menu>

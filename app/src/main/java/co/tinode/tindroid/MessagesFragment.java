@@ -292,36 +292,71 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
+    public void onPrepareOptionsMenu(final Menu menu) {
+        if (mTopic != null) {
+            MenuItem toMute = menu.findItem(R.id.action_mute);
+            MenuItem toUnmute = menu.findItem(R.id.action_unmute);
+            toUnmute.setVisible(mTopic.isMuted());
+            toMute.setVisible(!mTopic.isMuted());
+
+            MenuItem toDelete = menu.findItem(R.id.action_delete);
+            MenuItem toLeave = menu.findItem(R.id.action_leave);
+            toDelete.setVisible(mTopic.isOwner());
+            toLeave.setVisible(!mTopic.isOwner());
+        }
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        try {
+            switch (id) {
+                case R.id.action_clear:
+                    mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            mMessagesAdapter.runLoader();
+                            return null;
+                        }
+                    }, mFailureListener);
+                    return true;
 
-        switch (id) {
-            case R.id.action_clear: {
-                // TODO: implement Topic.deleteMessages
-                return true;
+                case R.id.action_unmute:
+                case R.id.action_mute:
+                    mTopic.updateMuted(!mTopic.isMuted());
+                    Activity activity = getActivity();
+                    if (activity != null) {
+                        activity.invalidateOptionsMenu();
+                    }
+                    return true;
+
+                case R.id.action_leave:
+                case R.id.action_delete:
+                    showDeleteTopicConfirmationDialog(id == R.id.action_delete);
+                    return true;
+
+                default:
+                    return super.onOptionsItemSelected(item);
             }
-            case R.id.action_mute: {
-                // TODO: implement setting notifications to off
-                return true;
-            }
-            case R.id.action_delete: {
-                showDeleteTopicConfirmationDialog();
-                return true;
-            }
-            default:
-                return super.onOptionsItemSelected(item);
+        } catch (NotConnectedException ignored) {
+            Log.d(TAG, "Offline - not changed");
+            Toast.makeText(getActivity(), R.string.no_connection, Toast.LENGTH_SHORT).show();
+        } catch (Exception ignored) {
+            Log.d(TAG, "Something went wrong while muting", ignored);
         }
+        return true;
     }
 
     // Confirmation dialog "Do you really want to do X?"
-    private void showDeleteTopicConfirmationDialog() {
+    private void showDeleteTopicConfirmationDialog(boolean del) {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
         confirmBuilder.setNegativeButton(android.R.string.cancel, null);
-        confirmBuilder.setMessage(R.string.confirm_delete_topic);
+        confirmBuilder.setMessage(del ? R.string.confirm_delete_topic : R.string.confirm_leave_topic);
 
         confirmBuilder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
@@ -357,7 +392,7 @@ public class MessagesFragment extends Fragment
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         try {
             startActivityForResult(
-                    Intent.createChooser(intent, getActivity().getString(title)), resultCode);
+                    Intent.createChooser(intent, getString(title)), resultCode);
         } catch (ActivityNotFoundException ex) {
             Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
         }

@@ -59,8 +59,9 @@
     <string name="action_settings">Settings</string>
     <string name="action_delete">Delete</string>
     <string name="action_mute">Mute conversation</string>
+    <string name="action_unmute">Unmute conversation</string>
     <string name="action_edit_contact">Edit contact</string>
-    <string name="action_clear_messages">Clear messages</string>
+    <string name="action_clear_messages">Clear all messages</string>
     <string name="action_view_contact">View contact</string>
     <string name="action_attach">Attach</string>
     <string name="action_new_chat">New chat</string>
@@ -75,6 +76,7 @@
     <string name="action_copy">Copy</string>
     <string name="action_offline">Working offline</string>
     <string name="action_delete_group">Delete conversation…</string>
+    <string name="action_leave_topic">Leave conversation…</string>
 
     <string name="avatar">Avatar picture</string>
     <string name="select_image">Select image</string>
@@ -157,6 +159,7 @@
 
     <string name="confirm_member_removal">Remove %1$s from \"%2$s\"?</string>
     <string name="confirm_member_ban">Remove and ban %1$s from \"%2$s\"?</string>
+    <string name="confirm_leave_topic">Do you really want to leave this conversation?</string>
     <string name="confirm_delete_topic">Do you really want to delete this conversation for everyone?</string>
     <string name="modeWriteOnly">write-only</string>
     <string name="owner_cannot_unsubscribe">Owner cannot unsubscribe</string>

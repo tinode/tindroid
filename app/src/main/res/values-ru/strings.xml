@@ -41,8 +41,9 @@
     <string name="action_send_now">Отправить сейчас</string>
     <string name="action_view_details">Детали</string>
     <string name="action_copy">Копировать</string>
-    <string name="action_offline">Нет связи...</string>
-    <string name="action_delete_group">Удалить чат...</string>
+    <string name="action_offline">Нет связи…</string>
+    <string name="action_leave_topic">Покинуть чат…</string>
+    <string name="action_delete_group">Удалить чат…</string>
     <string name="avatar">Аватарка</string>
     <string name="select_image">Выбрать картинку</string>
     <string name="select_file">Выбрать файл</string>
@@ -144,8 +145,10 @@
     <string name="invitation_text">Присоединяйся!</string>
     <string name="ignore">Игнорировать</string>
     <string name="action_mute">Отключить уведомления</string>
+    <string name="action_unmute">Включить уведомления</string>
     <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ</string>
-    <string name="confirm_delete_topic">Вы действительно хотите удалить этот чат?</string>
+    <string name="confirm_delete_topic">Вы действительно хотите удалить этот чат для всех?</string>
+    <string name="confirm_leave_topic">Вы действительно хотите покинуть этот чат?</string>
     <string name="group_members">Участники чата</string>
     <string name="forgot_password">Забыл пароль</string>
     <string name="failed_to_send_message">Сообщение не отправлено</string>

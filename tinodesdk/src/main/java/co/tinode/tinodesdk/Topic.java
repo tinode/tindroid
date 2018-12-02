@@ -1099,14 +1099,14 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     }
 
     /**
-     * Delete all messages in the topic.
+     * Delete message range.
      *
      * @param hard hard-delete messages
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> delMessages(final int fromId, final int toId, final boolean hard) throws Exception {
+    public PromisedReply<ServerMessage> delMessages(final int fromId, final int toId, final boolean hard) {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, fromId, toId, hard);
         }
@@ -1162,6 +1162,17 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
 
         throw new NotConnectedException();
+    }
+    /**
+     * Delete all messages.
+     *
+     * @param hard hard-delete messages
+     *
+     * @throws NotSubscribedException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply<ServerMessage> delMessages(final boolean hard) {
+        return delMessages(0, getSeq() + 1, hard);
     }
 
     /**
