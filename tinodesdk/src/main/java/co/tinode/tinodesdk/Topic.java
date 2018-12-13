@@ -694,7 +694,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         }
     }
 
-    protected PromisedReply<ServerMessage> publish(final Drafty content, final long msgId) throws Exception {
+    protected PromisedReply<ServerMessage> publish(final Drafty content, final long msgId) {
         return mTinode.publish(getName(), content.isPlain() ? content.toString() : content).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
