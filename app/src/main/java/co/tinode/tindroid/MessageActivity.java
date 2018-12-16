@@ -225,17 +225,10 @@ public class MessageActivity extends AppCompatActivity {
                             fragmsg.topicSubscribed();
                         }
                     });
+                    // Resume message sender and submit pending messages for processing:
+                    // publish queued, delete marked for deletion.
                     mMessageSender.resume();
-                    // Submit pending messages for processing: publish queued, delete marked for deletion.
-                    mMessageSender.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                mTopic.syncAll();
-                            } catch (Exception ignored) {
-                            }
-                        }
-                    });
+                    syncAllMessages(false);
                     return null;
                 }
             }, new PromisedReply.FailureListener<ServerMessage>() {
@@ -294,6 +287,48 @@ public class MessageActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    // Try to send all pending messages.
+    public void syncAllMessages(final boolean runLoader) {
+        syncMessages(-1, runLoader);
+    }
+
+    // Try to send the specified message.
+    public void syncMessages(final long msgId, final boolean runLoader) {
+        mMessageSender.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    PromisedReply<ServerMessage> promise;
+                    if (msgId >= 0) {
+                        promise = mTopic.syncOne(msgId);
+                    } else {
+                        promise = mTopic.syncAll();
+                    }
+                    if (runLoader) {
+                        promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    // Log.d(TAG, "onLoadFinished - onSuccess " + result.ctrl.id);
+                                    runOnUiThread(new Runnable() {
+                                                      @Override
+                                                      public void run() {
+                                                          runMessagesLoader();
+                                                      }
+                                                  }
+                                    );
+                                    return null;
+                                }
+                            }, null);
+                        }
+                } catch (Exception ex) {
+                    Log.d(TAG, "Failed to sync", ex);
+                    Toast.makeText(MessageActivity.this, R.string.failed_to_send_message,
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
     private boolean isFragmentVisible(String tag) {

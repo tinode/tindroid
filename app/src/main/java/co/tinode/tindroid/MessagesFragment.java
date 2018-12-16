@@ -493,20 +493,13 @@ public class MessagesFragment extends Fragment
     }
 
     private int findItemPositionById(long id) {
-        int position = -1;
         final int first = mMessageViewLayoutManager.findFirstVisibleItemPosition();
         final int last = mMessageViewLayoutManager.findLastVisibleItemPosition();
         if (last == RecyclerView.NO_POSITION) {
-            return position;
+            return -1;
         }
 
-        for (int i = first; i <= last && !isDetached(); i++) {
-            if (mMessagesAdapter.getItemId(i) == id) {
-                position = i;
-                break;
-            }
-        }
-        return position;
+        return mMessagesAdapter.getItemPositionById(id, first, last);
     }
 
     @NonNull
@@ -517,11 +510,13 @@ public class MessagesFragment extends Fragment
 
     @Override
     public void onLoadFinished(@NonNull Loader<UploadResult> loader, final UploadResult data) {
-        final FragmentActivity activity = getActivity();
+        final MessageActivity activity = (MessageActivity) getActivity();
         if (activity != null) {
             // Kill the loader otherwise it will keep uploading the same file whenever the activity
             // is created.
             activity.getSupportLoaderManager().destroyLoader(loader.getId());
+        } else {
+            return;
         }
 
         // Avoid processing the same result twice;
@@ -532,30 +527,7 @@ public class MessagesFragment extends Fragment
         }
 
         if (data.msgId > 0) {
-            try {
-                mTopic.syncOne(data.msgId).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        if (activity != null && result != null) {
-                            // Log.d(TAG, "onLoadFinished - onSuccess " + result.ctrl.id);
-                            activity.runOnUiThread(new Runnable() {
-                                   @Override
-                                   public void run() {
-                                       int pos = findItemPositionById(data.msgId);
-                                       if (pos >= 0) {
-                                           runMessagesLoader();
-                                       }
-                                   }
-                               }
-                            );
-                        }
-                        return null;
-                    }
-                }, null);
-            } catch (Exception ex) {
-                Log.d(TAG, "Failed to sync", ex);
-                Toast.makeText(activity, R.string.failed_to_send_message, Toast.LENGTH_LONG).show();
-            }
+            activity.syncMessages(data.msgId, true);
         } else if (data.error != null) {
             runMessagesLoader();
             Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();

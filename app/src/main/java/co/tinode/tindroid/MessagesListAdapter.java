@@ -514,6 +514,21 @@ public class MessagesListAdapter
         return -1;
     }
 
+    public int getItemPositionById(long itemId, int first, int last) {
+        if (mCursor == null || mCursor.isClosed()) {
+            return -1;
+        }
+
+        for (int i = first; i <= last; i++) {
+            if (mCursor.moveToPosition(i)) {
+                if (MessageDb.getLocalId(mCursor) == itemId) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
     @Override
     public int getItemCount() {
         return mCursor != null ? mCursor.getCount() : 0;
