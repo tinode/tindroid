@@ -1,13 +1,13 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 28
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
+        targetSdkVersion 28
+        versionCode gitVersionCode()
+        versionName gitVersionName()
     }
     buildTypes {
         release {
@@ -23,6 +23,17 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
+}
+
+static def gitVersionCode() {
+    def process = "git rev-list --count HEAD".execute()
+    return process.text.toInteger()
+}
+
+static def gitVersionName() {
+    def process = "git describe --tags".execute()
+    // Remove trailing CR and remove leading 'v' as in 'v1.2.3'
+    return process.text.trim().substring(1)
 }
 
 dependencies {
