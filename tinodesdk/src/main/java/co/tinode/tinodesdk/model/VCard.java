@@ -112,7 +112,7 @@ public class VCard implements Serializable {
         dst.email = Contact.copyArray(src.email);
         dst.impp = Contact.copyArray(src.impp);
         // Shallow copy of the photo
-        dst.photo = src.photo.copy();
+        dst.photo = src.photo != null ? src.photo.copy() : null;
 
         return dst;
     }
