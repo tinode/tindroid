@@ -178,7 +178,7 @@ public class MessagesFragment extends Fragment
         mFailureListener = new UiUtils.ToastFailureListener(getActivity());
 
         // Send message on button click
-        getActivity().findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
+        activity.findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendText();
@@ -186,7 +186,7 @@ public class MessagesFragment extends Fragment
         });
 
         // Send image button
-        getActivity().findViewById(R.id.attachImage).setOnClickListener(new View.OnClickListener() {
+        activity.findViewById(R.id.attachImage).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openFileSelector("image/*", R.string.select_image, ACTION_ATTACH_IMAGE);
@@ -194,7 +194,7 @@ public class MessagesFragment extends Fragment
         });
 
         // Send file button
-        getActivity().findViewById(R.id.attachFile).setOnClickListener(new View.OnClickListener() {
+        activity.findViewById(R.id.attachFile).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openFileSelector("*/*", R.string.select_file, ACTION_ATTACH_FILE);
@@ -511,6 +511,7 @@ public class MessagesFragment extends Fragment
     @Override
     public void onLoadFinished(@NonNull Loader<UploadResult> loader, final UploadResult data) {
         final MessageActivity activity = (MessageActivity) getActivity();
+
         if (activity != null) {
             // Kill the loader otherwise it will keep uploading the same file whenever the activity
             // is created.
@@ -561,11 +562,13 @@ public class MessagesFragment extends Fragment
 
         @Override
         public void onStartLoading() {
+
             if (mResult != null) {
+                // Loader has result already. Deliver it.
                 deliverResult(mResult);
-            } else {
+            } else if (mArgs.getLong("msgId") <= 0) {
+                // Create a new message which will be updated with upload progress.
                 Storage store = BaseDb.getInstance().getStore();
-                // Create blank message here to avoid the crash.
                 long msgId = store.msgDraft(Cache.getTinode().getTopic(mArgs.getString("topic")), new Drafty());
                 mArgs.putLong("msgId", msgId);
                 UploadProgress p = sProgress.get();
@@ -584,6 +587,12 @@ public class MessagesFragment extends Fragment
                 mResult = doUpload(getId(), getContext(), mArgs, sProgress);
             }
             return mResult;
+        }
+
+        @Override
+        public void onStopLoading() {
+            super.onStopLoading();
+            cancelLoad();
         }
     }
 

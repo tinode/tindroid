@@ -137,6 +137,28 @@ public class PromisedReply<T> {
         }
     }
 
+    /**
+     * Call onSuccess when the promise is resolved. The call will happen on the
+     * thread which called resolve().
+     *
+     * @param success called when the promise is resolved
+     * @return promise for chaining
+     */
+    public PromisedReply<T> thenApply(SuccessListener<T> success) {
+        return thenApply(success, null);
+    }
+
+    /**
+     * Call onFailure when the promise is rejected. The call will happen on the
+     * thread which called reject()
+     *
+     * @param failure called when the promise is rejected
+     * @return promise for chaining
+     */
+    public PromisedReply<T> thenCatch(FailureListener<T> failure) {
+        return thenApply(null, failure);
+    }
+
     private void callOnSuccess(final T result) throws Exception {
         PromisedReply<T> ret;
         try {

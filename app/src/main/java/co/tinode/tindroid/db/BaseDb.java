@@ -22,6 +22,16 @@ public class BaseDb extends SQLiteOpenHelper {
     private static final String TAG = "BaseDb";
 
     /**
+     * Schema version. Increment on schema changes.
+     */
+    private static final int DATABASE_VERSION = 5;
+
+    /**
+     * Filename for SQLite file.
+     */
+    private static final String DATABASE_NAME = "base.db";
+
+    /**
      * Content provider authority.
      */
     public static final String CONTENT_AUTHORITY = "co.tinode.tindroid.provider";
@@ -34,27 +44,20 @@ public class BaseDb extends SQLiteOpenHelper {
     public static final int STATUS_UNDEFINED = 0;
     // Object is not ready to be sent to the server.
     public static final int STATUS_DRAFT = 1;
-    // Object is ready but not yet sent to the server
+    // Object is ready but not yet sent to the server.
     public static final int STATUS_QUEUED = 2;
+    // Object is in the process of being sent to the server.
+    public static final int STATUS_SENDING = 3;
     // Object is received by the server
-    public static final int STATUS_SYNCED = 3;
+    public static final int STATUS_SYNCED = 4;
     // Meta-status: object should be visible in the UI
-    public static final int STATUS_VISIBLE = 3;
+    public static final int STATUS_VISIBLE = 4;
     // Object is hard-deleted
-    public static final int STATUS_DELETED_HARD = 4;
+    public static final int STATUS_DELETED_HARD = 5;
     // Object is soft-deleted
-    public static final int STATUS_DELETED_SOFT = 5;
+    public static final int STATUS_DELETED_SOFT = 6;
     // Object is rejected by the server.
-    public static final int STATUS_REJECTED = 6;
-
-    /**
-     * Schema version. Increment on schema changes.
-     */
-    private static final int DATABASE_VERSION = 4;
-    /**
-     * Filename for SQLite file.
-     */
-    private static final String DATABASE_NAME = "base.db";
+    public static final int STATUS_REJECTED = 7;
 
     private static BaseDb sInstance = null;
 

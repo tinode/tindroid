@@ -310,7 +310,6 @@ public class MessageActivity extends AppCompatActivity {
                         promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    // Log.d(TAG, "onLoadFinished - onSuccess " + result.ctrl.id);
                                     runOnUiThread(new Runnable() {
                                                       @Override
                                                       public void run() {

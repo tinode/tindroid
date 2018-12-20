@@ -282,7 +282,7 @@ class SqlStore implements Storage {
 
     @Override
     public long msgSend(Topic topic, Drafty data) {
-        return insertMessage(topic, data, BaseDb.STATUS_UNDEFINED);
+        return insertMessage(topic, data, BaseDb.STATUS_SENDING);
     }
 
     @Override
@@ -298,6 +298,12 @@ class SqlStore implements Storage {
     @Override
     public boolean msgReady(Topic topic, long messageDbId, Drafty data) {
         return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId, BaseDb.STATUS_QUEUED, data);
+    }
+
+    @Override
+    public boolean msgSyncing(Topic topic, long messageDbId, boolean sync) {
+        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId,
+                sync ? BaseDb.STATUS_SENDING : BaseDb.STATUS_QUEUED, null);
     }
 
     public boolean msgDiscard(Topic topic, long messageDbId) {

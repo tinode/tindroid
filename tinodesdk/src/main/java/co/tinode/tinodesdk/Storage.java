@@ -68,7 +68,7 @@ public interface Storage {
     long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
 
     /**
-     * Save message to DB as queued or synced.
+     * Save message to DB as "sending".
      *
      * @param topic topic which sent the message
      * @param data message data to save
@@ -106,6 +106,16 @@ public interface Storage {
      * @return true on success, false otherwise
      */
     boolean msgReady(Topic topic, long dbMessageId, Drafty data);
+
+    /**
+     * Message is being sent to the server.
+     * @param topic topic which sent the message
+     * @param dbMessageId database ID of the message.
+     * @param sync true when the sync started, false when it's finished unsuccessfully.
+     * @return true on success, false otherwise
+     *
+     */
+    boolean msgSyncing(Topic topic, long dbMessageId, boolean sync);
 
     /**
      * Delete message by database id.

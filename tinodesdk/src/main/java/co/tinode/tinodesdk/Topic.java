@@ -655,7 +655,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                             }
                             return null;
                         }
-                    }, null);
+                    });
         }
 
         if (mTinode.isConnected()) {
@@ -702,7 +702,16 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                         processDelivery(result.ctrl, msgId);
                         return null;
                     }
-                }, null);
+                },
+                new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        if (mStore != null) {
+                            mStore.msgSyncing(Topic.this, msgId, false);
+                        }
+                        return null;
+                    }
+                });
     }
 
     /**
@@ -724,12 +733,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         if (mAttached) {
             return publish(content, id);
         } else {
-            return subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    return publish(content, id);
-                }
-            }, null);
+            return subscribe().thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            return publish(content, id);
+                        }
+                    });
         }
     }
 
@@ -770,7 +780,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                         mStore.msgDelete(Topic.this, delId, toSoftDelete);
                         return null;
                 }
-            }, null);
+            });
         }
 
         // Get hard-deleted message IDs.
@@ -784,7 +794,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                         mStore.msgDelete(Topic.this, delId, toHardDelete);
                         return null;
                 }
-            }, null);
+            });
         }
 
         ML toSend = mStore.getQueuedMessages(this);
@@ -796,16 +806,25 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
             while (toSend.hasNext()) {
                 Storage.Message msg = toSend.next();
                 final long msgId = msg.getId();
+                mStore.msgSyncing(this, msgId, true);
                 last = mTinode.publish(getName(), msg.getContent())
                         .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    Log.d(TAG, "Processing delivery msgId="+ msgId);
-                                    processDelivery(result.ctrl, msgId);
-                                    return null;
-                                }
-                            }, null);
+                                new PromisedReply.SuccessListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                        Log.d(TAG, "Processing delivery msgId=" + msgId);
+                                        processDelivery(result.ctrl, msgId);
+                                        return null;
+                                    }
+                                },
+                                new PromisedReply.FailureListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                        Log.d(TAG, "Delivery failed msgId=" + msgId);
+                                        mStore.msgSyncing(Topic.this, msgId, false);
+                                        return null;
+                                    }
+                                });
             }
         } finally {
             try {
@@ -842,8 +861,9 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                                     mStore.msgDelete(Topic.this, delId, m.getSeqId(), m.getSeqId() + 1);
                                     return null;
                                 }
-                            }, null);
+                            });
                 } else if (m.isReady()) {
+                    mStore.msgSyncing(this, m.getId(), true);
                     result = mTinode.publish(getName(), m.getContent())
                             .thenApply(
                                     new PromisedReply.SuccessListener<ServerMessage>() {
@@ -853,7 +873,15 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                                             processDelivery(result.ctrl, m.getId());
                                             return null;
                                         }
-                                    }, null);
+                                    },
+                                    new PromisedReply.FailureListener<ServerMessage>() {
+                                        @Override
+                                        public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                            Log.d(TAG, "Delivery failed msgId=" + m.getId());
+                                            mStore.msgSyncing(Topic.this, m.getId(), false);
+                                            return null;
+                                        }
+                                    });
                 }
             } catch (Exception ignored) {}
         }

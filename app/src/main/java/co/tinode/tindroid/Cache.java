@@ -74,7 +74,7 @@ public class Cache {
         }
     }
 
-    static int getUniqueCounter() {
+    synchronized static int getUniqueCounter() {
         return ++sUniqueCounter;
     }
 
