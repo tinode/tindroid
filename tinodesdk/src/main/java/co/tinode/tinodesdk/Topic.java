@@ -953,7 +953,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> updateDefAcs(String auth, String anon)  throws Exception {
-        return setDescription(new MetaSetDesc<DP,DR>(auth, anon));
+        return setDescription(new MetaSetDesc<DP,DR>(new Defacs(auth, anon)));
     }
 
     /**

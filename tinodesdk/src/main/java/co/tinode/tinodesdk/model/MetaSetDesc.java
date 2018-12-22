@@ -14,16 +14,17 @@ public class MetaSetDesc<P,R> {
 
     public MetaSetDesc() {}
 
-    public MetaSetDesc(P pub, R priv) {
+    public MetaSetDesc(P pub, R priv, Defacs da) {
+        this.defacs = da;
         this.pub = pub;
         this.priv = priv;
     }
 
-    public MetaSetDesc(Defacs da) {
-        this.defacs = da;
+    public MetaSetDesc(P pub, R priv) {
+        this(pub, priv, null);
     }
 
-    public MetaSetDesc(String auth, String anon) {
-        this.defacs = new Defacs(auth, anon);
+    public MetaSetDesc(Defacs da) {
+        this(null, null, da);
     }
 }

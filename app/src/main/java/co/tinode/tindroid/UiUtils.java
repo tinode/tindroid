@@ -959,7 +959,7 @@ public class UiUtils {
         String[] SELECTION_ARGS = {
                 ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
                 Integer.toString(ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM),
-                Utils.IM_PROTOCOL,
+                Utils.TINODE_IM_PROTOCOL,
         };
         String SORT_ORDER = ContactsContract.CommonDataKinds.Im.DISPLAY_NAME_PRIMARY;
     }

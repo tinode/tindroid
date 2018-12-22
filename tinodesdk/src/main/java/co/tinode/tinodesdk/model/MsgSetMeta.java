@@ -21,4 +21,16 @@ public class MsgSetMeta<Pu,Pr> {
             this.tags = tags.toArray(this.tags);
         }
     }
+
+    public MsgSetMeta(MetaSetDesc<Pu,Pr> desc) {
+        this(desc, null, null);
+    }
+
+    public MsgSetMeta(MetaSetSub sub) {
+        this(null, sub, null);
+    }
+
+    public MsgSetMeta(List<String> tags) {
+        this(null, null, tags);
+    }
 }

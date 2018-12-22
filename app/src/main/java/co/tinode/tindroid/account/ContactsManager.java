@@ -17,7 +17,6 @@ import android.provider.ContactsContract.Groups;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.Settings;
 import android.provider.ContactsContract.StatusUpdates;
-import android.util.Log;
 
 import java.util.Collection;
 import java.util.Date;
@@ -49,7 +48,7 @@ public class ContactsManager {
     public static synchronized Date updateContacts(Context context, Account account,
                                                    Collection<Subscription<VxCard,?>> rawContacts,
                                                    Date lastSyncMarker) {
-        Log.d(TAG, "ContactsManager got batch, count=" + rawContacts.size());
+        // Log.d(TAG, "ContactsManager got batch, count=" + rawContacts.size());
 
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
@@ -168,6 +167,18 @@ public class ContactsManager {
      */
     public static void updateContact(Context context, ContentResolver resolver, Subscription<VxCard,?> rawContact,
                                      long rawContactId, BatchOperation batchOperation) {
+
+        final VxCard vc;
+        try {
+            vc = rawContact.pub;
+        } catch (ClassCastException e) {
+            return;
+        }
+
+        if (vc == null) {
+            return;
+        }
+
         boolean existingCellPhone = false;
         boolean existingHomePhone = false;
         boolean existingWorkPhone = false;
@@ -179,13 +190,6 @@ public class ContactsManager {
         final ContactOperations contactOp = ContactOperations.updateExistingContact(context,
                 rawContactId, batchOperation);
         if (c == null) {
-            return;
-        }
-
-        VxCard vc;
-        try {
-            vc = rawContact.pub;
-        } catch (ClassCastException e) {
             return;
         }
 
@@ -312,7 +316,7 @@ public class ContactsManager {
         }
 
         long id = lookupRawContact(resolver, uid);
-        Log.d(TAG, "getStoredSubscription for '" + uid + "' lookupRawContact returned " + id);
+        // Log.d(TAG, "getStoredSubscription for '" + uid + "' lookupRawContact returned " + id);
         return getRawContact(resolver, id);
     }
 
@@ -403,7 +407,7 @@ public class ContactsManager {
             values.put(StatusUpdates.DATA_ID, profileId);
             // values.put(StatusUpdates.STATUS, status);
             values.put(StatusUpdates.PROTOCOL, Im.PROTOCOL_CUSTOM);
-            values.put(StatusUpdates.CUSTOM_PROTOCOL, Utils.IM_PROTOCOL);
+            values.put(StatusUpdates.CUSTOM_PROTOCOL, Utils.TINODE_IM_PROTOCOL);
             values.put(StatusUpdates.IM_ACCOUNT, uid);
             values.put(StatusUpdates.IM_HANDLE, uid);
             values.put(StatusUpdates.STATUS_RES_PACKAGE, context.getPackageName());

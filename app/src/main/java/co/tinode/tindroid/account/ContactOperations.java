@@ -177,7 +177,7 @@ public class ContactOperations {
             mValues.put(Im.TYPE, Email.TYPE_OTHER);
             mValues.put(Im.MIMETYPE, Im.CONTENT_ITEM_TYPE);
             mValues.put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM);
-            mValues.put(Im.CUSTOM_PROTOCOL, Utils.IM_PROTOCOL);
+            mValues.put(Im.CUSTOM_PROTOCOL, Utils.TINODE_IM_PROTOCOL);
             addInsertOp();
         }
         return this;

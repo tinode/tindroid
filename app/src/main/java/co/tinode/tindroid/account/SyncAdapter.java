@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,7 +23,10 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MetaGetSub;
+import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -71,9 +75,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
      * the sync.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void onPerformSync(final Account account, final Bundle extras, String authority,
                               ContentProviderClient provider, final SyncResult syncResult) {
         //Log.i(TAG, "Beginning network synchronization");
+        boolean success = false;
         final Tinode tinode = Cache.getTinode();
         try {
             Log.i(TAG, "Starting sync for account " + account.name);
@@ -96,12 +102,28 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             tinode.connect(hostName, tls).getResult();
             tinode.loginToken(token).getResult();
 
-            // Don't care if it's resolved or rejected
-            tinode.subscribe(Tinode.TOPIC_FND, null, null).waitResult();
+            // Load contacts and send them to server as fnd.Private.
+            Date lastUpdated = getServerSyncMarker(account);
+            SparseArray<Utils.ContactHolder> contactList =
+                    Utils.fetchContacts(getContext().getContentResolver(),
+                            Utils.FETCH_EMAIL | Utils.FETCH_PHONE);
+            StringBuilder contacts = new StringBuilder();
+            for (int i=0; i<contactList.size(); i++) {
+                Utils.ContactHolder ch = contactList.get(contactList.keyAt(i));
+                contacts.append(ch.toString());
+                contacts.append(",");
+            }
 
-            final MsgGetMeta meta = MsgGetMeta.sub();
-            // FIXME(gene): The following is commented out for debugging
-            // MsgGetMeta meta = new MsgGetMeta(null, new MetaGetSub(getServerSyncMarker(account), null), null);
+            MsgSetMeta setMeta = contacts.length() > 0 ?
+                    new MsgSetMeta(new MetaSetDesc(null, contacts.toString())) : null;
+            // It throws if rejected and we fail to sync.
+            tinode.subscribe(Tinode.TOPIC_FND, setMeta, null).getResult();
+
+            // final MsgGetMeta meta = MsgGetMeta.sub();
+            final MsgGetMeta meta = new MsgGetMeta(
+                            null,
+                            new MetaGetSub(null, lastUpdated, null),
+                            null, null, null);
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
             if (future.waitResult()) {
                 ServerMessage<?,?,VxCard,PrivateType> pkt = future.getResult();
@@ -114,7 +136,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 Collection<Subscription<VxCard,?>> updated = new ArrayList<>();
                 for (Subscription<VxCard,?> sub : pkt.meta.sub) {
                     if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
-                        //Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
+                        // Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
                         updated.add(sub);
                     }
                 }
@@ -122,6 +144,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                         meta.sub == null ? null : meta.sub.ims);
                 setServerSyncMarker(account, upd);
             }
+            success = true;
         } catch (IOException e) {
             e.printStackTrace();
             syncResult.stats.numIoExceptions++;
@@ -129,7 +152,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             e.printStackTrace();
             syncResult.stats.numAuthExceptions++;
         }
-        Log.i(TAG, "Network synchronization complete");
+        Log.i(TAG, "Network synchronization " + (success ? "completed" : "failed"));
     }
 
     private Date getServerSyncMarker(Account account) {

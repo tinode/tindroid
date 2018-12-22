@@ -3,9 +3,9 @@ package co.tinode.tindroid.account;
 import android.accounts.Account;
 import android.content.ContentResolver;
 import android.database.Cursor;
-import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -26,7 +26,7 @@ public class Utils {
     public static final String TOKEN_TYPE = "co.tinode.token";
     public static final String ACCOUNT_TYPE = "co.tinode.account";
     public static final String SYNC_AUTHORITY = "com.android.contacts";
-    public static final String IM_PROTOCOL = "Tinode";
+    public static final String TINODE_IM_PROTOCOL = "Tinode";
 
     // Constants for accessing shared preferences
     public static final String PREFS_HOST_NAME = "pref_hostName";
@@ -36,6 +36,10 @@ public class Utils {
     public static final String TAG_LABEL_PHONE = "tel:";
     public static final String TAG_LABEL_EMAIL = "email:";
     public static final String TAG_LABEL_TINODE = "tinode:";
+
+    public static final int FETCH_EMAIL = 0x1;
+    public static final int FETCH_PHONE = 0x2;
+    public static final int FETCH_IM = 0x4;
 
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
@@ -50,10 +54,17 @@ public class Utils {
         return new Account(accountName, ACCOUNT_TYPE);
     }
 
-    public static SparseArray<ContactHolder> fetchEmailsAndPhones(ContentResolver resolver, Uri uri) {
+    /**
+     * Read address book contacts from the Contacts content provider.
+     *
+     * @param resolver content resolver to use.
+     * @param flags bit flags indicating types f contacts to fetch.
+     * @return
+     */
+    public static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver, int flags) {
         SparseArray<ContactHolder> map = new SparseArray<>();
 
-        String[] projection = {
+        final String[] projection = {
                 Data.CONTACT_ID,
                 Data.MIMETYPE,
                 ContactsContract.CommonDataKinds.Email.DATA,
@@ -61,16 +72,39 @@ public class Utils {
                 ContactsContract.CommonDataKinds.Im.PROTOCOL,
                 ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL,
         };
-        String selection = Data.MIMETYPE + " in (?, ?, ?)";
-        String[] selectionArgs = {
-                ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
-                ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
-                ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
-        };
 
-        // ok, let's work...
-        Cursor cursor = resolver.query(uri, projection, selection, selectionArgs, null);
+        LinkedList<String> args = new LinkedList<>();
+        if ((flags & FETCH_EMAIL) != 0) {
+            args.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+        }
+        if ((flags & FETCH_PHONE) != 0) {
+            args.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+        }
+        if ((flags & FETCH_IM) != 0) {
+            args.add(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE);
+        }
+        if (args.size() == 0) {
+            throw new IllegalArgumentException();
+        }
+
+        StringBuilder sel = new StringBuilder(Data.MIMETYPE);
+        sel.append(" IN (");
+        for (int i=0; i<args.size(); i++) {
+            sel.append("?,");
+        }
+        // Strip final comma.
+        sel.setLength(sel.length() - 1);
+        sel.append(")");
+
+        final String selection = sel.toString();
+
+        final String[] selectionArgs = args.toArray(new String[]{});
+
+        // Get contacts from the database.
+        Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI, projection,
+                selection, selectionArgs, null);
         if (cursor == null) {
+            Log.d(TAG, "Failed to fetch contacts");
             return map;
         }
 
@@ -109,12 +143,12 @@ public class Utils {
                     String protocolName = cursor.getString(imProtocolNameIdx);
                     // Log.d(TAG, "Possibly adding IM '" + data + "' to contact=" + contact_id);
                     if (protocol == ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM &&
-                            protocolName.equals(IM_PROTOCOL)) {
+                            protocolName.equals(TINODE_IM_PROTOCOL)) {
                         holder.putIm(data);
                         // Log.d(TAG, "Added IM '" + data + "' to contact=" + contact_id);
                     }
                     break;
-                default:
+                case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
                     // This is a phone number. Use mobile phones only.
                     if (type == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
                         // Log.d(TAG, "Adding mobile phone '" + data + "' to contact=" + contact_id);
@@ -146,12 +180,19 @@ public class Utils {
             ims = null;
         }
 
-        private static void Stringify(List<String> vals, StringBuilder str) {
-            if (vals != null) {
+        private static void Stringify(List<String> vals, String label, StringBuilder str) {
+            if (vals != null && vals.size() > 0) {
+                if (str.length() > 0) {
+                    str.append(",");
+                }
+
                 for (String entry : vals) {
+                    str.append(label);
                     str.append(entry);
                     str.append(",");
                 }
+                // Strip trailing comma.
+                str.setLength(str.length() - 1);
             }
         }
 
@@ -203,9 +244,9 @@ public class Utils {
         @Override
         public String toString() {
             StringBuilder str = new StringBuilder();
-            Stringify(emails, str);
-            Stringify(phones, str);
-            Stringify(ims, str);
+            Stringify(emails, TAG_LABEL_EMAIL, str);
+            Stringify(phones, TAG_LABEL_PHONE, str);
+            Stringify(ims, TAG_LABEL_TINODE, str);
             return str.toString();
         }
 

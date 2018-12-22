@@ -343,6 +343,11 @@ public class ContactListFragment extends ListFragment {
         // un-paused to let any remaining background work complete.
         mImageLoader.setPauseWork(false);
 
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         // Stop receiving update for changes to Contacts DB
         getActivity().getContentResolver().unregisterContentObserver(mContactsObserver);
     }
@@ -838,8 +843,9 @@ public class ContactListFragment extends ListFragment {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
+            final Activity activity = getActivity();
             // If this is the loader for finding contacts in the Contacts Provider
-            if (id == ContactsQuery.CORE_QUERY_ID) {
+            if (id == ContactsQuery.CORE_QUERY_ID && activity != null) {
                 Uri contentUri;
 
                 // There are two types of searches, one which displays all contacts and
@@ -860,7 +866,7 @@ public class ContactListFragment extends ListFragment {
                 // for the selection clause. The search string is either encoded onto the content URI,
                 // or no contacts search string is used. The other search criteria are constants. See
                 // the ContactsQuery interface.
-                return new CursorLoader(getActivity(),
+                return new CursorLoader(activity,
                         contentUri,
                         ContactsQuery.PROJECTION,
                         ContactsQuery.SELECTION,
@@ -871,7 +877,7 @@ public class ContactListFragment extends ListFragment {
         }
 
         @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
 
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
@@ -880,7 +886,7 @@ public class ContactListFragment extends ListFragment {
         }
 
         @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
+        public void onLoaderReset(@NonNull Loader<Cursor> loader) {
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 // When the loader is being reset, clear the cursor from the adapter. This allows the
                 // cursor resources to be freed.
@@ -891,16 +897,14 @@ public class ContactListFragment extends ListFragment {
 
     class PhEmImLoaderCallback implements LoaderManager.LoaderCallbacks<SparseArray<Utils.ContactHolder>> {
 
+        @NonNull
         @Override
         public Loader<SparseArray<Utils.ContactHolder>> onCreateLoader(int id, Bundle args) {
-            if (id == ContactsQuery.PHEMIM_QUERY_ID) {
-                return new PhoneEmailImLoader(getContext());
-            }
-            return null;
+            return new PhoneEmailImLoader(getContext());
         }
 
         @Override
-        public void onLoadFinished(Loader<SparseArray<Utils.ContactHolder>> loader,
+        public void onLoadFinished(@NonNull Loader<SparseArray<Utils.ContactHolder>> loader,
                                    SparseArray<Utils.ContactHolder> data) {
             mPhEmImData = data;
 
@@ -915,7 +919,7 @@ public class ContactListFragment extends ListFragment {
         }
 
         @Override
-        public void onLoaderReset(Loader<SparseArray<Utils.ContactHolder>> loader) {
+        public void onLoaderReset(@NonNull Loader<SparseArray<Utils.ContactHolder>> loader) {
             mPhEmImData = null;
         }
     }

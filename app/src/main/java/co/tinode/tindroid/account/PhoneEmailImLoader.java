@@ -51,8 +51,8 @@ public class PhoneEmailImLoader extends AsyncTaskLoader<SparseArray<Utils.Contac
 
     @Override
     public SparseArray<Utils.ContactHolder> loadInBackground() {
-        return Utils.fetchEmailsAndPhones(getContext().getContentResolver(),
-                ContactsContract.Data.CONTENT_URI);
+        return Utils.fetchContacts(getContext().getContentResolver(),
+                Utils.FETCH_EMAIL | Utils.FETCH_IM | Utils.FETCH_PHONE);
     }
 
     @Override
