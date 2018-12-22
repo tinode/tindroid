@@ -8,9 +8,9 @@ import android.graphics.Bitmap;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 

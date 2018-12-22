@@ -5,7 +5,7 @@ import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.text.TextUtils;
 
 import co.tinode.tindroid.account.Utils;
@@ -37,12 +37,16 @@ public class SplashActivity extends AppCompatActivity {
 
                 // Account found, try to use it for login
                 UiUtils.loginWithSavedAccount(this, accountManager, account);
-                finish();
                 return;
             }
         }
 
         startActivity(new Intent(this, LoginActivity.class));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
         finish();
     }
 }

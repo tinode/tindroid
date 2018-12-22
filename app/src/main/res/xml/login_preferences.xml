@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.preference.PreferenceScreen
+<androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v7.preference.EditTextPreference
+    <androidx.preference.EditTextPreference
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:defaultValue="@string/default_host_name"
@@ -12,7 +12,7 @@
         android:summary="%s"
         android:title="@string/settings_host_name"/>
 
-    <android.support.v7.preference.CheckBoxPreference
+    <androidx.preference.CheckBoxPreference
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:defaultValue="false"
@@ -21,7 +21,7 @@
         android:title="@string/settings_use_tls"
         />
 
-    <android.support.v7.preference.ListPreference
+    <androidx.preference.ListPreference
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:defaultValue="def"
@@ -30,4 +30,4 @@
         android:key="pref_wireTransport"
         android:summary="%s"
         android:title="@string/settings_wire_transport"/>
-</android.support.v7.preference.PreferenceScreen>
+</androidx.preference.PreferenceScreen>

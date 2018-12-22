@@ -2,11 +2,11 @@ package co.tinode.tindroid;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.TextInputLayout;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.preference.PreferenceManager;
+import androidx.annotation.NonNull;
+import com.google.android.material.textfield.TextInputLayout;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.ActionBar;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;

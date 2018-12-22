@@ -2,23 +2,15 @@ package co.tinode.tindroid;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
-import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.Toast;
-
-import java.util.Map;
 
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
-import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.NotSynchronizedException;
-import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerInfo;

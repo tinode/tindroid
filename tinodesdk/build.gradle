@@ -40,5 +40,6 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     api 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
     api 'com.fasterxml.jackson.core:jackson-core:2.9.8'
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.9.8'
     api 'org.java-websocket:Java-WebSocket:1.3.9'
 }

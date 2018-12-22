@@ -7,7 +7,7 @@
     android:orientation="vertical"
     tools:context="co.tinode.tindroid.CredentialsFragment">
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="@dimen/activity_default_margin"
@@ -30,18 +30,18 @@
                 android:id="@+id/call_to_validate"
                 android:layout_marginBottom="8dp"/>
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <android.support.design.widget.TextInputEditText
+                <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/response"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ems="10"
                     android:hint="@string/validation_example"
                     android:inputType="text"/>
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
             <LinearLayout
                 style="?android:attr/buttonBarStyle"
@@ -68,6 +68,6 @@
             </LinearLayout>
         </LinearLayout>
 
-    </android.support.v7.widget.CardView>
+    </androidx.cardview.widget.CardView>
 
 </LinearLayout>

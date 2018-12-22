@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_default_margin"
@@ -34,7 +34,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <android.support.v7.widget.AppCompatImageView
+                    <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/imageAvatar"
                         android:layout_width="@dimen/avatar_size_large"
                         android:layout_height="@dimen/avatar_size_large"
@@ -83,9 +83,9 @@
                         tools:text="Not sure what this should be"/>
 
                 </RelativeLayout>
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_default_margin"
@@ -138,9 +138,9 @@
                             android:layout_margin="4dp"/>
                     </LinearLayout>
                 </LinearLayout>
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_default_margin"
@@ -210,9 +210,9 @@
 
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_default_margin"
@@ -283,7 +283,7 @@
 
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
     </ScrollView>

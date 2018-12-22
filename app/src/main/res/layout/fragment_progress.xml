@@ -7,7 +7,7 @@
     android:layout_width="wrap_content"
     android:layout_marginStart="26dp">
 
-    <android.support.v7.widget.LinearLayoutCompat
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/progressPanel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
             android:paddingStart="4sp"
             android:paddingEnd="8sp"/>
 
-    </android.support.v7.widget.LinearLayoutCompat>
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <TextView
         android:id="@+id/progressResult"

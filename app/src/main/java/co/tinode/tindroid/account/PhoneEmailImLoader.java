@@ -3,7 +3,7 @@ package co.tinode.tindroid.account;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.provider.ContactsContract;
-import android.support.v4.content.AsyncTaskLoader;
+import androidx.loader.content.AsyncTaskLoader;
 import android.util.SparseArray;
 
 /**

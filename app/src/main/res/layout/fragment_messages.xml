@@ -30,7 +30,7 @@
 
     </FrameLayout>
 
-    <android.support.v4.widget.SwipeRefreshLayout
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresher"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -38,12 +38,12 @@
         android:layout_alignParentTop="true"
         android:layout_above="@id/sendMessageFragment">
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/messages_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbars="vertical"/>
 
-    </android.support.v4.widget.SwipeRefreshLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

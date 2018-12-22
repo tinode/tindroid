@@ -3,8 +3,8 @@ package co.tinode.tindroid;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatImageView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;

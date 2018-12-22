@@ -7,7 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.style.ReplacementSpan;
 
 public class BorderedSpan extends ReplacementSpan {
