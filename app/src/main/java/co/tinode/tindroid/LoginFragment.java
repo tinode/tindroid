@@ -164,7 +164,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
                                         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
                                         ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
-
+                                        ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
                                         UiUtils.onLoginSuccess(parent, signIn);
                                     }
                                     return null;

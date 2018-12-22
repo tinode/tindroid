@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import androidx.fragment.app.FragmentActivity;
+import androidx.loader.app.LoaderManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -63,7 +65,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
         mChipsInput = activity.findViewById(R.id.groupMembers);
@@ -81,7 +83,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
             }
         });
 
-        getLoaderManager().initLoader(0, null,
+        LoaderManager.getInstance(activity).initLoader(0, null,
                 new UiUtils.ContactsLoaderCallback(getActivity(), this));
     }
 

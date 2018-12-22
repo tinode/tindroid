@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2013 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package co.tinode.tindroid;
 
 import android.Manifest;
@@ -175,11 +159,13 @@ public class ContactListFragment extends ListFragment {
         mContactsObserver = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange) {
+                final FragmentActivity activity = getActivity();
                 // Content changed, refresh data
-                getActivity().runOnUiThread(new Runnable() {
+                activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+                        LoaderManager.getInstance(activity)
+                                .restartLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
                     }
                 });
             }
@@ -320,16 +306,18 @@ public class ContactListFragment extends ListFragment {
     public void onResume() {
         super.onResume();
 
-        Activity activity = getActivity();
+        FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
         }
 
         try {
             // Receive updates when the Contacts db is changed
-            activity.getContentResolver().registerContentObserver(ContactsQuery.CONTENT_URI, true, mContactsObserver);
+            activity.getContentResolver().registerContentObserver(ContactsQuery.CONTENT_URI,
+                    true, mContactsObserver);
             // Refresh data
-            getLoaderManager().initLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+            LoaderManager.getInstance(activity).initLoader(ContactsQuery.PHEMIM_QUERY_ID,
+                    null, mPhEmImLoaderCallback);
         } catch (SecurityException ex) {
             Log.d(TAG, "Missing permission", ex);
         }
@@ -349,7 +337,7 @@ public class ContactListFragment extends ListFragment {
         }
 
         // Stop receiving update for changes to Contacts DB
-        getActivity().getContentResolver().unregisterContentObserver(mContactsObserver);
+        activity.getContentResolver().unregisterContentObserver(mContactsObserver);
     }
 
     /**
@@ -417,7 +405,8 @@ public class ContactListFragment extends ListFragment {
 
                 // Restarts the loader. This triggers onCreateLoader(), which builds the
                 // necessary content Uri from mSearchTerm.
-                getLoaderManager().restartLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
+                LoaderManager.getInstance(getActivity()).restartLoader(ContactsQuery.CORE_QUERY_ID,
+                        null, mContactsLoaderCallback);
                 return true;
             }
         });
@@ -441,7 +430,8 @@ public class ContactListFragment extends ListFragment {
                     onSelectionCleared();
                 }
                 mSearchTerm = null;
-                getLoaderManager().restartLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
+                LoaderManager.getInstance(getActivity()).restartLoader(ContactsQuery.CORE_QUERY_ID,
+                        null, mContactsLoaderCallback);
                 return true;
             }
         });
@@ -679,9 +669,9 @@ public class ContactListFragment extends ListFragment {
             // allows bindView() to retrieve stored references instead of calling findViewById for
             // each instance of the layout.
             final ViewHolder holder = new ViewHolder();
-            holder.text1 = (TextView) itemLayout.findViewById(android.R.id.text1);
-            holder.text2 = (TextView) itemLayout.findViewById(android.R.id.text2);
-            holder.icon = (AppCompatImageView) itemLayout.findViewById(android.R.id.icon);
+            holder.text1 = itemLayout.findViewById(android.R.id.text1);
+            holder.text2 = itemLayout.findViewById(android.R.id.text2);
+            holder.icon = itemLayout.findViewById(android.R.id.icon);
             holder.inviteButton = itemLayout.findViewById(R.id.buttonInvite);
             holder.inviteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -913,7 +903,8 @@ public class ContactListFragment extends ListFragment {
             // the action bar search view (see onQueryTextChange() in onCreateOptionsMenu()).
             if (mPreviouslySelectedSearchItem == 0) {
                 //Initialize the loader, and create a loader identified by ContactsQuery.QUERY_ID
-                getLoaderManager().initLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
+                LoaderManager.getInstance(getActivity()).initLoader(ContactsQuery.CORE_QUERY_ID,
+                        null, mContactsLoaderCallback);
             }
 
         }

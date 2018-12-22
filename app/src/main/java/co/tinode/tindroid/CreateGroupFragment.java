@@ -22,6 +22,8 @@ import com.pchmn.materialchips.model.ChipInterface;
 
 import java.util.List;
 
+import androidx.fragment.app.FragmentActivity;
+import androidx.loader.app.LoaderManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -100,7 +102,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
         super.onActivityCreated(savedInstance);
 
         Log.d(TAG, "onActivityCreated");
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
 
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,7 +145,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             }
         });
 
-        getLoaderManager().initLoader(0, null,
+        LoaderManager.getInstance(activity).initLoader(0, null,
                 new UiUtils.ContactsLoaderCallback(getActivity(), this));
     }
 
