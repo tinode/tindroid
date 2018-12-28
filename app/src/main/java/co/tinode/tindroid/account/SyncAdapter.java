@@ -110,8 +110,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             StringBuilder contacts = new StringBuilder();
             for (int i=0; i<contactList.size(); i++) {
                 Utils.ContactHolder ch = contactList.get(contactList.keyAt(i));
-                contacts.append(ch.toString());
-                contacts.append(",");
+                String contact = ch.toString();
+                if (contact.length() > 0) {
+                    contacts.append(contact);
+                    contacts.append(",");
+                }
             }
 
             MsgSetMeta setMeta = contacts.length() > 0 ?
