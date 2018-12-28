@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.provider.ContactsContract;
 import androidx.loader.content.AsyncTaskLoader;
+
 import android.util.SparseArray;
 
 /**
@@ -68,6 +69,7 @@ public class PhoneEmailImLoader extends AsyncTaskLoader<SparseArray<Utils.Contac
     public void onStopLoading() {
         if (mObserver != null) {
             getContext().getContentResolver().unregisterContentObserver(mObserver);
+            mObserver = null;
         }
         super.onStopLoading();
     }

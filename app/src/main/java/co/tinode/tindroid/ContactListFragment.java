@@ -414,7 +414,6 @@ public class ContactListFragment extends ListFragment {
         MenuItemCompat.setOnActionExpandListener(searchItem, new MenuItemCompat.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionExpand(MenuItem menuItem) {
-                Log.d(TAG, "EXPAND onMenuItemActionCollapse");
                 searchView.setIconified(false);
                 searchView.requestFocusFromTouch();
                 return true;
@@ -422,7 +421,6 @@ public class ContactListFragment extends ListFragment {
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem menuItem) {
-                Log.d(TAG, "COLLAPSE onMenuItemActionCollapse");
                 searchView.clearFocus();
                 // When the user collapses the SearchView the current search string is
                 // cleared and the loader restarted.
@@ -832,7 +830,6 @@ public class ContactListFragment extends ListFragment {
     private class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
             final Activity activity = getActivity();
             // If this is the loader for finding contacts in the Contacts Provider
             if (id == ContactsQuery.CORE_QUERY_ID && activity != null) {
@@ -868,7 +865,6 @@ public class ContactListFragment extends ListFragment {
 
         @Override
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 mAdapter.swapCursor(data);
@@ -902,11 +898,10 @@ public class ContactListFragment extends ListFragment {
             // initializing the loader as it will be restarted later when the query is populated into
             // the action bar search view (see onQueryTextChange() in onCreateOptionsMenu()).
             if (mPreviouslySelectedSearchItem == 0) {
-                //Initialize the loader, and create a loader identified by ContactsQuery.QUERY_ID
-                LoaderManager.getInstance(getActivity()).initLoader(ContactsQuery.CORE_QUERY_ID,
+                // Restart the main contacts loader.
+                LoaderManager.getInstance(getActivity()).restartLoader(ContactsQuery.CORE_QUERY_ID,
                         null, mContactsLoaderCallback);
             }
-
         }
 
         @Override

@@ -823,7 +823,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     protected <Pu,Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
                                                            boolean loginNow, String[] tags, MetaSetDesc<Pu,Pr> desc,
-                                                           Credential[] cred) throws Exception {
+                                                           Credential[] cred) {
         ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
