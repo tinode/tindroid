@@ -102,6 +102,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             tinode.connect(hostName, tls).getResult();
             tinode.loginToken(token).getResult();
 
+            // It throws if rejected and we just fail to sync.
+            tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();
+
             // Load contacts and send them to server as fnd.Private.
             Date lastUpdated = getServerSyncMarker(account);
             SparseArray<Utils.ContactHolder> contactList =
@@ -117,10 +120,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
             }
 
-            MsgSetMeta setMeta = contacts.length() > 0 ?
-                    new MsgSetMeta(new MetaSetDesc(null, contacts.toString())) : null;
-            // It throws if rejected and we fail to sync.
-            tinode.subscribe(Tinode.TOPIC_FND, setMeta, null).getResult();
+            if (contacts.length() > 0) {
+                tinode.setMeta(Tinode.TOPIC_FND,
+                        new MsgSetMeta(new MetaSetDesc(null, contacts.toString()))).getResult();
+            }
 
             // final MsgGetMeta meta = MsgGetMeta.sub();
             final MsgGetMeta meta = new MsgGetMeta(
