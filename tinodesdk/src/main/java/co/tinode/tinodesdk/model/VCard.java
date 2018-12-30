@@ -35,30 +35,38 @@ public class VCard implements Serializable {
         this.photo = new Photo(avatar);
     }
 
-    protected static String typeToString(ContactType tp) {
-        String str = null;
+    private static String typeToString(ContactType tp) {
         switch (tp) {
             case HOME:
-                str = TYPE_HOME;
-                break;
+                return TYPE_HOME;
             case WORK:
-                str = TYPE_WORK;
-                break;
+                return TYPE_WORK;
             case MOBILE:
-                str = TYPE_MOBILE;
-                break;
+                return TYPE_MOBILE;
             case PERSONAL:
-                str = TYPE_PERSONAL;
-                break;
+                return TYPE_PERSONAL;
             case BUSINESS:
-                str = TYPE_BUSINESS;
-                break;
-            case OTHER:
-                str = TYPE_OTHER;
-                break;
+                return TYPE_BUSINESS;
+            default:
+                return TYPE_OTHER;
         }
+    }
 
-        return str;
+    private static ContactType stringToType(String str) {
+        switch (str) {
+            case TYPE_HOME:
+                return ContactType.HOME;
+            case TYPE_WORK:
+                return ContactType.WORK;
+            case TYPE_MOBILE:
+                return ContactType.MOBILE;
+            case TYPE_PERSONAL:
+                return ContactType.PERSONAL;
+            case TYPE_BUSINESS:
+                return ContactType.BUSINESS;
+            default:
+                return ContactType.OTHER;
+        }
     }
 
     @JsonIgnore
@@ -143,9 +151,21 @@ public class VCard implements Serializable {
         public String type;
         public String uri;
 
+        private ContactType tp;
+
         public Contact(String type, String uri) {
             this.type = type;
             this.uri = uri;
+            this.tp = null;
+            this.tp = getType();
+        }
+
+        @JsonIgnore
+        public ContactType getType() {
+            if (tp != null) {
+                return tp;
+            }
+            return stringToType(type);
         }
 
         public Contact copy() {

@@ -108,7 +108,7 @@ public class ContactOperations {
      *                  is specified.
      * @return instance of ContactOperations
      */
-    public ContactOperations addName(String fullName, String firstName, String lastName) {
+    public ContactOperations addName(final String fullName, final String firstName, final String lastName) {
         mValues.clear();
         if (!TextUtils.isEmpty(fullName)) {
             mValues.put(StructuredName.DISPLAY_NAME, fullName);
@@ -120,6 +120,7 @@ public class ContactOperations {
             }
             if (!TextUtils.isEmpty(lastName)) {
                 mValues.put(StructuredName.FAMILY_NAME, lastName);
+                // It's OK to add the same value again.
                 mValues.put(StructuredName.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
             }
         }
@@ -135,7 +136,7 @@ public class ContactOperations {
      * @param email address we're adding
      * @return instance of ContactOperations
      */
-    public ContactOperations addEmail(String email) {
+    public ContactOperations addEmail(final String email) {
         mValues.clear();
         if (!TextUtils.isEmpty(email)) {
             mValues.put(Email.DATA, email);
@@ -153,7 +154,7 @@ public class ContactOperations {
      * @param phoneType the type: cell, home, etc.
      * @return instance of ContactOperations
      */
-    public ContactOperations addPhone(String phone, int phoneType) {
+    public ContactOperations addPhone(final String phone, int phoneType) {
         mValues.clear();
         if (!TextUtils.isEmpty(phone)) {
             mValues.put(Phone.NUMBER, phone);
@@ -170,7 +171,7 @@ public class ContactOperations {
      * @param tinode_id address we're adding
      * @return instance of ContactOperations
      */
-    public ContactOperations addIm(String tinode_id) {
+    public ContactOperations addIm(final String tinode_id) {
         mValues.clear();
         if (!TextUtils.isEmpty(tinode_id)) {
             mValues.put(Im.DATA, tinode_id);
@@ -189,7 +190,7 @@ public class ContactOperations {
      * @param avatar avatar image serialized into byte array
      * @return instance of ContactOperations
      */
-    public ContactOperations addAvatar(byte[] avatar) {
+    public ContactOperations addAvatar(final byte[] avatar) {
         if (avatar != null) {
             mValues.clear();
             mValues.put(Photo.PHOTO, avatar);
@@ -205,7 +206,7 @@ public class ContactOperations {
      * @param serverId the uid of the topic object
      * @return instance of ContactOperations
      */
-    public ContactOperations addProfileAction(String serverId) {
+    public ContactOperations addProfileAction(final String serverId) {
         mValues.clear();
         if (!TextUtils.isEmpty(serverId)) {
             mValues.put(Data.MIMETYPE, Utils.MIME_PROFILE);
@@ -240,7 +241,7 @@ public class ContactOperations {
      * @param uri   Uri for the existing raw contact to be updated
      * @return instance of ContactOperations
      */
-    public ContactOperations updateEmail(String email, String existingEmail, Uri uri) {
+    public ContactOperations updateEmail(final String email, final String existingEmail, final Uri uri) {
         if (!TextUtils.equals(existingEmail, email)) {
             mValues.clear();
             mValues.put(Email.DATA, email);

@@ -44,7 +44,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     public static final String TAG = "SyncAdapter";
 
     private static final String ACCKEY_SYNC_MARKER = "co.tinode.tindroid.sync_marker_contacts";
-    private static final String ACCKEY_INVISIBLE_GROUP = "co.tinode.tindroid.invisible_group_id";
+    private static final String ACCKEY_QUERY_HASH = "co.tinode.tindroid.sync_query_hash_contacts";
 
     // Context for loading preferences
     private final Context mContext;
@@ -106,29 +106,40 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();
 
             // Load contacts and send them to server as fnd.Private.
-            Date lastUpdated = getServerSyncMarker(account);
             SparseArray<Utils.ContactHolder> contactList =
                     Utils.fetchContacts(getContext().getContentResolver(),
                             Utils.FETCH_EMAIL | Utils.FETCH_PHONE);
-            StringBuilder contacts = new StringBuilder();
+            StringBuilder contactsBuilder = new StringBuilder();
             for (int i=0; i<contactList.size(); i++) {
                 Utils.ContactHolder ch = contactList.get(contactList.keyAt(i));
                 String contact = ch.toString();
                 if (contact.length() > 0) {
-                    contacts.append(contact);
-                    contacts.append(",");
+                    contactsBuilder.append(contact);
+                    contactsBuilder.append(",");
                 }
             }
 
-            if (contacts.length() > 0) {
+            // If we have some contacts, send them to server.
+            if (contactsBuilder.length() > 0) {
+                String contacts = contactsBuilder.toString();
+                String oldHash = getServerQueryHash(account);
+                String newHash = Utils.hash(contacts);
+
                 tinode.setMeta(Tinode.TOPIC_FND,
-                        new MsgSetMeta(new MetaSetDesc(null, contacts.toString()))).getResult();
+                        new MsgSetMeta(new MetaSetDesc(null, contacts))).getResult();
+
+                if (!newHash.equals(oldHash)) {
+                    // If the query has changed, clear the sync marker for a full sync.
+                    // Otherwise we only going to get contacts which has updated.
+                    lastSyncMarker = null;
+                    setServerQueryHash(account, newHash);
+                }
             }
 
             // final MsgGetMeta meta = MsgGetMeta.sub();
             final MsgGetMeta meta = new MsgGetMeta(
                             null,
-                            new MetaGetSub(null, lastUpdated, null),
+                            new MetaGetSub(null, lastSyncMarker, null),
                             null, null, null);
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
             if (future.waitResult()) {
@@ -137,8 +148,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     // Server did not return any contacts.
                     return;
                 }
-                // Fetch the list of updated contacts. Group subscriptions will be stored in
-                // the address book but as invisible contacts (members of invisible group)
+
+                // Fetch the list of updated contacts.
                 Collection<Subscription<VxCard,?>> updated = new ArrayList<>();
                 for (Subscription<VxCard,?> sub : pkt.meta.sub) {
                     if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
@@ -175,5 +186,17 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             mAccountManager.setUserData(account, ACCKEY_SYNC_MARKER, Long.toString(marker.getTime()));
         }
     }
+
+    private String getServerQueryHash(Account account) {
+        return mAccountManager.getUserData(account, ACCKEY_QUERY_HASH);
+    }
+
+    private void setServerQueryHash(Account account, String hash) {
+        // The hash could be empty if user has no contacts
+        if (hash != null && !hash.equals("")) {
+            mAccountManager.setUserData(account, ACCKEY_QUERY_HASH, hash);
+        }
+    }
+
 }
 

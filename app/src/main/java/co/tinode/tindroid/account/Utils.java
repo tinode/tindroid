@@ -11,6 +11,9 @@ import android.util.SparseArray;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -73,6 +76,9 @@ public class Utils {
                 ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL,
         };
 
+        // Need to make the list order consistent so the hash does not change too often.
+        final String orderBy = ContactsContract.CommonDataKinds.Email.DATA;
+
         LinkedList<String> args = new LinkedList<>();
         if ((flags & FETCH_EMAIL) != 0) {
             args.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
@@ -102,7 +108,7 @@ public class Utils {
 
         // Get contacts from the database.
         Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI, projection,
-                selection, selectionArgs, null);
+                selection, selectionArgs, orderBy);
         if (cursor == null) {
             Log.d(TAG, "Failed to fetch contacts");
             return map;
@@ -169,6 +175,32 @@ public class Utils {
         return map;
     }
 
+    // Generate a hash from a string.
+    public static String hash(String s) {
+        if (s == null || s.equals("")) {
+            return "";
+        }
+
+        try {
+            // Create MD5 Hash
+            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+            digest.update(s.getBytes());
+            byte messageDigest[] = digest.digest();
+
+            // Create a String from the byte array.
+            StringBuilder hexString = new StringBuilder();
+            for (byte x : messageDigest) {
+                hexString.append(Integer.toString(0xFF & x, 32));
+            }
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        return String.valueOf(s.hashCode());
+    }
+
     public static class ContactHolder {
         List<String> emails;
         List<String> phones;
@@ -178,6 +210,36 @@ public class Utils {
             emails = null;
             phones = null;
             ims = null;
+        }
+
+        // Inverse of toString: deserialize contacts from
+        public ContactHolder(final String[] matches) {
+            // Initialize all content to null.
+            this();
+            // Parse contacts.
+            for (String match : matches) {
+                if (match.indexOf(TAG_LABEL_EMAIL) == 0) {
+                    putEmail(match.substring(TAG_LABEL_EMAIL.length()));
+                } else if (match.indexOf(TAG_LABEL_PHONE) == 0) {
+                    putPhone(match.substring(TAG_LABEL_PHONE.length()));
+                } else if (match.indexOf(TAG_LABEL_TINODE) == 0) {
+                    putIm(match.substring(TAG_LABEL_TINODE.length()));
+                }
+            }
+        }
+
+        public Iterator<String> iterateAll() {
+            List<String> all = new LinkedList<>();
+            if (emails != null) {
+                all.addAll(emails);
+            }
+            if (phones != null) {
+                all.addAll(emails);
+            }
+            if (ims != null) {
+                all.addAll(ims);
+            }
+            return all.iterator();
         }
 
         private static void Stringify(List<String> vals, String label, StringBuilder str) {

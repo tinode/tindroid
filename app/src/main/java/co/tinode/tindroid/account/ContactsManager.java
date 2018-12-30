@@ -20,12 +20,16 @@ import android.provider.ContactsContract.StatusUpdates;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.media.AvatarPhoto;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.VCard;
 
 /**
  * Class for managing contacts sync related mOperations
@@ -62,6 +66,7 @@ public class ContactsManager {
                 currentSyncMarker = rawContact.updated;
             }
 
+            // Check if we have this contact in the database.
             long rawContactId = lookupRawContact(resolver, rawContact.user);
             if (rawContact.deleted != null) {
                 if (rawContactId > 0) {
@@ -88,22 +93,6 @@ public class ContactsManager {
     }
 
     /**
-     * Update the status messages for a list of users.  This is typically called
-     * for contacts we've just added to the system, since we can't monkey with
-     * the contact's status until they have a profileId.
-     *
-     * @param context     The context of Authenticator Activity
-     * @param rawContacts The list of users we want to update
-     */
-    public static void updateStatusMessages(Context context, List<Subscription> rawContacts) {
-        final BatchOperation batchOperation = new BatchOperation(context.getContentResolver());
-        for (Subscription rawContact : rawContacts) {
-            updateContactStatus(context, rawContact, batchOperation);
-        }
-        batchOperation.execute();
-    }
-
-    /**
      * Adds a single contact to the platform contacts provider.
      * This can be used to respond to a new contact found as part
      * of sync information returned from the server, or because a
@@ -117,9 +106,6 @@ public class ContactsManager {
      */
     public static void addContact(Context context, Account account, Subscription<VxCard,?> rawContact,
                                   BatchOperation batchOperation) {
-        if (rawContact.pub == null) {
-            return;
-        }
 
         VxCard vc;
         try {
@@ -132,15 +118,70 @@ public class ContactsManager {
         final ContactOperations contactOp = ContactOperations.createNewContact(
                 context, rawContact.user, account.name, batchOperation);
 
-        contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
-                .addEmail(vc.email != null && vc.email.length > 0 ? vc.email[0].uri : null)
-                .addPhone(vc.getPhoneByType(VxCard.ContactType.MOBILE), Phone.TYPE_MOBILE)
-                .addPhone(vc.getPhoneByType(VxCard.ContactType.HOME), Phone.TYPE_HOME)
-                .addPhone(vc.getPhoneByType(VxCard.ContactType.WORK), Phone.TYPE_WORK)
-                .addIm(rawContact.user)
-                .addAvatar(vc.photo != null? vc.photo.data : null);
+        Map<String, VCard.ContactType> emails = null;
+        Map<String, VCard.ContactType> phones = null;
+        if (rawContact.priv instanceof String[]) {
+            Utils.ContactHolder ch = new Utils.ContactHolder((String[]) rawContact.priv);
+            if (ch.emails != null) {
+                emails = new HashMap<>();
+                for (String email : ch.emails) {
+                    emails.put(email, null);
+                }
+            }
 
-        // Actually create our status profile.
+            if (ch.phones != null) {
+                phones = new HashMap<>();
+                for (String phone : ch.phones) {
+                    phones.put(phone, null);
+                }
+            }
+        }
+
+        if (vc != null) {
+            contactOp.addName(vc.fn, vc.n != null ? vc.n.given : null, vc.n != null ? vc.n.surname : null)
+                    .addAvatar(vc.photo != null ? vc.photo.data : null);
+
+            if (vc.email != null) {
+                if (emails == null) {
+                    emails = new HashMap<>();
+                }
+                for (int i = 0; i < vc.email.length; i++) {
+                    emails.put(vc.email[i].uri, vc.email[i].getType());
+                }
+            }
+            if (vc.tel != null) {
+                if (phones == null) {
+                    phones = new HashMap<>();
+                }
+                for (int i = 0; i < vc.tel.length; i++) {
+                    phones.put(vc.tel[i].uri, vc.tel[i].getType());
+                }
+            }
+
+        }
+        if (emails != null) {
+            for (Map.Entry<String,VCard.ContactType> email: emails.entrySet()) {
+                contactOp.addEmail(email.getKey());
+            }
+        }
+        if (phones != null) {
+            for (Map.Entry<String,VCard.ContactType> phone: phones.entrySet()) {
+                VCard.ContactType tp = phone.getValue();
+                int phoneType = Phone.TYPE_OTHER;
+                if (VxCard.ContactType.MOBILE == tp) {
+                    phoneType = Phone.TYPE_MOBILE;
+                } else if (VxCard.ContactType.HOME == tp) {
+                    phoneType = Phone.TYPE_HOME;
+                } else if (VxCard.ContactType.WORK == tp) {
+                    phoneType = Phone.TYPE_WORK;
+                }
+                contactOp.addPhone(phone.getKey(), phoneType);
+            }
+        }
+
+        contactOp.addIm(rawContact.user);
+
+        // Actually create the profile.
         contactOp.addProfileAction(rawContact.user);
     }
 
@@ -185,10 +226,11 @@ public class ContactsManager {
         boolean existingEmail = false;
         boolean existingAvatar = false;
 
-        final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
-                new String[]{String.valueOf(rawContactId)}, null);
         final ContactOperations contactOp = ContactOperations.updateExistingContact(context,
                 rawContactId, batchOperation);
+
+        final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
+                new String[]{String.valueOf(rawContactId)}, null);
         if (c == null) {
             return;
         }
@@ -242,6 +284,7 @@ public class ContactsManager {
         } finally {
             c.close();
         }
+
         // Add the cell phone, if present and not updated above
         if (!existingCellPhone) {
             contactOp.addPhone(vc.getPhoneByType(VxCard.TYPE_MOBILE), Phone.TYPE_MOBILE);
@@ -266,10 +309,9 @@ public class ContactsManager {
         // If we don't have a status profile, then create one.  This could
         // happen for contacts that were created on the client - we don't
         // create the status profile until after the first sync...
-        final String serverId = rawContact.user;
-        final long profileId = lookupProfile(resolver, serverId);
+        final long profileId = lookupProfile(resolver, rawContact.user);
         if (profileId <= 0) {
-            contactOp.addProfileAction(serverId);
+            contactOp.addProfileAction(rawContact.user);
         }
     }
 
@@ -290,25 +332,6 @@ public class ContactsManager {
         context.getContentResolver().insert(Settings.CONTENT_URI, values);
     }
 
-    /**
-     * Create a contacts group to store group topics as contacts. This will make them invisible to the in the
-     * user in contact applications but they can still be fetched by name when needed.
-     *
-     * @param context the Authenticator Activity context
-     * @param account the Account which will own the group
-     */
-    public static long createInvisibleTinodeGroup(Context context, Account account) {
-        ContentValues values = new ContentValues();
-        values.put(Groups.TITLE, "INVISIBLE");
-        values.put(Groups.ACCOUNT_NAME, account.name);
-        values.put(Groups.ACCOUNT_TYPE, Utils.ACCOUNT_TYPE);
-        values.put(Groups.GROUP_VISIBLE, false);
-        Uri result = context.getContentResolver().insert(Groups.CONTENT_URI, values);
-        if (result != null) {
-            return Long.parseLong(result.getLastPathSegment());
-        }
-        return -1;
-    }
 
     public static Subscription<VxCard,?> getStoredSubscription(ContentResolver resolver, String uid) {
         if (uid == null) {
@@ -385,50 +408,16 @@ public class ContactsManager {
     }
 
     /**
-     * Update the status message associated with the specified user.  The status
-     * message would be something that is likely to be used by IM or social
-     * networking sync providers, and less by a straightforward contact provider.
-     * But it's a useful demo to see how it's done.
-     *
-     * @param context        the Authenticator Activity context
-     * @param rawContact     the contact whose status we should update
-     * @param batchOperation allow us to batch together multiple operations
-     */
-    private static void updateContactStatus(Context context, Subscription rawContact,
-                                            BatchOperation batchOperation) {
-        final ContentValues values = new ContentValues();
-        final ContentResolver resolver = context.getContentResolver();
-        final String uid = rawContact.user;
-
-        // Look up the user's data row
-        final long profileId = lookupProfile(resolver, uid);
-        // Insert the activity into the stream
-        if (profileId > 0) {
-            values.put(StatusUpdates.DATA_ID, profileId);
-            // values.put(StatusUpdates.STATUS, status);
-            values.put(StatusUpdates.PROTOCOL, Im.PROTOCOL_CUSTOM);
-            values.put(StatusUpdates.CUSTOM_PROTOCOL, Utils.TINODE_IM_PROTOCOL);
-            values.put(StatusUpdates.IM_ACCOUNT, uid);
-            values.put(StatusUpdates.IM_HANDLE, uid);
-            values.put(StatusUpdates.STATUS_RES_PACKAGE, context.getPackageName());
-            values.put(StatusUpdates.STATUS_ICON, R.mipmap.ic_launcher);
-            //values.put(StatusUpdates.STATUS_LABEL, R.string.label);
-            batchOperation.add(ContactOperations.newInsertCpo(StatusUpdates.CONTENT_URI, false)
-                    .withValues(values).build());
-        }
-    }
-
-    /**
      * Deletes a contact from the platform contacts provider. This method is used
      * both for contacts that were deleted locally and then that deletion was synced
      * to the server, and for contacts that were deleted on the server and the
      * deletion was synced to the client.
      *
-     * @param uid     the unique Id for this rawContact in contacts provider, locally issued
+     * @param id     the unique Id for this rawContact in contacts provider, locally issued
      */
-    private static void deleteContact(long uid, BatchOperation batchOperation) {
+    private static void deleteContact(long id, BatchOperation batchOperation) {
         batchOperation.add(ContactOperations.newDeleteCpo(
-                ContentUris.withAppendedId(RawContacts.CONTENT_URI, uid), true).build());
+                ContentUris.withAppendedId(RawContacts.CONTENT_URI, id), true).build());
     }
 
     /**
@@ -436,16 +425,16 @@ public class ContactsManager {
      * sample SyncAdapter user isn't found.
      *
      * @param resolver the content resolver to use
-     * @param uid      the sample SyncAdapter user ID to lookup
+     * @param contact the contact value to lookup
      * @return the RawContact id, or 0 if not found
      */
-    private static long lookupRawContact(ContentResolver resolver, String uid) {
+    private static long lookupRawContact(final ContentResolver resolver, final String contact) {
         long rawContactId = 0;
         final Cursor c = resolver.query(
                 UserIdQuery.CONTENT_URI,
                 UserIdQuery.PROJECTION,
                 UserIdQuery.SELECTION,
-                new String[]{uid},
+                new String[]{contact},
                 null);
 
         if (c != null) {
@@ -466,7 +455,7 @@ public class ContactsManager {
      * if the sample SyncAdapter user isn't found.
      *
      * @param resolver a content resolver
-     * @param uid      server-issued unique iD of the contact
+     * @param uid      server-issued unique ID of the contact
      * @return the profile Data row id, or 0 if not found
      */
     private static long lookupProfile(ContentResolver resolver, String uid) {
@@ -500,9 +489,6 @@ public class ContactsManager {
         static final String SELECTION =
                 Data.MIMETYPE + "='" + Utils.MIME_PROFILE + "' AND "
                         + Utils.DATA_PID + "=?";
-
-        private ProfileQuery() {
-        }
     }
 
     /**
@@ -519,9 +505,6 @@ public class ContactsManager {
         static final Uri CONTENT_URI = RawContacts.CONTENT_URI;
         static final String SELECTION =
                 RawContacts.ACCOUNT_TYPE + "='" + Utils.ACCOUNT_TYPE + "' AND " + RawContacts.SOURCE_ID + "=?";
-
-        private UserIdQuery() {
-        }
     }
 
     /**
