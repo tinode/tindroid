@@ -234,7 +234,7 @@ public class Utils {
                 all.addAll(emails);
             }
             if (phones != null) {
-                all.addAll(emails);
+                all.addAll(phones);
             }
             if (ims != null) {
                 all.addAll(ims);
