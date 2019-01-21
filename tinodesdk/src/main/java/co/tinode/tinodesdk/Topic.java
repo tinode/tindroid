@@ -772,7 +772,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         // Get soft-deleted message IDs.
         final List<Integer> toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
         if (toSoftDelete != null) {
-            last = mTinode.delMessage(getName(), toSoftDelete, true)
+            last = mTinode.delMessage(getName(), toSoftDelete, false)
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
