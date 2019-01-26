@@ -746,13 +746,16 @@ public class Drafty implements Serializable {
         });
 
         for (Span span : spans) {
-            if (span.type == null || span.type.equals("")) {
+            if (ent != null && (span.type == null || "".equals(span.type))) {
                 if (span.key >= 0 && span.key < ent.length && ent[span.key] != null) {
                     span.type = ent[span.key].tp;
                     span.data = ent[span.key].data;
-                } else {
-                    span.type = "HD";
                 }
+            }
+
+            // Is type still undefined? Hide the invalid element!
+            if (span.type == null || "".equals(span.type)) {
+                span.type = "HD";
             }
         }
 

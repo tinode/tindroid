@@ -118,7 +118,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
 
             } catch (NullPointerException | IllegalArgumentException | ClassCastException ex) {
-                Log.e(TAG, "Broken Image", ex);
+                Log.d(TAG, "Broken Image", ex);
             }
 
             if (bmp == null) {
