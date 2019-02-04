@@ -65,6 +65,8 @@ import co.tinode.tinodesdk.model.Subscription;
 public class Tinode {
     private static final String TAG = "Tinode";
 
+    public static final String USER_NEW = "new";
+
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
@@ -872,8 +874,8 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc) throws Exception {
-        return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
+            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc) {
+        return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, null, desc, null);
     }
 
@@ -891,7 +893,7 @@ public class Tinode {
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
             String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc) throws Exception {
-        return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
+        return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, null);
     }
 
@@ -910,7 +912,7 @@ public class Tinode {
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
             String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred) throws Exception {
-        return account(null, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
+        return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, cred);
     }
 

@@ -8,8 +8,6 @@ import java.util.Arrays;
  * Account creation packet
  */
 public class MsgClientAcc<Pu,Pr> {
-    private static final String USER_NEW = "new";
-
     public String id;
     public String user;
     public String scheme;
@@ -24,7 +22,7 @@ public class MsgClientAcc<Pu,Pr> {
     public MsgClientAcc(String id, String uid, String scheme, String secret, boolean doLogin,
                         MetaSetDesc<Pu, Pr> desc) {
         this.id = id;
-        this.user = uid == null ? USER_NEW : uid;
+        this.user = uid;
         this.scheme = scheme;
         this.secret = secret;
         this.login = doLogin;
