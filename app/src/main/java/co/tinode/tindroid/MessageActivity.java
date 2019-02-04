@@ -172,7 +172,9 @@ public class MessageActivity extends AppCompatActivity {
         } else {
             MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                     .findFragmentByTag(FRAGMENT_MESSAGES);
-            fragmsg.topicSubscribed();
+            if (fragmsg != null) {
+                fragmsg.topicSubscribed();
+            }
         }
     }
 
