@@ -45,7 +45,7 @@ import co.tinode.tinodesdk.model.Subscription;
  *  @param <SR> is the type of Subscription.Private
  */
 @SuppressWarnings("WeakerAccess, unused")
-public class Topic<DP,DR,SP,SR> implements LocalData {
+public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     private static final String TAG = "tinodesdk.Topic";
 
     public enum TopicType {
@@ -110,7 +110,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
         setName(sub.topic);
 
-        mDesc   = new Description<>();
+        mDesc = new Description<>();
         mDesc.merge(sub);
 
         if (sub.online != null) {
@@ -126,7 +126,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
         setName(name);
 
-        mDesc   = new Description<>();
+        mDesc = new Description<>();
         mDesc.merge(desc);
     }
 
@@ -374,6 +374,30 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     public void setUpdated(Date updated) {
         mDesc.updated = updated;
     }
+
+    public Date getTouched() {
+        return mDesc.touched;
+    }
+    public void setTouched(Date touched) {
+        mDesc.touched = touched;
+    }
+
+    @Override
+    public int compareTo(Topic t) {
+        if (t == null || t.mDesc.touched == null) {
+            if (mDesc.touched == null) {
+                return 0;
+            }
+            return -1;
+        }
+
+        if (mDesc.touched == null) {
+            return 1;
+        }
+
+        return -mDesc.touched.compareTo(t.mDesc.touched);
+    }
+
 
     public Date getSubsUpdated() {
         return mSubsUpdated;

@@ -29,14 +29,14 @@ public class ChatListAdapter extends BaseAdapter {
     private SparseBooleanArray mSelectedItems;
 
 
-    public ChatListAdapter(AppCompatActivity context) {
+    ChatListAdapter(AppCompatActivity context) {
         super();
         mContext = context;
         mSelectedItems = new SparseBooleanArray();
         resetContent();
     }
 
-    public void resetContent() {
+    void resetContent() {
         mTopics = Cache.getTinode().getFilteredTopics(ComTopic.TopicType.USER, null);
     }
 
@@ -119,16 +119,16 @@ public class ChatListAdapter extends BaseAdapter {
         // Log.d(TAG, "User " + topic.getName() + " is " + (topic.getOnline() ? "online" : "offline"));
     }
 
-    public void toggleSelected(int position) {
+    void toggleSelected(int position) {
         selectView(position, !mSelectedItems.get(position));
     }
 
-    public void removeSelection() {
+    void removeSelection() {
         mSelectedItems = new SparseBooleanArray();
         notifyDataSetChanged();
     }
 
-    public String getTopicNameFromView(View view) {
+    String getTopicNameFromView(View view) {
         final ViewHolder holder = (ViewHolder) view.getTag();
         return holder != null ? holder.topic : null;
     }
@@ -142,11 +142,11 @@ public class ChatListAdapter extends BaseAdapter {
     }
 
 
-    public int getSelectedCount() {
+    int getSelectedCount() {
         return mSelectedItems.size();
     }
 
-    public SparseBooleanArray getSelectedIds() {
+    SparseBooleanArray getSelectedIds() {
         return mSelectedItems;
     }
 

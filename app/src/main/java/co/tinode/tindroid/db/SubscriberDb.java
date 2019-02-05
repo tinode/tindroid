@@ -176,8 +176,8 @@ public class SubscriberDb implements BaseColumns {
             db.setTransactionSuccessful();
             sub.setLocal(ss);
 
-        } catch (SQLException ignored) {
-            Log.e(TAG, "Exception while inserting", ignored);
+        } catch (SQLException ex) {
+            Log.e(TAG, "Exception while inserting", ex);
         }
 
         db.endTransaction();

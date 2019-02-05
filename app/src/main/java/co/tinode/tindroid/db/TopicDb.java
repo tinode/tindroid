@@ -196,7 +196,7 @@ public class TopicDb implements BaseColumns {
         int status = topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED;
 
         // Convert topic description to a map of values
-        Date lastUsed = new Date();
+        Date lastUsed = topic.getTouched() != null ? topic.getTouched() : new Date();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
         values.put(COLUMN_NAME_STATUS, status);
@@ -276,7 +276,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
-        Date lastUsed = new Date();
+        Date lastUsed = topic.getTouched() != null ? topic.getTouched() : new Date();
         values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
 
         int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);

@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -63,20 +64,16 @@ import co.tinode.tinodesdk.model.Subscription;
 
 @SuppressWarnings("unused, WeakerAccess")
 public class Tinode {
-    private static final String TAG = "Tinode";
-
     public static final String USER_NEW = "new";
-
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_USR_PREFIX = "usr";
-
     protected static final String NOTE_KP = "kp";
     protected static final String NOTE_READ = "read";
     protected static final String NOTE_RECV = "recv";
-
+    private static final String TAG = "Tinode";
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
@@ -87,57 +84,9 @@ public class Tinode {
     private static final String PROTOVERSION = "0";
     private static final String VERSION = "0.15";
     private static final String LIBRARY = "tindroid/" + VERSION;
-
-    private static ObjectMapper sJsonMapper;
     protected static TypeFactory sTypeFactory;
-
-    private JavaType mDefaultTypeOfMetaPacket = null;
-    private HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
-
-    private MimeTypeResolver mMimeResolver = null;
-
     protected static SimpleDateFormat sDateFormat;
-
-    private Storage mStore;
-
-    private String mApiKey;
-    private String mServerHost = null;
-    private boolean mUseTLS;
-
-    private String mDeviceToken = null;
-    private String mLanguage = null;
-
-    private String mAppName;
-    private String mOsVersion;
-
-    private Connection mConnection = null;
-    // True is connection is authenticated
-    private boolean mConnAuth = false;
-
-    private String mServerVersion = null;
-    private String mServerBuild = null;
-
-    private boolean mAutologin = false;
-    private LoginCredentials mLoginCredentials = null;
-
-    private String mMyUid = null;
-    private String mAuthToken = null;
-    private Date mAuthTokenExpires = null;
-
-    private int mMsgId;
-    private int mPacketCount;
-
-    private EventListener mListener;
-
-    private ConcurrentMap<String, PromisedReply<ServerMessage>> mFutures;
-    private HashMap<String, Topic> mTopics;
-    private HashMap<String, User> mUsers;
-
-    private transient int mNameCounter = 0;
-    private boolean mTopicsLoaded = false;
-
-    // The difference between server time and local time.
-    private long mTimeAdjustment = 0;
+    private static ObjectMapper sJsonMapper;
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -156,6 +105,38 @@ public class Tinode {
 
         sTypeFactory = sJsonMapper.getTypeFactory();
     }
+
+    private JavaType mDefaultTypeOfMetaPacket = null;
+    private HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
+    private MimeTypeResolver mMimeResolver = null;
+    private Storage mStore;
+    private String mApiKey;
+    private String mServerHost = null;
+    private boolean mUseTLS;
+    private String mDeviceToken = null;
+    private String mLanguage = null;
+    private String mAppName;
+    private String mOsVersion;
+    private Connection mConnection = null;
+    // True is connection is authenticated
+    private boolean mConnAuth = false;
+    private String mServerVersion = null;
+    private String mServerBuild = null;
+    private boolean mAutologin = false;
+    private LoginCredentials mLoginCredentials = null;
+    private String mMyUid = null;
+    private String mAuthToken = null;
+    private Date mAuthTokenExpires = null;
+    private int mMsgId;
+    private int mPacketCount;
+    private EventListener mListener;
+    private ConcurrentMap<String, PromisedReply<ServerMessage>> mFutures;
+    private HashMap<String, Topic> mTopics;
+    private HashMap<String, User> mUsers;
+    private transient int mNameCounter = 0;
+    private boolean mTopicsLoaded = false;
+    // The difference between server time and local time.
+    private long mTimeAdjustment = 0;
 
     /**
      * Initialize Tinode package
@@ -209,6 +190,56 @@ public class Tinode {
         this(appname, apikey, null);
     }
 
+    @SuppressWarnings("WeakerAccess")
+    public static TypeFactory getTypeFactory() {
+        return sTypeFactory;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static ObjectMapper getJsonMapper() {
+        return sJsonMapper;
+    }
+
+    // FIXME(gene): this is broken. Figure out how to handle nulls
+    public static boolean isNull(Object obj) {
+        // Del control character
+        return (obj instanceof String) && obj.equals("\u2421");
+    }
+
+    /**
+     * Convert object to JSON string. Exported for convenience.
+     *
+     * @param o object to convert
+     * @return JSON as string.
+     * @throws JsonProcessingException if object cannot be converted
+     */
+    public static String jsonSerialize(Object o) throws JsonProcessingException {
+        return sJsonMapper.writeValueAsString(o);
+    }
+
+    /**
+     * Convert JSON to an object. Exported for convenience.
+     *
+     * @param input         JSON string to parse
+     * @param canonicalName name of the class to generate from JSON.
+     * @return converted object.
+     */
+    public static <T> T jsonDeserialize(String input, String canonicalName) {
+        try {
+            return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get minimum delay between two subsequent key press notifications.
+     */
+    @SuppressWarnings("WeakerAccess")
+    protected static long getKeyPressDelay() {
+        return NOTE_KP_DELAY;
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public EventListener setListener(EventListener listener) {
         EventListener oldListener = mListener;
@@ -216,7 +247,9 @@ public class Tinode {
         return oldListener;
     }
 
-    /** Set non-default version of OS string for User-Agent */
+    /**
+     * Set non-default version of OS string for User-Agent
+     */
     public void setOsString(String os) {
         mOsVersion = os;
     }
@@ -230,6 +263,7 @@ public class Tinode {
                     tt.setStorage(mStore);
                     mTopics.put(tt.getName(), tt);
                 }
+
                 mTopicsLoaded = true;
             }
         }
@@ -240,10 +274,10 @@ public class Tinode {
      * Open a websocket connection to the server and process handshake exchange.
      *
      * @param hostName address of the server to connect to
-     * @param tls use transport layer security (wss)
+     * @param tls      use transport layer security (wss)
      * @return returns promise which will be resolved when the connection sequence is completed.
      * @throws URISyntaxException if hostName is not a valid internet address
-     * @throws IOException if connection call has failed
+     * @throws IOException        if connection call has failed
      */
     public PromisedReply<ServerMessage> connect(String hostName, boolean tls) throws URISyntaxException, IOException {
         mUseTLS = tls;
@@ -349,6 +383,7 @@ public class Tinode {
 
     /**
      * Get configured server address as an URL.
+     *
      * @return Server URL.
      * @throws MalformedURLException thrown if server address is not yet configured.
      */
@@ -518,6 +553,7 @@ public class Tinode {
 
     /**
      * Get API key that was used for configuring this Tinode instance.
+     *
      * @return API key
      */
     public String getApiKey() {
@@ -526,6 +562,7 @@ public class Tinode {
 
     /**
      * Get internet address of the server that this Tinode instance was configured with.
+     *
      * @return server internet address
      */
     public String getServerHost() {
@@ -534,14 +571,16 @@ public class Tinode {
 
     /**
      * Get ID of the current logged in user.
+     *
      * @return user ID of the current user.
      */
     public String getMyId() {
-         return mMyUid;
+        return mMyUid;
     }
 
     /**
      * Check if the given user ID belong to the current logged in user.
+     *
      * @param uid ID of the user to check.
      * @return true if the ID belong to the current user, false otherwise.
      */
@@ -551,6 +590,7 @@ public class Tinode {
 
     /**
      * Get server-provided authentication token.
+     *
      * @return authentication token
      */
     public String getAuthToken() {
@@ -559,6 +599,7 @@ public class Tinode {
 
     /**
      * Get expiration time of the authentication token, see {@link #getAuthToken()}
+     *
      * @return time when the token expires or null.
      */
     public Date getAuthTokenExpiration() {
@@ -567,15 +608,16 @@ public class Tinode {
 
     /**
      * Check if the current session is authenticated.
+     *
      * @return true if the session is authenticated, false otherwise.
      */
     public boolean isAuthenticated() {
         return mConnAuth;
     }
 
-
     /**
      * Get the protocol version of the server that was reported at the last connection.
+     *
      * @return server protocol version.
      */
     public String getServerVersion() {
@@ -584,6 +626,7 @@ public class Tinode {
 
     /**
      * Get server build stamp reported at the last connection
+     *
      * @return server build stamp.
      */
     public String getServerBuild() {
@@ -598,46 +641,6 @@ public class Tinode {
      */
     public boolean isConnected() {
         return mConnection != null && mConnection.isConnected();
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public static TypeFactory getTypeFactory() {
-        return sTypeFactory;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public static ObjectMapper getJsonMapper() {
-        return sJsonMapper;
-    }
-
-    // FIXME(gene): this is broken. Figure out how to handle nulls
-    public static boolean isNull(Object obj) {
-        // Del control character
-        return (obj instanceof String) && obj.equals("\u2421");
-    }
-
-    /**
-     * Convert object to JSON string. Exported for convenience.
-     * @param o object to convert
-     * @return JSON as string.
-     * @throws JsonProcessingException if object cannot be converted
-     */
-    public static String jsonSerialize(Object o) throws JsonProcessingException {
-        return sJsonMapper.writeValueAsString(o);
-    }
-
-    /**
-     * Convert JSON to an object. Exported for convenience.
-     * @param input JSON string to parse
-     * @param canonicalName name of the class to generate from JSON.
-     * @return converted object.
-     */
-    public static <T> T jsonDeserialize(String input, String canonicalName) {
-        try {
-            return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
-        } catch (IOException e) {
-            return null;
-        }
     }
 
     /**
@@ -671,11 +674,11 @@ public class Tinode {
     /**
      * Assign types of generic parameters to topic type. Needed for packet deserialization.
      *
-     * @param topicName  - name of the topic to assign type values for.
+     * @param topicName         - name of the topic to assign type values for.
      * @param typeOfDescPublic  - type of public values
      * @param typeOfDescPrivate - type of private values
-     * @param typeOfSubPublic  - type of public values
-     * @param typeOfSubPrivate - type of private values
+     * @param typeOfSubPublic   - type of public values
+     * @param typeOfSubPrivate  - type of private values
      */
     public void setTypeOfMetaPacket(String topicName, JavaType typeOfDescPublic, JavaType typeOfDescPrivate,
                                     JavaType typeOfSubPublic, JavaType typeOfSubPrivate) {
@@ -737,17 +740,21 @@ public class Tinode {
 
     /**
      * Get {@link LargeFileHelper} object initialized for use with file uploading.
+     *
      * @return LargeFileHelper object.
      */
     public LargeFileHelper getFileUploader() {
         URL url = null;
         try {
             url = new URL(getBaseUrl(), "./file/u/");
-        } catch (MalformedURLException ignored) {}
+        } catch (MalformedURLException ignored) {
+        }
         return new LargeFileHelper(url, getApiKey(), getAuthToken(), makeUserAgent());
     }
+
     /**
      * Set device token for push notifications
+     *
      * @param token device token
      */
     public void setDeviceToken(String token) {
@@ -759,11 +766,12 @@ public class Tinode {
             // Token changed
             mDeviceToken = token;
             if (isConnected() && isAuthenticated()) {
-                ClientMessage msg = new ClientMessage(new MsgClientHi(null, null,null,
+                ClientMessage msg = new ClientMessage(new MsgClientHi(null, null, null,
                         mDeviceToken, null));
                 try {
                     send(Tinode.getJsonMapper().writeValueAsString(msg));
-                } catch (JsonProcessingException ignored) {}
+                } catch (JsonProcessingException ignored) {
+                }
             }
         }
     }
@@ -814,17 +822,17 @@ public class Tinode {
     /**
      * Create new account. Connection must be established prior to calling this method.
      *
-     * @param uid uid of the user to affect
-     * @param scheme authentication scheme to use
-     * @param secret authentication secret for the chosen scheme
+     * @param uid      uid of the user to affect
+     * @param scheme   authentication scheme to use
+     * @param secret   authentication secret for the chosen scheme
      * @param loginNow use the new account to login immediately
-     * @param desc default access parameters for this account
+     * @param desc     default access parameters for this account
      * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
-    protected <Pu,Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
-                                                           boolean loginNow, String[] tags, MetaSetDesc<Pu,Pr> desc,
-                                                           Credential[] cred) {
+    protected <Pu, Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
+                                                            boolean loginNow, String[] tags, MetaSetDesc<Pu, Pr> desc,
+                                                            Credential[] cred) {
         ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
         try {
@@ -867,13 +875,12 @@ public class Tinode {
      *
      * @param uname    user name
      * @param password password
-     * @param login use the new account for authentication
-     * @param desc account parameters, such as full name etc.
-     *
+     * @param login    use the new account for authentication
+     * @param desc     account parameters, such as full name etc.
      * @return PromisedReply of the reply ctrl message
      */
-    public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, MetaSetDesc<Pu,Pr> desc) {
+    public <Pu, Pr> PromisedReply<ServerMessage> createAccountBasic(
+            String uname, String password, boolean login, MetaSetDesc<Pu, Pr> desc) {
         return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, null, desc, null);
     }
@@ -884,14 +891,13 @@ public class Tinode {
      *
      * @param uname    user name
      * @param password password
-     * @param login use the new account for authentication
-     * @param tags discovery tags
-     * @param desc account parameters, such as full name etc.
-     *
+     * @param login    use the new account for authentication
+     * @param tags     discovery tags
+     * @param desc     account parameters, such as full name etc.
      * @return PromisedReply of the reply ctrl message
      */
-    public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc) {
+    public <Pu, Pr> PromisedReply<ServerMessage> createAccountBasic(
+            String uname, String password, boolean login, String[] tags, MetaSetDesc<Pu, Pr> desc) {
         return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, null);
     }
@@ -902,15 +908,14 @@ public class Tinode {
      *
      * @param uname    user name
      * @param password password
-     * @param login use the new account for authentication
-     * @param tags discovery tags
-     * @param desc account parameters, such as full name etc.
-     * @param cred account credential, such as email or phone
-     *
+     * @param login    use the new account for authentication
+     * @param tags     discovery tags
+     * @param desc     account parameters, such as full name etc.
+     * @param cred     account credential, such as email or phone
      * @return PromisedReply of the reply ctrl message
      */
-    public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred) {
+    public <Pu, Pr> PromisedReply<ServerMessage> createAccountBasic(
+            String uname, String password, boolean login, String[] tags, MetaSetDesc<Pu, Pr> desc, Credential[] cred) {
         return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, cred);
     }
@@ -954,7 +959,7 @@ public class Tinode {
      * Send a basic login packet to the server. A connection must be established prior to calling
      * this method. Success or failure will be reported through {@link EventListener#onLogin(int, String)}
      *
-     * @param token   server-provided security token
+     * @param token server-provided security token
      * @return PromisedReply of the reply ctrl message
      * @throws Exception if there is no connection
      */
@@ -1085,13 +1090,14 @@ public class Tinode {
      * @param topicName name of the topic to subscribe to
      * @return PromisedReply of the reply ctrl message
      */
-    public <Pu,Pr,T> PromisedReply<ServerMessage> subscribe(String topicName,
-                                                              MsgSetMeta<Pu,Pr> set,
+    public <Pu, Pr, T> PromisedReply<ServerMessage> subscribe(String topicName,
+                                                              MsgSetMeta<Pu, Pr> set,
                                                               MsgGetMeta get) {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) { }
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.sub.id, future);
         return future;
@@ -1109,12 +1115,12 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) { }
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.leave.id, future);
         return future;
     }
-
 
     /**
      * Low-level request to publish data. A {@link Topic#publish} should be normally
@@ -1129,7 +1135,8 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) { }
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.pub.id, future);
         return future;
@@ -1140,14 +1147,15 @@ public class Tinode {
      * used instead.
      *
      * @param topicName name of the topic to publish to
-     * @param query metadata query
+     * @param query     metadata query
      * @return PromisedReply of the reply ctrl or meta message
      */
     public PromisedReply<ServerMessage> getMeta(final String topicName, final MsgGetMeta query) {
         ClientMessage msg = new ClientMessage(new MsgClientGet(getNextId(), topicName, query));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {}
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.get.id, future);
         return future;
@@ -1158,16 +1166,17 @@ public class Tinode {
      * used instead.
      *
      * @param topicName name of the topic to publish to
-     * @param meta metadata to assign
+     * @param meta      metadata to assign
      * @return PromisedReply of the reply ctrl or meta message
      */
     @SuppressWarnings("WeakerAccess")
-    public <Pu,Pr,T> PromisedReply<ServerMessage> setMeta(final String topicName,
-                                                            final MsgSetMeta<Pu,Pr> meta) {
+    public <Pu, Pr, T> PromisedReply<ServerMessage> setMeta(final String topicName,
+                                                            final MsgSetMeta<Pu, Pr> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {}
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.set.id, future);
         return future;
@@ -1176,7 +1185,8 @@ public class Tinode {
     private PromisedReply<ServerMessage> sendDeleteMessage(ClientMessage msg) {
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {}
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.del.id, future);
         return future;
@@ -1187,8 +1197,8 @@ public class Tinode {
      * Use {@link Topic#delMessages(int, int, boolean)} instead.
      *
      * @param topicName name of the topic to inform
-     * @param fromId minimum ID to delete, inclusive (closed)
-     * @param toId maximum ID to delete, exclusive (open)
+     * @param fromId    minimum ID to delete, inclusive (closed)
+     * @param toId      maximum ID to delete, exclusive (open)
      * @return PromisedReply of the reply ctrl or meta message
      */
     @SuppressWarnings("WeakerAccess")
@@ -1201,7 +1211,7 @@ public class Tinode {
      * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(List, boolean)} instead.
      *
      * @param topicName name of the topic to inform
-     * @param list delete all messages with ids in this list
+     * @param list      delete all messages with ids in this list
      * @return PromisedReply of the reply ctrl or meta message
      */
     public PromisedReply<ServerMessage> delMessage(final String topicName, final List<Integer> list, final boolean hard) {
@@ -1212,7 +1222,7 @@ public class Tinode {
      * Low-level request to delete one message from a topic. Use {@link Topic#delMessages(List, boolean)} instead.
      *
      * @param topicName name of the topic to inform
-     * @param seqId seqID of the message to delete.
+     * @param seqId     seqID of the message to delete.
      * @return PromisedReply of the reply ctrl or meta message
      */
     public PromisedReply<ServerMessage> delMessage(final String topicName, final int seqId, final boolean hard) {
@@ -1230,7 +1240,8 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {}
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.del.id, future);
         return future;
@@ -1240,7 +1251,7 @@ public class Tinode {
      * Low-level request to delete a subscription. Use {@link Topic#eject(String, boolean)} ()} instead.
      *
      * @param topicName name of the topic
-     * @param user user ID to unsubscribe
+     * @param user      user ID to unsubscribe
      * @return PromisedReply of the reply ctrl or meta message
      */
     @SuppressWarnings("WeakerAccess")
@@ -1248,7 +1259,8 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, user));
         try {
             send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) { }
+        } catch (JsonProcessingException ignored) {
+        }
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         mFutures.put(msg.del.id, future);
         return future;
@@ -1269,7 +1281,8 @@ public class Tinode {
         try {
             send(Tinode.getJsonMapper().writeValueAsString(
                     new ClientMessage(new MsgClientNote(topicName, what, seq))));
-        } catch (JsonProcessingException ignored) { }
+        } catch (JsonProcessingException ignored) {
+        }
     }
 
     /**
@@ -1288,7 +1301,7 @@ public class Tinode {
      * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
      *
      * @param topicName name of the topic to inform
-     * @param seq id of the message being acknowledged
+     * @param seq       id of the message being acknowledged
      */
     @SuppressWarnings("WeakerAccess")
     public void noteRead(String topicName, int seq) {
@@ -1300,7 +1313,7 @@ public class Tinode {
      * This method does not return a PromisedReply because the server does not acknowledge {note} packets.
      *
      * @param topicName name of the topic to inform
-     * @param seq id of the message being acknowledged
+     * @param seq       id of the message being acknowledged
      */
     @SuppressWarnings("WeakerAccess")
     public void noteRecv(String topicName, int seq) {
@@ -1325,7 +1338,7 @@ public class Tinode {
      * Instantiate topic of an appropriate class given the name.
      *
      * @param name name of the topic to create
-     * @param l event listener; could be null
+     * @param l    event listener; could be null
      * @return topic of an appropriate class
      */
     @SuppressWarnings("unchecked")
@@ -1341,7 +1354,7 @@ public class Tinode {
     @SuppressWarnings("unchecked")
     Topic newTopic(Subscription sub) {
         if (TOPIC_ME.equals(sub.topic)) {
-            return new MeTopic(this, (MeTopic.MeListener)null);
+            return new MeTopic(this, (MeTopic.MeListener) null);
         } else if (TOPIC_FND.equals(sub.topic)) {
             return new FndTopic(this, null);
         }
@@ -1385,21 +1398,26 @@ public class Tinode {
         // Either I or Java really has problems with generics.
         return (FndTopic) getTopic(TOPIC_FND);
     }
+
     /**
-     * Obtain an existing topic by name
+     * Return a list of topics sorted by Topic.touched in descending order.
      *
-     * @return a {@link Collection} of topics
+     * @return a {@link List} of topics
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings("WeakerAccess, unchecked")
     public List<Topic> getTopics() {
-        return new ArrayList<>(mTopics.values());
+        List<Topic> result = new ArrayList<>(mTopics.values());
+        Collections.sort(result);
+        return result;
     }
 
     /**
-     * Return a collection of topics which satisfy the filters.
+     * Return a list of topics which satisfy the filters. Topics are sorted by
+     * Topic.touched in descending order.
      *
-     * @param type type of topics to return.
+     * @param type    type of topics to return.
      * @param updated return topics with update timestamp after this
+     * @return a {@link List} of topics
      */
     @SuppressWarnings("unchecked")
     public <T extends Topic> List<T> getFilteredTopics(Topic.TopicType type, Date updated) {
@@ -1416,13 +1434,14 @@ public class Tinode {
                 result.add(t);
             }
         }
+        Collections.sort(result);
         return result;
     }
 
     /**
-     * Get topic by index.
+     * Get topic by name.
      *
-     * @param name name of the topic to find
+     * @param name name of the topic to find.
      * @return existing topic or null if no such topic was found
      */
     @SuppressWarnings("unchecked")
@@ -1460,7 +1479,7 @@ public class Tinode {
     /**
      * Topic is cached by name, update the name used to cache the topic.
      *
-     * @param topic topic being updated
+     * @param topic   topic being updated
      * @param oldName old name of the topic (e.g. "newXYZ" or "usrZYX")
      * @return true if topic was found by the old name
      */
@@ -1588,21 +1607,17 @@ public class Tinode {
         return String.valueOf(++mMsgId);
     }
 
-    /**
-     * Get minimum delay between two subsequent key press notifications.
-     */
-    @SuppressWarnings("WeakerAccess")
-    protected static long getKeyPressDelay() {
-        return NOTE_KP_DELAY;
-    }
-
     synchronized String nextUniqueString() {
-        ++ mNameCounter;
+        ++mNameCounter;
         return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (mNameCounter & 0xFFFF), 32);
     }
 
     long getTimeAdjustment() {
         return mTimeAdjustment;
+    }
+
+    public interface MimeTypeResolver {
+        JavaType resolve(String mimeType);
     }
 
     /**
@@ -1716,17 +1731,13 @@ public class Tinode {
         }
     }
 
-    public interface MimeTypeResolver {
-        JavaType resolve(String mimeType);
-    }
-
     /**
      * Scheduler for sending delayed recv notifications.
      */
     class HeartBeat extends Timer {
         public static final String TAG = "HeartBeat";
 
-        private ConcurrentHashMap<String,Integer> recvQueue;
+        private ConcurrentHashMap<String, Integer> recvQueue;
 
         public HeartBeat() {
             super(TAG, true);
