@@ -33,7 +33,7 @@ public class MessageDb implements BaseColumns {
     /**
      * The name of the main table.
      */
-    static final String TABLE_NAME = "messages";
+    private static final String TABLE_NAME = "messages";
 
     /**
      * Content URI for retrieving messages (content://co.tinode.tindroid/messages)
@@ -138,7 +138,7 @@ public class MessageDb implements BaseColumns {
             }
 
             if (msg.userId <= 0 || msg.topicId <= 0) {
-                Log.d(TAG, "Failed to insert message " + msg.seq);
+                Log.w(TAG, "Failed to insert message " + msg.seq);
                 return -1;
             }
 
@@ -247,7 +247,7 @@ public class MessageDb implements BaseColumns {
      * @param msgId  _id of the message to retrieve.
      * @return cursor with the message.
      */
-    public static Cursor getMessageById(SQLiteDatabase db, long msgId) {
+    static Cursor getMessageById(SQLiteDatabase db, long msgId) {
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE _id=" + msgId;
 
         // Log.d(TAG, "Sql=[" + sql + "]");
@@ -262,7 +262,7 @@ public class MessageDb implements BaseColumns {
      * @param topicId Tinode topic ID (topics._id) to select from
      * @return cursor with the messages
      */
-    public static Cursor queryUnsent(SQLiteDatabase db, long topicId) {
+    static Cursor queryUnsent(SQLiteDatabase db, long topicId) {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
@@ -281,7 +281,7 @@ public class MessageDb implements BaseColumns {
      * @param hard    if true to return hard-deleted messages, soft-deleted otherwise.
      * @return cursor with the message seqIDs
      */
-    public static Cursor queryDeleted(SQLiteDatabase db, long topicId, boolean hard) {
+    static Cursor queryDeleted(SQLiteDatabase db, long topicId, boolean hard) {
         int status = hard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT;
 
         String sql = "SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
@@ -350,7 +350,7 @@ public class MessageDb implements BaseColumns {
                     (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
             db.setTransactionSuccessful();
         } catch (SQLException ex) {
-            Log.d(TAG, "Delete failed", ex);
+            Log.w(TAG, "Delete failed", ex);
         } finally {
             db.endTransaction();
         }
@@ -366,7 +366,7 @@ public class MessageDb implements BaseColumns {
      * @param markAsHard    mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
-    public static boolean markDeleted(SQLiteDatabase db, long topicId, List<Integer> list, boolean markAsHard) {
+    static boolean markDeleted(SQLiteDatabase db, long topicId, List<Integer> list, boolean markAsHard) {
         return deleteOrMarkDeleted(db, false, topicId, Integer.MAX_VALUE, 0, list, markAsHard);
     }
 
@@ -380,7 +380,7 @@ public class MessageDb implements BaseColumns {
      * @param markAsHard    mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
-    public static boolean markDeleted(SQLiteDatabase db, long topicId, int fromId, int toId, boolean markAsHard) {
+    static boolean markDeleted(SQLiteDatabase db, long topicId, int fromId, int toId, boolean markAsHard) {
         return deleteOrMarkDeleted(db, false, topicId, fromId, toId, null, markAsHard);
     }
 
@@ -454,6 +454,9 @@ public class MessageDb implements BaseColumns {
             this.topicId = TopicDb.getId(mDb, topic);
             this.pageCount = pageCount;
             this.pageSize = pageSize;
+            if (topicId < 0) {
+                Log.w(TAG, "Topic not found '" + topic + "'");
+            }
         }
 
         @Override

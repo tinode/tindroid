@@ -223,7 +223,9 @@ public class MessageActivity extends AppCompatActivity {
                             setProgressIndicator(false);
                             MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                                     .findFragmentByTag(FRAGMENT_MESSAGES);
-                            fragmsg.topicSubscribed();
+                            if (fragmsg != null) {
+                                fragmsg.topicSubscribed();
+                            }
                         }
                     });
                     // Resume message sender and submit pending messages for processing:

@@ -94,21 +94,27 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Static utilities for UI support.
  */
 public class UiUtils {
+    private static final String TAG = "UiUtils";
+
     static final int ACTION_UPDATE_SELF_SUB = 0;
     static final int ACTION_UPDATE_SUB = 1;
     static final int ACTION_UPDATE_AUTH = 2;
     static final int ACTION_UPDATE_ANON = 3;
+
     static final int SELECT_PICTURE = 1;
+
     static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
+
     static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     static final String PREF_READ_RCPT = "pref_readReceipts";
+
     static final int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
     static final int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
-    static final int COLOR_MESSAGE_BUBBLE = 0xffc5e1a5;
-    static final int COLOR_META_BUBBLE = 0xFFCFD8DC;
-    private static final String TAG = "UiUtils";
+
     private static final int AVATAR_SIZE = 128;
     private static final int MAX_BITMAP_SIZE = 1024;
+    private static final int MIN_TAG_LENGTH = 4;
+
     // Material colors, shade #200.
     // TODO(gene): maybe move to resource file
     private static final Colorizer[] sColorizer = {
@@ -140,7 +146,7 @@ public class UiUtils {
     private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
     // If StoredMessage activity is visible, this is the current topic in that activity.
-    static String sVisibleTopic = null;
+    private static String sVisibleTopic = null;
 
     // Logo LayerDrawable IDs
     private static final int LOGO_LAYER_AVATAR = 0;
@@ -443,7 +449,7 @@ public class UiUtils {
         }
     }
 
-    static Bitmap scaleSquareBitmap(Bitmap bmp) {
+    private static Bitmap scaleSquareBitmap(Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
@@ -483,7 +489,7 @@ public class UiUtils {
         return changed ? Bitmap.createScaledBitmap(bmp, width, height, true) : bmp;
     }
 
-    static Bitmap extractBitmap(final Activity activity, final Intent data) {
+    private static Bitmap extractBitmap(final Activity activity, final Intent data) {
         try {
             return MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
                     data.getData());
@@ -492,18 +498,17 @@ public class UiUtils {
         }
     }
 
-    static boolean acceptAvatar(final ImageView avatar, final Bitmap bmp) {
+    private static void acceptAvatar(final ImageView avatar, final Bitmap bmp) {
         avatar.setImageDrawable(new RoundImageDrawable(scaleSquareBitmap(bmp)));
-        return true;
     }
 
-    static boolean acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
+    static void acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
         final Bitmap bmp = extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
-            return false;
+            return;
         }
-        return acceptAvatar(avatar, bmp);
+        acceptAvatar(avatar, bmp);
     }
 
     static void assignBitmap(Context context, ImageView icon, Bitmap bmp, String name, String address) {
@@ -741,37 +746,30 @@ public class UiUtils {
                 if (newAcsStr.length() == 0) {
                     newAcsStr.append('N');
                 }
-                Log.d(TAG, "New access mode: " + newAcsStr);
                 try {
                     PromisedReply reply = null;
                     switch (what) {
                         case ACTION_UPDATE_SELF_SUB:
-                            Log.d(TAG, "Update self sub: " + newAcsStr);
                             reply = topic.updateMode(null, newAcsStr.toString());
                             break;
                         case ACTION_UPDATE_SUB:
-                            Log.d(TAG, "Update other sub: " + newAcsStr);
                             reply = topic.updateMode(uid, newAcsStr.toString());
                             break;
                         case ACTION_UPDATE_AUTH:
-                            Log.d(TAG, "Update auth: " + newAcsStr);
                             reply = topic.updateDefAcs(newAcsStr.toString(), null);
                             break;
                         case ACTION_UPDATE_ANON:
-                            Log.d(TAG, "Update anon: " + newAcsStr);
                             reply = topic.updateDefAcs(null, newAcsStr.toString());
                             break;
                         default:
-                            Log.d(TAG, "Unknown action " + what);
+                            Log.w(TAG, "Unknown action " + what);
                     }
 
-                    Log.d(TAG, "Reply is " + reply);
                     if (reply != null) {
                         ((PromisedReply<ServerMessage>) reply).thenApply(
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                      @Override
                                      public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                         Log.d(TAG, "Successful update");
                                          return null;
                                      }
                                  },
@@ -785,7 +783,7 @@ public class UiUtils {
                                         activity.runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                Log.d(TAG, "Failed", err);
+                                                Log.w(TAG, "Failed", err);
                                                 Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                                             }
                                         });
@@ -804,12 +802,12 @@ public class UiUtils {
         builder.show();
     }
 
-    static <T extends Topic<VxCard,PrivateType,?,?>> boolean updateAvatar(final Activity activity,
-                                                                          final T topic, final Intent data) {
+    static <T extends Topic<VxCard,PrivateType,?,?>> void updateAvatar(final Activity activity,
+                                                                       final T topic, final Intent data) {
         Bitmap bmp = UiUtils.extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
-            return false;
+            return;
         }
         VxCard pub = topic.getPub();
         if (pub != null) {
@@ -823,16 +821,13 @@ public class UiUtils {
             topic.setDescription(pub, null).thenApply(null, new ToastFailureListener(activity));
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-            return false;
         } catch (Exception ignored) {
             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-            return false;
         }
-        return true;
     }
 
-    static <T extends Topic<VxCard,PrivateType,?,?>> boolean updateTitle(final Activity activity,
-                                                                         T topic, String title, String comment) {
+    static <T extends Topic<VxCard,PrivateType,?,?>> void updateTitle(final Activity activity,
+                                                                      T topic, String title, String comment) {
         VxCard pub = null;
         if (title != null) {
             pub = topic.getPub();
@@ -862,15 +857,11 @@ public class UiUtils {
                 topic.setDescription(pub, priv).thenApply(null, new ToastFailureListener(activity));
             } catch (NotConnectedException ignored) {
                 Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                return false;
             } catch (Exception ignored) {
                 Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                return false;
             }
         }
-        Log.d(TAG, "OK");
 
-        return true;
     }
 
     @SuppressWarnings("unchecked")
@@ -887,7 +878,7 @@ public class UiUtils {
                     }, new PromisedReply.FailureListener() {
                         @Override
                         public PromisedReply onFailure(Exception err) throws Exception {
-                            Log.d(TAG, "Error subscribing to 'me' topic", err);
+                            Log.w(TAG, "Error subscribing to 'me' topic", err);
                             UiUtils.setProgressIndicator(activity, false);
                             if (err instanceof ServerResponseException) {
                                 ServerResponseException sre = (ServerResponseException) err;
@@ -911,6 +902,25 @@ public class UiUtils {
             setProgressIndicator(activity,false);
             Toast.makeText(activity, R.string.failed_to_attach, Toast.LENGTH_LONG).show();
         }
+    }
+
+    static String[] parseTags(final String tagList) {
+        if (tagList == null) {
+            return null;
+        }
+
+        String[] rawTags = TextUtils.split(tagList, ",");
+        ArrayList<String> tags = new ArrayList<>();
+        for (String tag : rawTags) {
+            tag = tag.trim();
+            if (tag.length() >= MIN_TAG_LENGTH) {
+                tags.add(tag);
+            }
+        }
+        if (tags.size() == 0) {
+            return null;
+        }
+        return tags.toArray(new String[]{});
     }
 
     /**
@@ -1056,7 +1066,6 @@ public class UiUtils {
         @Override
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
             // This swaps the new cursor into the adapter.
-            Log.d(TAG, "delivered cursor with items: " + data.getCount());
             mReceiver.receiveResult(mLoaderId, data);
         }
 

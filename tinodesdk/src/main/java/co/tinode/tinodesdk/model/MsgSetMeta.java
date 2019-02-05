@@ -18,7 +18,7 @@ public class MsgSetMeta<Pu,Pr> {
         this.desc = desc;
         this.sub = sub;
         if (tags != null) {
-            this.tags = tags.toArray(this.tags);
+            this.tags = tags.toArray(new String[]{});
         }
     }
 

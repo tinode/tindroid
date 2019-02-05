@@ -56,8 +56,6 @@ public class AccountInfoFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(TAG, "AccountInfoFragment.onCreateView");
-
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return  null;
@@ -86,119 +84,120 @@ public class AccountInfoFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
 
-        MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
-        if (me != null) {
-            final AppCompatActivity activity = (AppCompatActivity) getActivity();
-
-            final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
-            final TextView title = activity.findViewById(R.id.topicTitle);
-            title.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showEditAccountTitle();
-                }
-            });
-
-            activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    UiUtils.requestAvatar(AccountInfoFragment.this);
-                }
-            });
-
-            VxCard pub = me.getPub();
-            if (pub != null) {
-                if (!TextUtils.isEmpty(pub.fn)) {
-                    title.setText(pub.fn);
-                    title.setTypeface(null, Typeface.NORMAL);
-                    title.setTextIsSelectable(true);
-                } else {
-                    title.setText(R.string.placeholder_contact_title);
-                    title.setTypeface(null, Typeface.ITALIC);
-                    title.setTextIsSelectable(false);
-                }
-                final Bitmap bmp = pub.getBitmap();
-                if (bmp != null) {
-                    avatar.setImageDrawable(new RoundImageDrawable(bmp));
-                }
-            }
-            final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
-
-            final Switch readrcpt = activity.findViewById(R.id.switchReadReceipts);
-            readrcpt.setChecked(pref.getBoolean(UiUtils.PREF_READ_RCPT, true));
-            readrcpt.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    pref.edit().putBoolean(UiUtils.PREF_READ_RCPT, isChecked).apply();
-                }
-            });
-
-            final Switch typing = activity.findViewById(R.id.switchTypingNotifications);
-            typing.setChecked(pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true));
-            typing.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    pref.edit().putBoolean(UiUtils.PREF_TYPING_NOTIF, isChecked).apply();
-                }
-            });
-
-            ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
-
-            activity.findViewById(R.id.buttonChangePassword).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                    builder
-                            .setTitle(R.string.change_password)
-                            .setView(R.layout.dialog_password)
-                            .setCancelable(true)
-                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    TextView editor = (TextView)
-                                            ((AlertDialog) dialog).findViewById(R.id.enterPassword);
-                                    if (editor != null) {
-                                        String password = editor.getText().toString();
-                                        if (!TextUtils.isEmpty(password)) {
-                                            changePassword(pref.getString(LoginActivity.PREFS_LAST_LOGIN, null),
-                                                    password);
-                                        } else {
-                                            Toast.makeText(activity, R.string.failed_empty_password,
-                                                    Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .show();
-                }
-            });
-            activity.findViewById(R.id.buttonLogout).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    logout();
-                }
-            });
-
-            final TextView auth = activity.findViewById(R.id.authPermissions);
-            auth.setText(me.getAuthAcsStr());
-            auth.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                }
-            });
-            final TextView anon = activity.findViewById(R.id.anonPermissions);
-            anon.setText(me.getAnonAcsStr());
-            anon.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                }
-            });
+        if (me == null || activity == null) {
+            return;
         }
+
+        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
+        final TextView title = activity.findViewById(R.id.topicTitle);
+        title.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showEditAccountTitle();
+            }
+        });
+
+        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UiUtils.requestAvatar(AccountInfoFragment.this);
+            }
+        });
+
+        VxCard pub = me.getPub();
+        if (pub != null) {
+            if (!TextUtils.isEmpty(pub.fn)) {
+                title.setText(pub.fn);
+                title.setTypeface(null, Typeface.NORMAL);
+                title.setTextIsSelectable(true);
+            } else {
+                title.setText(R.string.placeholder_contact_title);
+                title.setTypeface(null, Typeface.ITALIC);
+                title.setTextIsSelectable(false);
+            }
+            final Bitmap bmp = pub.getBitmap();
+            if (bmp != null) {
+                avatar.setImageDrawable(new RoundImageDrawable(bmp));
+            }
+        }
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+
+        final Switch readrcpt = activity.findViewById(R.id.switchReadReceipts);
+        readrcpt.setChecked(pref.getBoolean(UiUtils.PREF_READ_RCPT, true));
+        readrcpt.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                pref.edit().putBoolean(UiUtils.PREF_READ_RCPT, isChecked).apply();
+            }
+        });
+
+        final Switch typing = activity.findViewById(R.id.switchTypingNotifications);
+        typing.setChecked(pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true));
+        typing.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                pref.edit().putBoolean(UiUtils.PREF_TYPING_NOTIF, isChecked).apply();
+            }
+        });
+
+        ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
+
+        activity.findViewById(R.id.buttonChangePassword).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                builder
+                        .setTitle(R.string.change_password)
+                        .setView(R.layout.dialog_password)
+                        .setCancelable(true)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                TextView editor = (TextView)
+                                        ((AlertDialog) dialog).findViewById(R.id.enterPassword);
+                                if (editor != null) {
+                                    String password = editor.getText().toString();
+                                    if (!TextUtils.isEmpty(password)) {
+                                        changePassword(pref.getString(LoginActivity.PREFS_LAST_LOGIN, null),
+                                                password);
+                                    } else {
+                                        Toast.makeText(activity, R.string.failed_empty_password,
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            }
+        });
+        activity.findViewById(R.id.buttonLogout).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                logout();
+            }
+        });
+
+        final TextView auth = activity.findViewById(R.id.authPermissions);
+        auth.setText(me.getAuthAcsStr());
+        auth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        final TextView anon = activity.findViewById(R.id.anonPermissions);
+        anon.setText(me.getAnonAcsStr());
+        anon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
     }
 
     // Dialog for editing pub.fn and priv
@@ -230,8 +229,6 @@ public class AccountInfoFragment extends Fragment {
     }
 
     private void changePassword(String login, String password) {
-        Log.d(TAG, "Change password: " + login + ", " + password);
-
         Activity activity = getActivity();
         try {
             // TODO: update stored record on success
@@ -275,7 +272,7 @@ public class AccountInfoFragment extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.clear();
     }
 }

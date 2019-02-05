@@ -98,17 +98,17 @@ public class Tinode {
 
     protected static SimpleDateFormat sDateFormat;
 
-    private Storage mStore = null;
+    private Storage mStore;
 
-    private String mApiKey = null;
+    private String mApiKey;
     private String mServerHost = null;
     private boolean mUseTLS;
 
     private String mDeviceToken = null;
     private String mLanguage = null;
 
-    private String mAppName = null;
-    private String mOsVersion = null;
+    private String mAppName;
+    private String mOsVersion;
 
     private Connection mConnection = null;
     // True is connection is authenticated
@@ -300,8 +300,8 @@ public class Tinode {
                 } catch (NotConnectedException ignored) {
                     Log.d(TAG, "NotConnectedException in autoreconnect");
                     // Do nothing
-                } catch (Exception e) {
-                    Log.e(TAG, "Exception in Connection.onConnect: ", e);
+                } catch (Exception ex) {
+                    Log.i(TAG, "Exception in Connection.onConnect: ", ex);
                 }
             }
 
@@ -309,8 +309,8 @@ public class Tinode {
             protected void onMessage(String message) {
                 try {
                     dispatchPacket(message);
-                } catch (Exception e) {
-                    Log.e(TAG, "Exception in dispatchPacket: ", e);
+                } catch (Exception ex) {
+                    Log.e(TAG, "Exception in dispatchPacket: ", ex);
                 }
             }
 
@@ -782,7 +782,6 @@ public class Tinode {
      * this method.
      *
      * @return PromisedReply of the reply ctrl message.
-     * @throws IOException if there is no connection
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> hello() {
@@ -850,7 +849,7 @@ public class Tinode {
                         try {
                             loginSuccessful(pkt.ctrl);
                         } catch (Exception ex) {
-                            Log.d(TAG, "Exception while parsing server response", ex);
+                            Log.i(TAG, "Exception while parsing server response", ex);
                         }
                         return null;
                     }
@@ -892,7 +891,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc) throws Exception {
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc) {
         return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, null);
     }
@@ -911,17 +910,17 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu,Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred) throws Exception {
+            String uname, String password, boolean login, String []tags, MetaSetDesc<Pu,Pr> desc, Credential[] cred) {
         return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, cred);
     }
 
     @SuppressWarnings("unchecked")
-    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret) throws Exception {
+    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret) {
         return account(uid, scheme, secret, false, null, null, null);
     }
 
-    public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password) throws Exception {
+    public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password) {
         return updateAccountSecret(uid, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
     }
 
@@ -1469,6 +1468,9 @@ public class Tinode {
     synchronized boolean changeTopicName(Topic topic, String oldName) {
         boolean found = mTopics.remove(oldName) != null;
         mTopics.put(topic.getName(), topic);
+        if (mStore != null) {
+            mStore.topicUpdate(topic);
+        }
         return found;
     }
 
@@ -1561,7 +1563,7 @@ public class Tinode {
                             msg.meta = mapper.readValue(node.traverse(),
                                     getTypeOfMetaPacket(node.get("topic").asText()));
                         } else {
-                            Log.d(TAG, "parse meta - FAILED");
+                            Log.i(TAG, "Failed to parse {meta}: missing topic name");
                         }
                         break;
                     default:  // Unrecognized field, ignore

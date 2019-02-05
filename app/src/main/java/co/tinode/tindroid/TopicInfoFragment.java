@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -55,7 +56,7 @@ public class TopicInfoFragment extends Fragment {
     private static final int ACTION_REMOVE = 4;
     private static final int ACTION_BAN = 5;
 
-    ComTopic<VxCard> mTopic;
+    private ComTopic<VxCard> mTopic;
     private MembersAdapter mAdapter;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -64,7 +65,7 @@ public class TopicInfoFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_topic_info, container, false);
     }
@@ -79,14 +80,16 @@ public class TopicInfoFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        mAdapter = new MembersAdapter();
-
         final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
 
+        mAdapter = new MembersAdapter();
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
         RecyclerView rv = activity.findViewById(R.id.groupMembers);
-        rv.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        rv.setLayoutManager(new LinearLayoutManager(activity, RecyclerView.VERTICAL, false));
         rv.setAdapter(mAdapter);
         rv.setNestedScrollingEnabled(false);
     }
@@ -95,12 +98,16 @@ public class TopicInfoFragment extends Fragment {
     @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
+        final Activity activity = getActivity();
+        final Bundle bundle = getArguments();
 
-        Bundle bundle = getArguments();
+        if (activity == null || bundle == null) {
+            return;
+        }
+
         String name = bundle.getString("topic");
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
 
-        final Activity activity = getActivity();
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
         final TextView address = activity.findViewById(R.id.topicAddress);
@@ -134,16 +141,12 @@ public class TopicInfoFragment extends Fragment {
 
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                Log.d(TAG, "isChecked=" + isChecked + ", muted=" + mTopic.isMuted());
                 try {
-                    Log.d(TAG, "Setting muted to " + isChecked);
                     mTopic.updateMuted(isChecked);
                 } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "Offline - not changed");
                     muted.setChecked(!isChecked);
                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {
-                    Log.d(TAG, "Generic exception", ignored);
+                } catch (Exception ex) {
                     muted.setChecked(!isChecked);
                 }
             }
@@ -273,10 +276,14 @@ public class TopicInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditTopicText() {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         VxCard pub = mTopic.getPub();
         final String title = pub == null ? null : pub.fn;
         final PrivateType priv = mTopic.getPriv();
-        final Activity activity = getActivity();
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final View editor = View.inflate(builder.getContext(), R.layout.dialog_edit_group, null);
         builder.setView(editor).setTitle(R.string.edit_topic);
@@ -314,6 +321,10 @@ public class TopicInfoFragment extends Fragment {
     private void showConfirmationDialog(final String topicTitle,
                                         final String title, final String uid, int message_id, final int what) {
         final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
         confirmBuilder.setNegativeButton(android.R.string.no, null);
         String message = activity.getString(message_id, title, topicTitle);
@@ -344,6 +355,10 @@ public class TopicInfoFragment extends Fragment {
     // Dialog-menu with actions for individual subscribers, like "send message", "change permissions", "ban", etc.
     private void showMemberAction(final String topicTitle, final String title, final String uid, final String mode) {
         final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         final String titleFixed = TextUtils.isEmpty(title) ?
                 activity.getString(R.string.placeholder_contact_title) :
                 title;
@@ -498,7 +513,7 @@ public class TopicInfoFragment extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         // inflater.inflate(R.menu.menu_topic_info, menu);
         super.onCreateOptionsMenu(menu, inflater);
@@ -573,10 +588,12 @@ public class TopicInfoFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull final MemberViewHolder holder, int position) {
+            final Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
             final Subscription<VxCard,PrivateType> sub = mItems[position];
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
-            final Activity activity = getActivity();
-
             Bitmap bmp = null;
             String title = Cache.getTinode().isMe(sub.user) ? activity.getString(R.string.current_user) : null;
             if (sub.pub != null) {

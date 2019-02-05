@@ -80,7 +80,7 @@ public class MessagesFragment extends Fragment
     private static final long MAX_ATTACHMENT_SIZE = 1 << 23;
 
     private static final int READ_DELAY = 1000;
-    protected ComTopic<VxCard> mTopic;
+    private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
     private MessagesListAdapter mMessagesAdapter;
@@ -105,7 +105,7 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_messages, container, false);
     }
@@ -115,6 +115,9 @@ public class MessagesFragment extends Fragment
         super.onActivityCreated(savedInstance);
 
         final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override
@@ -239,8 +242,10 @@ public class MessagesFragment extends Fragment
 
         Bundle bundle = getArguments();
         String oldTopicName = mTopicName;
-        mTopicName = bundle.getString("topic");
-        mMessageToSend = bundle.getString("messageText");
+        if (bundle != null) {
+            mTopicName = bundle.getString("topic");
+            mMessageToSend = bundle.getString("messageText");
+        }
 
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
 
@@ -285,14 +290,14 @@ public class MessagesFragment extends Fragment
 
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_topic, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
-    public void onPrepareOptionsMenu(final Menu menu) {
+    public void onPrepareOptionsMenu(@NonNull final Menu menu) {
         if (mTopic != null) {
             MenuItem toMute = menu.findItem(R.id.action_mute);
             MenuItem toUnmute = menu.findItem(R.id.action_unmute);
@@ -308,7 +313,7 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         try {
             switch (id) {
@@ -342,8 +347,8 @@ public class MessagesFragment extends Fragment
         } catch (NotConnectedException ignored) {
             Log.d(TAG, "Offline - not changed");
             Toast.makeText(getActivity(), R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception ignored) {
-            Log.d(TAG, "Something went wrong while muting", ignored);
+        } catch (Exception ex) {
+            Log.d(TAG, "Something went wrong while muting", ex);
         }
         return true;
     }
@@ -365,10 +370,10 @@ public class MessagesFragment extends Fragment
                     mTopic.delete().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            Intent intent = new Intent(getActivity(), ContactsActivity.class);
+                            Intent intent = new Intent(activity, ContactsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
-                            getActivity().finish();
+                            activity.finish();
                             return null;
                         }
                     }, mFailureListener);
@@ -382,11 +387,11 @@ public class MessagesFragment extends Fragment
         confirmBuilder.show();
     }
 
-    public void notifyDataSetChanged() {
+    void notifyDataSetChanged() {
         mMessagesAdapter.notifyDataSetChanged();
     }
 
-    void openFileSelector(String mimeType, int title, int resultCode) {
+    private void openFileSelector(String mimeType, int title, int resultCode) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType(mimeType);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -414,7 +419,7 @@ public class MessagesFragment extends Fragment
                     }
 
                     // Must use unique ID for each upload. Otherwise trouble.
-                    activity.getSupportLoaderManager().initLoader(Cache.getUniqueCounter(), args, this);
+                    LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
 
                     break;
                 }
@@ -423,7 +428,7 @@ public class MessagesFragment extends Fragment
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    boolean sendMessage(Drafty content) {
+    private boolean sendMessage(Drafty content) {
         MessageActivity  activity = (MessageActivity) getActivity();
         if (activity != null) {
             return activity.sendMessage(content);
@@ -431,58 +436,63 @@ public class MessagesFragment extends Fragment
         return false;
     }
 
-    void sendText() {
+    private void sendText() {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
-        final TextView inputField = activity.findViewById(R.id.editMessage);
+        final EditText inputField = activity.findViewById(R.id.editMessage);
         String message = inputField.getText().toString().trim();
         // notifyDataSetChanged();
         if (!message.equals("")) {
             if (sendMessage(Drafty.parse(message))) {
                 // Message is successfully queued, clear text from the input field and redraw the list.
-                inputField.setText("");
+                inputField.getText().clear();
             }
         }
     }
 
     // Send image in-band
-    public static Drafty draftyImage(String mimeType, byte[] bits, int width, int height, String fname) {
+    private static Drafty draftyImage(String mimeType, byte[] bits, int width, int height, String fname) {
         Drafty content = Drafty.parse(" ");
         content.insertImage(0, mimeType, bits, width, height, fname);
         return content;
     }
 
     // Send file in-band
-    public static Drafty draftyFile(String mimeType, byte[] bits, String fname) {
+    private static Drafty draftyFile(String mimeType, byte[] bits, String fname) {
         Drafty content = new Drafty();
         content.attachFile(mimeType, bits, fname);
         return content;
     }
 
     // Send file as a link.
-    public static Drafty draftyAttachment(String mimeType, String fname, String refUrl, long size) {
+    private static Drafty draftyAttachment(String mimeType, String fname, String refUrl, long size) {
         Drafty content = new Drafty();
         content.attachFile(mimeType, fname, refUrl, size);
         return content;
     }
 
 
-    public void sendReadNotification() {
+    private void sendReadNotification() {
         if (mTopic != null) {
             mTopic.noteRead();
         }
     }
 
-    public void topicSubscribed() {
+    void topicSubscribed() {
         Activity activity = getActivity();
         if (activity == null) {
             return;
         }
 
         if (mTopic.getAccessMode().isWriter()) {
-            ((TextView) activity.findViewById(R.id.editMessage)).setText(TextUtils.isEmpty(mMessageToSend) ? "" : mMessageToSend);
+            EditText input = activity.findViewById(R.id.editMessage);
+            if (TextUtils.isEmpty(mMessageToSend)) {
+                input.getText().clear();
+            } else {
+                input.setText(mMessageToSend);
+            }
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
             mMessageToSend = null;
@@ -515,7 +525,7 @@ public class MessagesFragment extends Fragment
         if (activity != null) {
             // Kill the loader otherwise it will keep uploading the same file whenever the activity
             // is created.
-            activity.getSupportLoaderManager().destroyLoader(loader.getId());
+            LoaderManager.getInstance(activity).destroyLoader(loader.getId());
         } else {
             return;
         }
@@ -539,7 +549,7 @@ public class MessagesFragment extends Fragment
     public void onLoaderReset(@NonNull Loader<UploadResult> loader) {
     }
 
-    public void setProgressIndicator(boolean active) {
+    void setProgressIndicator(boolean active) {
         if (!isAdded()) {
             return;
         }
@@ -599,7 +609,7 @@ public class MessagesFragment extends Fragment
     private static Bundle getFileDetails(final Context context, Uri uri) {
         final ContentResolver resolver = context.getContentResolver();
         String fname = null;
-        Long fsize = 0L;
+        long fsize = 0L;
 
         String mimeType = resolver.getType(uri);
         if (mimeType == null) {
@@ -662,7 +672,7 @@ public class MessagesFragment extends Fragment
 
             Bundle fileDetails = getFileDetails(context, uri);
             String fname = fileDetails.getString("name");
-            Long fsize = fileDetails.getLong("size");
+            long fsize = fileDetails.getLong("size");
             String mimeType = fileDetails.getString("mime");
 
             if (fsize == 0) {
@@ -802,6 +812,7 @@ public class MessagesFragment extends Fragment
         UploadResult() {
         }
 
+        @NonNull
         public String toString() {
             return "msgId=" + msgId + ", error='" + error + "'";
         }

@@ -216,4 +216,5 @@
     <string name="invalid_or_unknown_credential">Invalid or unknown address</string>
     <string name="password_reset_message_sent">Message with instructions sent</string>
     <string name="user_not_found">Not found</string>
+    <string name="topic_tags">Tags, comma separated list</string>
 </resources>

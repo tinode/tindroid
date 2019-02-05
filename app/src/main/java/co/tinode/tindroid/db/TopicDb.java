@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
-import android.util.Log;
 
 import java.util.Date;
 
@@ -194,11 +193,13 @@ public class TopicDb implements BaseColumns {
     public static long insert(SQLiteDatabase db, Topic topic) {
         // Log.d(TAG, "Creating topic " + topic.getName());
 
+        int status = topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED;
+
         // Convert topic description to a map of values
         Date lastUsed = new Date();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
-        values.put(COLUMN_NAME_STATUS, topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED);
+        values.put(COLUMN_NAME_STATUS, status);
         values.put(COLUMN_NAME_TOPIC, topic.getName());
 
         Topic.TopicType tp = topic.getTopicType();
@@ -232,6 +233,7 @@ public class TopicDb implements BaseColumns {
             st.id = id;
             st.lastUsed = lastUsed;
             st.nextUnsentId = UNSENT_ID_START;
+            st.status = status;
             topic.setLocal(st);
         }
 
@@ -255,6 +257,7 @@ public class TopicDb implements BaseColumns {
         int status = st.status;
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
+
         if (st.status == BaseDb.STATUS_QUEUED && !topic.isNew()) {
             status = BaseDb.STATUS_SYNCED;
             values.put(COLUMN_NAME_STATUS, status);
@@ -282,7 +285,7 @@ public class TopicDb implements BaseColumns {
             st.status = status;
         }
 
-        // Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
+        //Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
         //         " name=" + topic.getName() + " returned " + updated);
 
         return updated > 0;
@@ -435,7 +438,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
                     COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
         } catch (SQLException ignored) {
-            // topic not round
+            // topic not found
             return -1;
         }
     }

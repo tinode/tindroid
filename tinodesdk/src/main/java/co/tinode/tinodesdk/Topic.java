@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -250,7 +251,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      */
     @SuppressWarnings("unchecked")
     protected void update(Map<String,Object> params, MetaSetSub sub) {
-        // Log.d(TAG, "Topic.update(ctrl.params, MetaSetSub)");
         String user = sub.user;
 
         Map<String,String> acsMap = params != null ? (Map<String,String>) params.get("acs") : null;
@@ -302,7 +302,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @param desc updated topic parameters
      */
     protected void update(MetaSetDesc<DP,DR> desc) {
-        // Log.d(TAG, "Topic.update(MetaSetDesc)");
         if (mDesc.merge(desc) && mStore != null) {
             mStore.topicUpdate(this);
         }
@@ -471,7 +470,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     public boolean isAdmin() {
         return mDesc.acs != null && mDesc.acs.isAdmin();
     }
-    public PromisedReply<ServerMessage> updateAdmin(final boolean isAdmin) throws Exception {
+    public PromisedReply<ServerMessage> updateAdmin(final boolean isAdmin) {
         return updateMode(null, isAdmin ? "+S" : "-S");
     }
 
@@ -479,7 +478,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         return mDesc.acs != null && mDesc.acs.isMuted();
     }
     @SuppressWarnings("UnusedReturnValue")
-    public PromisedReply<ServerMessage> updateMuted(final boolean muted) throws Exception {
+    public PromisedReply<ServerMessage> updateMuted(final boolean muted) {
         return updateMode(null, muted ? "-P" : "+P");
     }
 
@@ -510,7 +509,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
         return mDesc.defacs != null && mDesc.defacs.anon != null ? mDesc.defacs.anon.toString() : "";
     }
     public int getUnreadCount() {
-        //Log.d(TAG, "getUnreadCount topic=" + mName + ", seq=" + mDesc.seq + ", read=" + mDesc.read);
         int unread = mDesc.seq - mDesc.read;
         return unread > 0 ? unread : 0;
     }
@@ -520,7 +518,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     }
     protected void setOnline(boolean online) {
         if (online != mOnline) {
-            //Log.d(TAG, "Topic[" + mName + "].setOnline(" + online + ");");
             mOnline = online;
             if (mListener != null) {
                 mListener.onOnline(mOnline);
@@ -550,17 +547,23 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
     /**
      * Subscribe to topic
-     *
-     * @throws Exception when anything goes wrong
      */
-    public PromisedReply<ServerMessage> subscribe() throws Exception {
+    public PromisedReply<ServerMessage> subscribe() {
         MsgSetMeta<DP,DR> mset = null;
-        if (isNew() && (mDesc.pub != null || mDesc.priv != null)) {
+        MsgGetMeta mget;
+        if (isNew()) {
             // If this is a new topic, sync topic description
-            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, null);
+            List<String> tags = null;
+            if (mTags != null) {
+                tags = Arrays.asList(mTags);
+            }
+            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, tags);
+            mget = null;
+        } else {
+            mget = getMetaGetBuilder()
+                    .withGetDesc().withGetData().withGetSub().withGetTags().build();
         }
-        return subscribe(mset, getMetaGetBuilder()
-                .withGetDesc().withGetData().withGetSub().withGetTags().build());
+        return subscribe(mset, mget);
     }
 
     /**
@@ -570,20 +573,16 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP,DR> set, MsgGetMeta get)
-            throws Exception {
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP,DR> set, MsgGetMeta get) {
 
         if (mAttached) {
             throw new AlreadySubscribedException();
         }
 
         final String topicName = getName();
-        final boolean newTopic;
-        if (mTinode.getTopic(topicName) == null) {
+        final boolean newTopic = isNew();
+        if (newTopic) {
             mTinode.registerTopic(this);
-            newTopic = true;
-        } else {
-            newTopic = false;
         }
 
         if (!mTinode.isConnected()) {
@@ -599,7 +598,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                             if (msg.ctrl != null) {
                                 if (msg.ctrl.params != null) {
                                     mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
-                                    if (isNew()) {
+                                    if (newTopic) {
                                         setUpdated(msg.ctrl.ts);
                                         setName(msg.ctrl.topic);
                                         mTinode.changeTopicName(Topic.this, topicName);
@@ -626,6 +625,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                                 mTinode.unregisterTopic(topicName);
                             }
                         }
+
                         // Rethrow exception to trigger the next failure handler.
                         throw err;
                     }
@@ -643,7 +643,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
-    public PromisedReply<ServerMessage> leave(final boolean unsub) throws Exception {
+    public PromisedReply<ServerMessage> leave(final boolean unsub) {
         if (mAttached) {
             return mTinode.leave(getName(), unsub).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
@@ -672,7 +672,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotConnectedException if there is no connection to server
      */
     @SuppressWarnings("UnusedReturnValue")
-    public PromisedReply<ServerMessage> leave() throws Exception {
+    public PromisedReply<ServerMessage> leave() {
         return leave(false);
     }
 
@@ -762,8 +762,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotConnectedException if there is no connection to server
      */
     @SuppressWarnings("UnusedReturnValue")
-    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncAll()
-            throws Exception {
+    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncAll() {
         PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
         if (mStore == null) {
             return last;
@@ -902,7 +901,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<DP,DR> meta) throws Exception {
+    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<DP,DR> meta) {
         if (mAttached) {
             return mTinode.setMeta(getName(), meta).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
@@ -927,7 +926,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<DP,DR> desc) throws Exception {
+    protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<DP,DR> desc) {
         return setMeta(new MsgSetMeta<>(desc, null, null));
     }
 
@@ -939,7 +938,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> setDescription(final DP pub, final DR priv) throws Exception {
+    public PromisedReply<ServerMessage> setDescription(final DP pub, final DR priv) {
         return setDescription(new MetaSetDesc<>(pub, priv));
     }
 
@@ -952,7 +951,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> updateDefAcs(String auth, String anon)  throws Exception {
+    public PromisedReply<ServerMessage> updateDefAcs(String auth, String anon) {
         return setDescription(new MetaSetDesc<DP,DR>(new Defacs(auth, anon)));
     }
 
@@ -962,7 +961,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) throws Exception {
+    protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) {
         return setMeta(new MsgSetMeta<DP,DR>(null, sub, null));
     }
 
@@ -975,7 +974,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> updateMode(String uid, final String update) throws Exception {
+    public PromisedReply<ServerMessage> updateMode(String uid, final String update) {
         final Subscription sub;
         if (uid != null) {
             sub = getSubscription(uid);
@@ -1026,7 +1025,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply<ServerMessage> invite(String uid, String mode) throws Exception {
+    public PromisedReply<ServerMessage> invite(String uid, String mode) {
 
         final Subscription<SP,SR> sub;
         if (getSubscription(uid) != null) {
@@ -1085,7 +1084,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotConnectedException if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
-    public PromisedReply<ServerMessage> eject(String uid, boolean ban) throws Exception {
+    public PromisedReply<ServerMessage> eject(String uid, boolean ban) {
         final Subscription<SP,SR> sub = getSubscription(uid);
 
         if (sub == null) {
@@ -1167,7 +1166,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) throws Exception {
+    public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, list, hard);
         }
@@ -1209,7 +1208,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> delete() throws Exception {
+    public PromisedReply<ServerMessage> delete() {
         if (!mTinode.isConnected()) {
             throw new NotConnectedException();
         }
@@ -1479,7 +1478,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
     }
 
     protected void routeMeta(MsgServerMeta<DP,DR,SP,SR> meta) {
-        //Log.d(TAG, "Generic.routeMeta");
         if (meta.desc != null) {
             routeMetaDesc(meta);
         }
@@ -1618,7 +1616,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
 
             case ACS:
                 sub = getSubscription(pres.src);
-                Log.d(TAG, "sub is " + sub);
                 if (sub == null) {
                     Acs acs = new Acs();
                     acs.update(pres.dacs);
@@ -1633,12 +1630,9 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                             mStore.topicUpdate(this);
                         }
                     }
-                    Log.d(TAG, "sub.acs = " + sub.acs.toString());
                     // User left topic.
                     if (!sub.acs.isModeDefined()) {
-                        Log.d(TAG, "sub.acs NOT DEFINED");
                         if (isP2PType()) {
-                            Log.d(TAG, "P2P, calling leave()");
                             // If the second user unsubscribed from the topic, then the topic is no longer usable.
                             try {
                                 leave();
@@ -1650,7 +1644,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData {
                 }
                 break;
             default:
-                Log.d(TAG, "Unknown presence update: " + pres.what);
+                Log.i(TAG, "Unknown presence update: " + pres.what);
         }
 
         if (mListener != null) {

@@ -21,9 +21,14 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
 
     @Override
     public void onCreatePreferences(Bundle bundle, String rootKey) {
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
         setHasOptionsMenu(false);
 
-        ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
         }

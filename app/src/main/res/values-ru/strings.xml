@@ -183,4 +183,5 @@
     <string name="tinode_message">Отправить сообщение Tinode</string>
     <string name="tinode_invite_body">Попробуйте Tinode Messenger. Check out Tindroid Messenger. Скачайте его из https://github.com/tinode/</string>
     <string name="user_not_found">Не найден</string>
+    <string name="topic_tags">Тэги, писок через запятую</string>
 </resources>

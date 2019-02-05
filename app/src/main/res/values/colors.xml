@@ -49,9 +49,9 @@
     <color name="colorBorderRed">#E57373</color>
     <color name="colorBorderYellow">#FFCA28</color>
 
-    <color name="colorMessageBubble">#c5e1a5</color>
-    <color name="colorMessageMetaBubble">#CFD8DC</color>
-
+    <color name="colorMessageBubbleMine">#00000000</color>
+    <color name="colorMessageBubbleOther">#FFC5E1A5</color>
+    <color name="colorMessageBubbleMeta">#FFCFD8DC</color>
 
     <!-- Background colors for LetterTileDrawables. -->
     <array name="letter_tile_colors_light">

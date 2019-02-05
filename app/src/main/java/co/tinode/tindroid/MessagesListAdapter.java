@@ -8,6 +8,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
@@ -18,6 +19,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.core.content.FileProvider;
 import androidx.loader.content.Loader;
@@ -115,11 +117,11 @@ public class MessagesListAdapter
 
     // This is a map of message IDs to their corresponding loader IDs.
     // This is needed for upload cancellations.
-    private LongSparseArray<Integer> mLoaders = null;
+    private LongSparseArray<Integer> mLoaders;
 
     private SpanClicker mSpanFormatterClicker;
 
-    public MessagesListAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
+    MessagesListAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
 
         mActivity = context;
@@ -265,8 +267,8 @@ public class MessagesListAdapter
                     }, null);
                 } catch (NotConnectedException ignored) {
                     Log.d(TAG, "sendDeleteMessages -- NotConnectedException");
-                } catch (Exception ignored) {
-                    Log.d(TAG, "sendDeleteMessages -- Exception", ignored);
+                } catch (Exception ex) {
+                    Log.d(TAG, "sendDeleteMessages -- Exception", ex);
                     Toast.makeText(mActivity, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
                 }
             } else if (discarded > 0) {
@@ -304,41 +306,49 @@ public class MessagesListAdapter
         return itemType;
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // create a new view
+        // Create a new message bubble view.
+
         View v;
 
+        final Resources res = mActivity.getResources();
+        final int leftBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleOther, null);
+        final int rightBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMine, null);
+        final int metaBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMeta, null);
         int bgColor = 0;
         switch (viewType) {
             case VIEWTYPE_FULL_CENTER:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message, parent, false);
-                bgColor = UiUtils.COLOR_META_BUBBLE;
+                bgColor = metaBgColor;
                 break;
             case VIEWTYPE_FULL_LEFT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single, parent, false);
-                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_AVATAR:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar, parent, false);
-                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_RIGHT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single, parent, false);
+                bgColor = rightBgColor;
                 break;
             case VIEWTYPE_SIMPLE_LEFT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left, parent, false);
-                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_AVATAR:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar, parent, false);
-                bgColor = UiUtils.COLOR_MESSAGE_BUBBLE;
+                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_RIGHT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right, parent, false);
+                bgColor = rightBgColor;
                 break;
             default:
-                return null;
+                v = null;
         }
 
         if (bgColor != 0) {
@@ -351,8 +361,8 @@ public class MessagesListAdapter
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
-    public void onBindViewHolder(@NonNull final ViewHolder holder, int position, List<Object> payload) {
-        if (payload != null && !payload.isEmpty()) {
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position, @NonNull List<Object> payload) {
+        if (!payload.isEmpty()) {
             Float progress = (Float) payload.get(0);
             holder.mProgressBar.setProgress((int) (progress * 100));
             return;
@@ -366,9 +376,12 @@ public class MessagesListAdapter
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
 
-        ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
-
+        final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
         final StoredMessage m = getMessage(position);
+
+        if (topic == null || m == null) {
+            return;
+        }
 
         // Disable attachment clicker.
         boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED || m.status == BaseDb.STATUS_DRAFT) &&
@@ -413,7 +426,7 @@ public class MessagesListAdapter
         }
 
         if (holder.mAvatar != null || holder.mUserName != null) {
-            Subscription<VxCard,?> sub = topic != null ? topic.getSubscription(m.from) : null;
+            Subscription<VxCard,?> sub = topic.getSubscription(m.from);
             if (sub != null && sub.pub != null) {
                 Bitmap avatar = sub.pub.getBitmap();
                 if (holder.mAvatar != null) {
@@ -452,7 +465,7 @@ public class MessagesListAdapter
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
                 if (m.status <= BaseDb.STATUS_QUEUED) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
-                } else if (topic != null) {
+                } else {
                     if (topic.msgReadCount(m.seq) > 0) {
                         holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
                     } else if (topic.msgRecvCount(m.seq) > 0) {
@@ -494,7 +507,7 @@ public class MessagesListAdapter
     }
 
     // Must match position-to-item of getItemId.
-    StoredMessage getMessage(int position) {
+    private StoredMessage getMessage(int position) {
         if (mCursor != null) {
             if (mCursor.moveToPosition(position)) {
                 return StoredMessage.readMessage(mCursor);
@@ -514,7 +527,7 @@ public class MessagesListAdapter
         return -1;
     }
 
-    public int getItemPositionById(long itemId, int first, int last) {
+    int getItemPositionById(long itemId, int first, int last) {
         if (mCursor == null || mCursor.isClosed()) {
             return -1;
         }
@@ -556,6 +569,7 @@ public class MessagesListAdapter
     }
 
     void swapCursor(final String topicName, final Cursor cursor, boolean refresh) {
+
         if (mCursor != null && mCursor == cursor) {
             return;
         }
@@ -605,7 +619,7 @@ public class MessagesListAdapter
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final LoaderManager lm = mActivity.getSupportLoaderManager();
+                final LoaderManager lm = LoaderManager.getInstance(mActivity);
                 final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
                 if (loader != null && !loader.isReset()) {
                     lm.restartLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this);
@@ -702,7 +716,7 @@ public class MessagesListAdapter
     private boolean cancelUpload(long msgId) {
         Integer loaderId = mLoaders.get(msgId);
         if (loaderId != null) {
-            mActivity.getSupportLoaderManager().destroyLoader(loaderId);
+            LoaderManager.getInstance(mActivity).destroyLoader(loaderId);
             // Change mapping to force background loading process to return early.
             addLoaderMapping(msgId, -1);
             return true;

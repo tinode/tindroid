@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -54,6 +56,10 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             @Override
             public PromisedReply<ServerMessage> onFailure(final Exception err) {
                 final Activity activity = getActivity();
+                if (activity == null) {
+                    return null;
+                }
+
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -74,8 +80,13 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        final FragmentActivity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         mImageLoader = new ImageLoader(getActivity(), UiUtils.getListPreferredItemHeight(this),
-                getActivity().getSupportFragmentManager()) {
+                activity.getSupportFragmentManager()) {
             @Override
             protected Bitmap processBitmap(Object data) {
                 // This gets called in a background thread and passed the data from
@@ -88,10 +99,8 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView");
-
         setHasOptionsMenu(true);
 
         return inflater.inflate(R.layout.fragment_add_group, container, false);
@@ -101,8 +110,10 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
-        Log.d(TAG, "onActivityCreated");
         final FragmentActivity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
 
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,13 +122,13 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             }
         });
 
-        mChipsInput = (ChipsInput)  activity.findViewById(R.id.groupMembers);
+        mChipsInput = activity.findViewById(R.id.groupMembers);
         //setListAdapter(mContactsAdapter);
 
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final EditText titleEdit = ((EditText) activity.findViewById(R.id.editTitle));
+                final EditText titleEdit = activity.findViewById(R.id.editTitle);
                 final String topicTitle = titleEdit.getText().toString();
                 if (TextUtils.isEmpty(topicTitle)) {
                     titleEdit.setError(getString(R.string.name_required));
@@ -125,8 +136,9 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
                 }
                 final String subtitle = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
 
+                final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
+
                 List<Chip> selected = (List<Chip>) mChipsInput.getSelectedChipList();
-                Log.d(TAG, "Chips count: " + selected.size() + " == " + mChipsInput.getChildCount());
                 if (selected.size() == 0) {
                     Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
                     return;
@@ -141,7 +153,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
                     // Ignore it.
                 }
 
-                createTopic(activity, topicTitle, bmp, subtitle);
+                createTopic(activity, topicTitle, bmp, subtitle, UiUtils.parseTags(tags));
             }
         });
 
@@ -166,8 +178,13 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.acceptAvatar(getActivity(), (ImageView) getActivity().findViewById(R.id.imageAvatar), data);
+            UiUtils.acceptAvatar(getActivity(), (ImageView) activity.findViewById(R.id.imageAvatar), data);
         }
     }
 
@@ -176,10 +193,12 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
         mChipsInput.setFilterableList(UiUtils.createChipsInputFilteredList(data));
     }
 
-    private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle) {
+    private void createTopic(final Activity activity, final String title,
+                             final Bitmap avatar, final String subtitle, final String[] tags) {
         final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), (Topic.Listener) null);
         topic.setPub(new VxCard(title, avatar));
         topic.setPriv(subtitle);
+        topic.setTags(tags);
         try {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
@@ -199,8 +218,9 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
             // Go back to contacts
-        } catch (Exception e) {
+        } catch (Exception ex) {
             Toast.makeText(activity, R.string.failed_to_create_topic, Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "Failed to create topic", ex);
         }
 
         startActivity(new Intent(activity, ContactsActivity.class));

@@ -13,18 +13,16 @@
         android:layout_width="@dimen/avatar_size_large"
         android:layout_height="@dimen/avatar_size_large"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:layout_margin="4sp"
         android:clickable="true"
         android:contentDescription="@string/avatar"
-        app:srcCompat="@drawable/ic_group_circle"/>
+        app:srcCompat="@drawable/ic_group"/>
 
     <Button
         android:id="@+id/uploadAvatar"
         android:layout_width="48sp"
         android:layout_height="48sp"
         android:layout_alignBottom="@id/imageAvatar"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="2sp"
         android:background="@drawable/pill_counter"
@@ -34,9 +32,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@id/imageAvatar"
         android:layout_toStartOf="@id/imageAvatar"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:orientation="vertical">
@@ -71,4 +67,21 @@
             tools:text="Private topic info"/>
     </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/editTagsWrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/uploadAvatar"
+        android:layout_marginTop="6dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/topic_tags"
+            android:inputType="text"
+            tools:text="ttag1, ttag2, ttag3"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
 </RelativeLayout>
