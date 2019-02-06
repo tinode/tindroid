@@ -103,9 +103,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     protected int mMaxDel = 0;
 
     protected Topic(Tinode tinode, Subscription<SP,SR> sub) {
-        if (tinode == null) {
-            throw new IllegalArgumentException("Tinode cannot be null");
-        }
         mTinode = tinode;
 
         setName(sub.topic);
@@ -119,9 +116,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     }
 
     protected Topic(Tinode tinode, String name, Description<DP,DR> desc) {
-        if (tinode == null) {
-            throw new IllegalArgumentException("Tinode cannot be null");
-        }
         mTinode = tinode;
 
         setName(name);
@@ -140,9 +134,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @throws IllegalArgumentException if 'tinode' argument is null
      */
     protected Topic(Tinode tinode, String name, Listener<DP,DR,SP,SR> l) {
-        if (tinode == null) {
-            throw new IllegalArgumentException("Tinode cannot be null");
-        }
         mTinode = tinode;
 
         setName(name);

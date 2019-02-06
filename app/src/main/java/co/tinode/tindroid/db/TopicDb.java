@@ -384,7 +384,7 @@ public class TopicDb implements BaseColumns {
     @SuppressWarnings("unchecked, WeakerAccess")
     protected static Topic readOne(Tinode tinode, Cursor c) {
         // Instantiate topic of an appropriate class ('me' or 'fnd' or group)
-        Topic topic = tinode.newTopic(c.getString(COLUMN_IDX_TOPIC), null);
+        Topic topic = Tinode.newTopic(tinode, c.getString(COLUMN_IDX_TOPIC), null);
         StoredTopic.deserialize(topic, c);
         return topic;
     }

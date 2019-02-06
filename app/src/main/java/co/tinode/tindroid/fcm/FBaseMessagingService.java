@@ -23,11 +23,12 @@ import co.tinode.tindroid.ContactsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
-import co.tinode.tindroid.account.ContactsManager;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.User;
 
 /**
  * Receive and handle (e.g. show) a push notification message.
@@ -48,6 +49,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onMessageReceived(RemoteMessage remoteMessage) {
         // There are two types of messages data messages and notification messages. Data messages are handled
         // here in onMessageReceived whether the app is in the foreground or background. Data messages are the type
@@ -84,42 +86,36 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
 
             // Fetch locally stored contacts
-            Subscription<VxCard,?> sender = ContactsManager.getStoredSubscription(getContentResolver(),
-                    data.get("xfrom"));
-            Subscription<VxCard,?> topic = ContactsManager.getStoredSubscription(getContentResolver(),
-                    topicName);
-            if (topic == null || sender == null) {
-                Log.w(TAG, "Unknown sender or topic in a push notification");
-                return;
-            }
-
+            Storage store = BaseDb.getInstance().getStore();
+            User<VxCard> sender = (User<VxCard>) store.userGet(data.get("xfrom"));
+            String senderName  = (sender == null || sender.pub == null) ?
+                    getResources().getString(R.string.sender_unknown) : sender.pub.fn;
+            Bitmap senderIcon = (sender == null || sender.pub == null) ?
+                    null : makeLargeIcon(sender.pub.getBitmap());
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
-
             if (tp == Topic.TopicType.P2P) {
                 // P2P message
-                if (sender != null && sender.pub != null) {
-                    title = sender.pub.fn;
-                    body = data.get("content");
-                    avatar = makeLargeIcon(sender.pub.getBitmap());
-                }
+                title = senderName;
+                body = data.get("content");
+                avatar = senderIcon;
 
             } else if (tp == Topic.TopicType.GRP) {
                 // Group message
-                if (topic != null && topic.pub != null && sender != null && sender.pub != null) {
-                    title = topic.pub.fn;
-                    body = sender.pub.fn + ": " + data.get("content");
-                    avatar = makeLargeIcon(sender.pub.getBitmap());
+
+                Topic<VxCard,?,?,?> topic = (Topic<VxCard,?,?,?>) store.topicGet(null, topicName);
+                if (topic == null) {
+                    Log.w(TAG, "Unknown topic: " + topicName);
+                    return;
                 }
-            } else if (tp == Topic.TopicType.ME) {
-                // TODO(gene): implement invite notification
-                // Invite or a request to approve an application to join
-                title = "User Name";
-                body = "Invite: " + data.get("content");
-            } else if (tp == Topic.TopicType.FND) {
-                // TODO(gene): implement contact found notification
-                // Someone joined Tinode
-                title = "User Name has joined";
-                body = data.get("content");
+
+                if (topic.getPub() != null) {
+                    title = topic.getPub().fn;
+                    body = senderName + ": " + data.get("content");
+                    avatar = senderIcon;
+                }
+            } else {
+                Log.w(TAG, "Unexpected topic type=" + tp);
+                return;
             }
         } else if (remoteMessage.getNotification() != null) {
             RemoteMessage.Notification data = remoteMessage.getNotification();

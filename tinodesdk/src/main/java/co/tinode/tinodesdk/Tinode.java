@@ -1334,6 +1334,26 @@ public class Tinode {
         mConnection.send(message);
     }
 
+
+    /**
+     * Instantiate topic of an appropriate class given the name.
+     *
+     * @param tinode instance of core Tinode to attach topic to
+     * @param name name of the topic to create
+     * @param l    event listener; could be null
+     * @return topic of an appropriate class
+     */
+    @SuppressWarnings("unchecked")
+    public static Topic newTopic(final Tinode tinode, final String name, final Topic.Listener l) {
+        if (TOPIC_ME.equals(name)) {
+            return new MeTopic(tinode, l);
+        } else if (TOPIC_FND.equals(name)) {
+            return new FndTopic(tinode, l);
+        }
+        return new ComTopic(tinode, name, l);
+    }
+
+
     /**
      * Instantiate topic of an appropriate class given the name.
      *
@@ -1342,13 +1362,8 @@ public class Tinode {
      * @return topic of an appropriate class
      */
     @SuppressWarnings("unchecked")
-    public Topic newTopic(String name, Topic.Listener l) {
-        if (TOPIC_ME.equals(name)) {
-            return new MeTopic(this, l);
-        } else if (TOPIC_FND.equals(name)) {
-            return new FndTopic(this, l);
-        }
-        return new ComTopic(this, name, l);
+    public Topic newTopic(final String name, final Topic.Listener l) {
+        return Tinode.newTopic(this, name, l);
     }
 
     @SuppressWarnings("unchecked")

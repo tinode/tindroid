@@ -29,6 +29,8 @@ public interface Storage {
 
     // Fetch all topics
     Topic[] topicGetAll(Tinode tinode);
+    // Fetch one topic by name
+    Topic topicGet(Tinode tinode, String name);
     // Add new topic
     long topicAdd(Topic topic);
     /** Incoming change to topic description: the already mutated topic in memory is synchronized to DB */

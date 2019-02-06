@@ -23,7 +23,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Persistence for Tinode.
  */
-class SqlStore implements Storage {
+public class SqlStore implements Storage {
 
     private static final String TAG = "SqlStore";
 
@@ -70,7 +70,7 @@ class SqlStore implements Storage {
     }
 
     @Override
-    public Topic[] topicGetAll(Tinode tinode) {
+    public Topic[] topicGetAll(final Tinode tinode) {
         Cursor c = TopicDb.query(mDbh.getReadableDatabase());
         if (c != null && c.moveToFirst()) {
             Topic[] list = new Topic[c.getCount()];
@@ -81,6 +81,11 @@ class SqlStore implements Storage {
             return list;
         }
         return null;
+    }
+
+    @Override
+    public Topic topicGet(final Tinode tinode, final String name) {
+        return TopicDb.readOne(mDbh.getReadableDatabase(), tinode, name);
     }
 
     @Override

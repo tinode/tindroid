@@ -36,6 +36,10 @@ public class VCard implements Serializable {
     }
 
     private static String typeToString(ContactType tp) {
+        if (tp == null) {
+            return null;
+        }
+
         switch (tp) {
             case HOME:
                 return TYPE_HOME;
@@ -53,6 +57,10 @@ public class VCard implements Serializable {
     }
 
     private static ContactType stringToType(String str) {
+        if (str == null) {
+            return null;
+        }
+
         switch (str) {
             case TYPE_HOME:
                 return ContactType.HOME;

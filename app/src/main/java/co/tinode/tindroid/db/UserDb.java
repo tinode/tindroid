@@ -197,7 +197,7 @@ public class UserDb implements BaseColumns {
         return id;
     }
 
-    static <Pu> User<Pu> readOne(SQLiteDatabase db, String uid) {
+    public static <Pu> User<Pu> readOne(SQLiteDatabase db, String uid) {
         // Instantiate topic of an appropriate class ('me' or group)
         User<Pu> user = null;
         String sql =
