@@ -1,11 +1,15 @@
 package co.tinode.tinodesdk;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgServerMeta;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
+import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-/* Communication topic: a P2P or Group.
+/**
+ * Communication topic: a P2P or Group.
  */
 public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
@@ -37,6 +41,28 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public String getComment() {
         PrivateType p = super.getPriv();
         return p != null ? p.getComment() : null;
+    }
+
+    /**
+     * Checks if the topic is archived. Not all topics support archiving.
+     * @return true if the topic is archived, false otherwise.
+     */
+    @Override
+    public boolean isArchived() {
+        PrivateType p = super.getPriv();
+        return p != null ? p.isArchived() : false;
+    }
+
+    /**
+     * Archive topic by issuing {@link Topic#setMeta} with priv set to {arch: true/false}.
+     *
+     * @throws NotSubscribedException if the client is not subscribed to the topic
+     * @throws NotConnectedException if there is no connection to the server
+     */
+    public PromisedReply<ServerMessage> archive(final boolean arch) {
+        PrivateType priv = new PrivateType();
+        priv.setArchived(arch);
+        return setMeta(new MsgSetMeta<>(new MetaSetDesc<DP,PrivateType>(null, priv)));
     }
 
     public static class ComListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {

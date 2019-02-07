@@ -137,7 +137,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      * @param topic topic handle for action
      */
     private void showNotification(String title, String body, Bitmap avatar, String topic) {
-        Log.d(TAG, "Notification title=" + title + ", body=" + body + "topic=" + topic);
+        // Log.d(TAG, "Notification title=" + title + ", body=" + body + ", topic=" + topic);
 
         Intent intent;
         if (TextUtils.isEmpty(topic)) {

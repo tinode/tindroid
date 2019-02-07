@@ -460,6 +460,15 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         mDesc.priv = priv;
     }
 
+    /**
+     * Checks if the topic is archived. Not all topics support archiving.
+     * @return true if the topic is archived, false otherwise.
+     */
+    public boolean isArchived() {
+        return false;
+    }
+
+
     public Storage.Range getCachedMessageRange() {
         return mStore == null ? null : mStore.getCachedMessagesRange(this);
     }

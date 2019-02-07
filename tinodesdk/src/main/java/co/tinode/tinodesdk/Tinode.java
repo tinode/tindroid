@@ -68,12 +68,18 @@ public class Tinode {
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
+
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_USR_PREFIX = "usr";
+
     protected static final String NOTE_KP = "kp";
     protected static final String NOTE_READ = "read";
     protected static final String NOTE_RECV = "recv";
+
     private static final String TAG = "Tinode";
+
+    public static final String NULL_VALUE = "\u2421";
+
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
@@ -200,10 +206,10 @@ public class Tinode {
         return sJsonMapper;
     }
 
-    // FIXME(gene): this is broken. Figure out how to handle nulls
+    // Compares object to a string which signifies "null" to the server.
     public static boolean isNull(Object obj) {
         // Del control character
-        return (obj instanceof String) && obj.equals("\u2421");
+        return (obj instanceof String) && obj.equals(NULL_VALUE);
     }
 
     /**
