@@ -17,10 +17,13 @@ public class PrivateType extends HashMap<String,Object> {
 
     @JsonIgnore
     public String getComment() {
-        String comment = (String) get("comment");
-        if (Tinode.isNull(comment)) {
-            return null;
-        }
+        String comment = null;
+        try {
+            comment = (String) get("comment");
+            if (Tinode.isNull(comment)) {
+                comment = null;
+            }
+        } catch (ClassCastException ignored) {}
         return comment;
     }
 
@@ -38,7 +41,12 @@ public class PrivateType extends HashMap<String,Object> {
         if (Tinode.isNull(arch)) {
             return false;
         }
-        return (Boolean) arch;
+        
+        try {
+            return (Boolean) arch;
+        } catch (ClassCastException ignored) {}
+
+        return false;
     }
 
     @JsonIgnore
