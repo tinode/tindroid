@@ -195,8 +195,9 @@ public class TopicDb implements BaseColumns {
 
         int status = topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED;
 
-        // Convert topic description to a map of values
-        Date lastUsed = topic.getTouched() != null ? topic.getTouched() : new Date();
+        // Convert topic description to a map of values. If value is not set use a magical constant.
+        // 1414213562373L is Oct 25, 2014 05:06:02.373 UTC, incidentally equal to the first few digits of sqrt(2)
+        Date lastUsed = topic.getTouched() != null ? topic.getTouched() : new Date(1414213562373L);
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
         values.put(COLUMN_NAME_STATUS, status);

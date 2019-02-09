@@ -17,7 +17,6 @@ import androidx.preference.PreferenceManager;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -156,8 +155,7 @@ public class AccountInfoFragment extends Fragment {
                         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                TextView editor = (TextView)
-                                        ((AlertDialog) dialog).findViewById(R.id.enterPassword);
+                                TextView editor = ((AlertDialog) dialog).findViewById(R.id.enterPassword);
                                 if (editor != null) {
                                     String password = editor.getText().toString();
                                     if (!TextUtils.isEmpty(password)) {
@@ -221,7 +219,7 @@ public class AccountInfoFragment extends Fragment {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        UiUtils.updateTitle(getActivity(), me, titleEditor.getText().toString(), null);
+                        UiUtils.updateTitle(activity, me, titleEditor.getText().toString(), null);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -265,9 +263,14 @@ public class AccountInfoFragment extends Fragment {
 
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         final MeTopic me = Cache.getTinode().getMeTopic();
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.updateAvatar(getActivity(), me, data);
+            UiUtils.updateAvatar(activity, me, data);
         }
     }
 

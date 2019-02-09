@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -24,6 +23,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -310,7 +310,7 @@ public class TopicInfoFragment extends Fragment {
                     newTitle = titleEditor.getText().toString();
                 }
                 String newPriv = subtitleEditor.getText().toString();
-                UiUtils.updateTitle(getActivity(), mTopic, newTitle, newPriv);
+                UiUtils.updateTitle(activity, mTopic, newTitle, newPriv);
             }
         });
         builder.setNegativeButton(android.R.string.cancel, null);
@@ -359,6 +359,10 @@ public class TopicInfoFragment extends Fragment {
             return;
         }
 
+        if (Cache.getTinode().isMe(uid)) {
+            return;
+        }
+
         final String titleFixed = TextUtils.isEmpty(title) ?
                 activity.getString(R.string.placeholder_contact_title) :
                 title;
@@ -382,8 +386,13 @@ public class TopicInfoFragment extends Fragment {
                 try {
                     switch (v.getId()) {
                         case R.id.buttonViewProfile:
+                            Toast.makeText(activity, R.string.not_implemented, Toast.LENGTH_SHORT).show();
                             break;
                         case R.id.buttonSendMessage:
+                            Intent intent = new Intent(activity, MessageActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            intent.putExtra("topic", uid);
+                            startActivity(intent);
                             break;
                         case R.id.buttonPermissions:
                             UiUtils.showEditPermissions(activity, mTopic, mode, uid, UiUtils.ACTION_UPDATE_SUB, true);
@@ -524,7 +533,9 @@ public class TopicInfoFragment extends Fragment {
         TextView extraInfo;
         LinearLayout statusContainer;
         TextView[] status;
+        ImageButton more;
         AppCompatImageView icon;
+
 
         MemberViewHolder(View item) {
             super(item);
@@ -536,6 +547,7 @@ public class TopicInfoFragment extends Fragment {
             for (int i = 0; i < status.length; i++) {
                 status[i] = (TextView) statusContainer.getChildAt(i);
             }
+            more = item.findViewById(R.id.optionsMenu);
             icon = item.findViewById(android.R.id.icon);
         }
     }
@@ -592,10 +604,13 @@ public class TopicInfoFragment extends Fragment {
             if (activity == null) {
                 return;
             }
+
             final Subscription<VxCard,PrivateType> sub = mItems[position];
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
+            final boolean isMe = Cache.getTinode().isMe(sub.user);
+
             Bitmap bmp = null;
-            String title = Cache.getTinode().isMe(sub.user) ? activity.getString(R.string.current_user) : null;
+            String title = isMe ? activity.getString(R.string.current_user) : null;
             if (sub.pub != null) {
                 if (title == null) {
                     title = !TextUtils.isEmpty(sub.pub.fn) ? sub.pub.fn :
@@ -625,7 +640,7 @@ public class TopicInfoFragment extends Fragment {
             UiUtils.assignBitmap(getActivity(), holder.icon, bmp,
                     sub.pub != null ? sub.pub.fn : null, sub.user);
 
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
+            final View.OnClickListener action = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     int position = holder.getAdapterPosition();
@@ -635,7 +650,15 @@ public class TopicInfoFragment extends Fragment {
                             sub.acs.getGiven());
                     Log.d(TAG, "Click on '" + sub.user + "', pos=" + holder.getAdapterPosition());
                 }
-            });
+            };
+
+            holder.itemView.setOnClickListener(action);
+            if (isMe) {
+                holder.more.setVisibility(View.INVISIBLE);
+            } else {
+                holder.more.setVisibility(View.VISIBLE);
+                holder.more.setOnClickListener(action);
+            }
         }
     }
 }

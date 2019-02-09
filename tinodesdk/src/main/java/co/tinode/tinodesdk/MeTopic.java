@@ -124,6 +124,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
                 case MSG: // new message received
                     topic.setSeq(pres.seq);
+                    topic.setTouched(new Date());
                     break;
 
                 case UPD: // pub/priv updated

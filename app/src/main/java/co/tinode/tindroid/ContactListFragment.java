@@ -131,7 +131,7 @@ public class ContactListFragment extends ListFragment {
         mContactsLoaderCallback = new ContactsLoaderCallback();
         mPhEmImLoaderCallback = new PhEmImLoaderCallback();
 
-        FragmentActivity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
         }
@@ -143,7 +143,7 @@ public class ContactListFragment extends ListFragment {
          *
          * http://developer.android.com/training/displaying-bitmaps/
          */
-        mImageLoader = new ImageLoader(activity, UiUtils.getListPreferredItemHeight(this),
+        mImageLoader = new ImageLoader(UiUtils.getListPreferredItemHeight(this),
                 activity.getSupportFragmentManager()) {
             @Override
             protected Bitmap processBitmap(Object data) {
@@ -154,13 +154,16 @@ public class ContactListFragment extends ListFragment {
         };
 
         // Set a placeholder loading image for the image loader
-        mImageLoader.setLoadingImage(R.drawable.ic_person_circle);
+        mImageLoader.setLoadingImage(activity, R.drawable.ic_person_circle);
 
         mContactsObserver = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange) {
-                final FragmentActivity activity = getActivity();
                 // Content changed, refresh data
+                final FragmentActivity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -173,7 +176,7 @@ public class ContactListFragment extends ListFragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the list fragment layout
         return inflater.inflate(R.layout.fragment_contact_list, container, false);
@@ -259,14 +262,18 @@ public class ContactListFragment extends ListFragment {
      * A wrapper which ensures that run-time permission to access contacts is granted.
      */
     private void assignAdapter() {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
         // Check the SDK version and whether the permission is already granted or not.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                getActivity().checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                activity.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
         } else {
             // Create the main contacts adapter
-            mAdapter = new ContactsAdapter(getActivity());
+            mAdapter = new ContactsAdapter(activity);
             setListAdapter(mAdapter);
             // mAdapter.notifyDataSetChanged();
         }
@@ -276,17 +283,22 @@ public class ContactListFragment extends ListFragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
+            final Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
                 assignAdapter();
             } else {
-                ((TextView) getActivity().findViewById(android.R.id.empty)).setText(R.string.contacts_permission_denied);
+                ((TextView) activity.findViewById(android.R.id.empty)).setText(R.string.contacts_permission_denied);
             }
         }
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
 
         try {
@@ -354,7 +366,12 @@ public class ContactListFragment extends ListFragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         menu.clear();
 
         // Inflate the menu items
@@ -365,7 +382,7 @@ public class ContactListFragment extends ListFragment {
 
         // Retrieves the system search manager service
         final SearchManager searchManager =
-                (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+                (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
 
         // Retrieves the SearchView from the search menu item
         final SearchView searchView = (SearchView) searchItem.getActionView();
@@ -373,7 +390,7 @@ public class ContactListFragment extends ListFragment {
 
         // Assign searchable info to SearchView
         searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(getActivity().getComponentName()));
+                searchManager.getSearchableInfo(activity.getComponentName()));
 
         // Set listeners for SearchView
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -385,6 +402,11 @@ public class ContactListFragment extends ListFragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                final FragmentActivity activity = getActivity();
+                if (activity == null) {
+                    return true;
+                }
+
                 // Called when the action bar search text has changed.  Updates
                 // the search filter, and restarts the loader to do a new query
                 // using the new search string.
@@ -405,13 +427,13 @@ public class ContactListFragment extends ListFragment {
 
                 // Restarts the loader. This triggers onCreateLoader(), which builds the
                 // necessary content Uri from mSearchTerm.
-                LoaderManager.getInstance(getActivity()).restartLoader(ContactsQuery.CORE_QUERY_ID,
+                LoaderManager.getInstance(activity).restartLoader(ContactsQuery.CORE_QUERY_ID,
                         null, mContactsLoaderCallback);
                 return true;
             }
         });
 
-        MenuItemCompat.setOnActionExpandListener(searchItem, new MenuItemCompat.OnActionExpandListener() {
+        searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionExpand(MenuItem menuItem) {
                 searchView.setIconified(false);
@@ -421,14 +443,20 @@ public class ContactListFragment extends ListFragment {
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem menuItem) {
+                final FragmentActivity activity = getActivity();
+                if (activity == null) {
+                    return true;
+                }
+
                 searchView.clearFocus();
+
                 // When the user collapses the SearchView the current search string is
                 // cleared and the loader restarted.
                 if (!TextUtils.isEmpty(mSearchTerm)) {
                     onSelectionCleared();
                 }
                 mSearchTerm = null;
-                LoaderManager.getInstance(getActivity()).restartLoader(ContactsQuery.CORE_QUERY_ID,
+                LoaderManager.getInstance(activity).restartLoader(ContactsQuery.CORE_QUERY_ID,
                         null, mContactsLoaderCallback);
                 return true;
             }
@@ -453,7 +481,7 @@ public class ContactListFragment extends ListFragment {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         if (!TextUtils.isEmpty(mSearchTerm)) {
             // Saves the current search string
@@ -465,7 +493,12 @@ public class ContactListFragment extends ListFragment {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return false;
+        }
+
         switch (item.getItemId()) {
             // Sends a request to the People app to display the create contact screen
             case R.id.action_add_contact:
@@ -478,11 +511,12 @@ public class ContactListFragment extends ListFragment {
                 return false;
 
             case R.id.action_settings:
-                ((ContactsActivity) getActivity()).showAccountInfoFragment();
+                ((ContactsActivity) activity).showAccountInfoFragment();
                 break;
 
             case R.id.action_about:
                 DialogFragment about = new AboutDialogFragment();
+                // This warning is a false positive.
                 about.show(getFragmentManager(), "about");
                 return true;
         }
@@ -556,7 +590,6 @@ public class ContactListFragment extends ListFragment {
         // restrict results to contacts that have a display name and are linked to visible groups.
         // Notice that the search on the string provided by the user is implemented by appending
         // the search string to CONTENT_FILTER_URI.
-        @SuppressLint("InlinedApi")
         String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
 
         // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
@@ -566,7 +599,6 @@ public class ContactListFragment extends ListFragment {
 
         // The projection for the CursorLoader query. This is a list of columns that the Contacts
         // Provider should return in the Cursor.
-        @SuppressLint("InlinedApi")
         String[] PROJECTION = {
 
                 // The contact's row id
@@ -614,7 +646,7 @@ public class ContactListFragment extends ListFragment {
          *
          * @param context A context that has access to the app's layout.
          */
-        public ContactsAdapter(Context context) {
+        ContactsAdapter(Context context) {
             super(context, null, 0);
 
             // Stores inflater for use later
@@ -757,7 +789,7 @@ public class ContactListFragment extends ListFragment {
                     .setLetterAndColor(displayName, line2)
                     .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON);
             holder.icon.setImageDrawable(tile);
-            mImageLoader.loadImage(photoUri, holder.icon);
+            mImageLoader.loadImage(getContext(), photoUri, holder.icon);
         }
 
         /**
@@ -828,6 +860,7 @@ public class ContactListFragment extends ListFragment {
     }
 
     private class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+        @NonNull
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             final Activity activity = getActivity();
@@ -860,7 +893,8 @@ public class ContactListFragment extends ListFragment {
                         null,
                         ContactsQuery.SORT_ORDER);
             }
-            return null;
+
+            throw new IllegalArgumentException("Unknown loader ID "+id);
         }
 
         @Override
@@ -894,12 +928,16 @@ public class ContactListFragment extends ListFragment {
                                    SparseArray<Utils.ContactHolder> data) {
             mPhEmImData = data;
 
+            final FragmentActivity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
             // If there's a previously selected search item from a saved state then don't bother
             // initializing the loader as it will be restarted later when the query is populated into
             // the action bar search view (see onQueryTextChange() in onCreateOptionsMenu()).
             if (mPreviouslySelectedSearchItem == 0) {
                 // Restart the main contacts loader.
-                LoaderManager.getInstance(getActivity()).restartLoader(ContactsQuery.CORE_QUERY_ID,
+                LoaderManager.getInstance(activity).restartLoader(ContactsQuery.CORE_QUERY_ID,
                         null, mContactsLoaderCallback);
             }
         }

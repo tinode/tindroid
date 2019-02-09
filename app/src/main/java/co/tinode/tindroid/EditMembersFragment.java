@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,7 +54,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Log.d(TAG, "onCreateView");
 
@@ -66,6 +68,9 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         super.onActivityCreated(savedInstance);
 
         final FragmentActivity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
         mChipsInput = activity.findViewById(R.id.groupMembers);
@@ -91,11 +96,15 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     public void onResume() {
         super.onResume();
 
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         Bundle bundle = getArguments();
         mTopic = Cache.getTinode().getTopic(bundle.getString("topic"));
 
         Collection<Subscription<VxCard,PrivateType>> subs = mTopic.getSubscriptions();
-        Activity activity = getActivity();
         for (Subscription<VxCard,PrivateType> sub : subs) {
             mInitialMembers.put(sub.user, true);
             mChipsInput.addChip(sub.user,
@@ -115,7 +124,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
             for (ChipInterface chip : list) {
                 // If the member is present in HashMap then it's unchanged, remove it from the map
                 // and from the list.
-                if (mInitialMembers.remove(chip.getId()) != null) {
+                if (mInitialMembers.remove((String) chip.getId()) != null) {
                     remove.add(chip);
                 }
             }

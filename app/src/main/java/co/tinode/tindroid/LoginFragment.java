@@ -78,7 +78,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_login, menu);
         super.onCreateOptionsMenu(menu, inflater);

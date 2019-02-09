@@ -16,15 +16,20 @@ public class PrivateType extends HashMap<String,Object> {
     }
 
     @JsonIgnore
+    private Object getValue(String name) {
+        Object value = get(name);
+        if (Tinode.isNull(value)) {
+            value = null;
+        }
+        return value;
+    }
+
+    @JsonIgnore
     public String getComment() {
-        String comment = null;
         try {
-            comment = (String) get("comment");
-            if (Tinode.isNull(comment)) {
-                comment = null;
-            }
+            return (String) getValue("comment");
         } catch (ClassCastException ignored) {}
-        return comment;
+        return null;
     }
 
     @JsonIgnore
@@ -34,18 +39,9 @@ public class PrivateType extends HashMap<String,Object> {
 
     @JsonIgnore
     public Boolean isArchived() {
-        Object arch = get("arch");
-        if (arch == null) {
-            return null;
-        }
-        if (Tinode.isNull(arch)) {
-            return false;
-        }
-        
         try {
-            return (Boolean) arch;
+            return (Boolean) getValue("arch");
         } catch (ClassCastException ignored) {}
-
         return false;
     }
 

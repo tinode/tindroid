@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Typeface;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
+
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +23,7 @@ import co.tinode.tinodesdk.ComTopic;
  * Handling contact list.
  */
 public class ChatListAdapter extends BaseAdapter {
-    private static final String TAG = "ChatListAdapter";
+    // private static final String TAG = "ChatListAdapter";
 
     private Context mContext;
     private List<ComTopic<VxCard>> mTopics;

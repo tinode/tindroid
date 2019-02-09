@@ -85,7 +85,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             return;
         }
 
-        mImageLoader = new ImageLoader(getActivity(), UiUtils.getListPreferredItemHeight(this),
+        mImageLoader = new ImageLoader(UiUtils.getListPreferredItemHeight(this),
                 activity.getSupportFragmentManager()) {
             @Override
             protected Bitmap processBitmap(Object data) {
@@ -95,7 +95,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             }
         };
         // Set a placeholder loading image for the image loader
-        mImageLoader.setLoadingImage(R.drawable.ic_person_circle);
+        mImageLoader.setLoadingImage(activity, R.drawable.ic_person_circle);
     }
 
     @Override

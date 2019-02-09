@@ -189,6 +189,10 @@ public class ContactsActivity extends AppCompatActivity implements
     public void selectTab(final int pageIndex) {
         FragmentManager fm = getSupportFragmentManager();
         ContactsFragment contacts = (ContactsFragment) fm.findFragmentByTag(FRAGMENT_CONTACTS);
+        if (contacts == null) {
+            return;
+        }
+
         contacts.selectTab(pageIndex);
     }
 

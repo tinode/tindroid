@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.ListFragment;
 import androidx.appcompat.app.AlertDialog;
@@ -43,7 +45,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_chat_list, container, false);
     }
@@ -51,8 +53,12 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     @Override
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
 
-        mAdapter = ((ContactsActivity) getActivity()).getChatListAdapter();
+        mAdapter = ((ContactsActivity) activity).getChatListAdapter();
 
         setListAdapter(mAdapter);
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
@@ -61,7 +67,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String topic = mAdapter.getTopicNameFromView(view);
-                Intent intent = new Intent(getActivity(), MessageActivity.class);
+                Intent intent = new Intent(activity, MessageActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("topic", topic);
                 startActivity(intent);
@@ -80,7 +86,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
@@ -91,11 +97,16 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
      * This menu is shown when no items are selected
      */
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        final ContactsActivity activity = (ContactsActivity)getActivity();
+        if (activity == null) {
+            return true;
+        }
+
         switch (item.getItemId()) {
             case R.id.action_new_p2p_topic:
                 Log.d(TAG, "Start new p2p topic");
-                ((ContactsActivity)getActivity()).selectTab(ContactsFragment.TAB_CONTACTS);
+                activity.selectTab(ContactsFragment.TAB_CONTACTS);
                 return true;
 
             case R.id.action_new_grp_topic:
@@ -106,7 +117,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             case R.id.action_add_by_id:
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
                 builder
                         .setTitle(R.string.action_start_by_id)
                         .setView(R.layout.dialog_add_by_id)
@@ -116,7 +127,6 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                             public void onClick(DialogInterface dialog, int which) {
                                 TextView editor = ((AlertDialog) dialog).findViewById(R.id.editId);
                                 if (editor != null) {
-                                    final Activity activity = getActivity();
                                     String id = editor.getText().toString();
                                     if (!TextUtils.isEmpty(id)) {
                                         Intent it = new Intent(activity, MessageActivity.class);
@@ -136,11 +146,13 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             case R.id.action_settings:
-                ((ContactsActivity)getActivity()).showAccountInfoFragment();
+                activity.showAccountInfoFragment();
                 return true;
 
             case R.id.action_about:
                 DialogFragment about = new AboutDialogFragment();
+                // The warning below is a false positive. If activity is not null, then
+                // getFragmentManager is also not null
                 about.show(getFragmentManager(), "about");
                 return true;
 
@@ -150,7 +162,6 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 } catch (IOException ex) {
                     Log.d(TAG, "Reconnect failure", ex);
                     String cause = ex.getCause().getMessage();
-                    Activity activity = getActivity();
                     Toast.makeText(activity, activity.getString(R.string.error_connection_failed) + cause,
                             Toast.LENGTH_SHORT).show();
                 }

@@ -4,8 +4,6 @@
               android:layout_height="match_parent"
               android:orientation="vertical"
               android:paddingEnd="@dimen/dialog_padding_right"
-              android:paddingLeft="@dimen/dialog_padding_left"
-              android:paddingRight="@dimen/dialog_padding_right"
               android:paddingStart="@dimen/dialog_padding_left">
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -15,7 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
         android:clickable="true"
-        android:drawableLeft="@drawable/ic_person"
         android:drawablePadding="4sp"
         android:drawableStart="@drawable/ic_person"
         android:focusable="true"

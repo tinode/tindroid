@@ -352,25 +352,36 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         mStore = store;
     }
 
+    // Returns greater of two dates.
+    private static Date maxDate(Date a, Date b) {
+        if (a == null) {
+            return b;
+        }
+        if (b == null) {
+            return a;
+        }
+        return a.compareTo(b) > 0 ? a : b;
+    }
+
     public Date getCreated() {
         return mDesc.created;
     }
     public void setCreated(Date created) {
-        mDesc.created = created;
+        mDesc.created = maxDate(mDesc.created, created);
     }
 
     public Date getUpdated() {
         return mDesc.updated;
     }
     public void setUpdated(Date updated) {
-        mDesc.updated = updated;
+        mDesc.updated = maxDate(mDesc.updated, updated);
     }
 
     public Date getTouched() {
         return mDesc.touched;
     }
     public void setTouched(Date touched) {
-        mDesc.touched = touched;
+        mDesc.touched = maxDate(mDesc.updated, touched);
     }
 
     @Override
@@ -1611,6 +1622,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             noteRecv();
         }
         setSeq(data.seq);
+        setTouched(data.ts);
 
         if (mListener != null) {
             mListener.onData(data);

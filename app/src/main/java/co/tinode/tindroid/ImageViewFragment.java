@@ -1,9 +1,12 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +21,7 @@ import android.widget.ImageView;
 public class ImageViewFragment extends Fragment {
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_view_image, container, false);
     }
@@ -27,7 +30,12 @@ public class ImageViewFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        Activity activity = getActivity();
         Bundle bundle = getArguments();
+        if (activity == null || bundle == null) {
+            return;
+        }
+
         byte[] bits = bundle.getByteArray("image");
         if (bits != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);

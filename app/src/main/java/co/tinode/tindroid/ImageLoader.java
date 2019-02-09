@@ -8,6 +8,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.collection.LruCache;
@@ -33,23 +35,21 @@ public abstract class ImageLoader {
     private static final float MEMORY_PERCENT = 0.1f;
     private static final int DEFAULT_IMAGE_SIZE = 24;
 
+    private LruCache<String, Bitmap> mBitmapCache;
+
     private final Object mPauseWorkLock = new Object();
     private Bitmap mLoadingBitmap;
     private boolean mPauseWork = false;
     private int mImageSize;
-    private Resources mResources;
+    // private Resources mResources;
 
-    private LruCache<String, Bitmap> mBitmapCache;
-
-    ImageLoader(Context context, int imageSize, FragmentManager fm) {
-        mResources = context.getResources();
+    ImageLoader(int imageSize, FragmentManager fm) {
+        // mResources = context.getResources();
         mImageSize = imageSize > 0 ? imageSize : DEFAULT_IMAGE_SIZE;
 
-        final RetainFragment mRetainFragment = findOrCreateRetainFragment(fm);
-
+        final RetainFragment retainFragment = findOrCreateRetainFragment(fm);
         // See if we already have an ImageCache stored in RetainFragment
-        mBitmapCache = (LruCache<String, Bitmap>) mRetainFragment.getObject();
-
+        mBitmapCache = (LruCache<String, Bitmap>) retainFragment.getObject();
         // No existing ImageCache, create one and store it in RetainFragment
         if (mBitmapCache == null) {
             int maxSize = Math.round(MEMORY_PERCENT * Runtime.getRuntime().maxMemory() / 1024);
@@ -59,12 +59,12 @@ public abstract class ImageLoader {
                  * for a bitmap cache
                  */
                 @Override
-                protected int sizeOf(String key, Bitmap bitmap) {
+                protected int sizeOf(@NonNull String key, @NonNull Bitmap bitmap) {
                     final int bitmapSize = bitmap.getByteCount() / 1024;
                     return bitmapSize == 0 ? 1 : bitmapSize;
                 }
             };
-            mRetainFragment.saveObject(mBitmapCache);
+            retainFragment.saveObject(mBitmapCache);
         }
     }
 
@@ -133,7 +133,7 @@ public abstract class ImageLoader {
      * @return A bitmap sampled down from the original with the same aspect ratio and dimensions
      * that are equal to or greater than the requested width and height
      */
-    public static Bitmap decodeSampledBitmapFromStream(
+    static Bitmap decodeSampledBitmapFromStream(
             InputStream is, int reqWidth, int reqHeight) throws IOException {
 
         // First decode with inJustDecodeBounds=true to check dimensions.
@@ -166,8 +166,8 @@ public abstract class ImageLoader {
      * @param reqHeight The requested height of the resulting bitmap
      * @return The value to be used for inSampleSize
      */
-    public static int calculateInSampleSize(BitmapFactory.Options options,
-                                            int reqWidth, int reqHeight) {
+    private static int calculateInSampleSize(BitmapFactory.Options options,
+                                             int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -209,7 +209,7 @@ public abstract class ImageLoader {
      * @return The existing instance of the Fragment or the new instance if just
      * created.
      */
-    public static RetainFragment findOrCreateRetainFragment(FragmentManager fm) {
+    private static RetainFragment findOrCreateRetainFragment(FragmentManager fm) {
         // Check to see if we have retained the worker fragment.
         RetainFragment retainFragment = (RetainFragment) fm.findFragmentByTag(TAG);
 
@@ -222,7 +222,7 @@ public abstract class ImageLoader {
         return retainFragment;
     }
 
-    public int getImageSize() {
+    int getImageSize() {
         return mImageSize;
     }
 
@@ -235,7 +235,7 @@ public abstract class ImageLoader {
      * @param data      The URL of the image to download.
      * @param imageView The ImageView to bind the downloaded image to.
      */
-    public void loadImage(Object data, ImageView imageView) {
+    void loadImage(Context context, Object data, ImageView imageView) {
         if (data == null) {
             return;
         }
@@ -248,7 +248,7 @@ public abstract class ImageLoader {
         } else if (cancelPotentialWork(data, imageView)) {
             final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
             final AsyncDrawable asyncDrawable =
-                    new AsyncDrawable(mResources, mLoadingBitmap, task);
+                    new AsyncDrawable(context.getResources(), mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
             task.execute(data);
         }
@@ -259,8 +259,8 @@ public abstract class ImageLoader {
      *
      * @param resId Resource ID of loading image.
      */
-    public void setLoadingImage(int resId) {
-        mLoadingBitmap = BitmapFactory.decodeResource(mResources, resId);
+    void setLoadingImage(Context context, int resId) {
+        mLoadingBitmap = BitmapFactory.decodeResource(context.getResources(), resId);
     }
 
     /**
@@ -269,7 +269,7 @@ public abstract class ImageLoader {
      * example, you could resize a large bitmap here, or pull down an image from the network.
      *
      * @param data The data to identify which image to process, as provided by
-     *             {@link ImageLoader#loadImage(Object, ImageView)}
+     *             {@link ImageLoader#loadImage(Context, Object, ImageView)}
      * @return The processed bitmap
      */
     protected abstract Bitmap processBitmap(Object data);
@@ -286,7 +286,7 @@ public abstract class ImageLoader {
      * {@link android.app.Activity#onPause()}), or there is a risk the
      * background thread will never finish.
      */
-    public void setPauseWork(boolean pauseWork) {
+    void setPauseWork(boolean pauseWork) {
         synchronized (mPauseWorkLock) {
             mPauseWork = pauseWork;
             if (!mPauseWork) {
@@ -301,7 +301,7 @@ public abstract class ImageLoader {
      * @param data Unique identifier for which item to get
      * @return The bitmap if found in cache, null otherwise
      */
-    public Bitmap getBitmapFromCache(String data) {
+    private Bitmap getBitmapFromCache(String data) {
         if (mBitmapCache != null) {
             return mBitmapCache.get(data);
         }
@@ -314,7 +314,7 @@ public abstract class ImageLoader {
      * @param data   Unique identifier for the bitmap to store
      * @param bitmap The bitmap to store
      */
-    public void addBitmapToCache(String data, Bitmap bitmap) {
+    private void addBitmapToCache(String data, Bitmap bitmap) {
         if (data == null || bitmap == null) {
             return;
         }
@@ -334,12 +334,12 @@ public abstract class ImageLoader {
     private static class AsyncDrawable extends BitmapDrawable {
         private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
 
-        public AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
+        AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
             super(res, bitmap);
             bitmapWorkerTaskReference = new WeakReference<>(bitmapWorkerTask);
         }
 
-        public BitmapWorkerTask getBitmapWorkerTask() {
+        BitmapWorkerTask getBitmapWorkerTask() {
             return bitmapWorkerTaskReference.get();
         }
     }
@@ -370,7 +370,7 @@ public abstract class ImageLoader {
          *
          * @param object The object to store
          */
-        public void saveObject(Object object) {
+        void saveObject(Object object) {
             mObject = object;
         }
 

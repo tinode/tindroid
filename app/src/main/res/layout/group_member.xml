@@ -17,10 +17,9 @@
         android:layout_width="48sp"
         android:layout_height="48sp"
         app:srcCompat="@drawable/ic_person_circle"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginRight="5dp"
-        android:contentDescription="avatar"
+        android:contentDescription="@string/avatar"
         android:layout_marginEnd="5dp" />
 
     <ImageButton
@@ -84,9 +83,7 @@
 
     <TextView
         android:id="@android:id/text1"
-        android:layout_toRightOf="@android:id/icon"
         android:layout_toEndOf="@android:id/icon"
-        android:layout_toLeftOf="@id/statusContainer"
         android:layout_toStartOf="@id/statusContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -107,9 +104,7 @@
         android:maxLines="1"
         android:maxWidth="240sp"
         android:layout_below="@android:id/text1"
-        android:layout_toLeftOf="@id/optionsMenu"
         android:layout_toStartOf="@id/optionsMenu"
-        android:layout_toRightOf="@android:id/icon"
         android:layout_toEndOf="@android:id/icon"
         tools:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
         android:textAppearance="?android:attr/textAppearanceSmall"/>

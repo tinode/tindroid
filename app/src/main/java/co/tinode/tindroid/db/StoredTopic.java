@@ -36,6 +36,7 @@ public class StoredTopic implements LocalData.Payload {
         st.nextUnsentId = c.getInt(TopicDb.COLUMN_IDX_NEXT_UNSENT_SEQ);
 
         topic.setUpdated(new Date(c.getLong(TopicDb.COLUMN_IDX_UPDATED)));
+        topic.setTouched(st.lastUsed);
 
         topic.setRead(c.getInt(TopicDb.COLUMN_IDX_READ));
         topic.setRecv(c.getInt(TopicDb.COLUMN_IDX_RECV));

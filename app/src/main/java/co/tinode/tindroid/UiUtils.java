@@ -852,8 +852,11 @@ public class UiUtils {
 
         if (pub != null || comment != null) {
             try {
-                PrivateType priv = new PrivateType();
-                priv.setComment(comment);
+                PrivateType priv = null;
+                if (comment != null) {
+                    priv = new PrivateType();
+                    priv.setComment(comment);
+                }
                 topic.setDescription(pub, priv).thenApply(null, new ToastFailureListener(activity));
             } catch (NotConnectedException ignored) {
                 Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
@@ -861,7 +864,6 @@ public class UiUtils {
                 Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
             }
         }
-
     }
 
     @SuppressWarnings("unchecked")
