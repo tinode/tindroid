@@ -648,7 +648,6 @@ public class TopicInfoFragment extends Fragment {
                     VxCard pub = mTopic.getPub();
                     showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub.user,
                             sub.acs.getGiven());
-                    Log.d(TAG, "Click on '" + sub.user + "', pos=" + holder.getAdapterPosition());
                 }
             };
 
