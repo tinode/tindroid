@@ -98,7 +98,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
      */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final ContactsActivity activity = (ContactsActivity)getActivity();
+        final ContactsActivity activity = (ContactsActivity) getActivity();
         if (activity == null) {
             return true;
         }
@@ -111,7 +111,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
             case R.id.action_new_grp_topic:
                 Log.d(TAG, "Launch new group topic");
-                Intent intent = new Intent(getActivity(), CreateGroupActivity.class);
+                Intent intent = new Intent(activity, CreateGroupActivity.class);
                 // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);
                 return true;
@@ -143,6 +143,10 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                         })
                         .setNegativeButton(android.R.string.cancel, null)
                         .show();
+                return true;
+
+            case R.id.action_archive:
+                Toast.makeText(activity, R.string.not_implemented, Toast.LENGTH_SHORT).show();
                 return true;
 
             case R.id.action_settings:

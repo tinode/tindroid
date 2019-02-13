@@ -18,6 +18,7 @@ import java.util.List;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.Tinode.TopicFilter;
 
 /**
  * Handling contact list.
@@ -28,17 +29,24 @@ public class ChatListAdapter extends BaseAdapter {
     private Context mContext;
     private List<ComTopic<VxCard>> mTopics;
     private SparseBooleanArray mSelectedItems;
+    private boolean mArchive;
 
-
-    ChatListAdapter(AppCompatActivity context) {
+    ChatListAdapter(AppCompatActivity context, boolean archive) {
         super();
         mContext = context;
         mSelectedItems = new SparseBooleanArray();
+        mArchive = archive;
         resetContent();
     }
 
     void resetContent() {
-        mTopics = Cache.getTinode().getFilteredTopics(ComTopic.TopicType.USER, null);
+        mTopics = Cache.getTinode().getFilteredTopics(new TopicFilter<ComTopic>() {
+            @Override
+            public boolean isIncluded(ComTopic t) {
+                return t.getTopicType().compare(ComTopic.TopicType.USER) &&
+                        (t.isArchived() == mArchive);
+            }
+        });
     }
 
     @Override

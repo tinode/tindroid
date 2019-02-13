@@ -1436,22 +1436,17 @@ public class Tinode {
      * Return a list of topics which satisfy the filters. Topics are sorted by
      * Topic.touched in descending order.
      *
-     * @param type    type of topics to return.
-     * @param updated return topics with update timestamp after this
+     * @param filter  filter object to select topics.
      * @return a {@link List} of topics
      */
     @SuppressWarnings("unchecked")
-    public <T extends Topic> List<T> getFilteredTopics(Topic.TopicType type, Date updated) {
-        if (type == Topic.TopicType.ANY && updated == null) {
+    public <T extends Topic> List<T> getFilteredTopics(TopicFilter filter) {
+        if (filter == null) {
             return (List<T>) getTopics();
-        }
-        if (type == Topic.TopicType.UNKNOWN) {
-            return null;
         }
         ArrayList<T> result = new ArrayList<>();
         for (T t : (Collection<T>) mTopics.values()) {
-            if (t.getTopicType().compare(type) &&
-                    (updated == null || updated.before(t.getUpdated()))) {
+            if (filter.isIncluded(t)) {
                 result.add(t);
             }
         }
@@ -1780,5 +1775,13 @@ public class Tinode {
         public void post(String topic, int recv) {
             recvQueue.put(topic, recv);
         }
+    }
+
+    /**
+     * Interface to be implemented by those clients which want to fetch topics
+     * using {@link Tinode#getFilteredTopics}
+     */
+    public interface TopicFilter<T extends Topic> {
+        boolean isIncluded(T t);
     }
 }

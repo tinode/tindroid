@@ -35,6 +35,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
     static final String FRAGMENT_CONTACTS = "contacts";
     static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
+    static final String FRAGMENT_ARCHIVE = "archive";
 
     private ChatListAdapter mChatListAdapter;
 
@@ -51,7 +52,7 @@ public class ContactsActivity extends AppCompatActivity implements
                 .replace(R.id.contentFragment, new ContactsFragment(), FRAGMENT_CONTACTS)
                 .commit();
 
-        mChatListAdapter = new ChatListAdapter(this);
+        mChatListAdapter = new ChatListAdapter(this, false);
         mMeTopicListener = new MeListener();
     }
 

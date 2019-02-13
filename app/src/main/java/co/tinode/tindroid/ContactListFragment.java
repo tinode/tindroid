@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
@@ -21,7 +20,6 @@ import androidx.fragment.app.ListFragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
-import androidx.core.view.MenuItemCompat;
 import androidx.cursoradapter.widget.CursorAdapter;
 import androidx.appcompat.widget.AppCompatImageView;
 import android.text.SpannableString;
@@ -87,7 +85,7 @@ public class ContactListFragment extends ListFragment {
     // a contact being selected
     private OnContactsInteractionListener mOnContactSelectedListener;
 
-    // Callback which receives notifications of contacts loding status;
+    // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
     // Callback for handling notifications of Phone, Email, IM contact loading;
     private PhEmImLoaderCallback mPhEmImLoaderCallback;

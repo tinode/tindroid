@@ -219,4 +219,5 @@
     <string name="topic_tags">Tags, comma separated list</string>
     <string name="sender_unknown">Unknown</string>
     <string name="not_implemented">Not implemented</string>
+    <string name="action_archive">Archived chats</string>
 </resources>
