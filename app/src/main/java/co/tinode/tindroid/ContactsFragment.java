@@ -1,7 +1,10 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.os.Bundle;
 import com.google.android.material.tabs.TabLayout;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
@@ -19,8 +22,11 @@ import android.view.ViewGroup;
 public class ContactsFragment extends Fragment {
     private static final String TAG = "ContactsFragment";
 
-    public static final int TAB_CHATS = 0;
-    public static final int TAB_CONTACTS = 1;
+    private static final int TAB_CHATS = 0;
+    static final int TAB_CONTACTS = 1;
+
+    private ChatListFragment mChatList = null;
+    private ContactListFragment mContacts = null;
 
     public ContactsFragment() {}
 
@@ -31,14 +37,17 @@ public class ContactsFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(TAG, "ContactsFragment.onCreateView");
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return null;
+        }
 
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_contacts, container, false);
 
-        ((AppCompatActivity) getActivity()).setSupportActionBar((Toolbar) fragment.findViewById(R.id.toolbar));
+        ((AppCompatActivity) activity).setSupportActionBar((Toolbar) fragment.findViewById(R.id.toolbar));
 
         TabLayout tabLayout = fragment.findViewById(R.id.tabsContacts);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
@@ -64,25 +73,35 @@ public class ContactsFragment extends Fragment {
         return fragment;
     }
 
-    public void selectTab(int pageIndex) {
-        final TabLayout tabLayout = getActivity().findViewById(R.id.tabsContacts);
-        final ViewPager viewPager = getActivity().findViewById(R.id.tabPager);
+    void selectTab(int pageIndex) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        final TabLayout tabLayout = activity.findViewById(R.id.tabsContacts);
+        final ViewPager viewPager = activity.findViewById(R.id.tabPager);
         if (tabLayout != null && viewPager != null) {
             tabLayout.setScrollPosition(pageIndex, 0f, true);
             viewPager.setCurrentItem(pageIndex);
         }
     }
 
+    void chatDatasetChanged() {
+        if (mChatList != null && mChatList.isVisible()) {
+            mChatList.datasetChanged();
+        }
+    }
+
     private class PagerAdapter extends FragmentStatePagerAdapter {
         int mNumOfTabs;
-        Fragment mChatList;
-        Fragment mContacts;
 
         PagerAdapter(FragmentManager fm, int numTabs) {
             super(fm);
             mNumOfTabs = numTabs;
         }
 
+        @NonNull
         @Override
         public Fragment getItem(int position) {
             switch (position) {
@@ -97,7 +116,7 @@ public class ContactsFragment extends Fragment {
                     }
                     return mContacts;
                 default:
-                    return null;
+                    throw new IllegalArgumentException("Unknown tab position " + position);
             }
         }
 

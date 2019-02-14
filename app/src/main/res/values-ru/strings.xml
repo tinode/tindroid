@@ -185,4 +185,9 @@
     <string name="user_not_found">Не найден</string>
     <string name="topic_tags">Тэги, писок через запятую</string>
     <string name="sender_unknown">Неизвестный</string>
+    <string name="not_implemented">Не создано</string>
+    <string name="action_archive">Заархивировать</string>
+    <string name="archived_chats">Архив</string>
+    <string name="action_show_archive">Архив</string>
+
 </resources>

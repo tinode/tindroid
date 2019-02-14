@@ -6,7 +6,6 @@
     android:background="@color/white"
     android:paddingBottom="6dp"
     android:paddingTop="6dp"
-    tools:context="co.tinode.tindroid.ChatListFragment"
     tools:showIn="@layout/activity_contacts">
 
     <ListView

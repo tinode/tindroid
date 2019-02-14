@@ -50,7 +50,8 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     @Override
     public boolean isArchived() {
         PrivateType p = super.getPriv();
-        return p != null ? p.isArchived() : false;
+        Boolean arch = (p != null ? p.isArchived() : Boolean.FALSE);
+        return arch != null ? arch : false;
     }
 
     /**

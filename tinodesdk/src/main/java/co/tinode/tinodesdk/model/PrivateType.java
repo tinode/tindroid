@@ -42,7 +42,7 @@ public class PrivateType extends HashMap<String,Object> {
         try {
             return (Boolean) getValue("arch");
         } catch (ClassCastException ignored) {}
-        return false;
+        return Boolean.FALSE;
     }
 
     @JsonIgnore

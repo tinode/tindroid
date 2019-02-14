@@ -1,12 +1,15 @@
 package co.tinode.tindroid;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.ListFragment;
 import androidx.appcompat.app.AlertDialog;
 import android.text.TextUtils;
@@ -34,6 +37,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
     private static final String TAG = "ChatListFragment";
     private ChatListAdapter mAdapter = null;
+    private Boolean mIsArchive;
 
     public ChatListFragment() {
     }
@@ -42,28 +46,57 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        Bundle args = getArguments();
+        if (args != null) {
+            mIsArchive = args.getBoolean("archive", false);
+            Log.d(TAG, "onCreate, args NOT null, mIsArchive="+mIsArchive);
+        } else {
+            mIsArchive = false;
+            Log.d(TAG, "onCreate, args null, mIsArchive="+mIsArchive);
+        }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat_list, container, false);
+        return inflater.inflate(mIsArchive ? R.layout.fragment_archive : R.layout.fragment_chat_list,
+                container, false);
     }
 
-    @Override
-    public void onActivityCreated(Bundle savedInstance) {
-        super.onActivityCreated(savedInstance);
-        final Activity activity = getActivity();
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
 
-        mAdapter = ((ContactsActivity) activity).getChatListAdapter();
-
+        mAdapter = new ChatListAdapter(activity, mIsArchive);
         setListAdapter(mAdapter);
-        getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
-        getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        if (mIsArchive) {
+            final Toolbar toolbar = view.findViewById(R.id.toolbar);
+            activity.setSupportActionBar(toolbar);
+
+            final ActionBar bar = activity.getSupportActionBar();
+            if (bar != null) {
+                bar.setDisplayHomeAsUpEnabled(true);
+            }
+
+            toolbar.setTitle(R.string.archived_chats);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    FragmentManager fm = getFragmentManager();
+                    if (fm != null) {
+                        fm.popBackStack();
+                    }
+                }
+            });
+        }
+
+        ListView lv = getListView();
+        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String topic = mAdapter.getTopicNameFromView(view);
@@ -74,14 +107,22 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
             }
         });
 
-        getListView().setMultiChoiceModeListener(this);
+        lv.setMultiChoiceModeListener(this);
     }
+
 
     @Override
     public void onResume() {
         super.onResume();
 
-        mAdapter.resetContent();
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            mIsArchive = bundle.getBoolean("archive", false);
+        } else {
+            mIsArchive = false;
+        }
+
+        mAdapter.resetContent(mIsArchive);
         mAdapter.notifyDataSetChanged();
     }
 
@@ -91,6 +132,12 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
         // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.menu_chat_list, menu);
+    }
+
+    @Override
+    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+        mode.getMenuInflater().inflate(R.menu.menu_contacts_selected, menu);
+        return true;
     }
 
     /**
@@ -145,12 +192,12 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                         .show();
                 return true;
 
-            case R.id.action_archive:
-                Toast.makeText(activity, R.string.not_implemented, Toast.LENGTH_SHORT).show();
+            case R.id.action_show_archive:
+                activity.showFragment(ContactsActivity.FRAGMENT_ARCHIVE);
                 return true;
 
             case R.id.action_settings:
-                activity.showAccountInfoFragment();
+                activity.showFragment(ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
                 return true;
 
             case R.id.action_about:
@@ -179,6 +226,12 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
      */
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+        final ContactsActivity activity = (ContactsActivity) getActivity();
+        if (activity == null) {
+            return true;
+        }
+
+        // TODO: implement menu actions
         switch (item.getItemId()) {
             case R.id.action_delete:
                 SparseBooleanArray selected = mAdapter.getSelectedIds();
@@ -187,17 +240,34 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                         Log.d(TAG, "deleting item at " + selected.keyAt(i));
                     }
                 }
+                Toast.makeText(activity, R.string.not_implemented,
+                        Toast.LENGTH_SHORT).show();
+
                 // Close CAB
                 mode.finish();
                 return true;
 
             case R.id.action_mute:
                 Log.d(TAG, "muting item");
+                Toast.makeText(activity, R.string.not_implemented,
+                        Toast.LENGTH_SHORT).show();
+
+                mode.finish();
+                return true;
+
+            case R.id.action_archive:
+                Log.d(TAG, "archive item");
+                Toast.makeText(activity, R.string.not_implemented,
+                        Toast.LENGTH_SHORT).show();
+
                 mode.finish();
                 return true;
 
             case R.id.action_edit:
-                Log.d(TAG, "editing item");
+                Log.d(TAG, "edit item");
+                Toast.makeText(activity, R.string.not_implemented,
+                        Toast.LENGTH_SHORT).show();
+
                 mode.finish();
                 return true;
 
@@ -208,24 +278,34 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
     }
 
     @Override
-    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-        mode.getMenuInflater().inflate(R.menu.menu_contacts_selected, menu);
-        return true;
-    }
-
-    @Override
     public void onDestroyActionMode(ActionMode mode) {
         mAdapter.removeSelection();
     }
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                return false;
-            }
+        return false;
+    }
 
     @Override
     public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
         mAdapter.toggleSelected(position);
         mode.setTitle("" + mAdapter.getSelectedCount());
+    }
+
+    void datasetChanged() {
+        mAdapter.resetContent(mIsArchive);
+
+        final ContactsActivity activity = (ContactsActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mAdapter.notifyDataSetChanged();
+            }
+        });
     }
 }

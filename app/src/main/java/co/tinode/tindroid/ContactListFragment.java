@@ -509,7 +509,7 @@ public class ContactListFragment extends ListFragment {
                 return false;
 
             case R.id.action_settings:
-                ((ContactsActivity) activity).showAccountInfoFragment();
+                ((ContactsActivity) activity).showFragment(ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
                 break;
 
             case R.id.action_about:

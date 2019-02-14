@@ -21,9 +21,9 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Activity holds the following fragments:
  *   ContactsFragment
- *     ChatListFragment
+ *     ChatListFragment archive=false
  *     ContactListFragment
- *
+ *   ChatListFragment archive=true
  *   AccountInfoFragment
  *
  * This activity owns 'me' topic.
@@ -36,8 +36,6 @@ public class ContactsActivity extends AppCompatActivity implements
     static final String FRAGMENT_CONTACTS = "contacts";
     static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
     static final String FRAGMENT_ARCHIVE = "archive";
-
-    private ChatListAdapter mChatListAdapter;
 
     private MeListener mMeTopicListener = null;
     private MeTopic mMeTopic = null;
@@ -52,7 +50,6 @@ public class ContactsActivity extends AppCompatActivity implements
                 .replace(R.id.contentFragment, new ContactsFragment(), FRAGMENT_CONTACTS)
                 .commit();
 
-        mChatListAdapter = new ChatListAdapter(this, false);
         mMeTopicListener = new MeListener();
     }
 
@@ -97,13 +94,15 @@ public class ContactsActivity extends AppCompatActivity implements
     }
 
     private void datasetChanged() {
-        mChatListAdapter.resetContent();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mChatListAdapter.notifyDataSetChanged();
-            }
-        });
+        final FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentByTag(FRAGMENT_ARCHIVE);
+        if (fragment != null && fragment.isVisible()) {
+            ((ChatListFragment) fragment).datasetChanged();
+        }
+        fragment = fm.findFragmentByTag(FRAGMENT_CONTACTS);
+        if (fragment != null && fragment.isVisible()) {
+            ((ContactsFragment) fragment).chatDatasetChanged();
+        }
     }
 
     @Override
@@ -122,14 +121,56 @@ public class ContactsActivity extends AppCompatActivity implements
         }
     }
 
-    protected ChatListAdapter getChatListAdapter() {
-        return mChatListAdapter;
-    }
+    //protected ChatListAdapter getChatListAdapter() {
+    //    return mChatListAdapter;
+    //}
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Enable options menu by returning true
         return true;
+    }
+
+    void showFragment(String tag) {
+        final FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentByTag(tag);
+
+        if (fragment == null) {
+            switch (tag) {
+                case FRAGMENT_EDIT_ACCOUNT:
+                    fragment = new AccountInfoFragment();
+                    break;
+                case FRAGMENT_ARCHIVE:
+                    fragment = new ChatListFragment();
+                    Bundle args = new Bundle();
+                    args.putBoolean("archive", Boolean.TRUE);
+                    fragment.setArguments(args);
+                    break;
+                case FRAGMENT_CONTACTS:
+                    fragment = new ContactsFragment();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Failed to create fragment: unknonw tag "+tag);
+            }
+        } else {
+            Log.d(TAG, "Action - fragment already exists");
+        }
+
+        FragmentTransaction trx = fm.beginTransaction();
+        trx.add(R.id.contentFragment, fragment, tag);
+        trx.addToBackStack(tag)
+                .show(fragment)
+                .commit();
+    }
+
+    public void selectTab(final int pageIndex) {
+        FragmentManager fm = getSupportFragmentManager();
+        ContactsFragment contacts = (ContactsFragment) fm.findFragmentByTag(FRAGMENT_CONTACTS);
+        if (contacts == null) {
+            return;
+        }
+
+        contacts.selectTab(pageIndex);
     }
 
     private class MeListener extends MeTopic.MeListener<VxCard> {
@@ -172,29 +213,6 @@ public class ContactsActivity extends AppCompatActivity implements
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
         }
-    }
-
-    void showAccountInfoFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentByTag(FRAGMENT_EDIT_ACCOUNT);
-        FragmentTransaction trx = fm.beginTransaction();
-        if (fragment == null) {
-            fragment = new AccountInfoFragment();
-            trx.add(R.id.contentFragment, fragment, FRAGMENT_EDIT_ACCOUNT);
-        }
-        trx.addToBackStack(FRAGMENT_EDIT_ACCOUNT)
-                .show(fragment)
-                .commit();
-    }
-
-    public void selectTab(final int pageIndex) {
-        FragmentManager fm = getSupportFragmentManager();
-        ContactsFragment contacts = (ContactsFragment) fm.findFragmentByTag(FRAGMENT_CONTACTS);
-        if (contacts == null) {
-            return;
-        }
-
-        contacts.selectTab(pageIndex);
     }
 
     private class ContactsEventListener extends UiUtils.EventListener {
