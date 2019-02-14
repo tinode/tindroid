@@ -231,13 +231,13 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
             return true;
         }
 
+        final SparseBooleanArray selected = mAdapter.getSelectedIds();
         // TODO: implement menu actions
         switch (item.getItemId()) {
             case R.id.action_delete:
-                SparseBooleanArray selected = mAdapter.getSelectedIds();
                 for (int i = 0; i < selected.size(); i++) {
                     if (selected.valueAt(i)) {
-                        Log.d(TAG, "deleting item at " + selected.keyAt(i));
+                        Log.d(TAG, "deleting item " + selected.keyAt(i));
                     }
                 }
                 Toast.makeText(activity, R.string.not_implemented,
@@ -248,7 +248,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             case R.id.action_mute:
-                Log.d(TAG, "muting item");
+                Log.d(TAG, "muting item " + selected.keyAt(0));
                 Toast.makeText(activity, R.string.not_implemented,
                         Toast.LENGTH_SHORT).show();
 
@@ -256,7 +256,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             case R.id.action_archive:
-                Log.d(TAG, "archive item");
+                Log.d(TAG, "archive item " + selected.keyAt(0));
                 Toast.makeText(activity, R.string.not_implemented,
                         Toast.LENGTH_SHORT).show();
 
@@ -264,7 +264,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             case R.id.action_edit:
-                Log.d(TAG, "edit item");
+                Log.d(TAG, "edit item " + selected.keyAt(0));
                 Toast.makeText(activity, R.string.not_implemented,
                         Toast.LENGTH_SHORT).show();
 
@@ -284,13 +284,20 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-        return false;
+        menu.setGroupVisible(R.id.single_selection, mAdapter.getSelectedCount() <= 1);
+        return true;
     }
 
     @Override
     public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+        boolean isMultipleBefore = mAdapter.getSelectedCount() > 1;
         mAdapter.toggleSelected(position);
-        mode.setTitle("" + mAdapter.getSelectedCount());
+        int count = mAdapter.getSelectedCount();
+        boolean isMultipleAfter = count > 1;
+        mode.setTitle("" + count);
+        if (isMultipleAfter != isMultipleBefore) {
+            mode.invalidate();
+        }
     }
 
     void datasetChanged() {

@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import androidx.core.content.res.ResourcesCompat;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
@@ -87,7 +88,10 @@ public class ChatListAdapter extends BaseAdapter {
             holder.contactPriv = item.findViewById(R.id.contactPriv);
             holder.icon = item.findViewById(R.id.avatar);
             holder.online = item.findViewById(R.id.online);
-
+            holder.colorOffline = ResourcesCompat.getColor(mContext.getResources(),
+                    R.color.offline, mContext.getTheme());
+            holder.colorOnline = ResourcesCompat.getColor(mContext.getResources(),
+                    R.color.online, mContext.getTheme());
             item.setTag(holder);
         } else {
             holder = (ViewHolder) item.getTag();
@@ -125,7 +129,7 @@ public class ChatListAdapter extends BaseAdapter {
                 pub != null ? pub.fn : null,
                 holder.topic);
 
-        holder.online.setColorFilter(topic.getOnline() ? UiUtils.COLOR_ONLINE : UiUtils.COLOR_OFFLINE);
+        holder.online.setColorFilter(topic.getOnline() ? holder.colorOnline : holder.colorOffline);
         // Log.d(TAG, "User " + topic.getName() + " is " + (topic.getOnline() ? "online" : "offline"));
     }
 
@@ -167,5 +171,7 @@ public class ChatListAdapter extends BaseAdapter {
         TextView contactPriv;
         AppCompatImageView icon;
         AppCompatImageView online;
+        int colorOnline;
+        int colorOffline;
     }
 }

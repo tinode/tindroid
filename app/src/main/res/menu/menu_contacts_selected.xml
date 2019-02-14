@@ -20,25 +20,28 @@
         android:icon="@drawable/ic_delete"
         app:showAsAction="ifRoom" />
 
-    <item
-        android:id="@+id/action_mute"
-        android:orderInCategory="101"
-        android:title="@string/action_mute"
-        android:icon="@drawable/ic_notifications_off"
-        app:showAsAction="ifRoom" />
+    <group
+        android:id="@+id/single_selection"
+        android:visible="true">
+        <item
+            android:id="@+id/action_mute"
+            android:orderInCategory="101"
+            android:title="@string/action_mute"
+            android:icon="@drawable/ic_notifications_off"
+            app:showAsAction="ifRoom" />
 
-    <item
-        android:id="@+id/action_edit"
-        android:orderInCategory="102"
-        android:title="@string/action_edit_contact"
-        android:icon="@drawable/ic_mode_edit"
-        app:showAsAction="ifRoom" />
+        <item
+            android:id="@+id/action_edit"
+            android:orderInCategory="102"
+            android:title="@string/action_edit_contact"
+            android:icon="@drawable/ic_mode_edit"
+            app:showAsAction="ifRoom" />
 
-    <item
-        android:id="@+id/action_archive"
-        android:orderInCategory="103"
-        android:title="@string/action_archive"
-        android:icon="@drawable/ic_archive"
-        app:showAsAction="ifRoom" />
-
+        <item
+            android:id="@+id/action_archive"
+            android:orderInCategory="103"
+            android:title="@string/action_archive"
+            android:icon="@drawable/ic_archive"
+            app:showAsAction="ifRoom" />
+    </group>
 </menu>

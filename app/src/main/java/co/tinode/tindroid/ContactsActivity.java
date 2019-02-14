@@ -150,7 +150,7 @@ public class ContactsActivity extends AppCompatActivity implements
                     fragment = new ContactsFragment();
                     break;
                 default:
-                    throw new IllegalArgumentException("Failed to create fragment: unknonw tag "+tag);
+                    throw new IllegalArgumentException("Failed to create fragment: unknown tag "+tag);
             }
         } else {
             Log.d(TAG, "Action - fragment already exists");

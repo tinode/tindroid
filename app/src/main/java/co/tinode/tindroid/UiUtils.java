@@ -17,7 +17,6 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
@@ -107,9 +106,6 @@ public class UiUtils {
 
     static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     static final String PREF_READ_RCPT = "pref_readReceipts";
-
-    static final int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
-    static final int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
 
     private static final int AVATAR_SIZE = 128;
     private static final int MAX_BITMAP_SIZE = 1024;
@@ -218,7 +214,7 @@ public class UiUtils {
             timer.cancel();
         }
 
-        final Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return null;
         }
@@ -873,13 +869,13 @@ public class UiUtils {
             Cache.attachMeTopic(l)
                     .thenApply(new PromisedReply.SuccessListener() {
                         @Override
-                        public PromisedReply onSuccess(Object result) throws Exception {
+                        public PromisedReply onSuccess(Object result) {
                             UiUtils.setProgressIndicator(activity, false);
                             return null;
                         }
                     }, new PromisedReply.FailureListener() {
                         @Override
-                        public PromisedReply onFailure(Exception err) throws Exception {
+                        public PromisedReply onFailure(Exception err) {
                             Log.w(TAG, "Error subscribing to 'me' topic", err);
                             UiUtils.setProgressIndicator(activity, false);
                             if (err instanceof ServerResponseException) {
