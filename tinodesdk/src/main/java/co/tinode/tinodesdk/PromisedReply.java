@@ -115,7 +115,7 @@ public class PromisedReply<T> {
 
             mSuccess = success;
             mFailure = failure;
-            mNextPromise = new PromisedReply<T>();
+            mNextPromise = new PromisedReply<>();
             try {
                 switch (mState) {
                     case RESOLVED:
@@ -316,6 +316,6 @@ public class PromisedReply<T> {
         public abstract PromisedReply<U> onSuccess(U result) throws Exception;
     }
     public static abstract class FailureListener<U> {
-        public abstract PromisedReply<U> onFailure(Exception err) throws Exception;
+        public abstract <E extends Exception> PromisedReply<U> onFailure(E err) throws Exception;
     }
 }

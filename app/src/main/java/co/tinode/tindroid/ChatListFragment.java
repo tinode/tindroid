@@ -3,15 +3,6 @@ package co.tinode.tindroid;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.ListFragment;
-import androidx.appcompat.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -29,6 +20,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.ListFragment;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * View with contacts.
@@ -49,10 +55,10 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
         Bundle args = getArguments();
         if (args != null) {
             mIsArchive = args.getBoolean("archive", false);
-            Log.d(TAG, "onCreate, args NOT null, mIsArchive="+mIsArchive);
+            Log.d(TAG, "onCreate, args NOT null, mIsArchive=" + mIsArchive);
         } else {
             mIsArchive = false;
-            Log.d(TAG, "onCreate, args null, mIsArchive="+mIsArchive);
+            Log.d(TAG, "onCreate, args null, mIsArchive=" + mIsArchive);
         }
     }
 
@@ -225,49 +231,51 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
      * This menu is shown when one or more items are selected from the list
      */
     @Override
-    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+    @SuppressWarnings("unchecked")
+    public boolean onActionItemClicked(final ActionMode mode, final MenuItem item) {
         final ContactsActivity activity = (ContactsActivity) getActivity();
         if (activity == null) {
             return true;
         }
 
         final SparseBooleanArray selected = mAdapter.getSelectedIds();
+        final ComTopic<VxCard> topic;
         // TODO: implement menu actions
         switch (item.getItemId()) {
             case R.id.action_delete:
+                int[] positions = new int[selected.size()];
                 for (int i = 0; i < selected.size(); i++) {
-                    if (selected.valueAt(i)) {
-                        Log.d(TAG, "deleting item " + selected.keyAt(i));
-                    }
+                    positions[i] = selected.keyAt(i);
                 }
-                Toast.makeText(activity, R.string.not_implemented,
-                        Toast.LENGTH_SHORT).show();
-
+                showDeleteTopicsConfirmationDialog(positions);
                 // Close CAB
                 mode.finish();
                 return true;
 
             case R.id.action_mute:
-                Log.d(TAG, "muting item " + selected.keyAt(0));
-                Toast.makeText(activity, R.string.not_implemented,
-                        Toast.LENGTH_SHORT).show();
-
-                mode.finish();
-                return true;
-
             case R.id.action_archive:
-                Log.d(TAG, "archive item " + selected.keyAt(0));
-                Toast.makeText(activity, R.string.not_implemented,
-                        Toast.LENGTH_SHORT).show();
-
-                mode.finish();
-                return true;
-
-            case R.id.action_edit:
-                Log.d(TAG, "edit item " + selected.keyAt(0));
-                Toast.makeText(activity, R.string.not_implemented,
-                        Toast.LENGTH_SHORT).show();
-
+                topic = (ComTopic<VxCard>) mAdapter.getItem(selected.keyAt(0));
+                topic.subscribe(null, null)
+                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                return item.getItemId() == R.id.action_mute ?
+                                        topic.updateMuted(!topic.isMuted()) :
+                                        topic.updateArchived(!topic.isArchived());
+                            }
+                        }).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        datasetChanged();
+                        return topic.leave();
+                    }
+                }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        Log.d(TAG, "Archive item failed", err);
+                        return null;
+                    }
+                });
                 mode.finish();
                 return true;
 
@@ -298,6 +306,41 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
         if (isMultipleAfter != isMultipleBefore) {
             mode.invalidate();
         }
+    }
+
+    // Confirmation dialog "Do you really want to do X?"
+    private void showDeleteTopicsConfirmationDialog(final int[] positions) {
+        final ContactsActivity activity = (ContactsActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
+        confirmBuilder.setNegativeButton(android.R.string.cancel, null);
+        confirmBuilder.setMessage(R.string.confirm_delete_multiple_topics);
+        confirmBuilder.setPositiveButton(android.R.string.ok,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            for (int pos : positions) {
+                                ComTopic<VxCard> t = (ComTopic<VxCard>) mAdapter.getItem(pos);
+                                t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                        // TODO: show error message to user.
+                                        return null;
+                                    }
+                                });
+                            }
+                        } catch (NotConnectedException ignored) {
+                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        } catch (Exception ignored) {
+                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+        confirmBuilder.show();
     }
 
     void datasetChanged() {

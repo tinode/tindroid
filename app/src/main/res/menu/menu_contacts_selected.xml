@@ -31,15 +31,8 @@
             app:showAsAction="ifRoom" />
 
         <item
-            android:id="@+id/action_edit"
-            android:orderInCategory="102"
-            android:title="@string/action_edit_contact"
-            android:icon="@drawable/ic_mode_edit"
-            app:showAsAction="ifRoom" />
-
-        <item
             android:id="@+id/action_archive"
-            android:orderInCategory="103"
+            android:orderInCategory="102"
             android:title="@string/action_archive"
             android:icon="@drawable/ic_archive"
             app:showAsAction="ifRoom" />

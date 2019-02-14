@@ -60,7 +60,7 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> archive(final boolean arch) {
+    public PromisedReply<ServerMessage> updateArchived(final boolean arch) {
         PrivateType priv = new PrivateType();
         priv.setArchived(arch);
         return setMeta(new MsgSetMeta<>(new MetaSetDesc<DP,PrivateType>(null, priv)));

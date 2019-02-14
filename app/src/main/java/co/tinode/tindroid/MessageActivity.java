@@ -394,6 +394,9 @@ public class MessageActivity extends AppCompatActivity {
                 reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        if (mTopic.isArchived()) {
+                            mTopic.archive(false);
+                        }
                         // Updates message list with "delivered" icon.
                         runMessagesLoader();
                         return null;
