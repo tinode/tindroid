@@ -611,6 +611,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP,DR> set, MsgGetMeta get) {
 
         if (mAttached) {
+            if (set == null && get == null) {
+                // If the topic is already attached and the user does not attempt to set or
+                // get any data, just return resolved promise.
+                return new PromisedReply<>((ServerMessage) null);
+            }
             throw new AlreadySubscribedException();
         }
 

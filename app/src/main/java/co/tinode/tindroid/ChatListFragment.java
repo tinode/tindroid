@@ -254,6 +254,8 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
             case R.id.action_mute:
             case R.id.action_archive:
+                // Archiving and muting is only possible for subscribed topics:
+                //  subscribe - change status - unsubscribe.
                 topic = (ComTopic<VxCard>) mAdapter.getItem(selected.keyAt(0));
                 topic.subscribe(null, null)
                         .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -264,18 +266,24 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                                         topic.updateArchived(!topic.isArchived());
                             }
                         }).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        datasetChanged();
-                        return topic.leave();
-                    }
-                }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        Log.d(TAG, "Archive item failed", err);
-                        return null;
-                    }
-                });
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                datasetChanged();
+                                return topic.leave();
+                            }
+                        }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                        Log.d(TAG, "Archiving failed", err);
+                                    }
+                                });
+                                return null;
+                            }
+                        });
                 mode.finish();
                 return true;
 
@@ -322,21 +330,28 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        try {
-                            for (int pos : positions) {
-                                ComTopic<VxCard> t = (ComTopic<VxCard>) mAdapter.getItem(pos);
+                        for (int pos : positions) {
+                            ComTopic<VxCard> t = (ComTopic<VxCard>) mAdapter.getItem(pos);
+                            try {
                                 t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                                     @Override
-                                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                        // TODO: show error message to user.
+                                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                        activity.runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                                Log.d(TAG, "Delete failed", err);
+                                            }
+                                        });
                                         return null;
                                     }
                                 });
+                            } catch (NotConnectedException ignored) {
+                                Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                            } catch (Exception err) {
+                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                Log.d(TAG, "Delete failed", err);
                             }
-                        } catch (NotConnectedException ignored) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        } catch (Exception ignored) {
-                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

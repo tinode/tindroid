@@ -93,7 +93,7 @@ public class PromisedReply<T> {
      *
      * @param err Exception used for rejection of the promise.
      */
-    public PromisedReply(Exception err) {
+    public <E extends Exception> PromisedReply(E err) {
         mException = err;
         mState = State.REJECTED;
         mDoneSignal = new CountDownLatch(0);

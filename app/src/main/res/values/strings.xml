@@ -6,7 +6,7 @@
     <string name="app_name" translatable="false">Tindroid</string>
     <string name="app_name_full" translatable="false">Tindroid Messenger</string>
     <string name="app_version">Version</string>
-    <string name="copyright" translatable="false">© 2014 – 2018 Tinode</string>
+    <string name="copyright" translatable="false">© 2014 – 2019 Tinode</string>
     <string name="tinode" translatable="false">Tinode</string>
 
     <string name="login_hint">Login</string>
