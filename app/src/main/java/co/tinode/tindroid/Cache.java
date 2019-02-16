@@ -80,7 +80,7 @@ public class Cache {
 
     // Connect to 'me' topic.
     @SuppressWarnings("unchecked")
-    static PromisedReply<ServerMessage> attachMeTopic(Topic.Listener l) throws Exception {
+    static PromisedReply<ServerMessage> attachMeTopic(Topic.Listener l) {
         Tinode tinode = getTinode();
         MeTopic me = tinode.getMeTopic();
         if (me == null) {

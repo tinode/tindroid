@@ -33,7 +33,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
@@ -55,10 +54,8 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
         Bundle args = getArguments();
         if (args != null) {
             mIsArchive = args.getBoolean("archive", false);
-            Log.d(TAG, "onCreate, args NOT null, mIsArchive=" + mIsArchive);
         } else {
             mIsArchive = false;
-            Log.d(TAG, "onCreate, args null, mIsArchive=" + mIsArchive);
         }
     }
 
@@ -158,12 +155,10 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
         switch (item.getItemId()) {
             case R.id.action_new_p2p_topic:
-                Log.d(TAG, "Start new p2p topic");
                 activity.selectTab(ContactsFragment.TAB_CONTACTS);
                 return true;
 
             case R.id.action_new_grp_topic:
-                Log.d(TAG, "Launch new group topic");
                 Intent intent = new Intent(activity, CreateGroupActivity.class);
                 // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);

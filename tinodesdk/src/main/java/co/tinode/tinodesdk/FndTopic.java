@@ -15,7 +15,7 @@ import co.tinode.tinodesdk.model.Subscription;
 public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
     private static final String TAG = "FndTopic";
 
-    public FndTopic(Tinode tinode, Listener l) {
+    public FndTopic(Tinode tinode, Listener<String,String,SP,String[]> l) {
         super(tinode, Tinode.TOPIC_FND, l);
     }
 

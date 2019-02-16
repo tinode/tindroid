@@ -90,6 +90,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         UiUtils.setupToolbar(this, null, null, false);
 
+        // This will issue a subscription request.
         UiUtils.attachMeTopic(this, mMeTopicListener);
     }
 
@@ -152,8 +153,6 @@ public class ContactsActivity extends AppCompatActivity implements
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag "+tag);
             }
-        } else {
-            Log.d(TAG, "Action - fragment already exists");
         }
 
         FragmentTransaction trx = fm.beginTransaction();
@@ -182,9 +181,9 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onPres(MsgServerPres pres) {
-            if (pres.what.equals("msg")) {
+            if ("msg".equals(pres.what)) {
                 datasetChanged();
-            } else if (pres.what.equals("off") || pres.what.equals("on")) {
+            } else if ("off".equals(pres.what) || "on".equals(pres.what)) {
                 datasetChanged();
             }
         }

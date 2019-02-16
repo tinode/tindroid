@@ -117,6 +117,7 @@ public class SqlStore implements Storage {
                 db.setTransactionSuccessful();
                 success = true;
 
+                topic.setLocal(null);
                 // Log.d(TAG, "SUCCESS deleting topic " + topic.getName());
             } catch (SQLException ignored) {
                 // Log.e(TAG, "Topic deletion failed", ignored);

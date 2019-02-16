@@ -70,7 +70,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     protected String mName;
 
-    /** The mStore is set by Tinode when the topic calls {@link Tinode#registerTopic(Topic)} */
+    /** The mStore is set by Tinode when the topic calls {@link Tinode#startTrackingTopic(Topic)} */
     Storage mStore = null;
 
     // Server-provided values:
@@ -102,25 +102,27 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     protected int mMaxDel = 0;
 
-    protected Topic(Tinode tinode, Subscription<SP,SR> sub) {
+    Topic(Tinode tinode, String name) {
         mTinode = tinode;
-
-        setName(sub.topic);
-
+        if (name == null) {
+            name = Tinode.TOPIC_NEW + tinode.nextUniqueString();
+        }
+        setName(name);
         mDesc = new Description<>();
-        mDesc.merge(sub);
 
+        mTinode.startTrackingTopic(this);
+    }
+
+    protected Topic(Tinode tinode, Subscription<SP,SR> sub) {
+        this(tinode, sub.topic);
+        mDesc.merge(sub);
         if (sub.online != null) {
             mOnline = sub.online;
         }
     }
 
     protected Topic(Tinode tinode, String name, Description<DP,DR> desc) {
-        mTinode = tinode;
-
-        setName(name);
-
-        mDesc = new Description<>();
+        this(tinode, name);
         mDesc.merge(desc);
     }
 
@@ -134,12 +136,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @throws IllegalArgumentException if 'tinode' argument is null
      */
     protected Topic(Tinode tinode, String name, Listener<DP,DR,SP,SR> l) {
-        mTinode = tinode;
-
-        setName(name);
-
-        mDesc = new Description<>();
-
+        this(tinode, name);
         setListener(l);
     }
 
@@ -156,7 +153,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @param l event listener, optional
      */
     protected Topic(Tinode tinode, Listener<DP,DR,SP,SR> l) {
-        this(tinode, Tinode.TOPIC_NEW + tinode.nextUniqueString(), l);
+        this(tinode, null, l);
     }
 
     /**
@@ -344,7 +341,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Called by Tinode from {@link Tinode#registerTopic(Topic)}
+     * Called by Tinode from {@link Tinode#startTrackingTopic(Topic)}
      *
      * @param store storage object
      */
@@ -565,8 +562,21 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @return true if the topic is persisted in local storage, false otherwise
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     protected boolean isPersisted() {
         return getLocal() != null;
+    }
+
+    protected void persist(boolean on) {
+        if (mStore != null) {
+            if (on) {
+                if (!isPersisted()) {
+                    mStore.topicAdd(this);
+                }
+            } else {
+                mStore.topicDelete(this);
+            }
+        }
     }
 
     protected void setLastSeen(Date when, String ua) {
@@ -609,7 +619,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      */
     @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP,DR> set, MsgGetMeta get) {
-
         if (mAttached) {
             if (set == null && get == null) {
                 // If the topic is already attached and the user does not attempt to set or
@@ -619,17 +628,16 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             throw new AlreadySubscribedException();
         }
 
-        final String topicName = getName();
-        final boolean newTopic = isNew();
-        if (newTopic) {
-            mTinode.registerTopic(this);
-        }
-
         if (!mTinode.isConnected()) {
             throw new NotConnectedException();
         }
 
-        return mTinode.subscribe(getName(), set, get).thenApply(
+        final String topicName = getName();
+        if (!isPersisted()) {
+            persist(true);
+        }
+
+        return mTinode.subscribe(topicName, set, get).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
@@ -638,7 +646,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                             if (msg.ctrl != null) {
                                 if (msg.ctrl.params != null) {
                                     mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
-                                    if (newTopic) {
+                                    if (isNew()) {
                                         setUpdated(msg.ctrl.ts);
                                         setName(msg.ctrl.topic);
                                         mTinode.changeTopicName(Topic.this, topicName);
@@ -659,10 +667,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                 }, new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
-                        if (newTopic && err instanceof ServerResponseException) {
+                        if (isNew() && err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
                             if (sre.getCode() >= 400 && sre.getCode() < 500) {
-                                mTinode.unregisterTopic(topicName);
+                                mTinode.stopTrackingTopic(topicName);
+                                persist(false);
                             }
                         }
 
@@ -691,7 +700,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             topicLeft(unsub, result.ctrl.code, result.ctrl.text);
                             if (unsub) {
-                                mTinode.unregisterTopic(getName());
+                                mTinode.stopTrackingTopic(getName());
+                                persist(false);
                             }
                             return null;
                         }
@@ -762,7 +772,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException if there is no connection to server
      */
-    public PromisedReply<ServerMessage> publish(final Drafty content) throws Exception {
+    public PromisedReply<ServerMessage> publish(final Drafty content) {
         final long id;
         if (mStore != null) {
             id = mStore.msgSend(this, content);
@@ -788,7 +798,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @param content message to send
      * @return PromisedReply
      */
-    public PromisedReply<ServerMessage> publish(String content) throws Exception {
+    public PromisedReply<ServerMessage> publish(String content) {
         return publish(Drafty.parse(content));
     }
 
@@ -1260,7 +1270,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         topicLeft(true, result.ctrl.code, result.ctrl.text);
-                        mTinode.unregisterTopic(getName());
+                        mTinode.stopTrackingTopic(getName());
+                        persist(false);
                         return null;
                     }
                 }, null);

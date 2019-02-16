@@ -1397,7 +1397,6 @@ public class Tinode {
             topic = new ComTopic(this, meta.topic, meta.desc);
         }
 
-        registerTopic(topic);
         return topic;
     }
 
@@ -1471,25 +1470,27 @@ public class Tinode {
     /**
      * Start tracking topic.
      */
-    void registerTopic(Topic topic) {
-        if (mStore != null) {
-            if (!topic.isPersisted()) {
-                mStore.topicAdd(topic);
-            }
-            topic.setStorage(mStore);
+    void startTrackingTopic(final Topic topic) {
+        final String name = topic.getName();
+        if (mTopics.containsKey(name)) {
+            throw new IllegalStateException("Topic '" + name + "' is already registered");
         }
-        mTopics.put(topic.getName(), topic);
+        topic.setStorage(mStore);
+        mTopics.put(name, topic);
     }
 
     /**
      * Stop tracking the topic, delete it from local storage.
      */
-    void unregisterTopic(String topicName) {
-        Topic topic = mTopics.remove(topicName);
-        if (topic != null && mStore != null) {
-            topic.setStorage(null);
-            mStore.topicDelete(topic);
-        }
+    void stopTrackingTopic(String topicName) {
+        mTopics.remove(topicName);
+    }
+
+    /**
+     * Check if topic is being tracked.
+     */
+    boolean isTopicTracked(String topicName) {
+        return mTopics.containsKey(topicName);
     }
 
     /**

@@ -46,12 +46,12 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     @Override
-    public PromisedReply<ServerMessage> publish(Drafty content) throws Exception {
+    public PromisedReply<ServerMessage> publish(Drafty content) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public PromisedReply<ServerMessage> publish(String content) throws Exception {
+    public PromisedReply<ServerMessage> publish(String content) {
         throw new UnsupportedOperationException();
     }
 
@@ -74,7 +74,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     @Override
     @SuppressWarnings("unchecked")
     protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
-        // Log.d(TAG, "Me:routeMetaSub");
         for (Subscription sub : meta.sub) {
             // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
             Topic topic = mTinode.getTopic(sub.topic);
@@ -82,7 +81,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 // This is an existing topic.
                 if (sub.deleted != null) {
                     // Expunge deleted topic
-                    mTinode.unregisterTopic(sub.topic);
+                    mTinode.stopTrackingTopic(sub.topic);
+                    topic.persist(false);
                 } else {
                     // Update its record in memory and in the database.
                     topic.update(sub);
@@ -93,7 +93,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 }
             } else if (sub.deleted == null) {
                 // This is a new topic. Register it and write to DB.
-                mTinode.registerTopic(mTinode.newTopic(sub));
+                topic = mTinode.newTopic(sub);
+                topic.persist(true);
             }
 
             if (mListener != null) {
@@ -155,7 +156,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
                 case GONE:
                     // If topic is unknown (==null), then we don't care to unregister it.
-                    mTinode.unregisterTopic(pres.src);
+                    mTinode.stopTrackingTopic(pres.src);
+                    topic.persist(false);
                     break;
             }
         } else {
