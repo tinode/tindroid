@@ -74,8 +74,6 @@ public class LetterTileDrawable extends Drawable {
             sLetterToTileRatio = 0.75f;
             DEFAULT_PERSON_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_person_white);
             DEFAULT_GROUP_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_group_white);
-            // sPaint.setTypeface(Typeface.create(
-            //         res.getString(R.string.letter_tile_letter_font_family), Typeface.NORMAL));
             sPaint.setTextAlign(Align.CENTER);
             sPaint.setAntiAlias(true);
         }
@@ -88,12 +86,16 @@ public class LetterTileDrawable extends Drawable {
     /**
      * Attempt to create a drawable from the given vector drawable resource id, and the convert drawable
      * to bitmap
-     * @param context
+     * @param context context
      * @param drawableId vector drawable resource id
-     * @return
+     * @return bitmap extracted from the drawable.
      */
     private static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
         Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (drawable == null) {
+            throw new IllegalStateException("getBitmapFromVectorDrawable failed: null drawable");
+        }
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             drawable = (DrawableCompat.wrap(drawable)).mutate();
         }
@@ -158,7 +160,7 @@ public class LetterTileDrawable extends Drawable {
         final int minDimension = Math.min(bounds.width(), bounds.height());
 
         if (mIsCircle) {
-            canvas.drawCircle(bounds.centerX(), bounds.centerY(), minDimension / 2, sPaint);
+            canvas.drawCircle(bounds.centerX(), bounds.centerY(), minDimension / 2.0f, sPaint);
         } else {
             canvas.drawRect(bounds, sPaint);
         }

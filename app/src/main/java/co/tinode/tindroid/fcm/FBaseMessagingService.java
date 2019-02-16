@@ -4,6 +4,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -40,10 +41,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     // Width and height of the large icon (avatar)
     private static final int AVATAR_SIZE = 128;
 
-    private static Bitmap makeLargeIcon(Bitmap bmp) {
+    private static Bitmap makeLargeIcon(Resources res, Bitmap bmp) {
         if (bmp != null) {
             Bitmap scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
-            return new RoundImageDrawable(scaled).getRoundedBitmap();
+            return new RoundImageDrawable(res, scaled).getRoundedBitmap();
         }
         return null;
     }
@@ -91,7 +92,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             String senderName  = (sender == null || sender.pub == null) ?
                     getResources().getString(R.string.sender_unknown) : sender.pub.fn;
             Bitmap senderIcon = (sender == null || sender.pub == null) ?
-                    null : makeLargeIcon(sender.pub.getBitmap());
+                    null : makeLargeIcon(getResources(), sender.pub.getBitmap());
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
             if (tp == Topic.TopicType.P2P) {
                 // P2P message
@@ -159,7 +160,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
         int background = ContextCompat.getColor(this, R.color.colorNotificationBackground);
 
-        NotificationCompat.Builder notificationBuilder =
+        @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
                         new NotificationCompat.Builder(this, "new_message") :
                         new NotificationCompat.Builder(this);

@@ -431,7 +431,8 @@ public class MessagesListAdapter
                 Bitmap avatar = sub.pub.getBitmap();
                 if (holder.mAvatar != null) {
                     if (avatar != null) {
-                        holder.mAvatar.setImageDrawable(new RoundImageDrawable(avatar));
+                        holder.mAvatar.setImageDrawable(
+                                new RoundImageDrawable(mActivity.getResources(), avatar));
                     } else {
                         holder.mAvatar.setImageDrawable(
                                 new LetterTileDrawable(mActivity)

@@ -470,7 +470,7 @@ public class TopicInfoFragment extends Fragment {
             }
             final Bitmap bmp = pub.getBitmap();
             if (bmp != null) {
-                avatar.setImageDrawable(new RoundImageDrawable(bmp));
+                avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
             } else {
                 avatar.setImageDrawable(
                         new LetterTileDrawable(requireContext())

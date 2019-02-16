@@ -111,31 +111,6 @@ public class UiUtils {
     private static final int MAX_BITMAP_SIZE = 1024;
     private static final int MIN_TAG_LENGTH = 4;
 
-    // Material colors, shade #200.
-    // TODO(gene): maybe move to resource file
-    private static final Colorizer[] sColorizer = {
-            new Colorizer(0xffffffff, 0xff212121),
-            new Colorizer(0xffef9a9a, 0xff212121), new Colorizer(0xffc5e1a5, 0xff212121),
-            new Colorizer(0xff90caf9, 0xff212121), new Colorizer(0xfffff59d, 0xff212121),
-            new Colorizer(0xffb0bec5, 0xff212121), new Colorizer(0xfff48fb1, 0xff212121),
-            new Colorizer(0xffb39ddb, 0xff212121), new Colorizer(0xff9fa8da, 0xff212121),
-            new Colorizer(0xffffab91, 0xff212121), new Colorizer(0xffffe082, 0xff212121),
-            new Colorizer(0xffa5d6a7, 0xff212121), new Colorizer(0xffbcaaa4, 0xff212121),
-            new Colorizer(0xffeeeeee, 0xff212121), new Colorizer(0xff80deea, 0xff212121),
-            new Colorizer(0xffe6ee9c, 0xff212121), new Colorizer(0xffce93d8, 0xff212121)
-    };
-    private static final Colorizer[] sColorizerDark = {
-            new Colorizer(0xff424242, 0xffdedede),
-            new Colorizer(0xffC62828, 0xffdedede), new Colorizer(0xffAD1457, 0xffdedede),
-            new Colorizer(0xff6A1B9A, 0xffdedede), new Colorizer(0xff4527A0, 0xffdedede),
-            new Colorizer(0xff283593, 0xffdedede), new Colorizer(0xff1565C0, 0xffdedede),
-            new Colorizer(0xff0277BD, 0xffdedede), new Colorizer(0xff00838F, 0xffdedede),
-            new Colorizer(0xff00695C, 0xffdedede), new Colorizer(0xff2E7D32, 0xffdedede),
-            new Colorizer(0xff558B2F, 0xffdedede), new Colorizer(0xff9E9D24, 0xff212121),
-            new Colorizer(0xffF9A825, 0xff212121), new Colorizer(0xffFF8F00, 0xff212121),
-            new Colorizer(0xffEF6C00, 0xffdedede), new Colorizer(0xffD84315, 0xffdedede),
-            new Colorizer(0xff4E342E, 0xffdedede), new Colorizer(0xff37474F, 0xffdedede)
-    };
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
     private static final int COLOR_RED_BORDER = 0xFFE57373;
     private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
@@ -184,7 +159,7 @@ public class UiUtils {
 
         Drawable avatarDrawable;
         if (avatar != null) {
-            avatarDrawable = new RoundImageDrawable(avatar);
+            avatarDrawable = new RoundImageDrawable(activity.getResources(), avatar);
         } else {
             avatarDrawable = new LetterTileDrawable(activity)
                     .setLetterAndColor(name, uid)
@@ -209,6 +184,7 @@ public class UiUtils {
         typing.setBounds(b.right - b.width()/4, b.bottom - b.height()/4, b.right, b.bottom);
     }
 
+    @SuppressWarnings("SameParameterValue")
     static Timer toolbarTypingIndicator(final Activity activity, Timer timer, int duration) {
         if (timer != null) {
             timer.cancel();
@@ -289,6 +265,7 @@ public class UiUtils {
         activity.finish();
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     static boolean checkPermission(Context context, String permission) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
@@ -495,7 +472,7 @@ public class UiUtils {
     }
 
     private static void acceptAvatar(final ImageView avatar, final Bitmap bmp) {
-        avatar.setImageDrawable(new RoundImageDrawable(scaleSquareBitmap(bmp)));
+        avatar.setImageDrawable(new RoundImageDrawable(avatar.getResources(), scaleSquareBitmap(bmp)));
     }
 
     static void acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
@@ -509,7 +486,7 @@ public class UiUtils {
 
     static void assignBitmap(Context context, ImageView icon, Bitmap bmp, String name, String address) {
         if (bmp != null) {
-            icon.setImageDrawable(new RoundImageDrawable(bmp));
+            icon.setImageDrawable(new RoundImageDrawable(context.getResources(), bmp));
         } else {
             LetterTileDrawable drawable = new LetterTileDrawable(context);
             drawable.setContactTypeAndColor(
@@ -619,23 +596,6 @@ public class UiUtils {
         return (int) typedValue.getDimension(metrics);
     }
 
-    public static Colorizer getColorsFor(String uid) {
-        int index = uid != null ? Math.abs(uid.hashCode()) : 0;
-        return sColorizer[index % sColorizer.length];
-    }
-
-    public static Colorizer getDarkColorsFor(int index) {
-        if (index >= sColorizerDark.length) {
-            index = index % sColorizerDark.length;
-        }
-        return sColorizerDark[index];
-    }
-
-    public static Colorizer getDarkColorsFor(String uid) {
-        int index = uid != null ? Math.abs(uid.hashCode()) : 0;
-        return sColorizerDark[index % sColorizerDark.length];
-    }
-
     static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
         ArrayList<AccessModeLabel> result = new ArrayList<>(2);
         if (acs != null) {
@@ -743,18 +703,22 @@ public class UiUtils {
                     newAcsStr.append('N');
                 }
                 try {
-                    PromisedReply reply = null;
+                    PromisedReply<ServerMessage> reply = null;
                     switch (what) {
                         case ACTION_UPDATE_SELF_SUB:
+                            //noinspection unchecked
                             reply = topic.updateMode(null, newAcsStr.toString());
                             break;
                         case ACTION_UPDATE_SUB:
+                            //noinspection unchecked
                             reply = topic.updateMode(uid, newAcsStr.toString());
                             break;
                         case ACTION_UPDATE_AUTH:
+                            //noinspection unchecked
                             reply = topic.updateDefAcs(newAcsStr.toString(), null);
                             break;
                         case ACTION_UPDATE_ANON:
+                            //noinspection unchecked
                             reply = topic.updateDefAcs(null, newAcsStr.toString());
                             break;
                         default:
@@ -762,7 +726,7 @@ public class UiUtils {
                     }
 
                     if (reply != null) {
-                        ((PromisedReply<ServerMessage>) reply).thenApply(
+                        reply.thenApply(
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                      @Override
                                      public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -956,7 +920,7 @@ public class UiUtils {
         };
 
         int ID = 0;
-        int CONTACT_ID = 1;
+        // int CONTACT_ID = 1;
         int DISPLAY_NAME = 2;
         int PHOTO_THUMBNAIL_DATA = 3;
         int IM_HANDLE = 4;
@@ -1013,7 +977,7 @@ public class UiUtils {
             }
         }
     }
-
+/*
     public static class Colorizer {
         int bg;
         int fg;
@@ -1023,7 +987,7 @@ public class UiUtils {
             this.fg = fg;
         }
     }
-
+*/
     public static class AccessModeLabel {
         int nameId;
         public int color;
@@ -1119,7 +1083,7 @@ public class UiUtils {
                         if ("primary".equalsIgnoreCase(type)) {
                             return Environment.getExternalStorageDirectory() + "/" + split[1];
                         }
-                        // TODO handle non-primary volumes
+                        // TODO: handle non-primary volumes
                     }
                     break;
                     case "com.android.providers.downloads.documents": {

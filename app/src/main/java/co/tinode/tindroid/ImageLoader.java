@@ -49,6 +49,7 @@ public abstract class ImageLoader {
 
         final RetainFragment retainFragment = findOrCreateRetainFragment(fm);
         // See if we already have an ImageCache stored in RetainFragment
+        //noinspection unchecked
         mBitmapCache = (LruCache<String, Bitmap>) retainFragment.getObject();
         // No existing ImageCache, create one and store it in RetainFragment
         if (mBitmapCache == null) {
@@ -244,7 +245,7 @@ public abstract class ImageLoader {
 
         if (bitmap != null) {
             // Bitmap found in memory cache
-            imageView.setImageDrawable(new RoundImageDrawable(bitmap));
+            imageView.setImageDrawable(new RoundImageDrawable(context.getResources(), bitmap));
         } else if (cancelPotentialWork(data, imageView)) {
             final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
             final AsyncDrawable asyncDrawable =
@@ -259,6 +260,8 @@ public abstract class ImageLoader {
      *
      * @param resId Resource ID of loading image.
      */
+
+    @SuppressWarnings("SameParameterValue")
     void setLoadingImage(Context context, int resId) {
         mLoadingBitmap = BitmapFactory.decodeResource(context.getResources(), resId);
     }
@@ -446,7 +449,7 @@ public abstract class ImageLoader {
 
             final ImageView imageView = getAttachedImageView();
             if (bitmap != null && imageView != null) {
-                imageView.setImageDrawable(new RoundImageDrawable(bitmap));
+                imageView.setImageDrawable(new RoundImageDrawable(imageView.getResources(), bitmap));
             }
         }
 

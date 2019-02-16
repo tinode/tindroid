@@ -58,6 +58,7 @@
     <color name="offline">#FFC0C0C0</color>
 
     <!-- Background colors for LetterTileDrawables. -->
+    -->
     <array name="letter_tile_colors_light">
         <item>#ef9a9a</item>
         <item>#90caf9</item>
@@ -76,7 +77,7 @@
         <item>#80deea</item>
         <item>#ce93d8</item>
     </array>
-    <color name="letter_tile_text_color_light">#f0f0f0</color>
+    <color name="letter_tile_text_color_light">#ffffff</color>
 
     <!-- Darker versions of letter_tile_colors, two shades darker. -->
     <array name="letter_tile_colors_dark">

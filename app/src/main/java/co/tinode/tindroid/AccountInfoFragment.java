@@ -119,7 +119,7 @@ public class AccountInfoFragment extends Fragment {
             }
             final Bitmap bmp = pub.getBitmap();
             if (bmp != null) {
-                avatar.setImageDrawable(new RoundImageDrawable(bmp));
+                avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
             }
         }
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
