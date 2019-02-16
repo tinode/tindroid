@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.os.Build;
-import android.util.Log;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -35,8 +34,6 @@ public class Cache {
 
     public static Tinode getTinode() {
         if (sTinode == null) {
-            Log.d(TAG, "Tinode instantiated");
-
             sTinode = new Tinode("Tindroid/" + TindroidApp.getAppVersion(), API_KEY,
                     BaseDb.getInstance().getStore(), null);
             sTinode.setOsString(Build.VERSION.RELEASE);
