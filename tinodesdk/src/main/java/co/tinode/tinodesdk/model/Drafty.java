@@ -632,7 +632,10 @@ public class Drafty implements Serializable {
     private <T> List<T> forEach(String line, int start, int end, List<Span> spans, Formatter<T> formatter) {
         List<T> result = new LinkedList<>();
         if (spans == null) {
-            result.add(formatter.apply(null, null, line.substring(start, end)));
+            T fs = formatter.apply(null, null, line.substring(start, end));
+            if (fs != null) {
+                result.add(fs);
+            }
             return result;
         }
 
@@ -644,13 +647,19 @@ public class Drafty implements Serializable {
             if (span.start < 0 && span.type.equals("EX")) {
                 // This is different from JS SDK. JS ignores these spans here.
                 // JS uses Drafty.attachments() to get attachments.
-                result.add(formatter.apply(span.type, span.data, null));
+                T fs = formatter.apply(span.type, span.data, null);
+                if (fs != null) {
+                    result.add(fs);
+                }
                 continue;
             }
 
             // Add un-styled range before the styled span starts.
             if (start < span.start) {
-                result.add(formatter.apply(null, null, line.substring(start, span.start)));
+                T fs = formatter.apply(null, null, line.substring(start, span.start));
+                if (fs != null) {
+                    result.add(fs);
+                }
                 start = span.start;
             }
 
@@ -676,10 +685,16 @@ public class Drafty implements Serializable {
                 span.data = span.data != null ? span.data : new HashMap<String, Object>();
                 String title = line.substring(span.start, span.end);
                 span.data.put("title", title);
-                result.add(formatter.apply(span.type, span.data, title));
+                T fs = formatter.apply(span.type, span.data, title);
+                if (fs != null) {
+                    result.add(fs);
+                }
             } else {
-                result.add(formatter.apply(span.type, span.data,
-                        forEach(line, start, span.end, subspans, formatter)));
+                T fs = formatter.apply(span.type, span.data,
+                        forEach(line, start, span.end, subspans, formatter));
+                if (fs != null) {
+                    result.add(fs);
+                }
             }
 
             start = span.end;
@@ -687,7 +702,10 @@ public class Drafty implements Serializable {
 
         // Add the last unformatted range.
         if (start < end) {
-            result.add(formatter.apply(null, null, line.substring(start, end)));
+            T fs = formatter.apply(null, null, line.substring(start, end));
+            if (fs != null) {
+                result.add(fs);
+            }
         }
 
         return result;
@@ -817,6 +835,7 @@ public class Drafty implements Serializable {
         }
 
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public String toString() {
             return "{tp: '" + tp + "', at: " + at + ", len: " + len + ", key: " + key + "}";

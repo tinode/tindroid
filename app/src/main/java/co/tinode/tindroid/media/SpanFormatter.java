@@ -3,7 +3,6 @@ package co.tinode.tindroid.media;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -17,7 +16,6 @@ import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
-import android.text.style.LineHeightSpan;
 import android.text.style.ParagraphStyle;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -64,6 +62,8 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         if (content.isPlain()) {
             return new SpannedString(content.toString());
         }
+        // This is needed for button shadows.
+        container.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         TreeNode result = content.format(new SpanFormatter(container, clicker));
         return result.toSpanned();
     }
@@ -150,7 +150,9 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return result;
     }
 
-    private TreeNode handleAttachment(final Context ctx, Object unused, final Map<String,Object> data) {
+    private TreeNode handleAttachment(final Context ctx,
+                                      @SuppressWarnings("unused") Object unused,
+                                      final Map<String,Object> data) {
         TreeNode result = new TreeNode();
         if (data != null) {
             try {
@@ -160,7 +162,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     // They are not meant to be user-visible.
                     return null;
                 }
-            } catch (NullPointerException | ClassCastException ignored) {
+            } catch (ClassCastException ignored) {
             }
 
             result.addNode( "\n");
@@ -168,8 +170,8 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             // Insert document icon
             Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_insert_drive_file);
             icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
-            CharacterStyle span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
-            final Rect bounds = ((ImageSpan) span).getDrawable().getBounds();
+            ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
+            final Rect bounds = span.getDrawable().getBounds();
             result.addNode(new SubscriptSpan(), new TreeNode(span, " "));
 
             // Insert document's file name
@@ -180,7 +182,8 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             }
             if (TextUtils.isEmpty(fname)) {
                 fname = ctx.getResources().getString(R.string.default_attachment_name);
-            } else if (fname.length() > 32) {
+            } else //noinspection ConstantConditions
+                if (fname.length() > 32) {
                 fname = fname.substring(0, 16) + "..." + fname.substring(fname.length() - 16);
             }
             result.addNode(new TypefaceSpan("monospace"), fname);
@@ -210,19 +213,15 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
     // Button: URLSpan wrapped into LineHeightSpan and then BorderedSpan.
     private TreeNode handleButton(final Map<String,Object> data, final Object content) {
-        TreeNode span = new TreeNode(new BorderedSpan(mContainer.getContext(), mFontSize * FORM_LINE_SPACING), (
-                CharSequence) null);
-        TreeNode lhs = new TreeNode(new LineHeightSpan() {
-            @Override
-            public void chooseHeight(CharSequence text, int start, int end,
-                                     int spanstartv, int lineHeight, Paint.FontMetricsInt fm) {
-                float height = mFontSize * FORM_LINE_SPACING;
-                int spacing = (int) ((height - mFontSize) * 0.5f);
-                fm.bottom += spacing;
-                fm.top -= spacing;
-            }
-        }, null);
-        lhs.addNode(new URLSpan("") {
+        // Create BorderSpan.
+        final TreeNode span = new TreeNode(
+                new BorderedSpan(mContainer.getContext(),
+                        mFontSize * (FORM_LINE_SPACING + 0.2f),
+                        mContainer.getPaint().measureText("0")),
+                (CharSequence) null);
+
+        // Wrap URLSpan into BorderSpan.
+        span.addNode(new URLSpan("") {
             @Override
             public void onClick(View widget) {
                 if (mClicker != null) {
@@ -230,7 +229,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 }
             }
         }, content);
-        span.addNode(lhs);
+
         return span;
     }
 
@@ -291,13 +290,14 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         // Add line breaks between form elements.
                         // Don't insert a BR after the last element.
                         try {
+                            @SuppressWarnings("unchecked")
                             List<TreeNode> children = (List<TreeNode>) content;
                             if (children.size() > 0) {
                                 span = new TreeNode();
-                                span.addNode(children.get(0));
-                                for (int i = 1; i < children.size(); i++) {
-                                    span.addNode("\n");
+                                // span.addNode(children.get(0));
+                                for (int i = 0; i < children.size(); i++) {
                                     span.addNode(children.get(i));
+                                    span.addNode("\n");
                                 }
                             }
                         } catch (ClassCastException ex) {
@@ -307,7 +307,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         if (span != null && span.isEmpty()) {
                             span = null;
                         } else {
-                            mContainer.setLineSpacing(mFontSize * FORM_LINE_SPACING, 0);
+                            mContainer.setLineSpacing(0, FORM_LINE_SPACING);
                         }
                     }
                     break;
@@ -433,27 +433,51 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     (children == null || children.size() == 0);
         }
 
+        @NonNull
         @Override
         public String toString() {
             StringBuilder result = new StringBuilder("{");
             if (text != null) {
                 if (text.equals("\n")) {
-                    result.append("text='BR'");
+                    result.append("txt='BR'");
                 } else {
-                    result.append("text='").append(text.toString()).append("'");
+                    result.append("txt='").append(text.toString()).append("'");
                 }
             } else if (children != null) {
-                result.append("children=[");
-                for (TreeNode child : children) {
-                    result.append(child.toString());
-                    result.append(",");
+                if (children.size() == 0) {
+                    result.append("ERROR:EMPTY");
+                } else if (children.size() == 1) {
+                    result.append(children.get(0).toString());
+                } else {
+                    result.append("[");
+                    for (TreeNode child : children) {
+                        if (child != null) {
+                            result.append(child.toString());
+                            result.append(",");
+                        } else {
+                            result.append("ERROR:NULL,");
+                        }
+                    }
+                    // Remove dangling comma.
+                    result.setLength(result.length() - 1);
+                    result.append("]");
                 }
-                result.append("]");
             } else {
-                result.append(" no content");
+                result.append("ERROR:NULL");
             }
+            result.append(styleName());
             result.append("}");
             return result.toString();
+        }
+
+        private String styleName() {
+            if (pStyle != null) {
+                return ", stl="+pStyle.getClass().getName();
+            }
+            if (cStyle != null) {
+                return ", stl="+cStyle.getClass().getName();
+            }
+            return "";
         }
 
         Spanned toSpanned() {
@@ -463,7 +487,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             } else if (children != null) {
                 for (TreeNode child : children) {
                     if (child == null) {
-                        Log.w(TAG, "NULL child. Should not happen!!!");
+                        Log.e(TAG, "NULL child. Should not happen!!!");
                     } else {
                         spanned.append(child.toSpanned());
                     }

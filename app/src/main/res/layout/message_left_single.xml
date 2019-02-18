@@ -26,7 +26,8 @@
                 android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:maxWidth="270dp"
+                android:maxWidth="280dp"
+                android:minWidth="140dp"
                 android:textColor="@color/colorTextPrimary"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
 
