@@ -249,36 +249,30 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
 
             case R.id.action_mute:
             case R.id.action_archive:
-                // Archiving and muting is only possible for subscribed topics:
-                //  subscribe - change status - unsubscribe.
+                // Archiving and muting is possible regardless of subscription status.
                 topic = (ComTopic<VxCard>) mAdapter.getItem(selected.keyAt(0));
-                topic.subscribe(null, null)
-                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                return item.getItemId() == R.id.action_mute ?
+                (item.getItemId() == R.id.action_mute ?
                                         topic.updateMuted(!topic.isMuted()) :
-                                        topic.updateArchived(!topic.isArchived());
-                            }
-                        }).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                        topic.updateArchived(!topic.isArchived())
+                ).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        datasetChanged();
+                        return null;
+                    }
+                }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                        activity.runOnUiThread(new Runnable() {
                             @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                datasetChanged();
-                                return topic.leave();
-                            }
-                        }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                activity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                        Log.d(TAG, "Archiving failed", err);
-                                    }
-                                });
-                                return null;
+                            public void run() {
+                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                Log.d(TAG, "Archiving failed", err);
                             }
                         });
+                        return null;
+                    }
+                });
                 mode.finish();
                 return true;
 

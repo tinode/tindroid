@@ -1510,6 +1510,11 @@ public class Tinode {
         return found;
     }
 
+    /**
+     * Look up user in a local cache: first in memory, then in persistent storage.
+     * @param uid ID of the user to find.
+     * @return {@link User} object or null if no such user is found in local cache.
+     */
     @SuppressWarnings("unchecked")
     User getUser(String uid) {
         User user = mUsers.get(uid);

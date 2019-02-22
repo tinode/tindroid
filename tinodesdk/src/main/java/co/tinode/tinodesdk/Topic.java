@@ -942,6 +942,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Query topic for data or metadata
      */
     public PromisedReply<ServerMessage> getMeta(MsgGetMeta query) {
+        if (!mTinode.isConnected()) {
+            throw new NotConnectedException();
+        }
+
         return mTinode.getMeta(getName(), query);
     }
 
@@ -952,8 +956,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<DP,DR> meta) {
-        if (mAttached) {
-            return mTinode.setMeta(getName(), meta).thenApply(
+        if (!mTinode.isConnected()) {
+            throw new NotConnectedException();
+        }
+
+        return mTinode.setMeta(getName(), meta).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -961,12 +968,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     return null;
                 }
             }, null);
-        }
-        if (mTinode.isConnected()) {
-            throw new NotSubscribedException();
-        }
-
-        throw new NotConnectedException();
     }
 
     /**
