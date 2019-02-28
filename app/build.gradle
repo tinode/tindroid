@@ -15,6 +15,15 @@ android {
         versionName gitVersionName()
     }
 
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a' // select ABIs to build APKs for
+            universalApk true // generate an additional APK that contains all the ABIs
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -48,7 +57,7 @@ dependencies {
     implementation project(path: ':tinodesdk')
     implementation 'androidx.appcompat:appcompat:1.1.0-alpha02'
     implementation 'androidx.preference:preference:1.1.0-alpha03'
-    implementation 'com.google.android.material:material:1.1.0-alpha03'
+    implementation 'com.google.android.material:material:1.1.0-alpha04'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0-alpha01'
     implementation 'androidx.recyclerview:recyclerview:1.1.0-alpha02'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -56,7 +65,7 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.github.pchmn:MaterialChipsInput:1.0.8'
     implementation 'com.google.firebase:firebase-core:16.0.7'
-    implementation 'com.google.firebase:firebase-messaging:17.3.4'
+    implementation 'com.google.firebase:firebase-messaging:17.4.0'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.9.2'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
     implementation "com.google.firebase:firebase-measurement-connector-impl:17.0.5"

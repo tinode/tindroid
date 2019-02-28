@@ -1685,15 +1685,19 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     }
                     // User left topic.
                     if (!sub.acs.isModeDefined()) {
+                        /*
                         if (isP2PType()) {
                             // If the second user unsubscribed from the topic, then the topic is no longer usable.
                             try {
+                                // FIXME: this should not happen here. The decision to leave
+                                // should be left to the application.
                                 leave();
                             } catch (Exception ignored) { }
                         }
+                        */
                         sub.deleted = new Date();
-                        processSub(sub);
                     }
+                    processSub(sub);
                 }
                 break;
             default:

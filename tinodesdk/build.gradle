@@ -9,6 +9,7 @@ android {
         versionCode gitVersionCode()
         versionName gitVersionName()
     }
+
     buildTypes {
         release {
             minifyEnabled false
