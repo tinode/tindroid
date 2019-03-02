@@ -425,9 +425,19 @@ public class Tinode {
         mServerBuild = null;
         mServerVersion = null;
 
+        // Mark all topics as un-attached.
         for (Topic topic : mTopics.values()) {
             topic.topicLeft(false, 503, "disconnected");
         }
+
+        // Reject all pending promises.
+        ServerResponseException ex = new ServerResponseException(503, "disconnected");
+        for (PromisedReply<ServerMessage> p : mFutures.values()) {
+            try {
+                p.reject(ex);
+            } catch (Exception ignored) {}
+        }
+
         if (mListener != null) {
             mListener.onDisconnect(byServer, code, reason);
         }
@@ -485,8 +495,13 @@ public class Tinode {
                     }
                 }
             }
-
-            if ("data".equals(pkt.ctrl.getStringParam("what"))) {
+            if (pkt.ctrl.code == 205 && "evicted".equals(pkt.ctrl.text)) {
+                Topic topic = getTopic(pkt.ctrl.topic);
+                if (topic != null) {
+                    Boolean unsub = pkt.ctrl.getBoolParam("unsub");
+                    topic.topicLeft(unsub != null ? unsub : false, pkt.ctrl.code, pkt.ctrl.text);
+                }
+            } else if ("data".equals(pkt.ctrl.getStringParam("what"))) {
                 Topic topic = getTopic(pkt.ctrl.topic);
                 if (topic != null) {
                     topic.allMessagesReceived(pkt.ctrl.getIntParam("count"));
@@ -1516,8 +1531,8 @@ public class Tinode {
      * @return {@link User} object or null if no such user is found in local cache.
      */
     @SuppressWarnings("unchecked")
-    User getUser(String uid) {
-        User user = mUsers.get(uid);
+    <SP> User<SP> getUser(String uid) {
+        User<SP> user = mUsers.get(uid);
         if (user == null && mStore != null) {
             user = mStore.userGet(uid);
             if (user != null) {

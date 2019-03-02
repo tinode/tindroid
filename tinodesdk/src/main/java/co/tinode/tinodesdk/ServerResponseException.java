@@ -13,6 +13,12 @@ public class ServerResponseException extends Exception {
         this.reason = reason;
     }
 
+    ServerResponseException(int code, String text) {
+        super(text);
+        this.code = code;
+        this.reason = text;
+    }
+
     @Override
     public String getMessage() {
         return super.getMessage() + " (" + code + ")";

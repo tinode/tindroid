@@ -72,38 +72,43 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public void setPriv(PrivateType priv) { /* do nothing */ }
 
     @Override
-    @SuppressWarnings("unchecked")
     protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
-        for (Subscription sub : meta.sub) {
-            // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
-            Topic topic = mTinode.getTopic(sub.topic);
-            if (topic != null) {
-                // This is an existing topic.
-                if (sub.deleted != null) {
-                    // Expunge deleted topic
-                    mTinode.stopTrackingTopic(sub.topic);
-                    topic.persist(false);
-                } else {
-                    // Update its record in memory and in the database.
-                    topic.update(sub);
-                    // Notify topic to update self.
-                    if (topic.mListener != null) {
-                        topic.mListener.onContUpdate(sub);
-                    }
-                }
-            } else if (sub.deleted == null) {
-                // This is a new topic. Register it and write to DB.
-                topic = mTinode.newTopic(sub);
-                topic.persist(true);
-            }
 
-            if (mListener != null) {
-                mListener.onMetaSub(sub);
-            }
+        for (Subscription<DP,PrivateType> sub : meta.sub) {
+            processOneSub(sub);
         }
 
         if (mListener != null) {
             mListener.onSubsUpdated();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void processOneSub(Subscription<DP,PrivateType> sub) {
+        // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
+        Topic topic = mTinode.getTopic(sub.topic);
+        if (topic != null) {
+            // This is an existing topic.
+            if (sub.deleted != null) {
+                // Expunge deleted topic
+                mTinode.stopTrackingTopic(sub.topic);
+                topic.persist(false);
+            } else {
+                // Update its record in memory and in the database.
+                topic.update(sub);
+                // Notify topic to update self.
+                if (topic.mListener != null) {
+                    topic.mListener.onContUpdate(sub);
+                }
+            }
+        } else if (sub.deleted == null) {
+            // This is a new topic. Register it and write to DB.
+            topic = mTinode.newTopic(sub);
+            topic.persist(true);
+        }
+
+        if (mListener != null) {
+            mListener.onMetaSub(sub);
         }
     }
 
@@ -142,12 +147,28 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     topic.setLastSeen(new Date(), pres.ua);
                     break;
 
-                case RECV: // user's other session marked some messges as received
-                    topic.setRecv(pres.seq);
+                case RECV: // user's other session marked some messages as received
+                    if (topic.getRecv() < pres.seq) {
+                        topic.setRecv(pres.seq);
+                        if (mStore != null) {
+                            mStore.setRecv(topic, pres.seq);
+                        }
+                    }
                     break;
 
                 case READ: // user's other session marked some messages as read
-                    topic.setRead(pres.seq);
+                    if (topic.getRead() < pres.seq) {
+                        topic.setRead(pres.seq);
+                        if (mStore != null) {
+                            mStore.setRead(topic, pres.seq);
+                        }
+                        if (topic.getRecv() < topic.getRead()) {
+                            topic.setRecv(topic.getRead());
+                            if (mStore != null) {
+                                mStore.setRecv(topic, topic.getRead());
+                            }
+                        }
+                    }
                     break;
 
                 case DEL: // messages deleted

@@ -38,6 +38,14 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
     public Subscription() {
     }
 
+    public Subscription(Subscription<SP,SR> sub) {
+        this.merge(sub);
+        mLocal = null;
+    }
+
+    /**
+     * Merge two subscriptions.
+     */
     public boolean merge(Subscription<SP,SR> sub) {
         int changed = 0;
 
@@ -60,6 +68,10 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
 
         if ((sub.touched != null) && (touched == null || touched.before(sub.touched))) {
             touched = sub.touched;
+        }
+
+        if (sub.deleted != null) {
+            deleted = sub.deleted;
         }
 
         if (sub.acs != null) {

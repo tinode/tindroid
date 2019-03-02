@@ -157,14 +157,26 @@ public class Acs implements Serializable {
         return am != null && mode.equals(am.mode) && want.equals(am.want) && given.equals(am.given);
     }
 
+    /**
+     * Check if Reader (R) flag is set.
+     * @return true if flag is set.
+     */
     public boolean isReader() {
         return mode.isReader();
     }
 
+    /**
+     * Check if Writer (W) flag is set.
+     * @return true if flag is set.
+     */
     public boolean isWriter() {
         return mode.isWriter();
     }
 
+    /**
+     * Check if Presence (P) flag is NOT set.
+     * @return true if flag is NOT set.
+     */
     public boolean isMuted() {
         return mode.isMuted();
     }
@@ -174,27 +186,63 @@ public class Acs implements Serializable {
         mode.setMuted(v);
         return this;
     }
+
+    /**
+     * Check if either one of Owner (O) or Approver (A) flags is set.
+     * @return true if flag is set.
+     */
     public boolean isAdmin() {
         return mode.isAdmin();
     }
+    /**
+     * Check if Deleter (D) flag is set.
+     * @return true if flag is set.
+     */
     public boolean isDeleter() {
         return mode.isDeleter();
     }
+    /**
+     * Check if Owner (O) flag is set.
+     * @return true if flag is set.
+     */
     public boolean isOwner() {
         return mode.isOwner();
     }
+    /**
+     * Check if Joiner (J) flag is set.
+     * @return true if flag is set.
+     */
     public boolean isJoiner() {
         return mode.isJoiner();
     }
+
+    /**
+     * Check if mode is defined.
+     * @return true if defined.
+     */
     public boolean isModeDefined() {
         return mode.isDefined();
     }
+    /**
+     * Check if given is defined.
+     * @return true if defined.
+     */
     public boolean isGivenDefined() {
         return given.isDefined();
     }
+
+    /**
+     * Check if want is defined.
+     * @return true if defined.
+     */
     public boolean isWantDefined() {
         return want.isDefined();
     }
+
+    /**
+     * Check if mode is invalid.
+     * @return true if invalid.
+     */
     public boolean isInvalid() {
         return mode.isInvalid();
     }

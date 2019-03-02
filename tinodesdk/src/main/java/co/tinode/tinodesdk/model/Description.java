@@ -106,6 +106,11 @@ public class Description<DP,DR> implements Serializable {
             changed++;
         }
 
+        if (sub.touched != null && (touched == null || touched.before(sub.touched))) {
+            touched = sub.touched;
+            changed ++;
+        }
+
         if (sub.seq > seq) {
             seq = sub.seq;
             changed++;

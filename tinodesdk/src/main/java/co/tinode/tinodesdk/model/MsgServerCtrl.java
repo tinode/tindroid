@@ -31,6 +31,11 @@ public class MsgServerCtrl {
     }
 
     @JsonIgnore
+    public Boolean getBoolParam(String key) {
+        return params != null ? (Boolean) params.get(key) : null;
+    }
+
+    @JsonIgnore
     @SuppressWarnings("unchecked")
     public Iterator<String> getStringIteratorParam(String key) {
         Iterable<String> it = params != null ? (Iterable<String>) params.get(key) : null;

@@ -213,9 +213,23 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @param sub updated topic parameters
      */
     protected void update(Subscription<SP,SR> sub) {
-        if (mDesc.merge(sub) && mStore != null) {
+        boolean changed;
+
+        if (mLastSeen == null) {
+            changed = true;
+            mLastSeen = sub.seen;
+        } else {
+            changed = mLastSeen.merge(sub.seen);
+        }
+
+        if (mDesc.merge(sub)) {
+            changed = true;
+        }
+
+        if (changed && mStore != null) {
             mStore.topicUpdate(this);
         }
+
         if (sub.online != null) {
             mOnline = sub.online;
         }
@@ -1389,7 +1403,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-
     public Subscription<SP,SR> getSubscription(String key) {
         if (mSubs == null) {
             loadSubs();
@@ -1562,6 +1575,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     protected void processSub(Subscription<SP,SR> newsub) {
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
@@ -1591,6 +1605,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             }
 
             mTinode.updateUser(sub);
+            MeTopic me = mTinode.getMeTopic();
+            if (me != null && sub.acs != null) {
+                // Don't copy 'private'
+                Subscription usub = new Subscription(sub);
+                usub.priv = null;
+                me.processOneSub(usub);
+            }
         }
 
         if (mListener != null) {
@@ -1673,32 +1694,23 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     Acs acs = new Acs();
                     acs.update(pres.dacs);
                     if (acs.isModeDefined()) {
-                        getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                        sub = new Subscription<>();
+                        sub.topic = pres.topic;
+                        sub.user = pres.src;
+                        sub.acs = acs;
+                        sub.updated = new Date();
+                        User<SP> user = mTinode.getUser(pres.src);
+                        if (user == null) {
+                            getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                        } else {
+                            sub.pub = user.pub;
+                        }
                     }
                 } else {
                     // Update to an existing subscription.
                     sub.updateAccessMode(pres.dacs);
-                    if (sub.user.equals(mTinode.getMyId())) {
-                        if (updateAccessMode(pres.dacs) && mStore != null) {
-                            mStore.topicUpdate(this);
-                        }
-                    }
-                    // User left topic.
-                    if (!sub.acs.isModeDefined()) {
-                        /*
-                        if (isP2PType()) {
-                            // If the second user unsubscribed from the topic, then the topic is no longer usable.
-                            try {
-                                // FIXME: this should not happen here. The decision to leave
-                                // should be left to the application.
-                                leave();
-                            } catch (Exception ignored) { }
-                        }
-                        */
-                        sub.deleted = new Date();
-                    }
-                    processSub(sub);
                 }
+                processSub(sub);
                 break;
             default:
                 Log.i(TAG, "Unknown presence update: " + pres.what);
@@ -1722,12 +1734,27 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                         break;
                     case Tinode.NOTE_READ:
                         sub.read = info.seq;
+                        if (sub.recv < sub.read) {
+                            sub.recv = sub.read;
+                            if (mStore != null) {
+                                mStore.msgRecvByRemote(sub, info.seq);
+                            }
+                        }
                         if (mStore != null) {
                             mStore.msgReadByRemote(sub, info.seq);
                         }
                         break;
                     default:
                         break;
+                }
+            }
+
+            // If this is an update from the current user, update the contact with the new count too.
+            if (mTinode.isMe(info.from)) {
+                MeTopic me = mTinode.getMeTopic();
+                if (me != null) {
+                    //noinspection unchecked
+                    me.processOneSub(sub);
                 }
             }
         }
