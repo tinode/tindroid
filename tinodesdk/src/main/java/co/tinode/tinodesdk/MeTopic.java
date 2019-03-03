@@ -102,6 +102,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 }
             }
         } else if (sub.deleted == null) {
+            Log.d(TAG, "Creating new topic: " + sub.topic, new Exception("stacktrace"));
             // This is a new topic. Register it and write to DB.
             topic = mTinode.newTopic(sub);
             topic.persist(true);

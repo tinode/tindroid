@@ -1305,21 +1305,25 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param what "read" or "recv" to indicate which action to report
      */
-    protected int noteReadRecv(NoteType what) {
+    protected int noteReadRecv(NoteType what, boolean fromMe) {
         int result = 0;
 
         try {
             switch (what) {
                 case RECV:
                     if (mDesc.recv < mDesc.seq) {
-                        mTinode.noteRecv(getName(), mDesc.seq);
+                        if (!fromMe) {
+                            mTinode.noteRecv(getName(), mDesc.seq);
+                        }
                         result = mDesc.recv = mDesc.seq;
                     }
                     break;
 
                 case READ:
                     if (mDesc.read < mDesc.seq) {
-                        mTinode.noteRead(getName(), mDesc.seq);
+                        if (!fromMe) {
+                            mTinode.noteRead(getName(), mDesc.seq);
+                        }
                         result = mDesc.read = mDesc.seq;
                     }
                     break;
@@ -1332,7 +1336,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     /** Notify the server that the client read the message */
     @SuppressWarnings("UnusedReturnValue")
     public int noteRead() {
-        int result = noteReadRecv(NoteType.READ);
+        return noteRead(false);
+    }
+
+    public int noteRead(boolean fromMe) {
+        int result = noteReadRecv(NoteType.READ, fromMe);
         if (mStore != null) {
             mStore.setRead(this, result);
         }
@@ -1342,13 +1350,16 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     /** Notify the server that the messages is stored on the client */
     @SuppressWarnings("UnusedReturnValue")
     public int noteRecv() {
-        int result = noteReadRecv(NoteType.RECV);
+        return noteRecv(false);
+    }
+
+    protected int noteRecv(boolean fromMe) {
+        int result = noteReadRecv(NoteType.RECV, fromMe);
         if (mStore != null) {
             mStore.setRecv(this, result);
         }
         return result;
     }
-
 
     /**
      * Send a key press notification to server. Ensure we do not sent too many.
@@ -1613,12 +1624,18 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             }
 
             mTinode.updateUser(sub);
-            MeTopic me = mTinode.getMeTopic();
-            if (me != null && sub.acs != null) {
-                // Don't copy 'private'
-                Subscription usub = new Subscription(sub);
-                usub.priv = null;
-                me.processOneSub(usub);
+
+            // If this is a change to user's own permissions, update topic too.
+            if (mTinode.isMe(sub.user) && sub.acs != null) {
+                setAccessMode(sub.acs);
+                if (mStore != null) {
+                    mStore.topicUpdate(this);
+                }
+
+                // Notify listener that topic has updated.
+                if (mListener != null) {
+                    mListener.onContUpdate(sub);
+                }
             }
         }
 
@@ -1662,10 +1679,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     protected void routeData(MsgServerData data) {
         if (mStore != null) {
             if (mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
-                noteRecv();
+                noteRecv(mTinode.isMe(data.from));
             }
         } else {
-            noteRecv();
+            noteRecv(mTinode.isMe(data.from));
         }
         setSeq(data.seq);
         setTouched(data.ts);
@@ -1703,7 +1720,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     acs.update(pres.dacs);
                     if (acs.isModeDefined()) {
                         sub = new Subscription<>();
-                        sub.topic = pres.topic;
+                        sub.topic = getName();
                         sub.user = pres.src;
                         sub.acs = acs;
                         sub.updated = new Date();
@@ -1815,7 +1832,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         public void onPres(MsgServerPres pres) {}
         /** {pres what="on|off"} is received */
         public void onOnline(boolean online) {}
-        /** Called by MeTopic when topic descriptor as contact is updated */
+        /** Called when topic descriptor as contact is updated */
         public void onContUpdate(Subscription<SP,SR> sub) {}
     }
 

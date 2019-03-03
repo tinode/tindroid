@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Date;
 
+import co.tinode.tinodesdk.Tinode;
+
 /**
  * Topic description as deserialized from the server packet.
  */
@@ -85,11 +87,11 @@ public class Description<DP,DR> implements Serializable {
         }
 
         if (desc.pub != null) {
-            pub = desc.pub;
+            pub = Tinode.isNull(desc.pub) ? null : desc.pub;
         }
 
         if (desc.priv != null) {
-            priv = desc.priv;
+            priv = Tinode.isNull(desc.priv) ? null : desc.priv;
         }
 
         return changed > 0;
@@ -134,13 +136,15 @@ public class Description<DP,DR> implements Serializable {
         if (sub.pub != null) {
             // This may throw a ClassCastException.
             // This is intentional behavior to catch cases of wrong assignment.
-            pub = (DP) sub.pub;
+            //noinspection unchecked
+            pub = (DP) (Tinode.isNull(sub.pub) ? null : sub.pub);
             changed++;
         }
 
         if (sub.priv != null) {
             try {
-                priv = (DR) sub.priv;
+                //noinspection unchecked
+                priv = (DR) (Tinode.isNull(sub.priv) ? null : sub.priv);
                 changed++;
             } catch (ClassCastException ignored) {}
 
@@ -162,14 +166,13 @@ public class Description<DP,DR> implements Serializable {
         }
 
         if (desc.pub != null) {
-            pub = desc.pub;
+            pub = Tinode.isNull(desc.pub) ? null : desc.pub;
         }
 
         if (desc.priv != null) {
-            priv = desc.priv;
+            priv = Tinode.isNull(desc.priv) ? null : desc.priv;
         }
 
         return changed > 0;
     }
-
 }

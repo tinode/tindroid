@@ -738,7 +738,7 @@ public class MessagesFragment extends Fragment
                             });
                     success = (ctrl != null && ctrl.code == 200);
                     if (success) {
-                        content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url"), fsize);
+                        content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url", null), fsize);
                     }
                 } else {
                     baos = new ByteArrayOutputStream();
