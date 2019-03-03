@@ -491,20 +491,20 @@ public class Tinode {
                         r.resolve(pkt);
                     } else {
                         r.reject(new ServerResponseException(pkt.ctrl.code, pkt.ctrl.text,
-                                pkt.ctrl.getStringParam("what")));
+                                pkt.ctrl.getStringParam("what", null)));
                     }
                 }
             }
             if (pkt.ctrl.code == 205 && "evicted".equals(pkt.ctrl.text)) {
                 Topic topic = getTopic(pkt.ctrl.topic);
                 if (topic != null) {
-                    Boolean unsub = pkt.ctrl.getBoolParam("unsub");
-                    topic.topicLeft(unsub != null ? unsub : false, pkt.ctrl.code, pkt.ctrl.text);
+                    boolean unsub = pkt.ctrl.getBoolParam("unsub", false);
+                    topic.topicLeft(unsub, pkt.ctrl.code, pkt.ctrl.text);
                 }
-            } else if ("data".equals(pkt.ctrl.getStringParam("what"))) {
+            } else if ("data".equals(pkt.ctrl.getStringParam("what", null))) {
                 Topic topic = getTopic(pkt.ctrl.topic);
                 if (topic != null) {
-                    topic.allMessagesReceived(pkt.ctrl.getIntParam("count"));
+                    topic.allMessagesReceived(pkt.ctrl.getIntParam("count", 0));
                 }
             }
         } else if (pkt.meta != null) {
@@ -1000,18 +1000,19 @@ public class Tinode {
         throw new IllegalArgumentException();
     }
 
-    private void loginSuccessful(final MsgServerCtrl ctrl) throws InvalidObjectException, ParseException {
+    private void loginSuccessful(final MsgServerCtrl ctrl) throws IllegalStateException,
+            InvalidObjectException, ParseException {
         if (ctrl == null) {
             throw new InvalidObjectException("Unexpected type of reply packet");
         }
 
-        String newUid = ctrl.getStringParam("user");
+        String newUid = ctrl.getStringParam("user", null);
         if (mMyUid != null && !mMyUid.equals(newUid)) {
             logout();
             if (mListener != null) {
                 mListener.onLogin(400, "UID mismatch");
             }
-            return;
+            throw new IllegalStateException("UID mismatch: received '" + newUid + "', expected '" + mMyUid + "'");
         }
 
         mMyUid = newUid;
@@ -1021,8 +1022,8 @@ public class Tinode {
         }
         // If topics were not loaded earlier, load them now.
         loadTopics();
-        mAuthToken = ctrl.getStringParam("token");
-        mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires"));
+        mAuthToken = ctrl.getStringParam("token", null);
+        mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires", ""));
         if (ctrl.code < 300) {
             mConnAuth = true;
             if (mListener != null) {

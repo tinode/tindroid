@@ -319,10 +319,11 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        PromisedReply<ServerMessage> reply = null;
                         for (int pos : positions) {
                             ComTopic<VxCard> t = (ComTopic<VxCard>) mAdapter.getItem(pos);
                             try {
-                                t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                                reply = t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onFailure(final Exception err) {
                                         activity.runOnUiThread(new Runnable() {
@@ -342,11 +343,24 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                                 Log.d(TAG, "Delete failed", err);
                             }
                         }
+                        // Wait for the last reply to resolve then update dataset.
+                        if (reply != null) {
+                            reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                                    datasetChanged();
+                                    return null;
+                                }
+                            });
+                        }
                     }
                 });
         confirmBuilder.show();
     }
 
+    /**
+     * Wraps mAdapter.notifyDataSetChanged() into runOnUiThread()
+     */
     void datasetChanged() {
         mAdapter.resetContent(mIsArchive);
 

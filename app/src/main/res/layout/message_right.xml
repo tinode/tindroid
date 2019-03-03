@@ -27,8 +27,11 @@
                 android:layout_height="wrap_content"
                 android:maxWidth="280dp"
                 android:minWidth="140dp"
+                android:paddingStart="12dp"
+                android:textColor="@color/colorTextPrimary"
+                tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-                android:textColor="@color/colorTextPrimary"/>
+                />
 
             <include layout="@layout/fragment_progress"
                      android:id="@+id/progressInclide"

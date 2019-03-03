@@ -21,18 +21,27 @@ public class MsgServerCtrl {
     }
 
     @JsonIgnore
-    public Integer getIntParam(String key) {
-        return params != null ? (Integer) params.get(key) : null;
+    private Object getParam(String key, Object def) {
+        if (params == null) {
+            return def;
+        }
+        Object result = params.get(key);
+        return result != null ? result : def;
     }
 
     @JsonIgnore
-    public String getStringParam(String key) {
-        return params != null ? (String) params.get(key) : null;
+    public Integer getIntParam(String key, Integer def) {
+        return (Integer) getParam(key, def);
     }
 
     @JsonIgnore
-    public Boolean getBoolParam(String key) {
-        return params != null ? (Boolean) params.get(key) : null;
+    public String getStringParam(String key, String def) {
+        return (String) getParam(key, def);
+    }
+
+    @JsonIgnore
+    public Boolean getBoolParam(String key, Boolean def) {
+        return (Boolean) getParam(key, def);
     }
 
     @JsonIgnore

@@ -20,9 +20,11 @@
             android:layout_height="wrap_content"
             android:maxWidth="200dp"
             android:minWidth="100dp"
+            android:paddingStart="12dp"
             android:textColor="@color/colorTextSecondary"
             style="@style/textMetaBubble"
-            tools:text="Lorem ipsum"/>
+            tools:text="Lorem ipsum"
+            tools:ignore="RtlSymmetry"/>
 
     </LinearLayout>
 </LinearLayout>

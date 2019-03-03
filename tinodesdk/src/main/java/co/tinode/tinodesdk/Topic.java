@@ -742,18 +742,20 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     private void processDelivery(final MsgServerCtrl ctrl, final long id) {
         if (ctrl != null) {
-            int seq = ctrl.getIntParam("seq");
-            setSeq(seq);
-            if (id > 0 && mStore != null) {
-                if (mStore.msgDelivered(Topic.this, id, ctrl.ts, seq)) {
+            int seq = ctrl.getIntParam("seq", 0);
+            if (seq > 0) {
+                setSeq(seq);
+                if (id > 0 && mStore != null) {
+                    if (mStore.msgDelivered(Topic.this, id, ctrl.ts, seq)) {
+                        setRecv(seq);
+                    }
+                } else {
                     setRecv(seq);
                 }
-            } else {
-                setRecv(seq);
-            }
-            setRead(seq);
-            if (mStore != null) {
-                mStore.setRead(Topic.this, seq);
+                setRead(seq);
+                if (mStore != null) {
+                    mStore.setRead(Topic.this, seq);
+                }
             }
         }
     }
@@ -839,8 +841,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        Integer delId = result.ctrl.getIntParam("del");
-                        mStore.msgDelete(Topic.this, delId, toSoftDelete);
+                        int delId = result.ctrl.getIntParam("del", 0);
+                        if (mStore != null && delId > 0) {
+                            mStore.msgDelete(Topic.this, delId, toSoftDelete);
+                        }
                         return null;
                 }
             });
@@ -853,8 +857,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        Integer delId = result.ctrl.getIntParam("del");
-                        mStore.msgDelete(Topic.this, delId, toHardDelete);
+                        int delId = result.ctrl.getIntParam("del", 0);
+                        if (mStore != null && delId > 0) {
+                            mStore.msgDelete(Topic.this, delId, toHardDelete);
+                        }
                         return null;
                 }
             });
@@ -920,8 +926,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                             .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    Integer delId = result.ctrl.getIntParam("del");
-                                    mStore.msgDelete(Topic.this, delId, m.getSeqId(), m.getSeqId() + 1);
+                                    int delId = result.ctrl.getIntParam("del", 0);
+                                    if (mStore != null && delId > 0) {
+                                        mStore.msgDelete(Topic.this, delId, m.getSeqId(), m.getSeqId() + 1);
+                                    }
                                     return null;
                                 }
                             });
@@ -1206,8 +1214,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    Integer delId = result.ctrl.getIntParam("del");
-                    if (mStore != null && delId != null) {
+                    int delId = result.ctrl.getIntParam("del", 0);
+                    if (mStore != null && delId > 0) {
                         mStore.msgDelete(Topic.this, delId, fromId, toId);
                     }
                     return null;
@@ -1240,8 +1248,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             return mTinode.delMessage(getName(), list, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    Integer delId = result.ctrl.getIntParam("del");
-                    if (mStore != null && delId != null) {
+                    int delId = result.ctrl.getIntParam("del", 0);
+                    if (mStore != null && delId > 0) {
                         mStore.msgDelete(Topic.this, delId, list);
                     }
                     return null;

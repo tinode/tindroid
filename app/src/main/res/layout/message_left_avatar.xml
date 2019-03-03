@@ -10,9 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingRight="6dp"
         android:paddingEnd="6dp"
-        android:paddingLeft="32dp"
         android:paddingStart="32dp">
 
         <LinearLayout
@@ -30,9 +28,11 @@
                 android:layout_height="wrap_content"
                 android:maxWidth="270dp"
                 android:minWidth="130dp"
+                android:paddingStart="12dp"
                 android:textColor="@color/colorTextPrimary"
                 android:clickable="false"
                 android:focusable="false"
+                tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
 
             <TextView
