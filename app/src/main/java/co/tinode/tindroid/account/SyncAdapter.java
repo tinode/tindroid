@@ -139,7 +139,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             // final MsgGetMeta meta = MsgGetMeta.sub();
             final MsgGetMeta meta = new MsgGetMeta(
                             null,
-                            new MetaGetSub(null, lastSyncMarker, null),
+                            new MetaGetSub(lastSyncMarker, null),
                             null, null, null);
             PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
             if (future.waitResult()) {

@@ -1904,8 +1904,12 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             return withGetDesc(topic.getUpdated());
         }
 
-        public MetaGetBuilder withGetSub(String user, Date ims, Integer limit) {
-            meta.setSub(user, ims, limit);
+        public MetaGetBuilder withGetSub(String userOrTopic, Date ims, Integer limit) {
+            if (topic.getTopicType() == TopicType.ME) {
+                meta.setSubTopic(userOrTopic, ims, limit);
+            } else {
+                meta.setSubUser(userOrTopic, ims, limit);
+            }
             return this;
         }
 
@@ -1917,8 +1921,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             return withGetSub(null, topic.getSubsUpdated(), null);
         }
 
-        public MetaGetBuilder withGetSub(String user) {
-            return withGetSub(user, topic.getSubsUpdated(), null);
+        public MetaGetBuilder withGetSub(String userOrTopic) {
+            return withGetSub(userOrTopic, topic.getSubsUpdated(), null);
         }
 
         public MetaGetBuilder withGetDel(Integer since, Integer limit) {

@@ -86,13 +86,32 @@ public class MsgGetMeta {
         buildWhat();
     }
 
-    public void setSub(String user, Date ims, Integer limit) {
-        if (user!= null || ims != null || limit != null) {
-            sub = new MetaGetSub(user, ims, limit);
+    public void setSub(Date ims, Integer limit) {
+        if (ims != null || limit != null) {
+            sub = new MetaGetSub(ims, limit);
         }
         mSet |= SUB_SET;
         buildWhat();
     }
+
+    public void setSubUser(String user, Date ims, Integer limit) {
+        if (ims != null || limit != null || user != null) {
+            sub = new MetaGetSub(ims, limit);
+            sub.setUser(user);
+        }
+        mSet |= SUB_SET;
+        buildWhat();
+    }
+
+    public void setSubTopic(String topic, Date ims, Integer limit) {
+        if (ims != null || limit != null || topic != null) {
+            sub = new MetaGetSub(ims, limit);
+            sub.setTopic(topic);
+        }
+        mSet |= SUB_SET;
+        buildWhat();
+    }
+
 
     public void setData(Integer since, Integer before, Integer limit) {
         if (since != null || before != null || limit != null) {

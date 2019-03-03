@@ -14,7 +14,9 @@ import co.tinode.tinodesdk.model.Subscription;
  * Local cash of known users
  */
 
+@SuppressWarnings("WeakerAccess")
 public class UserDb implements BaseColumns {
+    @SuppressWarnings("unused")
     private static final String TAG = "UserDb";
 
     /**
@@ -197,6 +199,7 @@ public class UserDb implements BaseColumns {
         return id;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static <Pu> User<Pu> readOne(SQLiteDatabase db, String uid) {
         // Instantiate topic of an appropriate class ('me' or group)
         User<Pu> user = null;
@@ -206,6 +209,7 @@ public class UserDb implements BaseColumns {
                         COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
                         " AND " +
                         COLUMN_NAME_UID + "='" + uid + "'";
+
         Cursor c = db.rawQuery(sql, null);
         if (c != null && c.getCount() > 0) {
             user = new User<>(uid);

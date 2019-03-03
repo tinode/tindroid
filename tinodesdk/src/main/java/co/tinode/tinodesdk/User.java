@@ -81,20 +81,19 @@ public class User<P> implements LocalData {
 
     public boolean merge(Description<P,?> desc) {
         boolean changed = false;
-        try {
-            if ((desc.updated != null) && (updated == null || updated.before(desc.updated))) {
-
-                if (desc.pub != null) {
+        if (desc.pub != null) {
+            try {
+                if ((desc.updated != null) && (updated == null || updated.before(desc.updated))) {
                     pub = desc.pub;
+                    updated = desc.updated;
+                    changed = true;
+                } else if (pub == null) {
+                    pub = desc.pub;
+                    changed = true;
                 }
-                updated = desc.updated;
-                changed = true;
-            } else if (pub == null && desc.pub != null) {
-                pub = desc.pub;
-                changed = true;
+            } catch (ClassCastException ignored) {
             }
-        } catch (ClassCastException ignored) {}
-
+        }
         return changed;
     }
 

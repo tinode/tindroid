@@ -100,9 +100,19 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 if (topic.mListener != null) {
                     topic.mListener.onContUpdate(sub);
                 }
+
+                if (topic.getTopicType() == TopicType.P2P && mStore != null) {
+                    // Use P2P description to generate and update user
+                    User user = mTinode.getUser(topic.getName());
+                    if (user == null) {
+                        user = mTinode.addUser(topic.getName());
+                    }
+                    if (user.merge(topic.mDesc)) {
+                        mStore.userUpdate(user);
+                    }
+                }
             }
         } else if (sub.deleted == null) {
-            Log.d(TAG, "Creating new topic: " + sub.topic, new Exception("stacktrace"));
             // This is a new topic. Register it and write to DB.
             topic = mTinode.newTopic(sub);
             topic.persist(true);
