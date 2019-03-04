@@ -26,14 +26,14 @@ public class AcsHelper implements Serializable {
     // Invalid mode to indicate an error
     private static final int MODE_INVALID = 0x100000;
 
-    private Integer a;
+    private int a;
 
     public AcsHelper(String str) {
         a = decode(str);
     }
 
     public AcsHelper(AcsHelper ah) {
-        a = ah != null ? ah.a : null;
+        a = ah != null ? ah.a : MODE_INVALID;
     }
 
     public AcsHelper(Integer a) {
@@ -42,13 +42,13 @@ public class AcsHelper implements Serializable {
 
     @Override
     public String toString() {
-        return a == null ? "" : encode(a);
+        return encode(a);
     }
 
     public boolean update(String umode) {
-        Integer old = a;
+        int old = a;
         a = update(a, umode);
-        return !a.equals(old);
+        return a != old;
     }
 
     @Override
@@ -68,54 +68,54 @@ public class AcsHelper implements Serializable {
 
         AcsHelper ah = (AcsHelper) o;
 
-        return (a == null && ah.a == null) || (a != null && a.equals(ah.a));
+        return a  == ah.a;
     }
 
     public boolean equals(String s) {
-        Integer ah = decode(s);
-        return (a == null && ah == null) || (a != null && a.equals(ah));
+        return a == decode(s);
     }
 
     public boolean isReader() {
-        return (a != null) && ((a & MODE_READ) != 0);
+        return (a & MODE_READ) != 0;
     }
     public boolean isWriter() {
-        return (a != null) && ((a & MODE_WRITE) != 0);
+        return (a & MODE_WRITE) != 0;
     }
     public boolean isMuted() {
-        return (a != null) && ((a & MODE_PRES) == 0);
+        return (a & MODE_PRES) == 0;
     }
     @JsonIgnore
     public void setMuted(boolean v) {
-        if (a == null) {
+        if (a == MODE_INVALID) {
             a = MODE_NONE;
         }
         a = !v ? a | MODE_PRES : (a & ~MODE_PRES);
     }
     public boolean isAdmin() {
-        return (a != null) && ((a & MODE_APPROVE) != 0);
+        return (a & MODE_APPROVE) != 0;
     }
     public boolean isDeleter() {
-        return (a != null) && ((a & MODE_DELETE) != 0);
+        return (a & MODE_DELETE) != 0;
     }
 
     public boolean isOwner() {
-        return (a != null) && ((a & MODE_OWNER) != 0);
+        return (a & MODE_OWNER) != 0;
     }
 
     public boolean isJoiner() {
-        return (a != null) && ((a & MODE_JOIN) != 0);
+        return (a & MODE_JOIN) != 0;
     }
 
     public boolean isDefined() {
-        return a != null && a != MODE_NONE && a != MODE_INVALID;
+        return a != MODE_INVALID;
     }
     public boolean isInvalid() {
-        return a != null && a == MODE_INVALID;
+        return a == MODE_INVALID;
     }
-    private static Integer decode(String mode) {
+
+    private static int decode(String mode) {
         if (mode == null || mode.length() == 0) {
-            return null;
+            return MODE_INVALID;
         }
 
         int m0 = MODE_NONE;
@@ -168,10 +168,10 @@ public class AcsHelper implements Serializable {
     private static String encode(Integer val) {
         // Need to distinguish between "not set" and "no access"
         if (val == null || val == MODE_INVALID) {
-            return null;
+            return "";
         }
 
-        if (val == 0) {
+        if (val == MODE_NONE) {
             return "N";
         }
 
@@ -193,7 +193,7 @@ public class AcsHelper implements Serializable {
      *              or an explicit new value: "+JS-WR" or just "JSA"
      * @return updated value.
      */
-    private static Integer update(Integer val, String umode) {
+    private static int update(int val, String umode) {
         if (umode == null || umode.length() == 0) {
             return val;
         }
@@ -201,7 +201,7 @@ public class AcsHelper implements Serializable {
         int m0;
         char action = umode.charAt(0);
         if (action == '+' || action == '-') {
-            Integer val0 = val != null ? val : 0;
+            int val0 = val;
             StringTokenizer parts = new StringTokenizer(umode, "-+", true);
             while (parts.hasMoreTokens()) {
                 action = parts.nextToken().charAt(0);
@@ -233,17 +233,12 @@ public class AcsHelper implements Serializable {
             }
         }
 
-        if (val == null) {
-            val = MODE_NONE;
-        }
-
-
         return val;
     }
 
     public boolean merge(AcsHelper ah) {
-        if (ah != null && ah.a != null && ah.a != MODE_INVALID) {
-            if (!ah.a.equals(a)) {
+        if (ah != null && ah.a != MODE_INVALID) {
+            if (ah.a != a) {
                 a = ah.a;
                 return true;
             }
