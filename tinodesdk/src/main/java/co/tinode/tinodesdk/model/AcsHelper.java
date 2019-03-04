@@ -37,7 +37,7 @@ public class AcsHelper implements Serializable {
     }
 
     public AcsHelper(Integer a) {
-        this.a = a;
+        this.a = a != null ? a : MODE_INVALID;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class AcsHelper implements Serializable {
         if (a == MODE_INVALID) {
             a = MODE_NONE;
         }
-        a = !v ? a | MODE_PRES : (a & ~MODE_PRES);
+        a = !v ? (a | MODE_PRES) : (a & ~MODE_PRES);
     }
     public boolean isAdmin() {
         return (a & MODE_APPROVE) != 0;
