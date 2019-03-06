@@ -516,8 +516,19 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public boolean isAdmin() {
         return mDesc.acs != null && mDesc.acs.isAdmin();
     }
-    public PromisedReply<ServerMessage> updateAdmin(final boolean isAdmin) {
-        return updateMode(null, isAdmin ? "+S" : "-S");
+    public PromisedReply<ServerMessage> updateAdmin(final boolean admin) {
+        return updateMode(null, admin ? "+A" : "-A");
+    }
+
+    public boolean isManager() {
+        return mDesc.acs != null && mDesc.acs.isManager();
+    }
+
+    public boolean isSharer() {
+        return mDesc.acs != null && mDesc.acs.isSharer();
+    }
+    public PromisedReply<ServerMessage> updateSharer(final boolean sharer) {
+        return updateMode(null, sharer ? "+S" : "-S");
     }
 
     public boolean isMuted() {

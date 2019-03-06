@@ -652,24 +652,24 @@ public class UiUtils {
     static void showEditPermissions(final Activity activity, final Topic topic,
                                     @NonNull final String mode,
                                     final String uid, final int what,
-                                    boolean noOwner) {
+                                    String skip) {
+        final int[] permissionsMap = new int[] {
+                R.string.permission_join,
+                R.string.permission_read,
+                R.string.permission_write,
+                R.string.permission_notifications,
+                R.string.permission_approve,
+                R.string.permission_share,
+                R.string.permission_delete,
+                R.string.permission_owner
+            };
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
         final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
         builder
                 .setView(editor)
                 .setTitle(R.string.edit_permissions);
-        final LinkedHashMap<Character, Integer> checks = new LinkedHashMap<>(8);
-        if (!noOwner) {
-            checks.put('O', R.string.permission_owner);
-        }
-        checks.put('J', R.string.permission_join);
-        checks.put('R', R.string.permission_read);
-        checks.put('W', R.string.permission_write);
-        checks.put('A', R.string.permission_approve);
-        checks.put('S', R.string.permission_share);
-        checks.put('P', R.string.permission_notifications);
-        checks.put('D', R.string.permission_delete);
+
         View.OnClickListener checkListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -677,14 +677,18 @@ public class UiUtils {
                 ((CheckedTextView) view).setChecked(checked);
             }
         };
-        for (Character key : checks.keySet()) {
-            if (noOwner && key.equals('O')) {
+
+        for (int i = 0; i<"JRWPASDO".length(); i++) {
+            char c = "JRWPASDO".charAt(i);
+            if (skip.indexOf(c) >= 0) {
                 continue;
             }
-            CheckedTextView check = (CheckedTextView) inflater.inflate(R.layout.edit_one_permission, editor, false);
-            check.setChecked(mode.contains(key.toString()));
-            check.setText(checks.get(key));
-            check.setTag(key);
+
+            CheckedTextView check = (CheckedTextView) inflater.inflate(R.layout.edit_one_permission,
+                    editor, false);
+            check.setChecked(mode.indexOf(c) >= 0);
+            check.setText(permissionsMap[i]);
+            check.setTag(c);
             check.setOnClickListener(checkListener);
             editor.addView(check, editor.getChildCount());
         }
@@ -790,21 +794,16 @@ public class UiUtils {
                                                                       T topic, String title, String comment) {
         VxCard pub = null;
         if (title != null) {
-            pub = topic.getPub();
-            if (pub == null) {
+            VxCard oldPub = topic.getPub();
+            if (oldPub != null && !title.equals(oldPub.fn)) {
                 pub = new VxCard();
-            } else {
-                pub = pub.copy();
-            }
-            if (title.equals(pub.fn)) {
-                pub = null;
-            } else {
                 pub.fn = title;
             }
         }
 
         if (comment != null) {
-            String oldComment = topic.getPriv().getComment();
+            PrivateType priv = topic.getPriv();
+            String oldComment = priv != null ? topic.getPriv().getComment() : null;
             if (comment.equals(oldComment)) {
                 comment = null;
             }

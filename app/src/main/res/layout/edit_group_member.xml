@@ -15,7 +15,7 @@
         android:layout_width="20sp"
         android:layout_height="20sp"
         app:srcCompat="@drawable/ic_circle"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         />
 
@@ -24,7 +24,7 @@
         android:layout_width="16sp"
         android:layout_height="16sp"
         app:srcCompat="@drawable/ic_cancel_grey"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:contentDescription="@string/close"
         android:layout_margin="2sp"

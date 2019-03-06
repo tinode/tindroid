@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/disk" />
+    <item android:drawable="@drawable/ic_person_white"
+          android:left="8sp"
+          android:right="8sp"
+          android:bottom="8sp"
+          android:top="8sp" />
+    <item android:drawable="@drawable/circle" />
+</layer-list>

@@ -188,12 +188,30 @@ public class Acs implements Serializable {
     }
 
     /**
-     * Check if either one of Owner (O) or Approver (A) flags is set.
+     * Check if Approver (A) flag is set.
      * @return true if flag is set.
      */
     public boolean isAdmin() {
         return mode.isAdmin();
     }
+
+    /**
+     * Check if either Owner (O) or Approver (A) flag is set.
+     * @return true if flag is set.
+     */
+    public boolean isManager() {
+        return mode.isAdmin() || mode.isOwner();
+    }
+
+    /**
+     * Check if Sharer (S) flag is set.
+     * @return true if flag is set.
+     */
+    public boolean isSharer() {
+        return mode.isSharer();
+    }
+
+
     /**
      * Check if Deleter (D) flag is set.
      * @return true if flag is set.

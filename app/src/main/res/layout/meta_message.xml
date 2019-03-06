@@ -7,24 +7,18 @@
     android:paddingLeft="6sp"
     android:paddingRight="6sp">
 
-    <LinearLayout
-        android:id="@+id/messageBubble"
+    <TextView
+        android:id="@+id/messageText"
         android:background="@drawable/bubble"
-        android:layout_gravity="center_horizontal"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:maxWidth="200dp"
+        android:minWidth="100dp"
+        android:paddingStart="12dp"
+        android:textColor="@color/colorTextSecondary"
+        style="@style/textMetaBubble"
+        tools:text="Lorem ipsum"
+        tools:ignore="RtlSymmetry"/>
 
-        <TextView
-            android:id="@+id/messageText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:maxWidth="200dp"
-            android:minWidth="100dp"
-            android:paddingStart="12dp"
-            android:textColor="@color/colorTextSecondary"
-            style="@style/textMetaBubble"
-            tools:text="Lorem ipsum"
-            tools:ignore="RtlSymmetry"/>
-
-    </LinearLayout>
-</LinearLayout>
+ </LinearLayout>

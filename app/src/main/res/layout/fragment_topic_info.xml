@@ -19,7 +19,7 @@
             android:layout_marginBottom="@dimen/activity_default_margin"
             android:layout_marginTop="@dimen/activity_default_margin"
             android:padding="4dp"
-            card_view:cardElevation="@dimen/cardview_default_elevation"
+            card_view:cardElevation="@dimen/cardview_elevation"
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPaddingLeft="@dimen/activity_horizontal_margin">
 
@@ -32,12 +32,11 @@
                     android:layout_width="@dimen/avatar_size_large"
                     android:layout_height="@dimen/avatar_size_large"
                     android:layout_alignParentEnd="true"
-                    android:layout_alignParentRight="true"
                     android:layout_margin="4sp"
                     android:clickable="true"
                     android:focusable="true"
                     android:contentDescription="@string/avatar"
-                    app:srcCompat="@drawable/ic_group_circle"/>
+                    app:srcCompat="@drawable/ic_group_grey"/>
 
                 <Button
                     android:id="@+id/uploadAvatar"
@@ -57,10 +56,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentTop="true"
-                    android:layout_toLeftOf="@id/imageAvatar"
                     android:layout_toStartOf="@id/imageAvatar"
                     android:maxLines="2"
-                    android:textIsSelectable="true"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:textIsSelectable="false"
                     tools:text="Topic title (public)"/>
 
                 <TextView
@@ -71,7 +71,9 @@
                     android:layout_below="@id/topicTitle"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:textIsSelectable="true"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:textIsSelectable="false"
                     tools:text="Topic subtitle (private)"/>
 
             </RelativeLayout>
@@ -82,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_default_margin"
             android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_default_elevation"
+            card_view:cardElevation="@dimen/cardview_elevation"
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPadding="@dimen/activity_horizontal_margin">
 
@@ -112,7 +114,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_default_margin"
             android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_default_elevation"
+            card_view:cardElevation="@dimen/cardview_elevation"
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPadding="@dimen/activity_horizontal_margin">
 
@@ -135,7 +137,6 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/membersTitle"
                     android:contentDescription="@string/add_members"
-                    android:drawableLeft="@drawable/ic_person_add"
                     android:drawablePadding="4sp"
                     android:drawableStart="@drawable/ic_person_add"
                     android:text="@string/add_members"
@@ -148,8 +149,6 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/membersTitle"
                     android:layout_toEndOf="@id/buttonAddMembers"
-                    android:layout_toRightOf="@id/buttonAddMembers"
-                    android:drawableLeft="@drawable/ic_exit_red"
                     android:drawablePadding="4sp"
                     android:drawableStart="@drawable/ic_exit_red"
                     android:text="@string/leave_group"
@@ -170,7 +169,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_default_margin"
             android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_default_elevation"
+            card_view:cardElevation="@dimen/cardview_elevation"
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPadding="@dimen/activity_horizontal_margin">
 
@@ -302,7 +301,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_default_margin"
             android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_default_elevation"
+            card_view:cardElevation="@dimen/cardview_elevation"
             card_view:cardPreventCornerOverlap="true"
             card_view:contentPadding="@dimen/activity_horizontal_margin">
 

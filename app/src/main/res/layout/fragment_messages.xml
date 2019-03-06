@@ -6,6 +6,17 @@
     android:background="@drawable/message_view_bkg"
     tools:context=".MessagesFragment">
 
+    <TextView
+        android:id="@+id/messagesNotReadable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:background="@drawable/bubble"
+        android:padding="12dp"
+        android:visibility="gone"
+        android:text="@string/messages_not_readable"/>
+
     <FrameLayout
         android:id="@+id/sendMessageFragment"
         android:layout_width="match_parent"

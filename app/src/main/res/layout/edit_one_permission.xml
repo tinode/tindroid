@@ -8,9 +8,7 @@
     android:textColor="?android:attr/textColorAlertDialogListItem"
     android:gravity="center_vertical"
     android:paddingStart="@dimen/dialog_padding_left"
-    android:paddingLeft="@dimen/dialog_padding_left"
     android:paddingEnd="@dimen/dialog_padding_right"
-    android:paddingRight="@dimen/dialog_padding_right"
     android:checkMark="?android:attr/listChoiceIndicatorMultiple"
     android:ellipsize="marquee"
     tools:text="@string/permission_owner"/>

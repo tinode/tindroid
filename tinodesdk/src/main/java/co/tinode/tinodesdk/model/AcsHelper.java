@@ -94,6 +94,11 @@ public class AcsHelper implements Serializable {
     public boolean isAdmin() {
         return (a & MODE_APPROVE) != 0;
     }
+
+    public boolean isSharer() {
+        return (a & MODE_SHARE) != 0;
+    }
+
     public boolean isDeleter() {
         return (a & MODE_DELETE) != 0;
     }

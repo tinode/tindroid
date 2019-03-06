@@ -190,5 +190,9 @@
     <string name="action_archive">Заархивировать</string>
     <string name="archived_chats">Архив</string>
     <string name="action_show_archive">Архив</string>
-
+    <string name="request_new_chat">Вас пригласили начать новый чат. Как вы хотите поступить?</string>
+    <string name="new_chat_accept">Принять</string>
+    <string name="new_chat_ignore">Игнорировать</string>
+    <string name="new_chat_block">Заблокировать</string>
+    <string name="messages_not_readable">нет доступа к сообщениям</string>
 </resources>

@@ -15,8 +15,9 @@
         android:layout_alignParentEnd="true"
         android:layout_margin="4sp"
         android:clickable="true"
+        android:focusable="true"
         android:contentDescription="@string/avatar"
-        app:srcCompat="@drawable/ic_group"/>
+        app:srcCompat="@drawable/ic_group_grey"/>
 
     <Button
         android:id="@+id/uploadAvatar"

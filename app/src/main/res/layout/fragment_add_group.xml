@@ -25,9 +25,9 @@
             android:layout_alignParentEnd="true"
             android:layout_margin="16dp"
             android:clickable="true"
+            android:focusable="true"
             app:elevation="@dimen/fab_elevation"
-            app:srcCompat="@drawable/ic_check"
-            />
+            app:srcCompat="@drawable/ic_check"/>
 
     </RelativeLayout>
 

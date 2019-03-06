@@ -26,7 +26,7 @@
                 android:layout_marginBottom="@dimen/activity_default_margin"
                 android:layout_marginTop="@dimen/activity_default_margin"
                 android:background="@color/cardview_light_background"
-                card_view:cardElevation="@dimen/cardview_default_elevation"
+                card_view:cardElevation="@dimen/cardview_elevation"
                 card_view:cardPreventCornerOverlap="true"
                 card_view:contentPaddingLeft="@dimen/activity_horizontal_margin">
 
@@ -39,12 +39,11 @@
                         android:layout_width="@dimen/avatar_size_large"
                         android:layout_height="@dimen/avatar_size_large"
                         android:layout_alignParentEnd="true"
-                        android:layout_alignParentRight="true"
-                        android:layout_marginLeft="8sp"
                         android:layout_marginStart="8sp"
                         android:clickable="true"
+                        android:focusable="true"
                         android:contentDescription="@string/avatar"
-                        app:srcCompat="@drawable/ic_person_circle"/>
+                        app:srcCompat="@drawable/ic_person_grey"/>
 
                     <Button
                         android:id="@+id/uploadAvatar"
@@ -52,7 +51,6 @@
                         android:layout_height="48sp"
                         android:layout_alignBottom="@id/imageAvatar"
                         android:layout_alignParentEnd="true"
-                        android:layout_alignParentRight="true"
                         android:layout_margin="2sp"
                         android:background="@drawable/pill_counter"
                         android:drawableTop="@drawable/ic_add_a_photo"
@@ -65,7 +63,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentTop="true"
-                        android:layout_toLeftOf="@id/imageAvatar"
                         android:layout_toStartOf="@id/imageAvatar"
                         android:maxLines="2"
                         android:textIsSelectable="true"
@@ -90,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_default_margin"
                 android:layout_marginTop="@dimen/activity_default_margin"
-                card_view:cardElevation="@dimen/cardview_default_elevation"
+                card_view:cardElevation="@dimen/cardview_elevation"
                 card_view:cardPreventCornerOverlap="true"
                 card_view:contentPadding="@dimen/activity_horizontal_margin">
 
@@ -145,7 +142,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_default_margin"
                 android:layout_marginTop="@dimen/activity_default_margin"
-                card_view:cardElevation="@dimen/cardview_default_elevation"
+                card_view:cardElevation="@dimen/cardview_elevation"
                 card_view:cardPreventCornerOverlap="true"
                 card_view:contentPadding="@dimen/activity_horizontal_margin">
 
@@ -188,7 +185,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:contentDescription="@string/change_password"
-                            android:drawableLeft="@drawable/ic_lock_outline"
                             android:drawablePadding="4sp"
                             android:drawableStart="@drawable/ic_lock_outline"
                             android:text="@string/change_password"
@@ -200,7 +196,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:contentDescription="@string/logout"
-                            android:drawableLeft="@drawable/ic_exit"
                             android:drawablePadding="4sp"
                             android:drawableStart="@drawable/ic_exit"
                             android:text="@string/logout"
@@ -217,7 +212,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_default_margin"
                 android:layout_marginTop="@dimen/activity_default_margin"
-                card_view:cardElevation="@dimen/cardview_default_elevation"
+                card_view:cardElevation="@dimen/cardview_elevation"
                 card_view:cardPreventCornerOverlap="true"
                 card_view:contentPadding="@dimen/activity_horizontal_margin">
 
@@ -242,6 +237,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:layout_marginStart="16dp"
                             android:text="@string/auth_permissions"/>
 
                         <TextView
@@ -250,9 +246,12 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="monospace"
-                            android:textIsSelectable="true"
+                            android:textIsSelectable="false"
                             android:typeface="monospace"
                             android:background="@drawable/dotted_line"
+                            android:focusable="true"
+                            android:focusableInTouchMode="false"
+                            android:clickable="true"
                             tools:text="RWPD"/>
 
                     </LinearLayout>
@@ -266,6 +265,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:layout_marginStart="16dp"
                             android:text="@string/anon_permissions"/>
 
                         <TextView
@@ -274,9 +274,12 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="monospace"
-                            android:textIsSelectable="true"
+                            android:textIsSelectable="false"
                             android:typeface="monospace"
                             android:background="@drawable/dotted_line"
+                            android:focusable="true"
+                            android:focusableInTouchMode="false"
+                            android:clickable="true"
                             tools:text="RWPD"/>
 
                     </LinearLayout>

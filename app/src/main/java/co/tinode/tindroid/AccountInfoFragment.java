@@ -185,6 +185,9 @@ public class AccountInfoFragment extends Fragment {
         auth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // TODO: handle Auth permissions editing
+                UiUtils.showEditPermissions(activity, me, me.getAuthAcsStr(), null,
+                        UiUtils.ACTION_UPDATE_AUTH, "O");
 
             }
         });
@@ -193,6 +196,9 @@ public class AccountInfoFragment extends Fragment {
         anon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // TODO: handle Anon permissions editing
+                UiUtils.showEditPermissions(activity, me, me.getAnonAcsStr(), null,
+                        UiUtils.ACTION_UPDATE_ANON, "O");
 
             }
         });

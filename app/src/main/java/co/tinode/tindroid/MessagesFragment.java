@@ -486,6 +486,12 @@ public class MessagesFragment extends Fragment
             return;
         }
 
+        if (mTopic.getAccessMode().isReader()) {
+            activity.findViewById(R.id.messagesNotReadable).setVisibility(View.GONE);
+        } else {
+            activity.findViewById(R.id.messagesNotReadable).setVisibility(View.VISIBLE);
+        }
+
         if (mTopic.getAccessMode().isWriter()) {
             EditText input = activity.findViewById(R.id.editMessage);
             if (TextUtils.isEmpty(mMessageToSend)) {
@@ -693,6 +699,7 @@ public class MessagesFragment extends Fragment
                 bmp = UiUtils.scaleBitmap(bmp);
                 imageWidth = bmp.getWidth();
                 imageHeight = bmp.getHeight();
+                //noinspection ConstantConditions
                 is.close();
 
                 is = UiUtils.bitmapToStream(bmp, mimeType);
