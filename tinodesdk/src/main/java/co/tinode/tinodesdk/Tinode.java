@@ -89,7 +89,7 @@ public class Tinode {
 
     private static final String PROTOVERSION = "0";
     private static final String VERSION = "0.15";
-    private static final String LIBRARY = "tindroid/" + VERSION;
+    private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
     protected static TypeFactory sTypeFactory;
     protected static SimpleDateFormat sDateFormat;
     private static ObjectMapper sJsonMapper;

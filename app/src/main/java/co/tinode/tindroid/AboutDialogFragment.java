@@ -18,7 +18,7 @@ public class AboutDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
-        Activity activity = getActivity();
+        final Activity activity = getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         View dialog = View.inflate(activity, R.layout.dialog_about, null);
         ((TextView) dialog.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
