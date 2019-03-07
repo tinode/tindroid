@@ -90,9 +90,9 @@ public class AccountInfoFragment extends Fragment {
             return;
         }
 
-        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
-        final TextView title = activity.findViewById(R.id.topicTitle);
-        title.setOnClickListener(new View.OnClickListener() {
+        // Attach listeners to editable form fields.
+
+        activity.findViewById(R.id.topicTitle).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showEditAccountTitle();
@@ -106,43 +106,22 @@ public class AccountInfoFragment extends Fragment {
             }
         });
 
-        VxCard pub = me.getPub();
-        if (pub != null) {
-            if (!TextUtils.isEmpty(pub.fn)) {
-                title.setText(pub.fn);
-                title.setTypeface(null, Typeface.NORMAL);
-                title.setTextIsSelectable(true);
-            } else {
-                title.setText(R.string.placeholder_contact_title);
-                title.setTypeface(null, Typeface.ITALIC);
-                title.setTextIsSelectable(false);
-            }
-            final Bitmap bmp = pub.getBitmap();
-            if (bmp != null) {
-                avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
-            }
-        }
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+        ((Switch) activity.findViewById(R.id.switchReadReceipts))
+                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        pref.edit().putBoolean(UiUtils.PREF_READ_RCPT, isChecked).apply();
+                    }
+                });
 
-        final Switch readrcpt = activity.findViewById(R.id.switchReadReceipts);
-        readrcpt.setChecked(pref.getBoolean(UiUtils.PREF_READ_RCPT, true));
-        readrcpt.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                pref.edit().putBoolean(UiUtils.PREF_READ_RCPT, isChecked).apply();
-            }
-        });
-
-        final Switch typing = activity.findViewById(R.id.switchTypingNotifications);
-        typing.setChecked(pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true));
-        typing.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                pref.edit().putBoolean(UiUtils.PREF_TYPING_NOTIF, isChecked).apply();
-            }
-        });
-
-        ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
+        ((Switch) activity.findViewById(R.id.switchTypingNotifications))
+                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                            pref.edit().putBoolean(UiUtils.PREF_TYPING_NOTIF, isChecked).apply();
+                    }
+                });
 
         activity.findViewById(R.id.buttonChangePassword).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -180,28 +159,62 @@ public class AccountInfoFragment extends Fragment {
             }
         });
 
-        final TextView auth = activity.findViewById(R.id.authPermissions);
-        auth.setText(me.getAuthAcsStr());
-        auth.setOnClickListener(new View.OnClickListener() {
+        activity.findViewById(R.id.authPermissions)
+                .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        UiUtils.showEditPermissions(activity, me, me.getAuthAcsStr(), null,
+                                UiUtils.ACTION_UPDATE_AUTH, "O");
+
+                    }
+                });
+        activity.findViewById(R.id.anonPermissions)
+                .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: handle Auth permissions editing
-                UiUtils.showEditPermissions(activity, me, me.getAuthAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_AUTH, "O");
+                        UiUtils.showEditPermissions(activity, me, me.getAnonAcsStr(), null,
+                                UiUtils.ACTION_UPDATE_ANON, "O");
 
-            }
-        });
-        final TextView anon = activity.findViewById(R.id.anonPermissions);
-        anon.setText(me.getAnonAcsStr());
-        anon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: handle Anon permissions editing
-                UiUtils.showEditPermissions(activity, me, me.getAnonAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_ANON, "O");
+                    }
+                });
 
+        // Assign initial form values.
+        updateFormValues(activity, me);
+    }
+
+    void updateFormValues(final Activity activity, final MeTopic<VxCard> me) {
+        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
+        final TextView title = activity.findViewById(R.id.topicTitle);
+
+        VxCard pub = me.getPub();
+        if (pub != null) {
+            if (!TextUtils.isEmpty(pub.fn)) {
+                title.setText(pub.fn);
+                title.setTypeface(null, Typeface.NORMAL);
+                title.setTextIsSelectable(true);
+            } else {
+                title.setText(R.string.placeholder_contact_title);
+                title.setTypeface(null, Typeface.ITALIC);
+                title.setTextIsSelectable(false);
             }
-        });
+            final Bitmap bmp = pub.getBitmap();
+            if (bmp != null) {
+                avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
+            }
+        }
+
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+
+        ((Switch)activity.findViewById(R.id.switchReadReceipts))
+                .setChecked(pref.getBoolean(UiUtils.PREF_READ_RCPT, true));
+
+        ((Switch) activity.findViewById(R.id.switchTypingNotifications))
+                .setChecked(pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true));
+
+        ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
+
+        ((TextView) activity.findViewById(R.id.authPermissions)).setText(me.getAuthAcsStr());
+        ((TextView) activity.findViewById(R.id.anonPermissions)).setText(me.getAnonAcsStr());
     }
 
     // Dialog for editing pub.fn and priv

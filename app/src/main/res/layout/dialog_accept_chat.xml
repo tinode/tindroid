@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:paddingTop="@dimen/activity_padding"
+    android:paddingBottom="@dimen/activity_padding"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin">
 
     <TextView
-        android:id="@+id/acceptNewChatMessage"
+        android:id="@+id/message"
+        style="@style/textPrimary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/request_new_chat"
-        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/request_new_chat_message"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/buttonAccept" style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
+        android:id="@+id/buttonAccept"
+        style="@style/textSecondary"
+        android:background="?attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
         android:clickable="true"
@@ -28,11 +34,12 @@
         android:text="@string/new_chat_accept"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/acceptNewChatMessage"/>
+        app:layout_constraintTop_toBottomOf="@id/message"/>
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/buttonIgnore" style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
+        android:id="@+id/buttonIgnore"
+        style="@style/textSecondary"
+        android:background="?attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
         android:clickable="true"
@@ -48,7 +55,7 @@
     <androidx.appcompat.widget.AppCompatTextView
         style="@style/textSecondary"
         android:id="@+id/buttonBlock"
-        android:background="?android:attr/selectableItemBackground"
+        android:background="?attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
         android:clickable="true"

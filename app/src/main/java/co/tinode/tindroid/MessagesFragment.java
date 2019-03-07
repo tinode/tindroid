@@ -56,8 +56,13 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.AccessChange;
+import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
+import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
@@ -266,10 +271,42 @@ public class MessagesFragment extends Fragment
             mMessagesAdapter.swapCursor(mTopicName, null,  !mTopicName.equals(oldTopicName));
             runMessagesLoader();
         }
+
+        updateFormValues();
+        showChatInvitationDialog();
     }
 
     void runMessagesLoader() {
         mMessagesAdapter.runLoader();
+    }
+
+    private void updateFormValues() {
+        final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        if (mTopic == null || !mTopic.isAttached()) {
+            return;
+        }
+
+        activity.findViewById(R.id.messagesNotReadable)
+                .setVisibility(mTopic.isReader() ? View.GONE : View.VISIBLE);
+
+        if (mTopic.isWriter()) {
+            EditText input = activity.findViewById(R.id.editMessage);
+            if (TextUtils.isEmpty(mMessageToSend)) {
+                input.getText().clear();
+            } else {
+                input.setText(mMessageToSend);
+            }
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
+            mMessageToSend = null;
+        } else {
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -387,6 +424,89 @@ public class MessagesFragment extends Fragment
         confirmBuilder.show();
     }
 
+    private void showChatInvitationDialog() {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
+        View view = inflater.inflate(R.layout.dialog_accept_chat, null);
+        builder.setTitle(R.string.request_new_chat_title).setView(view);
+
+        final AlertDialog invitation = builder.create();
+
+        View.OnClickListener l = new View.OnClickListener() {
+            @Override
+            public void onClick(final View view) {
+                PromisedReply<ServerMessage> response;
+
+                switch (view.getId()) {
+                    case R.id.buttonAccept:
+                        Log.d(TAG, "Accept");
+                        final String mode = mTopic.getAccessMode().getGiven();
+                        response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
+                        if (mTopic.isP2PType()) {
+                            // For P2P topics change 'given' permission of the peer too.
+                            // In p2p topics the other user has the same name as the topic.
+                            response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    return mTopic.setMeta(
+                                            new MsgSetMeta<VxCard,PrivateType>(new MetaSetSub(mTopic.getName(), mode)));
+                                }
+                            });
+                        }
+                        break;
+
+                    case R.id.buttonIgnore:
+                        response = mTopic.delete();
+                        break;
+
+                    case R.id.buttonBlock:
+                        Log.d(TAG, "Block");
+                        Acs am = new Acs(mTopic.getAccessMode());
+                        am.update(AccessChange.asWant("-JP"));
+                        response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(am.getWant())));
+                        break;
+
+                    default:
+                        Log.d(TAG, "Unknown");
+                        throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
+                }
+
+                invitation.dismiss();
+
+                response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        final int id = view.getId();
+                        if (id == R.id.buttonIgnore || id == R.id.buttonBlock) {
+                            Intent intent = new Intent(activity, ContactsActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            startActivity(intent);
+                        } else {
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateFormValues();
+                                }
+                            });
+                        }
+                        return null;
+                    }
+                }).thenCatch(new UiUtils.ToastFailureListener(activity));
+            }
+        };
+
+        view.findViewById(R.id.buttonAccept).setOnClickListener(l);
+        view.findViewById(R.id.buttonIgnore).setOnClickListener(l);
+        view.findViewById(R.id.buttonBlock).setOnClickListener(l);
+
+        invitation.show();
+    }
+
     void notifyDataSetChanged() {
         mMessagesAdapter.notifyDataSetChanged();
     }
@@ -481,31 +601,7 @@ public class MessagesFragment extends Fragment
     }
 
     void topicSubscribed() {
-        Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        if (mTopic.getAccessMode().isReader()) {
-            activity.findViewById(R.id.messagesNotReadable).setVisibility(View.GONE);
-        } else {
-            activity.findViewById(R.id.messagesNotReadable).setVisibility(View.VISIBLE);
-        }
-
-        if (mTopic.getAccessMode().isWriter()) {
-            EditText input = activity.findViewById(R.id.editMessage);
-            if (TextUtils.isEmpty(mMessageToSend)) {
-                input.getText().clear();
-            } else {
-                input.setText(mMessageToSend);
-            }
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
-            mMessageToSend = null;
-        } else {
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
-        }
+        updateFormValues();
     }
 
     private int findItemPositionById(long id) {

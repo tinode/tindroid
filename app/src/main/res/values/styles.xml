@@ -52,7 +52,6 @@
         <item name="android:textColor">@color/colorTextSecondary</item>
     </style>
 
-
     <style name="sectionTitleStyle" parent="@android:style/TextAppearance.DeviceDefault.Medium">
         <item name="android:textColor">@color/colorPrimaryDark</item>
         <item name="android:textAllCaps">true</item>

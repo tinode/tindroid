@@ -223,9 +223,10 @@
     <string name="action_archive">Archive</string>
     <string name="archived_chats">Archived Chats</string>
     <string name="action_show_archive">Archived chats</string>
-    <string name="request_new_chat">You are invited to start a new chat. What would you like to do?</string>
+    <string name="request_new_chat_title">New chat</string>
+    <string name="request_new_chat_message">You are invited to start a new chat. What would you like to do?</string>
     <string name="new_chat_accept">Accept</string>
     <string name="new_chat_ignore">Ignore</string>
     <string name="new_chat_block">Block</string>
-    <string name="messages_not_readable">no access to messages</string>
+    <string name="messages_not_readable">no access to new messages</string>
 </resources>

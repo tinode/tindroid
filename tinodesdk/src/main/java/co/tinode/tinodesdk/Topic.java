@@ -543,6 +543,14 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         return mDesc.acs != null && mDesc.acs.isOwner();
     }
 
+    public boolean isReader() {
+        return mDesc.acs != null && mDesc.acs.isReader();
+    }
+
+    public boolean isWriter() {
+        return mDesc.acs != null && mDesc.acs.isWriter();
+    }
+
     public Defacs getDefacs() {
         return mDesc.defacs;
     }

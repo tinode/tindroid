@@ -10,6 +10,11 @@ public class MetaSetSub {
 
     public MetaSetSub() {}
 
+    public MetaSetSub(String mode) {
+        this.user = null;
+        this.mode = mode;
+    }
+
     public MetaSetSub(String user, String mode) {
         this.user = user;
         this.mode = mode;

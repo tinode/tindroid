@@ -14,7 +14,6 @@
     <RelativeLayout
         android:layout_width="48sp"
         android:layout_height="48sp"
-        android:layout_marginRight="5dp"
         android:layout_marginEnd="5dp">
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -28,10 +27,9 @@
             android:layout_width="16sp"
             android:layout_height="16sp"
             android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             app:srcCompat="@drawable/ic_circle"
-            />
+            android:contentDescription="avatar"/>
 
     </RelativeLayout>
 
@@ -47,15 +45,14 @@
 
             <TextView
                 android:id="@+id/contactName"
+                android:textAppearance="@style/contactListTextPrimary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
                 android:maxLines="1"
-                android:paddingEnd="16sp" tools:ignore="RtlSymmetry"
-                android:paddingRight="16sp"
-                tools:text="Contact title"
-                android:textAppearance="@style/contactListTextPrimary"
-                />
+                android:paddingEnd="16sp"
+                tools:ignore="RtlSymmetry"
+                tools:text="Contact title"/>
 
             <TextView
                 android:id="@+id/unreadCount"
@@ -64,11 +61,13 @@
                 android:layout_gravity="end|center_vertical"
                 android:background="@drawable/pill_counter"
                 android:padding="3dp"
-                tools:text="9+"
                 android:gravity="center"
                 android:textColor="@color/white"
-                android:textSize="10sp" tools:ignore="SmallSp"
-                android:textStyle="bold"/>
+                android:textSize="10sp"
+                android:textStyle="bold"
+                tools:ignore="SmallSp"
+                tools:text="9+"
+                />
 
         </LinearLayout>
 

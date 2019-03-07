@@ -15,6 +15,7 @@
         android:background="@drawable/bubble"
         android:padding="12dp"
         android:visibility="gone"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/messages_not_readable"/>
 
     <FrameLayout

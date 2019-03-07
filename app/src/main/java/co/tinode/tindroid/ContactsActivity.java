@@ -50,6 +50,7 @@ public class ContactsActivity extends AppCompatActivity implements
                 .replace(R.id.contentFragment, new ContactsFragment(), FRAGMENT_CONTACTS)
                 .commit();
 
+        mMeTopic = Cache.getTinode().getMeTopic();
         mMeTopicListener = new MeListener();
     }
 
@@ -200,6 +201,17 @@ public class ContactsActivity extends AppCompatActivity implements
             if (desc.pub != null) {
                 desc.pub.constructBitmap();
             }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AccountInfoFragment fragment = (AccountInfoFragment) getSupportFragmentManager().
+                            findFragmentByTag(FRAGMENT_EDIT_ACCOUNT);
+                    if (fragment != null && fragment.isVisible()) {
+                        fragment.updateFormValues(ContactsActivity.this, mMeTopic);
+                    }
+                }
+            });
         }
 
         @Override

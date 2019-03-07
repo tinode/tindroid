@@ -17,14 +17,14 @@
         android:layout_width="48sp"
         android:layout_height="48sp"
         app:srcCompat="@drawable/ic_person_circle"
-        android:layout_alignParentLeft="true"
-        android:layout_marginRight="5dp" />
+        android:layout_alignParentStart="true"
+        android:layout_marginEnd="5dp" />
 
     <Button
         android:id="@+id/buttonInvite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:focusable="false"
         android:text="@string/invite"
         android:textAppearance="?android:attr/textAppearanceSmall"

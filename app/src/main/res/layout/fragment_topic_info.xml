@@ -27,7 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <ImageView
+                <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/imageAvatar"
                     android:layout_width="@dimen/avatar_size_large"
                     android:layout_height="@dimen/avatar_size_large"
