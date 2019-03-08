@@ -196,4 +196,7 @@
     <string name="new_chat_ignore">Игнорировать</string>
     <string name="new_chat_block">Заблокировать</string>
     <string name="messages_not_readable">нет доступа к новым сообщениям</string>
+    <string name="peers_messaging_disabled">Чат заблокирован у корреспондента</string>
+    <string name="action_enable">Разблокировать</string>
+
 </resources>

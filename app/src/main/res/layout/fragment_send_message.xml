@@ -6,9 +6,8 @@
     android:id="@+id/sendMessagePanel"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/background_light"
     android:orientation="horizontal"
-    android:paddingStart="6sp"
+    android:padding="6sp"
     android:visibility="visible"
     tools:ignore="RtlSymmetry">
 

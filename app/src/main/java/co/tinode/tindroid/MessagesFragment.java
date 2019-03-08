@@ -38,6 +38,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -98,6 +100,7 @@ public class MessagesFragment extends Fragment
     private String mTopicName = null;
     private Timer mNoteTimer = null;
     private String mMessageToSend = null;
+    private boolean mChatInvitationShown = false;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -273,7 +276,6 @@ public class MessagesFragment extends Fragment
         }
 
         updateFormValues();
-        showChatInvitationDialog();
     }
 
     void runMessagesLoader() {
@@ -290,22 +292,44 @@ public class MessagesFragment extends Fragment
             return;
         }
 
+        Acs acs = mTopic.getAccessMode();
+        if (acs == null) {
+            return;
+        }
+
         activity.findViewById(R.id.messagesNotReadable)
-                .setVisibility(mTopic.isReader() ? View.GONE : View.VISIBLE);
+                .setVisibility(acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
 
         if (mTopic.isWriter()) {
-            EditText input = activity.findViewById(R.id.editMessage);
-            if (TextUtils.isEmpty(mMessageToSend)) {
-                input.getText().clear();
-            } else {
-                input.setText(mMessageToSend);
-            }
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            Log.d(TAG, "Writer");
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
-            mMessageToSend = null;
+
+            if (acs.isJoiner(Acs.Side.WANT) && acs.getMissing().toString().contains("RW")) {
+                Log.d(TAG, "Peer disabled");
+                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+            } else {
+                Log.d(TAG, "All enabled");
+                EditText input = activity.findViewById(R.id.editMessage);
+                if (TextUtils.isEmpty(mMessageToSend)) {
+                    input.getText().clear();
+                } else {
+                    input.setText(mMessageToSend);
+                }
+                mMessageToSend = null;
+
+                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
+                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            }
         } else {
+            Log.d(TAG, "Disabled");
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+        }
+
+        if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {
+            showChatInvitationDialog();
         }
     }
 
@@ -398,7 +422,8 @@ public class MessagesFragment extends Fragment
         }
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
         confirmBuilder.setNegativeButton(android.R.string.cancel, null);
-        confirmBuilder.setMessage(del ? R.string.confirm_delete_topic : R.string.confirm_leave_topic);
+        confirmBuilder.setMessage(del ? R.string.confirm_delete_topic :
+                R.string.confirm_leave_topic);
 
         confirmBuilder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
@@ -425,17 +450,25 @@ public class MessagesFragment extends Fragment
     }
 
     private void showChatInvitationDialog() {
+        if (mChatInvitationShown) {
+            return;
+        }
+
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
 
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
-        View view = inflater.inflate(R.layout.dialog_accept_chat, null);
-        builder.setTitle(R.string.request_new_chat_title).setView(view);
+        mChatInvitationShown = true;
 
-        final AlertDialog invitation = builder.create();
+        final BottomSheetDialog invitation = new BottomSheetDialog(activity);
+        final LayoutInflater inflater = LayoutInflater.from(invitation.getContext());
+        final View view = inflater.inflate(R.layout.dialog_accept_chat, null);
+        invitation.setContentView(view);
+        invitation.setCancelable(false);
+        invitation.setCanceledOnTouchOutside(false);
+
+        //final AlertDialog invitation = builder.create();
 
         View.OnClickListener l = new View.OnClickListener() {
             @Override
@@ -481,12 +514,15 @@ public class MessagesFragment extends Fragment
                 response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        Log.d(TAG, "response.thenApply");
                         final int id = view.getId();
                         if (id == R.id.buttonIgnore || id == R.id.buttonBlock) {
+                            Log.d(TAG, "response.thenApply: ignore or block");
                             Intent intent = new Intent(activity, ContactsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                         } else {
+                            Log.d(TAG, "response.thenApply: accept");
                             activity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {

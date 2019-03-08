@@ -81,94 +81,94 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         //Log.i(TAG, "Beginning network synchronization");
         boolean success = false;
         final Tinode tinode = Cache.getTinode();
-        try {
-            Log.i(TAG, "Starting sync for account " + account.name);
+        Log.i(TAG, "Starting sync for account " + account.name);
 
-            // See if we already have a sync-state attached to this account.
-            Date lastSyncMarker = getServerSyncMarker(account);
+        // See if we already have a sync-state attached to this account.
+        Date lastSyncMarker = getServerSyncMarker(account);
 
-            // By default, contacts from a 3rd party provider are hidden in the contacts
-            // list. So let's set the flag that causes them to be visible, so that users
-            // can actually see these contacts.
-            if (lastSyncMarker == null) {
-                ContactsManager.makeAccountContactsVisibile(mContext, account);
+        // By default, contacts from a 3rd party provider are hidden in the contacts
+        // list. So let's set the flag that causes them to be visible, so that users
+        // can actually see these contacts.
+        if (lastSyncMarker == null) {
+            ContactsManager.makeAccountContactsVisibile(mContext, account);
+        }
+
+        // Load contacts and send them to server as fnd.Private.
+        SparseArray<Utils.ContactHolder> contactList =
+                Utils.fetchContacts(getContext().getContentResolver(),
+                        Utils.FETCH_EMAIL | Utils.FETCH_PHONE);
+        StringBuilder contactsBuilder = new StringBuilder();
+        for (int i=0; i<contactList.size(); i++) {
+            Utils.ContactHolder ch = contactList.get(contactList.keyAt(i));
+            String contact = ch.toString();
+            if (contact.length() > 0) {
+                contactsBuilder.append(contact);
+                contactsBuilder.append(",");
+            }
+        }
+
+        if (contactsBuilder.length() > 0) {
+            String contacts = contactsBuilder.toString();
+            String oldHash = getServerQueryHash(account);
+            String newHash = Utils.hash(contacts);
+
+            if (!newHash.equals(oldHash)) {
+                // If the query has changed, clear the sync marker for a full sync.
+                // Otherwise we only going to get updated contacts.
+                lastSyncMarker = null;
+                setServerQueryHash(account, newHash);
             }
 
-            final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
-            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
-            String token = AccountManager.get(mContext)
-                    .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-            tinode.connect(hostName, tls).getResult();
-            tinode.loginToken(token).getResult();
+            try {
+                final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+                boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
+                String token = AccountManager.get(mContext)
+                        .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
+                tinode.connect(hostName, tls).getResult();
+                tinode.loginToken(token).getResult();
 
-            // It throws if rejected and we just fail to sync.
-            tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();
-
-            // Load contacts and send them to server as fnd.Private.
-            SparseArray<Utils.ContactHolder> contactList =
-                    Utils.fetchContacts(getContext().getContentResolver(),
-                            Utils.FETCH_EMAIL | Utils.FETCH_PHONE);
-            StringBuilder contactsBuilder = new StringBuilder();
-            for (int i=0; i<contactList.size(); i++) {
-                Utils.ContactHolder ch = contactList.get(contactList.keyAt(i));
-                String contact = ch.toString();
-                if (contact.length() > 0) {
-                    contactsBuilder.append(contact);
-                    contactsBuilder.append(",");
-                }
-            }
-
-            // If we have some contacts, send them to server.
-            if (contactsBuilder.length() > 0) {
-                String contacts = contactsBuilder.toString();
-                String oldHash = getServerQueryHash(account);
-                String newHash = Utils.hash(contacts);
+                // It throws if rejected and we just fail to sync.
+                tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();
 
                 tinode.setMeta(Tinode.TOPIC_FND,
                         new MsgSetMeta(new MetaSetDesc(null, contacts))).getResult();
 
-                if (!newHash.equals(oldHash)) {
-                    // If the query has changed, clear the sync marker for a full sync.
-                    // Otherwise we only going to get contacts which has updated.
-                    lastSyncMarker = null;
-                    setServerQueryHash(account, newHash);
-                }
-            }
-
-            // final MsgGetMeta meta = MsgGetMeta.sub();
-            final MsgGetMeta meta = new MsgGetMeta(
-                            null,
-                            new MetaGetSub(lastSyncMarker, null),
-                            null, null, null);
-            PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
-            if (future.waitResult()) {
-                ServerMessage<?,?,VxCard,PrivateType> pkt = future.getResult();
-                if (pkt.meta == null || pkt.meta.sub == null) {
-                    // Server did not return any contacts.
-                    return;
-                }
-
-                // Fetch the list of updated contacts.
-                Collection<Subscription<VxCard,?>> updated = new ArrayList<>();
-                for (Subscription<VxCard,?> sub : pkt.meta.sub) {
-                    if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
-                        // Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
-                        updated.add(sub);
+                // final MsgGetMeta meta = MsgGetMeta.sub();
+                final MsgGetMeta meta = new MsgGetMeta(
+                        null,
+                        new MetaGetSub(lastSyncMarker, null),
+                        null, null, null);
+                PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
+                if (future.waitResult()) {
+                    ServerMessage<?, ?, VxCard, PrivateType> pkt = future.getResult();
+                    if (pkt.meta == null || pkt.meta.sub == null) {
+                        // Server did not return any contacts.
+                        return;
                     }
+
+                    // Fetch the list of updated contacts.
+                    Collection<Subscription<VxCard, ?>> updated = new ArrayList<>();
+                    for (Subscription<VxCard, ?> sub : pkt.meta.sub) {
+                        if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
+                            // Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
+                            updated.add(sub);
+                        }
+                    }
+                    Date upd = ContactsManager.updateContacts(mContext, account, updated,
+                            meta.sub == null ? null : meta.sub.ims);
+                    setServerSyncMarker(account, upd);
                 }
-                Date upd = ContactsManager.updateContacts(mContext, account, updated,
-                        meta.sub == null ? null : meta.sub.ims);
-                setServerSyncMarker(account, upd);
+                success = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                syncResult.stats.numIoExceptions++;
+            } catch (Exception e) {
+                e.printStackTrace();
+                syncResult.stats.numAuthExceptions++;
             }
-            success = true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            syncResult.stats.numIoExceptions++;
-        } catch (Exception e) {
-            e.printStackTrace();
-            syncResult.stats.numAuthExceptions++;
         }
+
         Log.i(TAG, "Network synchronization " + (success ? "completed" : "failed"));
     }
 

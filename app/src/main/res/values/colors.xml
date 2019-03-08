@@ -57,6 +57,10 @@
     <color name="online">#FF40C040</color>
     <color name="offline">#FFC0C0C0</color>
 
+    <!-- colors for striped background -->
+    <color name="stripe_50">#80FFFFFF</color>
+    <color name="stripe_80">#CCFFFFFF</color>
+
     <!-- Background colors for LetterTileDrawables. -->
     -->
     <array name="letter_tile_colors_light">

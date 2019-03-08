@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/peersMessagingDisabled"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="12sp"
+    android:visibility="visible"
+    tools:ignore="RtlSymmetry">
+
+    <TextView
+        style="@style/textPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignEnd="@id/separator"
+        android:text="@string/peers_messaging_disabled"
+        android:layout_centerVertical="true"
+        android:textColor="@color/colorTextPrimary" />
+
+    <TextView
+        android:id="@+id/separator"
+        style="@style/textPrimary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="|"
+        android:layout_centerVertical="true"
+        android:layout_alignStart="@id/chatSendButton"
+        android:textColor="@color/colorTextPrimary"
+        tools:ignore="HardcodedText"/>
+
+    <Button
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:id="@+id/chatSendButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:text="@string/action_enable"
+        />
+
+</RelativeLayout>

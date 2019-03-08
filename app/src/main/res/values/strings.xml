@@ -11,7 +11,7 @@
 
     <string name="login_hint">Login</string>
     <string name="password_hint">Password</string>
-    <string name="new_message_hint">Type a message</string>
+    <string name="new_message_hint">New message</string>
     <string name="send_message_button_hint">Send message</string>
     <string name="send_image_button_hint">Send image</string>
     <string name="send_file_button_hint">Send file</string>
@@ -223,10 +223,13 @@
     <string name="action_archive">Archive</string>
     <string name="archived_chats">Archived Chats</string>
     <string name="action_show_archive">Archived chats</string>
-    <string name="request_new_chat_title">New chat</string>
+    <string name="request_new_chat_title">New Chat</string>
     <string name="request_new_chat_message">You are invited to start a new chat. What would you like to do?</string>
     <string name="new_chat_accept">Accept</string>
     <string name="new_chat_ignore">Ignore</string>
     <string name="new_chat_block">Block</string>
     <string name="messages_not_readable">no access to new messages</string>
+    <string name="peers_messaging_disabled">Peer\'s messaging is disabled</string>
+    <string name="action_enable">Enable</string>
+
 </resources>

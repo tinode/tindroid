@@ -9,6 +9,17 @@ import java.util.Map;
  * Access mode.
  */
 public class Acs implements Serializable {
+    public enum Side {
+        MODE(0), WANT(1), GIVEN(2);
+
+        private int val;
+        Side(int val) {
+            this.val = val;
+        }
+
+        public int val() {return val;}
+    }
+
     AcsHelper given;
     AcsHelper want;
     AcsHelper mode;
@@ -158,11 +169,26 @@ public class Acs implements Serializable {
     }
 
     /**
-     * Check if Reader (R) flag is set.
+     * Check if mode Reader (R) flag is set.
      * @return true if flag is set.
      */
     public boolean isReader() {
-        return mode.isReader();
+        return mode != null && mode.isReader();
+    }
+    /**
+     * Check if Reader (R) flag is set for the given side.
+     * @return true if flag is set.
+     */
+    public boolean isReader(Side s) {
+        switch (s) {
+            case MODE:
+                return mode != null && mode.isReader();
+            case WANT:
+                return want != null && want.isReader();
+            case GIVEN:
+                return given != null && given.isReader();
+        }
+        return false;
     }
 
     /**
@@ -231,7 +257,23 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isJoiner() {
-        return mode.isJoiner();
+        return mode != null && mode.isJoiner();
+    }
+    /**
+     * Check if Joiner (J) flag is set for the specified side.
+     * @param s site to query (mode, want, given).
+     * @return true if flag is set.
+     */
+    public boolean isJoiner(Side s) {
+        switch (s) {
+            case MODE:
+                return mode != null && mode.isJoiner();
+            case WANT:
+                return want != null && want.isJoiner();
+            case GIVEN:
+                return given != null && given.isJoiner();
+        }
+        return false;
     }
 
     /**
@@ -263,6 +305,26 @@ public class Acs implements Serializable {
      */
     public boolean isInvalid() {
         return mode.isInvalid();
+    }
+
+    /**
+     * Get permissions present in 'want' but missing in 'given'.
+     * Inverse of {@link Acs#getExcessive}
+     *
+     * @return <b>want</b> value.
+     */
+    public AcsHelper getMissing() {
+        return AcsHelper.diff(want, given);
+    }
+
+    /**
+     * Get permissions present in 'given' but missing in 'want'.
+     * Inverse of {@link Acs#getMissing}
+     *
+     * @return permissions present in <b>given</b> but missing in <b>want</b>.
+     */
+    public AcsHelper getExcessive() {
+        return AcsHelper.diff(given, want);
     }
 
     @Override

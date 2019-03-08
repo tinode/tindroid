@@ -9,8 +9,6 @@ import java.util.StringTokenizer;
  * Helper class for access mode parser/generator.
  */
 public class AcsHelper implements Serializable {
-    private static final String TAG = "AcsHelper";
-
     // User access to topic
     private static final int MODE_JOIN = 0x01;      // J - join topic
     private static final int MODE_READ = 0x02;      // R - read broadcasts
@@ -84,6 +82,7 @@ public class AcsHelper implements Serializable {
     public boolean isMuted() {
         return (a & MODE_PRES) == 0;
     }
+
     @JsonIgnore
     public void setMuted(boolean v) {
         if (a == MODE_INVALID) {
@@ -257,4 +256,18 @@ public class AcsHelper implements Serializable {
         }
         return null;
     }
+
+    /**
+     * Get bits present in a1 but missing in a2: a1 & ~a2.
+     * @param a1
+     * @param a2
+     * @return {AcsHelper}
+     */
+    public static AcsHelper diff(AcsHelper a1, AcsHelper a2) {
+        if (a1 != null && !a1.isInvalid() && a2 != null && !a2.isInvalid()) {
+            return new AcsHelper(a1.a & ~a2.a);
+        }
+        return null;
+    }
+
 }
