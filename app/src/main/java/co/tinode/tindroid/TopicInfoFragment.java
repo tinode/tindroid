@@ -276,7 +276,6 @@ public class TopicInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditTopicText() {
-        Log.d(TAG, "showEditTopicText");
         final Activity activity = getActivity();
         if (activity == null) {
             return;
@@ -512,10 +511,9 @@ public class TopicInfoFragment extends Fragment {
 
         ((Switch) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
         ((TextView) activity.findViewById(R.id.permissions)).setText(mTopic.getAccessMode().getMode());
-        Log.d(TAG, "Set mode mode=" + mTopic.getAccessMode().getMode());
+
         ((TextView) activity.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
         ((TextView) activity.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
-        Log.d(TAG, "Set default permissions auth=" + mTopic.getAuthAcsStr() + ", anon=" + mTopic.getAnonAcsStr());
     }
 
     @Override
@@ -590,7 +588,7 @@ public class TopicInfoFragment extends Fragment {
                 } else {
                     mItemCount = 0;
                 }
-                // Log.d(TAG, "resetContent got " + mItemCount + " items");
+
                 notifyDataSetChanged();
             }
         }
@@ -633,7 +631,7 @@ public class TopicInfoFragment extends Fragment {
                 }
                 bmp = sub.pub.getBitmap();
             } else {
-                Log.d(TAG, "Pub is null for " + sub.user);
+                Log.w(TAG, "Pub is null for " + sub.user);
             }
             holder.name.setText(title);
             holder.extraInfo.setText(sub.acs.getMode());

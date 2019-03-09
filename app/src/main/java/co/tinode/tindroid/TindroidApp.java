@@ -39,7 +39,7 @@ public class TindroidApp extends Application {
             PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
             sAppVersion = pi.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            Log.d("TindroidApp", "Failed to retrieve app version");
+            Log.w("TindroidApp", "Failed to retrieve app version", e);
         }
 
         BroadcastReceiver br = new BroadcastReceiver() {

@@ -55,6 +55,19 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     /**
+     * In P2P topics get peer's subscription.
+     *
+     * @return peer's subscription.
+     */
+    public Subscription<DP, PrivateType> getPeer() {
+        if (isP2PType()) {
+            return super.getSubscription(getName());
+        }
+
+        return null;
+    }
+
+    /**
      * Archive topic by issuing {@link Topic#setMeta} with priv set to {arch: true/false}.
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic

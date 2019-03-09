@@ -267,7 +267,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                             @Override
                             public void run() {
                                 Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                Log.d(TAG, "Archiving failed", err);
+                                Log.w(TAG, "Archiving failed", err);
                             }
                         });
                         return null;
@@ -277,7 +277,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 return true;
 
             default:
-                Log.d(TAG, "unknown menu action");
+                Log.e(TAG, "Unknown menu action");
                 return false;
         }
     }
@@ -330,7 +330,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                                             @Override
                                             public void run() {
                                                 Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                                Log.d(TAG, "Delete failed", err);
+                                                Log.w(TAG, "Delete failed", err);
                                             }
                                         });
                                         return null;
@@ -340,7 +340,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                                 Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                             } catch (Exception err) {
                                 Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                Log.d(TAG, "Delete failed", err);
+                                Log.w(TAG, "Delete failed", err);
                             }
                         }
                         // Wait for the last reply to resolve then update dataset.

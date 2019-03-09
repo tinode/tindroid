@@ -9,6 +9,7 @@
 
     <TextView
         android:id="@+id/blockingMessage"
+        style="@style/textPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
@@ -16,7 +17,6 @@
         android:background="@drawable/bubble"
         android:padding="12dp"
         android:gravity="center"
-        android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/topic_not_found_or_invalid" />
 
 </RelativeLayout>

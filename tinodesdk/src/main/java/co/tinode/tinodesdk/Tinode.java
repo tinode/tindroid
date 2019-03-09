@@ -341,7 +341,7 @@ public class Tinode {
                     Log.d(TAG, "NotConnectedException in autoreconnect");
                     // Do nothing
                 } catch (Exception ex) {
-                    Log.i(TAG, "Exception in Connection.onConnect: ", ex);
+                    Log.w(TAG, "Exception in Connection.onConnect: ", ex);
                 }
             }
 
@@ -350,7 +350,7 @@ public class Tinode {
                 try {
                     dispatchPacket(message);
                 } catch (Exception ex) {
-                    Log.e(TAG, "Exception in dispatchPacket: ", ex);
+                    Log.w(TAG, "Exception in dispatchPacket: ", ex);
                 }
             }
 
@@ -456,7 +456,7 @@ public class Tinode {
         if (message == null || message.equals(""))
             return;
 
-        Log.d(TAG, "in: " + message);
+        Log.i(TAG, "in: " + message);
 
         mPacketCount++;
 
@@ -471,7 +471,7 @@ public class Tinode {
 
         ServerMessage pkt = parseServerMessageFromJson(message);
         if (pkt == null) {
-            Log.i(TAG, "Failed to parse packet");
+            Log.w(TAG, "Failed to parse packet");
             return;
         }
 
@@ -878,7 +878,7 @@ public class Tinode {
                         try {
                             loginSuccessful(pkt.ctrl);
                         } catch (Exception ex) {
-                            Log.i(TAG, "Exception while parsing server response", ex);
+                            Log.w(TAG, "Failed to parse server response", ex);
                         }
                         return null;
                     }
@@ -1352,7 +1352,7 @@ public class Tinode {
         if (mConnection == null || !mConnection.isConnected()) {
             throw new NotConnectedException("No connection");
         }
-        Log.d(TAG, "out: " + message);
+        Log.i(TAG, "out: " + message);
         mConnection.send(message);
     }
 
@@ -1626,11 +1626,11 @@ public class Tinode {
                             msg.meta = mapper.readValue(node.traverse(),
                                     getTypeOfMetaPacket(node.get("topic").asText()));
                         } else {
-                            Log.i(TAG, "Failed to parse {meta}: missing topic name");
+                            Log.w(TAG, "Failed to parse {meta}: missing topic name");
                         }
                         break;
                     default:  // Unrecognized field, ignore
-                        Log.i(TAG, "Unknown field in packet: '" + name + "'");
+                        Log.w(TAG, "Unknown field in packet: '" + name + "'");
                         break;
                 }
             }

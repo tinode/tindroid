@@ -118,7 +118,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
 
             } catch (NullPointerException | IllegalArgumentException | ClassCastException ex) {
-                Log.d(TAG, "Broken Image", ex);
+                Log.w(TAG, "Broken Image", ex);
             }
 
             if (bmp == null) {
@@ -301,7 +301,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                                 }
                             }
                         } catch (ClassCastException ex) {
-                            Log.i(TAG, "Exception", ex);
+                            Log.w(TAG, "Wrong type of content in Drafty", ex);
                         }
 
                         if (span != null && span.isEmpty()) {
@@ -487,7 +487,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             } else if (children != null) {
                 for (TreeNode child : children) {
                     if (child == null) {
-                        Log.e(TAG, "NULL child. Should not happen!!!");
+                        Log.w(TAG, "NULL child. Should not happen!!!");
                     } else {
                         spanned.append(child.toSpanned());
                     }

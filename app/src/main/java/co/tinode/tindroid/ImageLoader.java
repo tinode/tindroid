@@ -77,10 +77,6 @@ public abstract class ImageLoader {
 
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancel(true);
-            if (BuildConfig.DEBUG) {
-                final Object bitmapData = bitmapWorkerTask.mData;
-                Log.d(TAG, "cancelWork - cancelled work for " + bitmapData);
-            }
         }
     }
 
@@ -97,9 +93,6 @@ public abstract class ImageLoader {
             final Object bitmapData = bitmapWorkerTask.mData;
             if (bitmapData == null || !bitmapData.equals(data)) {
                 bitmapWorkerTask.cancel(true);
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "cancelPotentialWork - cancelled work for " + data);
-                }
             } else {
                 // The same work is already in progress.
                 return false;

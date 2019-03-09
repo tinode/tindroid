@@ -97,7 +97,7 @@ public class BaseDb extends SQLiteOpenHelper {
             try {
                 return obj.getClass().getCanonicalName() + ";" + Tinode.jsonSerialize(obj);
             } catch (JsonProcessingException ex) {
-                Log.e(TAG, "Failed to serialize", ex);
+                Log.w(TAG, "Failed to serialize", ex);
             }
         }
         return null;
@@ -115,7 +115,7 @@ public class BaseDb extends SQLiteOpenHelper {
                 String[] parts = input.split(";", 2);
                 return Tinode.jsonDeserialize(parts[1], parts[0]);
             } catch (ClassCastException ex) {
-                Log.e(TAG, "Failed to de-serialize", ex);
+                Log.w(TAG, "Failed to de-serialize", ex);
             }
         }
         return null;

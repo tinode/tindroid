@@ -56,8 +56,6 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Log.d(TAG, "onCreateView");
-
         setHasOptionsMenu(true);
 
         return inflater.inflate(R.layout.fragment_edit_members, container, false);
@@ -79,7 +77,6 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
             @Override
             public void onClick(View v) {
                 List<Chip> selected = (List<Chip>) mChipsInput.getSelectedChipList();
-                // Log.d(TAG, "Chips count: " + selected.size() + " == " + mChipsInput.getChildCount());
                 if (selected.size() == 0) {
                     Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
                 }
@@ -143,8 +140,8 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
             // Go back to contacts
-        } catch (Exception e) {
-            Log.d(TAG, "failed:", e);
+        } catch (Exception ex) {
+            Log.w(TAG, "Failed to change member's status", ex);
             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
         }
     }

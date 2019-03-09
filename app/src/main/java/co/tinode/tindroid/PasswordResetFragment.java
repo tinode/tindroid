@@ -134,8 +134,8 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
                         }
                     });
 
-        } catch (Exception e) {
-            Log.e(TAG, "Something went wrong", e);
+        } catch (Exception ex) {
+            Log.w(TAG, "Password reset failed", ex);
             confirm.setEnabled(true);
         }
     }

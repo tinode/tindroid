@@ -163,7 +163,7 @@ public class MessageDb implements BaseColumns {
             msg.id = db.insertOrThrow(TABLE_NAME, null, values);
             db.setTransactionSuccessful();
         } catch (Exception ex) {
-            Log.e(TAG, "Insert failed", ex);
+            Log.w(TAG, "Insert failed", ex);
         } finally {
             db.endTransaction();
         }
@@ -214,8 +214,6 @@ public class MessageDb implements BaseColumns {
                 " ORDER BY " + COLUMN_NAME_TS +
                 (limit > 0 ? " LIMIT " + limit : "");
 
-        // Log.d(TAG, "Sql=[" + sql + "]");
-
         return db.rawQuery(sql, null);
     }
 
@@ -235,8 +233,6 @@ public class MessageDb implements BaseColumns {
                 " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
 
-        // Log.d(TAG, "Sql=[" + sql + "]");
-
         return db.rawQuery(sql, null);
     }
 
@@ -249,8 +245,6 @@ public class MessageDb implements BaseColumns {
      */
     static Cursor getMessageById(SQLiteDatabase db, long msgId) {
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE _id=" + msgId;
-
-        // Log.d(TAG, "Sql=[" + sql + "]");
 
         return db.rawQuery(sql, null);
     }
@@ -268,7 +262,6 @@ public class MessageDb implements BaseColumns {
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_QUEUED +
                 " ORDER BY " + COLUMN_NAME_TS;
-        // Log.d(TAG, "Sql=[" + sql + "]");
 
         return db.rawQuery(sql, null);
     }
@@ -288,8 +281,6 @@ public class MessageDb implements BaseColumns {
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "=" + status +
                 " ORDER BY " + COLUMN_NAME_TS;
-
-        // Log.d(TAG, "Sql=[" + sql + "]");
 
         return db.rawQuery(sql, null);
     }

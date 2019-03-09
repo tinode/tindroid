@@ -208,7 +208,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                             });
 
         } catch (Exception e) {
-            Log.e(TAG, "Something went wrong", e);
+            Log.w(TAG, "Signup failed", e);
             signUp.setEnabled(true);
         }
     }

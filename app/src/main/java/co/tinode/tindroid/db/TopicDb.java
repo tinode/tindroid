@@ -191,8 +191,6 @@ public class TopicDb implements BaseColumns {
      */
     @SuppressWarnings("WeakerAccess")
     public static long insert(SQLiteDatabase db, Topic topic) {
-        // Log.d(TAG, "Creating topic " + topic.getName());
-
         int status = topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED;
 
         // Convert topic description to a map of values. If value is not set use a magical constant.
@@ -286,9 +284,6 @@ public class TopicDb implements BaseColumns {
             st.status = status;
         }
 
-        //Log.d(TAG, "Update row, accid=" + BaseDb.getInstance().getAccountId() +
-        //         " name=" + topic.getName() + " returned " + updated);
-
         return updated > 0;
     }
 
@@ -365,14 +360,11 @@ public class TopicDb implements BaseColumns {
      * @return cursor with topics
      */
     public static Cursor query(SQLiteDatabase db) {
-        // Log.d(TAG, "Querying");
-
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
                 " ORDER BY " + COLUMN_NAME_LASTUSED + " DESC";
 
-        // Log.d(TAG, sql);
         return db.rawQuery(sql, null);
     }
 

@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -141,7 +142,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         if (TextUtils.isEmpty(mTopicName)) {
-            Log.e(TAG, "Activity resumed with an empty topic name");
+            Log.w(TAG, "Activity resumed with an empty topic name");
             finish();
             return;
         }
@@ -160,7 +161,7 @@ public class MessageActivity extends AppCompatActivity {
             showFragment(FRAGMENT_MESSAGES, false, null);
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
-            Log.i(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+            Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
             UiUtils.setupToolbar(this, null, mTopicName, false);
             mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
             showFragment(FRAGMENT_INVALID, false, null);
@@ -196,7 +197,7 @@ public class MessageActivity extends AppCompatActivity {
                 try {
                     mTopic.leave();
                 } catch (Exception ex) {
-                    Log.e(TAG, "something went wrong in Topic.leave", ex);
+                    Log.w(TAG, "Leave failed", ex);
                 }
             }
         }
@@ -243,10 +244,9 @@ public class MessageActivity extends AppCompatActivity {
                 }
             });
         } catch (NotConnectedException ignored) {
-            Log.d(TAG, "Offline mode, ignore");
             setProgressIndicator(false);
         } catch (Exception ex) {
-            Log.e(TAG, "something went wrong", ex);
+            Log.w(TAG, "Subscribe failed", ex);
             setProgressIndicator(false);
             Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
         }
@@ -325,7 +325,7 @@ public class MessageActivity extends AppCompatActivity {
                             }, null);
                         }
                 } catch (Exception ex) {
-                    Log.d(TAG, "Failed to sync", ex);
+                    Log.w(TAG, "Sync failed", ex);
                     Toast.makeText(MessageActivity.this, R.string.failed_to_send_message,
                             Toast.LENGTH_LONG).show();
                 }
@@ -402,10 +402,9 @@ public class MessageActivity extends AppCompatActivity {
                         return null;
                     }
                 }, new UiUtils.ToastFailureListener(this));
-            } catch (NotConnectedException ex) {
-                Log.d(TAG, "sendMessage -- NotConnectedException", ex);
+            } catch (NotConnectedException ignored) {
             } catch (Exception ex) {
-                Log.d(TAG, "sendMessage -- Exception", ex);
+                Log.w(TAG, "Send fessage failed", ex);
                 Toast.makeText(this, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -506,9 +505,20 @@ public class MessageActivity extends AppCompatActivity {
 
     BroadcastReceiver onNotificationClick=new BroadcastReceiver() {
         public void onReceive(Context ctxt, Intent intent) {
+            // FIXME: handle notification click.
             Log.d(TAG, "onNotificationClick" + intent.getExtras());
         }
     };
+
+    Fragment getVisibleFragment() {
+        List<Fragment> fragments = getSupportFragmentManager().getFragments();
+        for (Fragment f : fragments) {
+            if (f.isVisible()) {
+                return f;
+            }
+        }
+        return null;
+    }
 
     private class TListener extends ComTopic.ComListener<VxCard> {
 
@@ -528,6 +538,7 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onPres(MsgServerPres pres) {
+            // FIXME: handle {pres}
             Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
         }
 
@@ -542,7 +553,7 @@ public class MessageActivity extends AppCompatActivity {
                             MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                                     findFragmentByTag(FRAGMENT_MESSAGES);
                             if (fragment != null && fragment.isVisible()) {
-                                fragment.notifyDataSetChanged();
+                                fragment.notifyDataSetChanged(false);
                             }
                         }
                     });
@@ -567,11 +578,13 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    TopicInfoFragment fragment = (TopicInfoFragment) getSupportFragmentManager().
-                            findFragmentByTag(FRAGMENT_INFO);
-
-                    if (fragment != null && fragment.isVisible()) {
-                        fragment.notifyDataSetChanged();
+                    Fragment fragment = getVisibleFragment();
+                    if (fragment != null) {
+                        if (fragment instanceof TopicInfoFragment) {
+                            ((TopicInfoFragment)fragment).notifyDataSetChanged();
+                        } else if (fragment instanceof MessagesFragment) {
+                            ((MessagesFragment)fragment).notifyDataSetChanged(true);
+                        }
                     }
                 }
             });
@@ -584,11 +597,13 @@ public class MessageActivity extends AppCompatActivity {
                 public void run() {
                     UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
                             mTopic.getOnline());
-
-                    TopicInfoFragment fragment = (TopicInfoFragment) getSupportFragmentManager().
-                            findFragmentByTag(FRAGMENT_INFO);
-                    if (fragment != null && fragment.isVisible()) {
-                        fragment.notifyContentChanged();
+                    Fragment fragment = getVisibleFragment();
+                    if (fragment != null) {
+                        if (fragment instanceof TopicInfoFragment) {
+                            ((TopicInfoFragment)fragment).notifyDataSetChanged();
+                        } else if (fragment instanceof MessagesFragment) {
+                            ((MessagesFragment)fragment).notifyDataSetChanged(true);
+                        }
                     }
                 }
             });

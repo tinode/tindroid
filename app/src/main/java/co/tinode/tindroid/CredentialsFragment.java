@@ -137,8 +137,8 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                     }
                 });
 
-        } catch (Exception e) {
-            Log.e(TAG, "Something went wrong", e);
+        } catch (Exception ex) {
+            Log.w(TAG, "Login failed", ex);
             confirm.setEnabled(true);
         }
     }

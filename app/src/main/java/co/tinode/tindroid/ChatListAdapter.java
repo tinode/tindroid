@@ -130,7 +130,6 @@ public class ChatListAdapter extends BaseAdapter {
                 holder.topic);
 
         holder.online.setColorFilter(topic.getOnline() ? holder.colorOnline : holder.colorOffline);
-        // Log.d(TAG, "User " + topic.getName() + " is " + (topic.getOnline() ? "online" : "offline"));
     }
 
     void toggleSelected(int position) {

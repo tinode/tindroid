@@ -104,7 +104,6 @@ public class SqlStore implements Storage {
         StoredTopic st = (StoredTopic) topic.getLocal();
         boolean success = false;
         if (st != null) {
-            //Log.d(TAG, "deleting topic " + topic.getName());
             SQLiteDatabase db = mDbh.getWritableDatabase();
 
             try {
@@ -118,9 +117,7 @@ public class SqlStore implements Storage {
                 success = true;
 
                 topic.setLocal(null);
-                // Log.d(TAG, "SUCCESS deleting topic " + topic.getName());
             } catch (SQLException ignored) {
-                // Log.e(TAG, "Topic deletion failed", ignored);
             }
 
             db.endTransaction();
@@ -220,7 +217,8 @@ public class SqlStore implements Storage {
         long topicId, userId;
         StoredSubscription ss = sub != null ? (StoredSubscription) sub.getLocal() : null;
         if (ss == null) {
-            Log.d(TAG, "Message from an unknown subscriber " + m.from);
+            Log.i(TAG, "Message from an unknown subscriber " + m.from);
+
             StoredTopic st = (StoredTopic) topic.getLocal();
             topicId = st.id;
             userId = UserDb.getId(db, m.from);
@@ -238,7 +236,7 @@ public class SqlStore implements Storage {
         }
 
         if (topicId < 0 || userId < 0) {
-            Log.d(TAG, "Failed to save message, topicId=" + topicId + ", userId=" + userId);
+            Log.w(TAG, "Failed to save message, topicId=" + topicId + ", userId=" + userId);
             return -1;
         }
 
@@ -256,7 +254,7 @@ public class SqlStore implements Storage {
             }
 
         } catch (SQLException ex) {
-            Log.d(TAG, "Failed to save message", ex);
+            Log.w(TAG, "Failed to save message", ex);
         } finally {
             db.endTransaction();
         }
@@ -329,7 +327,7 @@ public class SqlStore implements Storage {
                 result = true;
             }
         } catch (SQLException ex) {
-            Log.d(TAG, "Exception while updating message", ex);
+            Log.w(TAG, "Exception while updating message", ex);
         } finally {
             db.endTransaction();
         }
@@ -362,7 +360,7 @@ public class SqlStore implements Storage {
                 result = true;
             }
         } catch (SQLException ex) {
-            Log.d(TAG, "Exception while deleting message range", ex);
+            Log.w(TAG, "Exception while deleting message range", ex);
         } finally {
             db.endTransaction();
         }
@@ -384,7 +382,7 @@ public class SqlStore implements Storage {
                 result = true;
             }
         } catch (SQLException ex) {
-            Log.d(TAG, "Exception while deleting message list", ex);
+            Log.w(TAG, "Exception while deleting message list", ex);
         } finally {
             db.endTransaction();
         }

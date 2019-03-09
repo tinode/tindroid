@@ -66,6 +66,7 @@ import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.Subscription;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -137,7 +138,7 @@ public class MessagesFragment extends Fragment
                 try {
                     super.onLayoutChildren(recycler, state);
                 } catch (IndexOutOfBoundsException e) {
-                    Log.e("probe", "meet a IOOBE in RecyclerView");
+                    Log.i("probe", "meet a IOOBE in RecyclerView", e);
                 }
             }
         };
@@ -241,6 +242,18 @@ public class MessagesFragment extends Fragment
             public void afterTextChanged(Editable editable) {
             }
         });
+
+        activity.findViewById(R.id.enablePeerButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Enable peer.
+                Acs am = new Acs(mTopic.getAccessMode());
+                am.update(new AccessChange(null, "+RW"));
+                mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), am.getGiven())))
+                        .thenCatch(new UiUtils.ToastFailureListener(activity));
+
+            }
+        });
     }
 
     @Override
@@ -297,19 +310,24 @@ public class MessagesFragment extends Fragment
             return;
         }
 
-        activity.findViewById(R.id.messagesNotReadable)
-                .setVisibility(acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
+        if (mTopic.isReader()) {
+            activity.findViewById(R.id.notReadable).setVisibility(View.GONE);
+        } else {
+            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.notReadableNote).setVisibility(
+                    acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
+        }
 
         if (mTopic.isWriter()) {
-            Log.d(TAG, "Writer");
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
-            if (acs.isJoiner(Acs.Side.WANT) && acs.getMissing().toString().contains("RW")) {
-                Log.d(TAG, "Peer disabled");
+            Subscription peer = mTopic.getPeer();
+            if (peer != null && peer.acs != null &&
+                    peer.acs.isJoiner(Acs.Side.WANT) &&
+                    peer.acs.getMissing().toString().contains("RW")) {
                 activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             } else {
-                Log.d(TAG, "All enabled");
                 EditText input = activity.findViewById(R.id.editMessage);
                 if (TextUtils.isEmpty(mMessageToSend)) {
                     input.getText().clear();
@@ -322,7 +340,6 @@ public class MessagesFragment extends Fragment
                 activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
             }
         } else {
-            Log.d(TAG, "Disabled");
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
@@ -406,10 +423,9 @@ public class MessagesFragment extends Fragment
                     return super.onOptionsItemSelected(item);
             }
         } catch (NotConnectedException ignored) {
-            Log.d(TAG, "Offline - not changed");
             Toast.makeText(getActivity(), R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception ex) {
-            Log.d(TAG, "Something went wrong while muting", ex);
+            Log.d(TAG, "Muting failed", ex);
         }
         return true;
     }
@@ -477,7 +493,6 @@ public class MessagesFragment extends Fragment
 
                 switch (view.getId()) {
                     case R.id.buttonAccept:
-                        Log.d(TAG, "Accept");
                         final String mode = mTopic.getAccessMode().getGiven();
                         response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
                         if (mTopic.isP2PType()) {
@@ -498,14 +513,12 @@ public class MessagesFragment extends Fragment
                         break;
 
                     case R.id.buttonBlock:
-                        Log.d(TAG, "Block");
                         Acs am = new Acs(mTopic.getAccessMode());
                         am.update(AccessChange.asWant("-JP"));
                         response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(am.getWant())));
                         break;
 
                     default:
-                        Log.d(TAG, "Unknown");
                         throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
                 }
 
@@ -514,15 +527,12 @@ public class MessagesFragment extends Fragment
                 response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        Log.d(TAG, "response.thenApply");
                         final int id = view.getId();
                         if (id == R.id.buttonIgnore || id == R.id.buttonBlock) {
-                            Log.d(TAG, "response.thenApply: ignore or block");
                             Intent intent = new Intent(activity, ContactsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                         } else {
-                            Log.d(TAG, "response.thenApply: accept");
                             activity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -543,8 +553,12 @@ public class MessagesFragment extends Fragment
         invitation.show();
     }
 
-    void notifyDataSetChanged() {
-        mMessagesAdapter.notifyDataSetChanged();
+    void notifyDataSetChanged(boolean meta) {
+        if (meta) {
+            updateFormValues();
+        } else {
+            mMessagesAdapter.notifyDataSetChanged();
+        }
     }
 
     private void openFileSelector(String mimeType, int title, int resultCode) {
@@ -794,7 +808,7 @@ public class MessagesFragment extends Fragment
         result.msgId = args.getLong("msgId");
 
         if (uri == null) {
-            Log.d(TAG, "Received null URI");
+            Log.w(TAG, "Received null URI");
             result.error = "Null URI";
             return result;
         }
@@ -814,7 +828,7 @@ public class MessagesFragment extends Fragment
             String mimeType = fileDetails.getString("mime");
 
             if (fsize == 0) {
-                Log.d(TAG, "File size is zero "+uri);
+                Log.w(TAG, "File size is zero " + uri);
                 result.error = context.getString(R.string.invalid_file);
                 return result;
             }
@@ -839,7 +853,7 @@ public class MessagesFragment extends Fragment
             }
 
             if (fsize > MAX_ATTACHMENT_SIZE) {
-                Log.d(TAG, "File is too big, size="+fsize);
+                Log.w(TAG, "File is too big, size=" + fsize);
                 result.error = context.getString(R.string.attachment_too_large,
                         UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
             } else {
@@ -914,7 +928,7 @@ public class MessagesFragment extends Fragment
         } catch (IOException | NullPointerException ex) {
             result.error = ex.getMessage();
             if (!"cancelled".equals(result.error)) {
-                Log.e(TAG, "Failed to attach file", ex);
+                Log.w(TAG, "Failed to attach file", ex);
             }
         } finally {
             if (is != null) {

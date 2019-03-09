@@ -168,9 +168,11 @@ public class MessagesListAdapter
                         copyMessageText(getSelectedArray());
                         return true;
                     case R.id.action_send_now:
+                        // FIXME: implement resending now.
                         Log.d(TAG, "Try re-sending selected item");
                         return true;
                     case R.id.action_view_details:
+                        // FIXME: implement viewing message details.
                         Log.d(TAG, "Show message details");
                         return true;
                     default:
@@ -266,9 +268,8 @@ public class MessagesListAdapter
                         }
                     }, null);
                 } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "sendDeleteMessages -- NotConnectedException");
                 } catch (Exception ex) {
-                    Log.d(TAG, "sendDeleteMessages -- Exception", ex);
+                    Log.w(TAG, "Delete messages failed", ex);
                     Toast.makeText(mActivity, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
                 }
             } else if (discarded > 0) {
@@ -742,10 +743,10 @@ public class MessagesListAdapter
         FileOutputStream fos = null;
         try {
             if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                Log.d(TAG, "External storage not mounted: " + path);
+                Log.w(TAG, "External storage not mounted: " + path);
 
             } else if (!(path.mkdirs() || path.isDirectory())) {
-                Log.d(TAG, "Path is not a directory - " + path);
+                Log.w(TAG, "Path is not a directory - " + path);
             }
 
             Object val = data.get("val");
@@ -773,16 +774,16 @@ public class MessagesListAdapter
                     mActivity.startDownload(Uri.parse(new URL(Cache.getTinode().getBaseUrl(), (String) ref).toString()),
                             fname, mimeType, lfh.headers());
                 } else {
-                    Log.e(TAG, "Invalid or missing attachment");
+                    Log.w(TAG, "Invalid or missing attachment");
                     Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
                 }
             }
 
         } catch (NullPointerException | ClassCastException | IOException ex) {
-            Log.d(TAG, "Failed to save attachment to storage", ex);
+            Log.w(TAG, "Failed to save attachment to storage", ex);
             Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
         } catch (ActivityNotFoundException ex) {
-            Log.i(TAG, "No application can handle downloaded file");
+            Log.w(TAG, "No application can handle downloaded file");
             Toast.makeText(mActivity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
         } finally {
             if (fos != null) {

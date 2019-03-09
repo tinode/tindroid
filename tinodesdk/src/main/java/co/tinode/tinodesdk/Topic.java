@@ -900,7 +900,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                        Log.d(TAG, "Processing delivery msgId=" + msgId);
                                         processDelivery(result.ctrl, msgId);
                                         return null;
                                     }
@@ -908,7 +907,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                                 new PromisedReply.FailureListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                        Log.d(TAG, "Delivery failed msgId=" + msgId);
+                                        Log.w(TAG, "SyncAll failed msgId=" + msgId, err);
                                         mStore.msgSyncing(Topic.this, msgId, false);
                                         return null;
                                     }
@@ -959,7 +958,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                                     new PromisedReply.SuccessListener<ServerMessage>() {
                                         @Override
                                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                            Log.d(TAG, "Processing delivery msgId=" + m.getId());
                                             processDelivery(result.ctrl, m.getId());
                                             return null;
                                         }
@@ -967,7 +965,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                                     new PromisedReply.FailureListener<ServerMessage>() {
                                         @Override
                                         public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                            Log.d(TAG, "Delivery failed msgId=" + m.getId());
+                                            Log.w(TAG, "SyncOne failed msgId=" + m.getId(), err);
                                             mStore.msgSyncing(Topic.this, m.getId(), false);
                                             return null;
                                         }
@@ -1757,7 +1755,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                 processSub(sub);
                 break;
             default:
-                Log.i(TAG, "Unknown presence update: " + pres.what);
+                Log.w(TAG, "Unknown presence update: " + pres.what);
         }
 
         if (mListener != null) {

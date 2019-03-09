@@ -177,6 +177,7 @@ public class ContactsActivity extends AppCompatActivity implements
 
         @Override
         public void onInfo(MsgServerInfo info) {
+            // FIXME: handle {info}
             Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
         }
 
