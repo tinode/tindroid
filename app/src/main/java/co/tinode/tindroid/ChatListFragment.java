@@ -205,6 +205,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                 DialogFragment about = new AboutDialogFragment();
                 // The warning below is a false positive. If activity is not null, then
                 // getFragmentManager is also not null
+                //noinspection ConstantConditions
                 about.show(getFragmentManager(), "about");
                 return true;
 
@@ -321,6 +322,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                     public void onClick(DialogInterface dialog, int which) {
                         PromisedReply<ServerMessage> reply = null;
                         for (int pos : positions) {
+                            @SuppressWarnings("unchecked")
                             ComTopic<VxCard> t = (ComTopic<VxCard>) mAdapter.getItem(pos);
                             try {
                                 reply = t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
@@ -347,7 +349,7 @@ public class ChatListFragment extends ListFragment implements AbsListView.MultiC
                         if (reply != null) {
                             reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                     datasetChanged();
                                     return null;
                                 }
