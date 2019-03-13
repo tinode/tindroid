@@ -183,24 +183,8 @@ public class AccountInfoFragment extends Fragment {
     }
 
     void updateFormValues(final Activity activity, final MeTopic<VxCard> me) {
-        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
-        final TextView title = activity.findViewById(R.id.topicTitle);
-
-        VxCard pub = me.getPub();
-        if (pub != null) {
-            if (!TextUtils.isEmpty(pub.fn)) {
-                title.setText(pub.fn);
-                title.setTypeface(null, Typeface.NORMAL);
-                title.setTextIsSelectable(true);
-            } else {
-                title.setText(R.string.placeholder_contact_title);
-                title.setTypeface(null, Typeface.ITALIC);
-                title.setTextIsSelectable(false);
-            }
-            final Bitmap bmp = pub.getBitmap();
-            if (bmp != null) {
-                avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
-            }
+        if (activity== null) {
+            return;
         }
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
@@ -213,8 +197,33 @@ public class AccountInfoFragment extends Fragment {
 
         ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
 
-        ((TextView) activity.findViewById(R.id.authPermissions)).setText(me.getAuthAcsStr());
-        ((TextView) activity.findViewById(R.id.anonPermissions)).setText(me.getAnonAcsStr());
+
+        String fn = null;
+        if (me != null) {
+            ((TextView) activity.findViewById(R.id.authPermissions)).setText(me.getAuthAcsStr());
+            ((TextView) activity.findViewById(R.id.anonPermissions)).setText(me.getAnonAcsStr());
+
+            VxCard pub = me.getPub();
+            if (pub != null) {
+                fn = pub.fn;
+                final Bitmap bmp = pub.getBitmap();
+                if (bmp != null) {
+                    ((AppCompatImageView) activity.findViewById(R.id.imageAvatar))
+                            .setImageDrawable(new RoundImageDrawable(getResources(), bmp));
+                }
+            }
+        }
+
+        final TextView title = activity.findViewById(R.id.topicTitle);
+        if (!TextUtils.isEmpty(fn)) {
+            title.setText(fn);
+            title.setTypeface(null, Typeface.NORMAL);
+            title.setTextIsSelectable(true);
+        } else {
+            title.setText(R.string.placeholder_contact_title);
+            title.setTypeface(null, Typeface.ITALIC);
+            title.setTextIsSelectable(false);
+        }
     }
 
     // Dialog for editing pub.fn and priv

@@ -249,9 +249,12 @@ public class MessagesFragment extends Fragment
                 // Enable peer.
                 Acs am = new Acs(mTopic.getAccessMode());
                 am.update(new AccessChange(null, "+RW"));
-                mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), am.getGiven())))
-                        .thenCatch(new UiUtils.ToastFailureListener(activity));
-
+                try {
+                    mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), am.getGiven())))
+                            .thenCatch(new UiUtils.ToastFailureListener(activity));
+                } catch (Exception ignored) {
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
