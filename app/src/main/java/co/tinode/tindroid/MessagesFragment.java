@@ -305,6 +305,12 @@ public class MessagesFragment extends Fragment
         }
 
         if (mTopic == null || !mTopic.isAttached()) {
+            // Default view when the topic is not available.
+            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
+            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
             return;
         }
 

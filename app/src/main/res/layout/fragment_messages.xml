@@ -7,25 +7,6 @@
     android:background="@drawable/message_view_bkg"
     tools:context=".MessagesFragment">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/sendMessageFragment"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="4dp"
-        card_view:cardBackgroundColor="@android:color/background_light"
-        card_view:cardUseCompatPadding="true"
-        card_view:cardElevation="@dimen/cardview_elevation"
-        tools:layout="@layout/fragment_send_message">
-
-        <include layout="@layout/fragment_send_message" />
-        <include layout="@layout/fragment_messaging_disabled" />
-        <include layout="@layout/fragment_enable_peer" />
-
-    </androidx.cardview.widget.CardView>
-
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresher"
         android:layout_width="match_parent"
@@ -59,5 +40,24 @@
             android:text="@string/messages_not_readable"/>
 
     </LinearLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/sendMessageFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="4dp"
+        card_view:cardBackgroundColor="@android:color/background_light"
+        card_view:cardUseCompatPadding="true"
+        card_view:cardElevation="@dimen/cardview_elevation"
+        tools:layout="@layout/fragment_send_message">
+
+        <include layout="@layout/fragment_send_message" />
+        <include layout="@layout/fragment_messaging_disabled" />
+        <include layout="@layout/fragment_enable_peer" />
+
+    </androidx.cardview.widget.CardView>
 
 </RelativeLayout>

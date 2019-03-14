@@ -940,13 +940,14 @@ public class UiUtils {
     }
 
     public static class EventListener extends Tinode.EventListener {
-        private AppCompatActivity mActivity;
+        private Activity mActivity;
         private Boolean mConnected;
 
-        EventListener(AppCompatActivity owner, Boolean connected) {
+        EventListener(Activity owner, Boolean connected) {
             super();
             mActivity = owner;
             mConnected = connected;
+            setConnectedStatus(mActivity, connected);
         }
 
         @Override
