@@ -2,8 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
             android:opacity="opaque">
 
-    <item android:drawable="@color/colorSplashScreenBackground"
-          android:gravity="fill" />
+    <item android:drawable="@color/colorSplashScreenBackground" />
 
     <item>
         <bitmap
