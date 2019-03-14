@@ -287,11 +287,11 @@ public class MessageActivity extends AppCompatActivity {
         int id = item.getItemId();
         switch (id) {
             case R.id.action_view_contact: {
-                showFragment(FRAGMENT_INFO, false, null);
+                showFragment(FRAGMENT_INFO, true, null);
                 return true;
             }
             case R.id.action_topic_edit: {
-                showFragment(FRAGMENT_ADD_TOPIC, false, null);
+                showFragment(FRAGMENT_ADD_TOPIC, true, null);
                 return true;
             }
             default:
