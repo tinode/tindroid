@@ -252,8 +252,11 @@ public class MessagesFragment extends Fragment
                 try {
                     mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), am.getGiven())))
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
-                } catch (Exception ignored) {
+                } catch (NotConnectedException ignored) {
                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception err) {
+                    Log.w(TAG,"Failed to enable peer", err);
+                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -401,6 +404,11 @@ public class MessagesFragment extends Fragment
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return false;
+        }
+
         int id = item.getItemId();
         try {
             switch (id) {
@@ -417,34 +425,30 @@ public class MessagesFragment extends Fragment
                 case R.id.action_unmute:
                 case R.id.action_mute:
                     mTopic.updateMuted(!mTopic.isMuted());
-                    Activity activity = getActivity();
-                    if (activity != null) {
-                        activity.invalidateOptionsMenu();
-                    }
+                    activity.invalidateOptionsMenu();
                     return true;
 
                 case R.id.action_leave:
                 case R.id.action_delete:
-                    showDeleteTopicConfirmationDialog(id == R.id.action_delete);
+                    showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
                     return true;
 
                 default:
                     return super.onOptionsItemSelected(item);
             }
         } catch (NotConnectedException ignored) {
-            Toast.makeText(getActivity(), R.string.no_connection, Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception ex) {
             Log.d(TAG, "Muting failed", ex);
+            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
         }
+
+
         return true;
     }
 
     // Confirmation dialog "Do you really want to do X?"
-    private void showDeleteTopicConfirmationDialog(boolean del) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+    private void showDeleteTopicConfirmationDialog(final Activity activity, boolean del) {
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
         confirmBuilder.setNegativeButton(android.R.string.cancel, null);
         confirmBuilder.setMessage(del ? R.string.confirm_delete_topic :
@@ -466,7 +470,8 @@ public class MessagesFragment extends Fragment
                     }, mFailureListener);
                 } catch (NotConnectedException ignored) {
                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {
+                } catch (Exception err) {
+                    Log.w(TAG,"Failed to delete topic", err);
                     Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 }
             }
@@ -498,40 +503,50 @@ public class MessagesFragment extends Fragment
         View.OnClickListener l = new View.OnClickListener() {
             @Override
             public void onClick(final View view) {
-                PromisedReply<ServerMessage> response;
+                PromisedReply<ServerMessage> response = null;
+                try {
+                    switch (view.getId()) {
+                        case R.id.buttonAccept:
+                            final String mode = mTopic.getAccessMode().getGiven();
+                            response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
+                            if (mTopic.isP2PType()) {
+                                // For P2P topics change 'given' permission of the peer too.
+                                // In p2p topics the other user has the same name as the topic.
+                                response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                        return mTopic.setMeta(
+                                                new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), mode)));
+                                    }
+                                });
+                            }
+                            break;
 
-                switch (view.getId()) {
-                    case R.id.buttonAccept:
-                        final String mode = mTopic.getAccessMode().getGiven();
-                        response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
-                        if (mTopic.isP2PType()) {
-                            // For P2P topics change 'given' permission of the peer too.
-                            // In p2p topics the other user has the same name as the topic.
-                            response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    return mTopic.setMeta(
-                                            new MsgSetMeta<VxCard,PrivateType>(new MetaSetSub(mTopic.getName(), mode)));
-                                }
-                            });
-                        }
-                        break;
+                        case R.id.buttonIgnore:
+                            response = mTopic.delete();
+                            break;
 
-                    case R.id.buttonIgnore:
-                        response = mTopic.delete();
-                        break;
+                        case R.id.buttonBlock:
+                            Acs am = new Acs(mTopic.getAccessMode());
+                            am.update(AccessChange.asWant("-JP"));
+                            response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(am.getWant())));
+                            break;
 
-                    case R.id.buttonBlock:
-                        Acs am = new Acs(mTopic.getAccessMode());
-                        am.update(AccessChange.asWant("-JP"));
-                        response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(am.getWant())));
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
+                        default:
+                            throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
+                    }
+                } catch (NotConnectedException ignored) {
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception err) {
+                    Log.w(TAG,"Failed to handle chat invitation", err);
+                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 }
 
                 invitation.dismiss();
+
+                if (response == null) {
+                    return;
+                }
 
                 response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
