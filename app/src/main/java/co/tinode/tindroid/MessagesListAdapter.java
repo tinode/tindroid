@@ -588,12 +588,13 @@ public class MessagesListAdapter
         if (oldCursor != null) {
             oldCursor.close();
         }
+
         if (refresh) {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     mRefresher.setRefreshing(false);
-                    notifyDataSetChanged();
+                    mRecyclerView.setAdapter(MessagesListAdapter.this);
                     if (cursor != null)
                         mRecyclerView.scrollToPosition(0);
                 }

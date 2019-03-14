@@ -267,6 +267,8 @@ public class MessagesFragment extends Fragment
     public void onResume() {
         super.onResume();
 
+        setHasOptionsMenu(true);
+
         Bundle bundle = getArguments();
         String oldTopicName = mTopicName;
         if (bundle != null) {
@@ -275,8 +277,10 @@ public class MessagesFragment extends Fragment
         }
 
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
-
-        setHasOptionsMenu(true);
+        if (mTopicName != null) {
+            mMessagesAdapter.swapCursor(mTopicName, null,  !mTopicName.equals(oldTopicName));
+            runMessagesLoader();
+        }
 
         // Check periodically if all messages were read;
         mNoteTimer = new Timer();
@@ -288,11 +292,6 @@ public class MessagesFragment extends Fragment
         }, READ_DELAY, READ_DELAY);
 
         mRefresher.setRefreshing(false);
-
-        if (mTopicName != null) {
-            mMessagesAdapter.swapCursor(mTopicName, null,  !mTopicName.equals(oldTopicName));
-            runMessagesLoader();
-        }
 
         updateFormValues();
     }
