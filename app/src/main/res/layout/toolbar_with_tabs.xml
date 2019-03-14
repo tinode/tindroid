@@ -18,7 +18,7 @@
             android:id="@+id/toolbar_progress_bar"
             android:layout_width="24dp"
             android:layout_height="match_parent"
-            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
             android:visibility="gone" />
 
     </androidx.appcompat.widget.Toolbar>

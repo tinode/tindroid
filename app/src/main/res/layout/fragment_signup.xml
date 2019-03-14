@@ -29,6 +29,7 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
+                    android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
@@ -63,29 +64,32 @@
                 </LinearLayout>
 
                 <RelativeLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="128dp"
-                    android:layout_marginRight="8dp">
+                    android:layout_weight="0.1"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginTop="4dp">
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/imageAvatar"
-                        android:layout_width="112sp"
-                        android:layout_height="112sp"
-                        android:layout_marginLeft="8sp"
+                        android:layout_width="@dimen/avatar_size_large"
+                        android:layout_height="@dimen/avatar_size_large"
+                        android:layout_marginStart="8sp"
                         android:clickable="true"
+                        android:focusable="true"
                         android:contentDescription="@string/avatar"
-                        app:srcCompat="@drawable/ic_person"/>
+                        app:srcCompat="@drawable/ic_person_grey"/>
 
                     <Button
                         android:id="@+id/uploadAvatar"
                         android:layout_width="48sp"
                         android:layout_height="48sp"
                         android:layout_alignParentBottom="true"
-                        android:layout_alignParentRight="true"
+                        android:layout_alignParentEnd="true"
                         android:layout_margin="2sp"
                         android:background="@drawable/pill_counter"
-                        android:drawableTop="@drawable/ic_add_a_photo"
-                        android:paddingTop="10dp"/>
+                        android:paddingTop="10dp"
+                        app:drawableTopCompat="@drawable/ic_add_a_photo"/>
                 </RelativeLayout>
 
             </LinearLayout>

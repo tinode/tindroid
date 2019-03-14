@@ -2,6 +2,8 @@ package co.tinode.tindroid;
 
 import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -39,6 +41,11 @@ public class ContactsActivity extends AppCompatActivity implements
 
     private MeListener mMeTopicListener = null;
     private MeTopic mMeTopic = null;
+
+    static {
+        // Otherwise crash on pre-Lollipop (per-API 21)
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -52,9 +52,9 @@
                         android:layout_alignParentEnd="true"
                         android:layout_margin="2sp"
                         android:background="@drawable/pill_counter"
-                        android:drawableTop="@drawable/ic_add_a_photo"
                         android:gravity="center"
-                        android:paddingTop="10dp"/>
+                        android:paddingTop="10dp"
+                        app:drawableTopCompat="@drawable/ic_add_a_photo"/>
 
                     <TextView
                         android:id="@+id/topicTitle"
@@ -185,9 +185,9 @@
                             android:layout_height="wrap_content"
                             android:contentDescription="@string/change_password"
                             android:drawablePadding="4sp"
-                            android:drawableStart="@drawable/ic_lock_outline"
                             android:text="@string/change_password"
-                            android:textColor="@color/colorTextPrimary"/>
+                            android:textColor="@color/colorTextPrimary"
+                            app:drawableStartCompat="@drawable/ic_lock_outline" />
 
                         <Button
                             android:id="@+id/buttonLogout"
@@ -196,9 +196,9 @@
                             android:layout_height="wrap_content"
                             android:contentDescription="@string/logout"
                             android:drawablePadding="4sp"
-                            android:drawableStart="@drawable/ic_exit"
                             android:text="@string/logout"
-                            android:textColor="@color/colorTextPrimary"/>
+                            android:textColor="@color/colorDangerDark"
+                            app:drawableStartCompat="@drawable/ic_exit_red" />
 
                     </LinearLayout>
 

@@ -46,9 +46,9 @@
                     android:layout_alignParentEnd="true"
                     android:layout_margin="2sp"
                     android:background="@drawable/pill_counter"
-                    android:drawableTop="@drawable/ic_add_a_photo"
                     android:gravity="center"
-                    android:paddingTop="10dp"/>
+                    android:paddingTop="10dp"
+                    app:drawableTopCompat="@drawable/ic_add_a_photo"/>
 
                 <TextView
                     android:id="@+id/topicTitle"
@@ -138,9 +138,9 @@
                     android:layout_below="@id/membersTitle"
                     android:contentDescription="@string/add_members"
                     android:drawablePadding="4sp"
-                    android:drawableStart="@drawable/ic_person_add"
                     android:text="@string/add_members"
-                    android:textColor="@color/colorTextPrimary"/>
+                    android:textColor="@color/colorTextPrimary"
+                    app:drawableStartCompat="@drawable/ic_person_add" />
 
                 <Button
                     android:id="@+id/buttonLeaveGroup"
@@ -150,9 +150,9 @@
                     android:layout_below="@id/membersTitle"
                     android:layout_toEndOf="@id/buttonAddMembers"
                     android:drawablePadding="4sp"
-                    android:drawableStart="@drawable/ic_exit_red"
                     android:text="@string/leave_group"
-                    android:textColor="@color/colorDangerDark"/>
+                    android:textColor="@color/colorDangerDark"
+                    app:drawableStartCompat="@drawable/ic_exit_red" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/groupMembers"

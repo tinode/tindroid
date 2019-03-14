@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
@@ -71,6 +72,11 @@ public class LoginActivity extends AppCompatActivity {
 
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
     private Bundle mResultBundle = null;
+
+    static {
+        // Otherwise crash on pre-Lollipop (per-API 21)
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
 
     //private LoginFragment mLoginFragment = null;
     //private SignUpFragment mSignUpFragment = null;

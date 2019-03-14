@@ -27,8 +27,8 @@
         android:layout_alignParentEnd="true"
         android:layout_margin="2sp"
         android:background="@drawable/pill_counter"
-        android:drawableTop="@drawable/ic_add_a_photo"
-        android:paddingTop="10dp"/>
+        android:paddingTop="10dp"
+        app:drawableTopCompat="@drawable/ic_add_a_photo"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
