@@ -33,8 +33,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:supportsRtl="true">
         <meta-data
             android:name="asset_statements"
             android:resource="@string/asset_statements"/>
@@ -75,6 +74,7 @@
                     android:scheme="https"/>
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ContactsActivity"
             android:label="@string/app_name"
@@ -87,12 +87,14 @@
                 android:resource="@xml/searchable_contacts"/
             -->
         </activity>
+
         <activity
             android:name=".MessageActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize">
         </activity>
+
         <activity
             android:name=".CreateGroupActivity"
             android:label="@string/action_new_group"

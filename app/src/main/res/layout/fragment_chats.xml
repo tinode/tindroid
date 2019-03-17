@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ChatsFragment">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chat_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <!-- This is a view shown when no contacts are found. -->
+    <TextView
+        android:id="@android:id/empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/no_chats"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/startNewChat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:elevation="@dimen/fab_elevation"
+        app:borderWidth="0dp"
+        app:srcCompat="@drawable/ic_chat_wite"/>
+
+    <LinearLayout
+        android:id="@+id/p2pChatLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:layout_marginEnd="@dimen/fab_min_margin"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@id/groupChatLayout"
+        app:layout_constraintRight_toRightOf="parent">
+
+        <TextView
+            android:id="@+id/shareLabelTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/fab_label_spacing"
+            android:background="@drawable/bubble"
+            android:padding="6dp"
+            android:text="@string/fab_new_p2p"
+            android:textColor="@android:color/black"
+            android:typeface="normal" />
+
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/newP2PChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:backgroundTint="@color/lightBlue"
+            app:fabSize="mini"
+            app:elevation="@dimen/fab_elevation"
+            app:borderWidth="0dp"
+            app:tint="@color/darkBlue"
+            app:srcCompat="@drawable/ic_person_add"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/groupChatLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/fab_min_margin"
+        android:layout_marginEnd="@dimen/fab_min_margin"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@id/startNewChat"
+        app:layout_constraintRight_toRightOf="parent">
+
+        <TextView
+            android:id="@+id/createLabelTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/fab_label_spacing"
+            android:background="@drawable/bubble"
+            android:padding="6dp"
+            android:text="@string/fab_new_group"
+            android:textColor="@android:color/black"
+            android:typeface="normal" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/newGroupChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:backgroundTint="@color/lightBlue"
+            app:fabSize="mini"
+            app:elevation="@dimen/fab_elevation"
+            app:borderWidth="0dp"
+            app:tint="@color/darkBlue"
+            app:srcCompat="@drawable/ic_group_add" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

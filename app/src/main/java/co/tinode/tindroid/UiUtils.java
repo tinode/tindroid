@@ -375,7 +375,7 @@ public class UiUtils {
                     }
                     View line = activity.findViewById(R.id.offline_indicator);
                     if (line != null) {
-                        line.setVisibility(online ? View.GONE : View.VISIBLE);
+                        line.setVisibility(online ? View.INVISIBLE : View.VISIBLE);
                     }
                 }
             }

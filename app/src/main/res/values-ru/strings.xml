@@ -54,6 +54,7 @@
     <string name="contacts">Контакты</string>
     <string name="invite">Пригласить</string>
     <string name="no_contacts">Контакты не найдены</string>
+    <string name="no_chats">Чатов нет\n\n¯\\_(ツ)_/¯</string>
     <string name="error_new_account_failed">Ошибка регистрации:</string>
     <string name="password_required">Введите пароль</string>
     <string name="login_required">Введите логин</string>
@@ -198,5 +199,6 @@
     <string name="messages_not_readable">Нет доступа к новым сообщениям</string>
     <string name="peers_messaging_disabled">Чат заблокирован у корреспондента</string>
     <string name="action_enable">Разблокировать</string>
-
+    <string name="fab_new_group">Группа</string>
+    <string name="fab_new_p2p">Один на один</string>
 </resources>

@@ -4,12 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeight"
-    android:background="?android:attr/activatedBackgroundIndicator"
-    android:paddingBottom="2dp"
+    android:layout_height="?attr/listPreferredItemHeight"
+    android:background="@drawable/contact_background"
     android:paddingLeft="4dp"
     android:paddingRight="4dp"
-    android:paddingTop="2dp">
+    android:gravity="center_vertical">
 
     <RelativeLayout
         android:layout_width="48sp"
@@ -50,6 +49,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
                 android:maxLines="1"
+                android:ellipsize="end"
+                android:overScrollMode="never"
                 android:paddingEnd="16sp"
                 tools:ignore="RtlSymmetry"
                 tools:text="Contact title"/>
@@ -76,6 +77,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             android:ellipsize="end"
+            android:overScrollMode="never"
             android:maxLines="1"
             android:maxWidth="240sp"
             android:text=""

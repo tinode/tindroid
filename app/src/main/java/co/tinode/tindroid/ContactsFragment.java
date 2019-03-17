@@ -89,7 +89,7 @@ public class ContactsFragment extends Fragment {
 
     void chatDatasetChanged() {
         if (mChatList != null && mChatList.isVisible()) {
-            mChatList.datasetChanged();
+            //mChatList.datasetChanged();
         }
     }
 

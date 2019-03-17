@@ -17,7 +17,7 @@
     <string name="send_file_button_hint">Send file</string>
 
     <string name="sign_in">Sign In</string>
-    <string name="app_description" translatable="false">Tinode Demo Chat</string>
+    <string name="app_description" translatable="false">Tinode Chat</string>
     <string name="action_signup">Sign Up</string>
     <string name="sign_up">Sign Up</string>
     <string name="login_new">Login</string>
@@ -89,9 +89,13 @@
     <string name="password_required">Password required</string>
     <string name="error_new_account_failed">Account registration failed:</string>
     <string name="no_contacts">No contacts found</string>
+    <string name="no_chats">You have no chats\n\n¯\\_(ツ)_/¯</string>
     <string name="invite">Invite</string>
     <string name="contacts">Contacts</string>
     <string name="chats">Chats</string>
+
+    <string name="fab_new_group">Group</string>
+    <string name="fab_new_p2p">One on One</string>
 
     <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
      alphabet using ListView fast scroll. -->
@@ -125,7 +129,6 @@
     <string name="permissions">Permissions</string>
     <string name="close">Close</string>
 
-    <string name="invitation_text">Join my group!</string>
     <string name="no_connection">You are offline</string>
     <string name="action_failed">Action failed</string>
 

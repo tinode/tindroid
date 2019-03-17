@@ -5,6 +5,9 @@
     <dimen name="button_text">16sp</dimen>
     <dimen name="spacer_text">18sp</dimen>
     <dimen name="fab_elevation">4dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="fab_min_margin">24dp</dimen>
+    <dimen name="fab_label_spacing">8dp</dimen>
     <dimen name="activity_padding">6dp</dimen>
     <dimen name="dialog_item_padding">4dp</dimen>
     <dimen name="avatar_size_large">112dp</dimen>

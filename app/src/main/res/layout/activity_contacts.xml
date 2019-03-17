@@ -7,6 +7,8 @@
     android:orientation="vertical"
     tools:context=".ContactsActivity">
 
+    <include layout="@layout/toolbar" />
+
     <FrameLayout
         android:id="@+id/contentFragment"
         android:layout_width="match_parent"

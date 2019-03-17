@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -30,17 +31,16 @@ import co.tinode.tinodesdk.model.Subscription;
  *
  * This activity owns 'me' topic.
  */
-public class ContactsActivity extends AppCompatActivity implements
-        ContactListFragment.OnContactsInteractionListener {
+public class ContactsActivity extends AppCompatActivity {
 
     private static final String TAG = "ContactsActivity";
 
-    static final String FRAGMENT_CONTACTS = "contacts";
+    static final String FRAGMENT_CHATLIST = "contacts";
     static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
     static final String FRAGMENT_ARCHIVE = "archive";
 
     private MeListener mMeTopicListener = null;
-    private MeTopic mMeTopic = null;
+    private MeTopic<VxCard> mMeTopic = null;
 
     static {
         // Otherwise crash on pre-Lollipop (per-API 21)
@@ -53,35 +53,14 @@ public class ContactsActivity extends AppCompatActivity implements
 
         setContentView(R.layout.activity_contacts);
 
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.contentFragment, new ContactsFragment(), FRAGMENT_CONTACTS)
+                .replace(R.id.contentFragment, new ChatsFragment(), FRAGMENT_CHATLIST)
                 .commit();
 
-        mMeTopic = Cache.getTinode().getMeTopic();
+        mMeTopic = (MeTopic<VxCard>) Cache.getTinode().getMeTopic();
         mMeTopicListener = new MeListener();
-    }
-
-    /**
-     * This interface callback lets the main contacts list fragment notify
-     * this activity that a contact has been selected.
-     *
-     * @param contactUri The contact Uri to the selected contact.
-     */
-    @Override
-    public void onContactSelected(Uri contactUri) {
-        // Otherwise single pane layout, start a new ContactDetailActivity with
-        // the contact Uri
-        //Intent intent = new Intent(this, ContactDetailActivity.class);
-        //intent.setData(contactUri);
-        //startActivity(intent);
-    }
-
-    /**
-     * This interface callback lets the main contacts list fragment notify
-     * this activity that a contact is no longer selected.
-     */
-    @Override
-    public void onSelectionCleared() {
     }
 
     /**
@@ -106,11 +85,11 @@ public class ContactsActivity extends AppCompatActivity implements
         final FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(FRAGMENT_ARCHIVE);
         if (fragment != null && fragment.isVisible()) {
-            ((ChatListFragment) fragment).datasetChanged();
+            ((ChatsFragment) fragment).datasetChanged();
         }
-        fragment = fm.findFragmentByTag(FRAGMENT_CONTACTS);
+        fragment = fm.findFragmentByTag(FRAGMENT_CHATLIST);
         if (fragment != null && fragment.isVisible()) {
-            ((ContactsFragment) fragment).chatDatasetChanged();
+            ((ChatsFragment) fragment).datasetChanged();
         }
     }
 
@@ -130,10 +109,6 @@ public class ContactsActivity extends AppCompatActivity implements
         }
     }
 
-    //protected ChatListAdapter getChatListAdapter() {
-    //    return mChatListAdapter;
-    //}
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Enable options menu by returning true
@@ -150,13 +125,13 @@ public class ContactsActivity extends AppCompatActivity implements
                     fragment = new AccountInfoFragment();
                     break;
                 case FRAGMENT_ARCHIVE:
-                    fragment = new ChatListFragment();
+                    fragment = new ChatsFragment();
                     Bundle args = new Bundle();
                     args.putBoolean("archive", Boolean.TRUE);
                     fragment.setArguments(args);
                     break;
-                case FRAGMENT_CONTACTS:
-                    fragment = new ContactsFragment();
+                case FRAGMENT_CHATLIST:
+                    fragment = new ChatsFragment();
                     break;
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag "+tag);
@@ -168,16 +143,6 @@ public class ContactsActivity extends AppCompatActivity implements
         trx.addToBackStack(tag)
                 .show(fragment)
                 .commit();
-    }
-
-    public void selectTab(final int pageIndex) {
-        FragmentManager fm = getSupportFragmentManager();
-        ContactsFragment contacts = (ContactsFragment) fm.findFragmentByTag(FRAGMENT_CONTACTS);
-        if (contacts == null) {
-            return;
-        }
-
-        contacts.selectTab(pageIndex);
     }
 
     private class MeListener extends MeTopic.MeListener<VxCard> {

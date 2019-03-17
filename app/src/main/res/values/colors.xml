@@ -7,16 +7,22 @@
 
     <color name="colorTextPrimary">#212121</color>
     <color name="colorTextSecondary">#616161</color>
+    <color name="colorAccentLight">#B2DFDB</color>
+
 
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
 
-    <color name="colorAccent">#334081</color>
     <color name="colorDanger">#E57373</color>
     <color name="colorDangerDark">#B71C1C</color>
 
     <color name="colorLightGray">#eeeeee</color>
     <color name="colorGray">#cccccc</color>
+    <color name="colorDarkGray">#757575</color>
+
+    <color name="lightBlue">#81D4FA</color>
+    <color name="darkBlue">#0D47A1</color>
+
 
     <color name="colorFacebookPrimary">#3B5998</color>
     <color name="colorFacebookDark">#2f4779</color>

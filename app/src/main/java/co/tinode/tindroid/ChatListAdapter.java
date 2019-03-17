@@ -1,21 +1,30 @@
 package co.tinode.tindroid;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import androidx.core.content.res.ResourcesCompat;
+import androidx.recyclerview.selection.ItemDetailsLookup;
+import androidx.recyclerview.selection.ItemKeyProvider;
+import androidx.recyclerview.selection.SelectionTracker;
+import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
@@ -25,22 +34,35 @@ import co.tinode.tinodesdk.Topic;
 /**
  * Handling contact list.
  */
-public class ChatListAdapter extends BaseAdapter {
-    // private static final String TAG = "ChatListAdapter";
+public class ChatListAdapter
+        extends RecyclerView.Adapter<ChatListAdapter.ContactViewHolder> {
 
-    private Context mContext;
+    @SuppressWarnings("unused")
+    private static final String TAG = "ChatListAdapter";
+
     private List<ComTopic<VxCard>> mTopics;
-    private SparseBooleanArray mSelectedItems;
     private boolean mIsArchive;
 
-    ChatListAdapter(AppCompatActivity context, boolean archive) {
+    private SelectionTracker<String> mSelectionTracker;
+    private ContactClickListener mClickListener;
+
+    private static int sColorOffline;
+    private static int sColorOnline;
+
+    ChatListAdapter(Context context, ContactClickListener clickListener) {
         super();
-        mContext = context;
-        mSelectedItems = new SparseBooleanArray();
-        resetContent(archive);
+
+        mClickListener = clickListener;
+
+        setHasStableIds(true);
+
+        sColorOffline = ResourcesCompat.getColor(context.getResources(),
+                R.color.offline, context.getTheme());
+        sColorOnline = ResourcesCompat.getColor(context.getResources(),
+                R.color.online, context.getTheme());
     }
 
-    void resetContent(boolean archive) {
+    void resetContent(Activity activity, boolean archive, boolean notify) {
         mIsArchive = archive;
         mTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
             @Override
@@ -49,16 +71,31 @@ public class ChatListAdapter extends BaseAdapter {
                         (t.isArchived() == mIsArchive);
             }
         });
+
+        if (notify) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    notifyDataSetChanged();
+                }
+            });
+        }
+    }
+
+    @NonNull
+    @Override
+    public ContactViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        final LayoutInflater inflater = (LayoutInflater) parent.getContext()
+                .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
+        return new ContactViewHolder(
+                inflater.inflate(R.layout.contact, parent, false), mClickListener);
     }
 
     @Override
-    public int getCount() {
-        return mTopics.size();
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return mTopics.get(position);
+    public void onBindViewHolder(@NonNull ContactViewHolder holder, int position) {
+        ComTopic<VxCard> topic = mTopics.get(position);
+        holder.bind(position, topic, mSelectionTracker != null &&
+                mSelectionTracker.isSelected(topic.getName()));
     }
 
     @Override
@@ -67,110 +104,138 @@ public class ChatListAdapter extends BaseAdapter {
     }
 
     @Override
-    public boolean hasStableIds() {
-        return true;
+    public int getItemCount() {
+        return mTopics.size();
     }
 
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View item = convertView;
-        ViewHolder holder;
-        if (item == null) {
-            LayoutInflater inflater = (LayoutInflater) mContext
-                    .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
-            if (inflater == null) {
-                return null;
+    private ComTopic<VxCard> getItemAt(int pos) {
+        return mTopics.get(pos);
+    }
+
+    void setSelectionTracker(SelectionTracker<String> selectionTracker) {
+        mSelectionTracker = selectionTracker;
+    }
+
+    static class ContactDetails extends ItemDetailsLookup.ItemDetails<String> {
+        int pos;
+        String name;
+
+        ContactDetails() {
+        }
+
+        @Override
+        public int getPosition() {
+            return pos;
+        }
+
+        @Nullable
+        @Override
+        public String getSelectionKey() {
+            return name;
+        }
+    }
+
+    static class ContactItemKeyProvider extends ItemKeyProvider<String> {
+        private ChatListAdapter mAdapter;
+        private final Map<String,Integer> mKeyToPosition;
+
+        ContactItemKeyProvider(ChatListAdapter adapter) {
+            super(SCOPE_CACHED);
+
+            mAdapter = adapter;
+
+            mKeyToPosition = new HashMap<>(mAdapter.getItemCount());
+
+            for (int i = 0; i < mAdapter.getItemCount(); i++) {
+                mKeyToPosition.put(mAdapter.getItemAt(i).getName(), i);
             }
-            item = inflater.inflate(R.layout.contact, parent, false);
-            holder = new ViewHolder();
-            holder.name = item.findViewById(R.id.contactName);
-            holder.unreadCount = item.findViewById(R.id.unreadCount);
-            holder.contactPriv = item.findViewById(R.id.contactPriv);
-            holder.icon = item.findViewById(R.id.avatar);
-            holder.online = item.findViewById(R.id.online);
-            holder.colorOffline = ResourcesCompat.getColor(mContext.getResources(),
-                    R.color.offline, mContext.getTheme());
-            holder.colorOnline = ResourcesCompat.getColor(mContext.getResources(),
-                    R.color.online, mContext.getTheme());
-            item.setTag(holder);
-        } else {
-            holder = (ViewHolder) item.getTag();
         }
 
-        bindView(position, holder);
-
-        return item;
-    }
-
-    private void bindView(int position, ViewHolder holder) {
-        final ComTopic<VxCard> topic = mTopics.get(position);
-
-        holder.topic = topic.getName();
-        VxCard pub = topic.getPub();
-        if (pub != null) {
-            holder.name.setText(pub.fn);
-            holder.name.setTypeface(null, Typeface.NORMAL);
-        } else {
-            holder.name.setText(R.string.placeholder_contact_title);
-            holder.name.setTypeface(null, Typeface.ITALIC);
-        }
-        holder.contactPriv.setText(topic.getComment());
-
-        int unread = topic.getUnreadCount();
-        if (unread > 0) {
-            holder.unreadCount.setText(unread > 9 ? "9+" : String.valueOf(unread));
-            holder.unreadCount.setVisibility(View.VISIBLE);
-        } else {
-            holder.unreadCount.setVisibility(View.INVISIBLE);
+        @Nullable
+        @Override
+        public String getKey(int i) {
+            return mAdapter.getItemAt(i).getName();
         }
 
-        UiUtils.assignBitmap(mContext, holder.icon,
-                pub != null ? pub.getBitmap() : null,
-                pub != null ? pub.fn : null,
-                holder.topic);
-
-        holder.online.setColorFilter(topic.getOnline() ? holder.colorOnline : holder.colorOffline);
+        @Override
+        public int getPosition(@NonNull String s) {
+            Integer pos = mKeyToPosition.get(s);
+            return pos == null ? -1 : pos;
+        }
     }
 
-    void toggleSelected(int position) {
-        selectView(position, !mSelectedItems.get(position));
-    }
-
-    void removeSelection() {
-        mSelectedItems = new SparseBooleanArray();
-        notifyDataSetChanged();
-    }
-
-    String getTopicNameFromView(View view) {
-        final ViewHolder holder = (ViewHolder) view.getTag();
-        return holder != null ? holder.topic : null;
-    }
-
-    private void selectView(int position, boolean value) {
-        if (value)
-            mSelectedItems.put(position, true);
-        else
-            mSelectedItems.delete(position);
-        notifyDataSetChanged();
-    }
-
-
-    int getSelectedCount() {
-        return mSelectedItems.size();
-    }
-
-    SparseBooleanArray getSelectedIds() {
-        return mSelectedItems;
-    }
-
-    private class ViewHolder {
-        String topic;
+    static class ContactViewHolder
+            extends RecyclerView.ViewHolder {
         TextView name;
         TextView unreadCount;
         TextView contactPriv;
         AppCompatImageView icon;
         AppCompatImageView online;
-        int colorOnline;
-        int colorOffline;
+
+        ContactDetails details;
+        ContactClickListener clickListener;
+
+        ContactViewHolder(@NonNull View item, ContactClickListener cl) {
+            super(item);
+
+            name = item.findViewById(R.id.contactName);
+            unreadCount = item.findViewById(R.id.unreadCount);
+            contactPriv = item.findViewById(R.id.contactPriv);
+            icon = item.findViewById(R.id.avatar);
+            online = item.findViewById(R.id.online);
+
+            details = new ContactDetails();
+            clickListener = cl;
+        }
+
+        ContactDetails getItemDetails(@SuppressWarnings("unused") MotionEvent motion) {
+            return details;
+        }
+
+        void bind(int position, final ComTopic<VxCard> topic, boolean selected) {
+            final Context context = itemView.getContext();
+            final String topicName = topic.getName();
+
+            details.pos = position;
+            details.name = topic.getName();
+
+            VxCard pub = topic.getPub();
+            if (pub != null) {
+                name.setText(pub.fn);
+                name.setTypeface(null, Typeface.NORMAL);
+            } else {
+                name.setText(R.string.placeholder_contact_title);
+                name.setTypeface(null, Typeface.ITALIC);
+            }
+            contactPriv.setText(topic.getComment());
+
+            int unread = topic.getUnreadCount();
+            if (unread > 0) {
+                unreadCount.setText(unread > 9 ? "9+" : String.valueOf(unread));
+                unreadCount.setVisibility(View.VISIBLE);
+            } else {
+                unreadCount.setVisibility(View.INVISIBLE);
+            }
+
+            UiUtils.assignBitmap(context, icon,
+                    pub != null ? pub.getBitmap() : null,
+                    pub != null ? pub.fn : null,
+                    topicName);
+
+            online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
+
+            itemView.setActivated(selected);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    clickListener.onCLick(topicName);
+                }
+            });
+        }
+    }
+
+    interface ContactClickListener {
+        void onCLick(String topicName);
     }
 }
