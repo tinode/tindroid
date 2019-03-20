@@ -99,7 +99,7 @@
 
     <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
      alphabet using ListView fast scroll. -->
-    <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+    <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
 
     <string name="search_hint">Find contacts</string>
     <string name="contacts_permission_denied">Contacts not loaded: permission denied</string>
@@ -212,8 +212,9 @@
     <string name="invalid_confirmation_code">Invalid code</string>
     <string name="notification_channel_name">New mesage</string>
     <string name="notification_channel_description">New message was received</string>
-    <string name="request_pass_reset">Request password reset by %1$s:</string>
-    <string name="validated_address_to_use">Validated %1$s to use</string>
+    <string name="request_pass_reset_title">Password reset</string>
+    <string name="request_pass_reset">Request code by %1$s:</string>
+    <string name="validated_address_to_use">Validated %1$s to send code to</string>
     <string name="request">Request</string>
     <string name="forgot_password">Forgot password</string>
     <string name="enter_valid_address">Enter valid %1$s</string>
@@ -234,5 +235,10 @@
     <string name="messages_not_readable">No access to new messages</string>
     <string name="peers_messaging_disabled">Peer\'s messaging is disabled</string>
     <string name="action_enable">Enable</string>
+    <string name="find">Find</string>
+    <string name="by_id">By ID</string>
+    <string name="group">Group</string>
+    <string name="id_required">ID is required</string>
+    <string name="settings">Settings</string>
 
 </resources>

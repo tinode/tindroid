@@ -67,8 +67,9 @@
     <string name="invalid_file">Невозможно прикрепить этот файл</string>
     <string name="notification_channel_name">Новое сообщение</string>
     <string name="notification_channel_description">Получено новое сообщение</string>
-    <string name="request_pass_reset">Получить пароль по %1$s:</string>
-    <string name="validated_address_to_use">Использовать подтвержденный %1$s</string>
+    <string name="request_pass_reset_title">Сменить пароль</string>
+    <string name="request_pass_reset">Запросить код на %1$s</string>
+    <string name="validated_address_to_use">Подтвержденный %1$s для получения кода</string>
     <string name="request">Запрос</string>
     <string name="search_hint">Найти контакты</string>
     <string name="account_already_exists">Счет уже существует</string>
@@ -143,11 +144,10 @@
     <string name="join">Присоединиться</string>
     <string name="invalid_login">Неверный логин</string>
     <string name="invalid_or_unknown_credential">Неверный или неизвестный адрес</string>
-    <string name="invitation_text">Присоединяйся!</string>
     <string name="ignore">Игнорировать</string>
     <string name="action_mute">Отключить уведомления</string>
     <string name="action_unmute">Включить уведомления</string>
-    <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ</string>
+    <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ</string>
     <string name="confirm_delete_topic">Вы действительно хотите удалить этот чат для всех?</string>
     <string name="confirm_leave_topic">Вы действительно хотите покинуть этот чат?</string>
     <string name="confirm_delete_multiple_topics">Вы действительно хотите удалить эти чаты?</string>
@@ -201,4 +201,9 @@
     <string name="action_enable">Разблокировать</string>
     <string name="fab_new_group">Группа</string>
     <string name="fab_new_p2p">Один на один</string>
+    <string name="find">Найти</string>
+    <string name="by_id">По коду</string>
+    <string name="group">Группа</string>
+    <string name="id_required">ID обязательно</string>
+    <string name="settings">Настройки</string>
 </resources>

@@ -31,6 +31,8 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
         ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
+            bar.setHomeButtonEnabled(true);
+            bar.setTitle(R.string.settings);
         }
 
         addPreferencesFromResource(R.xml.login_preferences);

@@ -1,10 +1,13 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.ActionBar;
@@ -17,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import java.util.Iterator;
 
@@ -42,20 +44,24 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(false);
 
-        ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity == null) {
+            return null;
+        }
+
+        ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
+            bar.setTitle(R.string.sign_up);
         }
 
         View fragment = inflater.inflate(R.layout.fragment_signup, container, false);
 
         fragment.findViewById(R.id.signUp).setOnClickListener(this);
-        fragment.findViewById(R.id.continueFb).setOnClickListener(this);
-        fragment.findViewById(R.id.continueGoog).setOnClickListener(this);
 
         return fragment;
     }
@@ -64,9 +70,14 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
     public void onActivityCreated(Bundle savedInstance) {
         super.onActivityCreated(savedInstance);
 
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         // Get avatar from the gallery
         // TODO(gene): add support for taking a picture
-        getActivity().findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
+        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.requestAvatar(SignUpFragment.this);
@@ -79,22 +90,8 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
      *
      * @param v button pressed
      */
+    @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.signUp:
-                onSignUp();
-                break;
-            case R.id.continueFb:
-                onFacebookUp();
-                break;
-            case R.id.continueGoog:
-                onGoogleUp();
-                break;
-            default:
-        }
-    }
-
-    public void onSignUp() {
         final LoginActivity parent = (LoginActivity) getActivity();
         if (parent == null) {
             return;
@@ -137,7 +134,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
                                     // Try to create a new account.
                                     Bitmap bmp = null;
                                     try {
@@ -213,19 +210,15 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    public void onFacebookUp() {
-        Toast.makeText(getActivity(), "Facebook: not implemented", Toast.LENGTH_SHORT).show();
-    }
-
-    public void onGoogleUp() {
-        Toast.makeText(getActivity(), "Google: Not implemented", Toast.LENGTH_SHORT).show();
-    }
-
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.acceptAvatar(getActivity(), (ImageView) getActivity().findViewById(R.id.imageAvatar), data);
+            UiUtils.acceptAvatar(activity, (ImageView) activity.findViewById(R.id.imageAvatar), data);
         }
     }
 }

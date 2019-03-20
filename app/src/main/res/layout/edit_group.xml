@@ -38,35 +38,37 @@
         android:layout_alignParentTop="true"
         android:orientation="vertical">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/editTitleWrapper"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp">
+        <requestFocus />
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editTitle"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/editTitleWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/topic_title"
-            android:inputType="text"
-            tools:text="Topic title"/>
+            android:layout_marginTop="6dp">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/topic_title"
+                android:inputType="text"
+                tools:text="Topic title"/>
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/editPrivateWrapper"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editPrivate"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/editPrivateWrapper"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/topic_private"
-            android:inputType="text"
-            tools:text="Private topic info"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editPrivate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/topic_private"
+                android:inputType="text"
+                tools:text="Private topic info"/>
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout

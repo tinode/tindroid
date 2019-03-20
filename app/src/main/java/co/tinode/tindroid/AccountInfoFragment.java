@@ -43,9 +43,6 @@ public class AccountInfoFragment extends Fragment {
 
     private static final String TAG = "AccountInfoFragment";
 
-    public AccountInfoFragment() {
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,12 +58,12 @@ public class AccountInfoFragment extends Fragment {
         }
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_account_info, container, false);
-        Toolbar toolbar = fragment.findViewById(R.id.toolbar);
-        activity.setSupportActionBar(toolbar);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
         }
+
+        Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.account_settings);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override

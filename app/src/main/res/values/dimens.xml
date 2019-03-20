@@ -15,7 +15,7 @@
     <dimen name="label_h_padding">4dp</dimen>
     <dimen name="label_v_padding">2dp</dimen>
     <dimen name="label_margin">1.5dp</dimen>
-    <dimen name="activity_default_margin">3dp</dimen>
+    <dimen name="activity_default_margin">16dp</dimen>
     <dimen name="dialog_padding_left">12dip</dimen>
     <dimen name="dialog_padding_right">7dip</dimen>
     <dimen name="cardview_elevation">2dip</dimen>dimen>

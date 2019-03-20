@@ -5,13 +5,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.ViewCompat;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.ViewModelProviders;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,7 +28,6 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -41,10 +36,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.view.animation.OvershootInterpolator;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -53,17 +44,11 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     private static final String TAG = "ChatListFragment";
 
-    private ChatsViewModel mViewModel;
-    private boolean isFabMenuOpen = false;
     private Boolean mIsArchive;
 
     private ChatListAdapter mAdapter = null;
     private SelectionTracker<String> mSelectionTracker = null;
     private ActionMode mActionMode = null;
-
-    public static ChatsFragment newInstance() {
-        return new ChatsFragment();
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -77,10 +62,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
         setHasOptionsMenu(true);
 
-        View fragment = inflater.inflate(mIsArchive ? R.layout.fragment_archive : R.layout.fragment_chats,
+        return inflater.inflate(mIsArchive ? R.layout.fragment_archive : R.layout.fragment_chats,
                 container, false);
-
-        return fragment;
     }
 
     @Override
@@ -90,38 +73,38 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             return;
         }
 
+        final ActionBar bar = activity.getSupportActionBar();
         if (mIsArchive) {
-            final Toolbar toolbar = view.findViewById(R.id.toolbar);
-            activity.setSupportActionBar(toolbar);
-
-            final ActionBar bar = activity.getSupportActionBar();
             if (bar != null) {
                 bar.setDisplayHomeAsUpEnabled(true);
-            }
-
-            toolbar.setTitle(R.string.archived_chats);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    FragmentManager fm = getFragmentManager();
-                    if (fm != null) {
-                        fm.popBackStack();
+                bar.setTitle(R.string.archived_chats);
+                ((Toolbar) activity.findViewById(R.id.toolbar)).setNavigationOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // activity.getSupportFragmentManager().popBackStack();
+                        ((ContactsActivity)activity).showFragment(ContactsActivity.FRAGMENT_CHATLIST);
                     }
-                }
-            });
-        }
-
-        view.findViewById(R.id.startNewChat).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                handleFabMenu(!isFabMenuOpen);
+                });
             }
-        });
+        } else {
+            if (bar != null) {
+                bar.setDisplayHomeAsUpEnabled(false);
+                bar.setTitle(R.string.app_name);
+            }
+            activity.findViewById(R.id.startNewChat).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(activity, StartChatActivity.class);
+                        // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        startActivity(intent);
+                    }
+                });
+        }
 
         RecyclerView rv = activity.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
-        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.HORIZONTAL));
+        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
         mAdapter = new ChatListAdapter(activity, new ChatListAdapter.ContactClickListener() {
             @Override
             public void onCLick(final String topicName) {
@@ -145,6 +128,9 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 new ContactDetailsLookup(rv),
                 StorageStrategy.createStringStorage())
                 .build();
+
+        mSelectionTracker.onRestoreInstanceState(savedInstanceState);
+
         mAdapter.setSelectionTracker(mSelectionTracker);
         mSelectionTracker.addObserver(new SelectionTracker.SelectionObserver() {
             @Override
@@ -158,13 +144,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 }
             }
         });
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mViewModel = ViewModelProviders.of(this).get(ChatsViewModel.class);
-        // TODO: Use the ViewModel
     }
 
     @Override
@@ -193,6 +172,11 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
     }
 
     @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        mSelectionTracker.onSaveInstanceState(outState);
+    }
+
+    @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         Log.e(TAG, "onCreateOptionsMenu");
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -212,45 +196,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         }
 
         switch (item.getItemId()) {
-            case R.id.action_new_p2p_topic:
-                // activity.selectTab(ContactsFragment.TAB_CONTACTS);
-                return true;
-
-            case R.id.action_new_grp_topic:
-                Intent intent = new Intent(activity, CreateGroupActivity.class);
-                // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                startActivity(intent);
-                return true;
-
-            case R.id.action_add_by_id:
-                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                builder
-                        .setTitle(R.string.action_start_by_id)
-                        .setView(R.layout.dialog_add_by_id)
-                        .setCancelable(true)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                TextView editor = ((AlertDialog) dialog).findViewById(R.id.editId);
-                                if (editor != null) {
-                                    String id = editor.getText().toString();
-                                    if (!TextUtils.isEmpty(id)) {
-                                        Intent it = new Intent(activity, MessageActivity.class);
-                                        it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                        it.putExtra("topic", id);
-                                        startActivity(it);
-                                    } else {
-                                        Toast.makeText(activity, R.string.failed_empty_id,
-                                                Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-
-                            }
-                        })
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show();
-                return true;
-
             case R.id.action_show_archive:
                 activity.showFragment(ContactsActivity.FRAGMENT_ARCHIVE);
                 return true;
@@ -297,20 +242,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         menu.setGroupVisible(R.id.single_selection, mSelectionTracker.getSelection().size() <= 1);
         return true;
     }
-
-    /*
-    @Override
-    public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-        boolean isMultipleBefore = mAdapter.getSelectedCount() > 1;
-        mAdapter.toggleSelected(position);
-        int count = mAdapter.getSelectedCount();
-        boolean isMultipleAfter = count > 1;
-        mode.setTitle("" + count);
-        if (isMultipleAfter != isMultipleBefore) {
-            mode.invalidate();
-        }
-    }
-    */
 
     /**
      * This menu is shown when one or more items are selected from the list
@@ -435,43 +366,10 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         mAdapter.resetContent(getActivity(), mIsArchive, true);
     }
 
-    private void handleFabMenu(boolean open) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        if (open) {
-            Animation animOpen = AnimationUtils.loadAnimation(activity, R.anim.fab_open);
-            ViewCompat.animate(activity.findViewById(R.id.startNewChat))
-                    .rotation(45.0F)
-                    .withLayer()
-                    .setDuration(200)
-                    .setInterpolator(new OvershootInterpolator(10.0F))
-                    .start();
-            activity.findViewById(R.id.groupChatLayout).startAnimation(animOpen);
-            activity.findViewById(R.id.p2pChatLayout).startAnimation(animOpen);
-            isFabMenuOpen = true;
-        } else {
-            Animation animClose = AnimationUtils.loadAnimation(activity, R.anim.fab_close);
-            ViewCompat.animate(activity.findViewById(R.id.startNewChat))
-                    .rotation(0.0F)
-                    .withLayer()
-                    .setDuration(200)
-                    .setInterpolator(new OvershootInterpolator(10.0F))
-                    .start();
-            activity.findViewById(R.id.groupChatLayout).startAnimation(animClose);
-            activity.findViewById(R.id.p2pChatLayout).startAnimation(animClose);
-            isFabMenuOpen = false;
-        }
-    }
-
     // TODO: Add onBackPressed handing to parent Activity.
     public boolean onBackPressed() {
         if (mSelectionTracker.hasSelection()) {
             mSelectionTracker.clearSelection();
-        } else if (isFabMenuOpen) {
-            handleFabMenu(false);
         } else {
             return true;
         }
@@ -491,8 +389,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             View view = mRecyclerView.findChildViewUnder(motionEvent.getX(), motionEvent.getY());
             if (view != null) {
                 RecyclerView.ViewHolder viewHolder = mRecyclerView.getChildViewHolder(view);
-                if (viewHolder instanceof ChatListAdapter.ContactViewHolder) {
-                    return ((ChatListAdapter.ContactViewHolder) viewHolder).getItemDetails(motionEvent);
+                if (viewHolder instanceof ChatListAdapter.ChatViewHolder) {
+                    return ((ChatListAdapter.ChatViewHolder) viewHolder).getItemDetails(motionEvent);
                 }
             }
             return null;

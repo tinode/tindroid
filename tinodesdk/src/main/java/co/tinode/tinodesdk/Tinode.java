@@ -1793,7 +1793,7 @@ public class Tinode {
                 public void run() {
                     Set<String> keyset = recvQueue.keySet();
                     for (String topic : keyset) {
-                        int recv = recvQueue.remove(topic);
+                        @SuppressWarnings("ConstantConditions") int recv = recvQueue.remove(topic);
                         Tinode.this.noteRecv(topic, recv);
                     }
                 }

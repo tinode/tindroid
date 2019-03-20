@@ -1,381 +1,359 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:descendantFocusability="afterDescendants"
-    tools:context="co.tinode.tindroid.TopicInfoFragment">
+    android:layout_margin="@dimen/activity_default_margin"
+    tools:context=".TopicInfoFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <androidx.cardview.widget.CardView
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_default_margin"
-            android:layout_marginTop="@dimen/activity_default_margin"
-            android:padding="4dp"
-            card_view:cardElevation="@dimen/cardview_elevation"
-            card_view:cardPreventCornerOverlap="true"
-            card_view:contentPaddingLeft="@dimen/activity_horizontal_margin">
+            android:layout_height="wrap_content">
 
-            <RelativeLayout
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageAvatar"
+                android:layout_width="@dimen/avatar_size_large"
+                android:layout_height="@dimen/avatar_size_large"
+                android:layout_alignParentEnd="true"
+                android:layout_margin="4sp"
+                android:clickable="true"
+                android:contentDescription="@string/avatar"
+                android:focusable="true"
+                app:srcCompat="@drawable/ic_group_grey"/>
+
+            <Button
+                android:id="@+id/uploadAvatar"
+                android:layout_width="48sp"
+                android:layout_height="48sp"
+                android:layout_alignBottom="@id/imageAvatar"
+                android:layout_alignParentEnd="true"
+                android:layout_margin="2sp"
+                android:background="@drawable/pill_counter"
+                android:gravity="center"
+                android:paddingTop="10dp"
+                app:drawableTopCompat="@drawable/ic_add_a_photo"/>
+
+            <TextView
+                android:id="@+id/topicTitle"
+                style="@style/textPrimaryLarge"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_toStartOf="@id/imageAvatar"
+                android:clickable="true"
+                android:focusable="true"
+                android:maxLines="2"
+                android:textIsSelectable="false"
+                tools:text="Topic title (public)"/>
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/imageAvatar"
-                    android:layout_width="@dimen/avatar_size_large"
-                    android:layout_height="@dimen/avatar_size_large"
-                    android:layout_alignParentEnd="true"
-                    android:layout_margin="4sp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:contentDescription="@string/avatar"
-                    app:srcCompat="@drawable/ic_group_grey"/>
+            <TextView
+                android:id="@+id/topicSubtitle"
+                style="@style/textSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/topicTitle"
+                android:clickable="true"
+                android:ellipsize="end"
+                android:focusable="true"
+                android:maxLines="1"
+                android:textIsSelectable="false"
+                tools:text="Topic subtitle (private)"/>
 
-                <Button
-                    android:id="@+id/uploadAvatar"
-                    android:layout_width="48sp"
-                    android:layout_height="48sp"
-                    android:layout_alignBottom="@id/imageAvatar"
-                    android:layout_alignParentEnd="true"
-                    android:layout_margin="2sp"
-                    android:background="@drawable/pill_counter"
-                    android:gravity="center"
-                    android:paddingTop="10dp"
-                    app:drawableTopCompat="@drawable/ic_add_a_photo"/>
-
-                <TextView
-                    android:id="@+id/topicTitle"
-                    style="@style/textPrimaryLarge"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_toStartOf="@id/imageAvatar"
-                    android:maxLines="2"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:textIsSelectable="false"
-                    tools:text="Topic title (public)"/>
-
-                <TextView
-                    android:id="@+id/topicSubtitle"
-                    style="@style/textSecondary"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/topicTitle"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:textIsSelectable="false"
-                    tools:text="Topic subtitle (private)"/>
-
-            </RelativeLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_default_margin"
-            android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_elevation"
-            card_view:cardPreventCornerOverlap="true"
-            card_view:contentPadding="@dimen/activity_horizontal_margin">
+            android:layout_height="0.5dp"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_below="@id/imageAvatar"
+            android:background="@color/grey" />
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                style="@style/textPrimary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:text="@string/topic_muted"/>
+
+            <Switch
+                android:id="@+id/switchMuted"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"/>
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:background="@color/grey" />
+
+        <RelativeLayout
+            android:id="@+id/groupMembersWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/membersTitle"
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/group_members"
+                />
+
+            <Button
+                android:id="@+id/buttonAddMembers"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/membersTitle"
+                android:contentDescription="@string/add_members"
+                android:drawablePadding="4sp"
+                android:text="@string/add_members"
+                android:textColor="@color/colorTextPrimary"
+                app:drawableStartCompat="@drawable/ic_person_add"/>
+
+            <Button
+                android:id="@+id/buttonLeaveGroup"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/membersTitle"
+                android:layout_toEndOf="@id/buttonAddMembers"
+                android:drawablePadding="4sp"
+                android:text="@string/leave_group"
+                android:textColor="@color/colorDangerDark"
+                app:drawableStartCompat="@drawable/ic_exit_red"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/groupMembers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/buttonAddMembers"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_below="@id/groupMembers"
+                android:background="@color/grey" />
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content">
 
                 <TextView
                     style="@style/textPrimary"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
                     android:layout_weight="1"
-                    android:text="@string/topic_muted"/>
+                    android:text="@string/address"/>
 
-                <Switch
-                    android:id="@+id/switchMuted"
+                <TextView
+                    android:id="@+id/topicAddress"
+                    style="@style/textPrimarySmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="4dp"/>
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="true"
+                    android:typeface="monospace"
+                    tools:text="p2p__fv2qrUr6vAdVURkv6q3w"/>
+
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/groupMembersCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_default_margin"
-            android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_elevation"
-            card_view:cardPreventCornerOverlap="true"
-            card_view:contentPadding="@dimen/activity_horizontal_margin">
-
-            <RelativeLayout
+            <LinearLayout
+                android:id="@+id/singleUserPermissions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <TextView
-                    android:id="@+id/membersTitle"
-                    style="@style/sectionTitleStyle"
-                    android:layout_width="wrap_content"
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/group_members"
-                    />
-
-                <Button
-                    android:id="@+id/buttonAddMembers"
-                    style="?attr/buttonBarButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/membersTitle"
-                    android:contentDescription="@string/add_members"
-                    android:drawablePadding="4sp"
-                    android:text="@string/add_members"
-                    android:textColor="@color/colorTextPrimary"
-                    app:drawableStartCompat="@drawable/ic_person_add" />
-
-                <Button
-                    android:id="@+id/buttonLeaveGroup"
-                    style="?attr/buttonBarButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/membersTitle"
-                    android:layout_toEndOf="@id/buttonAddMembers"
-                    android:drawablePadding="4sp"
-                    android:text="@string/leave_group"
-                    android:textColor="@color/colorDangerDark"
-                    app:drawableStartCompat="@drawable/ic_exit_red" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/groupMembers"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/buttonAddMembers"/>
-
-            </RelativeLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_default_margin"
-            android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_elevation"
-            card_view:cardPreventCornerOverlap="true"
-            card_view:contentPadding="@dimen/activity_horizontal_margin">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        style="@style/textPrimary"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/address"/>
-
-                    <TextView
-                        android:id="@+id/topicAddress"
-                        style="@style/textPrimarySmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="monospace"
-                        android:textIsSelectable="true"
-                        android:typeface="monospace"
-                        tools:text="p2p__fv2qrUr6vAdVURkv6q3w"/>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/singleUserPermissions"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        style="@style/textPrimary"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/permissions"/>
-
-                    <TextView
-                        android:id="@+id/permissions"
-                        style="@style/textPrimarySmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="monospace"
-                        android:textIsSelectable="false"
-                        android:typeface="monospace"
-                        android:background="@drawable/dotted_line"
-                        android:focusable="true"
-                        android:focusableInTouchMode="false"
-                        android:clickable="true"
-                        tools:text="RWPD"/>
-                </LinearLayout>
-
-                <RelativeLayout
-                    android:id="@+id/p2pPermissions"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:id="@+id/permissionTitle"
-                        style="@style/textPrimary"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/permissions"
-                        tools:text="Permissions" />
-
-                    <TextView
-                        style="@style/textPrimary"
-                        android:layout_below="@id/permissionTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="@string/yourPermissions"/>
-
-                    <TextView
-                        android:id="@+id/userOne"
-                        style="@style/textPrimarySmall"
-                        android:layout_below="@id/permissionTitle"
-                        android:layout_alignParentEnd="true"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="monospace"
-                        android:textIsSelectable="false"
-                        android:typeface="monospace"
-                        android:background="@drawable/dotted_line"
-                        android:focusable="true"
-                        android:focusableInTouchMode="false"
-                        android:clickable="true"
-                        tools:text="RWPD"/>
-
-                    <TextView
-                        android:id="@+id/userTwoLabel"
-                        style="@style/textPrimary"
-                        android:layout_below="@id/userOne"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text=""
-                        tools:text="John Doe"/>
-
-                    <TextView
-                        android:id="@+id/userTwo"
-                        style="@style/textPrimarySmall"
-                        android:layout_below="@id/userOne"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:fontFamily="monospace"
-                        android:textIsSelectable="false"
-                        android:typeface="monospace"
-                        android:background="@drawable/dotted_line"
-                        android:focusable="true"
-                        android:focusableInTouchMode="false"
-                        android:clickable="true"
-                        tools:text="RWPD"/>
-
-                </RelativeLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/defaultPermissionsCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_default_margin"
-            android:layout_marginTop="@dimen/activity_default_margin"
-            card_view:cardElevation="@dimen/cardview_elevation"
-            card_view:cardPreventCornerOverlap="true"
-            card_view:contentPadding="@dimen/activity_horizontal_margin">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                    android:layout_weight="1"
+                    android:text="@string/permissions"/>
 
                 <TextView
-                    style="@style/sectionTitleStyle"
+                    android:id="@+id/permissions"
+                    style="@style/textPrimarySmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/default_permissions"
-                    />
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+            </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+            <RelativeLayout
+                android:id="@+id/p2pPermissions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-                    <TextView
-                        style="@style/textPrimary"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="16dp"
-                        android:text="@string/auth_permissions"/>
+                <TextView
+                    android:id="@+id/permissionTitle"
+                    style="@style/textPrimary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/permissions"
+                    tools:text="Permissions"/>
 
-                    <TextView
-                        android:id="@+id/authPermissions"
-                        style="@style/textPrimarySmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="monospace"
-                        android:textIsSelectable="false"
-                        android:typeface="monospace"
-                        android:background="@drawable/dotted_line"
-                        android:focusable="true"
-                        android:focusableInTouchMode="false"
-                        android:clickable="true"
-                        tools:text="RWPD"/>
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/permissionTitle"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/yourPermissions"/>
 
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/userOne"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/permissionTitle"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/userTwoLabel"
+                    style="@style/textPrimary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/userOne"
+                    android:layout_marginStart="16dp"
+                    android:text=""
+                    tools:text="John Doe"/>
 
-                    <TextView
-                        style="@style/textPrimary"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="16dp"
-                        android:text="@string/anon_permissions"/>
+                <TextView
+                    android:id="@+id/userTwo"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/userOne"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+            </RelativeLayout>
 
-                    <TextView
-                        android:id="@+id/anonPermissions"
-                        style="@style/textPrimarySmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="monospace"
-                        android:textIsSelectable="false"
-                        android:typeface="monospace"
-                        android:background="@drawable/dotted_line"
-                        android:focusable="true"
-                        android:focusableInTouchMode="false"
-                        android:clickable="true"
-                        tools:text="RWPD"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:background="@color/grey" />
 
-                </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/defaultPermissionsWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/default_permissions"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/auth_permissions"/>
+
+                <TextView
+                    android:id="@+id/authPermissions"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
 
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/anon_permissions"/>
+
+                <TextView
+                    android:id="@+id/anonPermissions"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

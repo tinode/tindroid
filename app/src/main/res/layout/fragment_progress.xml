@@ -22,8 +22,7 @@
             android:layout_marginTop="2dp"
             android:paddingLeft="2dp"
             android:paddingRight="2dp"
-            tools:progress="33"
-            />
+            tools:progress="33" />
 
         <ImageButton
             android:id="@+id/attachmentProgressCancel"

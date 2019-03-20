@@ -44,7 +44,7 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(false);
-        LoginActivity parent = (LoginActivity) getActivity();
+        final LoginActivity parent = (LoginActivity) getActivity();
         if (parent == null) {
             return null;
         }
@@ -52,6 +52,7 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
         ActionBar bar = parent.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
+            bar.setTitle(R.string.request_pass_reset_title);
         }
 
         View fragment = inflater.inflate(R.layout.fragment_pass_reset, container, false);
@@ -59,7 +60,7 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
         fragment.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((LoginActivity)getActivity()).showFragment(LoginActivity.FRAGMENT_LOGIN);
+                parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
             }
         });
 

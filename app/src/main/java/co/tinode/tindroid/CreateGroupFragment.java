@@ -50,32 +50,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
     // private TreeSet<Integer> mSelectedContacts;
-
-    public CreateGroupFragment() {
-        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                final Activity activity = getActivity();
-                if (activity == null) {
-                    return null;
-                }
-
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                        }
-                        startActivity(new Intent(activity, ContactsActivity.class));
-                    }
-                });
-                return null;
-            }
-        };
-    }
-
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -114,6 +89,24 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
         if (activity == null) {
             return;
         }
+
+        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (err instanceof NotConnectedException) {
+                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
+                        startActivity(new Intent(activity, ContactsActivity.class));
+                    }
+                });
+                return null;
+            }
+        };
 
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override

@@ -33,6 +33,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:theme="@style/AppTheme"
         android:supportsRtl="true">
         <meta-data
             android:name="asset_statements"
@@ -96,9 +97,10 @@
         </activity>
 
         <activity
-            android:name=".CreateGroupActivity"
-            android:label="@string/action_new_group"
-            android:theme="@style/AppTheme">
+            android:name=".StartChatActivity"
+            android:label="@string/action_new_chat"
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="adjustResize">
         </activity>
 
         <service

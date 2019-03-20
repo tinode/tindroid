@@ -7,10 +7,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:orientation="horizontal"
-    android:paddingBottom="2dp"
-    android:paddingTop="2dp"
     android:paddingLeft="4dp"
-    android:paddingRight="4dp">
+    android:paddingRight="4dp"
+    android:gravity="center_vertical">
 
     <ImageView
         android:id="@android:id/icon"
@@ -32,13 +31,12 @@
 
     <TextView
             android:id="@android:id/text1"
-            android:layout_toRightOf="@android:id/icon"
-            android:layout_toLeftOf="@id/buttonInvite"
+            android:layout_toEndOf="@android:id/icon"
+            android:layout_toStartOf="@id/buttonInvite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="left"
+            android:layout_gravity="start"
             android:paddingEnd="16sp"
-            android:paddingRight="16sp"
             android:layout_alignParentTop="true"
             android:maxLines="1"
             tools:text="Contact title"
@@ -46,8 +44,8 @@
 
     <TextView
             android:id="@android:id/text2"
-            android:layout_toRightOf="@android:id/icon"
-            android:layout_toLeftOf="@id/buttonInvite"
+            android:layout_toEndOf="@android:id/icon"
+            android:layout_toStartOf="@id/buttonInvite"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top"

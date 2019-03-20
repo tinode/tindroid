@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -22,13 +21,6 @@ import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Activity holds the following fragments:
- *   ContactsFragment
- *     ChatListFragment archive=false
- *     ContactListFragment
- *   ChatListFragment archive=true
- *   AccountInfoFragment
- *
  * This activity owns 'me' topic.
  */
 public class ContactsActivity extends AppCompatActivity {
@@ -118,7 +110,7 @@ public class ContactsActivity extends AppCompatActivity {
     void showFragment(String tag) {
         final FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
-
+        FragmentTransaction trx = fm.beginTransaction();
         if (fragment == null) {
             switch (tag) {
                 case FRAGMENT_EDIT_ACCOUNT:
@@ -138,11 +130,7 @@ public class ContactsActivity extends AppCompatActivity {
             }
         }
 
-        FragmentTransaction trx = fm.beginTransaction();
-        trx.add(R.id.contentFragment, fragment, tag);
-        trx.addToBackStack(tag)
-                .show(fragment)
-                .commit();
+        trx.addToBackStack(tag).replace(R.id.contentFragment, fragment, tag).commit();
     }
 
     private class MeListener extends MeTopic.MeListener<VxCard> {

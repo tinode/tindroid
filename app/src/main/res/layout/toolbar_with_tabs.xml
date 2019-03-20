@@ -9,36 +9,42 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:contentInsetStartWithNavigation="4dp"
         app:contentInsetStartWithNavigation="4dp"
-        app:popupTheme="@style/AppTheme.PopupOverlay">
-
-        <ProgressBar
-            android:id="@+id/toolbar_progress_bar"
-            android:layout_width="24dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="16dp"
-            android:visibility="gone" />
+        app:popupTheme="@style/AppTheme.PopupOverlay"
+        app:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:layout_scrollFlags="scroll|enterAlways">
 
     </androidx.appcompat.widget.Toolbar>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabsContacts"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.tabs.TabItem
-            android:id="@+id/tab_chat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/chats"/>
+        android:layout_height="wrap_content"
+        app:tabMode="scrollable">
 
         <com.google.android.material.tabs.TabItem
             android:id="@+id/tab_contacts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/contacts"/>
+
+        <com.google.android.material.tabs.TabItem
+            android:id="@+id/tab_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/group"/>
+
+        <com.google.android.material.tabs.TabItem
+            android:id="@+id/tab_search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/find"/>
+
+        <com.google.android.material.tabs.TabItem
+            android:id="@+id/tab_by_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/by_id"/>
 
     </com.google.android.material.tabs.TabLayout>
 
@@ -48,11 +54,5 @@
         android:background="@color/colorOffline"
         android:visibility="gone"
         android:id="@+id/offline_indicator" />
-
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/tabPager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/tabsContacts"/>
 
 </com.google.android.material.appbar.AppBarLayout>

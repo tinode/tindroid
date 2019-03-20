@@ -27,8 +27,8 @@
             android:layout_height="16sp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
-            app:srcCompat="@drawable/ic_circle"
-            android:contentDescription="avatar"/>
+            android:contentDescription="@string/avatar"
+            app:srcCompat="@drawable/ic_circle"/>
 
     </RelativeLayout>
 

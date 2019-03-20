@@ -8,12 +8,12 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="co.tinode.tindroid.LoginFragment">
+    tools:context=".LoginFragment">
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:src="@mipmap/ic_launcher"
+        android:src="@drawable/logo_src"
         android:layout_alignParentStart="true"
         android:id="@+id/imageLogo"
         android:layout_alignParentTop="true"
@@ -60,18 +60,20 @@
             android:hint="@string/password_hint"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/signIn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/sign_in"
         android:layout_below="@+id/editPasswordWrapper"
         android:textSize="@dimen/button_text"
+        app:backgroundTint="@color/colorAccent"
+        android:textColor="@color/white"
         android:layout_centerHorizontal="true"/>
 
     <Button
         android:id="@+id/forgotPassword"
-        style="?android:buttonBarButtonStyle"
+        style="?attr/buttonBarButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/forgot_password"

@@ -1,8 +1,8 @@
 package co.tinode.tindroid;
 
-
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Typeface;
 
 import androidx.annotation.NonNull;
@@ -32,10 +32,10 @@ import co.tinode.tinodesdk.Tinode.TopicFilter;
 import co.tinode.tinodesdk.Topic;
 
 /**
- * Handling contact list.
+ * Handling active chats, i.e. 'me' topic.
  */
 public class ChatListAdapter
-        extends RecyclerView.Adapter<ChatListAdapter.ContactViewHolder> {
+        extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
 
     @SuppressWarnings("unused")
     private static final String TAG = "ChatListAdapter";
@@ -84,15 +84,15 @@ public class ChatListAdapter
 
     @NonNull
     @Override
-    public ContactViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         final LayoutInflater inflater = (LayoutInflater) parent.getContext()
                 .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
-        return new ContactViewHolder(
+        return new ChatViewHolder(
                 inflater.inflate(R.layout.contact, parent, false), mClickListener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ContactViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         ComTopic<VxCard> topic = mTopics.get(position);
         holder.bind(position, topic, mSelectionTracker != null &&
                 mSelectionTracker.isSelected(topic.getName()));
@@ -164,7 +164,7 @@ public class ChatListAdapter
         }
     }
 
-    static class ContactViewHolder
+    static class ChatViewHolder
             extends RecyclerView.ViewHolder {
         TextView name;
         TextView unreadCount;
@@ -175,7 +175,7 @@ public class ChatListAdapter
         ContactDetails details;
         ContactClickListener clickListener;
 
-        ContactViewHolder(@NonNull View item, ContactClickListener cl) {
+        ChatViewHolder(@NonNull View item, ContactClickListener cl) {
             super(item);
 
             name = item.findViewById(R.id.contactName);
@@ -224,14 +224,25 @@ public class ChatListAdapter
 
             online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
 
-            itemView.setActivated(selected);
+            if (selected) {
+                itemView.setBackgroundResource(R.drawable.contact_background);
+                itemView.setOnClickListener(null);
+            } else {
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    clickListener.onCLick(topicName);
-                }
-            });
+                TypedArray typedArray = context.obtainStyledAttributes(
+                        new int[]{android.R.attr.selectableItemBackground});
+                itemView.setBackgroundResource(typedArray.getResourceId(0, 0));
+                typedArray.recycle();
+
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        clickListener.onCLick(topicName);
+                    }
+                });
+            }
+
+            itemView.setActivated(selected);
         }
     }
 

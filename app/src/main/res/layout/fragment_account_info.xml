@@ -1,292 +1,263 @@
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/activity_default_margin"
+    android:background="?android:attr/colorBackground"
+    tools:context=".AccountInfoFragment">
 
-    <include layout="@layout/toolbar"/>
-
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?android:attr/colorBackground"
-        tools:context=".AccountInfoFragment">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageAvatar"
+                android:layout_width="@dimen/avatar_size_large"
+                android:layout_height="@dimen/avatar_size_large"
+                android:layout_alignParentEnd="true"
+                android:layout_margin="4sp"
+                android:clickable="true"
+                android:contentDescription="@string/avatar"
+                android:focusable="true"
+                app:srcCompat="@drawable/ic_person_grey"/>
+
+            <Button
+                android:id="@+id/uploadAvatar"
+                android:layout_width="48sp"
+                android:layout_height="48sp"
+                android:layout_alignBottom="@id/imageAvatar"
+                android:layout_alignParentEnd="true"
+                android:layout_margin="2sp"
+                android:background="@drawable/pill_counter"
+                android:gravity="center"
+                android:paddingTop="10dp"
+                app:drawableTopCompat="@drawable/ic_add_a_photo"/>
+
+            <TextView
+                android:id="@+id/topicTitle"
+                style="@style/textPrimaryLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_toStartOf="@id/imageAvatar"
+                android:maxLines="2"
+                android:textIsSelectable="true"
+                tools:text="User name"/>
+
+            <TextView
+                android:id="@+id/topicSubtitle"
+                style="@style/textSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/topicTitle"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textIsSelectable="true"
+                tools:text="Not sure what this should be"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_below="@id/imageAvatar"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@color/grey"/>
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:text="@string/read_receipts_enabled"/>
+
+                <Switch
+                    android:id="@+id/switchReadReceipts"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"/>
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:text="@string/typing_notifications_enabled"/>
+
+                <Switch
+                    android:id="@+id/switchTypingNotifications"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@color/grey"/>
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/activity_default_margin"
-                android:layout_marginTop="@dimen/activity_default_margin"
-                card_view:cardElevation="@dimen/cardview_elevation"
-                card_view:cardPreventCornerOverlap="true"
-                card_view:contentPaddingLeft="@dimen/activity_horizontal_margin">
+                android:layout_height="wrap_content">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/imageAvatar"
-                        android:layout_width="@dimen/avatar_size_large"
-                        android:layout_height="@dimen/avatar_size_large"
-                        android:layout_margin="4sp"
-                        android:layout_alignParentEnd="true"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="@string/avatar"
-                        app:srcCompat="@drawable/ic_person_grey"/>
-
-                    <Button
-                        android:id="@+id/uploadAvatar"
-                        android:layout_width="48sp"
-                        android:layout_height="48sp"
-                        android:layout_alignBottom="@id/imageAvatar"
-                        android:layout_alignParentEnd="true"
-                        android:layout_margin="2sp"
-                        android:background="@drawable/pill_counter"
-                        android:gravity="center"
-                        android:paddingTop="10dp"
-                        app:drawableTopCompat="@drawable/ic_add_a_photo"/>
-
-                    <TextView
-                        android:id="@+id/topicTitle"
-                        style="@style/textPrimaryLarge"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentTop="true"
-                        android:layout_toStartOf="@id/imageAvatar"
-                        android:maxLines="2"
-                        android:textIsSelectable="true"
-                        tools:text="User name"/>
-
-                    <TextView
-                        android:id="@+id/topicSubtitle"
-                        style="@style/textSecondary"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/topicTitle"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textIsSelectable="true"
-                        tools:text="Not sure what this should be"/>
-
-                </RelativeLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/activity_default_margin"
-                android:layout_marginTop="@dimen/activity_default_margin"
-                card_view:cardElevation="@dimen/cardview_elevation"
-                card_view:cardPreventCornerOverlap="true"
-                card_view:contentPadding="@dimen/activity_horizontal_margin">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            style="@style/textPrimary"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_weight="1"
-                            android:text="@string/read_receipts_enabled"/>
-
-                        <Switch
-                            android:id="@+id/switchReadReceipts"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="4dp"/>
-                    </LinearLayout>
-
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            style="@style/textPrimary"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_weight="1"
-                            android:text="@string/typing_notifications_enabled"/>
-
-                        <Switch
-                            android:id="@+id/switchTypingNotifications"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="4dp"/>
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/activity_default_margin"
-                android:layout_marginTop="@dimen/activity_default_margin"
-                card_view:cardElevation="@dimen/cardview_elevation"
-                card_view:cardPreventCornerOverlap="true"
-                card_view:contentPadding="@dimen/activity_horizontal_margin">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    >
+                    android:layout_weight="1"
+                    android:text="@string/address"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/topicAddress"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="true"
+                    android:typeface="monospace"
+                    tools:text="usrfv2qrUr6vAd"/>
 
-                        <TextView
-                            style="@style/textPrimary"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/address"/>
+            </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/topicAddress"
-                            style="@style/textPrimarySmall"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="monospace"
-                            android:textIsSelectable="true"
-                            android:typeface="monospace"
-                            tools:text="usrfv2qrUr6vAd"/>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <Button
-                            android:id="@+id/buttonChangePassword"
-                            style="?attr/buttonBarButtonStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:contentDescription="@string/change_password"
-                            android:drawablePadding="4sp"
-                            android:text="@string/change_password"
-                            android:textColor="@color/colorTextPrimary"
-                            app:drawableStartCompat="@drawable/ic_lock_outline" />
-
-                        <Button
-                            android:id="@+id/buttonLogout"
-                            style="?attr/buttonBarButtonStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:contentDescription="@string/logout"
-                            android:drawablePadding="4sp"
-                            android:text="@string/logout"
-                            android:textColor="@color/colorDangerDark"
-                            app:drawableStartCompat="@drawable/ic_exit_red" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/activity_default_margin"
-                android:layout_marginTop="@dimen/activity_default_margin"
-                card_view:cardElevation="@dimen/cardview_elevation"
-                card_view:cardPreventCornerOverlap="true"
-                card_view:contentPadding="@dimen/activity_horizontal_margin">
+                android:layout_height="wrap_content">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
+                <Button
+                    android:id="@+id/buttonChangePassword"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/change_password"
+                    android:drawablePadding="4sp"
+                    android:text="@string/change_password"
+                    android:textColor="@color/colorTextPrimary"
+                    app:drawableStartCompat="@drawable/ic_lock_outline"/>
 
-                    <TextView
-                        style="@style/sectionTitleStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/default_permissions"
-                        />
+                <Button
+                    android:id="@+id/buttonLogout"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/logout"
+                    android:drawablePadding="4sp"
+                    android:text="@string/logout"
+                    android:textColor="@color/colorDangerDark"
+                    app:drawableStartCompat="@drawable/ic_exit_red"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
+            </LinearLayout>
 
-                        <TextView
-                            style="@style/textPrimary"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/auth_permissions"/>
-
-                        <TextView
-                            android:id="@+id/authPermissions"
-                            style="@style/textPrimarySmall"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="monospace"
-                            android:textIsSelectable="false"
-                            android:typeface="monospace"
-                            android:background="@drawable/dotted_line"
-                            android:focusable="true"
-                            android:focusableInTouchMode="false"
-                            android:clickable="true"
-                            tools:text="RWPD"/>
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            style="@style/textPrimary"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/anon_permissions"/>
-
-                        <TextView
-                            android:id="@+id/anonPermissions"
-                            style="@style/textPrimarySmall"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="monospace"
-                            android:textIsSelectable="false"
-                            android:typeface="monospace"
-                            android:background="@drawable/dotted_line"
-                            android:focusable="true"
-                            android:focusableInTouchMode="false"
-                            android:clickable="true"
-                            tools:text="RWPD"/>
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@color/grey"/>
 
         </LinearLayout>
-    </ScrollView>
-</LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/default_permissions"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/auth_permissions"/>
+
+                <TextView
+                    android:id="@+id/authPermissions"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/anon_permissions"/>
+
+                <TextView
+                    android:id="@+id/anonPermissions"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

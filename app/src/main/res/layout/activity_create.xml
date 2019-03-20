@@ -6,8 +6,8 @@
 
     <include layout="@layout/toolbar_with_tabs" />
 
-    <FrameLayout
-        android:id="@+id/contentFragment"
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/tabPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

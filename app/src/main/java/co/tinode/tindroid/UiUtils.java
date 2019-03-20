@@ -29,6 +29,7 @@ import android.provider.ContactsContract;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
@@ -403,7 +404,11 @@ public class UiUtils {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    static void requestAvatar(Fragment fragment) {
+    static void requestAvatar(@Nullable Fragment fragment) {
+        if (fragment == null) {
+            return;
+        }
+
         final Activity activity = fragment.getActivity();
         if (activity == null) {
             return;
@@ -898,10 +903,7 @@ public class UiUtils {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ProgressBar progressBar = activity.findViewById(R.id.toolbar_progress_bar);
-                if (progressBar != null) {
-                    progressBar.setVisibility(active ? View.VISIBLE : View.GONE);
-                }
+                // TODO: show progress indicator while loading contacts.
             }
         });
     }

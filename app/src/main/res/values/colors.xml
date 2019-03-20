@@ -4,11 +4,14 @@
     <color name="grey">#9e9e9e</color>
 
     <color name="colorButtonNormal">#d6d7d7</color>
+    <color name="colorMiniFab">#607D8B</color>
 
     <color name="colorTextPrimary">#212121</color>
     <color name="colorTextSecondary">#616161</color>
     <color name="colorAccentLight">#B2DFDB</color>
+    <color name="colorAccent">#008577</color>
 
+    <color name="alpha_80">#CCCCCCCC</color>
 
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
@@ -32,6 +35,7 @@
     <color name="colorGoogleLight">#dd4b39</color>
 
     <color name="colorPillCounter">#FF98AFC7</color>
+
     <color name="colorUserOnline">#FF40C040</color>
     <color name="colorUserOnlineH1">#FF30D030</color>
     <color name="colorUserOnlineH2">#FF10EE10</color>

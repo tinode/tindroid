@@ -39,9 +39,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     private static final String TAG = "LoginFragment";
 
-    public LoginFragment() {
-    }
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -56,6 +53,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(false);
+            bar.setTitle(R.string.app_name);
         }
 
         View fragment = inflater.inflate(R.layout.fragment_login, container, false);
