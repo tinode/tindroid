@@ -7,8 +7,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:orientation="horizontal"
-    android:paddingLeft="4dp"
-    android:paddingRight="4dp"
+    android:paddingStart="@dimen/activity_padding"
+    android:paddingEnd="@dimen/activity_padding"
     android:gravity="center_vertical">
 
     <ImageView

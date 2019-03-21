@@ -6,8 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="?attr/listPreferredItemHeight"
     android:background="@drawable/contact_background"
-    android:paddingLeft="4dp"
-    android:paddingRight="4dp"
+    android:paddingStart="@dimen/activity_padding"
+    android:paddingEnd="@dimen/activity_padding"
     android:gravity="center_vertical">
 
     <RelativeLayout

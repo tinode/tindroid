@@ -590,7 +590,9 @@ public class ContactListFragment extends Fragment {
          */
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            mCursor.moveToPosition(position);
+            if (!mCursor.moveToPosition(position)) {
+                throw new IllegalArgumentException("Invalid cursor position " + position);
+            }
 
             // ID of the contact
             holder.contact_id = mCursor.getInt(ContactsQuery.ID);
@@ -667,10 +669,11 @@ public class ContactListFragment extends Fragment {
                 return;
             }
 
+            final Cursor oldCursor = mCursor;
+
             // Update the AlphabetIndexer with new cursor as well
             mAlphabetIndexer.setCursor(newCursor);
 
-            Cursor oldCursor = mCursor;
             mCursor = newCursor;
             if (oldCursor != null) {
                 oldCursor.close();
