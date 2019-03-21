@@ -8,6 +8,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -101,7 +103,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
                         } else {
                             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                         }
-                        startActivity(new Intent(activity, ContactsActivity.class));
+                        startActivity(new Intent(activity, ChatsActivity.class));
                     }
                 });
                 return null;
@@ -216,6 +218,6 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             Log.w(TAG, "Failed to create topic", ex);
         }
 
-        startActivity(new Intent(activity, ContactsActivity.class));
+        startActivity(new Intent(activity, ChatsActivity.class));
     }
 }

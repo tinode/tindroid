@@ -105,7 +105,7 @@ public class MessageActivity extends AppCompatActivity {
                 } else if (!isFragmentVisible(FRAGMENT_MESSAGES) && !isFragmentVisible(FRAGMENT_INVALID)) {
                     showFragment(FRAGMENT_MESSAGES, false, null);
                 } else {
-                    Intent intent = new Intent(MessageActivity.this, ContactsActivity.class);
+                    Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     startActivity(intent);
                 }

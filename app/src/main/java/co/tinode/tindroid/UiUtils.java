@@ -36,7 +36,6 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
@@ -51,7 +50,6 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.pchmn.materialchips.model.Chip;
@@ -68,7 +66,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -262,7 +259,7 @@ public class UiUtils {
             });
         }
 
-        Intent intent = new Intent(activity, ContactsActivity.class);
+        Intent intent = new Intent(activity, ChatsActivity.class);
         activity.startActivity(intent);
         activity.finish();
     }
@@ -309,7 +306,7 @@ public class UiUtils {
                                 // Logged in successfully.
                                 Log.d(TAG, "LoginWithSavedAccount succeeded, sending to contacts");
                                 // Go to Contacts
-                                launch = new Intent(activity, ContactsActivity.class);
+                                launch = new Intent(activity, ChatsActivity.class);
                             } else {
                                 Log.d(TAG, "LoginWithSavedAccount failed due to credentials, sending to login");
                                 Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
@@ -319,7 +316,7 @@ public class UiUtils {
                             // Login failed due to network error.
                             // If we have UID, go to Contacts, otherwise to Login
                             launch = new Intent(activity, BaseDb.getInstance().isReady() ?
-                                    ContactsActivity.class : LoginActivity.class);
+                                    ChatsActivity.class : LoginActivity.class);
                             Log.d(TAG, "Network failure/" + (BaseDb.getInstance().isReady() ? "DB ready" : "DB NOT ready"));
                         } catch (Exception ex) {
                             Log.d(TAG, "Other failure", ex);
@@ -809,7 +806,7 @@ public class UiUtils {
 
         if (comment != null) {
             PrivateType priv = topic.getPriv();
-            String oldComment = priv != null ? topic.getPriv().getComment() : null;
+            String oldComment = priv != null ? priv.getComment() : null;
             if (comment.equals(oldComment)) {
                 comment = null;
             }

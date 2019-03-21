@@ -82,7 +82,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                     @Override
                     public void onClick(View v) {
                         // activity.getSupportFragmentManager().popBackStack();
-                        ((ContactsActivity)activity).showFragment(ContactsActivity.FRAGMENT_CHATLIST);
+                        ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_CHATLIST);
                     }
                 });
             }
@@ -190,18 +190,18 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
      */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final ContactsActivity activity = (ContactsActivity) getActivity();
+        final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
             return true;
         }
 
         switch (item.getItemId()) {
             case R.id.action_show_archive:
-                activity.showFragment(ContactsActivity.FRAGMENT_ARCHIVE);
+                activity.showFragment(ChatsActivity.FRAGMENT_ARCHIVE);
                 return true;
 
             case R.id.action_settings:
-                activity.showFragment(ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
+                activity.showFragment(ChatsActivity.FRAGMENT_EDIT_ACCOUNT);
                 return true;
 
             case R.id.action_about:
@@ -249,7 +249,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
     //@Override
     @SuppressWarnings("unchecked")
     public boolean onActionItemClicked(final ActionMode mode, final MenuItem item) {
-        final ContactsActivity activity = (ContactsActivity) getActivity();
+        final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
             return true;
         }
@@ -307,7 +307,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     // Confirmation dialog "Do you really want to do X?"
     private void showDeleteTopicsConfirmationDialog(final String[] topicNames) {
-        final ContactsActivity activity = (ContactsActivity) getActivity();
+        final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
             return;
         }

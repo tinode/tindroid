@@ -105,7 +105,7 @@ public class LoginActivity extends AppCompatActivity {
         if (tinode.isAuthenticated()) {
             // We already have a live connection to the server. All good.
             // Launch the contacts activity and stop.
-            Intent intent = new Intent(this, ContactsActivity.class);
+            Intent intent = new Intent(this, ChatsActivity.class);
             startActivity(intent);
             finish();
             return;

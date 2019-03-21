@@ -14,14 +14,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.Contacts;
 import androidx.annotation.NonNull;
-import androidx.fragment.app.DialogFragment;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.ListFragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
-import androidx.cursoradapter.widget.CursorAdapter;
 import androidx.appcompat.widget.AppCompatImageView;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -34,10 +33,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.AlphabetIndexer;
-import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
@@ -52,7 +48,7 @@ import co.tinode.tindroid.account.PhoneEmailImLoader;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 
-public class ContactListFragment extends Fragment {
+public class ContactsFragment extends Fragment {
 
     // Defines a tag for identifying log entries
     private static final String TAG = "ContactListFragment";
@@ -117,7 +113,7 @@ public class ContactListFragment extends Fragment {
             protected Bitmap processBitmap(Object data) {
                 // This gets called in a background thread and passed the data from
                 // ImageLoader.loadImage().
-                return UiUtils.loadContactPhotoThumbnail(ContactListFragment.this, (String) data, getImageSize());
+                return UiUtils.loadContactPhotoThumbnail(ContactsFragment.this, (String) data, getImageSize());
             }
         };
 
@@ -147,7 +143,7 @@ public class ContactListFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the list fragment layout
-        return inflater.inflate(R.layout.fragment_contact_list, container, false);
+        return inflater.inflate(R.layout.fragment_contacts, container, false);
     }
 
     @Override
@@ -685,9 +681,9 @@ public class ContactListFragment extends Fragment {
                 notifyItemRangeRemoved(0, getItemCount());
             }
 
-            Activity activity = getActivity();
-            if (activity != null) {
-                activity.findViewById(android.R.id.empty)
+            final View fragment = ContactsFragment.this.getView();
+            if (fragment != null) {
+                fragment.findViewById(android.R.id.empty)
                         .setVisibility(mAdapter.getItemCount() > 0 ? View.GONE : View.VISIBLE);
             }
         }

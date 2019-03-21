@@ -20,7 +20,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
-import co.tinode.tindroid.ContactsActivity;
+import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
@@ -143,7 +143,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         Intent intent;
         if (TextUtils.isEmpty(topic)) {
             // Communication on an unknown topic
-            intent = new Intent(this, ContactsActivity.class);
+            intent = new Intent(this, ChatsActivity.class);
         } else {
             // Communication on a known topic
             intent = new Intent(this, MessageActivity.class);

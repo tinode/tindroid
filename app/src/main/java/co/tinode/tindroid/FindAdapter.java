@@ -51,16 +51,16 @@ public class FindAdapter
         setHasStableIds(true);
     }
 
-    void resetContent(Activity activity, boolean notify) {
-        //noinspection unchecked
+    void resetContent(Activity activity) {
         Collection c = Cache.getTinode().getFndTopic().getSubscriptions();
         if (c == null) {
             mFound = new LinkedList<>();
         } else {
+            // noinspection unchecked
             mFound = new LinkedList<>(c);
         }
 
-        if (notify) {
+        if (activity != null) {
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

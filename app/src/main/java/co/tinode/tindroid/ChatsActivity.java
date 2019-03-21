@@ -23,7 +23,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * This activity owns 'me' topic.
  */
-public class ContactsActivity extends AppCompatActivity {
+public class ChatsActivity extends AppCompatActivity {
 
     private static final String TAG = "ContactsActivity";
 
@@ -169,7 +169,7 @@ public class ContactsActivity extends AppCompatActivity {
                     AccountInfoFragment fragment = (AccountInfoFragment) getSupportFragmentManager().
                             findFragmentByTag(FRAGMENT_EDIT_ACCOUNT);
                     if (fragment != null && fragment.isVisible()) {
-                        fragment.updateFormValues(ContactsActivity.this, mMeTopic);
+                        fragment.updateFormValues(ChatsActivity.this, mMeTopic);
                     }
                 }
             });
@@ -189,13 +189,13 @@ public class ContactsActivity extends AppCompatActivity {
 
     private class ContactsEventListener extends UiUtils.EventListener {
         ContactsEventListener(boolean online) {
-            super(ContactsActivity.this, online);
+            super(ChatsActivity.this, online);
         }
 
         @Override
         public void onLogin(int code, String txt) {
             super.onLogin(code, txt);
-            UiUtils.attachMeTopic(ContactsActivity.this, mMeTopicListener);
+            UiUtils.attachMeTopic(ChatsActivity.this, mMeTopicListener);
         }
     }
 }

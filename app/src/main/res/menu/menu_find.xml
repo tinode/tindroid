@@ -11,11 +11,4 @@
         app:showAsAction="ifRoom|collapseActionView"
         app:actionViewClass="android.widget.SearchView"/>
 
-    <item
-        android:id="@+id/action_add_contact"
-        android:orderInCategory="101"
-        android:title="@string/action_add_contact"
-        android:icon="@drawable/ic_person_add"
-        app:showAsAction="ifRoom"/>
-
 </menu>

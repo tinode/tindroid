@@ -22,7 +22,7 @@ import com.google.android.material.tabs.TabLayout;
  * View to display a single conversation
  */
 public class StartChatActivity extends AppCompatActivity implements
-        ContactListFragment.OnContactsInteractionListener {
+        ContactsFragment.OnContactsInteractionListener {
 
     private static final String TAG = "StartChatActivity";
 
@@ -47,11 +47,10 @@ public class StartChatActivity extends AppCompatActivity implements
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setDisplayShowHomeEnabled(true);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(StartChatActivity.this, ContactsActivity.class);
+                    Intent intent = new Intent(StartChatActivity.this, ChatsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
                 }
@@ -69,6 +68,11 @@ public class StartChatActivity extends AppCompatActivity implements
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewPager.setCurrentItem(tab.getPosition());
+                final ActionBar actionBar = getSupportActionBar();
+                if (actionBar != null) {
+                    actionBar.setDisplayHomeAsUpEnabled(true);
+                    actionBar.setTitle(R.string.action_new_chat);
+                }
             }
 
             @Override
@@ -130,7 +134,7 @@ public class StartChatActivity extends AppCompatActivity implements
             switch (position) {
                 case TAB_CONTACTS:
                     if (mContacts == null) {
-                        mContacts = new ContactListFragment();
+                        mContacts = new ContactsFragment();
                     }
                     return mContacts;
                 case TAB_NEW_GROUP:

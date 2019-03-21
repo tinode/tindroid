@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -73,11 +72,6 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
             return;
         }
 
-        final ActionBar bar = activity.getSupportActionBar();
-        if (bar != null) {
-            bar.setDisplayHomeAsUpEnabled(false);
-            bar.setTitle(R.string.app_name);
-        }
         activity.findViewById(R.id.startNewChat).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -101,7 +95,7 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
             }
         });
 
-        mAdapter.resetContent(activity, false);
+        mAdapter.resetContent(null);
         rv.setAdapter(mAdapter);
 
         mSelectionTracker = new SelectionTracker.Builder<>(
@@ -128,8 +122,8 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
     public void onResume() {
         super.onResume();
 
-        final Activity activity = getActivity();
-        if (activity == null) {
+        final View fragment = getView();
+        if (fragment == null) {
             return;
         }
 
@@ -150,20 +144,20 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
         } catch (NotSynchronizedException ignored) {
         } catch (NotConnectedException ignored) {
             /* offline - ignored */
-            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+            Toast.makeText(fragment.getContext(), R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception err) {
             Log.i(TAG, "Subscription failed", err);
-            Toast.makeText(activity, R.string.failed_to_attach, Toast.LENGTH_LONG).show();
+            Toast.makeText(fragment.getContext(), R.string.failed_to_attach, Toast.LENGTH_LONG).show();
         }
 
 
-        mAdapter.resetContent(activity, true);
+        mAdapter.resetContent(getActivity());
         if (mAdapter.getItemCount() > 0) {
-            activity.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
-            activity.findViewById(android.R.id.empty).setVisibility(View.GONE);
+            fragment.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
+            fragment.findViewById(android.R.id.empty).setVisibility(View.GONE);
         } else {
-            activity.findViewById(R.id.chat_list).setVisibility(View.GONE);
-            activity.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
+            fragment.findViewById(R.id.chat_list).setVisibility(View.GONE);
+            fragment.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
         }
     }
 
@@ -183,11 +177,8 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        Log.e(TAG, "onCreateOptionsMenu");
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
-        inflater.inflate(R.menu.menu_chat_list, menu);
+        inflater.inflate(R.menu.menu_find, menu);
     }
 
     /**
@@ -195,18 +186,18 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
      */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final ContactsActivity activity = (ContactsActivity) getActivity();
+        final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
             return true;
         }
 
         switch (item.getItemId()) {
             case R.id.action_show_archive:
-                activity.showFragment(ContactsActivity.FRAGMENT_ARCHIVE);
+                activity.showFragment(ChatsActivity.FRAGMENT_ARCHIVE);
                 return true;
 
             case R.id.action_settings:
-                activity.showFragment(ContactsActivity.FRAGMENT_EDIT_ACCOUNT);
+                activity.showFragment(ChatsActivity.FRAGMENT_EDIT_ACCOUNT);
                 return true;
 
             case R.id.action_about:
@@ -254,7 +245,7 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
     //@Override
     @SuppressWarnings("unchecked")
     public boolean onActionItemClicked(final ActionMode mode, final MenuItem item) {
-        final ContactsActivity activity = (ContactsActivity) getActivity();
+        final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
             return true;
         }
@@ -312,7 +303,7 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
 
     // Confirmation dialog "Do you really want to do X?"
     private void showDeleteTopicsConfirmationDialog(final String[] topicNames) {
-        final ContactsActivity activity = (ContactsActivity) getActivity();
+        final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -365,7 +356,7 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
     }
 
     private void datasetChanged() {
-        mAdapter.resetContent(getActivity(), true);
+        mAdapter.resetContent(getActivity());
     }
 
     // TODO: Add onBackPressed handing to parent Activity.

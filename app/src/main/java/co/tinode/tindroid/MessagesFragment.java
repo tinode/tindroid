@@ -460,7 +460,7 @@ public class MessagesFragment extends Fragment
                     mTopic.delete().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            Intent intent = new Intent(activity, ContactsActivity.class);
+                            Intent intent = new Intent(activity, ChatsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                             activity.finish();
@@ -552,7 +552,7 @@ public class MessagesFragment extends Fragment
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         final int id = view.getId();
                         if (id == R.id.buttonIgnore || id == R.id.buttonBlock) {
-                            Intent intent = new Intent(activity, ContactsActivity.class);
+                            Intent intent = new Intent(activity, ChatsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                         } else {
