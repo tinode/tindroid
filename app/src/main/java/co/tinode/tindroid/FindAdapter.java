@@ -4,73 +4,61 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageView;
-
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import androidx.core.content.res.ResourcesCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.selection.ItemDetailsLookup;
 import androidx.recyclerview.selection.ItemKeyProvider;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.widget.RecyclerView;
-import co.tinode.tindroid.db.StoredTopic;
+import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.Tinode.TopicFilter;
-import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Handling active chats, i.e. 'me' topic.
+ * Handling 'fnd' results.
  */
-public class ChatListAdapter
-        extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
+public class FindAdapter
+        extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
 
     @SuppressWarnings("unused")
-    private static final String TAG = "ChatListAdapter";
+    private static final String TAG = "FindAdapter";
 
-    private List<ComTopic<VxCard>> mTopics;
-    private boolean mIsArchive;
+    private List<Subscription<VxCard,String[]>> mFound;
 
     private SelectionTracker<String> mSelectionTracker;
-    private ContactClickListener mClickListener;
+    private ClickListener mClickListener;
 
-    private static int sColorOffline;
-    private static int sColorOnline;
-
-    ChatListAdapter(Context context, ContactClickListener clickListener) {
+    FindAdapter(ClickListener clickListener) {
         super();
 
         mClickListener = clickListener;
 
         setHasStableIds(true);
-
-        sColorOffline = ResourcesCompat.getColor(context.getResources(),
-                R.color.offline, context.getTheme());
-        sColorOnline = ResourcesCompat.getColor(context.getResources(),
-                R.color.online, context.getTheme());
     }
 
-    void resetContent(Activity activity, boolean archive, boolean notify) {
-        mIsArchive = archive;
-        mTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
-            @Override
-            public boolean isIncluded(Topic t) {
-                return t.getTopicType().compare(Topic.TopicType.USER) &&
-                        (t.isArchived() == mIsArchive);
-            }
-        });
+    void resetContent(Activity activity, boolean notify) {
+        //noinspection unchecked
+        Collection c = Cache.getTinode().getFndTopic().getSubscriptions();
+        if (c == null) {
+            mFound = new LinkedList<>();
+        } else {
+            mFound = new LinkedList<>(c);
+        }
 
         if (notify) {
             activity.runOnUiThread(new Runnable() {
@@ -84,32 +72,32 @@ public class ChatListAdapter
 
     @NonNull
     @Override
-    public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         final LayoutInflater inflater = (LayoutInflater) parent.getContext()
                 .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
-        return new ChatViewHolder(
+        return new ViewHolder(
                 inflater.inflate(R.layout.contact, parent, false), mClickListener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        ComTopic<VxCard> topic = mTopics.get(position);
-        holder.bind(position, topic, mSelectionTracker != null &&
-                mSelectionTracker.isSelected(topic.getName()));
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Subscription<VxCard,String[]> sub = mFound.get(position);
+        holder.bind(position, sub, mSelectionTracker != null &&
+                mSelectionTracker.isSelected(sub.getUnique()));
     }
 
     @Override
     public long getItemId(int position) {
-        return StoredTopic.getId(mTopics.get(position));
+        return StoredSubscription.getId(mFound.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return mTopics.size();
+        return mFound.size();
     }
 
-    private ComTopic<VxCard> getItemAt(int pos) {
-        return mTopics.get(pos);
+    private Subscription<VxCard,String[]> getItemAt(int pos) {
+        return mFound.get(pos);
     }
 
     void setSelectionTracker(SelectionTracker<String> selectionTracker) {
@@ -136,10 +124,10 @@ public class ChatListAdapter
     }
 
     static class ContactItemKeyProvider extends ItemKeyProvider<String> {
-        private ChatListAdapter mAdapter;
+        private FindAdapter mAdapter;
         private final Map<String,Integer> mKeyToPosition;
 
-        ContactItemKeyProvider(ChatListAdapter adapter) {
+        ContactItemKeyProvider(FindAdapter adapter) {
             super(SCOPE_CACHED);
 
             mAdapter = adapter;
@@ -147,14 +135,14 @@ public class ChatListAdapter
             mKeyToPosition = new HashMap<>(mAdapter.getItemCount());
 
             for (int i = 0; i < mAdapter.getItemCount(); i++) {
-                mKeyToPosition.put(mAdapter.getItemAt(i).getName(), i);
+                mKeyToPosition.put(mAdapter.getItemAt(i).getUnique(), i);
             }
         }
 
         @Nullable
         @Override
         public String getKey(int i) {
-            return mAdapter.getItemAt(i).getName();
+            return mAdapter.getItemAt(i).getUnique();
         }
 
         @Override
@@ -164,25 +152,24 @@ public class ChatListAdapter
         }
     }
 
-    static class ChatViewHolder
+    static class ViewHolder
             extends RecyclerView.ViewHolder {
         TextView name;
-        TextView unreadCount;
         TextView contactPriv;
         AppCompatImageView icon;
-        AppCompatImageView online;
 
         ContactDetails details;
-        ContactClickListener clickListener;
+        ClickListener clickListener;
 
-        ChatViewHolder(@NonNull View item, ContactClickListener cl) {
+        ViewHolder(@NonNull View item, ClickListener cl) {
             super(item);
 
             name = item.findViewById(R.id.contactName);
-            unreadCount = item.findViewById(R.id.unreadCount);
             contactPriv = item.findViewById(R.id.contactPriv);
             icon = item.findViewById(R.id.avatar);
-            online = item.findViewById(R.id.online);
+
+            item.findViewById(R.id.online).setVisibility(View.GONE);
+            item.findViewById(R.id.unreadCount).setVisibility(View.GONE);
 
             details = new ContactDetails();
             clickListener = cl;
@@ -192,14 +179,14 @@ public class ChatListAdapter
             return details;
         }
 
-        void bind(int position, final ComTopic<VxCard> topic, boolean selected) {
+        void bind(int position, final Subscription<VxCard,String[]> sub, boolean selected) {
             final Context context = itemView.getContext();
-            final String topicName = topic.getName();
+            final String unique = sub.getUnique();
 
             details.pos = position;
-            details.name = topic.getName();
+            details.name = sub.getUnique();
 
-            VxCard pub = topic.getPub();
+            VxCard pub = sub.pub;
             if (pub != null) {
                 name.setText(pub.fn);
                 name.setTypeface(null, Typeface.NORMAL);
@@ -207,22 +194,16 @@ public class ChatListAdapter
                 name.setText(R.string.placeholder_contact_title);
                 name.setTypeface(null, Typeface.ITALIC);
             }
-            contactPriv.setText(topic.getComment());
-
-            int unread = topic.getUnreadCount();
-            if (unread > 0) {
-                unreadCount.setText(unread > 9 ? "9+" : String.valueOf(unread));
-                unreadCount.setVisibility(View.VISIBLE);
+            if (sub.priv != null) {
+                contactPriv.setText(TextUtils.join(", ", sub.priv));
             } else {
-                unreadCount.setVisibility(View.INVISIBLE);
+                contactPriv.setText("");
             }
 
             UiUtils.assignBitmap(context, icon,
                     pub != null ? pub.getBitmap() : null,
                     pub != null ? pub.fn : null,
-                    topicName);
-
-            online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
+                    unique);
 
             if (selected) {
                 itemView.setBackgroundResource(R.drawable.contact_background);
@@ -237,7 +218,7 @@ public class ChatListAdapter
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        clickListener.onCLick(topicName);
+                        clickListener.onCLick(unique);
                     }
                 });
             }
@@ -246,7 +227,7 @@ public class ChatListAdapter
         }
     }
 
-    interface ContactClickListener {
+    interface ClickListener {
         void onCLick(String topicName);
     }
 }

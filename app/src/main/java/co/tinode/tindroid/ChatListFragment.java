@@ -1,39 +1,6 @@
 package co.tinode.tindroid;
 
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-import android.util.SparseBooleanArray;
-import android.view.ActionMode;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.IOException;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.ListFragment;
-import co.tinode.tindroid.media.VxCard;
-import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * View with contacts.
@@ -41,7 +8,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class ChatListFragment extends ListFragment {
 
     private static final String TAG = "ChatListFragment";
-    private ChatListAdapter mAdapter = null;
+    private ChatsAdapter mAdapter = null;
     private Boolean mIsArchive;
 
     public ChatListFragment() {
@@ -66,68 +33,6 @@ public class ChatListFragment extends ListFragment {
                 container, false);
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        mAdapter = new ChatListAdapter(activity, mIsArchive);
-        setListAdapter(mAdapter);
-
-        if (mIsArchive) {
-            final Toolbar toolbar = view.findViewById(R.id.toolbar);
-            activity.setSupportActionBar(toolbar);
-
-            final ActionBar bar = activity.getSupportActionBar();
-            if (bar != null) {
-                bar.setDisplayHomeAsUpEnabled(true);
-            }
-
-            toolbar.setTitle(R.string.archived_chats);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    FragmentManager fm = getFragmentManager();
-                    if (fm != null) {
-                        fm.popBackStack();
-                    }
-                }
-            });
-        }
-
-        ListView lv = getListView();
-        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String topic = mAdapter.getTopicNameFromView(view);
-                Intent intent = new Intent(activity, MessageActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("topic", topic);
-                startActivity(intent);
-            }
-        });
-
-        lv.setMultiChoiceModeListener(this);
-    }
-
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            mIsArchive = bundle.getBoolean("archive", false);
-        } else {
-            mIsArchive = false;
-        }
-
-        mAdapter.resetContent(getActivity(), mIsArchive, true);
-    }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -302,63 +207,5 @@ public class ChatListFragment extends ListFragment {
         }
     }
 
-    // Confirmation dialog "Do you really want to do X?"
-    private void showDeleteTopicsConfirmationDialog(final int[] positions) {
-        final ContactsActivity activity = (ContactsActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
-        confirmBuilder.setNegativeButton(android.R.string.cancel, null);
-        confirmBuilder.setMessage(R.string.confirm_delete_multiple_topics);
-        confirmBuilder.setPositiveButton(android.R.string.ok,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        PromisedReply<ServerMessage> reply = null;
-                        for (int pos : positions) {
-                            @SuppressWarnings("unchecked")
-                            ComTopic<VxCard> t = (ComTopic<VxCard>) mAdapter.getItemAt(pos);
-                            try {
-                                reply = t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                        activity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                                Log.w(TAG, "Delete failed", err);
-                                            }
-                                        });
-                                        return null;
-                                    }
-                                });
-                            } catch (NotConnectedException ignored) {
-                                Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                            } catch (Exception err) {
-                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                Log.w(TAG, "Delete failed", err);
-                            }
-                        }
-                        // Wait for the last reply to resolve then update dataset.
-                        if (reply != null) {
-                            reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    datasetChanged();
-                                    return null;
-                                }
-                            });
-                        }
-                    }
-                });
-        confirmBuilder.show();
-    }
-
-    // Wraps mAdapter.notifyDataSetChanged() into runOnUiThread()
-    void datasetChanged() {
-        mAdapter.resetContent(getActivity(), mIsArchive, true);
-    }
     */
 }

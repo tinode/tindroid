@@ -1398,6 +1398,22 @@ public class Tinode {
         return new ComTopic(this, sub);
     }
 
+    public <DP> MeTopic<DP> getOrCreateMeTopic() {
+        MeTopic<DP> me = getMeTopic();
+        if (me == null) {
+            me = new MeTopic<>(this, (MeTopic.MeListener<DP>) null);
+        }
+        return me;
+    }
+
+    public <DP> FndTopic<DP> getOrCreateFndTopic() {
+        FndTopic<DP> fnd = getFndTopic();
+        if (fnd == null) {
+            fnd = new FndTopic<>(this, null);
+        }
+        return fnd;
+    }
+
     @SuppressWarnings("unchecked, UnusedReturnValue")
     protected Topic maybeCreateTopic(MsgServerMeta meta) {
         if (meta.desc == null) {
@@ -1421,8 +1437,8 @@ public class Tinode {
      *
      * @return 'me' topic or null if 'me' has never been subscribed to
      */
-    public MeTopic getMeTopic() {
-        return (MeTopic) getTopic(TOPIC_ME);
+    public <DP> MeTopic<DP> getMeTopic() {
+        return (MeTopic<DP>) getTopic(TOPIC_ME);
     }
 
     /**
@@ -1430,9 +1446,9 @@ public class Tinode {
      *
      * @return 'fnd' topic or null if 'fnd' has never been subscribed to
      */
-    public FndTopic getFndTopic() {
+    public <DP> FndTopic<DP> getFndTopic() {
         // Either I or Java really has problems with generics.
-        return (FndTopic) getTopic(TOPIC_FND);
+        return (FndTopic<DP>) getTopic(TOPIC_FND);
     }
 
     /**

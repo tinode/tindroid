@@ -80,6 +80,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -830,20 +831,20 @@ public class UiUtils {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    static void attachMeTopic(final Activity activity, Topic.Listener l) {
+    static void attachMeTopic(final Activity activity, MeTopic.MeListener l) {
+        boolean success = false;
         try {
             setProgressIndicator(activity, true);
             Cache.attachMeTopic(l)
-                    .thenApply(new PromisedReply.SuccessListener() {
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply onSuccess(Object result) {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             UiUtils.setProgressIndicator(activity, false);
                             return null;
                         }
-                    }, new PromisedReply.FailureListener() {
+                    }, new PromisedReply.FailureListener<ServerMessage>() {
                         @Override
-                        public PromisedReply onFailure(Exception err) {
+                        public PromisedReply<ServerMessage> onFailure(Exception err) {
                             Log.w(TAG, "Error subscribing to 'me' topic", err);
                             UiUtils.setProgressIndicator(activity, false);
                             if (err instanceof ServerResponseException) {
@@ -856,17 +857,18 @@ public class UiUtils {
                             return null;
                         }
                     });
+            success = true;
         } catch (NotSynchronizedException ignored) {
-            setProgressIndicator(activity,false);
-            /* */
         } catch (NotConnectedException ignored) {
             /* offline - ignored */
-            setProgressIndicator(activity,false);
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception err) {
             Log.i(TAG, "Subscription failed", err);
-            setProgressIndicator(activity,false);
             Toast.makeText(activity, R.string.failed_to_attach, Toast.LENGTH_LONG).show();
+        } finally {
+            if (!success) {
+                setProgressIndicator(activity,false);
+            }
         }
     }
 

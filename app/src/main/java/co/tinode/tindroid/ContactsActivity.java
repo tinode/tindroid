@@ -51,7 +51,7 @@ public class ContactsActivity extends AppCompatActivity {
                 .replace(R.id.contentFragment, new ChatsFragment(), FRAGMENT_CHATLIST)
                 .commit();
 
-        mMeTopic = (MeTopic<VxCard>) Cache.getTinode().getMeTopic();
+        mMeTopic = Cache.getTinode().getOrCreateMeTopic();
         mMeTopicListener = new MeListener();
     }
 

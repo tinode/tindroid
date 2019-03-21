@@ -42,16 +42,12 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     private Topic<?,?,VxCard,PrivateType> mTopic;
-    private HashMap<String, Boolean> mInitialMembers;
+    private HashMap<String, Boolean> mInitialMembers = new HashMap<>();
 
     private ChipsInput mChipsInput;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
     // private TreeSet<Integer> mSelectedContacts;
-
-    public EditMembersFragment() {
-        mInitialMembers = new HashMap<>();
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,

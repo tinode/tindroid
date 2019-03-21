@@ -165,7 +165,6 @@ public class ContactListFragment extends Fragment {
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
         mAdapter = new ContactsAdapter(activity, null);
         rv.setAdapter(mAdapter);
-        Log.i(TAG, "Adapter assigned");
 
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override

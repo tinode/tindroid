@@ -10,10 +10,10 @@ import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -77,20 +77,27 @@ public class Cache {
 
     // Connect to 'me' topic.
     @SuppressWarnings("unchecked")
-    static PromisedReply<ServerMessage> attachMeTopic(Topic.Listener l) {
-        Tinode tinode = getTinode();
-        MeTopic me = tinode.getMeTopic();
-        if (me == null) {
-            // The very first launch of the app.
-            me = new MeTopic<>(tinode, l);
-        } else if (l != null) {
-            me.setListener(l);
-        }
+    static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l) {
+        final MeTopic<VxCard> me = getTinode().getOrCreateMeTopic();
+        me.setListener(l);
 
         if (!me.isAttached()) {
             return me.subscribe(null, me
                     .getMetaGetBuilder()
                     .withGetDesc()
+                    .withGetSub().build());
+        } else {
+            return new PromisedReply<>((ServerMessage) null);
+        }
+    }
+
+    static PromisedReply<ServerMessage> attachFndTopic(FndTopic.FndListener<VxCard> l) {
+        final FndTopic<VxCard> fnd = getTinode().getOrCreateFndTopic();
+        fnd.setListener(l);
+
+        if (!fnd.isAttached()) {
+            return fnd.subscribe(null, fnd
+                    .getMetaGetBuilder()
                     .withGetSub().build());
         } else {
             return new PromisedReply<>((ServerMessage) null);

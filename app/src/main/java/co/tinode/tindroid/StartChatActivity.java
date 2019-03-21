@@ -140,7 +140,7 @@ public class StartChatActivity extends AppCompatActivity implements
                     return mCreateGroup;
                 case TAB_SEARCH:
                     if (mSearch == null) {
-                        mSearch = new ContactListFragment();
+                        mSearch = new FindFragment();
                     }
                     return mSearch;
                 case TAB_BY_ID:

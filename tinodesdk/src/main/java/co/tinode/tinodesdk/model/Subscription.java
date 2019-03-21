@@ -43,6 +43,17 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
         mLocal = null;
     }
 
+    @JsonIgnore
+    public String getUnique() {
+        if (topic == null) {
+            return user;
+        }
+        if (user == null) {
+            return topic;
+        }
+        return topic + ":" + user;
+    }
+
     /**
      * Merge two subscriptions.
      */

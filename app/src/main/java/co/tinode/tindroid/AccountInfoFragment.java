@@ -225,7 +225,7 @@ public class AccountInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditAccountTitle() {
-        final MeTopic<VxCard> me = (MeTopic<VxCard>) Cache.getTinode().getMeTopic();
+        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
         VxCard pub = me.getPub();
         final String title = pub == null ? null : pub.fn;
         final Activity activity = getActivity();
