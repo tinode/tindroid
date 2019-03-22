@@ -62,7 +62,7 @@
     <string name="invalid_confirmation_code">Код неверен</string>
     <string name="email_rejected">Емейл неверен</string>
     <string name="login_rejected">Логин неверен</string>
-    <string name="yourPermissions">Ваш</string>
+    <string name="your_permissions">Ваш</string>
     <string name="cancelled">отменено</string>
     <string name="invalid_file">Невозможно прикрепить этот файл</string>
     <string name="notification_channel_name">Новое сообщение</string>
@@ -85,7 +85,7 @@
     <string name="add_one_member">Нужно добавить хотябы одного пользователя</string>
     <string name="anon_permissions">Анонимные пользователи</string>
     <string name="address">Адрес</string>
-    <string name="addByIdHint">Введите ID группы или пользователя</string>
+    <string name="hint_add_by_id">Введите ID группы или пользователя</string>
     <string name="attachment_too_large">Файл слишком большой: %1$s превышает %2$s лимит.</string>
     <string name="auth_permissions">Авторизованные пользователи</string>
     <string name="block">Заблокировать</string>
@@ -206,4 +206,5 @@
     <string name="group">Группа</string>
     <string name="id_required">ID обязательно</string>
     <string name="settings">Настройки</string>
+    <string name="hint_search_tags">Поиск по тагам</string>
 </resources>

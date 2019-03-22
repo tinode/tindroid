@@ -359,7 +359,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param store storage object
      */
-    void setStorage(Storage store) {
+    protected void setStorage(Storage store) {
         mStore = store;
     }
 

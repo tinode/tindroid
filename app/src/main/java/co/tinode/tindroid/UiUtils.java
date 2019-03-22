@@ -861,7 +861,7 @@ public class UiUtils {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception err) {
             Log.i(TAG, "Subscription failed", err);
-            Toast.makeText(activity, R.string.failed_to_attach, Toast.LENGTH_LONG).show();
+            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_LONG).show();
         } finally {
             if (!success) {
                 setProgressIndicator(activity,false);

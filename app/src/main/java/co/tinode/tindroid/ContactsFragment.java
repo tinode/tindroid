@@ -294,15 +294,13 @@ public class ContactsFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        menu.clear();
+        inflater.inflate(R.menu.menu_contacts, menu);
+
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
-
-        menu.clear();
-
-        // Inflate the menu items
-        inflater.inflate(R.menu.menu_contacts, menu);
 
         // Locate the search item
         MenuItem searchItem = menu.findItem(R.id.action_search);
@@ -408,15 +406,6 @@ public class ContactsFragment extends Fragment {
     }
 
     @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (!TextUtils.isEmpty(mSearchTerm)) {
-            // Saves the current search string
-            outState.putString(SearchManager.QUERY, mSearchTerm);
-        }
-    }
-
-    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         Activity activity = getActivity();
         if (activity == null) {
@@ -430,6 +419,15 @@ public class ContactsFragment extends Fragment {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (!TextUtils.isEmpty(mSearchTerm)) {
+            // Saves the current search string
+            outState.putString(SearchManager.QUERY, mSearchTerm);
+        }
     }
 
     /**

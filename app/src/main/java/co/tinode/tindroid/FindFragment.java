@@ -1,8 +1,11 @@
 package co.tinode.tindroid;
 
-import android.content.DialogInterface;
+import android.app.Activity;
+import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -11,43 +14,49 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SearchView;
 import android.widget.Toast;
-
-import java.io.IOException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.ActionMode;
-import androidx.fragment.app.DialogFragment;
+import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.selection.ItemDetailsLookup;
-import androidx.recyclerview.selection.Selection;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.selection.StorageStrategy;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-public class FindFragment extends Fragment implements ActionMode.Callback {
+public class FindFragment extends Fragment {
 
     private static final String TAG = "FindFragment";
+
+    // Delay in milliseconds between the last keystroke and time when the query is sent to the server.
+    private static final int SEARCH_REQUEST_DELAY = 1000;
 
     private FndTopic<VxCard> mFndTopic;
     private FndListener mFndListener;
 
+    private String mSearchTerm; // Stores the current search query term
+
     private FindAdapter mAdapter = null;
     private SelectionTracker<String> mSelectionTracker = null;
+    private RecyclerView.AdapterDataObserver mDataObserver = null;
+
+    private ContentLoadingProgressBar mProgress = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,24 +71,15 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
                              @Nullable Bundle savedInstanceState) {
         setHasOptionsMenu(true);
 
-        return inflater.inflate(R.layout.fragment_chats, container, false);
+        return inflater.inflate(R.layout.fragment_chat_list, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View fragment, Bundle savedInstanceState) {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
-
-        activity.findViewById(R.id.startNewChat).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(activity, StartChatActivity.class);
-                    // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    startActivity(intent);
-                }
-            });
 
         RecyclerView rv = activity.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
@@ -97,6 +97,23 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
 
         mAdapter.resetContent(null);
         rv.setAdapter(mAdapter);
+
+        mDataObserver = new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+
+                setProgressBarVisible(false);
+
+                if (mAdapter.getItemCount() > 0) {
+                    fragment.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
+                    fragment.findViewById(android.R.id.empty).setVisibility(View.GONE);
+                } else {
+                    fragment.findViewById(R.id.chat_list).setVisibility(View.GONE);
+                    fragment.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
+                }
+            }
+        };
 
         mSelectionTracker = new SelectionTracker.Builder<>(
                 "find-selection",
@@ -116,6 +133,8 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
                 // Do something here.
             }
         });
+
+        mProgress = activity.findViewById(R.id.progressBar);
     }
 
     @Override
@@ -147,18 +166,11 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
             Toast.makeText(fragment.getContext(), R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception err) {
             Log.i(TAG, "Subscription failed", err);
-            Toast.makeText(fragment.getContext(), R.string.failed_to_attach, Toast.LENGTH_LONG).show();
+            Toast.makeText(fragment.getContext(), R.string.action_failed, Toast.LENGTH_LONG).show();
         }
 
-
+        mAdapter.registerAdapterDataObserver(mDataObserver);
         mAdapter.resetContent(getActivity());
-        if (mAdapter.getItemCount() > 0) {
-            fragment.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
-            fragment.findViewById(android.R.id.empty).setVisibility(View.GONE);
-        } else {
-            fragment.findViewById(R.id.chat_list).setVisibility(View.GONE);
-            fragment.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
-        }
     }
 
     @Override
@@ -168,6 +180,8 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
         if (mFndTopic != null) {
             mFndTopic.setListener(null);
         }
+
+        mAdapter.unregisterAdapterDataObserver(mDataObserver);
     }
 
     @Override
@@ -179,184 +193,149 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.clear();
         inflater.inflate(R.menu.menu_find, menu);
-    }
 
-    /**
-     * This menu is shown when no items are selected
-     */
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final ChatsActivity activity = (ChatsActivity) getActivity();
-        if (activity == null) {
-            return true;
-        }
-
-        switch (item.getItemId()) {
-            case R.id.action_show_archive:
-                activity.showFragment(ChatsActivity.FRAGMENT_ARCHIVE);
-                return true;
-
-            case R.id.action_settings:
-                activity.showFragment(ChatsActivity.FRAGMENT_EDIT_ACCOUNT);
-                return true;
-
-            case R.id.action_about:
-                DialogFragment about = new AboutDialogFragment();
-                // The warning below is a false positive. If activity is not null, then
-                // getFragmentManager is also not null
-                //noinspection ConstantConditions
-                about.show(getFragmentManager(), "about");
-                return true;
-
-            case R.id.action_offline:
-                try {
-                    Cache.getTinode().reconnectNow();
-                } catch (IOException ex) {
-                    Log.d(TAG, "Reconnect failure", ex);
-                    String cause = ex.getCause().getMessage();
-                    Toast.makeText(activity, activity.getString(R.string.error_connection_failed) + cause,
-                            Toast.LENGTH_SHORT).show();
-                }
-                break;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-        mode.getMenuInflater().inflate(R.menu.menu_contacts_selected, menu);
-        return true;
-    }
-
-    @Override
-    public void onDestroyActionMode(ActionMode mode) {
-        mSelectionTracker.clearSelection();
-    }
-
-    @Override
-    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-        menu.setGroupVisible(R.id.single_selection, mSelectionTracker.getSelection().size() <= 1);
-        return true;
-    }
-
-    /**
-     * This menu is shown when one or more items are selected from the list
-     */
-    //@Override
-    @SuppressWarnings("unchecked")
-    public boolean onActionItemClicked(final ActionMode mode, final MenuItem item) {
-        final ChatsActivity activity = (ChatsActivity) getActivity();
-        if (activity == null) {
-            return true;
-        }
-
-        final Selection<String> selection = mSelectionTracker.getSelection();
-        // TODO: implement menu actions
-        switch (item.getItemId()) {
-            case R.id.action_delete:
-                String[] topicNames = new String[selection.size()];
-                int i = 0;
-                for (String name : selection) {
-                    topicNames[i++] = name;
-                }
-                showDeleteTopicsConfirmationDialog(topicNames);
-                // Close CAB
-                mode.finish();
-                return true;
-
-            case R.id.action_mute:
-            case R.id.action_archive:
-                // Archiving and muting is possible regardless of subscription status.
-
-                final ComTopic<VxCard> topic =
-                        (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
-                (item.getItemId() == R.id.action_mute ?
-                        topic.updateMuted(!topic.isMuted()) :
-                        topic.updateArchived(!topic.isArchived())
-                ).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        datasetChanged();
-                        return null;
-                    }
-                }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                Log.w(TAG, "Archiving failed", err);
-                            }
-                        });
-                        return null;
-                    }
-                });
-                mode.finish();
-                return true;
-
-            default:
-                Log.e(TAG, "Unknown menu action");
-                return false;
-        }
-    }
-
-    // Confirmation dialog "Do you really want to do X?"
-    private void showDeleteTopicsConfirmationDialog(final String[] topicNames) {
-        final ChatsActivity activity = (ChatsActivity) getActivity();
+        final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
 
-        final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
-        confirmBuilder.setNegativeButton(android.R.string.cancel, null);
-        confirmBuilder.setMessage(R.string.confirm_delete_multiple_topics);
-        confirmBuilder.setPositiveButton(android.R.string.ok,
-                new DialogInterface.OnClickListener() {
+        // Setting up SearchView
+
+        // Locate the search item
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+
+        // Retrieves the system search manager service
+        final SearchManager searchManager =
+                (SearchManager) activity.getSystemService(Activity.SEARCH_SERVICE);
+
+        // Retrieves the SearchView from the search menu item
+        final SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setQueryHint(getResources().getString(R.string.hint_search_tags));
+        // Assign searchable info to SearchView
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(activity.getComponentName()));
+        searchView.setFocusable(true);
+        searchView.setFocusableInTouchMode(true);
+
+        // Set listeners for SearchView
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            private Handler mHandler;
+            @Override
+            public boolean onQueryTextSubmit(String queryText) {
+                if (mHandler != null) {
+                    mHandler.removeCallbacksAndMessages(null);
+                }
+
+                // Called when the action bar search text has changed.  Updates
+                // the search filter, and restarts the loader to do a new query
+                // using the new search string.
+                String newFilter = !TextUtils.isEmpty(queryText) ? queryText : null;
+
+                // Don't do anything if the filter is empty
+                if (mSearchTerm == null && newFilter == null) {
+                    return false;
+                }
+
+                // Don't do anything if the new filter is the same as the current filter
+                if (mSearchTerm != null && mSearchTerm.equals(newFilter)) {
+                    return true;
+                }
+
+                // Updates current filter to new filter
+                mSearchTerm = newFilter;
+
+                Log.i(TAG, "Post request to server: ENTER = " + mSearchTerm);
+
+                setProgressBarVisible(true);
+                doSearch(mSearchTerm);
+
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                mSearchTerm = newText;
+                if (mHandler == null) {
+                    mHandler = new Handler();
+                } else {
+                    mHandler.removeCallbacksAndMessages(null);
+                }
+
+                mHandler.postDelayed(new Runnable() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        PromisedReply<ServerMessage> reply = null;
-                        for (String name : topicNames) {
-                            @SuppressWarnings("unchecked")
-                            ComTopic<VxCard> t = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
-                            try {
-                                reply = t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                        activity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                                Log.w(TAG, "Delete failed", err);
-                                            }
-                                        });
-                                        return null;
-                                    }
-                                });
-                            } catch (NotConnectedException ignored) {
-                                Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                            } catch (Exception err) {
-                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                Log.w(TAG, "Delete failed", err);
-                            }
-                        }
-                        // Wait for the last reply to resolve then update dataset.
-                        if (reply != null) {
-                            reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    datasetChanged();
-                                    return null;
-                                }
-                            });
-                        }
+                    public void run() {
+                        Log.i(TAG, "Post request to server by timer");
+                        setProgressBarVisible(true);
+                        doSearch(mSearchTerm);
                     }
-                });
-        confirmBuilder.show();
+                }, SEARCH_REQUEST_DELAY);
+                return true;
+            }
+        });
+
+        searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem menuItem) {
+                searchView.setIconified(false);
+                searchView.requestFocus();
+                searchView.requestFocusFromTouch();
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem menuItem) {
+                searchView.clearFocus();
+                mSearchTerm = null;
+                return true;
+            }
+        });
+
+
+        if (mSearchTerm != null) {
+            // If search term is already set here then this fragment is
+            // being restored from a saved state and the search menu item
+            // needs to be expanded and populated again.
+
+            // Stores the search term (as it will be wiped out by
+            // onQueryTextChange() when the menu item is expanded).
+            final String savedSearchTerm = mSearchTerm;
+
+            // Expands the search menu item
+            searchItem.expandActionView();
+
+            // Sets the SearchView to the previous search string
+            searchView.setQuery(savedSearchTerm, false);
+        }
+    }
+
+    /**
+     * Do nothing.
+     */
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        return false;
     }
 
     private void datasetChanged() {
         mAdapter.resetContent(getActivity());
+    }
+
+    private void doSearch(final String query) {
+        FndTopic<?> fnd = Cache.getTinode().getFndTopic();
+        fnd.setMeta(new MsgSetMeta<>(new MetaSetDesc<String, String>(query, null)));
+        fnd.getMeta(MsgGetMeta.sub());
+    }
+
+    private void setProgressBarVisible(boolean visible) {
+        if (mProgress == null) {
+            return;
+        }
+
+        if (visible) {
+            mProgress.show();
+        } else {
+            mProgress.hide();
+        }
     }
 
     // TODO: Add onBackPressed handing to parent Activity.
@@ -400,6 +379,7 @@ public class FindFragment extends Fragment implements ActionMode.Callback {
 
         @Override
         public void onSubsUpdated() {
+            Log.i(TAG, "onSubsUpdated");
             datasetChanged();
         }
     }

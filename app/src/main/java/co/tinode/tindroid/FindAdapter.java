@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -61,6 +62,7 @@ public class FindAdapter
         }
 
         if (activity != null) {
+            Log.i(TAG, "resetContent");
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

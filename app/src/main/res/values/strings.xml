@@ -111,23 +111,20 @@
     <string name="profile_action">Tinode profile</string>
     <string name="view_profile">View Profile</string>
     <string name="tinode_message">Send Tinode message</string>
-    <string name="failed_to_invite">Don\'t know how to invite - no contact info</string>
     <string name="about_title">About</string>
-    <string name="failed_to_send_message">Failed to send message</string>
-    <string name="failed_to_delete_messages">Failed to delete messages</string>
     <string name="topic_title">Name of the group</string>
     <string name="group_members">Group Members</string>
     <string name="name_required">Topic name required</string>
     <string name="no_members">No group members</string>
     <string name="letter_tile_font_family" translatable="false">sans-serif-medium</string>
     <string name="add_one_member">Add at least one group member</string>
-    <string name="failed_to_create_topic">Failed to create topic</string>
     <string name="add_members">Add members</string>
     <string name="leave_group">Leave group</string>
     <string name="address">Address</string>
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
     <string name="close">Close</string>
+    <string name="your_permissions">Yours</string>
 
     <string name="no_connection">You are offline</string>
     <string name="action_failed">Action failed</string>
@@ -173,7 +170,6 @@
     <string name="change_password">Change password</string>
     <string name="account_settings">Account settings</string>
     <string name="enter_new_password">Enter new password</string>
-    <string name="failed_empty_password">Not changed: empty password</string>
     <string name="confirm_logout">Are you sure you want to logout?</string>
     <string name="edit_account">Edit account name</string>
     <string name="invalid_login">Login is invalid</string>
@@ -185,7 +181,17 @@
     <string name="broken_image">Unknown or invalid image format</string>
     <string name="file_manager_not_found">File manager not found</string>
     <string name="attachment_too_large">The file size %1$s exceeds the %2$s limit.</string>
+
     <string name="failed_to_attach">Failed to send file</string>
+    <string name="failed_to_download">Failed to save downloaded file</string>
+    <string name="failed_to_open_file">No application can view the file of this type</string>
+    <string name="failed_empty_password">Not changed: empty password</string>
+    <string name="failed_to_invite">Don\'t know how to invite - no contact info</string>
+    <string name="failed_to_send_message">Failed to send message</string>
+    <string name="failed_to_delete_messages">Failed to delete messages</string>
+    <string name="failed_empty_id">ID is required</string>
+    <string name="failed_credential_confirmation">Incorrect confirmation code</string>
+    <string name="failed_to_create_topic">Failed to create topic</string>
 
     <string name="email">Email</string>
     <string name="tel">Phone</string>
@@ -195,18 +201,14 @@
     <string name="confirm">Confirm</string>
     <string name="validation_example">Numbers only</string>
     <string name="enter_confirmation_code">Enter confirmation code</string>
-    <string name="failed_credential_confirmation">Incorrect confirmation code</string>
-    <string name="addByIdHint">Enter topic or user ID</string>
-    <string name="failed_empty_id">ID is required</string>
+    <string name="hint_add_by_id">Enter topic or user ID</string>
+    <string name="hint_search_tags">Search by tags</string>
     <string name="topic_not_found_or_invalid">Topic not found or invalid</string>
     <string name="sending_disabled">Not available</string>
-    <string name="failed_to_download">Failed to save downloaded file</string>
-    <string name="failed_to_open_file">No application can view the file of this type</string>
     <string name="download_title">Tindroid download</string>
     <string name="some_permissions_missing">Some permissions missing.</string>
     <string name="invalid_file">Unable to attach this file</string>
     <string name="cancelled">cancelled</string>
-    <string name="yourPermissions">Yours</string>
     <string name="login_rejected">Login rejected</string>
     <string name="email_rejected">Email rejected</string>
     <string name="invalid_confirmation_code">Invalid code</string>

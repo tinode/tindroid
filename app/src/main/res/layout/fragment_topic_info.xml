@@ -230,7 +230,7 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/permissionTitle"
                     android:layout_marginStart="16dp"
-                    android:text="@string/yourPermissions"/>
+                    android:text="@string/your_permissions"/>
 
                 <TextView
                     android:id="@+id/userOne"

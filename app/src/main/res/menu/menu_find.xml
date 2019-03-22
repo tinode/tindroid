@@ -8,7 +8,7 @@
         android:orderInCategory="100"
         android:title="@string/action_search"
         android:icon="@drawable/ic_search"
-        app:showAsAction="ifRoom|collapseActionView"
+        app:showAsAction="always|collapseActionView"
         app:actionViewClass="android.widget.SearchView"/>
 
 </menu>

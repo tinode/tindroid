@@ -13,12 +13,15 @@ import co.tinode.tinodesdk.model.Subscription;
 
 // Topic's Public and Private are String. Subscription Public is VCard, Private is String[].
 public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
+    @SuppressWarnings("unused")
     private static final String TAG = "FndTopic";
 
+    @SuppressWarnings("WeakerAccess")
     public FndTopic(Tinode tinode, Listener<String,String,SP,String[]> l) {
         super(tinode, Tinode.TOPIC_FND, l);
     }
 
+    @SuppressWarnings("unused")
     public void setTypes(JavaType typeOfSubPu) {
         mTinode.setFndTypeOfMetaPacket(typeOfSubPu);
     }
@@ -40,18 +43,19 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
      * @param sub subscription to add to cache
      */
     @Override
-    protected void addSubToCache(Subscription sub) {
+    protected void addSubToCache(Subscription<SP,String[]> sub) {
         if (mSubs == null) {
             mSubs = new HashMap<>();
         }
-        mSubs.put(sub.user != null ? sub.user : sub.topic, sub);
+        mSubs.put(sub.getUnique(), sub);
     }
 
     @Override
-    @SuppressWarnings("un-checked")
-    protected void routeMetaSub(MsgServerMeta meta) {
-        for (Subscription upd : meta.sub) {
-            Subscription sub = getSubscription(upd.user != null ? upd.user : upd.topic);
+    protected void routeMetaSub(MsgServerMeta<String,String,SP,String[]> meta) {
+        // Reset subscriptions on new data.
+        mSubs = null;
+        for (Subscription<SP,String[]> upd : meta.sub) {
+            Subscription<SP,String[]> sub = getSubscription(upd.getUnique());
             if (sub != null) {
                 sub.merge(upd);
             } else {
@@ -70,15 +74,18 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Subscription<SP,String[]> getSubscription(String key) {
         return mSubs != null ? mSubs.get(key) : null;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Collection<Subscription<SP,String[]>> getSubscriptions() {
         return mSubs != null ? mSubs.values() : null;
+    }
+
+    @Override
+    protected void setStorage(Storage store) {
+        /* Do nothing: all fnd data is transient. */
     }
 
     public static class FndListener<SP> extends Listener<String,String,SP,String[]> {

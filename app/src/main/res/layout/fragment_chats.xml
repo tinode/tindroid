@@ -7,14 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".ChatsFragment">
 
-    <androidx.core.widget.ContentLoadingProgressBar
-        style="@android:style/Widget.Holo.ProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <include layout="@layout/fragment_chat_list" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
