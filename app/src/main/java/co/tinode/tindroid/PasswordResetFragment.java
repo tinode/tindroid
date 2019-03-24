@@ -68,20 +68,12 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
     }
 
     @Override
-    public void onActivityCreated(Bundle unused) {
-        super.onActivityCreated(unused);
-
-        final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null) {
-            return;
-        }
-
-        String method;
+    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
         Bundle args = getArguments();
-        method = args != null ? args.getString(ARG_KEY) : "email";
-        TextView text = parent.findViewById(R.id.callToReset);
+        String method = args != null ? args.getString(ARG_KEY) : "email";
+        TextView text = view.findViewById(R.id.callToReset);
         text.setText(getString(R.string.request_pass_reset, method));
-        TextInputLayout hint = parent.findViewById(R.id.responseHint);
+        TextInputLayout hint = view.findViewById(R.id.responseHint);
         hint.setHint(getString(R.string.validated_address_to_use, method));
     }
 

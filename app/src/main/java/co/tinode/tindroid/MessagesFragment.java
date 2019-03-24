@@ -120,8 +120,7 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstance) {
-        super.onActivityCreated(savedInstance);
+    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
@@ -145,7 +144,7 @@ public class MessagesFragment extends Fragment
         // mMessageViewLayoutManager.setStackFromEnd(true);
         mMessageViewLayoutManager.setReverseLayout(true);
 
-        RecyclerView ml = activity.findViewById(R.id.messages_container);
+        RecyclerView ml = view.findViewById(R.id.messages_container);
         ml.setLayoutManager(mMessageViewLayoutManager);
 
         // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
@@ -153,7 +152,7 @@ public class MessagesFragment extends Fragment
         // This needs to be rebound on activity creation.
         FileUploader.setProgressHandler(mUploadProgress);
 
-        mRefresher = activity.findViewById(R.id.swipe_refresher);
+        mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
         ml.setAdapter(mMessagesAdapter);
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -190,7 +189,7 @@ public class MessagesFragment extends Fragment
         mFailureListener = new UiUtils.ToastFailureListener(getActivity());
 
         // Send message on button click
-        activity.findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendText();
@@ -198,7 +197,7 @@ public class MessagesFragment extends Fragment
         });
 
         // Send image button
-        activity.findViewById(R.id.attachImage).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.attachImage).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openFileSelector("image/*", R.string.select_image, ACTION_ATTACH_IMAGE);
@@ -206,14 +205,14 @@ public class MessagesFragment extends Fragment
         });
 
         // Send file button
-        activity.findViewById(R.id.attachFile).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.attachFile).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openFileSelector("*/*", R.string.select_file, ACTION_ATTACH_FILE);
             }
         });
 
-        EditText editor = activity.findViewById(R.id.editMessage);
+        EditText editor = view.findViewById(R.id.editMessage);
         // Send message on Enter
         editor.setOnEditorActionListener(
                 new TextView.OnEditorActionListener() {
@@ -243,7 +242,7 @@ public class MessagesFragment extends Fragment
             }
         });
 
-        activity.findViewById(R.id.enablePeerButton).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.enablePeerButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Enable peer.

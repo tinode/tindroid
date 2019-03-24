@@ -149,7 +149,7 @@ public class StartChatActivity extends AppCompatActivity implements
                     return mSearch;
                 case TAB_BY_ID:
                     if (mById == null) {
-                        mById = new AddByID();
+                        mById = new AddByIDFragment();
                     }
                     return mById;
                 default:

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerMeta;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -27,12 +28,19 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
     }
 
     @Override
-    public PromisedReply<ServerMessage> publish(Drafty content) {
-        throw new UnsupportedOperationException();
+    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<String,String> meta) {
+        if (mSubs != null) {
+            mSubs = null;
+
+            if (mListener != null) {
+                mListener.onSubsUpdated();
+            }
+        }
+        return super.setMeta(meta);
     }
 
     @Override
-    public PromisedReply<ServerMessage> publish(String content) {
+    protected PromisedReply<ServerMessage> publish(Drafty content, long id) {
         throw new UnsupportedOperationException();
     }
 

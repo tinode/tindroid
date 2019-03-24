@@ -34,6 +34,7 @@ import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -81,7 +82,7 @@ public class FindFragment extends Fragment {
             return;
         }
 
-        RecyclerView rv = activity.findViewById(R.id.chat_list);
+        RecyclerView rv = fragment.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
@@ -102,9 +103,6 @@ public class FindFragment extends Fragment {
             @Override
             public void onChanged() {
                 super.onChanged();
-
-                setProgressBarVisible(false);
-
                 if (mAdapter.getItemCount() > 0) {
                     fragment.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
                     fragment.findViewById(android.R.id.empty).setVisibility(View.GONE);
@@ -134,7 +132,7 @@ public class FindFragment extends Fragment {
             }
         });
 
-        mProgress = activity.findViewById(R.id.progressBar);
+        mProgress = fragment.findViewById(R.id.progressBar);
     }
 
     @Override
@@ -222,51 +220,31 @@ public class FindFragment extends Fragment {
             private Handler mHandler;
             @Override
             public boolean onQueryTextSubmit(String queryText) {
+                Log.i(TAG, "onQueryTextSubmit='"+queryText+"'");
+
                 if (mHandler != null) {
                     mHandler.removeCallbacksAndMessages(null);
                 }
 
-                // Called when the action bar search text has changed.  Updates
-                // the search filter, and restarts the loader to do a new query
-                // using the new search string.
-                String newFilter = !TextUtils.isEmpty(queryText) ? queryText : null;
-
-                // Don't do anything if the filter is empty
-                if (mSearchTerm == null && newFilter == null) {
-                    return false;
-                }
-
-                // Don't do anything if the new filter is the same as the current filter
-                if (mSearchTerm != null && mSearchTerm.equals(newFilter)) {
-                    return true;
-                }
-
-                // Updates current filter to new filter
-                mSearchTerm = newFilter;
-
-                Log.i(TAG, "Post request to server: ENTER = " + mSearchTerm);
-
-                setProgressBarVisible(true);
-                doSearch(mSearchTerm);
+                mSearchTerm = doSearch(queryText);
 
                 return true;
             }
 
             @Override
-            public boolean onQueryTextChange(String newText) {
-                mSearchTerm = newText;
+            public boolean onQueryTextChange(final String queryText) {
+
                 if (mHandler == null) {
                     mHandler = new Handler();
                 } else {
                     mHandler.removeCallbacksAndMessages(null);
                 }
 
+                // Delay search in case of more input
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i(TAG, "Post request to server by timer");
-                        setProgressBarVisible(true);
-                        doSearch(mSearchTerm);
+                        mSearchTerm = doSearch(queryText);
                     }
                 }, SEARCH_REQUEST_DELAY);
                 return true;
@@ -320,22 +298,55 @@ public class FindFragment extends Fragment {
         mAdapter.resetContent(getActivity());
     }
 
-    private void doSearch(final String query) {
-        FndTopic<?> fnd = Cache.getTinode().getFndTopic();
-        fnd.setMeta(new MsgSetMeta<>(new MetaSetDesc<String, String>(query, null)));
-        fnd.getMeta(MsgGetMeta.sub());
+    private String doSearch(String query) {
+        query = query.trim();
+        query = !TextUtils.isEmpty(query) ? query : null;
+
+        // No change.
+        if (mSearchTerm == null && query == null) {
+            return null;
+        }
+
+        // Don't do anything if the new filter is the same as the current filter
+        if (mSearchTerm != null && mSearchTerm.equals(query)) {
+            return mSearchTerm;
+        }
+
+        setProgressBarVisible(true);
+
+        final FndTopic<?> fnd = Cache.getTinode().getFndTopic();
+        fnd.setMeta(new MsgSetMeta<>(
+                new MetaSetDesc<String, String>(query == null ? Tinode.NULL_VALUE : query, null)));
+        fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onFinally() {
+                setProgressBarVisible(false);
+                return null;
+            }
+        });
+
+        return query;
     }
 
-    private void setProgressBarVisible(boolean visible) {
+    private void setProgressBarVisible(final boolean visible) {
         if (mProgress == null) {
             return;
         }
-
-        if (visible) {
-            mProgress.show();
-        } else {
-            mProgress.hide();
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
         }
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (visible) {
+                    mProgress.show();
+                } else {
+                    mProgress.hide();
+                }
+            }
+        });
     }
 
     // TODO: Add onBackPressed handing to parent Activity.

@@ -13,21 +13,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.pchmn.materialchips.ChipsInput;
-import com.pchmn.materialchips.model.Chip;
-import com.pchmn.materialchips.model.ChipInterface;
+import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -41,10 +38,9 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    private Topic<?,?,VxCard,PrivateType> mTopic;
+    private ComTopic<VxCard> mTopic;
     private HashMap<String, Boolean> mInitialMembers = new HashMap<>();
 
-    private ChipsInput mChipsInput;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
     // private TreeSet<Integer> mSelectedContacts;
@@ -58,8 +54,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstance) {
-        super.onActivityCreated(savedInstance);
+    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
         final FragmentActivity activity = getActivity();
         if (activity == null) {
@@ -67,7 +62,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         }
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
-        mChipsInput = activity.findViewById(R.id.groupMembers);
+        mSelectedMembers = activity.findViewById(R.id.selectedMembers);
 
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,12 +85,12 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         super.onResume();
 
         final Activity activity = getActivity();
-        if (activity == null) {
+        final Bundle bundle = getArguments();
+        if (activity == null || bundle == null) {
             return;
         }
 
-        Bundle bundle = getArguments();
-        mTopic = Cache.getTinode().getTopic(bundle.getString("topic"));
+        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(bundle.getString("topic"));
 
         Collection<Subscription<VxCard,PrivateType>> subs = mTopic.getSubscriptions();
         for (Subscription<VxCard,PrivateType> sub : subs) {

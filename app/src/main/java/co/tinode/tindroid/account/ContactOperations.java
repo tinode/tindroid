@@ -209,7 +209,7 @@ public class ContactOperations {
     public ContactOperations addProfileAction(final String serverId) {
         mValues.clear();
         if (!TextUtils.isEmpty(serverId)) {
-            mValues.put(Data.MIMETYPE, Utils.MIME_PROFILE);
+            mValues.put(Data.MIMETYPE, Utils.MIME_TINODE_PROFILE);
             mValues.put(Utils.DATA_PID, serverId);
             mValues.put(Utils.DATA_SUMMARY, mContext.getString(R.string.profile_action));
             mValues.put(Utils.DATA_DETAIL, mContext.getString(R.string.tinode_message));

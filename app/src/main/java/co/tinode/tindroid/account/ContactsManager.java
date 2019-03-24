@@ -8,24 +8,18 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
-import android.provider.ContactsContract.Groups;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.Settings;
-import android.provider.ContactsContract.StatusUpdates;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import co.tinode.tindroid.R;
 import co.tinode.tindroid.media.AvatarPhoto;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
@@ -487,7 +481,7 @@ public class ContactsManager {
         static final String[] PROJECTION = new String[]{Data._ID};
         static final int COLUMN_ID = 0;
         static final String SELECTION =
-                Data.MIMETYPE + "='" + Utils.MIME_PROFILE + "' AND "
+                Data.MIMETYPE + "='" + Utils.MIME_TINODE_PROFILE + "' AND "
                         + Utils.DATA_PID + "=?";
     }
 

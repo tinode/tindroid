@@ -68,8 +68,6 @@ public class PromisedReply<T> {
 
     private CountDownLatch mDoneSignal;
 
-    //private final Executor mExecutor;
-
     /**
      * Create promise in a WAITING state.
      */
@@ -100,8 +98,10 @@ public class PromisedReply<T> {
     }
 
     /**
-     * Call onSuccess or onFailure when the promise is resolved or rejected. The call will happen on the
-     * thread which called resolve() or reject()
+     * Call SuccessListener.onSuccess or FailureListener.onFailure when the
+     * promise is resolved or rejected. The call will happen on the thread which
+     * called resolve() or reject().
+     *
      * @param success called when the promise is resolved
      * @param failure called when the promise is rejected
      * @return promise for chaining
@@ -138,7 +138,7 @@ public class PromisedReply<T> {
     }
 
     /**
-     * Call onSuccess when the promise is resolved. The call will happen on the
+     * Calls SuccessListener.onSuccess when the promise is resolved. The call will happen on the
      * thread which called resolve().
      *
      * @param success called when the promise is resolved
@@ -157,6 +157,27 @@ public class PromisedReply<T> {
      */
     public PromisedReply<T> thenCatch(FailureListener<T> failure) {
         return thenApply(null, failure);
+    }
+
+    /**
+     * Call FinalListener.onFinally when the promise is completed. The call will happen on the
+     * thread which completed the promise: called either resolve() or reject().
+     *
+     * @param finished called when the promise is completed either way.
+     * @return promise for chaining
+     */
+    public PromisedReply<T> thenFinally(final FinalListener<T> finished) {
+        return thenApply(new SuccessListener<T>() {
+            @Override
+            public PromisedReply<T> onSuccess(T result) throws Exception {
+                return finished.onFinally();
+            }
+        }, new FailureListener<T>() {
+            @Override
+            public <E extends Exception> PromisedReply<T> onFailure(E err) throws Exception {
+                return finished.onFinally();
+            }
+        });
     }
 
     private void callOnSuccess(final T result) throws Exception {
@@ -317,5 +338,9 @@ public class PromisedReply<T> {
     }
     public static abstract class FailureListener<U> {
         public abstract <E extends Exception> PromisedReply<U> onFailure(E err) throws Exception;
+    }
+
+    public static abstract class FinalListener<U> {
+        public abstract PromisedReply<U> onFinally() throws Exception;
     }
 }

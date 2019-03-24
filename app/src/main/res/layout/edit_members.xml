@@ -1,12 +1,37 @@
-<com.pchmn.materialchips.ChipsInput
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/groupMembers"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/membersTitle"
+        style="@style/sectionTitleStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/group_members"
+        />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/selectedMembers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:chip_hasAvatarIcon="true"
-        app:chip_deletable="true"
-        app:showChipDetailed="false"
-        app:filterable_list_backgroundColor="@color/colorLightGray"
-        app:maxRows="4"
-        app:hint="@string/add_members" />
+        android:minHeight="48dp"
+        android:maxHeight="196dp"
+        tools:text="Show something when empty "/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginBottom="@dimen/activity_padding"
+        android:layout_marginTop="@dimen/activity_padding"
+        android:background="@color/grey" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/contact_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</LinearLayout>

@@ -16,7 +16,7 @@ import java.util.List;
  * This class handles execution of batch mOperations on Contacts provider.
  */
 final public class BatchOperation {
-    private final String TAG = "BatchOperation";
+    private final static String TAG = "BatchOperation";
 
     private final ContentResolver mResolver;
     // List for storing the batch mOperations

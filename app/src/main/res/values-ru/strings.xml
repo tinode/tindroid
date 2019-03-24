@@ -55,6 +55,7 @@
     <string name="invite">Пригласить</string>
     <string name="no_contacts">Контакты не найдены</string>
     <string name="no_chats">Чатов нет\n\n¯\\_(ツ)_/¯</string>
+    <string name="nothing_found">Ничего не найдено\n\n¯\\_(ツ)_/¯</string>
     <string name="error_new_account_failed">Ошибка регистрации:</string>
     <string name="password_required">Введите пароль</string>
     <string name="login_required">Введите логин</string>

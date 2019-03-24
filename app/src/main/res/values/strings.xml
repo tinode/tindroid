@@ -90,6 +90,8 @@
     <string name="error_new_account_failed">Account registration failed:</string>
     <string name="no_contacts">No contacts found</string>
     <string name="no_chats">You have no chats\n\n¯\\_(ツ)_/¯</string>
+    <string name="nothing_found">Nothing found\n\n¯\\_(ツ)_/¯</string>
+
     <string name="invite">Invite</string>
     <string name="contacts">Contacts</string>
     <string name="chats">Chats</string>

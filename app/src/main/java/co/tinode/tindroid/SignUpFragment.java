@@ -67,8 +67,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstance) {
-        super.onActivityCreated(savedInstance);
+    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
         Activity activity = getActivity();
         if (activity == null) {
@@ -77,7 +76,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
 
         // Get avatar from the gallery
         // TODO(gene): add support for taking a picture
-        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.requestAvatar(SignUpFragment.this);

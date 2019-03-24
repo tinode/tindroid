@@ -91,7 +91,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 bar.setDisplayHomeAsUpEnabled(false);
                 bar.setTitle(R.string.app_name);
             }
-            activity.findViewById(R.id.startNewChat).setOnClickListener(new View.OnClickListener() {
+            view.findViewById(R.id.startNewChat).setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         Intent intent = new Intent(activity, StartChatActivity.class);
@@ -101,7 +101,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 });
         }
 
-        RecyclerView rv = activity.findViewById(R.id.chat_list);
+        RecyclerView rv = view.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));

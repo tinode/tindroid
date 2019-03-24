@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.material.chip.ChipGroup;
 import com.pchmn.materialchips.ChipsInput;
 import com.pchmn.materialchips.model.Chip;
 import com.pchmn.materialchips.model.ChipInterface;
@@ -28,6 +29,9 @@ import java.util.List;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -48,7 +52,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    private ChipsInput mChipsInput;
+    private ChipGroup mSelectedMembers;
 
     // Sorted set of selected contacts (cursor positions of selected contacts).
     // private TreeSet<Integer> mSelectedContacts;
@@ -68,7 +72,8 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             protected Bitmap processBitmap(Object data) {
                 // This gets called in a background thread and passed the data from
                 // ImageLoader.loadImage().
-                return UiUtils.loadContactPhotoThumbnail(CreateGroupFragment.this, (String) data, getImageSize());
+                return UiUtils.loadContactPhotoThumbnail(CreateGroupFragment.this,
+                        (String) data, getImageSize());
             }
         };
         // Set a placeholder loading image for the image loader
@@ -84,8 +89,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstance) {
-        super.onActivityCreated(savedInstance);
+    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
         final FragmentActivity activity = getActivity();
         if (activity == null) {
@@ -110,17 +114,27 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             }
         };
 
-        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.requestAvatar(CreateGroupFragment.this);
             }
         });
 
-        mChipsInput = activity.findViewById(R.id.groupMembers);
-        //setListAdapter(mContactsAdapter);
+        mSelectedMembers = view.findViewById(R.id.selectedMembers);
+        // TODO: add existing members to the mChipsInput.
 
-        activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
+        // Recycler view with all available Tinode contacts.
+        RecyclerView rv = view.findViewById(R.id.contact_list);
+        rv.setLayoutManager(new LinearLayoutManager(activity));
+        rv.setHasFixedSize(true);
+        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
+
+        mAdapter = new ContactsAdapter(activity, null);
+        rv.setAdapter(mAdapter);
+
+        // This button creates the new group.
+        view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final EditText titleEdit = activity.findViewById(R.id.editTitle);

@@ -14,17 +14,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract.Contacts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
-import androidx.appcompat.widget.AppCompatImageView;
-import android.text.SpannableString;
+
 import android.text.TextUtils;
-import android.text.style.TextAppearanceSpan;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -33,20 +29,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AlphabetIndexer;
 import android.widget.SearchView;
-import android.widget.SectionIndexer;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Locale;
 
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.account.PhoneEmailImLoader;
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.widgets.LetterTileDrawable;
 
 public class ContactsFragment extends Fragment {
 
@@ -131,6 +122,11 @@ public class ContactsFragment extends Fragment {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        final View fragment = getView();
+                        if (fragment != null) {
+                            fragment.findViewById(android.R.id.empty)
+                                    .setVisibility(mAdapter.getItemCount() > 0 ? View.GONE : View.VISIBLE);
+                        }
                         LoaderManager.getInstance(activity)
                                 .restartLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
                     }
@@ -159,7 +155,7 @@ public class ContactsFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-        mAdapter = new ContactsAdapter(activity, null);
+        mAdapter = new ContactsAdapter(activity, null, null);
         rv.setAdapter(mAdapter);
 
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -181,7 +177,7 @@ public class ContactsFragment extends Fragment {
         }
     }
 
-    private void handleItemClick(final ViewHolder tag) {
+    private void handleItemClick(final ContactsAdapter.ViewHolder tag) {
         boolean done = false;
         if (mPhEmImData != null) {
             Utils.ContactHolder holder = mPhEmImData.get(tag.contact_id);
@@ -191,20 +187,6 @@ public class ContactsFragment extends Fragment {
                     Intent it = new Intent(getActivity(), MessageActivity.class);
                     it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     it.putExtra("topic", address);
-                    startActivity(it);
-                    done = true;
-                } else if ((address = holder.getPhone()) != null) {
-                    // Send an SMS with an invitation
-                    Uri uri = Uri.fromParts("smsto", address, null);
-                    Intent it = new Intent(Intent.ACTION_SENDTO, uri);
-                    it.putExtra("sms_body", getString(R.string.tinode_invite_body));
-                    startActivity(it);
-                    done = true;
-                } else if ((address = holder.getEmail()) != null) {
-                    Uri uri = Uri.fromParts("mailto", address, null);
-                    Intent it = new Intent(Intent.ACTION_SENDTO, uri);
-                    it.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.tinode_invite_subject));
-                    it.putExtra(Intent.EXTRA_TEXT, getString(R.string.tinode_invite_body));
                     startActivity(it);
                     done = true;
                 }
@@ -512,260 +494,6 @@ public class ContactsFragment extends Fragment {
         int SORT_KEY = 4;
     }
 
-    /**
-     * This is a subclass of CursorAdapter that supports binding Cursor columns to a view layout.
-     * If those items are part of search results, the search string is marked by highlighting the
-     * query text. An {@link AlphabetIndexer} is used to allow quicker navigation up and down the
-     * ListView.
-     */
-    private class ContactsAdapter extends RecyclerView.Adapter<ViewHolder> implements SectionIndexer {
-        private AlphabetIndexer mAlphabetIndexer; // Stores the AlphabetIndexer instance
-        private TextAppearanceSpan highlightTextSpan; // Stores the highlight text appearance style
-
-        private Cursor mCursor;
-
-        /**
-         * Instantiates a new Contacts Adapter.
-         *
-         * @param context A context that has access to the app's layout.
-         */
-        ContactsAdapter(Context context, Cursor cursor) {
-            setHasStableIds(true);
-            swapCursor(cursor);
-
-            // Loads a string containing the English alphabet. To fully localize the app, provide a
-            // strings.xml file in res/values-<x> directories, where <x> is a locale. In the file,
-            // define a string with android:name="alphabet" and contents set to all of the
-            // alphabetic characters in the language in their proper sort order, in upper case if
-            // applicable.
-            final String alphabet = context.getString(R.string.alphabet);
-
-            // Instantiates a new AlphabetIndexer bound to the column used to sort contact names.
-            // The cursor is left null, because it has not yet been retrieved.
-            mAlphabetIndexer = new AlphabetIndexer(null, ContactsQuery.SORT_KEY, alphabet);
-
-            // Defines a span for highlighting the part of a display name that matches the search
-            // string
-            highlightTextSpan = new TextAppearanceSpan(getActivity(), R.style.searchTextHighlight);
-        }
-
-        /**
-         * Identifies the start of the search string in the display name column of a Cursor row.
-         * E.g. If displayName was "Adam" and search query (mSearchTerm) was "da" this would
-         * return 1.
-         *
-         * @param displayName The contact display name.
-         * @return The starting position of the search string in the display name, 0-based. The
-         * method returns -1 if the string is not found in the display name, or if the search
-         * string is empty or null.
-         */
-        private int indexOfSearchQuery(String displayName) {
-            if (!TextUtils.isEmpty(mSearchTerm)) {
-                return displayName.toLowerCase(Locale.getDefault()).indexOf(
-                        mSearchTerm.toLowerCase(Locale.getDefault()));
-            }
-
-            return -1;
-        }
-
-        /**
-         * Overrides newView() to inflate the list item views.
-         */
-        @Override
-        @NonNull
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
-            return new ViewHolder(LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.contact_invite, parent, false));
-        }
-
-        /**
-         * Binds data from the Cursor to the provided view.
-         */
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            if (!mCursor.moveToPosition(position)) {
-                throw new IllegalArgumentException("Invalid cursor position " + position);
-            }
-
-            // ID of the contact
-            holder.contact_id = mCursor.getInt(ContactsQuery.ID);
-
-            // Get the thumbnail image Uri from the current Cursor row.
-            final String photoUri = mCursor.getString(ContactsQuery.PHOTO_THUMBNAIL_DATA);
-
-            final String displayName = mCursor.getString(ContactsQuery.DISPLAY_NAME);
-
-            final int startIndex = indexOfSearchQuery(displayName);
-
-            Utils.ContactHolder extra = (mPhEmImData != null ? mPhEmImData.get(holder.contact_id) : null);
-
-            if (extra != null && extra.getImCount() > 0) {
-                holder.inviteButton.setVisibility(View.GONE);
-            } else {
-                holder.inviteButton.setVisibility(View.VISIBLE);
-            }
-
-            String line2 = (extra != null) ? extra.bestContact() : null;
-
-            if (startIndex == -1) {
-                // If the user didn't do a search, or the search string didn't match a display
-                // name, show the display name without highlighting
-                holder.text1.setText(displayName);
-
-                if (TextUtils.isEmpty(mSearchTerm)) {
-                    if (TextUtils.isEmpty(line2)) {
-                        // Search string is empty and we have no contacts to show
-                        holder.text2.setVisibility(View.GONE);
-                    } else {
-                        holder.text2.setText(line2);
-                        holder.text2.setVisibility(View.VISIBLE);
-                    }
-                } else {
-                    // Shows a second line of text that indicates the search string matched
-                    // something other than the display name
-                    holder.text2.setVisibility(View.VISIBLE);
-                }
-            } else {
-                // If the search string matched the display name, applies a SpannableString to
-                // highlight the search string with the displayed display name
-
-                // Wraps the display name in the SpannableString
-                final SpannableString highlightedName = new SpannableString(displayName);
-
-                // Sets the span to start at the starting point of the match and end at "length"
-                // characters beyond the starting point
-                highlightedName.setSpan(highlightTextSpan, startIndex,
-                        startIndex + mSearchTerm.length(), 0);
-
-                // Binds the SpannableString to the display name View object
-                holder.text1.setText(highlightedName);
-
-                // Since the search string matched the name, this hides the secondary message
-                holder.text2.setVisibility(View.GONE);
-            }
-
-            // Clear the icon then load the thumbnail from photoUri in a background worker thread
-            LetterTileDrawable tile = new LetterTileDrawable(requireContext())
-                    .setIsCircular(true)
-                    .setLetterAndColor(displayName, line2)
-                    .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON);
-            holder.icon.setImageDrawable(tile);
-            mImageLoader.loadImage(getContext(), photoUri, holder.icon);
-        }
-
-        /**
-         * Overrides swapCursor to move the new Cursor into the AlphabetIndex as well as the
-         * CursorAdapter.
-         */
-        void swapCursor(Cursor newCursor) {
-            if (newCursor == mCursor) {
-                return;
-            }
-
-            final Cursor oldCursor = mCursor;
-
-            // Update the AlphabetIndexer with new cursor as well
-            mAlphabetIndexer.setCursor(newCursor);
-
-            mCursor = newCursor;
-            if (oldCursor != null) {
-                oldCursor.close();
-            }
-
-            if (newCursor != null) {
-                // notify the observers about the new cursor
-                notifyDataSetChanged();
-            } else {
-                notifyItemRangeRemoved(0, getItemCount());
-            }
-
-            final View fragment = ContactsFragment.this.getView();
-            if (fragment != null) {
-                fragment.findViewById(android.R.id.empty)
-                        .setVisibility(mAdapter.getItemCount() > 0 ? View.GONE : View.VISIBLE);
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            if (mCursor == null) {
-                return 0;
-            }
-            return mCursor.getCount();
-        }
-
-        @Override
-        public long getItemId(int pos) {
-            if (mCursor == null) {
-                throw new IllegalStateException("Cursor is null.");
-            }
-            if (!mCursor.moveToPosition(pos)) {
-                throw new IllegalStateException("Failed to move cursor to position " + pos);
-            }
-
-            return mCursor.getLong(ContactsQuery.ID);
-        }
-
-        /**
-         * Defines the SectionIndexer.getSections() interface.
-         */
-        @Override
-        public Object[] getSections() {
-            return mAlphabetIndexer.getSections();
-        }
-
-        /**
-         * Defines the SectionIndexer.getPositionForSection() interface.
-         */
-        @Override
-        public int getPositionForSection(int i) {
-            if (mCursor == null) {
-                return 0;
-            }
-            return mAlphabetIndexer.getPositionForSection(i);
-        }
-
-        /**
-         * Defines the SectionIndexer.getSectionForPosition() interface.
-         */
-        @Override
-        public int getSectionForPosition(int i) {
-            if (mCursor == null) {
-                return 0;
-            }
-            return mAlphabetIndexer.getSectionForPosition(i);
-        }
-    }
-
-    private class ViewHolder extends RecyclerView.ViewHolder {
-        int contact_id;
-        TextView text1;
-        TextView text2;
-        AppCompatImageView icon;
-        View inviteButton;
-
-        ViewHolder(@NonNull final View view) {
-            super(view);
-
-            text1 = view.findViewById(android.R.id.text1);
-            text2 = view.findViewById(android.R.id.text2);
-            icon = view.findViewById(android.R.id.icon);
-            inviteButton = view.findViewById(R.id.buttonInvite);
-            inviteButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    handleItemClick(ViewHolder.this);
-                }
-            });
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    handleItemClick(ViewHolder.this);
-                }
-            });
-        }
-    }
-
     private class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
         @NonNull
         @Override
@@ -808,7 +536,7 @@ public class ContactsFragment extends Fragment {
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
-                mAdapter.swapCursor(data);
+                mAdapter.resetContent(data, mSearchTerm);
             }
         }
 
@@ -817,7 +545,7 @@ public class ContactsFragment extends Fragment {
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 // When the loader is being reset, clear the cursor from the adapter. This allows the
                 // cursor resources to be freed.
-                mAdapter.swapCursor(null);
+                mAdapter.resetContent(null, mSearchTerm);
             }
         }
     }

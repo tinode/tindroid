@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
-public class AddByID extends Fragment {
+public class AddByIDFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -27,7 +27,7 @@ public class AddByID extends Fragment {
             return;
         }
 
-        activity.findViewById(R.id.confirm).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.confirm).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 TextView editor = activity.findViewById(R.id.editId);

@@ -73,9 +73,7 @@ public class TopicInfoFragment extends Fragment {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstance) {
-        super.onActivityCreated(savedInstance);
-
+    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
@@ -84,21 +82,21 @@ public class TopicInfoFragment extends Fragment {
         mAdapter = new MembersAdapter();
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
-        RecyclerView rv = activity.findViewById(R.id.groupMembers);
+        RecyclerView rv = view.findViewById(R.id.groupMembers);
         rv.setLayoutManager(new LinearLayoutManager(activity, RecyclerView.VERTICAL, false));
         rv.setAdapter(mAdapter);
         rv.setNestedScrollingEnabled(false);
 
         // Set up listeners
 
-        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.requestAvatar(TopicInfoFragment.this);
             }
         });
 
-        final Switch muted = activity.findViewById(R.id.switchMuted);
+        final Switch muted = view.findViewById(R.id.switchMuted);
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 try {
@@ -112,7 +110,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        activity.findViewById(R.id.permissions).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.permissions).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
@@ -120,7 +118,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        activity.findViewById(R.id.buttonLeaveGroup).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.buttonLeaveGroup).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mTopic.isOwner()) {
@@ -142,7 +140,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        activity.findViewById(R.id.buttonAddMembers).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.buttonAddMembers).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS,
@@ -150,7 +148,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        activity.findViewById(R.id.authPermissions).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.authPermissions).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
@@ -158,7 +156,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        activity.findViewById(R.id.anonPermissions).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.anonPermissions).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
@@ -166,7 +164,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        activity.findViewById(R.id.userOne).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.userOne).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.showEditPermissions(activity, mTopic,
@@ -175,7 +173,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        activity.findViewById(R.id.userTwo).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.userTwo).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UiUtils.showEditPermissions(activity, mTopic,
