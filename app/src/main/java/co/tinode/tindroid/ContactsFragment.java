@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -36,7 +37,6 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import co.tinode.tindroid.account.PhoneEmailImLoader;
 import co.tinode.tindroid.account.Utils;
 
 public class ContactsFragment extends Fragment {
@@ -50,17 +50,10 @@ public class ContactsFragment extends Fragment {
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
     private String mSearchTerm; // Stores the current search query term
 
-    // Contact selected listener that allows the activity holding this fragment to be notified of
-    // a contact being selected
-    private OnContactsInteractionListener mOnContactSelectedListener;
-
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
-    // Callback for handling notifications of Phone, Email, IM contact loading;
-    private PhEmImLoaderCallback mPhEmImLoaderCallback;
-    private SparseArray<Utils.ContactHolder> mPhEmImData;
 
-    // Observer to receive notifications while the fragment is active
+    // Observer to receive notifications while the fragment is active.
     private ContentObserver mContactsObserver;
 
     @Override
@@ -84,32 +77,13 @@ public class ContactsFragment extends Fragment {
         }
 
         mContactsLoaderCallback = new ContactsLoaderCallback();
-        mPhEmImLoaderCallback = new PhEmImLoaderCallback();
 
         final FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
         }
 
-        /*
-         * An ImageLoader object loads and resizes an image in the background and binds it to the
-         * each item layout of the ListView. ImageLoader implements memory caching for each image,
-         * which substantially improves refreshes of the ListView as the user scrolls through it.
-         *
-         * http://developer.android.com/training/displaying-bitmaps/
-         */
-        mImageLoader = new ImageLoader(UiUtils.getListPreferredItemHeight(this),
-                activity.getSupportFragmentManager()) {
-            @Override
-            protected Bitmap processBitmap(Object data) {
-                // This gets called in a background thread and passed the data from
-                // ImageLoader.loadImage().
-                return UiUtils.loadContactPhotoThumbnail(ContactsFragment.this, (String) data, getImageSize());
-            }
-        };
-
-        // Set a placeholder loading image for the image loader
-        mImageLoader.setLoadingImage(activity, R.drawable.ic_person_circle);
+        mImageLoader = UiUtils.getImageLoaderInstance(this);
 
         mContactsObserver = new ContentObserver(null) {
             @Override
@@ -128,7 +102,7 @@ public class ContactsFragment extends Fragment {
                                     .setVisibility(mAdapter.getItemCount() > 0 ? View.GONE : View.VISIBLE);
                         }
                         LoaderManager.getInstance(activity)
-                                .restartLoader(ContactsQuery.PHEMIM_QUERY_ID, null, mPhEmImLoaderCallback);
+                                .restartLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
                     }
                 });
             }
@@ -155,7 +129,15 @@ public class ContactsFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-        mAdapter = new ContactsAdapter(activity, null, null);
+        mAdapter = new ContactsAdapter(activity, mImageLoader, new ContactsAdapter.ClickListener() {
+            @Override
+            public void onClick(String topicName, ContactsAdapter.ViewHolder holder) {
+                Intent it = new Intent(activity, MessageActivity.class);
+                it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                it.putExtra("topic", topicName);
+                startActivity(it);
+            }
+        });
         rv.setAdapter(mAdapter);
 
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -177,27 +159,6 @@ public class ContactsFragment extends Fragment {
         }
     }
 
-    private void handleItemClick(final ContactsAdapter.ViewHolder tag) {
-        boolean done = false;
-        if (mPhEmImData != null) {
-            Utils.ContactHolder holder = mPhEmImData.get(tag.contact_id);
-            if (holder != null) {
-                String address = holder.getIm();
-                if (address != null) {
-                    Intent it = new Intent(getActivity(), MessageActivity.class);
-                    it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    it.putExtra("topic", address);
-                    startActivity(it);
-                    done = true;
-                }
-            }
-        }
-
-        if (!done) {
-            Toast.makeText(getContext(), R.string.failed_to_invite, Toast.LENGTH_SHORT).show();
-        }
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -210,23 +171,6 @@ public class ContactsFragment extends Fragment {
             if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 ((TextView) activity.findViewById(android.R.id.empty)).setText(R.string.contacts_permission_denied);
             }
-        }
-    }
-
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-
-        try {
-            // Assign callback listener which the holding activity must implement. This is used
-            // so that when a contact item is interacted with (selected by the user) the holding
-            // activity will be notified and can take further action such as populating the contact
-            // detail pane (if in multi-pane layout) or starting a new activity with the contact
-            // details (single pane layout).
-            mOnContactSelectedListener = (OnContactsInteractionListener) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString()
-                    + " must implement OnContactsInteractionListener");
         }
     }
 
@@ -250,8 +194,8 @@ public class ContactsFragment extends Fragment {
             activity.getContentResolver().registerContentObserver(ContactsQuery.CONTENT_URI,
                     true, mContactsObserver);
             // Refresh data
-            LoaderManager.getInstance(activity).initLoader(ContactsQuery.PHEMIM_QUERY_ID,
-                    null, mPhEmImLoaderCallback);
+            LoaderManager.getInstance(activity).initLoader(ContactsQuery.CORE_QUERY_ID,
+                    null, mContactsLoaderCallback);
         } catch (SecurityException ex) {
             Log.d(TAG, "Missing permission", ex);
         }
@@ -356,15 +300,11 @@ public class ContactsFragment extends Fragment {
                 }
 
                 searchView.clearFocus();
-
-                // When the user collapses the SearchView the current search string is
-                // cleared and the loader restarted.
-                if (!TextUtils.isEmpty(mSearchTerm)) {
-                    mOnContactSelectedListener.onSelectionCleared();
-                }
                 mSearchTerm = null;
+
                 LoaderManager.getInstance(activity).restartLoader(ContactsQuery.CORE_QUERY_ID,
                         null, mContactsLoaderCallback);
+
                 return true;
             }
         });
@@ -413,26 +353,6 @@ public class ContactsFragment extends Fragment {
     }
 
     /**
-     * This interface must be implemented by any activity that loads this fragment. When an
-     * interaction occurs, such as touching an item from the ListView, these callbacks will
-     * be invoked to communicate the event back to the activity.
-     */
-    public interface OnContactsInteractionListener {
-        /**
-         * Called when a contact is selected from the ListView.
-         *
-         * @param contactUri The contact Uri.
-         */
-        void onContactSelected(Uri contactUri);
-
-        /**
-         * Called when the ListView selection is cleared like when
-         * a contact search is taking place or is finishing.
-         */
-        void onSelectionCleared();
-    }
-
-    /**
      * This interface defines constants for the Cursor and CursorLoader, based on constants defined
      * in the {@link android.provider.ContactsContract.Contacts} class.
      */
@@ -440,8 +360,6 @@ public class ContactsFragment extends Fragment {
 
         // An identifier for the base loader -- just contact names
         int CORE_QUERY_ID = 1;
-        // ID of the loader for fetching emails, phones, and Tinode IM handles
-        int PHEMIM_QUERY_ID = 2;
 
         // A content URI for the Contacts table
         Uri CONTENT_URI = Contacts.CONTENT_URI;
@@ -452,35 +370,23 @@ public class ContactsFragment extends Fragment {
 
         // The selection clause for the CursorLoader query. The search criteria defined here
         // restrict results to contacts that have a display name and are linked to visible groups.
-        // Notice that the search on the string provided by the user is implemented by appending
-        // the search string to CONTENT_FILTER_URI.
-        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " + Contacts.IN_VISIBLE_GROUP + "=1";
+        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " +
+                Contacts.IN_VISIBLE_GROUP + "=1 AND " +
+                ContactsContract.CommonDataKinds.Im.PROTOCOL + "=" +
+                    ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + " AND " +
+                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL + "=" +
+                    co.tinode.tindroid.account.Utils.TINODE_IM_PROTOCOL;
 
-        // The desired sort order for the returned Cursor. In Android 3.0 and later, the primary
-        // sort key allows for localization. In earlier versions. use the display name as the sort
-        // key.
+        // The desired sort order for the returned Cursor.
         String SORT_ORDER = Contacts.SORT_KEY_PRIMARY;
 
-        // The projection for the CursorLoader query. This is a list of columns that the Contacts
-        // Provider should return in the Cursor.
+        // A list of columns that the Contacts Provider should return in the Cursor.
         String[] PROJECTION = {
-
-                // The contact's row id
                 Contacts._ID,
-
-                // A pointer to the contact that is guaranteed to be more permanent than _ID. Given
-                // a contact's current _ID value and LOOKUP_KEY, the Contacts Provider can generate
-                // a "permanent" contact URI.
                 Contacts.LOOKUP_KEY,
-
-                // In platform version 3.0 and later, the Contacts table contains
-                // DISPLAY_NAME_PRIMARY, which either contains the contact's displayable name or
-                // some other useful identifier such as an email address.
                 Contacts.DISPLAY_NAME_PRIMARY,
-
-                // In Android 3.0 and later, the thumbnail image is pointed to by
-                // PHOTO_THUMBNAIL_URI.
                 Contacts.PHOTO_THUMBNAIL_URI,
+                ContactsContract.CommonDataKinds.Email.DATA,
 
                 // The sort order column for the returned Cursor, used by the AlphabetIndexer
                 SORT_ORDER,
@@ -488,10 +394,12 @@ public class ContactsFragment extends Fragment {
 
         // The query column numbers which map to each value in the projection
         int ID = 0;
-        int LOOKUP_KEY = 1;
+        // int LOOKUP_KEY = 1;
         int DISPLAY_NAME = 2;
         int PHOTO_THUMBNAIL_DATA = 3;
-        int SORT_KEY = 4;
+        int IM_ADDRESS = 4;
+
+        int SORT_KEY = 5;
     }
 
     private class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -547,35 +455,6 @@ public class ContactsFragment extends Fragment {
                 // cursor resources to be freed.
                 mAdapter.resetContent(null, mSearchTerm);
             }
-        }
-    }
-
-    class PhEmImLoaderCallback implements LoaderManager.LoaderCallbacks<SparseArray<Utils.ContactHolder>> {
-
-        @NonNull
-        @Override
-        public Loader<SparseArray<Utils.ContactHolder>> onCreateLoader(int id, Bundle args) {
-            return new PhoneEmailImLoader(getContext());
-        }
-
-        @Override
-        public void onLoadFinished(@NonNull Loader<SparseArray<Utils.ContactHolder>> loader,
-                                   SparseArray<Utils.ContactHolder> data) {
-            mPhEmImData = data;
-
-            final FragmentActivity activity = getActivity();
-            if (activity == null) {
-                return;
-            }
-
-            // Restart the main contacts loader.
-            LoaderManager.getInstance(activity).restartLoader(ContactsQuery.CORE_QUERY_ID,
-                    null, mContactsLoaderCallback);
-        }
-
-        @Override
-        public void onLoaderReset(@NonNull Loader<SparseArray<Utils.ContactHolder>> loader) {
-            mPhEmImData = null;
         }
     }
 }

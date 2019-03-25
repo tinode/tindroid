@@ -8,8 +8,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,12 +18,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.pchmn.materialchips.ChipsInput;
-import com.pchmn.materialchips.model.Chip;
-import com.pchmn.materialchips.model.ChipInterface;
 
-import java.util.List;
+import java.util.HashMap;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
@@ -44,7 +40,8 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment for adding/editing a group topic
  */
-public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoaderResultReceiver {
+public class CreateGroupFragment extends Fragment
+        implements UiUtils.ContactsLoaderResultReceiver, ContactsAdapter.ClickListener {
 
     private static final String TAG = "CreateGroupFragment";
 
@@ -52,32 +49,15 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
+    private ContactsAdapter mAdapter;
+    private HashMap<String, Boolean> mGroupMembers = new HashMap<>();
     private ChipGroup mSelectedMembers;
 
-    // Sorted set of selected contacts (cursor positions of selected contacts).
-    // private TreeSet<Integer> mSelectedContacts;
-    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        mImageLoader = new ImageLoader(UiUtils.getListPreferredItemHeight(this),
-                activity.getSupportFragmentManager()) {
-            @Override
-            protected Bitmap processBitmap(Object data) {
-                // This gets called in a background thread and passed the data from
-                // ImageLoader.loadImage().
-                return UiUtils.loadContactPhotoThumbnail(CreateGroupFragment.this,
-                        (String) data, getImageSize());
-            }
-        };
-        // Set a placeholder loading image for the image loader
-        mImageLoader.setLoadingImage(activity, R.drawable.ic_person_circle);
+        mImageLoader = UiUtils.getImageLoaderInstance(this);
     }
 
     @Override
@@ -122,7 +102,6 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
         });
 
         mSelectedMembers = view.findViewById(R.id.selectedMembers);
-        // TODO: add existing members to the mChipsInput.
 
         // Recycler view with all available Tinode contacts.
         RecyclerView rv = view.findViewById(R.id.contact_list);
@@ -130,7 +109,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
 
-        mAdapter = new ContactsAdapter(activity, null);
+        mAdapter = new ContactsAdapter(activity, mImageLoader, this);
         rv.setAdapter(mAdapter);
 
         // This button creates the new group.
@@ -147,8 +126,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
 
                 final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
 
-                List<Chip> selected = (List<Chip>) mChipsInput.getSelectedChipList();
-                if (selected.size() == 0) {
+                if (mGroupMembers.size() == 0) {
                     Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -199,7 +177,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
 
     @Override
     public void receiveResult(int id, Cursor data) {
-        mChipsInput.setFilterableList(UiUtils.createChipsInputFilteredList(data));
+        mAdapter.resetContent(data, null);
     }
 
     private void createTopic(final Activity activity, final String title,
@@ -212,8 +190,8 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    for (ChipInterface chip : mChipsInput.getSelectedChipList()) {
-                        topic.invite((String) chip.getId(), null /* use default */);
+                    for (String user : mGroupMembers.keySet()) {
+                        topic.invite(user, null /* use default */);
                     }
 
                     Intent intent = new Intent(activity, MessageActivity.class);
@@ -233,5 +211,24 @@ public class CreateGroupFragment extends Fragment implements UiUtils.ContactsLoa
         }
 
         startActivity(new Intent(activity, ChatsActivity.class));
+    }
+
+    @Override
+    public void onClick(String topicName, ContactsAdapter.ViewHolder holder) {
+        Activity activity = getActivity();
+        if (activity != null) {
+            Chip chip = UiUtils.makeChip(activity,
+                    (String) holder.text1.getText(),
+                    holder.icon.getDrawable(), topicName);
+            chip.setOnCloseIconClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    // noinspection SuspiciousMethodCalls
+                    mGroupMembers.remove(view.getTag(0));
+                    mSelectedMembers.removeView(view);
+                }
+            });
+            mSelectedMembers.addView(chip);
+        }
     }
 }

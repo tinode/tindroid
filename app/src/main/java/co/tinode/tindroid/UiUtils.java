@@ -6,6 +6,7 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentUris;
@@ -15,10 +16,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
@@ -32,6 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
@@ -52,7 +56,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.pchmn.materialchips.model.Chip;
+import com.google.android.material.chip.Chip;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -66,7 +70,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -87,6 +90,7 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Static utilities for UI support.
@@ -501,6 +505,35 @@ public class UiUtils {
         }
     }
 
+    /*
+     * An ImageLoader object loads and resizes an image in the background and binds it to the
+     * each item layout of the ListView. ImageLoader implements memory caching for each image,
+     * which substantially improves refreshes of the ListView as the user scrolls through it.
+     *
+     * http://developer.android.com/training/displaying-bitmaps/
+     */
+    static ImageLoader getImageLoaderInstance(final Fragment parent) {
+        FragmentActivity activity = parent.getActivity();
+        if (activity == null) {
+            return null;
+        }
+
+        ImageLoader il = new ImageLoader(getListPreferredItemHeight(parent),
+                activity.getSupportFragmentManager()) {
+            @Override
+            protected Bitmap processBitmap(Object data) {
+                // This gets called in a background thread and passed the data from
+                // ImageLoader.loadImage().
+                return UiUtils.loadContactPhotoThumbnail(parent,
+                        (String) data, getImageSize());
+            }
+        };
+        // Set a placeholder loading image for the image loader
+        il.setLoadingImage(activity, R.drawable.ic_person_circle);
+
+        return il;
+    }
+
     /**
      * Decodes and scales a contact's image from a file pointed to by a Uri in the contact's data,
      * and returns the result as a Bitmap. The column that contains the Uri varies according to the
@@ -512,7 +545,7 @@ public class UiUtils {
      * @return A Bitmap containing the contact's image, resized to fit the provided image size. If
      * no thumbnail exists, returns null.
      */
-    static Bitmap loadContactPhotoThumbnail(Fragment fragment, String photoData, int imageSize) {
+    private static Bitmap loadContactPhotoThumbnail(Fragment fragment, String photoData, int imageSize) {
 
         // Ensures the Fragment is still added to an activity. As this method is called in a
         // background thread, there's the possibility the Fragment is no longer attached and
@@ -577,7 +610,7 @@ public class UiUtils {
      *
      * @return The preferred height in pixels, based on the current theme.
      */
-    static int getListPreferredItemHeight(Fragment fragment) {
+    private static int getListPreferredItemHeight(Fragment fragment) {
         final TypedValue typedValue = new TypedValue();
 
         final Activity activity = fragment.getActivity();
@@ -634,24 +667,6 @@ public class UiUtils {
                 result.toArray(new AccessModeLabel[0]) : null;
     }
 
-    static List<Chip> createChipsInputFilteredList(Cursor cursor) {
-        List<Chip> list = new ArrayList<>();
-
-        if (cursor != null) {
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                final String uid = cursor.getString(UiUtils.ContactsQuery.IM_HANDLE);
-                final String uriString = cursor.getString(UiUtils.ContactsQuery.PHOTO_THUMBNAIL_DATA);
-                final Uri photoUri = uriString == null ? null : Uri.parse(uriString);
-                final String displayName = cursor.getString(UiUtils.ContactsQuery.DISPLAY_NAME);
-                list.add(new Chip(uid, photoUri, displayName, null));
-                cursor.moveToNext();
-            }
-        }
-
-        return list;
-    }
-
     static void showEditPermissions(final Activity activity, final Topic topic,
                                     @NonNull final String mode,
                                     final String uid, final int what,
@@ -668,6 +683,7 @@ public class UiUtils {
             };
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
+        @SuppressLint("InflateParams")
         final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
         builder
                 .setView(editor)
@@ -978,17 +994,7 @@ public class UiUtils {
             }
         }
     }
-/*
-    public static class Colorizer {
-        int bg;
-        int fg;
 
-        Colorizer(int bg, int fg) {
-            this.bg = bg;
-            this.fg = fg;
-        }
-    }
-*/
     public static class AccessModeLabel {
         int nameId;
         public int color;
@@ -1168,5 +1174,38 @@ public class UiUtils {
             return mimeTypeMap.getMimeTypeFromExtension(ext);
         }
         return null;
+    }
+
+    /**
+     * Create Chip from subscription.
+     *
+     * @param activity context
+     * @param sub Subscription with chip data.
+     * @return created Chip
+     */
+    static Chip makeChip(@NonNull Activity activity, @NonNull Subscription<VxCard, PrivateType> sub) {
+        Chip chip;
+        if (sub.pub != null) {
+            chip = makeChip(activity, sub.pub.fn,
+                    new BitmapDrawable(activity.getResources(), sub.pub.getBitmap()), sub.getUnique());
+        } else {
+            chip = makeChip(activity, sub.getUnique(),
+                    activity.getResources().getDrawable(R.drawable.ic_person_circle), sub.getUnique());
+        }
+        return chip;
+    }
+
+    static Chip makeChip(@NonNull Activity activity, String title, Drawable icon, String unique) {
+        final Chip chip = new Chip(activity);
+        chip.setText(title);
+        chip.setChipIcon(icon);
+        // TODO: make [close] dependent on permissions.
+        chip.setCloseIconVisible(true);
+        chip.setTag(0, unique);
+        //chip.setChipBackgroundColorResource(R.color.red);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            chip.setElevation(R.dimen.chip_elevation);
+        }
+        return chip;
     }
 }

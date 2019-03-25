@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -21,9 +20,9 @@ import com.google.android.material.tabs.TabLayout;
 /**
  * View to display a single conversation
  */
-public class StartChatActivity extends AppCompatActivity implements
-        ContactsFragment.OnContactsInteractionListener {
+public class StartChatActivity extends AppCompatActivity {
 
+    @SuppressWarnings("unused")
     private static final String TAG = "StartChatActivity";
 
     private static final int TAB_CONTACTS = 0;
@@ -104,16 +103,6 @@ public class StartChatActivity extends AppCompatActivity implements
                 UiUtils.requestAvatar(getSupportFragmentManager().findFragmentById(R.id.contentFragment));
             }
         }
-    }
-
-    @Override
-    public void onContactSelected(Uri contactUri) {
-
-    }
-
-    @Override
-    public void onSelectionCleared() {
-
     }
 
     private class PagerAdapter extends FragmentStatePagerAdapter {

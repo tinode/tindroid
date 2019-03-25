@@ -30,37 +30,37 @@
     </style>
 
     <style name="searchTextHighlight">
-        <item name="textColor">@color/colorAccent</item>
+        <item name="android:textColor">@color/colorAccent</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="contactListTextPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
-        <item name="textColor">@color/colorTextPrimary</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
     </style>
 
     <style name="textPrimarySmall" parent="@android:style/TextAppearance.DeviceDefault.Small">
-        <item name="textColor">@color/colorTextPrimary</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
     </style>
 
     <style name="textPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
-        <item name="textColor">@color/colorTextPrimary</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
     </style>
 
     <style name="textPrimaryLarge" parent="@android:style/TextAppearance.DeviceDefault.Large">
-        <item name="textColor">@color/colorTextPrimary</item>
+        <item name="android:textColor">@color/colorTextPrimary</item>
     </style>
 
     <style name="textSecondary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
-        <item name="textColor">@color/colorTextSecondary</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
     </style>
 
     <style name="sectionTitleStyle" parent="@android:style/TextAppearance.DeviceDefault.Medium">
-        <item name="textColor">@color/colorPrimaryDark</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
         <item name="textAllCaps">true</item>
     </style>
 
     <style name="textMetaBubble">
-        <item name="textColor">@color/colorTextSecondary</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
         <item name="android:textSize">11sp</item>
     </style>
 

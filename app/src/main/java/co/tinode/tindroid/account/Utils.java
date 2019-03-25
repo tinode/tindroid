@@ -18,6 +18,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import androidx.annotation.NonNull;
+
 
 /**
  * Constants and misc utils
@@ -62,7 +64,8 @@ public class Utils {
      *
      * @param resolver content resolver to use.
      * @param flags bit flags indicating types f contacts to fetch.
-     * @return
+     *
+     * @return contacts
      */
     public static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver, int flags) {
         SparseArray<ContactHolder> map = new SparseArray<>();
@@ -304,6 +307,7 @@ public class Utils {
         }
 
         @Override
+        @NonNull
         public String toString() {
             StringBuilder str = new StringBuilder();
             Stringify(emails, TAG_LABEL_EMAIL, str);

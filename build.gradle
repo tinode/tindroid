@@ -25,8 +25,7 @@ allprojects {
         google()
         jcenter()
         mavenCentral()
-        // Used by com.github.pchmn:MaterialChipsInput
-        maven { url "https://jitpack.io" }
+
         maven { url 'https://maven.google.com/' }
     }
 }

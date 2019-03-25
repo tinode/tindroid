@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.database.Cursor;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,9 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -39,11 +37,9 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
     private ComTopic<VxCard> mTopic;
+    // List of members before editing started.
     private HashMap<String, Boolean> mInitialMembers = new HashMap<>();
-
-
-    // Sorted set of selected contacts (cursor positions of selected contacts).
-    // private TreeSet<Integer> mSelectedContacts;
+    private HashMap<String, Boolean> mCurrentMembers = new HashMap<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -54,7 +50,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
+    public void onViewCreated(@NonNull View view, Bundle bundle) {
 
         final FragmentActivity activity = getActivity();
         if (activity == null) {
@@ -62,13 +58,12 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         }
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
-        mSelectedMembers = activity.findViewById(R.id.selectedMembers);
+        ChipGroup selectedMembers = view.findViewById(R.id.selectedMembers);
 
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<Chip> selected = (List<Chip>) mChipsInput.getSelectedChipList();
-                if (selected.size() == 0) {
+                if (mCurrentMembers.size() == 0) {
                     Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
                 }
 
@@ -78,52 +73,39 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
 
         LoaderManager.getInstance(activity).initLoader(0, null,
                 new UiUtils.ContactsLoaderCallback(getActivity(), this));
+
+        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(bundle.getString("topic"));
+        if (mTopic != null) {
+            Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
+            for (Subscription<VxCard, PrivateType> sub : subs) {
+                mInitialMembers.put(sub.getUnique(), true);
+                mCurrentMembers.put(sub.getUnique(), true);
+                selectedMembers.addView(UiUtils.makeChip(activity, sub));
+            }
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
-        final Activity activity = getActivity();
-        final Bundle bundle = getArguments();
-        if (activity == null || bundle == null) {
-            return;
-        }
-
-        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(bundle.getString("topic"));
-
-        Collection<Subscription<VxCard,PrivateType>> subs = mTopic.getSubscriptions();
-        for (Subscription<VxCard,PrivateType> sub : subs) {
-            mInitialMembers.put(sub.user, true);
-            mChipsInput.addChip(sub.user,
-                    new BitmapDrawable(activity.getResources(), sub.pub.getBitmap()), sub.pub.fn, null);
-        }
     }
 
     @Override
     public void receiveResult(int id, Cursor data) {
-        mChipsInput.setFilterableList(UiUtils.createChipsInputFilteredList(data));
+        // TODO: update adapter.
     }
 
     private void updateContacts(final Activity activity) {
         try {
-            final List<ChipInterface> list = (List<ChipInterface>) mChipsInput.getSelectedChipList();
-            final List<ChipInterface> remove = new ArrayList<>(list.size());
-            for (ChipInterface chip : list) {
-                // If the member is present in HashMap then it's unchanged, remove it from the map
-                // and from the list.
-                if (mInitialMembers.remove((String) chip.getId()) != null) {
-                    remove.add(chip);
+            for (String key : mCurrentMembers.keySet()) {
+                if (!mInitialMembers.containsKey(key)) {
+                    mTopic.invite(key, null /* use default */).thenCatch(mFailureListener);
                 }
             }
-            list.removeAll(remove);
-
-            // The hash map contains members to delete, the list contains members to add.
             for (String key : mInitialMembers.keySet()) {
-                mTopic.eject(key, false).thenApply(null, mFailureListener);
-            }
-            for (ChipInterface chip : list) {
-                mTopic.invite((String) chip.getId(), null /* use default */).thenApply(null, mFailureListener);
+                if (!mCurrentMembers.containsKey(key)) {
+                    mTopic.eject(key, false).thenCatch(mFailureListener);
+                }
             }
 
             ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_INFO, false, null);

@@ -34,18 +34,20 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     private String mSearchTerm;
     private ClickListener mClickListener;
     private Cursor mCursor;
+    private ImageLoader mImageLoader;
 
     /**
      * Instantiates a new Contacts Adapter.
      *
      * @param context A context that has access to the app's layout.
      */
-    ContactsAdapter(Context context, Cursor cursor, ClickListener clickListener) {
+    ContactsAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
         mContext = context;
         mClickListener = clickListener;
+        mImageLoader = imageLoader;
 
         setHasStableIds(true);
-        swapCursor(cursor);
+        mCursor = null;
 
         // Loads a string containing the English alphabet. To fully localize the app, provide a
         // strings.xml file in res/values-<x> directories, where <x> is a locale. In the file,
@@ -97,10 +99,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
      */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (!mCursor.moveToPosition(position)) {
-            throw new IllegalArgumentException("Invalid cursor position " + position);
-        }
-        holder.bind(mCursor);
+        holder.bind(mCursor, position);
     }
 
     /**
@@ -186,6 +185,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
+        String unique;
         TextView text1;
         TextView text2;
         AppCompatImageView icon;
@@ -197,18 +197,17 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
             icon = view.findViewById(android.R.id.icon);
         }
 
-        void bind(Cursor cursor) {
+        void bind(Cursor cursor, int position) {
+            if (!cursor.moveToPosition(position)) {
+                throw new IllegalArgumentException("Invalid cursor position " + position);
+            }
 
             // Get the thumbnail image Uri from the current Cursor row.
             final String photoUri = cursor.getString(ContactsFragment.ContactsQuery.PHOTO_THUMBNAIL_DATA);
-
             final String displayName = cursor.getString(ContactsFragment.ContactsQuery.DISPLAY_NAME);
+            unique = cursor.getString(ContactsFragment.ContactsQuery.IM_ADDRESS);
 
             final int startIndex = indexOfSearchQuery(displayName);
-
-            Utils.ContactHolder extra = (contactsFragment.mPhEmImData != null ? contactsFragment.mPhEmImData.get(contact_id) : null);
-
-            String line2 = (extra != null) ? extra.bestContact() : null;
 
             if (startIndex == -1) {
                 // If the user didn't do a search, or the search string didn't match a display
@@ -216,11 +215,11 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
                 text1.setText(displayName);
 
                 if (TextUtils.isEmpty(mSearchTerm)) {
-                    if (TextUtils.isEmpty(line2)) {
+                    if (TextUtils.isEmpty(unique)) {
                         // Search string is empty and we have no contacts to show
                         text2.setVisibility(View.GONE);
                     } else {
-                        text2.setText(line2);
+                        text2.setText(unique);
                         text2.setVisibility(View.VISIBLE);
                     }
                 } else {
@@ -250,21 +249,23 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
             // Clear the icon then load the thumbnail from photoUri in a background worker thread
             LetterTileDrawable tile = new LetterTileDrawable(mContext)
                     .setIsCircular(true)
-                    .setLetterAndColor(displayName, line2)
+                    .setLetterAndColor(displayName, unique)
                     .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON);
             icon.setImageDrawable(tile);
-            contactsFragment.mImageLoader.loadImage(mContext, photoUri, holder.icon);
+            mImageLoader.loadImage(mContext, photoUri, icon);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mClickListener.onCLick(getIm());
+                    if (mClickListener != null) {
+                        mClickListener.onClick(unique, ViewHolder.this);
+                    }
                 }
             });
         }
     }
 
     interface ClickListener {
-        void onCLick(String topicName);
+        void onClick(String topicName, ViewHolder holder);
     }
 }
