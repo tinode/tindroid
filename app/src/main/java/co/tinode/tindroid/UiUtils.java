@@ -16,7 +16,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -31,17 +30,6 @@ import android.os.Environment;
 import android.provider.ContactsContract;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
-import androidx.appcompat.app.AlertDialog;
-import androidx.preference.PreferenceManager;
-import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -54,9 +42,8 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.material.chip.Chip;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -73,6 +60,18 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
+import androidx.preference.PreferenceManager;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -96,20 +95,15 @@ import co.tinode.tinodesdk.model.Subscription;
  * Static utilities for UI support.
  */
 public class UiUtils {
-    private static final String TAG = "UiUtils";
-
     static final int ACTION_UPDATE_SELF_SUB = 0;
     static final int ACTION_UPDATE_SUB = 1;
     static final int ACTION_UPDATE_AUTH = 2;
     static final int ACTION_UPDATE_ANON = 3;
-
     static final int SELECT_PICTURE = 1;
-
     static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
-
     static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     static final String PREF_READ_RCPT = "pref_readReceipts";
-
+    private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
     private static final int MAX_BITMAP_SIZE = 1024;
     private static final int MIN_TAG_LENGTH = 4;
@@ -119,13 +113,12 @@ public class UiUtils {
     private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
     private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
-    // If StoredMessage activity is visible, this is the current topic in that activity.
-    private static String sVisibleTopic = null;
-
     // Logo LayerDrawable IDs
     private static final int LOGO_LAYER_AVATAR = 0;
     private static final int LOGO_LAYER_ONLINE = 1;
     private static final int LOGO_LAYER_TYPING = 2;
+    // If StoredMessage activity is visible, this is the current topic in that activity.
+    private static String sVisibleTopic = null;
 
     static void setupToolbar(final Activity activity, final VxCard pub,
                              final String topicName, final boolean online) {
@@ -184,7 +177,7 @@ public class UiUtils {
         layers.setId(2, LOGO_LAYER_TYPING);
         toolbar.setLogo(layers);
         Rect b = toolbar.getLogo().getBounds();
-        typing.setBounds(b.right - b.width()/4, b.bottom - b.height()/4, b.right, b.bottom);
+        typing.setBounds(b.right - b.width() / 4, b.bottom - b.height() / 4, b.right, b.bottom);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -205,7 +198,7 @@ public class UiUtils {
         final AnimationDrawable typing = (AnimationDrawable) ((LayerDrawable) logo)
                 .findDrawableByLayerId(LOGO_LAYER_TYPING);
         Rect b = logo.getBounds();
-        typing.setBounds(b.right - b.width()/4, b.bottom - b.height()/4, b.right, b.bottom);
+        typing.setBounds(b.right - b.width() / 4, b.bottom - b.height() / 4, b.right, b.bottom);
         typing.setVisible(true, false);
         typing.setAlpha(255);
         typing.start();
@@ -240,7 +233,7 @@ public class UiUtils {
             return;
         }
 
-        ((OnlineDrawable)((LayerDrawable) logo).findDrawableByLayerId(LOGO_LAYER_ONLINE)).setOnline(online);
+        ((OnlineDrawable) ((LayerDrawable) logo).findDrawableByLayerId(LOGO_LAYER_ONLINE)).setOnline(online);
     }
 
     public static String getVisibleTopic() {
@@ -445,7 +438,7 @@ public class UiUtils {
         // Scale up or down.
         bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
         // Chop the square from the middle.
-        return Bitmap.createBitmap(bmp, (width - AVATAR_SIZE)/2, (height - AVATAR_SIZE)/2,
+        return Bitmap.createBitmap(bmp, (width - AVATAR_SIZE) / 2, (height - AVATAR_SIZE) / 2,
                 AVATAR_SIZE, AVATAR_SIZE);
     }
 
@@ -671,7 +664,7 @@ public class UiUtils {
                                     @NonNull final String mode,
                                     final String uid, final int what,
                                     String skip) {
-        final int[] permissionsMap = new int[] {
+        final int[] permissionsMap = new int[]{
                 R.string.permission_join,
                 R.string.permission_read,
                 R.string.permission_write,
@@ -680,11 +673,10 @@ public class UiUtils {
                 R.string.permission_share,
                 R.string.permission_delete,
                 R.string.permission_owner
-            };
+        };
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
-        @SuppressLint("InflateParams")
-        final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
+        @SuppressLint("InflateParams") final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
         builder
                 .setView(editor)
                 .setTitle(R.string.edit_permissions);
@@ -697,7 +689,7 @@ public class UiUtils {
             }
         };
 
-        for (int i = 0; i<"JRWPASDO".length(); i++) {
+        for (int i = 0; i < "JRWPASDO".length(); i++) {
             char c = "JRWPASDO".charAt(i);
             if (skip.indexOf(c) >= 0) {
                 continue;
@@ -751,11 +743,11 @@ public class UiUtils {
                     if (reply != null) {
                         reply.thenApply(
                                 new PromisedReply.SuccessListener<ServerMessage>() {
-                                     @Override
-                                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                         return null;
-                                     }
-                                 },
+                                    @Override
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                        return null;
+                                    }
+                                },
                                 new PromisedReply.FailureListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onFailure(final Exception err) {
@@ -785,8 +777,8 @@ public class UiUtils {
         builder.show();
     }
 
-    static <T extends Topic<VxCard,PrivateType,?,?>> void updateAvatar(final Activity activity,
-                                                                       final T topic, final Intent data) {
+    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateAvatar(final Activity activity,
+                                                                          final T topic, final Intent data) {
         Bitmap bmp = UiUtils.extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
@@ -809,8 +801,8 @@ public class UiUtils {
         }
     }
 
-    static <T extends Topic<VxCard,PrivateType,?,?>> void updateTitle(final Activity activity,
-                                                                      T topic, String title, String comment) {
+    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTitle(final Activity activity,
+                                                                         T topic, String title, String comment) {
         VxCard pub = null;
         if (title != null) {
             VxCard oldPub = topic.getPub();
@@ -880,7 +872,7 @@ public class UiUtils {
             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_LONG).show();
         } finally {
             if (!success) {
-                setProgressIndicator(activity,false);
+                setProgressIndicator(activity, false);
             }
         }
     }
@@ -908,9 +900,9 @@ public class UiUtils {
      * Show or hide progress indicator in the toolbar.
      *
      * @param activity activity making the call.
-     * @param active show when true, hide when false.
+     * @param active   show when true, hide when false.
      */
-     private static void setProgressIndicator(final Activity activity, final boolean active) {
+    private static void setProgressIndicator(final Activity activity, final boolean active) {
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -921,6 +913,143 @@ public class UiUtils {
                 // TODO: show progress indicator while loading contacts.
             }
         });
+    }
+
+    // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
+    static String getPath(Context context, Uri uri) {
+        // DocumentProvider
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
+                DocumentsContract.isDocumentUri(context, uri)) {
+            final String docId = DocumentsContract.getDocumentId(uri);
+            String authority = uri.getAuthority();
+            if (authority != null) {
+                switch (authority) {
+                    case "com.android.externalstorage.documents": {
+                        // ExternalStorageProvider
+                        final String[] split = docId.split(":");
+                        final String type = split[0];
+
+                        if ("primary".equalsIgnoreCase(type)) {
+                            return Environment.getExternalStorageDirectory() + "/" + split[1];
+                        }
+                        // TODO: handle non-primary volumes
+                    }
+                    break;
+                    case "com.android.providers.downloads.documents": {
+                        // DownloadsProvider
+
+                        final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
+                                Long.valueOf(docId));
+                        return getDataColumn(context, contentUri, null, null);
+                    }
+                    case "com.android.providers.media.documents": {
+                        // MediaProvider
+
+                        final String[] split = docId.split(":");
+                        final String type = split[0];
+                        Uri contentUri = null;
+                        if ("image".equals(type)) {
+                            contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                        } else if ("video".equals(type)) {
+                            contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                        } else if ("audio".equals(type)) {
+                            contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                        }
+                        final String selection = "_id=?";
+                        final String[] selectionArgs = new String[]{split[1]};
+                        return getDataColumn(context, contentUri, selection, selectionArgs);
+                    }
+                    default:
+                        Log.d(TAG, "Unknown content authority " + uri.getAuthority());
+                }
+            } else {
+                Log.d(TAG, "URI has no content authority " + uri);
+            }
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            // MediaStore (and general)
+            // Return the remote address
+            if ("com.google.android.apps.photos.content".equals(uri.getAuthority())) {
+                return uri.getLastPathSegment();
+            }
+            return getDataColumn(context, uri, null, null);
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            // File
+            return uri.getPath();
+        }
+        return null;
+    }
+
+    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+        final String column = "_data";
+        final String[] projection = {column};
+        try (Cursor cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                final int index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(index);
+            }
+        }
+        return null;
+    }
+
+    static String bytesToHumanSize(long bytes) {
+        if (bytes <= 0) {
+            return "0 Bytes";
+        }
+
+        String[] sizes = new String[]{"Bytes", "KB", "MB", "GB", "TB"};
+        int bucket = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
+        double count = bytes / Math.pow(1024, bucket);
+        int roundTo = bucket > 0 ? (count < 10 ? 2 : (count < 100 ? 1 : 0)) : 0;
+        NumberFormat fmt = DecimalFormat.getInstance();
+        fmt.setMaximumFractionDigits(roundTo);
+        return fmt.format(count) + " " + sizes[bucket];
+    }
+
+    static String getMimeType(Uri uri) {
+        if (uri == null) {
+            return null;
+        }
+
+        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+        String ext = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+        if (mimeTypeMap.hasExtension(ext)) {
+            return mimeTypeMap.getMimeTypeFromExtension(ext);
+        }
+        return null;
+    }
+
+    /**
+     * Create Chip from subscription.
+     *
+     * @param activity context
+     * @param sub      Subscription with chip data.
+     * @return created Chip
+     */
+    static View makeChip(@NonNull Activity activity, @NonNull Subscription<VxCard, PrivateType> sub) {
+        View chip;
+        if (sub.pub != null) {
+            chip = makeChip(activity, sub.pub.fn,
+                    new BitmapDrawable(activity.getResources(), sub.pub.getBitmap()), sub.getUnique());
+        } else {
+            chip = makeChip(activity, sub.getUnique(),
+                    activity.getResources().getDrawable(R.drawable.ic_person_circle), sub.getUnique());
+        }
+        return chip;
+    }
+
+    static View makeChip(@NonNull Activity activity, String title, Drawable icon, String unique) {
+        final View chip = LayoutInflater.from(activity).inflate(R.layout.group_member_chip,
+                null, false);
+        ((TextView) chip.findViewById(android.R.id.text1)).setText(title);
+        ((ImageView) chip.findViewById(android.R.id.icon)).setImageDrawable(icon);
+        // TODO: make [close] dependent on permissions.
+        chip.findViewById(android.R.id.closeButton).setVisibility(View.VISIBLE);
+        chip.setTag(unique);
+        //chip.setChipBackgroundColorResource(R.color.red);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            chip.setElevation(R.dimen.chip_elevation);
+        }
+        return chip;
     }
 
     interface ContactsQuery {
@@ -996,8 +1125,8 @@ public class UiUtils {
     }
 
     public static class AccessModeLabel {
-        int nameId;
         public int color;
+        int nameId;
 
         AccessModeLabel(int nameId, int color) {
             this.nameId = nameId;
@@ -1071,141 +1200,5 @@ public class UiUtils {
             });
             return null;
         }
-    }
-
-    // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
-    static String getPath(Context context, Uri uri) {
-        // DocumentProvider
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
-                DocumentsContract.isDocumentUri(context, uri)) {
-            final String docId = DocumentsContract.getDocumentId(uri);
-            String authority = uri.getAuthority();
-            if (authority != null) {
-                switch (authority) {
-                    case "com.android.externalstorage.documents": {
-                        // ExternalStorageProvider
-                        final String[] split = docId.split(":");
-                        final String type = split[0];
-
-                        if ("primary".equalsIgnoreCase(type)) {
-                            return Environment.getExternalStorageDirectory() + "/" + split[1];
-                        }
-                        // TODO: handle non-primary volumes
-                    }
-                    break;
-                    case "com.android.providers.downloads.documents": {
-                        // DownloadsProvider
-
-                        final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
-                                Long.valueOf(docId));
-                        return getDataColumn(context, contentUri, null, null);
-                    }
-                    case "com.android.providers.media.documents": {
-                        // MediaProvider
-
-                        final String[] split = docId.split(":");
-                        final String type = split[0];
-                        Uri contentUri = null;
-                        if ("image".equals(type)) {
-                            contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                        } else if ("video".equals(type)) {
-                            contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                        } else if ("audio".equals(type)) {
-                            contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                        }
-                        final String selection = "_id=?";
-                        final String[] selectionArgs = new String[]{split[1]};
-                        return getDataColumn(context, contentUri, selection, selectionArgs);
-                    }
-                    default:
-                        Log.d(TAG, "Unknown content authority " + uri.getAuthority());
-                }
-            } else {
-                Log.d(TAG, "URI has no content authority " + uri);
-            }
-        } else if ("content".equalsIgnoreCase(uri.getScheme())) {
-            // MediaStore (and general)
-            // Return the remote address
-            if ("com.google.android.apps.photos.content".equals(uri.getAuthority())) {
-                return uri.getLastPathSegment();
-            }
-            return getDataColumn(context, uri, null, null);
-        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            // File
-            return uri.getPath();
-        }
-        return null;
-    }
-
-    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
-        final String column = "_data";
-        final String[] projection = { column };
-        try (Cursor cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                final int index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(index);
-            }
-        }
-        return null;
-    }
-
-    static String bytesToHumanSize(long bytes) {
-        if (bytes <= 0) {
-            return "0 Bytes";
-        }
-
-        String[] sizes = new String[] {"Bytes", "KB", "MB", "GB", "TB"};
-        int bucket = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
-        double count = bytes / Math.pow(1024, bucket);
-        int roundTo = bucket > 0 ? (count < 10 ? 2 : (count < 100 ? 1 : 0)) : 0;
-        NumberFormat fmt = DecimalFormat.getInstance();
-        fmt.setMaximumFractionDigits(roundTo);
-        return fmt.format(count) + " " + sizes[bucket];
-    }
-
-    static String getMimeType(Uri uri) {
-        if (uri == null) {
-            return null;
-        }
-
-        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-        String ext = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-        if (mimeTypeMap.hasExtension(ext)) {
-            return mimeTypeMap.getMimeTypeFromExtension(ext);
-        }
-        return null;
-    }
-
-    /**
-     * Create Chip from subscription.
-     *
-     * @param activity context
-     * @param sub Subscription with chip data.
-     * @return created Chip
-     */
-    static Chip makeChip(@NonNull Activity activity, @NonNull Subscription<VxCard, PrivateType> sub) {
-        Chip chip;
-        if (sub.pub != null) {
-            chip = makeChip(activity, sub.pub.fn,
-                    new BitmapDrawable(activity.getResources(), sub.pub.getBitmap()), sub.getUnique());
-        } else {
-            chip = makeChip(activity, sub.getUnique(),
-                    activity.getResources().getDrawable(R.drawable.ic_person_circle), sub.getUnique());
-        }
-        return chip;
-    }
-
-    static Chip makeChip(@NonNull Activity activity, String title, Drawable icon, String unique) {
-        final Chip chip = new Chip(activity);
-        chip.setText(title);
-        chip.setChipIcon(icon);
-        // TODO: make [close] dependent on permissions.
-        chip.setCloseIconVisible(true);
-        chip.setTag(0, unique);
-        //chip.setChipBackgroundColorResource(R.color.red);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            chip.setElevation(R.dimen.chip_elevation);
-        }
-        return chip;
     }
 }

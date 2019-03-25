@@ -8,13 +8,13 @@
 
     <color name="colorTextPrimary">#212121</color>
     <color name="colorTextSecondary">#616161</color>
-    <color name="colorAccentLight">#B2DFDB</color>
+    <color name="colorAccentLight">#E0F2F1</color>
     <color name="colorAccent">#008577</color>
 
     <color name="alpha_80">#CCCCCCCC</color>
 
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimary">#006064</color>
+    <color name="colorPrimaryDark">#005662</color>
 
     <color name="colorDanger">#E57373</color>
     <color name="colorDangerDark">#B71C1C</color>

@@ -1,15 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.chip.Chip
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/Widget.MaterialComponents.Chip.Entry"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:checkable="false"
-    app:chipBackgroundColor="@color/colorLightGray"
-    app:chipIcon="@drawable/ic_person_circle"
-    app:chipIconVisible="true"
-    app:closeIconEnabled="true"
-    app:closeIconVisible="true"
-    tools:text="Alice Johnson"/>
+    android:background="@drawable/rounded_corners"
+    android:orientation="horizontal"
+    android:layout_margin="2dp"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:id="@android:id/icon"
+        android:layout_width="24sp"
+        android:layout_height="24sp"
+        android:layout_marginEnd="6dp"
+        app:srcCompat="@drawable/ic_person_circle" />
+
+    <TextView
+        android:id="@android:id/text1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:maxLines="1"
+        android:textAppearance="@style/textPrimarySmall"
+        android:layout_marginEnd="6dp"
+        android:ellipsize="end"
+        tools:text="Alice Johnson"/>
+
+    <ImageButton
+        android:id="@android:id/closeButton"
+        android:layout_width="24sp"
+        android:layout_height="24sp"
+        android:visibility="visible"
+        app:srcCompat="@drawable/ic_cancel_grey"
+        android:contentDescription="@android:string/cancel"/>
+
+</LinearLayout>

@@ -362,7 +362,7 @@ public class ContactsFragment extends Fragment {
         int CORE_QUERY_ID = 1;
 
         // A content URI for the Contacts table
-        Uri CONTENT_URI = Contacts.CONTENT_URI;
+        Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
         // Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
 
         // The search/filter query Uri
@@ -370,22 +370,22 @@ public class ContactsFragment extends Fragment {
 
         // The selection clause for the CursorLoader query. The search criteria defined here
         // restrict results to contacts that have a display name and are linked to visible groups.
-        String SELECTION = Contacts.DISPLAY_NAME_PRIMARY + "<>'' AND " +
-                Contacts.IN_VISIBLE_GROUP + "=1 AND " +
+        String SELECTION = ContactsContract.Data.DISPLAY_NAME_PRIMARY + "<>'' AND " +
+                ContactsContract.Data.IN_VISIBLE_GROUP + "=1 AND " +
                 ContactsContract.CommonDataKinds.Im.PROTOCOL + "=" +
                     ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + " AND " +
-                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL + "=" +
-                    co.tinode.tindroid.account.Utils.TINODE_IM_PROTOCOL;
+                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL + "='" +
+                    co.tinode.tindroid.account.Utils.TINODE_IM_PROTOCOL + "'";
 
         // The desired sort order for the returned Cursor.
-        String SORT_ORDER = Contacts.SORT_KEY_PRIMARY;
+        String SORT_ORDER = ContactsContract.Data.SORT_KEY_PRIMARY;
 
         // A list of columns that the Contacts Provider should return in the Cursor.
         String[] PROJECTION = {
-                Contacts._ID,
-                Contacts.LOOKUP_KEY,
-                Contacts.DISPLAY_NAME_PRIMARY,
-                Contacts.PHOTO_THUMBNAIL_URI,
+                ContactsContract.Data._ID,
+                ContactsContract.Data.LOOKUP_KEY,
+                ContactsContract.Data.DISPLAY_NAME_PRIMARY,
+                ContactsContract.Data.PHOTO_THUMBNAIL_URI,
                 ContactsContract.CommonDataKinds.Email.DATA,
 
                 // The sort order column for the returned Cursor, used by the AlphabetIndexer
@@ -444,7 +444,7 @@ public class ContactsFragment extends Fragment {
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
-                mAdapter.resetContent(data, mSearchTerm);
+                // mAdapter.resetContent(data, mSearchTerm);
             }
         }
 
@@ -453,7 +453,7 @@ public class ContactsFragment extends Fragment {
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 // When the loader is being reset, clear the cursor from the adapter. This allows the
                 // cursor resources to be freed.
-                mAdapter.resetContent(null, mSearchTerm);
+                // mAdapter.resetContent(null, mSearchTerm);
             }
         }
     }

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context="co.tinode.tindroid.CreateGroupFragment">
+    tools:context=".CreateGroupFragment">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/imageAvatar"

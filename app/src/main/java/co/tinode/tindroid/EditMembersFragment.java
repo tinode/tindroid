@@ -12,13 +12,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.google.android.material.chip.ChipGroup;
-
 import java.util.Collection;
 import java.util.HashMap;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -58,7 +57,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         }
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
-        ChipGroup selectedMembers = view.findViewById(R.id.selectedMembers);
+        ChipGroup selectedMembers = view.findViewById(R.id.selected_members);
 
         activity.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override

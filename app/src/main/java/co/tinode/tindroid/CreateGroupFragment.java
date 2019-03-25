@@ -14,20 +14,22 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
-
-import java.util.HashMap;
+import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.android.flexbox.JustifyContent;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -41,7 +43,7 @@ import static android.app.Activity.RESULT_OK;
  * Fragment for adding/editing a group topic
  */
 public class CreateGroupFragment extends Fragment
-        implements UiUtils.ContactsLoaderResultReceiver, ContactsAdapter.ClickListener {
+        implements UiUtils.ContactsLoaderResultReceiver {
 
     private static final String TAG = "CreateGroupFragment";
 
@@ -49,9 +51,11 @@ public class CreateGroupFragment extends Fragment
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    private ContactsAdapter mAdapter;
-    private HashMap<String, Boolean> mGroupMembers = new HashMap<>();
-    private ChipGroup mSelectedMembers;
+    private MembersAdapter mSelectedAdapter;
+    private ContactsAdapter mContactsAdapter;
+
+    private Animation mAnimateSelected;
+    private Animation mAnimateDeselected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,6 +79,9 @@ public class CreateGroupFragment extends Fragment
         if (activity == null) {
             return;
         }
+
+        mAnimateSelected = AnimationUtils.loadAnimation(activity, R.anim.flip_out);
+        mAnimateDeselected = AnimationUtils.loadAnimation(activity, R.anim.flip_in);
 
         mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
             @Override
@@ -101,16 +108,45 @@ public class CreateGroupFragment extends Fragment
             }
         });
 
-        mSelectedMembers = view.findViewById(R.id.selectedMembers);
+        // Recycler view with selected contacts.
+        RecyclerView rv = view.findViewById(R.id.selected_members);
+        FlexboxLayoutManager lm = new FlexboxLayoutManager(activity);
+        lm.setFlexDirection(FlexDirection.ROW);
+        lm.setJustifyContent(JustifyContent.FLEX_START);
+        rv.setLayoutManager(lm);
+        rv.setHasFixedSize(false);
+
+        mSelectedAdapter = new MembersAdapter(null, new MembersAdapter.ClickListener() {
+            @Override
+            public void onClick(String unique) {
+                mSelectedAdapter.remove(unique);
+                mContactsAdapter.toggleSelected(unique);
+            }
+        }, true);
+        rv.setAdapter(mSelectedAdapter);
 
         // Recycler view with all available Tinode contacts.
-        RecyclerView rv = view.findViewById(R.id.contact_list);
+        rv = view.findViewById(R.id.contact_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
 
-        mAdapter = new ContactsAdapter(activity, mImageLoader, this);
-        rv.setAdapter(mAdapter);
+        mContactsAdapter = new ContactsAdapter(activity, mImageLoader, new ContactsAdapter.ClickListener() {
+            @Override
+            public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
+                if (!mContactsAdapter.isSelected(unique)) {
+                    MembersAdapter.Member user = new MembersAdapter.Member();
+                    user.unique = unique;
+                    user.icon = holder.icon.getDrawable();
+                    user.name = (String) holder.text1.getText();
+                    mSelectedAdapter.append(user);
+                } else {
+                    mSelectedAdapter.remove(unique);
+                }
+                mContactsAdapter.toggleSelected(unique);
+            }
+        });
+        rv.setAdapter(mContactsAdapter);
 
         // This button creates the new group.
         view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
@@ -126,7 +162,8 @@ public class CreateGroupFragment extends Fragment
 
                 final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
 
-                if (mGroupMembers.size() == 0) {
+                String[] members = mSelectedAdapter.getAdded();
+                if (members.length == 0) {
                     Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -140,7 +177,7 @@ public class CreateGroupFragment extends Fragment
                     // Ignore it.
                 }
 
-                createTopic(activity, topicTitle, bmp, subtitle, UiUtils.parseTags(tags));
+                createTopic(activity, topicTitle, bmp, subtitle, UiUtils.parseTags(tags), members);
             }
         });
 
@@ -177,11 +214,11 @@ public class CreateGroupFragment extends Fragment
 
     @Override
     public void receiveResult(int id, Cursor data) {
-        mAdapter.resetContent(data, null);
+        mContactsAdapter.resetContent(data, null);
     }
 
     private void createTopic(final Activity activity, final String title,
-                             final Bitmap avatar, final String subtitle, final String[] tags) {
+                             final Bitmap avatar, final String subtitle, final String[] tags, final String[] members) {
         final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), (Topic.Listener) null);
         topic.setPub(new VxCard(title, avatar));
         topic.setPriv(subtitle);
@@ -190,7 +227,7 @@ public class CreateGroupFragment extends Fragment
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
-                    for (String user : mGroupMembers.keySet()) {
+                    for (String user : members) {
                         topic.invite(user, null /* use default */);
                     }
 
@@ -211,24 +248,5 @@ public class CreateGroupFragment extends Fragment
         }
 
         startActivity(new Intent(activity, ChatsActivity.class));
-    }
-
-    @Override
-    public void onClick(String topicName, ContactsAdapter.ViewHolder holder) {
-        Activity activity = getActivity();
-        if (activity != null) {
-            Chip chip = UiUtils.makeChip(activity,
-                    (String) holder.text1.getText(),
-                    holder.icon.getDrawable(), topicName);
-            chip.setOnCloseIconClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    // noinspection SuspiciousMethodCalls
-                    mGroupMembers.remove(view.getTag(0));
-                    mSelectedMembers.removeView(view);
-                }
-            });
-            mSelectedMembers.addView(chip);
-        }
     }
 }

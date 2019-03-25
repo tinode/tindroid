@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -12,12 +13,13 @@ import android.widget.AlphabetIndexer;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import java.util.HashMap;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.RecyclerView;
-import co.tinode.tindroid.account.Utils;
+
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 
 /**
@@ -36,6 +38,9 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     private Cursor mCursor;
     private ImageLoader mImageLoader;
 
+    // Selected items
+    private HashMap<String,Integer> mSelected;
+
     /**
      * Instantiates a new Contacts Adapter.
      *
@@ -45,6 +50,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
         mContext = context;
         mClickListener = clickListener;
         mImageLoader = imageLoader;
+        mSelected = new HashMap<>();
 
         setHasStableIds(true);
         mCursor = null;
@@ -91,7 +97,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     @NonNull
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
         return new ViewHolder(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.contact_invite, parent, false));
+                .inflate(R.layout.contact_basic, parent, false));
     }
 
     /**
@@ -184,6 +190,19 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
         return mAlphabetIndexer.getSectionForPosition(i);
     }
 
+    boolean isSelected(String unique) {
+        return mSelected.containsKey(unique);
+    }
+
+    void toggleSelected(String unique) {
+        if (mSelected.containsKey(unique)) {
+            mSelected.remove(unique);
+        } else {
+            mSelected.put(unique, 0);
+        }
+        notifyDataSetChanged();
+    }
+
     class ViewHolder extends RecyclerView.ViewHolder {
         String unique;
         TextView text1;
@@ -246,13 +265,27 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
                 text2.setVisibility(View.GONE);
             }
 
-            // Clear the icon then load the thumbnail from photoUri in a background worker thread
-            LetterTileDrawable tile = new LetterTileDrawable(mContext)
-                    .setIsCircular(true)
-                    .setLetterAndColor(displayName, unique)
-                    .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON);
-            icon.setImageDrawable(tile);
-            mImageLoader.loadImage(mContext, photoUri, icon);
+            if (mSelected.containsKey(unique)) {
+                icon.setImageResource(R.drawable.ic_selected);
+                itemView.setBackgroundResource(R.drawable.contact_background);
+
+                itemView.setActivated(true);
+            } else {
+                // Clear the icon then load the thumbnail from photoUri in a background worker thread
+                LetterTileDrawable tile = new LetterTileDrawable(mContext)
+                        .setIsCircular(true)
+                        .setLetterAndColor(displayName, unique)
+                        .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON);
+                icon.setImageDrawable(tile);
+                mImageLoader.loadImage(mContext, photoUri, icon);
+
+                TypedArray typedArray = itemView.getContext().obtainStyledAttributes(
+                        new int[]{android.R.attr.selectableItemBackground});
+                itemView.setBackgroundResource(typedArray.getResourceId(0, 0));
+                typedArray.recycle();
+
+                itemView.setActivated(false);
+            }
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
