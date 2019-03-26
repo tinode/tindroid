@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageView;
@@ -194,8 +195,12 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
         return mSelected.containsKey(unique);
     }
 
+    Set<String> getSelected() {
+        return mSelected.keySet();
+    }
+
     void toggleSelected(String unique) {
-        if (mSelected.containsKey(unique)) {
+        if (isSelected(unique)) {
             mSelected.remove(unique);
         } else {
             mSelected.put(unique, 0);
@@ -265,7 +270,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
                 text2.setVisibility(View.GONE);
             }
 
-            if (mSelected.containsKey(unique)) {
+            if (isSelected(unique)) {
                 icon.setImageResource(R.drawable.ic_selected);
                 itemView.setBackgroundResource(R.drawable.contact_background);
 

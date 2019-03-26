@@ -216,10 +216,10 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 unreadCount.setVisibility(View.INVISIBLE);
             }
 
-            UiUtils.assignBitmap(context, icon,
+            icon.setImageDrawable(UiUtils.avatarDrawable(context,
                     pub != null ? pub.getBitmap() : null,
                     pub != null ? pub.fn : null,
-                    topicName);
+                    topicName));
 
             online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
 

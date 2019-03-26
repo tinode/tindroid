@@ -16,7 +16,9 @@ import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHolder> {
-    private ArrayList<Member> mInitialMembers;
+    private static final String TAG = "MembersAdapter";
+
+    private ArrayList<String> mInitialMembers;
     private ArrayList<Member> mCurrentMembers;
 
     // This means initial items can be removed too.
@@ -34,7 +36,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
         if (users != null) {
             for (Member user : users) {
-                mInitialMembers.add(user);
+                mInitialMembers.add(user.unique);
                 mCurrentMembers.add(user);
             }
         }
@@ -57,6 +59,10 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         return mCurrentMembers.size();
     }
 
+    boolean append(String unique, String name, Drawable icon, boolean removable) {
+        return append(new Member(unique, name, icon, removable));
+    }
+
     boolean append(Member user) {
         // Ensure uniqueness.
         for (int i = 0; i < mCurrentMembers.size(); i++) {
@@ -75,28 +81,28 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         if (!mCancelable) {
             // Check if the member is allowed to be removed.
             for (int i = 0; i < mInitialMembers.size(); i++) {
-                if (unique.equals(mInitialMembers.get(i).unique)) {
+                if (unique.equals(mInitialMembers.get(i))) {
                     return false;
                 }
             }
         }
 
         for (int i = 0; i < mCurrentMembers.size(); i++) {
-            if (unique.equals(mCurrentMembers.get(i).unique)) {
+            Member m = mCurrentMembers.get(i);
+            if (unique.equals(m.unique) && m.removable) {
                 mCurrentMembers.remove(i);
                 notifyItemRemoved(i);
                 return true;
             }
         }
-
         return false;
     }
 
     String[] getAdded() {
         ArrayList<String> added = new ArrayList<>();
         HashMap<String,Object> initial = new HashMap<>();
-        for (Member user : mInitialMembers) {
-            initial.put(user.unique, "");
+        for (String unique : mInitialMembers) {
+            initial.put(unique, "");
         }
         for (Member user : mCurrentMembers) {
             if (!initial.containsKey(user.unique)) {
@@ -114,9 +120,9 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             current.put(user.unique, "");
         }
 
-        for (Member user : mInitialMembers) {
-            if (!current.containsKey(user.unique)) {
-                removed.add(user.unique);
+        for (String unique : mInitialMembers) {
+            if (!current.containsKey(unique)) {
+                removed.add(unique);
             }
         }
         return removed.toArray(new String[]{});
@@ -142,16 +148,19 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             }
             title.setText(user.name);
 
-            if (mCancelable) {
+            if (mCancelable && user.removable) {
+                close.setVisibility(View.VISIBLE);
                 close.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         int pos = getAdapterPosition();
                         Member user = mCurrentMembers.remove(pos);
-                        notifyItemRemoved(pos);
                         mOnCancel.onClick(user.unique);
+                        notifyItemRemoved(pos);
                     }
                 });
+            } else {
+                close.setVisibility(View.GONE);
             }
         }
     }
@@ -160,6 +169,18 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         String unique;
         String name;
         Drawable icon;
+        Boolean removable;
+
+        Member(String unique, String name, Drawable icon) {
+            this(unique, name, icon, false);
+        }
+
+        Member(String unique, String name, Drawable icon, boolean removable) {
+            this.unique = unique;
+            this.name = name != null ? name : unique;
+            this.icon = icon;
+            this.removable = removable;
+        }
     }
 
     interface ClickListener {

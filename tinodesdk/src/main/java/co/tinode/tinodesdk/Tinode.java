@@ -1492,7 +1492,7 @@ public class Tinode {
      * @return existing topic or null if no such topic was found
      */
     @SuppressWarnings("unchecked")
-    public Topic getTopic(String name) {
+    public Topic<?,?,?,?> getTopic(String name) {
         if (name == null) {
             return null;
         }

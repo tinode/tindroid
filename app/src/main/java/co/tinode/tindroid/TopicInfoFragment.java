@@ -656,8 +656,8 @@ public class TopicInfoFragment extends Fragment {
                 holder.status[i].setVisibility(View.GONE);
             }
 
-            UiUtils.assignBitmap(getActivity(), holder.icon, bmp,
-                    sub.pub != null ? sub.pub.fn : null, sub.user);
+            holder.icon.setImageDrawable(UiUtils.avatarDrawable(activity, bmp,
+                    sub.pub != null ? sub.pub.fn : null, sub.user));
 
             final View.OnClickListener action = new View.OnClickListener() {
                 @Override

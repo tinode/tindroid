@@ -202,10 +202,11 @@ public class FindAdapter
                 contactPriv.setText("");
             }
 
-            UiUtils.assignBitmap(context, icon,
+            icon.setImageDrawable(
+                    UiUtils.avatarDrawable(context,
                     pub != null ? pub.getBitmap() : null,
                     pub != null ? pub.fn : null,
-                    unique);
+                    unique));
 
             if (selected) {
                 itemView.setBackgroundResource(R.drawable.contact_background);

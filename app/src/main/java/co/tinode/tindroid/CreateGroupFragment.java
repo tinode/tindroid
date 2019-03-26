@@ -119,11 +119,17 @@ public class CreateGroupFragment extends Fragment
         mSelectedAdapter = new MembersAdapter(null, new MembersAdapter.ClickListener() {
             @Override
             public void onClick(String unique) {
-                mSelectedAdapter.remove(unique);
                 mContactsAdapter.toggleSelected(unique);
             }
         }, true);
         rv.setAdapter(mSelectedAdapter);
+        mSelectedAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                togglePlaceholders(mContactsAdapter.getItemCount(), mSelectedAdapter.getItemCount());
+            }
+        });
 
         // Recycler view with all available Tinode contacts.
         rv = view.findViewById(R.id.contact_list);
@@ -135,11 +141,8 @@ public class CreateGroupFragment extends Fragment
             @Override
             public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
                 if (!mContactsAdapter.isSelected(unique)) {
-                    MembersAdapter.Member user = new MembersAdapter.Member();
-                    user.unique = unique;
-                    user.icon = holder.icon.getDrawable();
-                    user.name = (String) holder.text1.getText();
-                    mSelectedAdapter.append(user);
+                    mSelectedAdapter.append(unique, (String) holder.text1.getText(),
+                            holder.icon.getDrawable(), true);
                 } else {
                     mSelectedAdapter.remove(unique);
                 }
@@ -147,6 +150,15 @@ public class CreateGroupFragment extends Fragment
             }
         });
         rv.setAdapter(mContactsAdapter);
+        mContactsAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                togglePlaceholders(mContactsAdapter.getItemCount(), mSelectedAdapter.getItemCount());
+            }
+        });
+
+        togglePlaceholders(mContactsAdapter.getItemCount(), mSelectedAdapter.getItemCount());
 
         // This button creates the new group.
         view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
@@ -215,6 +227,29 @@ public class CreateGroupFragment extends Fragment
     @Override
     public void receiveResult(int id, Cursor data) {
         mContactsAdapter.resetContent(data, null);
+    }
+
+    private void togglePlaceholders(int contactsCount, int membersCount) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        if (membersCount > 0) {
+            activity.findViewById(R.id.empty_members).setVisibility(View.GONE);
+            activity.findViewById(R.id.selected_members).setVisibility(View.VISIBLE);
+        } else {
+            activity.findViewById(R.id.empty_members).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.selected_members).setVisibility(View.GONE);
+        }
+
+        if (contactsCount > 0) {
+            activity.findViewById(R.id.empty_contacts).setVisibility(View.GONE);
+            activity.findViewById(R.id.contact_list).setVisibility(View.VISIBLE);
+        } else {
+            activity.findViewById(R.id.empty_contacts).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.contact_list).setVisibility(View.GONE);
+        }
     }
 
     private void createTopic(final Activity activity, final String title,

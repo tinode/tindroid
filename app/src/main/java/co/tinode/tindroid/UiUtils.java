@@ -484,9 +484,9 @@ public class UiUtils {
         acceptAvatar(avatar, bmp);
     }
 
-    static void assignBitmap(Context context, ImageView icon, Bitmap bmp, String name, String address) {
+    static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address) {
         if (bmp != null) {
-            icon.setImageDrawable(new RoundImageDrawable(context.getResources(), bmp));
+            return new RoundImageDrawable(context.getResources(), bmp);
         } else {
             LetterTileDrawable drawable = new LetterTileDrawable(context);
             drawable.setContactTypeAndColor(
@@ -494,7 +494,7 @@ public class UiUtils {
                             LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP)
                     .setLetterAndColor(name, address)
                     .setIsCircular(true);
-            icon.setImageDrawable(drawable);
+            return drawable;
         }
     }
 
@@ -866,7 +866,6 @@ public class UiUtils {
         } catch (NotSynchronizedException ignored) {
         } catch (NotConnectedException ignored) {
             /* offline - ignored */
-            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception err) {
             Log.i(TAG, "Subscription failed", err);
             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_LONG).show();
