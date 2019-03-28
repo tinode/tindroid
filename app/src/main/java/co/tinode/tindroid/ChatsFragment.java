@@ -117,8 +117,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 activity.startActivity(intent);
             }
         });
-
-        mAdapter.resetContent(activity, mIsArchive, false);
         rv.setAdapter(mAdapter);
 
         mSelectionTracker = new SelectionTracker.Builder<>(
@@ -144,6 +142,21 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 }
             }
         });
+
+        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+
+                if (mAdapter.getItemCount() > 0) {
+                    activity.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
+                    activity.findViewById(android.R.id.empty).setVisibility(View.GONE);
+                } else {
+                    activity.findViewById(R.id.chat_list).setVisibility(View.GONE);
+                    activity.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     @Override
@@ -162,13 +175,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         }
 
         mAdapter.resetContent(activity, mIsArchive, true);
-        if (mAdapter.getItemCount() > 0) {
-            activity.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
-            activity.findViewById(android.R.id.empty).setVisibility(View.GONE);
-        } else {
-            activity.findViewById(R.id.chat_list).setVisibility(View.GONE);
-            activity.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
-        }
     }
 
     @Override
@@ -178,7 +184,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        Log.e(TAG, "onCreateOptionsMenu");
         // Inflate the menu; this adds items to the action bar if it is present.
         // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();

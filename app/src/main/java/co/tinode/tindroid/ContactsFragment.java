@@ -419,9 +419,12 @@ public class ContactsFragment extends Fragment {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             final Activity activity = getActivity();
+            if (activity == null) {
+                throw new IllegalStateException("Activity is NULL");
+            }
 
             // If this is the loader for finding contacts in the Contacts Provider
-            if (id == ContactsQuery.CORE_QUERY_ID && activity != null) {
+            if (id == ContactsQuery.CORE_QUERY_ID) {
                 String[] selectionArgs = null;
                 String selection = ContactsQuery.SELECTION;
                 if (mSearchTerm != null) {
@@ -442,9 +445,6 @@ public class ContactsFragment extends Fragment {
 
         @Override
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-            Log.i(TAG, "Columns: " + Arrays.toString(data.getColumnNames()));
-            DatabaseUtils.dumpCursor(data);
-
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 mAdapter.resetContent(data, mSearchTerm);
