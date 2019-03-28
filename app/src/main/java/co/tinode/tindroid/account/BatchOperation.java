@@ -22,7 +22,7 @@ final public class BatchOperation {
     // List for storing the batch mOperations
     private final ArrayList<ContentProviderOperation> mOperations;
 
-    public BatchOperation(ContentResolver resolver) {
+    BatchOperation(ContentResolver resolver) {
         mResolver = resolver;
         mOperations = new ArrayList<>();
     }
@@ -35,7 +35,8 @@ final public class BatchOperation {
         mOperations.add(cpo);
     }
 
-    public List<Uri> execute() {
+    @SuppressWarnings("UnusedReturnValue")
+    List<Uri> execute() {
         List<Uri> resultUris = new ArrayList<>();
         if (mOperations.size() == 0) {
             return resultUris;

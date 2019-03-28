@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Comparator;
 
 public class VCard implements Serializable {
 
@@ -91,11 +92,11 @@ public class VCard implements Serializable {
     }
 
     public void addPhone(String phone, String type) {
-        tel = Contact.append(tel, new Contact(phone, type));
+        tel = Contact.append(tel, new Contact(type, phone));
     }
 
     public void addEmail(String addr, String type) {
-        email = Contact.append(email, new Contact(addr, type));
+        email = Contact.append(email, new Contact(type, addr));
     }
 
     @JsonIgnore
@@ -155,7 +156,7 @@ public class VCard implements Serializable {
         }
     }
 
-    public static class Contact implements Serializable {
+    public static class Contact implements Serializable, Comparable<Contact> {
         public String type;
         public String uri;
 
@@ -164,8 +165,7 @@ public class VCard implements Serializable {
         public Contact(String type, String uri) {
             this.type = type;
             this.uri = uri;
-            this.tp = null;
-            this.tp = getType();
+            this.tp = stringToType(type);
         }
 
         @JsonIgnore
@@ -180,7 +180,7 @@ public class VCard implements Serializable {
             return new Contact(type, uri);
         }
 
-        public static Contact[] copyArray(Contact[] src){
+        static Contact[] copyArray(Contact[] src){
             Contact[] dst = null;
             if (src != null) {
                 dst = Arrays.copyOf(src, src.length);
@@ -192,13 +192,33 @@ public class VCard implements Serializable {
         }
 
         public static Contact[] append(Contact[] arr, Contact val) {
+            int insertAt;
             if (arr == null) {
                 arr = new Contact[1];
+                arr[0] = val;
+            } else if ((insertAt = Arrays.binarySearch(arr, val)) >=0) {
+                if (!TYPE_OTHER.equals(val.type)) {
+                    arr[insertAt].type = val.type;
+                    arr[insertAt].tp = stringToType(val.type);
+                }
             } else {
                 arr = Arrays.copyOf(arr, arr.length + 1);
+                arr[arr.length - 1] = val;
             }
-            arr[arr.length - 1] = val;
+
+            Arrays.sort(arr);
+
             return arr;
+        }
+
+        @Override
+        public int compareTo(Contact c) {
+            return uri.compareTo(c.uri);
+        }
+
+        @Override
+        public String toString() {
+            return type + ":" + uri;
         }
     }
 

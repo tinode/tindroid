@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ContactsSource xmlns:android="http://schemas.android.com/apk/res/android">
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
     <ContactsDataKind
-        android:mimeType="vnd.android.cursor.item/vnd.tinode.profile"
+        android:mimeType="vnd.android.cursor.item/vnd.co.tinode.im"
         android:icon="@mipmap/ic_launcher"
-        android:detailSocialSummary="true"
         android:summaryColumn="data2"
         android:detailColumn="data3" />
-</ContactsSource>
+</ContactsAccountType>

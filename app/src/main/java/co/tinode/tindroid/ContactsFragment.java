@@ -8,7 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.graphics.Bitmap;
+import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,7 +23,6 @@ import androidx.loader.content.Loader;
 
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,12 +31,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import java.util.Arrays;
 
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import co.tinode.tindroid.account.Utils;
+
 
 public class ContactsFragment extends Fragment {
 
@@ -151,6 +153,21 @@ public class ContactsFragment extends Fragment {
                 }
             }
         });
+
+        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+
+                boolean empty = mAdapter.getItemCount() == 0;
+                activity.findViewById(android.R.id.empty).setVisibility(empty ? View.VISIBLE : View.GONE);
+                activity.findViewById(R.id.contact_list).setVisibility(empty ? View.GONE : View.VISIBLE);
+            }
+        });
+
+        boolean empty = mAdapter.getItemCount() == 0;
+        activity.findViewById(android.R.id.empty).setVisibility(empty ? View.VISIBLE : View.GONE);
+        activity.findViewById(R.id.contact_list).setVisibility(empty ? View.GONE : View.VISIBLE);
 
         // Check for access to Contacts.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
@@ -363,19 +380,14 @@ public class ContactsFragment extends Fragment {
 
         // A content URI for the Contacts table
         Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
-        // Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
-
-        // The search/filter query Uri
-        Uri FILTER_URI = Contacts.CONTENT_FILTER_URI;
 
         // The selection clause for the CursorLoader query. The search criteria defined here
         // restrict results to contacts that have a display name and are linked to visible groups.
         String SELECTION = ContactsContract.Data.DISPLAY_NAME_PRIMARY + "<>'' AND " +
                 ContactsContract.Data.IN_VISIBLE_GROUP + "=1 AND " +
-                ContactsContract.CommonDataKinds.Im.PROTOCOL + "=" +
-                    ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + " AND " +
-                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL + "='" +
-                    co.tinode.tindroid.account.Utils.TINODE_IM_PROTOCOL + "'";
+                ContactsContract.Data.MIMETYPE + "='" + Utils.MIME_TINODE_PROFILE + "'";
+
+        String SELECTION_FILTER = " AND " + ContactsContract.Data.DISPLAY_NAME_PRIMARY + " LIKE ?";
 
         // The desired sort order for the returned Cursor.
         String SORT_ORDER = ContactsContract.Data.SORT_KEY_PRIMARY;
@@ -386,7 +398,7 @@ public class ContactsFragment extends Fragment {
                 ContactsContract.Data.LOOKUP_KEY,
                 ContactsContract.Data.DISPLAY_NAME_PRIMARY,
                 ContactsContract.Data.PHOTO_THUMBNAIL_URI,
-                ContactsContract.CommonDataKinds.Email.DATA,
+                ContactsContract.Data.DATA1,
 
                 // The sort order column for the returned Cursor, used by the AlphabetIndexer
                 SORT_ORDER,
@@ -407,33 +419,21 @@ public class ContactsFragment extends Fragment {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             final Activity activity = getActivity();
+
             // If this is the loader for finding contacts in the Contacts Provider
             if (id == ContactsQuery.CORE_QUERY_ID && activity != null) {
-                Uri contentUri;
-
-                // There are two types of searches, one which displays all contacts and
-                // one which filters contacts by a search query. If mSearchTerm is set
-                // then a search query has been entered and the latter should be used.
-
-                if (mSearchTerm == null) {
-                    // Since there's no search string, use the content URI that searches the entire
-                    // Contacts table
-                    contentUri = ContactsQuery.CONTENT_URI;
-                } else {
-                    // Since there's a search string, use the special content Uri that searches the
-                    // Contacts table. The URI consists of a base Uri and the search string.
-                    contentUri = Uri.withAppendedPath(ContactsQuery.FILTER_URI, Uri.encode(mSearchTerm));
+                String[] selectionArgs = null;
+                String selection = ContactsQuery.SELECTION;
+                if (mSearchTerm != null) {
+                    selection = ContactsQuery.SELECTION + ContactsQuery.SELECTION_FILTER;
+                    selectionArgs = new String[]{mSearchTerm + "%"};
                 }
 
-                // Returns a new CursorLoader for querying the Contacts table. No arguments are used
-                // for the selection clause. The search string is either encoded onto the content URI,
-                // or no contacts search string is used. The other search criteria are constants. See
-                // the ContactsQuery interface.
                 return new CursorLoader(activity,
-                        contentUri,
+                        ContactsQuery.CONTENT_URI,
                         ContactsQuery.PROJECTION,
-                        ContactsQuery.SELECTION,
-                        null,
+                        selection,
+                        selectionArgs,
                         ContactsQuery.SORT_ORDER);
             }
 
@@ -442,9 +442,12 @@ public class ContactsFragment extends Fragment {
 
         @Override
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+            Log.i(TAG, "Columns: " + Arrays.toString(data.getColumnNames()));
+            DatabaseUtils.dumpCursor(data);
+
             // This swaps the new cursor into the adapter.
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
-                // mAdapter.resetContent(data, mSearchTerm);
+                mAdapter.resetContent(data, mSearchTerm);
             }
         }
 
@@ -453,7 +456,7 @@ public class ContactsFragment extends Fragment {
             if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
                 // When the loader is being reset, clear the cursor from the adapter. This allows the
                 // cursor resources to be freed.
-                // mAdapter.resetContent(null, mSearchTerm);
+                mAdapter.resetContent(null, mSearchTerm);
             }
         }
     }

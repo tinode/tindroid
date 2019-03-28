@@ -1,5 +1,6 @@
 package co.tinode.tindroid.account;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -21,6 +22,10 @@ public class SyncService extends Service {
     private static final String TAG = "SyncService";
 
     private static final Object sSyncAdapterLock = new Object();
+
+    // Verbatim copy of
+    // https://developer.android.com/training/sync-adapters/creating-sync-adapter
+    @SuppressLint("StaticFieldLeak")
     private static SyncAdapter sSyncAdapter = null;
 
     /**
@@ -29,6 +34,7 @@ public class SyncService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
         synchronized (sSyncAdapterLock) {
             if (sSyncAdapter == null) {
                 sSyncAdapter = new SyncAdapter(getApplicationContext(), true);
@@ -36,10 +42,10 @@ public class SyncService extends Service {
         }
     }
 
-    @Override
     /**
      * Logging-only destructor.
      */
+    @Override
     public void onDestroy() {
         super.onDestroy();
     }

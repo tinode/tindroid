@@ -15,6 +15,7 @@ import android.util.SparseArray;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 
@@ -155,8 +156,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                             updated.add(sub);
                         }
                     }
-                    Date upd = ContactsManager.updateContacts(mContext, account, updated,
-                            meta.sub == null ? null : meta.sub.ims);
+                    Date upd = ContactsManager.updateContacts(mContext, account, updated, lastSyncMarker);
                     setServerSyncMarker(account, upd);
                 }
                 success = true;

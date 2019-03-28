@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
           package="co.tinode.tindroid">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -94,6 +95,14 @@
             android:label="@string/app_name"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize">
+
+            <intent-filter android:icon="@mipmap/ic_launcher" tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:mimeType="vnd.android.cursor.item/vnd.co.tinode.im" />
+            </intent-filter>
+
         </activity>
 
         <activity
@@ -131,8 +140,11 @@
                 android:resource="@xml/contacts_source"/>
         </service>
 
-        <!-- FCM handling -->
-        <service android:name=".fcm.FBaseMessagingService">
+        <!-- FirebaseMessagingService performs security checks at runtime,
+             no need for explicit permissions despite exported="true".
+             Using tools:ignore="ExportedService" to disable the warning -->
+        <service android:name=".fcm.FBaseMessagingService"
+                 tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>

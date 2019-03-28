@@ -13,6 +13,7 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,7 +51,7 @@ public class Utils {
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */
     public static final String MIME_TINODE_PROFILE =
-            "vnd.android.cursor.item/vnd.tinode.profile";
+            "vnd.android.cursor.item/vnd.co.tinode.im";
     public static final String DATA_PID = Data.DATA1;
     public static final String DATA_SUMMARY = Data.DATA2;
     public static final String DATA_DETAIL = Data.DATA3;
@@ -61,6 +62,7 @@ public class Utils {
 
     /**
      * Read address book contacts from the Contacts content provider.
+     * The results are ordered by 'data1' field.
      *
      * @param resolver content resolver to use.
      * @param flags bit flags indicating types f contacts to fetch.
@@ -179,7 +181,7 @@ public class Utils {
     }
 
     // Generate a hash from a string.
-    public static String hash(String s) {
+    static String hash(String s) {
         if (s == null || s.equals("")) {
             return "";
         }
@@ -209,16 +211,17 @@ public class Utils {
         List<String> phones;
         List<String> ims;
 
-        public ContactHolder() {
+        ContactHolder() {
             emails = null;
             phones = null;
             ims = null;
         }
 
         // Inverse of toString: deserialize contacts from
-        public ContactHolder(final String[] matches) {
+        ContactHolder(final String[] matches) {
             // Initialize all content to null.
             this();
+            // Log.i(TAG, "Processing matches: " + Arrays.toString(matches));
             // Parse contacts.
             for (String match : matches) {
                 if (match.indexOf(TAG_LABEL_EMAIL) == 0) {
@@ -229,20 +232,6 @@ public class Utils {
                     putIm(match.substring(TAG_LABEL_TINODE.length()));
                 }
             }
-        }
-
-        public Iterator<String> iterateAll() {
-            List<String> all = new LinkedList<>();
-            if (emails != null) {
-                all.addAll(emails);
-            }
-            if (phones != null) {
-                all.addAll(phones);
-            }
-            if (ims != null) {
-                all.addAll(ims);
-            }
-            return all.iterator();
         }
 
         private static void Stringify(List<String> vals, String label, StringBuilder str) {
@@ -261,49 +250,25 @@ public class Utils {
             }
         }
 
-        public void putEmail(String email) {
+        void putEmail(String email) {
             if (emails == null) {
                 emails = new LinkedList<>();
             }
             emails.add(email);
         }
 
-        public void putPhone(String phone) {
+        void putPhone(String phone) {
             if (phones == null) {
                 phones = new LinkedList<>();
             }
             phones.add(phone);
         }
 
-        public void putIm(String im) {
+        void putIm(String im) {
             if (ims == null) {
                 ims = new LinkedList<>();
             }
             ims.add(im);
-        }
-
-        public int getEmailCount() {
-            return emails != null ? emails.size() : 0;
-        }
-
-        public int getPhoneCount() {
-            return phones != null ? phones.size() : 0;
-        }
-
-        public int getImCount() {
-            return ims != null ? ims.size() : 0;
-        }
-
-        public String getEmail() {
-            return emails != null ? emails.get(0) : null;
-        }
-
-        public String getPhone() {
-            return phones != null ? phones.get(0) : null;
-        }
-
-        public String getIm() {
-            return ims != null ? ims.get(0) : null;
         }
 
         @Override
@@ -314,22 +279,6 @@ public class Utils {
             Stringify(phones, TAG_LABEL_PHONE, str);
             Stringify(ims, TAG_LABEL_TINODE, str);
             return str.toString();
-        }
-
-        public String bestContact() {
-            if (ims != null) {
-                return TAG_LABEL_TINODE + ims.get(0);
-            }
-
-            if (phones != null) {
-                return TAG_LABEL_PHONE + phones.get(0);
-            }
-
-            if (emails != null) {
-                return TAG_LABEL_EMAIL + emails.get(0);
-            }
-
-            return "";
         }
     }
 }
