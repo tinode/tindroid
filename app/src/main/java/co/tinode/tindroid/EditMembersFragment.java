@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,7 +29,6 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -38,9 +36,10 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Fragment for editing group members
  */
-public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoaderResultReceiver {
+public class EditMembersFragment extends Fragment {
 
     private static final String TAG = "EditMembersFragment";
+    private static final int LOADER_ID = 103;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -49,7 +48,12 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     private MembersAdapter mSelectedAdapter;
     private ContactsAdapter mContactsAdapter;
 
+    private RecyclerView.AdapterDataObserver mSelectedDataObserver = null;
+    private RecyclerView.AdapterDataObserver mContactsDataObserver = null;
+
     private ImageLoader mImageLoader;
+
+    private ContactsLoaderCallback mContactsLoaderCallback;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -62,7 +66,7 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
+    public void onViewCreated(@NonNull final View view, Bundle savedInstance) {
 
         final FragmentActivity activity = getActivity();
         if (activity == null) {
@@ -76,7 +80,6 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-
         mContactsAdapter = new ContactsAdapter(activity, mImageLoader, new ContactsAdapter.ClickListener() {
             @Override
             public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
@@ -92,6 +95,23 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
             }
         });
         rv.setAdapter(mContactsAdapter);
+        mContactsDataObserver = new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+
+                if (mContactsAdapter.getItemCount() > 0) {
+                    view.findViewById(R.id.empty_contacts).setVisibility(View.GONE);
+                    view.findViewById(R.id.contact_list).setVisibility(View.VISIBLE);
+                } else {
+                    view.findViewById(R.id.empty_contacts).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.contact_list).setVisibility(View.GONE);
+                }
+            }
+        };
+        mContactsAdapter.registerAdapterDataObserver(mContactsDataObserver);
+
+        mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mContactsAdapter);
 
         // Recycler view with selected contacts.
         rv = view.findViewById(R.id.selected_members);
@@ -134,6 +154,21 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
             }
         }, cancelable);
         rv.setAdapter(mSelectedAdapter);
+        mSelectedDataObserver = new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+
+                if (mSelectedAdapter.getItemCount() > 0) {
+                    view.findViewById(R.id.empty_members).setVisibility(View.GONE);
+                    view.findViewById(R.id.selected_members).setVisibility(View.VISIBLE);
+                } else {
+                    view.findViewById(R.id.empty_members).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.selected_members).setVisibility(View.GONE);
+                }
+            }
+        };
+        mSelectedAdapter.registerAdapterDataObserver(mSelectedDataObserver);
 
         // This button creates the new group.
         view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
@@ -142,14 +177,13 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
                 updateContacts(activity);
             }
         });
-
-        LoaderManager.getInstance(activity).initLoader(0, null,
-                new UiUtils.ContactsLoaderCallback(getActivity(), this));
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        restartLoader();
     }
 
     @Override
@@ -160,8 +194,27 @@ public class EditMembersFragment extends Fragment implements UiUtils.ContactsLoa
     }
 
     @Override
-    public void receiveResult(int id, Cursor data) {
-        mContactsAdapter.resetContent(data, null);
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mSelectedDataObserver != null) {
+            mSelectedAdapter.unregisterAdapterDataObserver(mSelectedDataObserver);
+        }
+        if (mContactsDataObserver != null) {
+            mContactsAdapter.unregisterAdapterDataObserver(mContactsDataObserver);
+        }
+    }
+
+    // Restarts the loader. This triggers onCreateLoader(), which builds the
+    // necessary content Uri from mSearchTerm.
+    private void restartLoader() {
+        final FragmentActivity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        LoaderManager.getInstance(activity).restartLoader(LOADER_ID,
+                null, mContactsLoaderCallback);
     }
 
     private void updateContacts(final Activity activity) {

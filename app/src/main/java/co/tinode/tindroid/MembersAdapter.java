@@ -16,18 +16,21 @@ import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHolder> {
+    @SuppressWarnings("unused")
     private static final String TAG = "MembersAdapter";
 
     private ArrayList<String> mInitialMembers;
     private ArrayList<Member> mCurrentMembers;
 
-    // This means initial items can be removed too.
+    // mCancelable means initial items can be removed too.
     // Newly added members can always be removed.
     private boolean mCancelable;
     private ClickListener mOnCancel;
 
     MembersAdapter(@Nullable ArrayList<Member> users, @Nullable ClickListener onCancel,
                    boolean cancelable) {
+        setHasStableIds(true);
+
         mCancelable = cancelable;
         mOnCancel = onCancel;
 
@@ -57,6 +60,11 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     @Override
     public int getItemCount() {
         return mCurrentMembers.size();
+    }
+
+    @Override
+    public long getItemId(int pos) {
+        return mCurrentMembers.get(pos).unique.hashCode();
     }
 
     boolean append(String unique, String name, Drawable icon, boolean removable) {

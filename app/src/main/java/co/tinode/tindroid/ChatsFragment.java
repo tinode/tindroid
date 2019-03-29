@@ -174,7 +174,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             return;
         }
 
-        mAdapter.resetContent(activity, mIsArchive, true);
+        mAdapter.resetContent(activity, mIsArchive);
     }
 
     @Override
@@ -368,7 +368,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
      * Wraps mAdapter.notifyDataSetChanged() into runOnUiThread()
      */
     void datasetChanged() {
-        mAdapter.resetContent(getActivity(), mIsArchive, true);
+        mAdapter.resetContent(getActivity(), mIsArchive);
     }
 
     // TODO: Add onBackPressed handing to parent Activity.

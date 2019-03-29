@@ -20,14 +20,12 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.ContactsContract;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -42,7 +40,6 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedInputStream;
@@ -68,9 +65,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
 import androidx.preference.PreferenceManager;
 
 import co.tinode.tindroid.account.Utils;
@@ -79,6 +73,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
@@ -89,7 +84,6 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Static utilities for UI support.
@@ -1017,73 +1011,6 @@ public class UiUtils {
         return null;
     }
 
-    /**
-     * Create Chip from subscription.
-     *
-     * @param activity context
-     * @param sub      Subscription with chip data.
-     * @return created Chip
-     */
-    static View makeChip(@NonNull Activity activity, @NonNull Subscription<VxCard, PrivateType> sub) {
-        View chip;
-        if (sub.pub != null) {
-            chip = makeChip(activity, sub.pub.fn,
-                    new BitmapDrawable(activity.getResources(), sub.pub.getBitmap()), sub.getUnique());
-        } else {
-            chip = makeChip(activity, sub.getUnique(),
-                    activity.getResources().getDrawable(R.drawable.ic_person_circle), sub.getUnique());
-        }
-        return chip;
-    }
-
-    static View makeChip(@NonNull Activity activity, String title, Drawable icon, String unique) {
-        final View chip = LayoutInflater.from(activity).inflate(R.layout.group_member_chip,
-                null, false);
-        ((TextView) chip.findViewById(android.R.id.text1)).setText(title);
-        ((ImageView) chip.findViewById(android.R.id.icon)).setImageDrawable(icon);
-        // TODO: make [close] dependent on permissions.
-        chip.findViewById(android.R.id.closeButton).setVisibility(View.VISIBLE);
-        chip.setTag(unique);
-        //chip.setChipBackgroundColorResource(R.color.red);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            chip.setElevation(R.dimen.chip_elevation);
-        }
-        return chip;
-    }
-
-    interface ContactsQuery {
-        String[] PROJECTION = {
-                ContactsContract.Data._ID,
-                ContactsContract.Data.CONTACT_ID,
-                ContactsContract.CommonDataKinds.Im.DISPLAY_NAME_PRIMARY,
-                ContactsContract.CommonDataKinds.Im.PHOTO_THUMBNAIL_URI,
-                ContactsContract.CommonDataKinds.Im.DATA,
-                ContactsContract.Data.MIMETYPE,
-                ContactsContract.CommonDataKinds.Im.PROTOCOL,
-                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL,
-        };
-
-        int ID = 0;
-        // int CONTACT_ID = 1;
-        int DISPLAY_NAME = 2;
-        int PHOTO_THUMBNAIL_DATA = 3;
-        int IM_HANDLE = 4;
-
-        String SELECTION = ContactsContract.Data.MIMETYPE + "=? AND " +
-                ContactsContract.CommonDataKinds.Im.PROTOCOL + "=? AND " +
-                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL + "=?";
-        String[] SELECTION_ARGS = {
-                ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
-                Integer.toString(ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM),
-                Utils.TINODE_IM_PROTOCOL,
-        };
-        String SORT_ORDER = ContactsContract.CommonDataKinds.Im.DISPLAY_NAME_PRIMARY;
-    }
-
-    interface ContactsLoaderResultReceiver {
-        void receiveResult(int id, Cursor c);
-    }
-
     public static class EventListener extends Tinode.EventListener {
         private Activity mActivity;
         private Boolean mConnected;
@@ -1130,47 +1057,6 @@ public class UiUtils {
         AccessModeLabel(int nameId, int color) {
             this.nameId = nameId;
             this.color = color;
-        }
-    }
-
-    static class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
-        private Activity mActivity;
-        private ContactsLoaderResultReceiver mReceiver;
-        private int mLoaderId = -1;
-
-        ContactsLoaderCallback(Activity activity, ContactsLoaderResultReceiver receiver) {
-            mActivity = activity;
-            mReceiver = receiver;
-        }
-
-        @NonNull
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            mLoaderId = id;
-
-            // Returns a new CursorLoader for querying the Contacts table. No arguments are used
-            // for the selection clause. The search string is either encoded onto the content URI,
-            // or no contacts search string is used. The other search criteria are constants. See
-            // the ContactsQuery interface.
-            return new CursorLoader(mActivity,
-                    ContactsContract.Data.CONTENT_URI,
-                    ContactsQuery.PROJECTION,
-                    ContactsQuery.SELECTION,
-                    ContactsQuery.SELECTION_ARGS,
-                    ContactsQuery.SORT_ORDER);
-        }
-
-        @Override
-        public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-            // This swaps the new cursor into the adapter.
-            mReceiver.receiveResult(mLoaderId, data);
-        }
-
-        @Override
-        public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-            // When the loader is being reset, clear the cursor from the adapter. This allows the
-            // cursor resources to be freed.
-            mReceiver.receiveResult(mLoaderId, null);
         }
     }
 

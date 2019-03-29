@@ -30,6 +30,8 @@ import co.tinode.tindroid.widgets.LetterTileDrawable;
  * ListView.
  */
 class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> implements SectionIndexer {
+    private static final String TAG = "ContactsAdapter";
+
     private AlphabetIndexer mAlphabetIndexer; // Stores the AlphabetIndexer instance
     private TextAppearanceSpan mHighlightTextSpan; // Stores the highlight text appearance style
 
@@ -65,7 +67,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
 
         // Instantiates a new AlphabetIndexer bound to the column used to sort contact names.
         // The cursor is left null, because it has not yet been retrieved.
-        mAlphabetIndexer = new AlphabetIndexer(null, ContactsFragment.ContactsQuery.SORT_KEY, alphabet);
+        mAlphabetIndexer = new AlphabetIndexer(null, ContactsLoaderCallback.ContactsQuery.SORT_KEY, alphabet);
 
         // Defines a span for highlighting the part of a display name that matches the search
         // string
@@ -124,15 +126,12 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
         mAlphabetIndexer.setCursor(newCursor);
 
         mCursor = newCursor;
+
+        // Notify the observers about the new cursor
+        notifyDataSetChanged();
+
         if (oldCursor != null) {
             oldCursor.close();
-        }
-
-        if (newCursor != null) {
-            // notify the observers about the new cursor
-            notifyDataSetChanged();
-        } else {
-            notifyItemRangeRemoved(0, getItemCount());
         }
     }
 
@@ -158,7 +157,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
             throw new IllegalStateException("Failed to move cursor to position " + pos);
         }
 
-        return mCursor.getLong(ContactsFragment.ContactsQuery.ID);
+        return mCursor.getLong(ContactsLoaderCallback.ContactsQuery.ID);
     }
 
     /**
@@ -227,9 +226,9 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
             }
 
             // Get the thumbnail image Uri from the current Cursor row.
-            final String photoUri = cursor.getString(ContactsFragment.ContactsQuery.PHOTO_THUMBNAIL_DATA);
-            final String displayName = cursor.getString(ContactsFragment.ContactsQuery.DISPLAY_NAME);
-            unique = cursor.getString(ContactsFragment.ContactsQuery.IM_ADDRESS);
+            final String photoUri = cursor.getString(ContactsLoaderCallback.ContactsQuery.PHOTO_THUMBNAIL_DATA);
+            final String displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
+            unique = cursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
 
             final int startIndex = indexOfSearchQuery(displayName);
 

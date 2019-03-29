@@ -7,19 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
 
 import android.text.TextUtils;
 import android.util.Log;
@@ -32,21 +26,18 @@ import android.view.ViewGroup;
 import android.widget.SearchView;
 import android.widget.TextView;
 
-import java.util.Arrays;
-
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import co.tinode.tindroid.account.Utils;
 
 
 public class ContactsFragment extends Fragment {
 
     // Defines a tag for identifying log entries
-    private static final String TAG = "ContactListFragment";
+    private static final String TAG = "ContactsFragment";
 
     private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+    private static final int LOADER_ID = 101;
 
     private ContactsAdapter mAdapter; // The main query adapter
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
@@ -57,6 +48,9 @@ public class ContactsFragment extends Fragment {
 
     // Observer to receive notifications while the fragment is active.
     private ContentObserver mContactsObserver;
+
+    // Observer of data
+    private RecyclerView.AdapterDataObserver mDataObserver = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,8 +72,6 @@ public class ContactsFragment extends Fragment {
             mSearchTerm = savedInstanceState.getString(SearchManager.QUERY);
         }
 
-        mContactsLoaderCallback = new ContactsLoaderCallback();
-
         final FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
@@ -91,20 +83,10 @@ public class ContactsFragment extends Fragment {
             @Override
             public void onChange(boolean selfChange) {
                 // Content changed, refresh data
-                final FragmentActivity activity = getActivity();
-                if (activity == null) {
-                    return;
-                }
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        final View fragment = getView();
-                        if (fragment != null) {
-                            fragment.findViewById(android.R.id.empty)
-                                    .setVisibility(mAdapter.getItemCount() > 0 ? View.GONE : View.VISIBLE);
-                        }
-                        LoaderManager.getInstance(activity)
-                                .restartLoader(ContactsQuery.CORE_QUERY_ID, null, mContactsLoaderCallback);
+                        restartLoader();
                     }
                 });
             }
@@ -119,13 +101,25 @@ public class ContactsFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
+
+        mDataObserver = new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+
+                boolean empty = mAdapter.getItemCount() == 0;
+
+                view.findViewById(android.R.id.empty).setVisibility(empty ? View.VISIBLE : View.GONE);
+                view.findViewById(R.id.contact_list).setVisibility(empty ? View.GONE : View.VISIBLE);
+            }
+        };
 
         RecyclerView rv = view.findViewById(R.id.contact_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
@@ -140,6 +134,7 @@ public class ContactsFragment extends Fragment {
                 startActivity(it);
             }
         });
+        mAdapter.registerAdapterDataObserver(mDataObserver);
         rv.setAdapter(mAdapter);
 
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -154,20 +149,7 @@ public class ContactsFragment extends Fragment {
             }
         });
 
-        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-
-                boolean empty = mAdapter.getItemCount() == 0;
-                activity.findViewById(android.R.id.empty).setVisibility(empty ? View.VISIBLE : View.GONE);
-                activity.findViewById(R.id.contact_list).setVisibility(empty ? View.GONE : View.VISIBLE);
-            }
-        });
-
-        boolean empty = mAdapter.getItemCount() == 0;
-        activity.findViewById(android.R.id.empty).setVisibility(empty ? View.VISIBLE : View.GONE);
-        activity.findViewById(R.id.contact_list).setVisibility(empty ? View.GONE : View.VISIBLE);
+        mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);
 
         // Check for access to Contacts.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
@@ -195,12 +177,6 @@ public class ContactsFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        View view = getView();
-        if (view != null) {
-            view.findViewById(android.R.id.empty)
-                    .setVisibility(mAdapter.getItemCount() > 0 ? View.GONE : View.VISIBLE);
-        }
-
         FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
@@ -208,13 +184,14 @@ public class ContactsFragment extends Fragment {
 
         try {
             // Receive updates when the Contacts db is changed
-            activity.getContentResolver().registerContentObserver(ContactsQuery.CONTENT_URI,
+            activity.getContentResolver().registerContentObserver(ContactsLoaderCallback.ContactsQuery.CONTENT_URI,
                     true, mContactsObserver);
+
             // Refresh data
-            LoaderManager.getInstance(activity).initLoader(ContactsQuery.CORE_QUERY_ID,
-                    null, mContactsLoaderCallback);
+            restartLoader();
+
         } catch (SecurityException ex) {
-            Log.d(TAG, "Missing permission", ex);
+            Log.i(TAG, "Missing permission", ex);
         }
     }
 
@@ -233,6 +210,15 @@ public class ContactsFragment extends Fragment {
 
         // Stop receiving update for changes to Contacts DB
         activity.getContentResolver().unregisterContentObserver(mContactsObserver);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mDataObserver != null) {
+            mAdapter.unregisterAdapterDataObserver(mDataObserver);
+        }
     }
 
     @Override
@@ -270,11 +256,6 @@ public class ContactsFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                final FragmentActivity activity = getActivity();
-                if (activity == null) {
-                    return true;
-                }
-
                 // Called when the action bar search text has changed.  Updates
                 // the search filter, and restarts the loader to do a new query
                 // using the new search string.
@@ -293,10 +274,8 @@ public class ContactsFragment extends Fragment {
                 // Updates current filter to new filter
                 mSearchTerm = newFilter;
 
-                // Restarts the loader. This triggers onCreateLoader(), which builds the
-                // necessary content Uri from mSearchTerm.
-                LoaderManager.getInstance(activity).restartLoader(ContactsQuery.CORE_QUERY_ID,
-                        null, mContactsLoaderCallback);
+                restartLoader();
+
                 return true;
             }
         });
@@ -311,17 +290,12 @@ public class ContactsFragment extends Fragment {
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem menuItem) {
-                final FragmentActivity activity = getActivity();
-                if (activity == null) {
-                    return true;
-                }
-
                 searchView.clearFocus();
-                mSearchTerm = null;
 
-                LoaderManager.getInstance(activity).restartLoader(ContactsQuery.CORE_QUERY_ID,
-                        null, mContactsLoaderCallback);
-
+                if (mSearchTerm != null) {
+                    mSearchTerm = null;
+                    restartLoader();
+                }
                 return true;
             }
         });
@@ -369,96 +343,17 @@ public class ContactsFragment extends Fragment {
         }
     }
 
-    /**
-     * This interface defines constants for the Cursor and CursorLoader, based on constants defined
-     * in the {@link android.provider.ContactsContract.Contacts} class.
-     */
-    interface ContactsQuery {
-
-        // An identifier for the base loader -- just contact names
-        int CORE_QUERY_ID = 1;
-
-        // A content URI for the Contacts table
-        Uri CONTENT_URI = ContactsContract.Data.CONTENT_URI;
-
-        // The selection clause for the CursorLoader query. The search criteria defined here
-        // restrict results to contacts that have a display name and are linked to visible groups.
-        String SELECTION = ContactsContract.Data.DISPLAY_NAME_PRIMARY + "<>'' AND " +
-                ContactsContract.Data.IN_VISIBLE_GROUP + "=1 AND " +
-                ContactsContract.Data.MIMETYPE + "='" + Utils.MIME_TINODE_PROFILE + "'";
-
-        String SELECTION_FILTER = " AND " + ContactsContract.Data.DISPLAY_NAME_PRIMARY + " LIKE ?";
-
-        // The desired sort order for the returned Cursor.
-        String SORT_ORDER = ContactsContract.Data.SORT_KEY_PRIMARY;
-
-        // A list of columns that the Contacts Provider should return in the Cursor.
-        String[] PROJECTION = {
-                ContactsContract.Data._ID,
-                ContactsContract.Data.LOOKUP_KEY,
-                ContactsContract.Data.DISPLAY_NAME_PRIMARY,
-                ContactsContract.Data.PHOTO_THUMBNAIL_URI,
-                ContactsContract.Data.DATA1,
-
-                // The sort order column for the returned Cursor, used by the AlphabetIndexer
-                SORT_ORDER,
-        };
-
-        // The query column numbers which map to each value in the projection
-        int ID = 0;
-        // int LOOKUP_KEY = 1;
-        int DISPLAY_NAME = 2;
-        int PHOTO_THUMBNAIL_DATA = 3;
-        int IM_ADDRESS = 4;
-
-        int SORT_KEY = 5;
-    }
-
-    private class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
-        @NonNull
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            final Activity activity = getActivity();
-            if (activity == null) {
-                throw new IllegalStateException("Activity is NULL");
-            }
-
-            // If this is the loader for finding contacts in the Contacts Provider
-            if (id == ContactsQuery.CORE_QUERY_ID) {
-                String[] selectionArgs = null;
-                String selection = ContactsQuery.SELECTION;
-                if (mSearchTerm != null) {
-                    selection = ContactsQuery.SELECTION + ContactsQuery.SELECTION_FILTER;
-                    selectionArgs = new String[]{mSearchTerm + "%"};
-                }
-
-                return new CursorLoader(activity,
-                        ContactsQuery.CONTENT_URI,
-                        ContactsQuery.PROJECTION,
-                        selection,
-                        selectionArgs,
-                        ContactsQuery.SORT_ORDER);
-            }
-
-            throw new IllegalArgumentException("Unknown loader ID "+id);
+    // Restarts the loader. This triggers onCreateLoader(), which builds the
+    // necessary content Uri from mSearchTerm.
+    private void restartLoader() {
+        final FragmentActivity activity = getActivity();
+        if (activity == null) {
+            return;
         }
 
-        @Override
-        public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-            // This swaps the new cursor into the adapter.
-            if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
-                mAdapter.resetContent(data, mSearchTerm);
-            }
-        }
-
-        @Override
-        public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-            if (loader.getId() == ContactsQuery.CORE_QUERY_ID) {
-                // When the loader is being reset, clear the cursor from the adapter. This allows the
-                // cursor resources to be freed.
-                mAdapter.resetContent(null, mSearchTerm);
-            }
-        }
+        Bundle args = new Bundle();
+        args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, mSearchTerm);
+        LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
     }
 }
 

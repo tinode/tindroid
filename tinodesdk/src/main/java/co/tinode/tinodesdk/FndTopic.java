@@ -31,6 +31,7 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
     public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<String,String> meta) {
         if (mSubs != null) {
             mSubs = null;
+            mSubsUpdated = null;
 
             if (mListener != null) {
                 mListener.onSubsUpdated();
@@ -60,8 +61,6 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
 
     @Override
     protected void routeMetaSub(MsgServerMeta<String,String,SP,String[]> meta) {
-        // Reset subscriptions on new data.
-        mSubs = null;
         for (Subscription<SP,String[]> upd : meta.sub) {
             Subscription<SP,String[]> sub = getSubscription(upd.getUnique());
             if (sub != null) {

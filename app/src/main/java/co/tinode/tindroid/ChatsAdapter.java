@@ -10,7 +10,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -62,7 +61,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 R.color.online, context.getTheme());
     }
 
-    void resetContent(Activity activity, boolean archive, boolean notify) {
+    void resetContent(Activity activity, boolean archive) {
         mIsArchive = archive;
         mTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
             @Override
@@ -72,14 +71,12 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             }
         });
 
-        if (notify) {
-            activity.runOnUiThread(new Runnable() {
+        activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     notifyDataSetChanged();
                 }
             });
-        }
     }
 
     @NonNull

@@ -7,6 +7,7 @@
     android:layout_height="wrap_content"
     android:background="@drawable/rounded_corners"
     android:orientation="horizontal"
+    android:maxWidth="144dp"
     android:layout_margin="2dp"
     android:gravity="center_vertical">
 

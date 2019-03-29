@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -30,6 +29,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import androidx.recyclerview.widget.SimpleItemAnimator;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -42,10 +42,10 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment for adding/editing a group topic
  */
-public class CreateGroupFragment extends Fragment
-        implements UiUtils.ContactsLoaderResultReceiver {
+public class CreateGroupFragment extends Fragment {
 
     private static final String TAG = "CreateGroupFragment";
+    private static final int LOADER_ID = 102;
 
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
 
@@ -53,6 +53,12 @@ public class CreateGroupFragment extends Fragment
 
     private MembersAdapter mSelectedAdapter;
     private ContactsAdapter mContactsAdapter;
+
+    private RecyclerView.AdapterDataObserver mSelectedDataObserver = null;
+    private RecyclerView.AdapterDataObserver mContactsDataObserver = null;
+
+    // Callback which receives notifications of contacts loading status;
+    private ContactsLoaderCallback mContactsLoaderCallback;
 
     private Animation mAnimateSelected;
     private Animation mAnimateDeselected;
@@ -73,7 +79,7 @@ public class CreateGroupFragment extends Fragment
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
+    public void onViewCreated(@NonNull final View view, Bundle savedInstance) {
 
         final FragmentActivity activity = getActivity();
         if (activity == null) {
@@ -122,14 +128,21 @@ public class CreateGroupFragment extends Fragment
                 mContactsAdapter.toggleSelected(unique);
             }
         }, true);
-        rv.setAdapter(mSelectedAdapter);
-        mSelectedAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        mSelectedDataObserver = new RecyclerView.AdapterDataObserver() {
             @Override
-            public void onChanged() {
-                super.onChanged();
-                togglePlaceholders(mContactsAdapter.getItemCount(), mSelectedAdapter.getItemCount());
+            public void onItemRangeInserted(int position, int itemCount) {
+                super.onItemRangeInserted(position, itemCount);
+                updateSelectedPlaceholder(view, 1);
             }
-        });
+
+            @Override
+            public void onItemRangeRemoved(int position, int itemCount) {
+                super.onItemRangeRemoved(position, itemCount);
+                updateSelectedPlaceholder(view, -1);
+            }
+        };
+        rv.setAdapter(mSelectedAdapter);
+        mSelectedAdapter.registerAdapterDataObserver(mSelectedDataObserver);
 
         // Recycler view with all available Tinode contacts.
         rv = view.findViewById(R.id.contact_list);
@@ -150,15 +163,23 @@ public class CreateGroupFragment extends Fragment
             }
         });
         rv.setAdapter(mContactsAdapter);
-        mContactsAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        mContactsDataObserver = new RecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
                 super.onChanged();
-                togglePlaceholders(mContactsAdapter.getItemCount(), mSelectedAdapter.getItemCount());
-            }
-        });
 
-        togglePlaceholders(mContactsAdapter.getItemCount(), mSelectedAdapter.getItemCount());
+                if (mContactsAdapter.getItemCount() > 0) {
+                    view.findViewById(R.id.empty_contacts).setVisibility(View.GONE);
+                    view.findViewById(R.id.contact_list).setVisibility(View.VISIBLE);
+                } else {
+                    view.findViewById(R.id.empty_contacts).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.contact_list).setVisibility(View.GONE);
+                }
+            }
+        };
+        mContactsAdapter.registerAdapterDataObserver(mContactsDataObserver);
+
+        mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mContactsAdapter);
 
         // This button creates the new group.
         view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
@@ -192,15 +213,21 @@ public class CreateGroupFragment extends Fragment
                 createTopic(activity, topicTitle, bmp, subtitle, UiUtils.parseTags(tags), members);
             }
         });
-
-        LoaderManager.getInstance(activity).initLoader(0, null,
-                new UiUtils.ContactsLoaderCallback(getActivity(), this));
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
+
+        final FragmentActivity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        updateSelectedPlaceholder(getView(), mSelectedAdapter.getItemCount());
+
+        restartLoader();
     }
 
     @Override
@@ -225,30 +252,39 @@ public class CreateGroupFragment extends Fragment
     }
 
     @Override
-    public void receiveResult(int id, Cursor data) {
-        mContactsAdapter.resetContent(data, null);
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mSelectedDataObserver != null) {
+            mSelectedAdapter.unregisterAdapterDataObserver(mSelectedDataObserver);
+        }
+        if (mContactsDataObserver != null) {
+            mContactsAdapter.unregisterAdapterDataObserver(mContactsDataObserver);
+        }
     }
 
-    private void togglePlaceholders(int contactsCount, int membersCount) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+    // Change visibility of list/empty views for selected items.
+    private void updateSelectedPlaceholder(View view, int action) {
+        int count = mSelectedAdapter.getItemCount();
 
-        if (membersCount > 0) {
-            activity.findViewById(R.id.empty_members).setVisibility(View.GONE);
-            activity.findViewById(R.id.selected_members).setVisibility(View.VISIBLE);
-        } else {
-            activity.findViewById(R.id.empty_members).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.selected_members).setVisibility(View.GONE);
-        }
-
-        if (contactsCount > 0) {
-            activity.findViewById(R.id.empty_contacts).setVisibility(View.GONE);
-            activity.findViewById(R.id.contact_list).setVisibility(View.VISIBLE);
-        } else {
-            activity.findViewById(R.id.empty_contacts).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.contact_list).setVisibility(View.GONE);
+        if (action > 0) {
+            if (count == 1) {
+                view.findViewById(R.id.empty_members).setVisibility(View.GONE);
+                RecyclerView rv = view.findViewById(R.id.selected_members);
+                rv.setVisibility(View.VISIBLE);
+                SimpleItemAnimator sia = (SimpleItemAnimator) rv.getItemAnimator();
+                if (sia != null) {
+                    sia.setSupportsChangeAnimations(true);
+                }
+            }
+        } else if (count == 0) {
+            view.findViewById(R.id.empty_members).setVisibility(View.VISIBLE);
+            RecyclerView rv = view.findViewById(R.id.selected_members);
+            SimpleItemAnimator sia = (SimpleItemAnimator) rv.getItemAnimator();
+            if (sia != null) {
+                sia.setSupportsChangeAnimations(false);
+            }
+            rv.setVisibility(View.GONE);
         }
     }
 
@@ -261,7 +297,7 @@ public class CreateGroupFragment extends Fragment
         try {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     for (String user : members) {
                         topic.invite(user, null /* use default */);
                     }
@@ -283,5 +319,17 @@ public class CreateGroupFragment extends Fragment
         }
 
         startActivity(new Intent(activity, ChatsActivity.class));
+    }
+
+    // Restarts the loader. This triggers onCreateLoader(), which builds the
+    // necessary content Uri from mSearchTerm.
+    private void restartLoader() {
+        final FragmentActivity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        LoaderManager.getInstance(activity).restartLoader(LOADER_ID,
+                null, mContactsLoaderCallback);
     }
 }

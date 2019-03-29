@@ -62,7 +62,6 @@ public class FindAdapter
         }
 
         if (activity != null) {
-            Log.i(TAG, "resetContent");
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -90,7 +89,8 @@ public class FindAdapter
 
     @Override
     public long getItemId(int position) {
-        return StoredSubscription.getId(mFound.get(position));
+        // Content is transient. Use hashes.
+        return mFound.get(position).getUnique().hashCode();
     }
 
     @Override

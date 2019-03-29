@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_marginStart="@dimen/label_h_padding"
         android:text="@string/group_members"
         />
 
@@ -18,14 +19,14 @@
         android:id="@+id/selected_members"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="34dp"
+        android:minHeight="36dp"
         android:maxHeight="144dp"
         tools:text="Show something when empty "/>
 
     <TextView
         android:id="@+id/empty_members"
         android:layout_width="match_parent"
-        android:layout_height="34dp"
+        android:layout_height="36dp"
         android:gravity="center"
         android:text="@string/no_members"
         android:visibility="gone" />
