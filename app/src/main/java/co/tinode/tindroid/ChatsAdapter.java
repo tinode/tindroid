@@ -40,6 +40,8 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     private static final String TAG = "ChatsAdapter";
 
     private List<ComTopic<VxCard>> mTopics;
+    private HashMap<String,Integer> mTopicIndex;
+
     private boolean mIsArchive;
 
     private SelectionTracker<String> mSelectionTracker;
@@ -71,6 +73,13 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             }
         });
 
+        mTopicIndex = new HashMap<>(mTopics.size());
+        int i = 0;
+        for (Topic t : mTopics) {
+            mTopicIndex.put(t.getName(), i);
+            i++;
+        }
+
         activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -100,25 +109,46 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         return StoredTopic.getId(mTopics.get(position));
     }
 
+    private String getItemKey(int position) {
+        return mTopics.get(position).getName();
+    }
+
+    private int getItemPosition(String key) {
+        Integer pos = mTopicIndex.get(key);
+        return pos == null ? -1 : pos;
+    }
+
     @Override
     public int getItemCount() {
         return mTopics == null ? 0 : mTopics.size();
-    }
-
-    private ComTopic<VxCard> getItemAt(int pos) {
-        return mTopics.get(pos);
     }
 
     void setSelectionTracker(SelectionTracker<String> selectionTracker) {
         mSelectionTracker = selectionTracker;
     }
 
+    static class ContactDetailsLookup extends ItemDetailsLookup<String> {
+        RecyclerView mRecyclerView;
+
+        ContactDetailsLookup(RecyclerView rv) {
+            mRecyclerView = rv;
+        }
+
+        @Nullable
+        @Override
+        public ItemDetails<String> getItemDetails(@NonNull MotionEvent e) {
+            View view = mRecyclerView.findChildViewUnder(e.getX(), e.getY());
+            if (view != null) {
+                ViewHolder holder = (ViewHolder) mRecyclerView.getChildViewHolder(view);
+                return holder.getItemDetails();
+            }
+            return null;
+        }
+    }
+
     static class ContactDetails extends ItemDetailsLookup.ItemDetails<String> {
         int pos;
-        String name;
-
-        ContactDetails() {
-        }
+        String id;
 
         @Override
         public int getPosition() {
@@ -128,36 +158,27 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         @Nullable
         @Override
         public String getSelectionKey() {
-            return name;
+            return id;
         }
     }
 
-    static class ContactItemKeyProvider extends ItemKeyProvider<String> {
-        private ChatsAdapter mAdapter;
-        private final Map<String,Integer> mKeyToPosition;
+    static class ContactKeyProvider extends ItemKeyProvider<String> {
+        ChatsAdapter mAdapter;
 
-        ContactItemKeyProvider(ChatsAdapter adapter) {
-            super(SCOPE_CACHED);
-
+        ContactKeyProvider(ChatsAdapter adapter) {
+            super(SCOPE_MAPPED);
             mAdapter = adapter;
-
-            mKeyToPosition = new HashMap<>(mAdapter.getItemCount());
-
-            for (int i = 0; i < mAdapter.getItemCount(); i++) {
-                mKeyToPosition.put(mAdapter.getItemAt(i).getName(), i);
-            }
         }
 
         @Nullable
         @Override
-        public String getKey(int i) {
-            return mAdapter.getItemAt(i).getName();
+        public String getKey(int position) {
+            return mAdapter.getItemKey(position);
         }
 
         @Override
-        public int getPosition(@NonNull String s) {
-            Integer pos = mKeyToPosition.get(s);
-            return pos == null ? -1 : pos;
+        public int getPosition(@NonNull String key) {
+            return mAdapter.getItemPosition(key);
         }
     }
 
@@ -185,7 +206,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             clickListener = cl;
         }
 
-        ContactDetails getItemDetails(@SuppressWarnings("unused") MotionEvent motion) {
+        ItemDetailsLookup.ItemDetails<String> getItemDetails() {
             return details;
         }
 
@@ -194,7 +215,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             final String topicName = topic.getName();
 
             details.pos = position;
-            details.name = topic.getName();
+            details.id = topic.getName();
 
             VxCard pub = topic.getPub();
             if (pub != null) {
@@ -224,6 +245,8 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             if (selected) {
                 itemView.setBackgroundResource(R.drawable.contact_background);
                 itemView.setOnClickListener(null);
+
+                itemView.setActivated(true);
             } else {
 
                 TypedArray typedArray = context.obtainStyledAttributes(
@@ -237,9 +260,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                         clickListener.onCLick(topicName);
                     }
                 });
-            }
 
-            itemView.setActivated(selected);
+                itemView.setActivated(false);
+            }
         }
     }
 

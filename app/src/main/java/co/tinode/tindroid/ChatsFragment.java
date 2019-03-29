@@ -15,7 +15,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.selection.ItemDetailsLookup;
 import androidx.recyclerview.selection.Selection;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.selection.StorageStrategy;
@@ -33,7 +32,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -122,8 +120,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         mSelectionTracker = new SelectionTracker.Builder<>(
                 "contacts-selection",
                 rv,
-                new ChatsAdapter.ContactItemKeyProvider(mAdapter),
-                new ContactDetailsLookup(rv),
+                new ChatsAdapter.ContactKeyProvider(mAdapter),
+                new ChatsAdapter.ContactDetailsLookup(rv),
                 StorageStrategy.createStringStorage())
                 .build();
 
@@ -260,7 +258,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         }
 
         final Selection<String> selection = mSelectionTracker.getSelection();
-        // TODO: implement menu actions
         switch (item.getItemId()) {
             case R.id.action_delete:
                 String[] topicNames = new String[selection.size()];
@@ -379,26 +376,5 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             return true;
         }
         return false;
-    }
-
-    private static class ContactDetailsLookup extends ItemDetailsLookup<String> {
-        RecyclerView mRecyclerView;
-
-        ContactDetailsLookup(RecyclerView recyclerView) {
-            this.mRecyclerView = recyclerView;
-        }
-
-        @Nullable
-        @Override
-        public ItemDetails<String> getItemDetails(@NonNull MotionEvent motionEvent) {
-            View view = mRecyclerView.findChildViewUnder(motionEvent.getX(), motionEvent.getY());
-            if (view != null) {
-                RecyclerView.ViewHolder viewHolder = mRecyclerView.getChildViewHolder(view);
-                if (viewHolder instanceof ChatsAdapter.ViewHolder) {
-                    return ((ChatsAdapter.ViewHolder) viewHolder).getItemDetails(motionEvent);
-                }
-            }
-            return null;
-        }
     }
 }
