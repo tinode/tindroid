@@ -39,6 +39,7 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -516,7 +517,8 @@ public class TopicInfoFragment extends Fragment {
         }
 
         ((Switch) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
-        ((TextView) activity.findViewById(R.id.permissions)).setText(mTopic.getAccessMode().getMode());
+        Acs acs = mTopic.getAccessMode();
+        ((TextView) activity.findViewById(R.id.permissions)).setText(acs == null ? "" : acs.getMode());
 
         ((TextView) activity.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
         ((TextView) activity.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
@@ -640,7 +642,7 @@ public class TopicInfoFragment extends Fragment {
                 Log.w(TAG, "Pub is null for " + sub.user);
             }
             holder.name.setText(title);
-            holder.extraInfo.setText(sub.acs.getMode());
+            holder.extraInfo.setText(sub.acs != null ? sub.acs.getMode() : "");
 
             int i = 0;
             UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.acs, ss.status);
