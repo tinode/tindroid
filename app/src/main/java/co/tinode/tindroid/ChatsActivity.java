@@ -1,5 +1,7 @@
 package co.tinode.tindroid;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -14,11 +16,14 @@ import android.view.Menu;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.Subscription;
+
+import co.tinode.tindroid.account.ContactsManager;
 
 /**
  * This activity owns 'me' topic.
@@ -33,6 +38,8 @@ public class ChatsActivity extends AppCompatActivity {
 
     private MeListener mMeTopicListener = null;
     private MeTopic<VxCard> mMeTopic = null;
+
+    private Account mAccount;
 
     static {
         // Otherwise crash on pre-Lollipop (per-API 21)
@@ -53,6 +60,8 @@ public class ChatsActivity extends AppCompatActivity {
 
         mMeTopic = Cache.getTinode().getOrCreateMeTopic();
         mMeTopicListener = new MeListener();
+
+        mAccount = UiUtils.getSavedAccount(this, AccountManager.get(this), Cache.getTinode().getMyId());
     }
 
     /**
@@ -133,12 +142,13 @@ public class ChatsActivity extends AppCompatActivity {
         trx.addToBackStack(tag).replace(R.id.contentFragment, fragment, tag).commit();
     }
 
+    // This is called on Websocket thread.
     private class MeListener extends MeTopic.MeListener<VxCard> {
 
         @Override
         public void onInfo(MsgServerInfo info) {
-            // FIXME: handle {info}
-            Log.d(TAG, "Contacts got onInfo update '" + info.what + "'");
+            // FIXME: this is not supposed to happen.
+            Log.e(TAG, "Contacts got onInfo update '" + info.what + "'");
         }
 
         @Override
@@ -152,8 +162,16 @@ public class ChatsActivity extends AppCompatActivity {
 
         @Override
         public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
-            if (sub.pub != null) {
-                sub.pub.constructBitmap();
+            if (sub.deleted == null) {
+                if (sub.pub != null) {
+                    sub.pub.constructBitmap();
+                }
+
+                if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
+                    ContactsManager.processContact(ChatsActivity.this,
+                            ChatsActivity.this.getContentResolver(),
+                            mAccount, sub, null, false);
+                }
             }
         }
 

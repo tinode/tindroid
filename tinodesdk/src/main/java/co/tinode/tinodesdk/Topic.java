@@ -59,7 +59,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
 
         public int val() {return val;}
-        public boolean compare(TopicType v2) {
+        public boolean match(TopicType v2) {
             return (val & v2.val) != 0;
         }
     }
@@ -1510,19 +1510,18 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     }
 
     public static TopicType getTopicTypeByName(String name) {
-        TopicType tp = TopicType.UNKNOWN;
         if (name != null) {
             if (name.equals(Tinode.TOPIC_ME)) {
-                tp = TopicType.ME;
+                return TopicType.ME;
             } else if (name.equals(Tinode.TOPIC_FND)) {
-                tp = TopicType.FND;
+                return TopicType.FND;
             } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
-                tp = TopicType.GRP;
+                return TopicType.GRP;
             } else if (name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
-                tp = TopicType.P2P;
+                return TopicType.P2P;
             }
         }
-        return tp;
+        return  TopicType.UNKNOWN;
     }
 
     public TopicType getTopicType() {

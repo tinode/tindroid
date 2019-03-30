@@ -54,7 +54,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     /**
      * Constructor. Obtains handle to content resolver for later use.
      */
-    public SyncAdapter(Context context, boolean autoInitialize) {
+    SyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
         mContext = context;
         mAccountManager = AccountManager.get(context);
@@ -156,7 +156,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                             updated.add(sub);
                         }
                     }
-                    Date upd = ContactsManager.updateContacts(mContext, account, updated, lastSyncMarker);
+                    Date upd = ContactsManager.updateContacts(mContext, account, updated,
+                            lastSyncMarker, true);
                     setServerSyncMarker(account, upd);
                 }
                 success = true;

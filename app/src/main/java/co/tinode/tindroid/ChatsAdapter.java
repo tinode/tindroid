@@ -68,7 +68,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         mTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
             @Override
             public boolean isIncluded(Topic t) {
-                return t.getTopicType().compare(Topic.TopicType.USER) &&
+                return t.getTopicType().match(Topic.TopicType.USER) &&
                         (t.isArchived() == mIsArchive);
             }
         });
