@@ -62,5 +62,5 @@ Pull requests with translations are welcome. See [Russian translation](app/src/m
 
 
 ## Screenshots
-<img src="android-contacts-1.png" alt="App screenshot - contacts" width="270" /> <img src="android-chat-1.png" alt="App screenshot - chat" width="270" /> <img src="android-topic-info-1.png" alt="App screenshot - chat settings" width="270" />
-<img src="android-account-1.png" alt="App screenshot - account info" width="270" />
+<img src="android-contacts.png" alt="App screenshot - contacts" width="270" /> <img src="android-chat.png" alt="App screenshot - chat" width="270" /> <img src="android-topic-info.png" alt="App screenshot - chat settings" width="270" />
+<img src="android-account.png" alt="App screenshot - account info" width="270" /> <img src="android-new-topic.png" alt="App screenshot - creating new topic" width="270" />
