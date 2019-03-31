@@ -55,7 +55,6 @@ public class FindFragment extends Fragment {
 
     private FindAdapter mAdapter = null;
     private SelectionTracker<String> mSelectionTracker = null;
-    private RecyclerView.AdapterDataObserver mDataObserver = null;
 
     private ContentLoadingProgressBar mProgress = null;
 
@@ -98,20 +97,6 @@ public class FindFragment extends Fragment {
 
         mAdapter.resetContent(null);
         rv.setAdapter(mAdapter);
-
-        mDataObserver = new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                if (mAdapter.getItemCount() > 0) {
-                    fragment.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
-                    fragment.findViewById(android.R.id.empty).setVisibility(View.GONE);
-                } else {
-                    fragment.findViewById(R.id.chat_list).setVisibility(View.GONE);
-                    fragment.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
-                }
-            }
-        };
 
         mSelectionTracker = new SelectionTracker.Builder<>(
                 "find-selection",
@@ -167,7 +152,6 @@ public class FindFragment extends Fragment {
             Toast.makeText(fragment.getContext(), R.string.action_failed, Toast.LENGTH_LONG).show();
         }
 
-        mAdapter.registerAdapterDataObserver(mDataObserver);
         mAdapter.resetContent(getActivity());
     }
 
@@ -178,8 +162,6 @@ public class FindFragment extends Fragment {
         if (mFndTopic != null) {
             mFndTopic.setListener(null);
         }
-
-        mAdapter.unregisterAdapterDataObserver(mDataObserver);
     }
 
     @Override

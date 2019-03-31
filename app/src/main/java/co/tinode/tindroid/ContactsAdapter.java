@@ -98,9 +98,9 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
      */
     @Override
     @NonNull
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new ViewHolder(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.contact_basic, parent, false));
+                .inflate(viewType, parent, false), viewType);
     }
 
     /**
@@ -108,7 +108,9 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
      */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(mCursor, position);
+        if (holder.viewType == R.layout.contact_basic) {
+            holder.bind(mCursor, position);
+        }
     }
 
     /**
@@ -140,8 +142,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
         swapCursor(newCursor);
     }
 
-    @Override
-    public int getItemCount() {
+    private int getActualItemCount() {
         if (mCursor == null) {
             return 0;
         }
@@ -149,7 +150,25 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     }
 
     @Override
+    public int getItemCount() {
+        int count = getActualItemCount();
+        return count == 0 ? 1 : count;
+    }
+
+    public int getItemViewType(int position) {
+        if (getActualItemCount() == 0) {
+            return R.layout.contact_empty;
+        }
+
+        return R.layout.contact_basic;
+    }
+
+    @Override
     public long getItemId(int pos) {
+        if (getActualItemCount() == 0) {
+            return -2;
+        }
+
         if (mCursor == null) {
             throw new IllegalStateException("Cursor is null.");
         }
@@ -208,16 +227,21 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
+        int viewType;
         String unique;
         TextView text1;
         TextView text2;
         AppCompatImageView icon;
 
-        ViewHolder(@NonNull final View view) {
+        ViewHolder(@NonNull final View view, int viewType) {
             super(view);
-            text1 = view.findViewById(android.R.id.text1);
-            text2 = view.findViewById(android.R.id.text2);
-            icon = view.findViewById(android.R.id.icon);
+
+            this.viewType = viewType;
+            if (viewType == R.layout.contact_basic) {
+                text1 = view.findViewById(android.R.id.text1);
+                text2 = view.findViewById(android.R.id.text2);
+                icon = view.findViewById(android.R.id.icon);
+            }
         }
 
         void bind(Cursor cursor, int position) {

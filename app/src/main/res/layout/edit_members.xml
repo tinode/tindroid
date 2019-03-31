@@ -23,14 +23,6 @@
         android:maxHeight="144dp"
         tools:text="Show something when empty "/>
 
-    <TextView
-        android:id="@+id/empty_members"
-        android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:gravity="center"
-        android:text="@string/no_members"
-        android:visibility="gone" />
-
     <View
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
@@ -43,11 +35,4 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <TextView
-        android:id="@+id/empty_contacts"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="@string/no_contacts"
-        android:visibility="gone"/>
 </LinearLayout>

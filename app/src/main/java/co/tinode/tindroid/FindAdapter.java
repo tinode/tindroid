@@ -33,8 +33,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Handling 'fnd' results.
  */
-public class FindAdapter
-        extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
+public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
 
     @SuppressWarnings("unused")
     private static final String TAG = "FindAdapter";
@@ -77,28 +76,50 @@ public class FindAdapter
         final LayoutInflater inflater = (LayoutInflater) parent.getContext()
                 .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
         return new ViewHolder(
-                inflater.inflate(R.layout.contact, parent, false), mClickListener);
+                inflater.inflate(viewType, parent, false), mClickListener, viewType);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Subscription<VxCard,String[]> sub = mFound.get(position);
-        holder.bind(position, sub, mSelectionTracker != null &&
-                mSelectionTracker.isSelected(sub.getUnique()));
+        if (holder.viewType == R.layout.contact) {
+            Subscription<VxCard, String[]> sub = mFound.get(position);
+            holder.bind(position, sub, mSelectionTracker != null &&
+                    mSelectionTracker.isSelected(sub.getUnique()));
+        }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (getActualItemCount() == 0) {
+            return R.layout.contact_empty;
+        }
+
+        return R.layout.contact;
     }
 
     @Override
     public long getItemId(int position) {
+        if (getActualItemCount() == 0) {
+            return "empty".hashCode();
+        }
         // Content is transient. Use hashes.
         return mFound.get(position).getUnique().hashCode();
     }
 
-    @Override
-    public int getItemCount() {
+    private int getActualItemCount() {
         return mFound.size();
     }
 
+    @Override
+    public int getItemCount() {
+        int count = getActualItemCount();
+        return count == 0 ? 1 : count;
+    }
+
     private Subscription<VxCard,String[]> getItemAt(int pos) {
+        if (getActualItemCount() == 0) {
+            return null;
+        }
         return mFound.get(pos);
     }
 
@@ -137,7 +158,10 @@ public class FindAdapter
             mKeyToPosition = new HashMap<>(mAdapter.getItemCount());
 
             for (int i = 0; i < mAdapter.getItemCount(); i++) {
-                mKeyToPosition.put(mAdapter.getItemAt(i).getUnique(), i);
+                Subscription sub = mAdapter.getItemAt(i);
+                if (sub != null) {
+                    mKeyToPosition.put(sub.getUnique(), i);
+                }
             }
         }
 
@@ -154,8 +178,8 @@ public class FindAdapter
         }
     }
 
-    static class ViewHolder
-            extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        int viewType;
         TextView name;
         TextView contactPriv;
         AppCompatImageView icon;
@@ -163,18 +187,24 @@ public class FindAdapter
         ContactDetails details;
         ClickListener clickListener;
 
-        ViewHolder(@NonNull View item, ClickListener cl) {
+        ViewHolder(@NonNull View item, ClickListener cl, int viewType) {
             super(item);
 
-            name = item.findViewById(R.id.contactName);
-            contactPriv = item.findViewById(R.id.contactPriv);
-            icon = item.findViewById(R.id.avatar);
+            this.viewType = viewType;
+            if (viewType == R.layout.contact) {
+                name = item.findViewById(R.id.contactName);
+                contactPriv = item.findViewById(R.id.contactPriv);
+                icon = item.findViewById(R.id.avatar);
 
-            item.findViewById(R.id.online).setVisibility(View.GONE);
-            item.findViewById(R.id.unreadCount).setVisibility(View.GONE);
+                item.findViewById(R.id.online).setVisibility(View.GONE);
+                item.findViewById(R.id.unreadCount).setVisibility(View.GONE);
 
-            details = new ContactDetails();
-            clickListener = cl;
+                details = new ContactDetails();
+                clickListener = cl;
+            } else {
+                details = null;
+            }
+
         }
 
         ContactDetails getItemDetails(@SuppressWarnings("unused") MotionEvent motion) {

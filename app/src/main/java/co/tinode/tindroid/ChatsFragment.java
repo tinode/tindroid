@@ -140,21 +140,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 }
             }
         });
-
-        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-
-                if (mAdapter.getItemCount() > 0) {
-                    activity.findViewById(R.id.chat_list).setVisibility(View.VISIBLE);
-                    activity.findViewById(android.R.id.empty).setVisibility(View.GONE);
-                } else {
-                    activity.findViewById(R.id.chat_list).setVisibility(View.GONE);
-                    activity.findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
-                }
-            }
-        });
     }
 
     @Override

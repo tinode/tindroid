@@ -49,21 +49,39 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new ViewHolder(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.group_member_chip, parent, false));
+                .inflate(viewType, parent, false), viewType);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(position);
+        if (holder.viewType == R.layout.group_member_chip) {
+            holder.bind(position);
+        }
     }
 
-    @Override
-    public int getItemCount() {
+    private int getActualItemCount() {
         return mCurrentMembers.size();
     }
 
     @Override
+    public int getItemViewType(int position) {
+        if (getActualItemCount() == 0) {
+            return R.layout.group_member_chip_empty;
+        }
+        return R.layout.group_member_chip;
+    }
+
+    @Override
+    public int getItemCount() {
+        int count = getActualItemCount();
+        return count == 0 ? 1 : count;
+    }
+
+    @Override
     public long getItemId(int pos) {
+        if (getActualItemCount() == 0) {
+            return "empty".hashCode();
+        }
         return mCurrentMembers.get(pos).unique.hashCode();
     }
 
@@ -137,16 +155,20 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
+        int viewType;
         ImageView icon;
         TextView title;
         AppCompatImageButton close;
 
-        public ViewHolder(@NonNull View itemView) {
+        public ViewHolder(@NonNull View itemView, int viewType) {
             super(itemView);
 
-            icon = itemView.findViewById(android.R.id.icon);
-            title = itemView.findViewById(android.R.id.text1);
-            close = itemView.findViewById(android.R.id.closeButton);
+            this.viewType = viewType;
+            if (viewType == R.layout.group_member_chip) {
+                icon = itemView.findViewById(android.R.id.icon);
+                title = itemView.findViewById(android.R.id.text1);
+                close = itemView.findViewById(android.R.id.closeButton);
+            }
         }
 
         void bind(int pos) {

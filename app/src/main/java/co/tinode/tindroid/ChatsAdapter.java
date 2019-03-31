@@ -18,7 +18,6 @@ import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.selection.ItemDetailsLookup;
@@ -94,18 +93,23 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         final LayoutInflater inflater = (LayoutInflater) parent.getContext()
                 .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
         return new ViewHolder(
-                inflater.inflate(R.layout.contact, parent, false), mClickListener);
+                inflater.inflate(viewType, parent, false), mClickListener, viewType);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        ComTopic<VxCard> topic = mTopics.get(position);
-        holder.bind(position, topic, mSelectionTracker != null &&
-                mSelectionTracker.isSelected(topic.getName()));
+        if (holder.viewType == R.layout.contact) {
+            ComTopic<VxCard> topic = mTopics.get(position);
+            holder.bind(position, topic, mSelectionTracker != null &&
+                    mSelectionTracker.isSelected(topic.getName()));
+        }
     }
 
     @Override
     public long getItemId(int position) {
+        if (getActualItemCount() == 0) {
+            return -2;
+        }
         return StoredTopic.getId(mTopics.get(position));
     }
 
@@ -118,9 +122,23 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         return pos == null ? -1 : pos;
     }
 
+    private int getActualItemCount() {
+       return mTopics == null ? 0 : mTopics.size();
+    }
+
     @Override
     public int getItemCount() {
-        return mTopics == null ? 0 : mTopics.size();
+        // If there are no contacts, the RV will show a single 'empty' item.
+        int count = getActualItemCount();
+        return count == 0 ? 1 : count;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (getActualItemCount() == 0) {
+            return R.layout.contact_empty;
+        }
+        return R.layout.contact;
     }
 
     void setSelectionTracker(SelectionTracker<String> selectionTracker) {
@@ -182,8 +200,8 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         }
     }
 
-    static class ViewHolder
-            extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        int viewType;
         TextView name;
         TextView unreadCount;
         TextView contactPriv;
@@ -193,17 +211,22 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         ContactDetails details;
         ClickListener clickListener;
 
-        ViewHolder(@NonNull View item, ClickListener cl) {
+        ViewHolder(@NonNull View item, ClickListener cl, int viewType) {
             super(item);
+            this.viewType = viewType;
 
-            name = item.findViewById(R.id.contactName);
-            unreadCount = item.findViewById(R.id.unreadCount);
-            contactPriv = item.findViewById(R.id.contactPriv);
-            icon = item.findViewById(R.id.avatar);
-            online = item.findViewById(R.id.online);
+            if (viewType == R.layout.contact) {
+                name = item.findViewById(R.id.contactName);
+                unreadCount = item.findViewById(R.id.unreadCount);
+                contactPriv = item.findViewById(R.id.contactPriv);
+                icon = item.findViewById(R.id.avatar);
+                online = item.findViewById(R.id.online);
 
-            details = new ContactDetails();
-            clickListener = cl;
+                details = new ContactDetails();
+                clickListener = cl;
+            } else {
+                details = null;
+            }
         }
 
         ItemDetailsLookup.ItemDetails<String> getItemDetails() {

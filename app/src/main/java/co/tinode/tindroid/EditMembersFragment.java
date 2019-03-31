@@ -48,9 +48,6 @@ public class EditMembersFragment extends Fragment {
     private MembersAdapter mSelectedAdapter;
     private ContactsAdapter mContactsAdapter;
 
-    private RecyclerView.AdapterDataObserver mSelectedDataObserver = null;
-    private RecyclerView.AdapterDataObserver mContactsDataObserver = null;
-
     private ImageLoader mImageLoader;
 
     private ContactsLoaderCallback mContactsLoaderCallback;
@@ -95,21 +92,6 @@ public class EditMembersFragment extends Fragment {
             }
         });
         rv.setAdapter(mContactsAdapter);
-        mContactsDataObserver = new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-
-                if (mContactsAdapter.getItemCount() > 0) {
-                    view.findViewById(R.id.empty_contacts).setVisibility(View.GONE);
-                    view.findViewById(R.id.contact_list).setVisibility(View.VISIBLE);
-                } else {
-                    view.findViewById(R.id.empty_contacts).setVisibility(View.VISIBLE);
-                    view.findViewById(R.id.contact_list).setVisibility(View.GONE);
-                }
-            }
-        };
-        mContactsAdapter.registerAdapterDataObserver(mContactsDataObserver);
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mContactsAdapter);
 
@@ -154,21 +136,6 @@ public class EditMembersFragment extends Fragment {
             }
         }, cancelable);
         rv.setAdapter(mSelectedAdapter);
-        mSelectedDataObserver = new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-
-                if (mSelectedAdapter.getItemCount() > 0) {
-                    view.findViewById(R.id.empty_members).setVisibility(View.GONE);
-                    view.findViewById(R.id.selected_members).setVisibility(View.VISIBLE);
-                } else {
-                    view.findViewById(R.id.empty_members).setVisibility(View.VISIBLE);
-                    view.findViewById(R.id.selected_members).setVisibility(View.GONE);
-                }
-            }
-        };
-        mSelectedAdapter.registerAdapterDataObserver(mSelectedDataObserver);
 
         // This button creates the new group.
         view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
@@ -191,18 +158,6 @@ public class EditMembersFragment extends Fragment {
         super.onPause();
 
         mImageLoader.setPauseWork(false);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (mSelectedDataObserver != null) {
-            mSelectedAdapter.unregisterAdapterDataObserver(mSelectedDataObserver);
-        }
-        if (mContactsDataObserver != null) {
-            mContactsAdapter.unregisterAdapterDataObserver(mContactsDataObserver);
-        }
     }
 
     // Restarts the loader. This triggers onCreateLoader(), which builds the

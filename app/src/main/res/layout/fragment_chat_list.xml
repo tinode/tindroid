@@ -16,14 +16,4 @@
         android:layout_gravity="center"
         android:visibility="gone" />
 
-    <!-- This is a view shown when no contacts are found. -->
-    <TextView
-        android:id="@android:id/empty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="@string/no_chats"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:visibility="gone" />
-
 </FrameLayout>

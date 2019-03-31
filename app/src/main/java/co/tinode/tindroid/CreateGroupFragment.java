@@ -54,9 +54,6 @@ public class CreateGroupFragment extends Fragment {
     private MembersAdapter mSelectedAdapter;
     private ContactsAdapter mContactsAdapter;
 
-    private RecyclerView.AdapterDataObserver mSelectedDataObserver = null;
-    private RecyclerView.AdapterDataObserver mContactsDataObserver = null;
-
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
 
@@ -128,21 +125,7 @@ public class CreateGroupFragment extends Fragment {
                 mContactsAdapter.toggleSelected(unique);
             }
         }, true);
-        mSelectedDataObserver = new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int position, int itemCount) {
-                super.onItemRangeInserted(position, itemCount);
-                updateSelectedPlaceholder(view, 1);
-            }
-
-            @Override
-            public void onItemRangeRemoved(int position, int itemCount) {
-                super.onItemRangeRemoved(position, itemCount);
-                updateSelectedPlaceholder(view, -1);
-            }
-        };
         rv.setAdapter(mSelectedAdapter);
-        mSelectedAdapter.registerAdapterDataObserver(mSelectedDataObserver);
 
         // Recycler view with all available Tinode contacts.
         rv = view.findViewById(R.id.contact_list);
@@ -163,21 +146,6 @@ public class CreateGroupFragment extends Fragment {
             }
         });
         rv.setAdapter(mContactsAdapter);
-        mContactsDataObserver = new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-
-                if (mContactsAdapter.getItemCount() > 0) {
-                    view.findViewById(R.id.empty_contacts).setVisibility(View.GONE);
-                    view.findViewById(R.id.contact_list).setVisibility(View.VISIBLE);
-                } else {
-                    view.findViewById(R.id.empty_contacts).setVisibility(View.VISIBLE);
-                    view.findViewById(R.id.contact_list).setVisibility(View.GONE);
-                }
-            }
-        };
-        mContactsAdapter.registerAdapterDataObserver(mContactsDataObserver);
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mContactsAdapter);
 
@@ -225,8 +193,6 @@ public class CreateGroupFragment extends Fragment {
             return;
         }
 
-        updateSelectedPlaceholder(getView(), mSelectedAdapter.getItemCount());
-
         restartLoader();
     }
 
@@ -248,43 +214,6 @@ public class CreateGroupFragment extends Fragment {
 
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
             UiUtils.acceptAvatar(getActivity(), (ImageView) activity.findViewById(R.id.imageAvatar), data);
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (mSelectedDataObserver != null) {
-            mSelectedAdapter.unregisterAdapterDataObserver(mSelectedDataObserver);
-        }
-        if (mContactsDataObserver != null) {
-            mContactsAdapter.unregisterAdapterDataObserver(mContactsDataObserver);
-        }
-    }
-
-    // Change visibility of list/empty views for selected items.
-    private void updateSelectedPlaceholder(View view, int action) {
-        int count = mSelectedAdapter.getItemCount();
-
-        if (action > 0) {
-            if (count == 1) {
-                view.findViewById(R.id.empty_members).setVisibility(View.GONE);
-                RecyclerView rv = view.findViewById(R.id.selected_members);
-                rv.setVisibility(View.VISIBLE);
-                SimpleItemAnimator sia = (SimpleItemAnimator) rv.getItemAnimator();
-                if (sia != null) {
-                    sia.setSupportsChangeAnimations(true);
-                }
-            }
-        } else if (count == 0) {
-            view.findViewById(R.id.empty_members).setVisibility(View.VISIBLE);
-            RecyclerView rv = view.findViewById(R.id.selected_members);
-            SimpleItemAnimator sia = (SimpleItemAnimator) rv.getItemAnimator();
-            if (sia != null) {
-                sia.setSupportsChangeAnimations(false);
-            }
-            rv.setVisibility(View.GONE);
         }
     }
 
