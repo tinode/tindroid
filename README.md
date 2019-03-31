@@ -43,8 +43,6 @@ websocket support.
 
 * [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
 to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
-* [MaterialChipsInput](https://github.com/pchmn/MaterialChipsInput) widget for group chat member selection.
-This implementation is buggy and inflexible, should be replaced ASAP. Google should have provided this widget.
 * [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications.
 In order to compile the app you need to [download your own](https://developers.google.com/android/guides/google-services-plugin)
 config file `google-services.json`. Once downloaded, copy it to the `./app/` folder. The
