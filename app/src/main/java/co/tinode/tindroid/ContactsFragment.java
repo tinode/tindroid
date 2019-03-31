@@ -49,9 +49,6 @@ public class ContactsFragment extends Fragment {
     // Observer to receive notifications while the fragment is active.
     private ContentObserver mContactsObserver;
 
-    // Observer of data
-    private RecyclerView.AdapterDataObserver mDataObserver = null;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,18 +106,6 @@ public class ContactsFragment extends Fragment {
             return;
         }
 
-        mDataObserver = new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-
-                boolean empty = mAdapter.getItemCount() == 0;
-
-                view.findViewById(android.R.id.empty).setVisibility(empty ? View.VISIBLE : View.GONE);
-                view.findViewById(R.id.contact_list).setVisibility(empty ? View.GONE : View.VISIBLE);
-            }
-        };
-
         RecyclerView rv = view.findViewById(R.id.contact_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
@@ -134,7 +119,6 @@ public class ContactsFragment extends Fragment {
                 startActivity(it);
             }
         });
-        mAdapter.registerAdapterDataObserver(mDataObserver);
         rv.setAdapter(mAdapter);
 
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -210,15 +194,6 @@ public class ContactsFragment extends Fragment {
 
         // Stop receiving update for changes to Contacts DB
         activity.getContentResolver().unregisterContentObserver(mContactsObserver);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (mDataObserver != null) {
-            mAdapter.unregisterAdapterDataObserver(mDataObserver);
-        }
     }
 
     @Override

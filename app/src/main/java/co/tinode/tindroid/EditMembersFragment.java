@@ -117,7 +117,7 @@ public class EditMembersFragment extends Fragment {
                 Bitmap avatar = null;
                 if (sub.pub != null) {
                     name = sub.pub.fn;
-                    avatar = sub.pub.avatar.getBitmap();
+                    avatar = sub.pub.avatar == null ? null : sub.pub.avatar.getBitmap();
                 }
                 members.add(new MembersAdapter.Member(
                         sub.user,

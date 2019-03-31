@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -588,6 +589,25 @@ public class UiUtils {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bmp.compress(fmt, 70, bos);
         return new ByteArrayInputStream(bos.toByteArray());
+    }
+
+    /**
+     * Identifies the start of the search string (needle) in the display name (haystack).
+     * E.g. If display name was "Adam" and search query was "da" this would
+     * return 1.
+     *
+     * @param haystack The contact display name.
+     * @return The starting position of the search string in the display name, 0-based. The
+     * method returns -1 if the string is not found in the display name, or if the search
+     * string is empty or null.
+     */
+    static int indexOfSearchQuery(String haystack, String needle) {
+        if (!TextUtils.isEmpty(needle)) {
+            return haystack.toLowerCase(Locale.getDefault()).indexOf(
+                    needle.toLowerCase(Locale.getDefault()));
+        }
+
+        return -1;
     }
 
     /**

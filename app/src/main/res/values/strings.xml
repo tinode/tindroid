@@ -195,6 +195,9 @@
     <string name="failed_credential_confirmation">Incorrect confirmation code</string>
     <string name="failed_to_create_topic">Failed to create topic</string>
 
+    <string name="contacts_section_contacts">Phone Contacts</string>
+    <string name="contacts_section_directory">Directory</string>
+
     <string name="email">Email</string>
     <string name="tel">Phone</string>
     <string name="email_required">Email required</string>

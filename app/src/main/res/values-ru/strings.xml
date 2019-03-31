@@ -208,4 +208,6 @@
     <string name="id_required">ID обязательно</string>
     <string name="settings">Настройки</string>
     <string name="hint_search_tags">Поиск по тагам</string>
+    <string name="contacts_section_contacts">Адресная книга</string>
+    <string name="contacts_section_directory">Глобальная Директория</string>
 </resources>

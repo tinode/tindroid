@@ -14,14 +14,11 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.RecyclerView;
-
-import co.tinode.tindroid.widgets.LetterTileDrawable;
 
 /**
  * This is a subclass of CursorAdapter that supports binding Cursor columns to a view layout.
@@ -29,13 +26,13 @@ import co.tinode.tindroid.widgets.LetterTileDrawable;
  * query text. An {@link AlphabetIndexer} is used to allow quicker navigation up and down the
  * ListView.
  */
-class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> implements SectionIndexer {
+class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
+        implements SectionIndexer, ContactsLoaderCallback.CursorSwapper {
     private static final String TAG = "ContactsAdapter";
 
     private AlphabetIndexer mAlphabetIndexer; // Stores the AlphabetIndexer instance
     private TextAppearanceSpan mHighlightTextSpan; // Stores the highlight text appearance style
 
-    private Context mContext;
     private String mSearchTerm;
     private ClickListener mClickListener;
     private Cursor mCursor;
@@ -44,13 +41,8 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     // Selected items
     private HashMap<String,Integer> mSelected;
 
-    /**
-     * Instantiates a new Contacts Adapter.
-     *
-     * @param context A context that has access to the app's layout.
-     */
     ContactsAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
-        mContext = context;
+
         mClickListener = clickListener;
         mImageLoader = imageLoader;
         mSelected = new HashMap<>();
@@ -75,25 +67,6 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
     }
 
     /**
-     * Identifies the start of the search string in the display name column of a Cursor row.
-     * E.g. If displayName was "Adam" and search query (mSearchTerm) was "da" this would
-     * return 1.
-     *
-     * @param displayName The contact display name.
-     * @return The starting position of the search string in the display name, 0-based. The
-     * method returns -1 if the string is not found in the display name, or if the search
-     * string is empty or null.
-     */
-    private int indexOfSearchQuery(String displayName) {
-        if (!TextUtils.isEmpty(mSearchTerm)) {
-            return displayName.toLowerCase(Locale.getDefault()).indexOf(
-                    mSearchTerm.toLowerCase(Locale.getDefault()));
-        }
-
-        return -1;
-    }
-
-    /**
      * Overrides newView() to inflate the list item views.
      */
     @Override
@@ -113,11 +86,10 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
         }
     }
 
-    /**
-     * Overrides swapCursor to move the new Cursor into the AlphabetIndex as well as the
-     * CursorAdapter.
-     */
-    private void swapCursor(Cursor newCursor) {
+    @Override
+    public void swapCursor(Cursor newCursor, String newSearchTerm) {
+        mSearchTerm = newSearchTerm;
+
         if (newCursor == mCursor) {
             return;
         }
@@ -135,11 +107,6 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
         if (oldCursor != null) {
             oldCursor.close();
         }
-    }
-
-    void resetContent(Cursor newCursor, String newSearchTerm) {
-        mSearchTerm = newSearchTerm;
-        swapCursor(newCursor);
     }
 
     private int getActualItemCount() {
@@ -254,7 +221,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
             final String displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
             unique = cursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
 
-            final int startIndex = indexOfSearchQuery(displayName);
+            final int startIndex = UiUtils.indexOfSearchQuery(displayName, mSearchTerm);
 
             if (startIndex == -1) {
                 // If the user didn't do a search, or the search string didn't match a display
@@ -299,13 +266,10 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> i
 
                 itemView.setActivated(true);
             } else {
-                // Clear the icon then load the thumbnail from photoUri in a background worker thread
-                LetterTileDrawable tile = new LetterTileDrawable(mContext)
-                        .setIsCircular(true)
-                        .setLetterAndColor(displayName, unique)
-                        .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON);
-                icon.setImageDrawable(tile);
-                mImageLoader.loadImage(mContext, photoUri, icon);
+                Context context = itemView.getContext();
+                // Clear the icon then load the thumbnail from photoUri in a background worker thread.
+                icon.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
+                mImageLoader.loadImage(context, photoUri, icon);
 
                 TypedArray typedArray = itemView.getContext().obtainStyledAttributes(
                         new int[]{android.R.attr.selectableItemBackground});

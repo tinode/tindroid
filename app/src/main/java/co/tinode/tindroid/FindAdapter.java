@@ -2,56 +2,61 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.TypedArray;
+import android.database.Cursor;
 import android.graphics.Typeface;
+import android.text.SpannableString;
 import android.text.TextUtils;
-import android.util.Log;
+import android.text.style.TextAppearanceSpan;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
-import androidx.recyclerview.selection.ItemDetailsLookup;
-import androidx.recyclerview.selection.ItemKeyProvider;
-import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.widget.RecyclerView;
-import co.tinode.tindroid.db.StoredSubscription;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Handling 'fnd' results.
+ * FindAdapter merges results from searching local Contacts with remote 'fnd' topic.
  */
-public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
+public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
+        implements ContactsLoaderCallback.CursorSwapper {
 
     @SuppressWarnings("unused")
     private static final String TAG = "FindAdapter";
 
+    private TextAppearanceSpan mHighlightTextSpan;
+
     private List<Subscription<VxCard,String[]>> mFound;
 
-    private SelectionTracker<String> mSelectionTracker;
+    private Cursor mCursor;
+    private String mSearchTerm;
+    private ImageLoader mImageLoader;
+
     private ClickListener mClickListener;
 
-    FindAdapter(ClickListener clickListener) {
+    FindAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
         super();
+
+        mImageLoader = imageLoader;
+        mCursor = null;
 
         mClickListener = clickListener;
 
         setHasStableIds(true);
+
+        mHighlightTextSpan = new TextAppearanceSpan(context, R.style.searchTextHighlight);
     }
 
-    void resetContent(Activity activity) {
+    void resetFound(Activity activity, String searchTerm) {
         Collection c = Cache.getTinode().getFndTopic().getSubscriptions();
         if (c == null) {
             mFound = new LinkedList<>();
@@ -60,6 +65,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
             mFound = new LinkedList<>(c);
         }
 
+        mSearchTerm = searchTerm;
         if (activity != null) {
             activity.runOnUiThread(new Runnable() {
                 @Override
@@ -70,27 +76,71 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
         }
     }
 
+    @Override
+    public void swapCursor(Cursor newCursor, String searchTerm) {
+        mSearchTerm = searchTerm;
+
+        if (newCursor == mCursor) {
+            return;
+        }
+
+        final Cursor oldCursor = mCursor;
+
+        mCursor = newCursor;
+
+        // Notify the observers about the new cursor
+        notifyDataSetChanged();
+
+        if (oldCursor != null) {
+            oldCursor.close();
+        }
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         final LayoutInflater inflater = (LayoutInflater) parent.getContext()
                 .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
-        return new ViewHolder(
-                inflater.inflate(viewType, parent, false), mClickListener, viewType);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (holder.viewType == R.layout.contact) {
-            Subscription<VxCard, String[]> sub = mFound.get(position);
-            holder.bind(position, sub, mSelectionTracker != null &&
-                    mSelectionTracker.isSelected(sub.getUnique()));
+        View view = inflater.inflate(viewType, parent, false);
+        switch (viewType) {
+            case R.layout.contact_empty:
+                return new ViewHolderEmpty(view);
+            case R.layout.contact_section:
+                return new ViewHolderSection(view);
+            default:
+                return new ViewHolderItem(view, mClickListener);
         }
     }
 
     @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        holder.bind(position, getItemAt(position));
+    }
+
+    @Override
     public int getItemViewType(int position) {
-        if (getActualItemCount() == 0) {
+        if (position == 0) {
+            return R.layout.contact_section;
+        }
+
+        int count = getCursorItemCount() + 1;
+        if (count == 1) {
+            if (position == 1) {
+                // The 'empty' element in the 'PHONE CONTACTS' section.
+                return R.layout.contact_empty;
+            }
+        }
+
+        if (position < count) {
+            return R.layout.contact;
+        }
+
+        if (position == count) {
+            return R.layout.contact_section;
+        }
+
+        count ++;
+        if (getFoundItemCount() == 0 && position == count) {
             return R.layout.contact_empty;
         }
 
@@ -99,124 +149,216 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
 
     @Override
     public long getItemId(int position) {
-        if (getActualItemCount() == 0) {
-            return "empty".hashCode();
+        if (position == 0) {
+            return "section_one".hashCode();
         }
-        // Content is transient. Use hashes.
-        return mFound.get(position).getUnique().hashCode();
+
+        // Count the section title element.
+        int count = getCursorItemCount() + 1;
+        if (count == 1) {
+            if (position == 1) {
+                // The 'empty' element in the 'PHONE CONTACTS' section.
+                return "empty_one".hashCode();
+            }
+        }
+
+        if (position < count) {
+            // Element from the cursor.
+            mCursor.moveToPosition(position - 1);
+            String unique = mCursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
+            return ("contact:" + unique).hashCode();
+        }
+
+        if (position == count) {
+            // Section title DIRECTORY;
+            return "section_two".hashCode();
+        }
+
+        count ++;
+        if (getFoundItemCount() == 0 && position == count) {
+            // The 'empty' element in the DIRECTORY section.
+            return "empty_two".hashCode();
+        }
+
+        return ("found:" + mFound.get(position - count).getUnique()).hashCode();
     }
 
-    private int getActualItemCount() {
+    private int getCursorItemCount() {
+        return mCursor == null ? 0 : mCursor.getCount();
+    }
+
+    private int getFoundItemCount() {
         return mFound.size();
+    }
+
+
+    private int getActualItemCount() {
+        return getCursorItemCount() + getFoundItemCount();
+    }
+
+    private Object getItemAt(int position) {
+        if (position == 0) {
+            // Section title 'PHONE CONTACTS';
+            return null;
+        }
+
+        // Count the section title element.
+        int count = getCursorItemCount() + 1;
+        if (count == 1) {
+            if (position == 1) {
+                // The 'empty' element in the 'PHONE CONTACTS' section.
+                return null;
+            }
+        }
+
+        if (position < count) {
+            // One of the phone contacts. Move the cursor
+            // to the correct position and return it.
+            mCursor.moveToPosition(position - 1);
+            return mCursor;
+        }
+
+        if (position == count) {
+            // Section title DIRECTORY;
+            return null;
+        }
+
+        // Count the 'DIRECTORY' element;
+        count ++;
+        if (getFoundItemCount() == 0 && position == count) {
+            // The 'empty' element in the DIRECTORY section.
+            return null;
+        }
+
+        return mFound.get(position - count);
     }
 
     @Override
     public int getItemCount() {
-        int count = getActualItemCount();
-        return count == 0 ? 1 : count;
+        // At least 2 section titles.
+        int itemCount = 2;
+
+        int count = getFoundItemCount();
+        itemCount += count == 0 ? 1 : count;
+        count = getCursorItemCount();
+        itemCount += count == 0 ? 1 : count;
+
+        return itemCount;
     }
 
-    private Subscription<VxCard,String[]> getItemAt(int pos) {
-        if (getActualItemCount() == 0) {
-            return null;
-        }
-        return mFound.get(pos);
-    }
-
-    void setSelectionTracker(SelectionTracker<String> selectionTracker) {
-        mSelectionTracker = selectionTracker;
-    }
-
-    static class ContactDetails extends ItemDetailsLookup.ItemDetails<String> {
-        int pos;
-        String name;
-
-        ContactDetails() {
+    static class ViewHolderSection extends ViewHolder {
+        ViewHolderSection(@NonNull View item) {
+            super(item);
         }
 
-        @Override
-        public int getPosition() {
-            return pos;
-        }
-
-        @Nullable
-        @Override
-        public String getSelectionKey() {
-            return name;
-        }
-    }
-
-    static class ContactItemKeyProvider extends ItemKeyProvider<String> {
-        private FindAdapter mAdapter;
-        private final Map<String,Integer> mKeyToPosition;
-
-        ContactItemKeyProvider(FindAdapter adapter) {
-            super(SCOPE_CACHED);
-
-            mAdapter = adapter;
-
-            mKeyToPosition = new HashMap<>(mAdapter.getItemCount());
-
-            for (int i = 0; i < mAdapter.getItemCount(); i++) {
-                Subscription sub = mAdapter.getItemAt(i);
-                if (sub != null) {
-                    mKeyToPosition.put(sub.getUnique(), i);
-                }
+        public void bind(int position, Object data) {
+            if (position == 0) {
+                ((TextView) itemView).setText(R.string.contacts_section_contacts);
+            } else {
+                ((TextView) itemView).setText(R.string.contacts_section_directory);
             }
         }
+    }
 
-        @Nullable
-        @Override
-        public String getKey(int i) {
-            return mAdapter.getItemAt(i).getUnique();
+    static class ViewHolderEmpty extends ViewHolder {
+        ViewHolderEmpty(@NonNull View item) {
+            super(item);
         }
 
-        @Override
-        public int getPosition(@NonNull String s) {
-            Integer pos = mKeyToPosition.get(s);
-            return pos == null ? -1 : pos;
+        public void bind(int position, Object data) {
         }
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        int viewType;
+    class ViewHolderItem extends ViewHolder {
         TextView name;
         TextView contactPriv;
         AppCompatImageView icon;
 
-        ContactDetails details;
         ClickListener clickListener;
 
-        ViewHolder(@NonNull View item, ClickListener cl, int viewType) {
+        ViewHolderItem(@NonNull View item, ClickListener cl) {
             super(item);
 
-            this.viewType = viewType;
-            if (viewType == R.layout.contact) {
-                name = item.findViewById(R.id.contactName);
-                contactPriv = item.findViewById(R.id.contactPriv);
-                icon = item.findViewById(R.id.avatar);
+            name = item.findViewById(R.id.contactName);
+            contactPriv = item.findViewById(R.id.contactPriv);
+            icon = item.findViewById(R.id.avatar);
 
-                item.findViewById(R.id.online).setVisibility(View.GONE);
-                item.findViewById(R.id.unreadCount).setVisibility(View.GONE);
+            item.findViewById(R.id.online).setVisibility(View.GONE);
+            item.findViewById(R.id.unreadCount).setVisibility(View.GONE);
 
-                details = new ContactDetails();
-                clickListener = cl;
+            clickListener = cl;
+        }
+
+        @Override
+        public void bind(int position, final Object data) {
+            if (data instanceof Subscription) {
+                // noinspection unchecked
+                bind(position, (Subscription<VxCard, String[]>)data);
             } else {
-                details = null;
+                bind(position, (Cursor) data);
+            }
+        }
+
+        private void bind(int position, final Cursor cursor) {
+            final String photoUri = cursor.getString(ContactsLoaderCallback.ContactsQuery.PHOTO_THUMBNAIL_DATA);
+            final String displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
+            final String unique = cursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
+
+            final int startIndex = UiUtils.indexOfSearchQuery(displayName, mSearchTerm);
+
+            if (startIndex == -1) {
+                // If the user didn't do a search, or the search string didn't match a display
+                // name, show the display name without highlighting
+                name.setText(displayName);
+
+                if (TextUtils.isEmpty(mSearchTerm)) {
+                    if (TextUtils.isEmpty(unique)) {
+                        // Search string is empty and we have no contacts to show
+                        contactPriv.setVisibility(View.GONE);
+                    } else {
+                        contactPriv.setText(unique);
+                        contactPriv.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    // Shows a second line of text that indicates the search string matched
+                    // something other than the display name
+                    contactPriv.setVisibility(View.VISIBLE);
+                }
+            } else {
+                // If the search string matched the display name, applies a SpannableString to
+                // highlight the search string with the displayed display name
+
+                // Wraps the display name in the SpannableString
+                final SpannableString highlightedName = new SpannableString(displayName);
+
+                // Sets the span to start at the starting point of the match and end at "length"
+                // characters beyond the starting point
+                highlightedName.setSpan(mHighlightTextSpan, startIndex,
+                        startIndex + mSearchTerm.length(), 0);
+
+                // Binds the SpannableString to the display name View object
+                name.setText(highlightedName);
+
+                // Since the search string matched the name, this hides the secondary message
+                contactPriv.setVisibility(View.GONE);
             }
 
+            // Clear the icon then load the thumbnail from photoUri in a background worker thread
+            Context context = itemView.getContext();
+            icon.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
+            mImageLoader.loadImage(context, photoUri, icon);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    clickListener.onCLick(unique);
+                }
+            });
         }
 
-        ContactDetails getItemDetails(@SuppressWarnings("unused") MotionEvent motion) {
-            return details;
-        }
-
-        void bind(int position, final Subscription<VxCard,String[]> sub, boolean selected) {
+        private void bind(int position, final Subscription<VxCard, String[]> sub) {
             final Context context = itemView.getContext();
             final String unique = sub.getUnique();
-
-            details.pos = position;
-            details.name = sub.getUnique();
 
             VxCard pub = sub.pub;
             if (pub != null) {
@@ -238,27 +380,24 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder> {
                     pub != null ? pub.fn : null,
                     unique));
 
-            if (selected) {
-                itemView.setBackgroundResource(R.drawable.contact_background);
-                itemView.setOnClickListener(null);
-            } else {
-
-                TypedArray typedArray = context.obtainStyledAttributes(
-                        new int[]{android.R.attr.selectableItemBackground});
-                itemView.setBackgroundResource(typedArray.getResourceId(0, 0));
-                typedArray.recycle();
-
-                itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        clickListener.onCLick(unique);
-                    }
-                });
-            }
-
-            itemView.setActivated(selected);
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    clickListener.onCLick(unique);
+                }
+            });
         }
     }
+
+    static abstract class ViewHolder extends RecyclerView.ViewHolder {
+
+        ViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+
+        abstract void bind(int position, Object data);
+    }
+
 
     interface ClickListener {
         void onCLick(String topicName);

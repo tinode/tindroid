@@ -19,10 +19,10 @@ class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private int mID;
     private Context mContext;
-    private ContactsAdapter mAdapter;
+    private CursorSwapper mAdapter;
     private String mSearchTerm;
 
-    ContactsLoaderCallback(int loaderID, Context context, ContactsAdapter adapter) {
+    ContactsLoaderCallback(int loaderID, Context context, CursorSwapper adapter) {
         mID = loaderID;
         mContext = context;
         mAdapter = adapter;
@@ -57,7 +57,7 @@ class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
         // This swaps the new cursor into the adapter.
         if (loader.getId() == mID) {
-            mAdapter.resetContent(data, mSearchTerm);
+            mAdapter.swapCursor(data, mSearchTerm);
         }
     }
 
@@ -66,7 +66,7 @@ class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
         if (loader.getId() == mID) {
             // When the loader is being reset, clear the cursor from the adapter. This allows the
             // cursor resources to be freed.
-            mAdapter.resetContent(null, mSearchTerm);
+            mAdapter.swapCursor(null, mSearchTerm);
         }
     }
 
@@ -110,5 +110,9 @@ class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
         int IM_ADDRESS = 4;
 
         int SORT_KEY = 5;
+    }
+
+    interface CursorSwapper {
+        void swapCursor(Cursor cursor, String searchQuery);
     }
 }
