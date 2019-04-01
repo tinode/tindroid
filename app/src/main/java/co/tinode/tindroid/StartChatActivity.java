@@ -25,10 +25,10 @@ public class StartChatActivity extends AppCompatActivity {
     @SuppressWarnings("unused")
     private static final String TAG = "StartChatActivity";
 
-    private static final int TAB_CONTACTS = 0;
+    private static final int COUNT_OF_TABS = 3;
+    private static final int TAB_SEARCH = 0;
     private static final int TAB_NEW_GROUP = 1;
-    private static final int TAB_SEARCH = 2;
-    private static final int TAB_BY_ID = 3;
+    private static final int TAB_BY_ID = 2;
 
 
     static {
@@ -106,11 +106,8 @@ public class StartChatActivity extends AppCompatActivity {
     }
 
     private class PagerAdapter extends FragmentStatePagerAdapter {
-        private static final int sNumOfTabs = 4;
-
-        Fragment mContacts;
-        Fragment mCreateGroup;
         Fragment mSearch;
+        Fragment mCreateGroup;
         Fragment mById;
 
         PagerAdapter(FragmentManager fm) {
@@ -121,21 +118,16 @@ public class StartChatActivity extends AppCompatActivity {
         @NonNull
         public Fragment getItem(int position) {
             switch (position) {
-                case TAB_CONTACTS:
-                    if (mContacts == null) {
-                        mContacts = new ContactsFragment();
-                    }
-                    return mContacts;
-                case TAB_NEW_GROUP:
-                    if (mCreateGroup == null) {
-                        mCreateGroup = new CreateGroupFragment();
-                    }
-                    return mCreateGroup;
                 case TAB_SEARCH:
                     if (mSearch == null) {
                         mSearch = new FindFragment();
                     }
                     return mSearch;
+                case TAB_NEW_GROUP:
+                    if (mCreateGroup == null) {
+                        mCreateGroup = new CreateGroupFragment();
+                    }
+                    return mCreateGroup;
                 case TAB_BY_ID:
                     if (mById == null) {
                         mById = new AddByIDFragment();
@@ -148,7 +140,7 @@ public class StartChatActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return sNumOfTabs;
+            return COUNT_OF_TABS;
         }
     }
 }

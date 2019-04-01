@@ -247,5 +247,6 @@
     <string name="group">Group</string>
     <string name="id_required">ID is required</string>
     <string name="settings">Settings</string>
+    <string name="no_results">No results</string>
 
 </resources>

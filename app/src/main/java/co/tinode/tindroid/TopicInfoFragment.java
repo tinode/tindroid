@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
@@ -85,6 +86,7 @@ public class TopicInfoFragment extends Fragment {
 
         RecyclerView rv = view.findViewById(R.id.groupMembers);
         rv.setLayoutManager(new LinearLayoutManager(activity, RecyclerView.VERTICAL, false));
+        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
         rv.setAdapter(mAdapter);
         rv.setNestedScrollingEnabled(false);
 

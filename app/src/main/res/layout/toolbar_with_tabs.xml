@@ -19,26 +19,19 @@
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabsContacts"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:tabMode="scrollable">
-
-        <com.google.android.material.tabs.TabItem
-            android:id="@+id/tab_contacts"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/contacts"/>
-
-        <com.google.android.material.tabs.TabItem
-            android:id="@+id/tab_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/group"/>
+        android:layout_height="wrap_content">
 
         <com.google.android.material.tabs.TabItem
             android:id="@+id/tab_search"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/find"/>
+
+        <com.google.android.material.tabs.TabItem
+            android:id="@+id/tab_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/group"/>
 
         <com.google.android.material.tabs.TabItem
             android:id="@+id/tab_by_id"

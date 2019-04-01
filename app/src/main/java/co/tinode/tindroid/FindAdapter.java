@@ -103,7 +103,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
                 .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(viewType, parent, false);
         switch (viewType) {
-            case R.layout.contact_empty:
+            case R.layout.not_found:
                 return new ViewHolderEmpty(view);
             case R.layout.contact_section:
                 return new ViewHolderSection(view);
@@ -123,25 +123,31 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             return R.layout.contact_section;
         }
 
-        int count = getCursorItemCount() + 1;
-        if (count == 1) {
-            if (position == 1) {
-                // The 'empty' element in the 'PHONE CONTACTS' section.
-                return R.layout.contact_empty;
-            }
-        }
+        position --;
 
-        if (position < count) {
+        int count = getCursorItemCount();
+        if (count == 0) {
+            if (position == 0) {
+                // The 'empty' element in the 'PHONE CONTACTS' section.
+                return R.layout.not_found;
+            }
+            // One 'empty' element
+            count = 1;
+        } else if (position < count) {
             return R.layout.contact;
         }
 
-        if (position == count) {
+        position -= count;
+
+        if (position == 0) {
             return R.layout.contact_section;
         }
 
-        count ++;
-        if (getFoundItemCount() == 0 && position == count) {
-            return R.layout.contact_empty;
+        position --;
+
+        count = getFoundItemCount();
+        if (count == 0 && position == 0) {
+            return R.layout.not_found;
         }
 
         return R.layout.contact;
@@ -153,34 +159,42 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             return "section_one".hashCode();
         }
 
-        // Count the section title element.
-        int count = getCursorItemCount() + 1;
-        if (count == 1) {
-            if (position == 1) {
+        // Subtract section title.
+        position --;
+
+        int count = getCursorItemCount();
+        if (count == 0) {
+            if (position == 0) {
                 // The 'empty' element in the 'PHONE CONTACTS' section.
                 return "empty_one".hashCode();
             }
-        }
 
-        if (position < count) {
+            count = 1;
+        } else if (position < count) {
             // Element from the cursor.
-            mCursor.moveToPosition(position - 1);
+            mCursor.moveToPosition(position);
             String unique = mCursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
             return ("contact:" + unique).hashCode();
         }
 
-        if (position == count) {
+        // Skip all cursor elements
+        position -= count;
+
+        if (position == 0) {
             // Section title DIRECTORY;
             return "section_two".hashCode();
         }
 
-        count ++;
-        if (getFoundItemCount() == 0 && position == count) {
+        // Subtract section title.
+        position --;
+
+        count = getFoundItemCount();
+        if (count == 0 && position == 0) {
             // The 'empty' element in the DIRECTORY section.
             return "empty_two".hashCode();
         }
 
-        return ("found:" + mFound.get(position - count).getUnique()).hashCode();
+        return ("found:" + mFound.get(position).getUnique()).hashCode();
     }
 
     private int getCursorItemCount() {
@@ -191,46 +205,46 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         return mFound.size();
     }
 
-
-    private int getActualItemCount() {
-        return getCursorItemCount() + getFoundItemCount();
-    }
-
     private Object getItemAt(int position) {
         if (position == 0) {
             // Section title 'PHONE CONTACTS';
             return null;
         }
 
+        position --;
+
         // Count the section title element.
-        int count = getCursorItemCount() + 1;
-        if (count == 1) {
-            if (position == 1) {
+        int count = getCursorItemCount();
+        if (count == 0) {
+            if (position == 0) {
                 // The 'empty' element in the 'PHONE CONTACTS' section.
                 return null;
             }
-        }
-
-        if (position < count) {
+            count = 1;
+        } else if (position < count) {
             // One of the phone contacts. Move the cursor
             // to the correct position and return it.
-            mCursor.moveToPosition(position - 1);
+            mCursor.moveToPosition(position);
             return mCursor;
         }
 
-        if (position == count) {
+        position -= count;
+
+        if (position == 0) {
             // Section title DIRECTORY;
             return null;
         }
 
-        // Count the 'DIRECTORY' element;
-        count ++;
-        if (getFoundItemCount() == 0 && position == count) {
+        // Skip the 'DIRECTORY' element;
+        position --;
+
+        count = getFoundItemCount();
+        if (count == 0 && position == 0) {
             // The 'empty' element in the DIRECTORY section.
             return null;
         }
 
-        return mFound.get(position - count);
+        return mFound.get(position);
     }
 
     @Override
