@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.flexbox.FlexDirection;
@@ -82,7 +83,7 @@ public class EditMembersFragment extends Fragment {
             public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
                 if (!mContactsAdapter.isSelected(unique)) {
                     mSelectedAdapter.append(unique, (String) holder.text1.getText(),
-                            holder.icon.getDrawable(), true);
+                            holder.getIconDrawable(), true);
                     mContactsAdapter.toggleSelected(unique);
                 } else {
                     if (mSelectedAdapter.remove(unique)) {

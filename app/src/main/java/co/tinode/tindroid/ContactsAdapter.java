@@ -3,6 +3,8 @@ package co.tinode.tindroid;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
@@ -10,6 +12,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AlphabetIndexer;
+import android.widget.ImageSwitcher;
+import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
@@ -198,16 +202,19 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
         String unique;
         TextView text1;
         TextView text2;
-        AppCompatImageView icon;
+        ImageSwitcher switcher;
 
         ViewHolder(@NonNull final View view, int viewType) {
             super(view);
 
             this.viewType = viewType;
             if (viewType == R.layout.contact_basic) {
+                Context context = view.getContext();
                 text1 = view.findViewById(android.R.id.text1);
                 text2 = view.findViewById(android.R.id.text2);
-                icon = view.findViewById(android.R.id.icon);
+                switcher = view.findViewById(R.id.icon_switcher);
+                switcher.setInAnimation(context, R.anim.flip_in);
+                switcher.setOutAnimation(context, R.anim.flip_out);
             }
         }
 
@@ -261,12 +268,13 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
             }
 
             if (isSelected(unique)) {
-                icon.setImageResource(R.drawable.ic_selected);
+                ((ImageView) switcher.getCurrentView()).setImageResource(R.drawable.ic_selected);
                 itemView.setBackgroundResource(R.drawable.contact_background);
 
                 itemView.setActivated(true);
             } else {
                 Context context = itemView.getContext();
+                ImageView icon = (ImageView) switcher.getCurrentView();
                 // Clear the icon then load the thumbnail from photoUri in a background worker thread.
                 icon.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
                 mImageLoader.loadImage(context, photoUri, icon);
@@ -279,14 +287,25 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                 itemView.setActivated(false);
             }
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (mClickListener != null) {
+            if (mClickListener != null) {
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
                         mClickListener.onClick(unique, ViewHolder.this);
+                        if (isSelected(unique)) {
+                            ViewHolder.this.switcher.setImageResource(R.drawable.ic_selected);
+                        } else {
+                            Context context = itemView.getContext();
+                            mImageLoader.loadImage(context, photoUri, (ImageView) ViewHolder.this.switcher.getNextView());
+                            ViewHolder.this.switcher.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
+                        }
                     }
-                }
-            });
+                });
+            }
+        }
+
+        Drawable getIconDrawable() {
+           return ((ImageView) switcher.getCurrentView()).getDrawable();
         }
     }
 

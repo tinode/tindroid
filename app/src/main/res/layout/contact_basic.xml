@@ -11,29 +11,41 @@
     android:paddingEnd="@dimen/activity_padding"
     android:gravity="center_vertical">
 
-    <ImageView
-        android:id="@android:id/icon"
-        android:layout_width="48sp"
-        android:layout_height="48sp"
-        app:srcCompat="@drawable/ic_person_circle"
+    <ImageSwitcher
+        android:id="@+id/icon_switcher"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
-        android:layout_marginEnd="5dp" />
+        android:layout_marginEnd="5dp">
+        <ImageView
+            android:id="@+id/deselected"
+            android:layout_width="48sp"
+            android:layout_height="48sp"
+            app:srcCompat="@drawable/ic_person_circle"/>
+
+        <ImageView
+            android:id="@+id/selected"
+            android:layout_width="48sp"
+            android:layout_height="48sp"
+            app:srcCompat="@drawable/ic_selected"/>
+    </ImageSwitcher>
 
     <TextView
             android:id="@android:id/text1"
-            android:layout_toEndOf="@android:id/icon"
+            android:textAppearance="@style/contactListTextPrimary"
+            android:layout_toEndOf="@id/icon_switcher"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="start"
             android:paddingEnd="16sp"
             android:layout_alignParentTop="true"
             android:maxLines="1"
-            tools:text="Contact title"
-            android:textAppearance="@style/contactListTextPrimary"/>
+            tools:text="Contact title"/>
 
     <TextView
             android:id="@android:id/text2"
-            android:layout_toEndOf="@android:id/icon"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_toEndOf="@id/icon_switcher"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
@@ -41,7 +53,6 @@
             android:maxLines="1"
             android:maxWidth="240sp"
             android:layout_below="@android:id/text1"
-            tools:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"
-            android:textAppearance="?android:attr/textAppearanceSmall"/>
+            tools:text="Dolorem ipsum quia dolor sit amet consectetur adipisci velit"/>
 
 </RelativeLayout>

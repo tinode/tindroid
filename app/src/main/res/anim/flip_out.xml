@@ -8,4 +8,4 @@
     android:toYScale="1.0"
     android:pivotX="50%"
     android:fillAfter="false"
-    android:duration="150" />
+    android:duration="75" />

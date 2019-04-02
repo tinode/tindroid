@@ -129,7 +129,7 @@ public class CreateGroupFragment extends Fragment {
             public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
                 if (!mContactsAdapter.isSelected(unique)) {
                     mSelectedAdapter.append(unique, (String) holder.text1.getText(),
-                            holder.icon.getDrawable(), true);
+                            holder.getIconDrawable(), true);
                 } else {
                     mSelectedAdapter.remove(unique);
                 }
