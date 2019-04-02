@@ -111,14 +111,14 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Check if the activity show ask for credentials instead of login/password.
+        // Check if the activity asks for credentials instead of login/password.
 
         final Intent intent = getIntent();
         final String alAction = intent.getAction();
         final Uri alUri = intent.getData();
         final String cred = intent.getStringExtra("credential");
 
-        Log.d(TAG, "Login app link: action="+alAction + ", uri="+alUri+", cred="+cred);
+        Log.d(TAG, "Login app link: action=" + alAction + ", uri="+alUri+", cred="+cred);
 
         if (TextUtils.isEmpty(cred)) {
             // Display the login form.

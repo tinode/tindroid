@@ -2,8 +2,8 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@drawable/disk_selected" />
     <item android:drawable="@drawable/ic_check"
-          android:left="16sp"
-          android:right="16sp"
-          android:bottom="16sp"
-          android:top="16sp" />
+          android:left="20dp"
+          android:right="20dp"
+          android:bottom="20dp"
+          android:top="20dp" />
 </layer-list>

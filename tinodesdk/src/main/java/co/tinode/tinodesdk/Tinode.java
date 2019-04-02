@@ -326,16 +326,18 @@ public class Tinode {
 
                                     return null;
                                 }
-                            }, null);
-                    if (mAutologin && mLoginCredentials != null) {
+                            });
+                    if (mAutologin) {
                         future.thenApply(
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                        login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
+                                        if (mLoginCredentials != null) {
+                                            login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
+                                        }
                                         return null;
                                     }
-                                }, null);
+                                });
                     }
                 } catch (NotConnectedException ignored) {
                     Log.d(TAG, "NotConnectedException in autoreconnect");
@@ -1085,12 +1087,51 @@ public class Tinode {
         return future;
     }
 
-    public void setAutologin(boolean state) {
-        mAutologin = state;
+    /**
+     * Tell Tinode to automatically login after connecting.
+     *
+     * @param scheme authentication scheme to use
+     * @param secret authentication secret
+     */
+    public void setAutoLogin(String scheme, String secret) {
+        if (scheme != null) {
+            mAutologin = true;
+            mLoginCredentials = new LoginCredentials(scheme, secret);
+        } else {
+            mAutologin = false;
+            mLoginCredentials = null;
+        }
+    }
+
+    /**
+     * Tell Tinode to automatically login after connecting using token authentication scheme.
+     *
+     * @param token auth token to use or null to disable auth-login.
+     */
+    public void setAutoLoginToken(String token) {
+        if (token != null) {
+            setAutoLogin(AuthScheme.LOGIN_TOKEN, token);
+        } else {
+            setAutoLogin(null, null);
+        }
+    }
+
+    /**
+     * Tell Tinode to automatically login after connecting using basic authentication scheme.
+     *
+     * @param uname    user name
+     * @param password password
+     */
+    public void setAutoLoginBasic(String uname, String password) {
+        if (uname != null && password != null) {
+            setAutoLogin(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
+        } else {
+            setAutoLogin(null, null);
+        }
     }
 
     public void disconnect() {
-        setAutologin(false);
+        setAutoLogin(null, null);
         if (mConnection != null) {
             mConnection.disconnect();
         }

@@ -45,7 +45,6 @@ public class Cache {
 
             // Set device language
             sTinode.setLanguage(Locale.getDefault().toString());
-            sTinode.setAutologin(true);
 
             // Keep in app to prevent garbage collection.
             TindroidApp.retainTinodeCache(sTinode);

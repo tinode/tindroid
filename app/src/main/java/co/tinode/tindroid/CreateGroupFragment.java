@@ -13,8 +13,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -29,7 +27,6 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import androidx.recyclerview.widget.SimpleItemAnimator;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -57,9 +54,6 @@ public class CreateGroupFragment extends Fragment {
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
 
-    private Animation mAnimateSelected;
-    private Animation mAnimateDeselected;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,9 +76,6 @@ public class CreateGroupFragment extends Fragment {
         if (activity == null) {
             return;
         }
-
-        mAnimateSelected = AnimationUtils.loadAnimation(activity, R.anim.flip_out);
-        mAnimateDeselected = AnimationUtils.loadAnimation(activity, R.anim.flip_in);
 
         mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
             @Override
