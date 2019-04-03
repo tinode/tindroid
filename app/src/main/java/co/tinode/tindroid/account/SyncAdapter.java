@@ -128,12 +128,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 String token = AccountManager.get(mContext)
                         .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
                 tinode.connect(hostName, tls).getResult();
-                try {
-                    tinode.loginToken(token).getResult();
-                } catch (InProgressException ignored) {
-                    // Skip sync at this time, will retry later.
-                    return;
-                }
+
+                // It will throw if something is wrong so we will try again later.
+                tinode.loginToken(token).getResult();
 
                 // It throws if rejected and we just fail to sync.
                 tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();
