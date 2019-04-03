@@ -123,7 +123,7 @@ public class ContactsManager {
      *
      * @param context        the Authenticator Activity context
      * @param account        the account the contact belongs to
-     * @param rawContact     the sample SyncAdapter User object
+     * @param rawContact     the User object
      * @param batchOperation allow us to batch together multiple operations
      *                       into a single provider call
      */
@@ -328,8 +328,7 @@ public class ContactsManager {
 
 
     /**
-     * Returns the RawContact id for a sample SyncAdapter contact, or 0 if the
-     * sample SyncAdapter user isn't found.
+     * Returns the RawContact id for a contact, or 0 if the user isn't found.
      *
      * @param resolver the content resolver to use
      * @param contact the contact value to lookup
@@ -358,8 +357,7 @@ public class ContactsManager {
     }
 
     /**
-     * Returns the Data id for a sample SyncAdapter contact's profile row, or 0
-     * if the sample SyncAdapter user isn't found.
+     * Returns the Data id a contact's profile row, or 0 if the user isn't found.
      *
      * @param resolver a content resolver
      * @param uid      server-issued unique ID of the contact
@@ -383,6 +381,33 @@ public class ContactsManager {
         }
 
         return profileId;
+    }
+
+    /**
+     * Returns the Lookup Key for a contact, or null if user isn't found.
+     *
+     * @param resolver a content resolver
+     * @param uid      server-issued unique ID of the contact
+     * @return the profile Data row id, or 0 if not found
+     */
+    public static String getLookupKey(ContentResolver resolver, String uid) {
+        final Cursor c = resolver.query(Data.CONTENT_URI, ProfileQuery.PROJECTION, ProfileQuery.SELECTION,
+                new String[]{uid}, null);
+
+        if (c == null) {
+            return null;
+        }
+
+        String lookupKey = null;
+        try {
+            if (c.moveToFirst()) {
+                lookupKey = c.getString(ProfileQuery.COLUMN_LOOKUP_KEY);
+            }
+        } finally {
+            c.close();
+        }
+
+        return lookupKey;
     }
 
     // Process Private field, add emails and phones to Public.
@@ -426,20 +451,19 @@ public class ContactsManager {
     }
 
     /**
-     * Constants for a query to find a contact given a sample SyncAdapter user
-     * ID.
+     * Constants for a query to find a contact given a user ID.
      */
     final private static class ProfileQuery {
-        static final String[] PROJECTION = new String[]{Data._ID};
+        static final String[] PROJECTION = new String[]{Data._ID, Data.LOOKUP_KEY};
         static final int COLUMN_ID = 0;
+        static final int COLUMN_LOOKUP_KEY = 1;
         static final String SELECTION =
                 Data.MIMETYPE + "='" + Utils.MIME_TINODE_PROFILE + "' AND "
                         + Utils.DATA_PID + "=?";
     }
 
     /**
-     * Constants for a query to find a contact given a sample SyncAdapter user
-     * ID.
+     * Constants for a query to find a contact given a user ID.
      */
     final private static class UserIdQuery {
         static final String[] PROJECTION = new String[]{

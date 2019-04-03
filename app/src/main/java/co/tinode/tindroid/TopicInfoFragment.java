@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -14,6 +15,8 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,6 +35,7 @@ import android.widget.Toast;
 
 import java.util.Collection;
 
+import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
@@ -393,13 +397,18 @@ public class TopicInfoFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 try {
+                    Intent intent;
                     switch (v.getId()) {
                         case R.id.buttonViewProfile:
-                            // FIXME: implement profile viewing.
-                            Toast.makeText(activity, R.string.not_implemented, Toast.LENGTH_SHORT).show();
+                            String lookupKey = ContactsManager.getLookupKey(activity.getContentResolver(), uid);
+                            intent = new Intent(Intent.ACTION_VIEW,
+                                    Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey));
+                            if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                                startActivity(intent);
+                            }
                             break;
                         case R.id.buttonSendMessage:
-                            Intent intent = new Intent(activity, MessageActivity.class);
+                            intent = new Intent(activity, MessageActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             intent.putExtra("topic", uid);
                             startActivity(intent);
