@@ -79,8 +79,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 ((Toolbar) activity.findViewById(R.id.toolbar)).setNavigationOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // activity.getSupportFragmentManager().popBackStack();
-                        ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_CHATLIST);
+                        activity.getSupportFragmentManager().popBackStack();
                     }
                 });
             }

@@ -54,8 +54,10 @@ public class ChatsActivity extends AppCompatActivity {
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
+        Fragment fragment = new ChatsFragment();
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.contentFragment, new ChatsFragment(), FRAGMENT_CHATLIST)
+                .replace(R.id.contentFragment, fragment, FRAGMENT_CHATLIST)
+                .setPrimaryNavigationFragment(fragment)
                 .commit();
 
         mMeTopic = Cache.getTinode().getOrCreateMeTopic();
@@ -139,7 +141,10 @@ public class ChatsActivity extends AppCompatActivity {
             }
         }
 
-        trx.addToBackStack(tag).replace(R.id.contentFragment, fragment, tag).commit();
+        trx.replace(R.id.contentFragment, fragment, tag)
+                .addToBackStack(tag)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                .commit();
     }
 
     // This is called on Websocket thread.

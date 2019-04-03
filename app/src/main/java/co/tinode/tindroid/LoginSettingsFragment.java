@@ -58,6 +58,10 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Preference preference = findPreference(key);
+        if (preference == null) {
+            return;
+        }
+
         if (preference instanceof ListPreference) {
             ListPreference listPreference = (ListPreference) preference;
             int prefIndex = listPreference.findIndexOfValue(sharedPreferences.getString(key, ""));

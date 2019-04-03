@@ -16,6 +16,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
 import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
@@ -97,7 +98,8 @@ public class LoginActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showFragment(FRAGMENT_LOGIN);
+                getSupportFragmentManager().popBackStack();
+                //showFragment(FRAGMENT_LOGIN);
             }
         });
 
@@ -282,8 +284,10 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         fm.beginTransaction()
-            .replace(R.id.contentFragment, fragment)
-            .commit();
+                .replace(R.id.contentFragment, fragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                .addToBackStack(null)
+                .commit();
     }
 
     /**

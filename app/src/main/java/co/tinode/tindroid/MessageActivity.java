@@ -62,7 +62,6 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_MESSAGES = "msg";
     static final String FRAGMENT_INVALID ="invalid";
     static final String FRAGMENT_INFO = "info";
-    static final String FRAGMENT_ADD_TOPIC = "add_topic";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE ="view_image";
 
@@ -100,15 +99,26 @@ public class MessageActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (isFragmentVisible(FRAGMENT_MESSAGES) || isFragmentVisible(FRAGMENT_INVALID)) {
+                    Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(intent);
+                } else {
+                    getSupportFragmentManager().popBackStack();
+                }
+                /*
                 if (isFragmentVisible(FRAGMENT_EDIT_MEMBERS)) {
-                    showFragment(FRAGMENT_INFO, false, null);
+                    getSupportFragmentManager().popBackStack();
+                    //showFragment(FRAGMENT_INFO, false, null);
                 } else if (!isFragmentVisible(FRAGMENT_MESSAGES) && !isFragmentVisible(FRAGMENT_INVALID)) {
-                    showFragment(FRAGMENT_MESSAGES, false, null);
+                    getSupportFragmentManager().popBackStack();
+                    //showFragment(FRAGMENT_MESSAGES, false, null);
                 } else {
                     Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     startActivity(intent);
                 }
+                */
             }
         });
 
@@ -291,10 +301,6 @@ public class MessageActivity extends AppCompatActivity {
                 showFragment(FRAGMENT_INFO, true, null);
                 return true;
             }
-            case R.id.action_topic_edit: {
-                showFragment(FRAGMENT_ADD_TOPIC, true, null);
-                return true;
-            }
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -357,9 +363,6 @@ public class MessageActivity extends AppCompatActivity {
                 case FRAGMENT_INFO:
                     fragment = new TopicInfoFragment();
                     break;
-                case FRAGMENT_ADD_TOPIC:
-                    fragment = new CreateGroupFragment();
-                    break;
                 case FRAGMENT_EDIT_MEMBERS:
                     fragment = new EditMembersFragment();
                     break;
@@ -385,8 +388,9 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         if (!fragment.isVisible()) {
-            FragmentTransaction trx = fm.beginTransaction();
-            trx.replace(R.id.contentFragment, fragment, tag);
+            FragmentTransaction trx = fm.beginTransaction()
+                    .replace(R.id.contentFragment, fragment, tag)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
             if (addToBackstack) {
                 trx.addToBackStack(tag);
             }

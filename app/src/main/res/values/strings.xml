@@ -248,5 +248,8 @@
     <string name="id_required">ID is required</string>
     <string name="settings">Settings</string>
     <string name="no_results">No results</string>
+    <string name="file_name_label">File name:</string>
+    <string name="content_type_label">Content type:</string>
+    <string name="image_size_label">Size:</string>
 
 </resources>
