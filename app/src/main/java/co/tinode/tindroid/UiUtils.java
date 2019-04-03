@@ -290,7 +290,7 @@ public class UiUtils {
                         try {
                             // Connecting with synchronous calls because this is not the UI thread.
                             final Tinode tinode = Cache.getTinode();
-                            // tinode.setAutoLoginToken(token);
+                            tinode.setAutoLoginToken(token);
                             tinode.connect(hostName, tls).getResult();
                             ServerMessage msg = tinode.loginToken(token).getResult();
                             // Logged in successfully. Save refreshed token for future use.

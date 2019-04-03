@@ -320,18 +320,22 @@ public class FindFragment extends Fragment {
             return query;
         }
 
-        setProgressBarVisible(true);
-
         final FndTopic<?> fnd = Cache.getTinode().getFndTopic();
         fnd.setMeta(new MsgSetMeta<>(
                 new MetaSetDesc<String, String>(query == null ? Tinode.NULL_VALUE : query, null)));
-        fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFinally() {
-                setProgressBarVisible(false);
-                return null;
-            }
-        });
+        if (query != null) {
+            setProgressBarVisible(true);
+            fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onFinally() {
+                    setProgressBarVisible(false);
+                    return null;
+                }
+            });
+        } else {
+            // If query is empty, clear the results and refresh.
+            onFindQueryResult();
+        }
 
         return query;
     }

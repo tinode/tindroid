@@ -95,9 +95,8 @@ public class Cache {
         fnd.setListener(l);
 
         if (!fnd.isAttached()) {
-            return fnd.subscribe(null, fnd
-                    .getMetaGetBuilder()
-                    .withGetSub().build());
+            // Don't request anything here.
+            return fnd.subscribe(null, null);
         } else {
             return new PromisedReply<>((ServerMessage) null);
         }

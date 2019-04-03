@@ -21,6 +21,7 @@ import java.util.Date;
 
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.InProgressException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -127,7 +128,12 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 String token = AccountManager.get(mContext)
                         .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
                 tinode.connect(hostName, tls).getResult();
-                tinode.loginToken(token).getResult();
+                try {
+                    tinode.loginToken(token).getResult();
+                } catch (InProgressException ignored) {
+                    // Skip sync at this time, will retry later.
+                    return;
+                }
 
                 // It throws if rejected and we just fail to sync.
                 tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();

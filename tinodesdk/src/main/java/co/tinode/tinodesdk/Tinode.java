@@ -143,7 +143,8 @@ public class Tinode {
     private boolean mTopicsLoaded = false;
     // The difference between server time and local time.
     private long mTimeAdjustment = 0;
-
+    // Indicator that login is in progress
+    private Boolean mLoginInProgress = false;
     /**
      * Initialize Tinode package
      *
@@ -327,12 +328,13 @@ public class Tinode {
                                     return null;
                                 }
                             });
-                    if (mAutologin) {
+                    // Login automatically if it's enabled and only if this is an auto-reconnect attempt.
+                    if (mAutologin && autoreconnected) {
                         future.thenApply(
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                        if (mLoginCredentials != null) {
+                                        if (mLoginCredentials != null  && !mLoginInProgress) {
                                             login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
                                         }
                                         return null;
@@ -1034,7 +1036,16 @@ public class Tinode {
         }
     }
 
-    protected PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds) throws Exception {
+    /**
+     *
+     * @param scheme authentication scheme
+     * @param secret base64-encoded authentication secret
+     * @param creds credentials for validation
+     * @return {@link PromisedReply} resolved or rejected on completion.
+     * @throws Exception when something goes wrong
+     */
+    protected synchronized PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds)
+            throws Exception {
         if (mAutologin) {
             mLoginCredentials = new LoginCredentials(scheme, secret);
         }
@@ -1043,6 +1054,11 @@ public class Tinode {
             // Don't try to login again if we are logged in.
             return new PromisedReply<>((ServerMessage) null);
         }
+
+        if (mLoginInProgress) {
+            throw new InProgressException();
+        }
+        mLoginInProgress = true;
 
         ClientMessage msg = new ClientMessage(new MsgClientLogin(getNextId(), scheme, secret));
         if (creds != null) {
@@ -1058,6 +1074,7 @@ public class Tinode {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                        mLoginInProgress = false;
                         loginSuccessful(pkt.ctrl);
                         return null;
                     }
@@ -1065,6 +1082,7 @@ public class Tinode {
                 new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        mLoginInProgress = false;
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
                             final int code = sre.getCode();
