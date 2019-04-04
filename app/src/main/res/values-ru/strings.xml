@@ -211,4 +211,8 @@
     <string name="contacts_section_contacts">Адресная книга</string>
     <string name="contacts_section_directory">Глобальная Директория</string>
     <string name="no_results">Ничего не найдено</string>
+    <string name="file_name_label">Имя файла:</string>
+    <string name="content_type_label">Тип:</string>
+    <string name="image_size_label">Размер:</string>
+    <string name="must_subscribe_first">Сначала нужно подписаться</string>
 </resources>

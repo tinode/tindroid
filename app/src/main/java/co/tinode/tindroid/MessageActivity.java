@@ -106,19 +106,6 @@ public class MessageActivity extends AppCompatActivity {
                 } else {
                     getSupportFragmentManager().popBackStack();
                 }
-                /*
-                if (isFragmentVisible(FRAGMENT_EDIT_MEMBERS)) {
-                    getSupportFragmentManager().popBackStack();
-                    //showFragment(FRAGMENT_INFO, false, null);
-                } else if (!isFragmentVisible(FRAGMENT_MESSAGES) && !isFragmentVisible(FRAGMENT_INVALID)) {
-                    getSupportFragmentManager().popBackStack();
-                    //showFragment(FRAGMENT_MESSAGES, false, null);
-                } else {
-                    Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    startActivity(intent);
-                }
-                */
             }
         });
 

@@ -1075,17 +1075,17 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             sub = getSubscription(mTinode.getMyId());
         }
 
-        final boolean self = (uid == null);
-
-        if (sub == null) {
+        if (sub == null && getTopicType() != TopicType.P2P) {
             throw new NotSubscribedException();
         }
+
+        final boolean self = (uid == null || sub == null);
 
         if (mDesc.acs == null) {
             mDesc.acs = new Acs();
         }
 
-        final AcsHelper mode = uid == null ? mDesc.acs.getWantHelper() : sub.acs.getGivenHelper();
+        final AcsHelper mode = self ? mDesc.acs.getWantHelper() : sub.acs.getGivenHelper();
         if (mode.update(update)) {
             return setSubscription(new MetaSetSub(uid, mode.toString()))
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -1095,12 +1095,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                             if (result.ctrl != null) {
                                 if (self) {
                                     mDesc.acs.merge((Map) result.ctrl.params);
+                                } else {
+                                    sub.acs.merge((Map) result.ctrl.params);
                                 }
-                                sub.acs.merge((Map) result.ctrl.params);
                             }
                             return null;
                         }
-                    }, null);
+                    });
         }
         // The state is unchanged, return resolved promise.
         return new PromisedReply<>((ServerMessage) null);
@@ -1161,7 +1162,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                         }
                         return null;
                     }
-                }, null);
+                });
     }
 
     /**

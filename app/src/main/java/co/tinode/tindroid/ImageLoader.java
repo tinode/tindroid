@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.collection.LruCache;
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.google.android.gms.common.util.IOUtils;
