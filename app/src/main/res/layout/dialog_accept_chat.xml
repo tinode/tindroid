@@ -79,7 +79,7 @@
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
         android:clickable="true"
         android:drawablePadding="4sp"
-        app:drawableStartCompat="@drawable/ic_block"
+        app:drawableStartCompat="@drawable/ic_block_gray"
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/new_chat_block"

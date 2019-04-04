@@ -285,7 +285,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
 
         // This is an update to someone else's subscription to topic (given)
-        Subscription<SP,SR> s = mSubs.get(user);
+        Subscription<SP,SR> s = getSubscription(user);
         if (s == null) {
             s = new Subscription<>();
             s.user = user;
@@ -549,6 +549,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     public boolean isWriter() {
         return mDesc.acs != null && mDesc.acs.isWriter();
+    }
+
+    public boolean isJoiner() {
+        return mDesc.acs != null && mDesc.acs.isJoiner();
     }
 
     public Defacs getDefacs() {

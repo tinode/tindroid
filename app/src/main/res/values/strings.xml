@@ -252,5 +252,7 @@
     <string name="content_type_label">Content type:</string>
     <string name="image_size_label">Size:</string>
     <string name="must_subscribe_first">Must subscribe first</string>
+    <string name="topic_blocked">Blocked</string>
+    <string name="topic_archived">Archived</string>
 
 </resources>

@@ -57,8 +57,8 @@
 
             <TextView
                 android:id="@+id/unreadCount"
-                android:layout_width="20sp"
-                android:layout_height="20sp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_gravity="end|center_vertical"
                 android:background="@drawable/pill_counter"
                 android:padding="3dp"
@@ -69,6 +69,33 @@
                 tools:ignore="SmallSp"
                 tools:text="9+"
                 />
+
+            <ImageView
+                android:id="@+id/icon_muted"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:alpha="0.2"
+                android:contentDescription="@string/topic_muted"
+                android:visibility="gone"
+                app:srcCompat="@drawable/ic_notifications_off"/>
+
+            <ImageView
+                android:id="@+id/icon_blocked"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:alpha="0.2"
+                android:contentDescription="@string/topic_blocked"
+                android:visibility="gone"
+                app:srcCompat="@drawable/ic_block"/>
+
+            <ImageView
+                android:id="@+id/icon_archived"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:alpha="0.2"
+                android:contentDescription="@string/topic_archived"
+                android:visibility="gone"
+                app:srcCompat="@drawable/ic_filecab"/>
 
         </LinearLayout>
 

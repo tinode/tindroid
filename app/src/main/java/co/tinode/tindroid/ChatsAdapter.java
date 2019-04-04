@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.HashMap;
@@ -205,8 +206,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         TextView name;
         TextView unreadCount;
         TextView contactPriv;
-        AppCompatImageView icon;
-        AppCompatImageView online;
+        AppCompatImageView avatar;
+        ImageView online;
+        ImageView muted;
+        ImageView blocked;
+        ImageView archived;
 
         ContactDetails details;
         ClickListener clickListener;
@@ -219,8 +223,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 name = item.findViewById(R.id.contactName);
                 unreadCount = item.findViewById(R.id.unreadCount);
                 contactPriv = item.findViewById(R.id.contactPriv);
-                icon = item.findViewById(R.id.avatar);
+                avatar = item.findViewById(R.id.avatar);
                 online = item.findViewById(R.id.online);
+                muted = item.findViewById(R.id.icon_muted);
+                blocked = item.findViewById(R.id.icon_blocked);
+                archived = item.findViewById(R.id.icon_archived);
 
                 details = new ContactDetails();
                 clickListener = cl;
@@ -255,15 +262,19 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 unreadCount.setText(unread > 9 ? "9+" : String.valueOf(unread));
                 unreadCount.setVisibility(View.VISIBLE);
             } else {
-                unreadCount.setVisibility(View.INVISIBLE);
+                unreadCount.setVisibility(View.GONE);
             }
 
-            icon.setImageDrawable(UiUtils.avatarDrawable(context,
+            avatar.setImageDrawable(UiUtils.avatarDrawable(context,
                     pub != null ? pub.getBitmap() : null,
                     pub != null ? pub.fn : null,
                     topicName));
 
             online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
+
+            muted.setVisibility(topic.isMuted() ? View.VISIBLE : View.GONE);
+            archived.setVisibility(topic.isArchived() ? View.VISIBLE : View.GONE);
+            blocked.setVisibility(!topic.isJoiner() ? View.VISIBLE : View.GONE);
 
             if (selected) {
                 itemView.setBackgroundResource(R.drawable.contact_background);
