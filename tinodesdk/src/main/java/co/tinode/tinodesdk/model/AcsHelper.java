@@ -26,6 +26,10 @@ public class AcsHelper implements Serializable {
 
     private int a;
 
+    public AcsHelper() {
+        a = MODE_NONE;
+    }
+
     public AcsHelper(String str) {
         a = decode(str);
     }
@@ -250,6 +254,12 @@ public class AcsHelper implements Serializable {
         return false;
     }
 
+    /**
+     * Bitwise AND between two modes, usually given & want: a1 & a2.
+     * @param a1 first mode
+     * @param a2 second mode
+     * @return {AcsHelper} (a1 & a2)
+     */
     public static AcsHelper and(AcsHelper a1, AcsHelper a2) {
         if (a1 != null && !a1.isInvalid() && a2 != null && !a2.isInvalid()) {
             return new AcsHelper(a1.a & a2.a);
@@ -259,9 +269,9 @@ public class AcsHelper implements Serializable {
 
     /**
      * Get bits present in a1 but missing in a2: a1 & ~a2.
-     * @param a1
-     * @param a2
-     * @return {AcsHelper}
+     * @param a1 first mode
+     * @param a2 second mode
+     * @return {AcsHelper} (a1 & ~a2)
      */
     public static AcsHelper diff(AcsHelper a1, AcsHelper a2) {
         if (a1 != null && !a1.isInvalid() && a2 != null && !a2.isInvalid()) {
@@ -269,5 +279,4 @@ public class AcsHelper implements Serializable {
         }
         return null;
     }
-
 }

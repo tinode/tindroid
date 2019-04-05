@@ -249,35 +249,43 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     /**
      * Topic sent an update to subscription, got a confirmation.
      *
-     * @param sub updated topic parameters
+     * @param
+     * @param sSub updated topic parameters
      */
     @SuppressWarnings("unchecked")
-    protected void update(Map<String,Object> params, MetaSetSub sub) {
-        String user = sub.user;
+    protected void update(Map<String,Object> params, MetaSetSub sSub) {
+        String user = sSub.user;
 
         Map<String,String> acsMap = params != null ? (Map<String,String>) params.get("acs") : null;
         Acs acs;
         if (acsMap != null) {
             acs = new Acs(acsMap);
+            Log.i(TAG, "Mode from map " + acs.toString());
         } else {
             acs = new Acs();
+            Log.i(TAG, "Blank mode " + acs.toString());
             if (user == null) {
-                acs.setWant(sub.mode);
+                acs.setWant(sSub.mode);
             } else {
-                acs.setGiven(sub.mode);
+                acs.setGiven(sSub.mode);
             }
         }
 
-        if (user == null) {
+        Log.i(TAG, "Mode is " + acs.toString());
+
+        if (user == null || mTinode.isMe(user)) {
             user = mTinode.getMyId();
             boolean changed;
             // This is an update to user's own subscription to topic (want)
             if (mDesc.acs == null) {
                 mDesc.acs = acs;
                 changed = true;
+                Log.i(TAG, "Desc set to "+mDesc.acs.toString());
             } else {
                 changed = mDesc.acs.merge(acs);
+                Log.i(TAG, "Merged to Desc "+mDesc.acs.toString());
             }
+
             if (changed && mStore != null) {
                 mStore.topicUpdate(this);
             }
@@ -285,16 +293,21 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
 
         // This is an update to someone else's subscription to topic (given)
-        Subscription<SP,SR> s = getSubscription(user);
-        if (s == null) {
-            s = new Subscription<>();
-            s.user = user;
-            s.acs = acs;
-            addSubToCache(s);
+        Subscription<SP,SR> sub = getSubscription(user);
+        if (sub == null) {
+            sub = new Subscription<>();
+            sub.user = user;
+            sub.acs = acs;
+            addSubToCache(sub);
+            if (mStore != null) {
+                mStore.subNew(this, sub);
+            }
         } else {
-            s.acs.merge(acs);
+            sub.acs.merge(acs);
+            if (mStore != null) {
+                mStore.subUpdate(this, sub);
+            }
         }
-
     }
 
     /**
@@ -1007,10 +1020,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    Log.i(TAG, "setMeta.thenApply ctrl=" + result.ctrl);
                     update(result.ctrl, meta);
                     return null;
                 }
-            }, null);
+            });
     }
 
     /**
@@ -1079,10 +1093,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             sub = getSubscription(mTinode.getMyId());
         }
 
-        if (sub == null && getTopicType() != TopicType.P2P) {
-            throw new NotSubscribedException();
-        }
-
         final boolean self = (uid == null || sub == null);
 
         if (mDesc.acs == null) {
@@ -1091,21 +1101,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
         final AcsHelper mode = self ? mDesc.acs.getWantHelper() : sub.acs.getGivenHelper();
         if (mode.update(update)) {
-            return setSubscription(new MetaSetSub(uid, mode.toString()))
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        @SuppressWarnings("unchecked")
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            if (result.ctrl != null) {
-                                if (self) {
-                                    mDesc.acs.merge((Map) result.ctrl.params);
-                                } else {
-                                    sub.acs.merge((Map) result.ctrl.params);
-                                }
-                            }
-                            return null;
-                        }
-                    });
+            return setSubscription(new MetaSetSub(uid, mode.toString()));
         }
         // The state is unchanged, return resolved promise.
         return new PromisedReply<>((ServerMessage) null);
@@ -1217,7 +1213,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                 }
                 return null;
             }
-        }, null);
+        });
     }
 
     /**
@@ -1242,7 +1238,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     }
                     return null;
                 }
-            }, null);
+            });
         }
 
         if (mTinode.isConnected()) {
@@ -1276,7 +1272,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     }
                     return null;
                 }
-            }, null);
+            });
         }
 
         if (mTinode.isConnected()) {
@@ -1319,7 +1315,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                         persist(false);
                         return null;
                     }
-                }, null);
+                });
     }
 
     /**

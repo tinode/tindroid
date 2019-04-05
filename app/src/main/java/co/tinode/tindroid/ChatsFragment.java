@@ -259,30 +259,32 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             case R.id.action_archive:
                 // Archiving and muting is possible regardless of subscription status
                 try {
-                    final ComTopic<VxCard> topic =
-                            (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
-                    (item.getItemId() == R.id.action_mute ?
-                            topic.updateMuted(!topic.isMuted()) :
-                            topic.updateArchived(!topic.isArchived())
-                    ).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            datasetChanged();
-                            return null;
-                        }
-                    }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                    Log.w(TAG, "Archiving or muting failed", err);
-                                }
-                            });
-                            return null;
-                        }
-                    });
+                    for (String topicName : selection) {
+                        final ComTopic<VxCard> topic =
+                                (ComTopic<VxCard>) Cache.getTinode().getTopic(topicName);
+                        (item.getItemId() == R.id.action_mute ?
+                                topic.updateMuted(!topic.isMuted()) :
+                                topic.updateArchived(!topic.isArchived())
+                        ).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                datasetChanged();
+                                return null;
+                            }
+                        }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                        Log.w(TAG, "Archiving or muting failed", err);
+                                    }
+                                });
+                                return null;
+                            }
+                        });
+                    }
                 } catch (NotConnectedException ex) {
                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                     Log.w(TAG, "Archiving or muting failed", ex);

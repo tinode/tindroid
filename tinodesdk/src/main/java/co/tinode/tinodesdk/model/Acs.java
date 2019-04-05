@@ -20,9 +20,9 @@ public class Acs implements Serializable {
         public int val() {return val;}
     }
 
-    AcsHelper given;
-    AcsHelper want;
-    AcsHelper mode;
+    AcsHelper given = null;
+    AcsHelper want = null;
+    AcsHelper mode = null;
 
     public Acs() {
         assign(null, null, null);
@@ -34,9 +34,9 @@ public class Acs implements Serializable {
 
     public Acs(Acs am) {
         if (am != null) {
-            given = new AcsHelper(am.given);
-            want = new AcsHelper(am.want);
-            mode = new AcsHelper(am.mode);
+            given = am.given != null ? new AcsHelper(am.given) : null;
+            want = am.want != null ? new AcsHelper(am.want) : null;
+            mode = am.mode != null ? new AcsHelper(am.mode) : null;
         }
     }
 
@@ -48,45 +48,58 @@ public class Acs implements Serializable {
 
     public Acs(AccessChange ac) {
         if (ac != null) {
-            given = new AcsHelper("N");
-            given.update(ac.given);
-            want = new AcsHelper("N");
-            want.update(ac.want);
-            mode = AcsHelper.and(want, given);
+            int change = 0;
+            if (ac.given != null) {
+                if (given == null) {
+                    given = new AcsHelper();
+                }
+                change += given.update(ac.given) ? 1 : 0;
+            }
+
+            if (ac.want != null) {
+                if (want == null) {
+                    want = new AcsHelper();
+                }
+                change += want.update(ac.want) ? 1 : 0;
+            }
+
+            if (change > 0) {
+                mode = AcsHelper.and(want, given);
+            }
         }
     }
 
     private void assign(String g, String w, String m) {
-        this.given = new AcsHelper(g);
-        this.want = new AcsHelper(w);
-        this.mode = new AcsHelper(m);
+        this.given = g != null ? new AcsHelper(g) : null;
+        this.want = w != null ? new AcsHelper(w) : null;
+        this.mode = m != null ? new AcsHelper(m) : null;
     }
 
     public void setMode(String m) {
-        mode = new AcsHelper(m);
+        mode = m != null ? new AcsHelper(m) : null;
     }
     public String getMode() {
-        return mode.toString();
+        return mode != null ? mode.toString() : null;
     }
     public AcsHelper getModeHelper() {
         return new AcsHelper(mode);
     }
 
     public void setGiven(String g) {
-        given = new AcsHelper(g);
+        given = g != null ? new AcsHelper(g) : null;
     }
     public String getGiven() {
-        return given.toString();
+        return given != null ? given.toString() : null;
     }
     public AcsHelper getGivenHelper() {
         return new AcsHelper(given);
     }
 
     public void setWant(String w) {
-        want = new AcsHelper(w);
+        want = w != null ? new AcsHelper(w) : null;
     }
     public String getWant() {
-        return want.toString();
+        return want != null ? want.toString() : null;
     }
     public AcsHelper getWantHelper() {
         return new AcsHelper(want);
@@ -96,17 +109,28 @@ public class Acs implements Serializable {
         int change = 0;
         if (am != null && !equals(am)) {
             if (am.given != null) {
+                if (given == null) {
+                    given = new AcsHelper();
+                }
                 change += given.merge(am.given) ? 1 : 0;
             }
+
             if (am.want != null) {
+                if (want == null) {
+                    want = new AcsHelper();
+                }
                 change += want.merge(am.want) ? 1 : 0;
             }
+
             if (am.mode != null) {
+                if (mode == null) {
+                    mode = new AcsHelper();
+                }
                 change += mode.merge(am.mode) ? 1 : 0;
-            } else {
+            } else if (change > 0) {
                 AcsHelper m2 = AcsHelper.and(want, given);
-                if (m2 != null) {
-                    change += m2.equals(mode) ? 0 : 1;
+                if (m2 != null && !m2.equals(mode)) {
+                    change ++;
                     mode = m2;
                 }
             }
@@ -120,15 +144,17 @@ public class Acs implements Serializable {
             if (am.get("given") != null) {
                 change += given.merge(new AcsHelper(am.get("given"))) ? 1 : 0;
             }
+
             if (am.get("want") != null) {
                 change += want.merge(new AcsHelper(am.get("want"))) ? 1 : 0;
             }
+
             if (am.get("mode") != null) {
                 change += mode.merge(new AcsHelper(am.get("mode"))) ? 1 : 0;
-            } else {
+            } else if (change > 0) {
                 AcsHelper m2 = AcsHelper.and(want, given);
-                if (m2 != null) {
-                    change += m2.equals(mode) ? 0 : 1;
+                if (m2 != null && !m2.equals(mode)) {
+                    change ++;
                     mode = m2;
                 }
             }
@@ -155,17 +181,23 @@ public class Acs implements Serializable {
                     change += want.isDefined() ? 1 : 0;
                 }
             }
-            AcsHelper m2 = AcsHelper.and(want, given);
-            if (m2 != null) {
-                change += m2.equals(mode) ? 0 : 1;
-                mode = m2;
+
+            if (change > 0) {
+                AcsHelper m2 = AcsHelper.and(want, given);
+                if (m2 != null && !m2.equals(mode)) {
+                    change++;
+                    mode = m2;
+                }
             }
         }
         return change > 0;
     }
 
     public boolean equals(Acs am) {
-        return am != null && mode.equals(am.mode) && want.equals(am.want) && given.equals(am.given);
+        return (am != null) &&
+                ((mode == null && am.mode == null) || (mode != null && mode.equals(am.mode))) &&
+                ((want == null && am.want == null) || (want != null && want.equals(am.want))) &&
+                ((given == null && am.given == null) || (given != null && given.equals(am.given)));
     }
 
     /**
@@ -196,7 +228,7 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isWriter() {
-        return mode.isWriter();
+        return mode != null && mode.isWriter();
     }
 
     /**
@@ -204,11 +236,14 @@ public class Acs implements Serializable {
      * @return true if flag is NOT set.
      */
     public boolean isMuted() {
-        return mode.isMuted();
+        return mode != null && mode.isMuted();
     }
 
     @JsonIgnore
     public Acs setMuted(boolean v) {
+        if (mode == null) {
+            mode = new AcsHelper("N");
+        }
         mode.setMuted(v);
         return this;
     }
@@ -218,7 +253,7 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isAdmin() {
-        return mode.isAdmin();
+        return mode != null && mode.isAdmin();
     }
 
     /**
@@ -226,7 +261,7 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isManager() {
-        return mode.isAdmin() || mode.isOwner();
+        return mode != null && (mode.isAdmin() || mode.isOwner());
     }
 
     /**
@@ -234,7 +269,7 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isSharer() {
-        return mode.isSharer();
+        return mode != null && mode.isSharer();
     }
 
 
@@ -243,14 +278,14 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isDeleter() {
-        return mode.isDeleter();
+        return mode != null && mode.isDeleter();
     }
     /**
      * Check if Owner (O) flag is set.
      * @return true if flag is set.
      */
     public boolean isOwner() {
-        return mode.isOwner();
+        return mode != null && mode.isOwner();
     }
     /**
      * Check if Joiner (J) flag is set.
@@ -281,14 +316,14 @@ public class Acs implements Serializable {
      * @return true if defined.
      */
     public boolean isModeDefined() {
-        return mode.isDefined();
+        return mode != null && mode.isDefined();
     }
     /**
      * Check if given is defined.
      * @return true if defined.
      */
     public boolean isGivenDefined() {
-        return given.isDefined();
+        return given != null && given.isDefined();
     }
 
     /**
@@ -296,7 +331,7 @@ public class Acs implements Serializable {
      * @return true if defined.
      */
     public boolean isWantDefined() {
-        return want.isDefined();
+        return want != null && want.isDefined();
     }
 
     /**
@@ -304,7 +339,7 @@ public class Acs implements Serializable {
      * @return true if invalid.
      */
     public boolean isInvalid() {
-        return mode.isInvalid();
+        return mode != null && mode.isInvalid();
     }
 
     /**
@@ -329,7 +364,8 @@ public class Acs implements Serializable {
 
     @Override
     public String toString() {
-        return "G:" + (given != null ? given.toString() : "null") +
-                ";W:"+ (want != null ? want.toString() : "null");
+        return "{\"given\":" + (given != null ? " \"" + given.toString() + "\"" : " null") +
+                ", \"want\":" + (want != null ? " \"" + want.toString() + "\"" : " null") +
+                ", \"mode\":" + (mode != null ? " \"" + mode.toString() + "\"}" : " null}");
     }
 }

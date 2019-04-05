@@ -113,6 +113,15 @@ public class Description<DP,DR> implements Serializable {
             changed ++;
         }
 
+        if (sub.acs != null) {
+            if (acs == null) {
+                acs = sub.acs;
+                changed++;
+            } else {
+                changed += acs.merge(sub.acs) ? 1 : 0;
+            }
+        }
+
         if (sub.seq > seq) {
             seq = sub.seq;
             changed++;
