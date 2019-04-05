@@ -239,7 +239,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-        mode.getMenuInflater().inflate(R.menu.menu_contacts_selected, menu);
+        mode.getMenuInflater().inflate(R.menu.menu_chats_selected, menu);
         return true;
     }
 

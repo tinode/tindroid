@@ -34,7 +34,7 @@
         android:icon="@drawable/ic_share"
         android:orderInCategory="102"
         android:title="@string/action_invite"
-        app:actionProviderClass="android.widget.ShareActionProvider"
+        app:actionProviderClass="androidx.appcompat.widget.ShareActionProvider"
         app:showAsAction="never"/>
 
 </menu>

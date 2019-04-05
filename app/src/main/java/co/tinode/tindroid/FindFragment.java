@@ -15,7 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
-import android.widget.ShareActionProvider;
+import androidx.appcompat.widget.ShareActionProvider;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -23,6 +23,7 @@ import java.io.IOException;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuItemCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -305,10 +306,11 @@ public class FindFragment extends Fragment {
                 return true;
 
             case R.id.action_invite:
-                ShareActionProvider provider = (ShareActionProvider) item.getActionProvider();
+                ShareActionProvider provider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
                 intent = new Intent(Intent.ACTION_SEND);
                 intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_TEXT, activity.getResources().getString(R.string.invite));
+                intent.putExtra(Intent.EXTRA_SUBJECT, activity.getResources().getString(R.string.tinode_invite_subject));
+                intent.putExtra(Intent.EXTRA_TEXT, activity.getResources().getString(R.string.tinode_invite_body));
                 provider.setShareIntent(intent);
                 return true;
 
