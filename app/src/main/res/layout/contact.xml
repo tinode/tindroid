@@ -74,7 +74,7 @@
                 android:id="@+id/icon_muted"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:alpha="0.2"
+                android:alpha="0.25"
                 android:contentDescription="@string/topic_muted"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_notifications_off"/>
@@ -83,7 +83,7 @@
                 android:id="@+id/icon_blocked"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:alpha="0.2"
+                android:alpha="0.25"
                 android:contentDescription="@string/topic_blocked"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_block"/>
@@ -92,7 +92,7 @@
                 android:id="@+id/icon_archived"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:alpha="0.2"
+                android:alpha="0.25"
                 android:contentDescription="@string/topic_archived"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_filecab"/>
