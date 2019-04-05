@@ -13,19 +13,22 @@
             app:showAsAction="always" />
     </group>
 
-    <item
-        android:id="@+id/action_show_archive"
-        android:orderInCategory="101"
-        android:title="@string/action_show_archive"
-        android:icon="@drawable/ic_filecab"
-        app:showAsAction="never" />
+    <group android:id="@+id/not_archive">
+        <item
+            android:id="@+id/action_show_archive"
+            android:orderInCategory="101"
+            android:title="@string/action_show_archive"
+            android:icon="@drawable/ic_filecab"
+            app:showAsAction="never" />
 
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="102"
-        android:title="@string/action_settings"
-        android:icon="@drawable/ic_settings"
-        app:showAsAction="never" />
+
+        <item
+            android:id="@+id/action_settings"
+            android:orderInCategory="102"
+            android:title="@string/action_settings"
+            android:icon="@drawable/ic_settings"
+            app:showAsAction="never" />
+    </group>
 
     <item
         android:id="@+id/action_about"

@@ -32,7 +32,7 @@ public class StartChatActivity extends AppCompatActivity {
 
 
     static {
-        // Otherwise crash on pre-Lollipop (per-API 21)
+        // Otherwise crash on pre-Lollipop (API < 21)
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
 

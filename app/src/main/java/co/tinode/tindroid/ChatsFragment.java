@@ -1,19 +1,28 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import java.io.IOException;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
-
-import android.app.Activity;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.selection.Selection;
 import androidx.recyclerview.selection.SelectionTracker;
@@ -28,22 +37,12 @@ import co.tinode.tinodesdk.NotSubscribedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import java.io.IOException;
-
 public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     private static final String TAG = "ChatsFragment";
 
     private Boolean mIsArchive;
+    private boolean mSelectionMuted;
 
     private ChatsAdapter mAdapter = null;
     private SelectionTracker<String> mSelectionTracker = null;
@@ -90,13 +89,13 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 bar.setTitle(R.string.app_name);
             }
             view.findViewById(R.id.startNewChat).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(activity, StartChatActivity.class);
-                        // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        startActivity(intent);
-                    }
-                });
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(activity, StartChatActivity.class);
+                    // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(intent);
+                }
+            });
         }
 
         RecyclerView rv = view.findViewById(R.id.chat_list);
@@ -128,7 +127,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         mSelectionTracker.onRestoreInstanceState(savedInstanceState);
 
         mAdapter.setSelectionTracker(mSelectionTracker);
-        mSelectionTracker.addObserver(new SelectionTracker.SelectionObserver() {
+        mSelectionTracker.addObserver(new SelectionTracker.SelectionObserver<String>() {
             @Override
             public void onSelectionChanged() {
                 super.onSelectionChanged();
@@ -137,6 +136,28 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 } else if (!mSelectionTracker.hasSelection() && mActionMode != null) {
                     mActionMode.finish();
                     mActionMode = null;
+                }
+                if (mActionMode != null) {
+                    mActionMode.setTitle("" + mSelectionTracker.getSelection().size());
+                }
+            }
+
+            @Override
+            public void onItemStateChanged(@NonNull String topicName, boolean selected) {
+                int after = mSelectionTracker.getSelection().size();
+                Log.i(TAG, "onItemStateChanged, topic=" + topicName + ", after="+after);
+                int before = selected ? after - 1 : after + 1;
+                if (after == 1) {
+                    ComTopic topic = (ComTopic) Cache.getTinode().getTopic(topicName);
+                    if (topic != null) {
+                        mSelectionMuted = topic.isMuted();
+                        Log.i(TAG, "Setting muted to " + mSelectionMuted);
+                    }
+                }
+                if (mActionMode != null) {
+                    if ((before > 1) != (after > 1)) {
+                        mActionMode.invalidate();
+                    }
                 }
             }
         });
@@ -152,6 +173,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         } else {
             mIsArchive = false;
         }
+
         final Activity activity = getActivity();
         if (activity == null) {
             return;
@@ -171,6 +193,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.menu_chat_list, menu);
+        menu.setGroupVisible(R.id.not_archive, !mIsArchive);
     }
 
     /**
@@ -196,7 +219,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 DialogFragment about = new AboutDialogFragment();
                 // The warning below is a false positive. If activity is not null, then
                 // getFragmentManager is also not null
-                //noinspection ConstantConditions
+                // noinspection ConstantConditions
                 about.show(getFragmentManager(), "about");
                 return true;
 
@@ -227,7 +250,19 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-        menu.setGroupVisible(R.id.single_selection, mSelectionTracker.getSelection().size() <= 1);
+        boolean single = mSelectionTracker.getSelection().size() <= 1;
+        menu.setGroupVisible(R.id.single_selection, single);
+
+        if (single) {
+            Log.i(TAG, "Creating menu muted=" + mSelectionMuted);
+
+            menu.findItem(R.id.action_mute).setVisible(!mSelectionMuted);
+            menu.findItem(R.id.action_unmute).setVisible(mSelectionMuted);
+
+            menu.findItem(R.id.action_archive).setVisible(!mIsArchive);
+            menu.findItem(R.id.action_unarchive).setVisible(mIsArchive);
+        }
+
         return true;
     }
 
@@ -239,7 +274,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
     public boolean onActionItemClicked(final ActionMode mode, final MenuItem item) {
         final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
-            return true;
+            return false;
         }
 
         final Selection<String> selection = mSelectionTracker.getSelection();
@@ -256,41 +291,75 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 return true;
 
             case R.id.action_mute:
-            case R.id.action_archive:
-                // Archiving and muting is possible regardless of subscription status
+            case R.id.action_unmute:
+                // Muting is possible regardless of subscription status.
                 try {
-                    for (String topicName : selection) {
-                        final ComTopic<VxCard> topic =
-                                (ComTopic<VxCard>) Cache.getTinode().getTopic(topicName);
-                        (item.getItemId() == R.id.action_mute ?
-                                topic.updateMuted(!topic.isMuted()) :
-                                topic.updateArchived(!topic.isArchived())
-                        ).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                datasetChanged();
-                                return null;
-                            }
-                        }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                activity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                        Log.w(TAG, "Archiving or muting failed", err);
-                                    }
-                                });
-                                return null;
-                            }
-                        });
-                    }
+                    final ComTopic<VxCard> topic =
+                            (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+                    topic.updateMuted(!topic.isMuted())
+                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    datasetChanged();
+                                    return null;
+                                }
+                            })
+                            .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                            Log.w(TAG, "Muting failed", err);
+                                        }
+                                    });
+                                    return null;
+                                }
+                            });
                 } catch (NotConnectedException ex) {
                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                    Log.w(TAG, "Archiving or muting failed", ex);
+                    Log.w(TAG, "Muting failed", ex);
                 } catch (NotSubscribedException ex) {
                     Toast.makeText(activity, R.string.must_subscribe_first, Toast.LENGTH_SHORT).show();
-                    Log.w(TAG, "Archiving or muting failed", ex);
+                    Log.w(TAG, "Muting failed", ex);
+                }
+                mode.finish();
+                return true;
+
+            case R.id.action_archive:
+            case R.id.action_unarchive:
+                // Archiving is possible regardless of subscription status.
+                try {
+                    final ComTopic<VxCard> topic =
+                            (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+                    topic.updateArchived(!topic.isArchived())
+                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    mAdapter.resetContent(activity, mIsArchive);
+                                    return null;
+                                }
+                            })
+                            .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                            Log.w(TAG, "Archiving failed", err);
+                                        }
+                                    });
+                                    return null;
+                                }
+                            });
+                } catch (NotConnectedException ex) {
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                    Log.w(TAG, "Archiving failed", ex);
+                } catch (NotSubscribedException ex) {
+                    Toast.makeText(activity, R.string.must_subscribe_first, Toast.LENGTH_SHORT).show();
+                    Log.w(TAG, "Archiving failed", ex);
                 }
                 mode.finish();
                 return true;

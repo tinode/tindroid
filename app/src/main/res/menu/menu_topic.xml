@@ -21,25 +21,40 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/action_clear"
-        android:orderInCategory="102"
-        android:title="@string/action_clear_messages"
-        android:icon="@drawable/ic_close"
-        app:showAsAction="never" />
-
-    <item
         android:id="@+id/action_mute"
-        android:orderInCategory="103"
+        android:orderInCategory="102"
         android:title="@string/action_mute"
         android:icon="@drawable/ic_notifications_off"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_unmute"
-        android:orderInCategory="104"
+        android:orderInCategory="102"
         android:title="@string/action_unmute"
         android:icon="@drawable/ic_notifications"
         android:visible="false"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_archive"
+        android:orderInCategory="103"
+        android:title="@string/action_archive"
+        android:icon="@drawable/ic_archive"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_unarchive"
+        android:orderInCategory="103"
+        android:title="@string/action_unarchive"
+        android:icon="@drawable/ic_unarchive"
+        android:visible="false"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_clear"
+        android:orderInCategory="104"
+        android:title="@string/action_clear_messages"
+        android:icon="@drawable/ic_close"
         app:showAsAction="never" />
 
     <item
@@ -51,7 +66,7 @@
 
     <item
         android:id="@+id/action_delete"
-        android:orderInCategory="106"
+        android:orderInCategory="107"
         android:title="@string/action_delete_group"
         android:icon="@drawable/ic_delete"
         app:showAsAction="never" />

@@ -254,5 +254,7 @@
     <string name="must_subscribe_first">Must subscribe first</string>
     <string name="topic_blocked">Blocked</string>
     <string name="topic_archived">Archived</string>
+    <string name="action_unarchive">Unarchive</string>
+    <string name="action_invite">Invite</string>
 
 </resources>

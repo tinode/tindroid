@@ -5,6 +5,7 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,7 +15,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
+import android.widget.ShareActionProvider;
 import android.widget.Toast;
+
+import java.io.IOException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -85,7 +89,7 @@ public class FindFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         setHasOptionsMenu(true);
 
-        return inflater.inflate(R.layout.fragment_chat_list, container, false);
+        return inflater.inflate(R.layout.fragment_contacts, container, false);
     }
 
     @Override
@@ -191,7 +195,7 @@ public class FindFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.clear();
-        inflater.inflate(R.menu.menu_find, menu);
+        inflater.inflate(R.menu.menu_contacts, menu);
 
         final Activity activity = getActivity();
         if (activity == null) {
@@ -287,11 +291,41 @@ public class FindFragment extends Fragment {
         }
     }
 
-    /**
-     * Do nothing.
-     */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return true;
+        }
+        Intent intent;
+        switch (item.getItemId()) {
+            case R.id.action_add_contact:
+                intent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
+                startActivity(intent);
+                return true;
+
+            case R.id.action_invite:
+                ShareActionProvider provider = (ShareActionProvider) item.getActionProvider();
+                intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, activity.getResources().getString(R.string.invite));
+                provider.setShareIntent(intent);
+                return true;
+
+            case R.id.action_offline:
+                try {
+                    Cache.getTinode().reconnectNow();
+                } catch (IOException ex) {
+                    Log.d(TAG, "Reconnect failure", ex);
+                    String cause = ex.getCause().getMessage();
+                    Toast.makeText(activity, activity.getString(R.string.error_connection_failed) + cause,
+                            Toast.LENGTH_SHORT).show();
+                }
+                return true;
+        }
+
+        // R.id.action_search
+
         return false;
     }
 

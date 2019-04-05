@@ -15,3 +15,8 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# For com.fasterxml.jackson to work on versions of Android prior to L.
+-keep class java.beans.Transient.** {*;}
+-keep class java.beans.ConstructorProperties.** {*;}
+-keep class java.nio.file.Path.** {*;}

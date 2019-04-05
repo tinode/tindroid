@@ -249,8 +249,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     /**
      * Topic sent an update to subscription, got a confirmation.
      *
-     * @param
-     * @param sSub updated topic parameters
+     * @param params {ctrl} parameters returned by the server (could be null).
+     * @param sSub updated topic parameters.
      */
     @SuppressWarnings("unchecked")
     protected void update(Map<String,Object> params, MetaSetSub sSub) {

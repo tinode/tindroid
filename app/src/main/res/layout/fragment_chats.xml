@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".ChatsFragment">
 
-    <include layout="@layout/fragment_chat_list" />
+    <include layout="@layout/fragment_contacts" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/startNewChat"

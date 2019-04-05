@@ -381,23 +381,20 @@ public class MessagesFragment extends Fragment
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_topic, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
     public void onPrepareOptionsMenu(@NonNull final Menu menu) {
         if (mTopic != null) {
-            MenuItem toMute = menu.findItem(R.id.action_mute);
-            MenuItem toUnmute = menu.findItem(R.id.action_unmute);
-            toUnmute.setVisible(mTopic.isMuted());
-            toMute.setVisible(!mTopic.isMuted());
+            menu.findItem(R.id.action_unmute).setVisible(mTopic.isMuted());
+            menu.findItem(R.id.action_mute).setVisible(!mTopic.isMuted());
 
-            MenuItem toDelete = menu.findItem(R.id.action_delete);
-            MenuItem toLeave = menu.findItem(R.id.action_leave);
-            toDelete.setVisible(mTopic.isOwner());
-            toLeave.setVisible(!mTopic.isOwner());
+            menu.findItem(R.id.action_delete).setVisible(mTopic.isOwner());
+            menu.findItem(R.id.action_leave).setVisible(!mTopic.isOwner());
+
+            menu.findItem(R.id.action_archive).setVisible(!mTopic.isArchived());
+            menu.findItem(R.id.action_unarchive).setVisible(mTopic.isArchived());
         }
-        super.onPrepareOptionsMenu(menu);
     }
 
     @Override

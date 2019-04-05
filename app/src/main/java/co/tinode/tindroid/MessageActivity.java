@@ -284,12 +284,22 @@ public class MessageActivity extends AppCompatActivity {
 
         int id = item.getItemId();
         switch (id) {
-            case R.id.action_view_contact: {
+            case R.id.action_view_contact:
                 showFragment(FRAGMENT_INFO, true, null);
                 return true;
+
+            case R.id.action_archive: {
+                // TODO: implement topic archiving
+                return true;
             }
+
+            case R.id.action_unarchive: {
+                // TODO: implement topic un-archiving
+                return true;
+            }
+
             default:
-                return super.onOptionsItemSelected(item);
+                return false;
         }
     }
 

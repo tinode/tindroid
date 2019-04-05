@@ -215,4 +215,8 @@
     <string name="content_type_label">Тип:</string>
     <string name="image_size_label">Размер:</string>
     <string name="must_subscribe_first">Сначала нужно подписаться</string>
+    <string name="topic_blocked">Заблокировано</string>
+    <string name="topic_archived">В архиве</string>
+    <string name="action_unarchive">Восстановить</string>
+    <string name="action_invite">Пригласить</string>
 </resources>

@@ -33,7 +33,7 @@
                     tools:ignore="RtlSymmetry"
                     tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
 
-                <include layout="@layout/fragment_progress"
+                <include layout="@layout/progress_bar"
                          android:id="@+id/progressInclide"
                          android:visibility="gone"/>
 

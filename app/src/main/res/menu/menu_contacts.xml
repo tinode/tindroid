@@ -3,19 +3,38 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <group
+        android:id="@+id/offline"
+        android:visible="false">
+        <item
+            android:id="@+id/action_offline"
+            android:icon="@drawable/ic_offline"
+            android:orderInCategory="10"
+            android:title="@string/action_offline"
+            app:showAsAction="always"/>
+    </group>
+
     <item
         android:id="@+id/action_search"
+        android:icon="@drawable/ic_search"
         android:orderInCategory="100"
         android:title="@string/action_search"
-        android:icon="@drawable/ic_search"
-        app:showAsAction="ifRoom|collapseActionView"
-        app:actionViewClass="android.widget.SearchView"/>
+        app:actionViewClass="android.widget.SearchView"
+        app:showAsAction="ifRoom|collapseActionView"/>
 
     <item
         android:id="@+id/action_add_contact"
+        android:icon="@drawable/ic_person_add"
         android:orderInCategory="101"
         android:title="@string/action_add_contact"
-        android:icon="@drawable/ic_person_add"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_invite"
+        android:icon="@drawable/ic_share"
+        android:orderInCategory="102"
+        android:title="@string/action_invite"
+        app:actionProviderClass="android.widget.ShareActionProvider"
+        app:showAsAction="never"/>
 
 </menu>

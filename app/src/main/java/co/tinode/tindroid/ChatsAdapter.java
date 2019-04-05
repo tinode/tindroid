@@ -63,26 +63,30 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 R.color.online, context.getTheme());
     }
 
-    void resetContent(Activity activity, boolean archive) {
-        mIsArchive = archive;
-        mTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
+    void resetContent(Activity activity, final boolean archive) {
+
+        final List<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
             @Override
             public boolean isIncluded(Topic t) {
                 return t.getTopicType().match(Topic.TopicType.USER) &&
-                        (t.isArchived() == mIsArchive);
+                        (t.isArchived() == archive);
             }
         });
 
-        mTopicIndex = new HashMap<>(mTopics.size());
+        final HashMap<String,Integer> newTopicIndex = new HashMap<>(newTopics.size());
         int i = 0;
-        for (Topic t : mTopics) {
-            mTopicIndex.put(t.getName(), i);
+        for (Topic t : newTopics) {
+            newTopicIndex.put(t.getName(), i);
             i++;
         }
 
         activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    mIsArchive = archive;
+                    mTopics = newTopics;
+                    mTopicIndex = newTopicIndex;
+
                     notifyDataSetChanged();
                 }
             });

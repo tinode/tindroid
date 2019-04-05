@@ -31,10 +31,26 @@
             app:showAsAction="ifRoom" />
 
         <item
+            android:id="@+id/action_unmute"
+            android:orderInCategory="101"
+            android:title="@string/action_unmute"
+            android:icon="@drawable/ic_notifications"
+            android:visible="false"
+            app:showAsAction="ifRoom" />
+
+        <item
             android:id="@+id/action_archive"
             android:orderInCategory="102"
             android:title="@string/action_archive"
             android:icon="@drawable/ic_archive"
+            app:showAsAction="ifRoom" />
+
+        <item
+            android:id="@+id/action_unarchive"
+            android:orderInCategory="103"
+            android:title="@string/action_unarchive"
+            android:icon="@drawable/ic_unarchive"
+            android:visible="false"
             app:showAsAction="ifRoom" />
     </group>
 </menu>
