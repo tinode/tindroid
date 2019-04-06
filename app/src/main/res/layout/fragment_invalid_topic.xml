@@ -8,7 +8,6 @@
     tools:context="co.tinode.tindroid.MessagesFragment">
 
     <TextView
-        android:id="@+id/blockingMessage"
         style="@style/textPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

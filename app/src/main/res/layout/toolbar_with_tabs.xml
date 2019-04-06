@@ -22,19 +22,16 @@
         android:layout_height="wrap_content">
 
         <com.google.android.material.tabs.TabItem
-            android:id="@+id/tab_search"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/find"/>
 
         <com.google.android.material.tabs.TabItem
-            android:id="@+id/tab_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/group"/>
 
         <com.google.android.material.tabs.TabItem
-            android:id="@+id/tab_by_id"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/by_id"/>

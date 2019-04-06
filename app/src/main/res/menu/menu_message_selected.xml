@@ -3,7 +3,6 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <group
-        android:id="@+id/retry_sending"
         android:visible="false">
         <item
             android:id="@+id/action_send_now"

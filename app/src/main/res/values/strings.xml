@@ -22,31 +22,16 @@
     <string name="sign_up">Sign Up</string>
     <string name="login_new">Login</string>
     <string name="password_new">Password</string>
-    <string name="password_repeat">Repeat password</string>
     <string name="full_name">Full name, e.g. John Doe</string>
     <string name="tinode_logo" translatable="false">Tinode Logo</string>
-    <string name="upload_avatar">Upload avatar picture</string>
-    <string name="continue_fb">Continue with Facebook</string>
-    <string name="continue_goog">Continue with Google</string>
-    <string name="or">OR</string>
     <string name="action_cancel">Cancel</string>
-    <string name="transport_default">default</string>
-    <string name="transport_websocket" translatable="false">websocket</string>
-    <string name="transport_long_polling" translatable="false">long polling</string>
     <string name="settings_host_name">Host name</string>
     <string name="settings_use_tls">Use TLS</string>
     <string name="settings_wire_transport">Wire transport</string>
-    <string name="settings_host_name_summary">Change server address</string>
-    <string name="settings_use_tls_summary">Use secure connection</string>
-    <string name="settings_wire_transport_summary">Select wire transport</string>
 
     <!-- access mode definitions -->
-    <string name="modeReadable">can join</string>
-    <string name="modeWritable">can publish</string>
     <string name="modeReadOnly">read-only</string>
-    <string name="modeMuted">muted</string>
     <string name="modeAdmin">admin</string>
-    <string name="modeCanDelete">can delete</string>
     <string name="modeOwner">owner</string>
     <string name="modeBlocked">blocked</string>
     <!-- mode-like access statuses -->
@@ -60,17 +45,12 @@
     <string name="action_delete">Delete</string>
     <string name="action_mute">Mute conversation</string>
     <string name="action_unmute">Unmute conversation</string>
-    <string name="action_edit_contact">Edit contact</string>
     <string name="action_clear_messages">Clear all messages</string>
     <string name="action_view_contact">View contact</string>
-    <string name="action_attach">Attach</string>
     <string name="action_new_chat">New chat</string>
-    <string name="action_new_group">New group chat</string>
-    <string name="action_start_by_id">Start by ID</string>
     <string name="action_about">About</string>
     <string name="action_search">Search</string>
     <string name="action_add_contact">Add contact</string>
-    <string name="action_edit_topic">Edit topic</string>
     <string name="action_send_now">Send now</string>
     <string name="action_view_details">View details</string>
     <string name="action_copy">Copy</string>
@@ -81,51 +61,34 @@
     <string name="avatar">Avatar picture</string>
     <string name="select_image">Select image</string>
     <string name="select_file">Select file</string>
-    <string name="image_is_missing">Image is missing</string>
-    <string name="passwords_dont_match">Passwords don\'t match</string>
+    <string name="image_is_unavailable">Image is unavailable</string>
     <string name="error_login_failed">Login failed: </string>
     <string name="error_connection_failed">Connection failed: </string>
     <string name="login_required">Login required</string>
     <string name="password_required">Password required</string>
     <string name="error_new_account_failed">Account registration failed:</string>
-    <string name="no_contacts">No contacts found</string>
     <string name="no_chats">You have no chats\n\n¯\\_(ツ)_/¯</string>
-    <string name="nothing_found">Nothing found\n\n¯\\_(ツ)_/¯</string>
-
-    <string name="invite">Invite</string>
-    <string name="contacts">Contacts</string>
-    <string name="chats">Chats</string>
-
-    <string name="fab_new_group">Group</string>
-    <string name="fab_new_p2p">One on One</string>
 
     <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
      alphabet using ListView fast scroll. -->
     <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
 
-    <string name="search_hint">Find contacts</string>
-    <string name="contacts_permission_denied">Contacts not loaded: permission denied</string>
-    <string name="account_already_exists">Account already exists</string>
-    <string name="pick_account">Pick Account</string>
     <string name="tinode_invite_subject">Check out Tindroid Messenger</string>
     <string name="tinode_invite_body">Check out Tindroid Messenger. Download it from https://github.com/tinode/</string>
 
     <string name="profile_action">Tinode profile</string>
     <string name="view_profile">View Profile</string>
     <string name="tinode_message">Send Tinode message</string>
-    <string name="about_title">About</string>
     <string name="topic_title">Name of the group</string>
     <string name="group_members">Group Members</string>
     <string name="name_required">Topic name required</string>
     <string name="no_members">No group members</string>
-    <string name="letter_tile_font_family" translatable="false">sans-serif-medium</string>
     <string name="add_one_member">Add at least one group member</string>
     <string name="add_members">Add members</string>
     <string name="leave_group">Leave group</string>
     <string name="address">Address</string>
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
-    <string name="close">Close</string>
     <string name="your_permissions">Yours</string>
 
     <string name="no_connection">You are offline</string>
@@ -175,8 +138,6 @@
     <string name="confirm_logout">Are you sure you want to logout?</string>
     <string name="edit_account">Edit account name</string>
     <string name="invalid_login">Login is invalid</string>
-    <string name="join">Join</string>
-    <string name="ignore">Ignore</string>
 
     <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
     <string name="download_attachment">save</string>
@@ -184,14 +145,9 @@
     <string name="file_manager_not_found">File manager not found</string>
     <string name="attachment_too_large">The file size %1$s exceeds the %2$s limit.</string>
 
-    <string name="failed_to_attach">Failed to send file</string>
     <string name="failed_to_download">Failed to save downloaded file</string>
     <string name="failed_to_open_file">No application can view the file of this type</string>
     <string name="failed_empty_password">Not changed: empty password</string>
-    <string name="failed_to_invite">Don\'t know how to invite - no contact info</string>
-    <string name="failed_to_send_message">Failed to send message</string>
-    <string name="failed_to_delete_messages">Failed to delete messages</string>
-    <string name="failed_empty_id">ID is required</string>
     <string name="failed_credential_confirmation">Incorrect confirmation code</string>
     <string name="failed_to_create_topic">Failed to create topic</string>
 
@@ -199,9 +155,7 @@
     <string name="contacts_section_directory">Directory</string>
 
     <string name="email">Email</string>
-    <string name="tel">Phone</string>
     <string name="email_required">Email required</string>
-    <string name="tel_required">Phone number required</string>
     <string name="validate_cred">Enter confirmation code sent to you by %1$s:</string>
     <string name="confirm">Confirm</string>
     <string name="validation_example">Numbers only</string>
@@ -230,7 +184,6 @@
     <string name="user_not_found">Not found</string>
     <string name="topic_tags">Tags, comma separated list</string>
     <string name="sender_unknown">Unknown</string>
-    <string name="not_implemented">Not implemented</string>
     <string name="action_archive">Archive</string>
     <string name="archived_chats">Archived Chats</string>
     <string name="action_show_archive">Archived chats</string>

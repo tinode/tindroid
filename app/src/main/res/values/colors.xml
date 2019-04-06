@@ -3,36 +3,18 @@
     <color name="white">#FFFFFF</color>
     <color name="grey">#9e9e9e</color>
 
-    <color name="colorButtonNormal">#d6d7d7</color>
-    <color name="colorMiniFab">#607D8B</color>
-
     <color name="colorTextPrimary">#212121</color>
     <color name="colorTextSecondary">#616161</color>
     <color name="colorAccentLight">#E0F2F1</color>
     <color name="colorAccent">#008577</color>
 
-    <color name="alpha_80">#CCCCCCCC</color>
-
-    <color name="colorPrimary">#006064</color>
     <color name="colorPrimaryDark">#005662</color>
 
-    <color name="colorDanger">#E57373</color>
     <color name="colorDangerDark">#B71C1C</color>
 
     <color name="colorLightGray">#eeeeee</color>
     <color name="colorGray">#cccccc</color>
-    <color name="colorDarkGray">#757575</color>
 
-    <color name="lightBlue">#81D4FA</color>
-    <color name="darkBlue">#0D47A1</color>
-
-
-    <color name="colorFacebookPrimary">#3B5998</color>
-    <color name="colorFacebookDark">#2f4779</color>
-    <color name="colorFacebookLight">#627aac</color>
-    <color name="colorGooglePrimary">#dd4b39</color>
-    <color name="colorGoogleDark">#dd4b39</color>
-    <color name="colorGoogleLight">#dd4b39</color>
 
     <color name="colorPillCounter">#FF98AFC7</color>
 
@@ -40,9 +22,7 @@
     <color name="colorUserOnlineH1">#FF30D030</color>
     <color name="colorUserOnlineH2">#FF10EE10</color>
     <color name="colorUserOnlineH3">#FF00FF00</color>
-    <color name="colorUserOffline">#FFC0C0C0</color>
 
-    <color name="colorAvatarLight">#66000000</color>
     <color name="colorSplashScreenBackground">#FF3949AB</color>
 
     <color name="colorNotificationBackground">#3949AB</color>
@@ -53,11 +33,7 @@
 
     <color name="colorDivider">#66000000</color>
 
-    <color name="colorBorderGreen">#4CAF50</color>
     <color name="colorBorderGray">#9E9E9E</color>
-    <color name="colorBorderBlue">#2196F3</color>
-    <color name="colorBorderRed">#E57373</color>
-    <color name="colorBorderYellow">#FFCA28</color>
 
     <color name="colorMessageBubbleMine">#00000000</color>
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
@@ -68,8 +44,6 @@
     <color name="offline">#FFC0C0C0</color>
 
     <!-- colors for striped background -->
-    <color name="stripe_50">#80FFFFFF</color>
-    <color name="stripe_80">#CCFFFFFF</color>
 
     <!-- Background colors for LetterTileDrawables. -->
     -->

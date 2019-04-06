@@ -478,7 +478,7 @@ public class UiUtils {
     static void acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
         final Bitmap bmp = extractBitmap(activity, data);
         if (bmp == null) {
-            Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
             return;
         }
         acceptAvatar(avatar, bmp);
@@ -800,7 +800,7 @@ public class UiUtils {
                                                                           final T topic, final Intent data) {
         Bitmap bmp = UiUtils.extractBitmap(activity, data);
         if (bmp == null) {
-            Toast.makeText(activity, activity.getString(R.string.image_is_missing), Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
             return;
         }
         VxCard pub = topic.getPub();
