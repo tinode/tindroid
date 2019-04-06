@@ -13,12 +13,18 @@ import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.core.CrashlyticsCore;
+
 import co.tinode.tinodesdk.Tinode;
+
+import io.fabric.sdk.android.Fabric;
 
 /**
  * A class for providing global context for database access
  */
 public class TindroidApp extends Application {
+    private static final String TAG = "TindroidApp";
 
     private static TindroidApp sContext;
 
@@ -39,7 +45,13 @@ public class TindroidApp extends Application {
             PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
             sAppVersion = pi.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            Log.w("TindroidApp", "Failed to retrieve app version", e);
+            Log.w(TAG, "Failed to retrieve app version", e);
+        }
+
+        if (Build.PRODUCT.startsWith("sdk") || Build.PRODUCT.startsWith("vbox")) {
+            Log.i(TAG, "Running in emulator: disabling Crashlytics");
+            CrashlyticsCore disabled = new CrashlyticsCore.Builder().disabled(true).build();
+            Fabric.with(this, new Crashlytics.Builder().core(disabled).build());
         }
 
         BroadcastReceiver br = new BroadcastReceiver() {
