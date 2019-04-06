@@ -129,7 +129,7 @@ public class Connection {
      * @param autoreconnect if connection is dropped, reconnect automatically
      * @return true if a new attempt to open a connection was performed, false if connection already exists
      */
-    public boolean connect(boolean autoreconnect) throws IOException {
+    public boolean connect(boolean autoreconnect) {
         this.autoreconnect = autoreconnect;
 
         if (autoreconnect && reconnecting) {

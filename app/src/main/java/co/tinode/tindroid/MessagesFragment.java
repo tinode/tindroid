@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
@@ -91,7 +92,7 @@ public class MessagesFragment extends Fragment
     private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
-    private MessagesListAdapter mMessagesAdapter;
+    private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
 
     // It cannot be local.
@@ -153,7 +154,7 @@ public class MessagesFragment extends Fragment
         FileUploader.setProgressHandler(mUploadProgress);
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
-        mMessagesAdapter = new MessagesListAdapter(activity, mRefresher);
+        mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
         ml.setAdapter(mMessagesAdapter);
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -269,16 +270,18 @@ public class MessagesFragment extends Fragment
         setHasOptionsMenu(true);
 
         Bundle bundle = getArguments();
-        String oldTopicName = mTopicName;
         if (bundle != null) {
             mTopicName = bundle.getString("topic");
             mMessageToSend = bundle.getString("messageText");
+        } else {
+            mTopicName = null;
         }
 
-        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
         if (mTopicName != null) {
-            mMessagesAdapter.swapCursor(mTopicName, null,  !mTopicName.equals(oldTopicName));
-            runMessagesLoader();
+            mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+            runMessagesLoader(mTopicName);
+        } else {
+            mTopic = null;
         }
 
         // Check periodically if all messages were read;
@@ -295,8 +298,8 @@ public class MessagesFragment extends Fragment
         updateFormValues();
     }
 
-    void runMessagesLoader() {
-        mMessagesAdapter.runLoader();
+    void runMessagesLoader(String topicName) {
+        mMessagesAdapter.resetContent(topicName);
     }
 
     private void updateFormValues() {
@@ -305,7 +308,7 @@ public class MessagesFragment extends Fragment
             return;
         }
 
-        if (mTopic == null || !mTopic.isAttached()) {
+        if (mTopic == null) {
             // Default view when the topic is not available.
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
@@ -411,7 +414,7 @@ public class MessagesFragment extends Fragment
                     mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            mMessagesAdapter.runLoader();
+                            runMessagesLoader(mTopicName);
                             return null;
                         }
                     }, mFailureListener);
@@ -428,6 +431,16 @@ public class MessagesFragment extends Fragment
                     showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
                     return true;
 
+                case R.id.action_offline:
+                    try {
+                        Cache.getTinode().reconnectNow();
+                    } catch (IOException ex) {
+                        Log.d(TAG, "Reconnect failure", ex);
+                        String cause = ex.getCause().getMessage();
+                        Toast.makeText(activity, activity.getString(R.string.error_connection_failed) + cause,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    break;
                 default:
                     return super.onOptionsItemSelected(item);
             }
@@ -488,6 +501,7 @@ public class MessagesFragment extends Fragment
 
         final BottomSheetDialog invitation = new BottomSheetDialog(activity);
         final LayoutInflater inflater = LayoutInflater.from(invitation.getContext());
+        @SuppressLint("InflateParams")
         final View view = inflater.inflate(R.layout.dialog_accept_chat, null);
         invitation.setContentView(view);
         invitation.setCancelable(false);
@@ -711,7 +725,7 @@ public class MessagesFragment extends Fragment
         if (data.msgId > 0) {
             activity.syncMessages(data.msgId, true);
         } else if (data.error != null) {
-            runMessagesLoader();
+            runMessagesLoader(mTopicName);
             Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();
         }
     }
@@ -861,6 +875,7 @@ public class MessagesFragment extends Fragment
                 is = resolver.openInputStream(uri);
                 // Resize image to ensure it's under the maximum in-band size.
                 Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
+                // noinspection ConstantConditions: NullPointerException is handled explicitly.
                 bmp = UiUtils.scaleBitmap(bmp);
                 imageWidth = bmp.getWidth();
                 imageHeight = bmp.getHeight();
@@ -916,6 +931,7 @@ public class MessagesFragment extends Fragment
                     baos = new ByteArrayOutputStream();
                     byte[] buffer = new byte[16384];
                     int len;
+                    // noinspection ConstantConditions: NullPointerException is handled explicitly.
                     while ((len = is.read(buffer)) > 0) {
                         baos.write(buffer, 0, len);
                     }
@@ -997,7 +1013,7 @@ public class MessagesFragment extends Fragment
 
         void onStart(final long msgId) {
             // Reload the cursor.
-            runMessagesLoader();
+            runMessagesLoader(mTopicName);
         }
 
         // Returns true to continue the upload, false to cancel.

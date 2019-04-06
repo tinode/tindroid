@@ -71,15 +71,11 @@ public class Tinode {
 
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_USR_PREFIX = "usr";
-
+    public static final String NULL_VALUE = "\u2421";
     protected static final String NOTE_KP = "kp";
     protected static final String NOTE_READ = "read";
     protected static final String NOTE_RECV = "recv";
-
     private static final String TAG = "Tinode";
-
-    public static final String NULL_VALUE = "\u2421";
-
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
@@ -145,6 +141,7 @@ public class Tinode {
     private long mTimeAdjustment = 0;
     // Indicator that login is in progress
     private Boolean mLoginInProgress = false;
+
     /**
      * Initialize Tinode package
      *
@@ -247,6 +244,24 @@ public class Tinode {
         return NOTE_KP_DELAY;
     }
 
+    /**
+     * Instantiate topic of an appropriate class given the name.
+     *
+     * @param tinode instance of core Tinode to attach topic to
+     * @param name   name of the topic to create
+     * @param l      event listener; could be null
+     * @return topic of an appropriate class
+     */
+    @SuppressWarnings("unchecked")
+    public static Topic newTopic(final Tinode tinode, final String name, final Topic.Listener l) {
+        if (TOPIC_ME.equals(name)) {
+            return new MeTopic(tinode, l);
+        } else if (TOPIC_FND.equals(name)) {
+            return new FndTopic(tinode, l);
+        }
+        return new ComTopic(tinode, name, l);
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public EventListener setListener(EventListener listener) {
         EventListener oldListener = mListener;
@@ -283,10 +298,8 @@ public class Tinode {
      * @param hostName address of the server to connect to
      * @param tls      use transport layer security (wss)
      * @return returns promise which will be resolved when the connection sequence is completed.
-     * @throws URISyntaxException if hostName is not a valid internet address
-     * @throws IOException        if connection call has failed
      */
-    public PromisedReply<ServerMessage> connect(String hostName, boolean tls) throws URISyntaxException, IOException {
+    public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
         mUseTLS = tls;
 
         if (mConnection != null && mConnection.isConnected()) {
@@ -299,13 +312,13 @@ public class Tinode {
         mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
 
         final PromisedReply<ServerMessage> connected = new PromisedReply<>();
-        mConnection = new Connection(
-                new URI((tls ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/"),
-                mApiKey, new Connection.WsListener() {
+        try {
+            mConnection = new Connection(
+                    new URI((tls ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/"),
+                    mApiKey, new Connection.WsListener() {
 
-            @Override
-            protected void onConnect(final boolean autoreconnected) {
-                try {
+                @Override
+                protected void onConnect(final boolean autoreconnected) {
                     // Connection established, send handshake, inform listener on success
                     PromisedReply<ServerMessage> future = hello().thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
@@ -333,52 +346,49 @@ public class Tinode {
                         future.thenApply(
                                 new PromisedReply.SuccessListener<ServerMessage>() {
                                     @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                        if (mLoginCredentials != null  && !mLoginInProgress) {
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
+                                        if (mLoginCredentials != null && !mLoginInProgress) {
                                             login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
                                         }
                                         return null;
                                     }
                                 });
                     }
-                } catch (NotConnectedException ignored) {
-                    Log.d(TAG, "NotConnectedException in autoreconnect");
-                    // Do nothing
-                } catch (Exception ex) {
-                    Log.w(TAG, "Exception in Connection.onConnect: ", ex);
                 }
-            }
 
-            @Override
-            protected void onMessage(String message) {
-                try {
-                    dispatchPacket(message);
-                } catch (Exception ex) {
-                    Log.w(TAG, "Exception in dispatchPacket: ", ex);
-                }
-            }
-
-            @Override
-            protected void onDisconnect(boolean byServer, int code, String reason) {
-                handleDisconnect(byServer, -code, reason);
-            }
-
-            @Override
-            protected void onError(Exception err) {
-                handleDisconnect(true, 0, err.getMessage());
-                // If the promise is waiting, reject. Otherwise it's not our problem.
-                if (!connected.isDone()) {
+                @Override
+                protected void onMessage(String message) {
                     try {
-                        connected.reject(err);
-                    } catch (Exception ignored) {
-                        // There is no rejection handler ths there should not be an exception
+                        dispatchPacket(message);
+                    } catch (Exception ex) {
+                        Log.w(TAG, "Exception in dispatchPacket: ", ex);
                     }
                 }
-            }
-        });
 
-        // true means autoreconnect
-        mConnection.connect(true);
+                @Override
+                protected void onDisconnect(boolean byServer, int code, String reason) {
+                    handleDisconnect(byServer, -code, reason);
+                }
+
+                @Override
+                protected void onError(Exception err) {
+                    handleDisconnect(true, 0, err.getMessage());
+                    // If the promise is waiting, reject. Otherwise it's not our problem.
+                    if (!connected.isDone()) {
+                        try {
+                            connected.reject(err);
+                        } catch (Exception ignored) {
+                            // There is no rejection handler ths there should not be an exception
+                        }
+                    }
+                }
+            });
+
+            // true means autoreconnect
+            mConnection.connect(true);
+        } catch (URISyntaxException ex) {
+            return new PromisedReply<>(ex);
+        }
 
         return connected;
     }
@@ -439,7 +449,8 @@ public class Tinode {
         for (PromisedReply<ServerMessage> p : mFutures.values()) {
             try {
                 p.reject(ex);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         if (mListener != null) {
@@ -794,7 +805,7 @@ public class Tinode {
                 ClientMessage msg = new ClientMessage(new MsgClientHi(null, null, null,
                         mDeviceToken, null));
                 try {
-                    send(Tinode.getJsonMapper().writeValueAsString(msg));
+                    send(msg);
                 } catch (JsonProcessingException ignored) {
                 }
             }
@@ -820,28 +831,20 @@ public class Tinode {
     public PromisedReply<ServerMessage> hello() {
         ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION,
                 makeUserAgent(), mDeviceToken, mLanguage));
-        try {
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.hi.id, future);
-            future = future.thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                            if (pkt.ctrl == null) {
-                                throw new InvalidObjectException("Unexpected type of reply packet to hello");
-                            }
-                            if (pkt.ctrl.params != null) {
-                                mServerVersion = (String) pkt.ctrl.params.get("ver");
-                                mServerBuild = (String) pkt.ctrl.params.get("build");
-                            }
-                            return null;
+        return sendWithPromise(msg, msg.hi.id).thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                        if (pkt.ctrl == null) {
+                            throw new InvalidObjectException("Unexpected type of reply packet to hello");
                         }
-                    }, null);
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-            return future;
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+                        if (pkt.ctrl.params != null) {
+                            mServerVersion = (String) pkt.ctrl.params.get("ver");
+                            mServerBuild = (String) pkt.ctrl.params.get("build");
+                        }
+                        return null;
+                    }
+                });
     }
 
     /**
@@ -860,38 +863,33 @@ public class Tinode {
                                                             Credential[] cred) {
         ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
-        try {
-            // Add tags and credentials
-            if (tags != null) {
-                for (String tag : tags) {
-                    msg.acc.addTag(tag);
-                }
+        // Add tags and credentials
+        if (tags != null) {
+            for (String tag : tags) {
+                msg.acc.addTag(tag);
             }
-            if (cred != null) {
-                for (Credential c : cred) {
-                    msg.acc.addCred(c);
-                }
-            }
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-            PromisedReply<ServerMessage> future = new PromisedReply<>();
-            mFutures.put(msg.acc.id, future);
-            if (loginNow) {
-                future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
-                        try {
-                            loginSuccessful(pkt.ctrl);
-                        } catch (Exception ex) {
-                            Log.w(TAG, "Failed to parse server response", ex);
-                        }
-                        return null;
-                    }
-                }, null);
-            }
-            return future;
-        } catch (JsonProcessingException e) {
-            return null;
         }
+        if (cred != null) {
+            for (Credential c : cred) {
+                msg.acc.addCred(c);
+            }
+        }
+
+        PromisedReply<ServerMessage> future = sendWithPromise(msg, msg.acc.id);
+        if (loginNow) {
+            future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
+                    try {
+                        loginSuccessful(pkt.ctrl);
+                    } catch (Exception ex) {
+                        Log.w(TAG, "Failed to parse server response", ex);
+                    }
+                    return null;
+                }
+            });
+        }
+        return future;
     }
 
     /**
@@ -961,9 +959,8 @@ public class Tinode {
      * @param uname    user name
      * @param password password
      * @return PromisedReply of the reply ctrl message
-     * @throws Exception if there is no connection
      */
-    public PromisedReply<ServerMessage> loginBasic(String uname, String password) throws Exception {
+    public PromisedReply<ServerMessage> loginBasic(String uname, String password) {
         return login(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password), null);
     }
 
@@ -974,9 +971,8 @@ public class Tinode {
      * @param token server-provided security token
      * @param creds validation credentials.
      * @return PromisedReply of the reply ctrl message
-     * @throws Exception if there is no connection
      */
-    public PromisedReply<ServerMessage> loginToken(String token, Credential[] creds) throws Exception {
+    public PromisedReply<ServerMessage> loginToken(String token, Credential[] creds) {
         return login(AuthScheme.LOGIN_TOKEN, token, creds);
     }
 
@@ -986,22 +982,22 @@ public class Tinode {
      *
      * @param token server-provided security token
      * @return PromisedReply of the reply ctrl message
-     * @throws Exception if there is no connection
      */
-    public PromisedReply<ServerMessage> loginToken(String token) throws Exception {
+    public PromisedReply<ServerMessage> loginToken(String token) {
         return loginToken(token, null);
     }
 
-    public PromisedReply<ServerMessage> requestResetSecret(String scheme, String method, String value) throws Exception {
+    public PromisedReply<ServerMessage> requestResetSecret(String scheme, String method, String value) {
         return login(AuthScheme.LOGIN_RESET, AuthScheme.encodeResetSecret(scheme, method, value), null);
     }
 
-    protected PromisedReply<ServerMessage> login(String combined) throws Exception {
+    protected PromisedReply<ServerMessage> login(String combined) {
         AuthScheme auth = AuthScheme.parse(combined);
         if (auth != null) {
             return login(auth.scheme, auth.secret, null);
         }
-        throw new IllegalArgumentException();
+
+        return new PromisedReply<>(new IllegalArgumentException());
     }
 
     private void loginSuccessful(final MsgServerCtrl ctrl) throws IllegalStateException,
@@ -1037,15 +1033,12 @@ public class Tinode {
     }
 
     /**
-     *
      * @param scheme authentication scheme
      * @param secret base64-encoded authentication secret
-     * @param creds credentials for validation
+     * @param creds  credentials for validation
      * @return {@link PromisedReply} resolved or rejected on completion.
-     * @throws Exception when something goes wrong
      */
-    protected synchronized PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds)
-            throws Exception {
+    protected synchronized PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds) {
         if (mAutologin) {
             mLoginCredentials = new LoginCredentials(scheme, secret);
         }
@@ -1056,8 +1049,9 @@ public class Tinode {
         }
 
         if (mLoginInProgress) {
-            throw new InProgressException();
+            return new PromisedReply<>(new InProgressException());
         }
+
         mLoginInProgress = true;
 
         ClientMessage msg = new ClientMessage(new MsgClientLogin(getNextId(), scheme, secret));
@@ -1067,10 +1061,7 @@ public class Tinode {
             }
         }
 
-        send(Tinode.getJsonMapper().writeValueAsString(msg));
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.login.id, future);
-        future = future.thenApply(
+        return sendWithPromise(msg, msg.login.id).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
@@ -1102,7 +1093,6 @@ public class Tinode {
                         return new PromisedReply<>(err);
                     }
                 });
-        return future;
     }
 
     /**
@@ -1175,13 +1165,7 @@ public class Tinode {
                                                               MsgSetMeta<Pu, Pr> set,
                                                               MsgGetMeta get) {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.sub.id, future);
-        return future;
+        return sendWithPromise(msg, msg.sub.id);
     }
 
     /**
@@ -1194,13 +1178,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> leave(final String topicName, boolean unsub) {
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.leave.id, future);
-        return future;
+        return sendWithPromise(msg, msg.leave.id);
     }
 
     /**
@@ -1214,13 +1192,7 @@ public class Tinode {
     @SuppressWarnings("unchecked, WeakerAccess")
     public PromisedReply<ServerMessage> publish(String topicName, Object data) {
         ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data));
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.pub.id, future);
-        return future;
+        return sendWithPromise(msg, msg.pub.id);
     }
 
     /**
@@ -1233,13 +1205,7 @@ public class Tinode {
      */
     public PromisedReply<ServerMessage> getMeta(final String topicName, final MsgGetMeta query) {
         ClientMessage msg = new ClientMessage(new MsgClientGet(getNextId(), topicName, query));
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.get.id, future);
-        return future;
+        return sendWithPromise(msg, msg.get.id);
     }
 
     /**
@@ -1254,23 +1220,11 @@ public class Tinode {
     public <Pu, Pr, T> PromisedReply<ServerMessage> setMeta(final String topicName,
                                                             final MsgSetMeta<Pu, Pr> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.set.id, future);
-        return future;
+        return sendWithPromise(msg, msg.set.id);
     }
 
     private PromisedReply<ServerMessage> sendDeleteMessage(ClientMessage msg) {
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.del.id, future);
-        return future;
+        return sendWithPromise(msg, msg.del.id);
     }
 
     /**
@@ -1319,13 +1273,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delTopic(final String topicName) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName));
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.del.id, future);
-        return future;
+        return sendWithPromise(msg, msg.del.id);
     }
 
     /**
@@ -1338,13 +1286,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delSubscription(final String topicName, final String user) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName, user));
-        try {
-            send(Tinode.getJsonMapper().writeValueAsString(msg));
-        } catch (JsonProcessingException ignored) {
-        }
-        PromisedReply<ServerMessage> future = new PromisedReply<>();
-        mFutures.put(msg.del.id, future);
-        return future;
+        return sendWithPromise(msg, msg.del.id);
     }
 
     /**
@@ -1360,9 +1302,8 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     protected void note(String topicName, String what, int seq) {
         try {
-            send(Tinode.getJsonMapper().writeValueAsString(
-                    new ClientMessage(new MsgClientNote(topicName, what, seq))));
-        } catch (JsonProcessingException ignored) {
+            send(new ClientMessage(new MsgClientNote(topicName, what, seq)));
+        } catch (JsonProcessingException | NotConnectedException ignored) {
         }
     }
 
@@ -1415,25 +1356,29 @@ public class Tinode {
         mConnection.send(message);
     }
 
-
     /**
-     * Instantiate topic of an appropriate class given the name.
+     * Takes {@link ClientMessage}, converts it to string writes to websocket.
      *
-     * @param tinode instance of core Tinode to attach topic to
-     * @param name name of the topic to create
-     * @param l    event listener; could be null
-     * @return topic of an appropriate class
+     * @param message string to write to websocket
      */
-    @SuppressWarnings("unchecked")
-    public static Topic newTopic(final Tinode tinode, final String name, final Topic.Listener l) {
-        if (TOPIC_ME.equals(name)) {
-            return new MeTopic(tinode, l);
-        } else if (TOPIC_FND.equals(name)) {
-            return new FndTopic(tinode, l);
-        }
-        return new ComTopic(tinode, name, l);
+    protected void send(ClientMessage message) throws JsonProcessingException {
+        send(Tinode.getJsonMapper().writeValueAsString(message));
     }
 
+    protected PromisedReply<ServerMessage> sendWithPromise(ClientMessage message, String id) {
+        PromisedReply<ServerMessage> future = new PromisedReply<>();
+        try {
+            send(message);
+            mFutures.put(id, future);
+        } catch (Exception ex1) {
+            try {
+                future.reject(ex1);
+            } catch (Exception ex2) {
+                Log.i(TAG, "Exception while rejecting the promise", ex2);
+            }
+        }
+        return future;
+    }
 
     /**
      * Instantiate topic of an appropriate class given the name.
@@ -1526,7 +1471,7 @@ public class Tinode {
      * Return a list of topics which satisfy the filters. Topics are sorted by
      * Topic.touched in descending order.
      *
-     * @param filter  filter object to select topics.
+     * @param filter filter object to select topics.
      * @return a {@link List} of topics
      */
     @SuppressWarnings("unchecked")
@@ -1551,7 +1496,7 @@ public class Tinode {
      * @return existing topic or null if no such topic was found
      */
     @SuppressWarnings("unchecked")
-    public Topic<?,?,?,?> getTopic(String name) {
+    public Topic<?, ?, ?, ?> getTopic(String name) {
         if (name == null) {
             return null;
         }
@@ -1603,6 +1548,7 @@ public class Tinode {
 
     /**
      * Look up user in a local cache: first in memory, then in persistent storage.
+     *
      * @param uid ID of the user to find.
      * @return {@link User} object or null if no such user is found in local cache.
      */
@@ -1620,6 +1566,7 @@ public class Tinode {
 
     /**
      * Create blank user in cache: in memory and in persistent storage.
+     *
      * @param uid ID of the user to create.
      * @return {@link User} created user.
      */
@@ -1737,6 +1684,14 @@ public class Tinode {
 
     public interface MimeTypeResolver {
         JavaType resolve(String mimeType);
+    }
+
+    /**
+     * Interface to be implemented by those clients which want to fetch topics
+     * using {@link Tinode#getFilteredTopics}
+     */
+    public interface TopicFilter<T extends Topic> {
+        boolean isIncluded(T t);
     }
 
     /**
@@ -1878,13 +1833,5 @@ public class Tinode {
         public void post(String topic, int recv) {
             recvQueue.put(topic, recv);
         }
-    }
-
-    /**
-     * Interface to be implemented by those clients which want to fetch topics
-     * using {@link Tinode#getFilteredTopics}
-     */
-    public interface TopicFilter<T extends Topic> {
-        boolean isIncluded(T t);
     }
 }

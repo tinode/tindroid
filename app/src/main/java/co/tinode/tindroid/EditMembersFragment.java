@@ -112,6 +112,7 @@ public class EditMembersFragment extends Fragment {
         boolean cancelable = false;
         if (mTopic != null) {
             Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
+            boolean manager = mTopic.isManager();
             for (Subscription<VxCard, PrivateType> sub : subs) {
                 mContactsAdapter.toggleSelected(sub.user);
                 String name = null;
@@ -124,7 +125,7 @@ public class EditMembersFragment extends Fragment {
                         sub.user,
                         name,
                         UiUtils.avatarDrawable(activity, avatar, name, sub.user),
-                        !tinode.isMe(sub.user)));
+                        !tinode.isMe(sub.user) && manager));
             }
             cancelable = mTopic.isAdmin();
         }

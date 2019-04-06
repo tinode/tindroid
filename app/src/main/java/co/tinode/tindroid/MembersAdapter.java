@@ -160,7 +160,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         TextView title;
         AppCompatImageButton close;
 
-        public ViewHolder(@NonNull View itemView, int viewType) {
+        ViewHolder(@NonNull View itemView, int viewType) {
             super(itemView);
 
             this.viewType = viewType;
@@ -178,7 +178,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             }
             title.setText(user.name);
 
-            if (mCancelable && user.removable) {
+            if (user.removable && (mCancelable || !mInitialMembers.contains(user.unique))) {
                 close.setVisibility(View.VISIBLE);
                 close.setOnClickListener(new View.OnClickListener() {
                     @Override

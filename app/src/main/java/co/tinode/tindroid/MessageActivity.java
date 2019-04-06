@@ -11,15 +11,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.core.content.FileProvider;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
@@ -37,11 +28,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
@@ -57,32 +57,60 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 public class MessageActivity extends AppCompatActivity {
 
-    private static final String TAG = "MessageActivity";
-
     static final String FRAGMENT_MESSAGES = "msg";
-    static final String FRAGMENT_INVALID ="invalid";
+    static final String FRAGMENT_INVALID = "invalid";
     static final String FRAGMENT_INFO = "info";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
-    static final String FRAGMENT_VIEW_IMAGE ="view_image";
-
+    static final String FRAGMENT_VIEW_IMAGE = "view_image";
+    private static final String TAG = "MessageActivity";
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
-    private Timer mTypingAnimationTimer;
-
-    private String mMessageText = null;
-
-    private String mTopicName = null;
-    private ComTopic<VxCard> mTopic = null;
-
-    private PausableSingleThreadExecutor mMessageSender = null;
-
-    private DownloadManager mDownloadMgr = null;
-    private long mDownloadId = -1;
 
     static {
         // Otherwise crash on pre-Lollipop (per-API 21)
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
+
+    BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
+        public void onReceive(Context ctxt, Intent intent) {
+            // FIXME: handle notification click.
+            Log.d(TAG, "onNotificationClick" + intent.getExtras());
+        }
+    };
+    private Timer mTypingAnimationTimer;
+    private String mMessageText = null;
+    private String mTopicName = null;
+    private ComTopic<VxCard> mTopic = null;
+    private PausableSingleThreadExecutor mMessageSender = null;
+    private DownloadManager mDownloadMgr = null;
+    private long mDownloadId = -1;
+    BroadcastReceiver onComplete = new BroadcastReceiver() {
+        public void onReceive(Context ctx, Intent intent) {
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction()) &&
+                    intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0) == mDownloadId) {
+                DownloadManager.Query query = new DownloadManager.Query();
+                query.setFilterById(mDownloadId);
+                Cursor c = mDownloadMgr.query(query);
+                if (c.moveToFirst()) {
+                    if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
+                        URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+                        String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
+                        intent = new Intent();
+                        intent.setAction(android.content.Intent.ACTION_VIEW);
+                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                                "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        try {
+                            startActivity(intent);
+                        } catch (ActivityNotFoundException ignored) {
+                            startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                        }
+                    }
+                }
+                c.close();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -198,62 +226,56 @@ public class MessageActivity extends AppCompatActivity {
 
             // Deactivate current topic
             if (mTopic.isAttached()) {
-                try {
-                    mTopic.leave();
-                } catch (Exception ex) {
-                    Log.w(TAG, "Leave failed", ex);
-                }
+                mTopic.leave();
             }
         }
     }
 
     private void topicAttach() {
-        try {
-            setProgressIndicator(true);
-            mTopic.subscribe(null,
-                    mTopic.getMetaGetBuilder()
-                            .withGetDesc()
-                            .withGetSub()
-                            .withGetData()
-                            .withGetDel()
-                            .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                            mTopicName, mTopic.getOnline());
-                    showFragment(FRAGMENT_MESSAGES, false, null);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            setProgressIndicator(false);
-                            MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
-                                    .findFragmentByTag(FRAGMENT_MESSAGES);
-                            if (fragmsg != null) {
-                                fragmsg.topicSubscribed();
-                            }
+        setProgressIndicator(true);
+        mTopic.subscribe(null,
+                mTopic.getMetaGetBuilder()
+                        .withGetDesc()
+                        .withGetSub()
+                        .withGetData()
+                        .withGetDel()
+                        .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
+                        mTopicName, mTopic.getOnline());
+                showFragment(FRAGMENT_MESSAGES, false, null);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        setProgressIndicator(false);
+                        MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                                .findFragmentByTag(FRAGMENT_MESSAGES);
+                        if (fragmsg != null) {
+                            fragmsg.topicSubscribed();
                         }
-                    });
-                    // Resume message sender and submit pending messages for processing:
-                    // publish queued, delete marked for deletion.
-                    mMessageSender.resume();
-                    syncAllMessages(false);
-                    return null;
+                    }
+                });
+                // Resume message sender and submit pending messages for processing:
+                // publish queued, delete marked for deletion.
+                mMessageSender.resume();
+                syncAllMessages(true);
+                return null;
+            }
+        }, new PromisedReply.FailureListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onFailure(Exception err) {
+                setProgressIndicator(false);
+
+                if (!(err instanceof NotConnectedException)) {
+                    Log.w(TAG, "Subscribe failed", err);
+                    if (err instanceof ServerResponseException) {
+                        showFragment(FRAGMENT_INVALID, false, null);
+                    }
                 }
-            }, new PromisedReply.FailureListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onFailure(Exception err) {
-                    setProgressIndicator(false);
-                    showFragment(FRAGMENT_INVALID, false, null);
-                    return null;
-                }
-            });
-        } catch (NotConnectedException ignored) {
-            setProgressIndicator(false);
-        } catch (Exception ex) {
-            Log.w(TAG, "Subscribe failed", ex);
-            setProgressIndicator(false);
-            Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
-        }
+                return null;
+            }
+        });
     }
 
     @Override
@@ -288,15 +310,17 @@ public class MessageActivity extends AppCompatActivity {
                 showFragment(FRAGMENT_INFO, true, null);
                 return true;
 
-            case R.id.action_archive: {
-                // TODO: implement topic archiving
+            case R.id.action_archive:
+                if (mTopic != null) {
+                    mTopic.updateArchived(true);
+                }
                 return true;
-            }
 
-            case R.id.action_unarchive: {
-                // TODO: implement topic un-archiving
+            case R.id.action_unarchive:
+                if (mTopic != null) {
+                    mTopic.updateArchived(false);
+                }
                 return true;
-            }
 
             default:
                 return false;
@@ -305,6 +329,7 @@ public class MessageActivity extends AppCompatActivity {
 
     // Try to send all pending messages.
     public void syncAllMessages(final boolean runLoader) {
+        Log.i(TAG, "syncAllMessages runLoader="+runLoader);
         syncMessages(-1, runLoader);
     }
 
@@ -313,33 +338,31 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(new Runnable() {
             @Override
             public void run() {
-                try {
-                    PromisedReply<ServerMessage> promise;
-                    if (msgId >= 0) {
-                        promise = mTopic.syncOne(msgId);
-                    } else {
-                        promise = mTopic.syncAll();
-                    }
-                    if (runLoader) {
-                        promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    runOnUiThread(new Runnable() {
-                                                      @Override
-                                                      public void run() {
-                                                          runMessagesLoader();
-                                                      }
-                                                  }
-                                    );
-                                    return null;
-                                }
-                            }, null);
-                        }
-                } catch (Exception ex) {
-                    Log.w(TAG, "Sync failed", ex);
-                    Toast.makeText(MessageActivity.this, R.string.failed_to_send_message,
-                            Toast.LENGTH_LONG).show();
+                Log.i(TAG, "Sync started");
+                PromisedReply<ServerMessage> promise;
+                if (msgId >= 0) {
+                    promise = mTopic.syncOne(msgId);
+                } else {
+                    Log.i(TAG, "Calling mTopic.syncAll()");
+                    promise = mTopic.syncAll();
                 }
+                if (runLoader) {
+                    promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            Log.i(TAG, "Sync succeeded");
+                            runMessagesLoader();
+                            return null;
+                        }
+                    });
+                }
+                promise.thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        Log.w(TAG, "Sync failed", err);
+                        return null;
+                    }
+                });
             }
         });
     }
@@ -397,26 +420,27 @@ public class MessageActivity extends AppCompatActivity {
 
     boolean sendMessage(Drafty content) {
         if (mTopic != null) {
-            try {
-                PromisedReply<ServerMessage> reply = mTopic.publish(content);
-                runMessagesLoader(); // Shows pending message
-                reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        if (mTopic.isArchived()) {
-                            mTopic.updateArchived(false);
+            PromisedReply<ServerMessage> reply = mTopic.publish(content);
+            runMessagesLoader(); // Shows pending message
+            reply
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            if (mTopic.isArchived()) {
+                                mTopic.updateArchived(false);
+                            }
+                            return null;
                         }
-                        // Updates message list with "delivered" icon.
-                        runMessagesLoader();
-                        return null;
-                    }
-                }, new UiUtils.ToastFailureListener(this));
-            } catch (NotConnectedException ignored) {
-            } catch (Exception ex) {
-                Log.w(TAG, "Send fessage failed", ex);
-                Toast.makeText(this, R.string.failed_to_send_message, Toast.LENGTH_SHORT).show();
-                return false;
-            }
+                    })
+                    .thenCatch(new UiUtils.ToastFailureListener(this))
+                    .thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onFinally() {
+                            // Updates message list with "delivered" or "failed" icon.
+                            runMessagesLoader();
+                            return null;
+                        }
+                    });
             return true;
         }
         return false;
@@ -432,7 +456,7 @@ public class MessageActivity extends AppCompatActivity {
         final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                 findFragmentByTag(FRAGMENT_MESSAGES);
         if (fragment != null && fragment.isVisible()) {
-            fragment.runMessagesLoader();
+            fragment.runMessagesLoader(mTopicName);
         }
     }
 
@@ -440,14 +464,14 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(runnable);
     }
 
-    public void startDownload(Uri uri, String fname, String mime, Map<String,String> headers) {
+    public void startDownload(Uri uri, String fname, String mime, Map<String, String> headers) {
         Environment
                 .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 .mkdirs();
 
         DownloadManager.Request req = new DownloadManager.Request(uri);
         if (headers != null) {
-            for (Map.Entry<String,String> entry : headers.entrySet()) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
                 req.addRequestHeader(entry.getKey(), entry.getValue());
             }
         }
@@ -455,17 +479,18 @@ public class MessageActivity extends AppCompatActivity {
         mDownloadId = mDownloadMgr.enqueue(
                 req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
                         DownloadManager.Request.NETWORK_MOBILE)
-                .setMimeType(mime)
-                .setAllowedOverRoaming(false)
-                .setTitle(fname)
-                .setDescription(getString(R.string.download_title))
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setVisibleInDownloadsUi(true)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fname));
+                        .setMimeType(mime)
+                        .setAllowedOverRoaming(false)
+                        .setTitle(fname)
+                        .setDescription(getString(R.string.download_title))
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setVisibleInDownloadsUi(true)
+                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fname));
     }
 
     /**
      * Show progress indicator based on current status
+     *
      * @param active should be true to show progress indicator
      */
     public void setProgressIndicator(final boolean active) {
@@ -484,41 +509,6 @@ public class MessageActivity extends AppCompatActivity {
         });
     }
 
-    BroadcastReceiver onComplete=new BroadcastReceiver() {
-        public void onReceive(Context ctx, Intent intent) {
-            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction()) &&
-                intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0) == mDownloadId) {
-                DownloadManager.Query query = new DownloadManager.Query();
-                query.setFilterById(mDownloadId);
-                Cursor c = mDownloadMgr.query(query);
-                if (c.moveToFirst()) {
-                    if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
-                        URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
-                        String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
-                        intent = new Intent();
-                        intent.setAction(android.content.Intent.ACTION_VIEW);
-                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
-                                "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        try {
-                            startActivity(intent);
-                        } catch (ActivityNotFoundException ignored) {
-                            startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                        }
-                    }
-                }
-                c.close();
-            }
-        }
-    };
-
-    BroadcastReceiver onNotificationClick=new BroadcastReceiver() {
-        public void onReceive(Context ctxt, Intent intent) {
-            // FIXME: handle notification click.
-            Log.d(TAG, "onNotificationClick" + intent.getExtras());
-        }
-    };
-
     Fragment getVisibleFragment() {
         List<Fragment> fragments = getSupportFragmentManager().getFragments();
         for (Fragment f : fragments) {
@@ -527,6 +517,53 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
         return null;
+    }
+
+    /**
+     * Utility class to send messages queued while offline.
+     * The execution is paused while the activity is in background and unpaused
+     * when the topic subscription is live.
+     */
+    private static class PausableSingleThreadExecutor extends ThreadPoolExecutor {
+        private boolean isPaused;
+        private ReentrantLock pauseLock = new ReentrantLock();
+        private Condition unpaused = pauseLock.newCondition();
+
+        PausableSingleThreadExecutor() {
+            super(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        }
+
+        @Override
+        protected void beforeExecute(Thread t, Runnable r) {
+            super.beforeExecute(t, r);
+            pauseLock.lock();
+            try {
+                while (isPaused) unpaused.await();
+            } catch (InterruptedException ie) {
+                t.interrupt();
+            } finally {
+                pauseLock.unlock();
+            }
+        }
+
+        void pause() {
+            pauseLock.lock();
+            try {
+                isPaused = true;
+            } finally {
+                pauseLock.unlock();
+            }
+        }
+
+        void resume() {
+            pauseLock.lock();
+            try {
+                isPaused = false;
+                unpaused.signalAll();
+            } finally {
+                pauseLock.unlock();
+            }
+        }
     }
 
     private class TListener extends ComTopic.ComListener<VxCard> {
@@ -590,9 +627,9 @@ public class MessageActivity extends AppCompatActivity {
                     Fragment fragment = getVisibleFragment();
                     if (fragment != null) {
                         if (fragment instanceof TopicInfoFragment) {
-                            ((TopicInfoFragment)fragment).notifyDataSetChanged();
+                            ((TopicInfoFragment) fragment).notifyDataSetChanged();
                         } else if (fragment instanceof MessagesFragment) {
-                            ((MessagesFragment)fragment).notifyDataSetChanged(true);
+                            ((MessagesFragment) fragment).notifyDataSetChanged(true);
                         }
                     }
                 }
@@ -600,7 +637,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
+        public void onMetaDesc(final Description<VxCard, PrivateType> desc) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -609,9 +646,9 @@ public class MessageActivity extends AppCompatActivity {
                     Fragment fragment = getVisibleFragment();
                     if (fragment != null) {
                         if (fragment instanceof TopicInfoFragment) {
-                            ((TopicInfoFragment)fragment).notifyDataSetChanged();
+                            ((TopicInfoFragment) fragment).notifyDataSetChanged();
                         } else if (fragment instanceof MessagesFragment) {
-                            ((MessagesFragment)fragment).notifyDataSetChanged(true);
+                            ((MessagesFragment) fragment).notifyDataSetChanged(true);
                         }
                     }
                 }
@@ -619,7 +656,7 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
+        public void onContUpdate(final Subscription<VxCard, PrivateType> sub) {
             onMetaDesc(null);
         }
 
@@ -632,53 +669,6 @@ public class MessageActivity extends AppCompatActivity {
                 }
             });
 
-        }
-    }
-
-    /**
-     * Utility class to send messages queued while offline.
-     * The execution is paused while the activity is in background and unpaused
-     * when the topic subscription is live.
-     */
-    private static class PausableSingleThreadExecutor extends ThreadPoolExecutor {
-        private boolean isPaused;
-        private ReentrantLock pauseLock = new ReentrantLock();
-        private Condition unpaused = pauseLock.newCondition();
-
-        PausableSingleThreadExecutor() {
-            super(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-        }
-
-        @Override
-        protected void beforeExecute(Thread t, Runnable r) {
-            super.beforeExecute(t, r);
-            pauseLock.lock();
-            try {
-                while (isPaused) unpaused.await();
-            } catch (InterruptedException ie) {
-                t.interrupt();
-            } finally {
-                pauseLock.unlock();
-            }
-        }
-
-        void pause() {
-            pauseLock.lock();
-            try {
-                isPaused = true;
-            } finally {
-                pauseLock.unlock();
-            }
-        }
-
-        void resume() {
-            pauseLock.lock();
-            try {
-                isPaused = false;
-                unpaused.signalAll();
-            } finally {
-                pauseLock.unlock();
-            }
         }
     }
 

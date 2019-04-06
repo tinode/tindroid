@@ -249,7 +249,7 @@ public class TopicInfoFragment extends Fragment {
             }
 
             button = activity.findViewById(R.id.buttonAddMembers);
-            if (!mTopic.isManager()) {
+            if (!mTopic.isSharer() && !mTopic.isManager()) {
                 // FIXME: allow sharers to add members but not remove.
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.

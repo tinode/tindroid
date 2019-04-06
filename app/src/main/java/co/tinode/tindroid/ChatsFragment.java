@@ -192,7 +192,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         // Inflate the menu; this adds items to the action bar if it is present.
         // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
-        inflater.inflate(R.menu.menu_chat_list, menu);
+        inflater.inflate(R.menu.menu_chats, menu);
         menu.setGroupVisible(R.id.not_archive, !mIsArchive);
     }
 

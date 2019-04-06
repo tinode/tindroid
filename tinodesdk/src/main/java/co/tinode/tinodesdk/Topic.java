@@ -36,71 +36,43 @@ import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- *
  * Class for handling communication on a single topic
  * Generic parameters:
- *  @param <DP> is the type of Desc.Public
- *  @param <DR> is the type of Desc.Private
- *  @param <SP> is the type of Subscription.Public
- *  @param <SR> is the type of Subscription.Private
+ *
+ * @param <DP> is the type of Desc.Public
+ * @param <DR> is the type of Desc.Private
+ * @param <SP> is the type of Subscription.Public
+ * @param <SR> is the type of Subscription.Private
  */
 @SuppressWarnings("WeakerAccess, unused")
-public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
+public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     private static final String TAG = "tinodesdk.Topic";
-
-    public enum TopicType {
-        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08),
-        USER(0x04 | 0x08), SYSTEM(0x01 | 0x02), UNKNOWN(0x00),
-        ANY(0x01 | 0x02 | 0x04 | 0x08);
-
-        private int val;
-        TopicType(int val) {
-            this.val = val;
-        }
-
-        public int val() {return val;}
-        public boolean match(TopicType v2) {
-            return (val & v2.val) != 0;
-        }
-    }
-
-    protected enum NoteType {READ, RECV}
-
     protected Tinode mTinode;
-
     protected String mName;
-
-    /** The mStore is set by Tinode when the topic calls {@link Tinode#startTrackingTopic(Topic)} */
-    Storage mStore = null;
-
-    // Server-provided values:
-
     // The bulk of topic data
-    protected Description<DP,DR> mDesc;
+    protected Description<DP, DR> mDesc;
     // Cache of topic subscribers indexed by userID
-    protected HashMap<String,Subscription<SP,SR>> mSubs = null;
+    protected HashMap<String, Subscription<SP, SR>> mSubs = null;
     // Timestamp of the last update to subscriptions. Default: Oct 25, 2014 05:06:02 UTC, incidentally equal
     // to the first few digits of sqrt(2)
     protected Date mSubsUpdated = null;
 
+    // Server-provided values:
     // Tags: user and topic discovery
     protected String[] mTags;
-
     // The topic is subscribed/online.
     protected boolean mAttached = false;
-
-    protected Listener<DP,DR,SP,SR> mListener = null;
-
+    protected Listener<DP, DR, SP, SR> mListener = null;
     // Timestamp of the last key press that the server was notified of, milliseconds
     protected long mLastKeyPress = 0;
-
-    private Payload mLocal = null;
-
     protected boolean mOnline = false;
-
     protected LastSeen mLastSeen = null;
-
     protected int mMaxDel = 0;
+    /**
+     * The mStore is set by Tinode when the topic calls {@link Tinode#startTrackingTopic(Topic)}
+     */
+    Storage mStore = null;
+    private Payload mLocal = null;
 
     Topic(Tinode tinode, String name) {
         mTinode = tinode;
@@ -113,7 +85,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         mTinode.startTrackingTopic(this);
     }
 
-    protected Topic(Tinode tinode, Subscription<SP,SR> sub) {
+    protected Topic(Tinode tinode, Subscription<SP, SR> sub) {
         this(tinode, sub.topic);
         mDesc.merge(sub);
         if (sub.online != null) {
@@ -121,7 +93,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected Topic(Tinode tinode, String name, Description<DP,DR> desc) {
+    protected Topic(Tinode tinode, String name, Description<DP, DR> desc) {
         this(tinode, name);
         mDesc.merge(desc);
     }
@@ -130,41 +102,70 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Create a named topic.
      *
      * @param tinode instance of Tinode object to communicate with the server
-     * @param name name of the topic
-     * @param l event listener, optional
-     *
+     * @param name   name of the topic
+     * @param l      event listener, optional
      * @throws IllegalArgumentException if 'tinode' argument is null
      */
-    protected Topic(Tinode tinode, String name, Listener<DP,DR,SP,SR> l) {
+    protected Topic(Tinode tinode, String name, Listener<DP, DR, SP, SR> l) {
         this(tinode, name);
         setListener(l);
     }
 
     /**
      * Start a new topic.
-     *
+     * <p>
      * Construct {@code }typeOfT} with one of {@code
      * com.fasterxml.jackson.databind.type.TypeFactory.constructXYZ()} methods such as
      * {@code mMyConnectionInstance.getTypeFactory().constructType(MyPayloadClass.class)}.
-     *
+     * <p>
      * The actual topic name will be set after completion of a successful subscribe call
      *
      * @param tinode tinode instance
-     * @param l event listener, optional
+     * @param l      event listener, optional
      */
-    protected Topic(Tinode tinode, Listener<DP,DR,SP,SR> l) {
+    protected Topic(Tinode tinode, Listener<DP, DR, SP, SR> l) {
         this(tinode, null, l);
+    }
+
+    // Returns greater of two dates.
+    private static Date maxDate(Date a, Date b) {
+        if (a == null) {
+            return b;
+        }
+        if (b == null) {
+            return a;
+        }
+        return a.compareTo(b) > 0 ? a : b;
+    }
+
+    public static TopicType getTopicTypeByName(String name) {
+        if (name != null) {
+            if (name.equals(Tinode.TOPIC_ME)) {
+                return TopicType.ME;
+            } else if (name.equals(Tinode.TOPIC_FND)) {
+                return TopicType.FND;
+            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
+                return TopicType.GRP;
+            } else if (name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
+                return TopicType.P2P;
+            }
+        }
+        return TopicType.UNKNOWN;
+    }
+
+    public static boolean getIsNewByName(String name) {
+        return name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
+        // synced with the server
     }
 
     /**
      * Set custom types of payload: {data} as well as public and private content. Needed for
      * deserialization of server messages.
      *
-     * @param typeOfDescPublic type of {meta.desc.public}
+     * @param typeOfDescPublic  type of {meta.desc.public}
      * @param typeOfDescPrivate type of {meta.desc.private}
-     * @param typeOfSubPublic type of {meta.subs[].public}
-     * @param typeOfSubPrivate type of {meta.subs[].private}
-     *
+     * @param typeOfSubPublic   type of {meta.subs[].public}
+     * @param typeOfSubPrivate  type of {meta.subs[].private}
      */
     public void setTypes(JavaType typeOfDescPublic, JavaType typeOfDescPrivate,
                          JavaType typeOfSubPublic, JavaType typeOfSubPrivate) {
@@ -176,11 +177,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Set types of payload: {data} as well as public and private content. Needed for
      * deserialization of server messages.
      *
-     * @param typeOfDescPublic type of {meta.desc.public}
+     * @param typeOfDescPublic  type of {meta.desc.public}
      * @param typeOfDescPrivate type of {meta.desc.private}
-     * @param typeOfSubPublic type of {meta.sub[].public}
-     * @param typeOfSubPrivate type of {meta.sub[].private}
-     *
+     * @param typeOfSubPublic   type of {meta.sub[].public}
+     * @param typeOfSubPrivate  type of {meta.sub[].private}
      */
     public void setTypes(Class<?> typeOfDescPublic, Class<?> typeOfDescPrivate,
                          Class<?> typeOfSubPublic, Class<?> typeOfSubPrivate) {
@@ -193,11 +193,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Set types of payload: {data} content as well as public and private fields of topic.
      * Type names must be generated by {@link JavaType#toCanonical()}
      *
-     * @param typeOfDescPublic type of {meta.desc.public}
+     * @param typeOfDescPublic  type of {meta.desc.public}
      * @param typeOfDescPrivate type of {meta.desc.private}
-     * @param typeOfSubPublic type of {meta.desc.public}
-     * @param typeOfSubPrivate type of {meta.desc.private}
-     *
+     * @param typeOfSubPublic   type of {meta.desc.public}
+     * @param typeOfSubPrivate  type of {meta.desc.private}
      * @throws IllegalArgumentException if types cannot be parsed
      */
     public void setTypes(String typeOfDescPublic, String typeOfDescPrivate,
@@ -212,7 +211,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param sub updated topic parameters
      */
-    protected void update(Subscription<SP,SR> sub) {
+    protected void update(Subscription<SP, SR> sub) {
         boolean changed;
 
         if (mLastSeen == null) {
@@ -240,7 +239,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param desc updated topic parameters
      */
-    protected void update(Description<DP,DR> desc) {
+    protected void update(Description<DP, DR> desc) {
         if (mDesc.merge(desc) && mStore != null) {
             mStore.topicUpdate(this);
         }
@@ -250,13 +249,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Topic sent an update to subscription, got a confirmation.
      *
      * @param params {ctrl} parameters returned by the server (could be null).
-     * @param sSub updated topic parameters.
+     * @param sSub   updated topic parameters.
      */
     @SuppressWarnings("unchecked")
-    protected void update(Map<String,Object> params, MetaSetSub sSub) {
+    protected void update(Map<String, Object> params, MetaSetSub sSub) {
         String user = sSub.user;
 
-        Map<String,String> acsMap = params != null ? (Map<String,String>) params.get("acs") : null;
+        Map<String, String> acsMap = params != null ? (Map<String, String>) params.get("acs") : null;
         Acs acs;
         if (acsMap != null) {
             acs = new Acs(acsMap);
@@ -280,10 +279,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             if (mDesc.acs == null) {
                 mDesc.acs = acs;
                 changed = true;
-                Log.i(TAG, "Desc set to "+mDesc.acs.toString());
+                Log.i(TAG, "Desc set to " + mDesc.acs.toString());
             } else {
                 changed = mDesc.acs.merge(acs);
-                Log.i(TAG, "Merged to Desc "+mDesc.acs.toString());
+                Log.i(TAG, "Merged to Desc " + mDesc.acs.toString());
             }
 
             if (changed && mStore != null) {
@@ -293,7 +292,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
 
         // This is an update to someone else's subscription to topic (given)
-        Subscription<SP,SR> sub = getSubscription(user);
+        Subscription<SP, SR> sub = getSubscription(user);
         if (sub == null) {
             sub = new Subscription<>();
             sub.user = user;
@@ -316,7 +315,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param desc updated topic parameters
      */
-    protected void update(MetaSetDesc<DP,DR> desc) {
+    protected void update(MetaSetDesc<DP, DR> desc) {
         if (mDesc.merge(desc) && mStore != null) {
             mStore.topicUpdate(this);
         }
@@ -329,7 +328,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * @param ctrl {ctrl} packet sent by the server
      * @param meta original {meta} packet updated topic parameters
      */
-    protected void update(MsgServerCtrl ctrl, MsgSetMeta<DP,DR> meta) {
+    protected void update(MsgServerCtrl ctrl, MsgSetMeta<DP, DR> meta) {
         if (meta.desc != null) {
             update(meta.desc);
             if (mListener != null) {
@@ -376,20 +375,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         mStore = store;
     }
 
-    // Returns greater of two dates.
-    private static Date maxDate(Date a, Date b) {
-        if (a == null) {
-            return b;
-        }
-        if (b == null) {
-            return a;
-        }
-        return a.compareTo(b) > 0 ? a : b;
-    }
-
     public Date getCreated() {
         return mDesc.created;
     }
+
     public void setCreated(Date created) {
         mDesc.created = maxDate(mDesc.created, created);
     }
@@ -397,6 +386,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public Date getUpdated() {
         return mDesc.updated;
     }
+
     public void setUpdated(Date updated) {
         mDesc.updated = maxDate(mDesc.updated, updated);
     }
@@ -404,6 +394,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public Date getTouched() {
         return mDesc.touched;
     }
+
     public void setTouched(Date touched) {
         mDesc.touched = maxDate(mDesc.updated, touched);
     }
@@ -432,6 +423,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public int getSeq() {
         return mDesc.seq;
     }
+
     public void setSeq(int seq) {
         if (seq > mDesc.seq) {
             mDesc.seq = seq;
@@ -441,6 +433,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public int getClear() {
         return mDesc.clear;
     }
+
     public void setClear(int clear) {
         if (clear > mDesc.clear) {
             mDesc.clear = clear;
@@ -450,6 +443,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public int getMaxDel() {
         return mMaxDel;
     }
+
     public void setMaxDel(int max_del) {
         if (max_del > mMaxDel) {
             mMaxDel = max_del;
@@ -459,6 +453,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public int getRead() {
         return mDesc.read;
     }
+
     public void setRead(int read) {
         if (read > mDesc.read) {
             mDesc.read = read;
@@ -468,6 +463,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public int getRecv() {
         return mDesc.recv;
     }
+
     public void setRecv(int recv) {
         if (recv > mDesc.recv) {
             mDesc.recv = recv;
@@ -477,6 +473,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public String[] getTags() {
         return mTags;
     }
+
     public void setTags(String[] tags) {
         mTags = tags;
     }
@@ -484,6 +481,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public DP getPub() {
         return mDesc.pub;
     }
+
     public void setPub(DP pub) {
         mDesc.pub = pub;
     }
@@ -491,12 +489,14 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public DR getPriv() {
         return mDesc.priv;
     }
+
     public void setPriv(DR priv) {
         mDesc.priv = priv;
     }
 
     /**
      * Checks if the topic is archived. Not all topics support archiving.
+     *
      * @return true if the topic is archived, false otherwise.
      */
     public boolean isArchived() {
@@ -512,9 +512,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public Acs getAccessMode() {
         return mDesc.acs;
     }
+
     public void setAccessMode(Acs mode) {
         mDesc.acs = mode;
     }
+
     public boolean updateAccessMode(AccessChange ac) {
         if (mDesc.acs == null) {
             mDesc.acs = new Acs();
@@ -522,24 +524,37 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         return mDesc.acs.update(ac);
     }
 
-    //public void setAccessMode(String mode) {
-    //    mDesc = new Acs(mode);
-    //}
-
+    /**
+     * Check if user has an Approver (A) permission.
+     *
+     * @return true if the user has the permission.
+     */
     public boolean isAdmin() {
         return mDesc.acs != null && mDesc.acs.isAdmin();
     }
+
     public PromisedReply<ServerMessage> updateAdmin(final boolean admin) {
         return updateMode(null, admin ? "+A" : "-A");
     }
 
+    /**
+     * Check if user has O or A permissions.
+     *
+     * @return true if current user is the owner (O) or approver (A).
+     */
     public boolean isManager() {
         return mDesc.acs != null && mDesc.acs.isManager();
     }
 
+    /**
+     * Check if user has a Sharer (S) permission.
+     *
+     * @return true if user has the permission.
+     */
     public boolean isSharer() {
         return mDesc.acs != null && mDesc.acs.isSharer();
     }
+
     public PromisedReply<ServerMessage> updateSharer(final boolean sharer) {
         return updateMode(null, sharer ? "+S" : "-S");
     }
@@ -547,6 +562,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public boolean isMuted() {
         return mDesc.acs != null && mDesc.acs.isMuted();
     }
+
     @SuppressWarnings("UnusedReturnValue")
     public PromisedReply<ServerMessage> updateMuted(final boolean muted) {
         return updateMode(null, muted ? "-P" : "+P");
@@ -571,25 +587,32 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public Defacs getDefacs() {
         return mDesc.defacs;
     }
+
     public void setDefacs(Defacs da) {
         mDesc.defacs = da;
     }
+
     public void setDefacs(String auth, String anon) {
         mDesc.defacs.setAuth(auth);
         mDesc.defacs.setAnon(anon);
     }
+
     public AcsHelper getAuthAcs() {
         return mDesc.defacs == null ? null : mDesc.defacs.auth;
     }
+
     public String getAuthAcsStr() {
         return mDesc.defacs != null && mDesc.defacs.auth != null ? mDesc.defacs.auth.toString() : "";
     }
+
     public AcsHelper getAnonAcs() {
         return mDesc.defacs == null ? null : mDesc.defacs.anon;
     }
+
     public String getAnonAcsStr() {
         return mDesc.defacs != null && mDesc.defacs.anon != null ? mDesc.defacs.anon.toString() : "";
     }
+
     public int getUnreadCount() {
         int unread = mDesc.seq - mDesc.read;
         return unread > 0 ? unread : 0;
@@ -598,6 +621,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     public boolean getOnline() {
         return mOnline;
     }
+
     protected void setOnline(boolean online) {
         if (online != mOnline) {
             mOnline = online;
@@ -632,6 +656,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     protected void setLastSeen(Date when, String ua) {
         mLastSeen = new LastSeen(when, ua);
     }
+
     protected void setLastSeen(Date when) {
         if (mLastSeen != null) {
             mLastSeen.when = when;
@@ -644,7 +669,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Subscribe to topic
      */
     public PromisedReply<ServerMessage> subscribe() {
-        MsgSetMeta<DP,DR> mset = null;
+        MsgSetMeta<DP, DR> mset = null;
         MsgGetMeta mget;
         if (isNew()) {
             // If this is a new topic, sync topic description
@@ -664,22 +689,18 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     /**
      * Subscribe to topic with parameters
      *
-     * @throws NotConnectedException if there is no live connection to the server
+     * @throws NotConnectedException      if there is no live connection to the server
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP,DR> set, MsgGetMeta get) {
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
         if (mAttached) {
             if (set == null && get == null) {
                 // If the topic is already attached and the user does not attempt to set or
                 // get any data, just return resolved promise.
                 return new PromisedReply<>((ServerMessage) null);
             }
-            throw new AlreadySubscribedException();
-        }
-
-        if (!mTinode.isConnected()) {
-            throw new NotConnectedException();
+            return new PromisedReply<>(new AlreadySubscribedException());
         }
 
         final String topicName = getName();
@@ -737,10 +758,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     /**
      * Leave topic
-     * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to server
+     * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      */
     public PromisedReply<ServerMessage> leave(final boolean unsub) {
         if (mAttached) {
@@ -756,20 +775,17 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                             return null;
                         }
                     });
+        } else if (!unsub) {
+            return new PromisedReply<>((ServerMessage) null);
+        } else if (mTinode.isConnected()) {
+            return new PromisedReply<>(new NotSubscribedException());
         }
 
-        if (mTinode.isConnected()) {
-            throw new NotSubscribedException();
-        }
-
-        throw new NotConnectedException();
+        return new PromisedReply<>(new NotConnectedException());
     }
 
     /**
      * Leave topic without unsubscribing
-     *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to server
      */
     @SuppressWarnings("UnusedReturnValue")
     public PromisedReply<ServerMessage> leave() {
@@ -807,11 +823,12 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                 },
                 new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                    public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                         if (mStore != null) {
                             mStore.msgSyncing(Topic.this, msgId, false);
                         }
-                        return null;
+                        // Rethrow exception to trigger the next possible failure listener.
+                        throw err;
                     }
                 });
     }
@@ -820,9 +837,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Publish message to a topic. It will attempt to publish regardless of subscription status.
      *
      * @param content payload
-     *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to server
      */
     public PromisedReply<ServerMessage> publish(final Drafty content) {
         final long id;
@@ -835,11 +849,21 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         if (mAttached) {
             return publish(content, id);
         } else {
-            return subscribe().thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
+            return subscribe()
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             return publish(content, id);
+                        }
+                    })
+                    .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                            if (mStore != null) {
+                                mStore.msgSyncing(Topic.this, id, false);
+                            }
+
+                            throw err;
                         }
                     });
         }
@@ -847,6 +871,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     /**
      * Convenience method for plain text messages. Will convert message to Drafty.
+     *
      * @param content message to send
      * @return PromisedReply
      */
@@ -859,9 +884,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Processing will stop on the first error.
      *
      * @return {@link PromisedReply} of the last sent command.
-     *
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to server
+     * @throws NotConnectedException  if there is no connection to server
      */
     @SuppressWarnings("UnusedReturnValue")
     public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncAll() {
@@ -873,33 +897,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         // Get soft-deleted message IDs.
         final List<Integer> toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
         if (toSoftDelete != null) {
-            last = mTinode.delMessage(getName(), toSoftDelete, false)
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        int delId = result.ctrl.getIntParam("del", 0);
-                        if (mStore != null && delId > 0) {
-                            mStore.msgDelete(Topic.this, delId, toSoftDelete);
-                        }
-                        return null;
-                }
-            });
+            last = mTinode.delMessage(getName(), toSoftDelete, false);
         }
 
         // Get hard-deleted message IDs.
         final List<Integer> toHardDelete = mStore.getQueuedMessageDeletes(this, true);
         if (toHardDelete != null) {
-            last = mTinode.delMessage(getName(), toHardDelete, true)
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        int delId = result.ctrl.getIntParam("del", 0);
-                        if (mStore != null && delId > 0) {
-                            mStore.msgDelete(Topic.this, delId, toHardDelete);
-                        }
-                        return null;
-                }
-            });
+            last = mTinode.delMessage(getName(), toHardDelete, true);
         }
 
         ML toSend = mStore.getQueuedMessages(this);
@@ -912,30 +916,14 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                 Storage.Message msg = toSend.next();
                 final long msgId = msg.getId();
                 mStore.msgSyncing(this, msgId, true);
-                last = mTinode.publish(getName(), msg.getContent())
-                        .thenApply(
-                                new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                        processDelivery(result.ctrl, msgId);
-                                        return null;
-                                    }
-                                },
-                                new PromisedReply.FailureListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                        Log.w(TAG, "SyncAll failed msgId=" + msgId, err);
-                                        mStore.msgSyncing(Topic.this, msgId, false);
-                                        return null;
-                                    }
-                                });
+                last = publish(msg.getContent(), msgId);
             }
         } finally {
             try {
                 toSend.close();
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
-
         return last;
     }
 
@@ -943,9 +931,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Try to sync one message.
      *
      * @return {@link PromisedReply} resolved on result of the operation.
-     *
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to server
+     * @throws NotConnectedException  if there is no connection to server
      */
     public PromisedReply<ServerMessage> syncOne(long msgDatabaseId) {
         PromisedReply<ServerMessage> result = new PromisedReply<>((ServerMessage) null);
@@ -955,40 +942,12 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
         final Storage.Message m = mStore.getMessageById(this, msgDatabaseId);
         if (m != null) {
-            try {
-                if (m.isDeleted()) {
-                    result = mTinode.delMessage(getName(), m.getSeqId(), m.isDeleted(true))
-                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    int delId = result.ctrl.getIntParam("del", 0);
-                                    if (mStore != null && delId > 0) {
-                                        mStore.msgDelete(Topic.this, delId, m.getSeqId(), m.getSeqId() + 1);
-                                    }
-                                    return null;
-                                }
-                            });
-                } else if (m.isReady()) {
-                    mStore.msgSyncing(this, m.getId(), true);
-                    result = mTinode.publish(getName(), m.getContent())
-                            .thenApply(
-                                    new PromisedReply.SuccessListener<ServerMessage>() {
-                                        @Override
-                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                            processDelivery(result.ctrl, m.getId());
-                                            return null;
-                                        }
-                                    },
-                                    new PromisedReply.FailureListener<ServerMessage>() {
-                                        @Override
-                                        public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                            Log.w(TAG, "SyncOne failed msgId=" + m.getId(), err);
-                                            mStore.msgSyncing(Topic.this, m.getId(), false);
-                                            return null;
-                                        }
-                                    });
-                }
-            } catch (Exception ignored) {}
+            if (m.isDeleted()) {
+                result = mTinode.delMessage(getName(), m.getSeqId(), m.isDeleted(true));
+            } else if (m.isReady()) {
+                mStore.msgSyncing(this, m.getId(), true);
+                result = publish(m.getContent(), m.getId());
+            }
         }
 
         return result;
@@ -998,10 +957,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Query topic for data or metadata
      */
     public PromisedReply<ServerMessage> getMeta(MsgGetMeta query) {
-        if (!mTinode.isConnected()) {
-            throw new NotConnectedException();
-        }
-
         return mTinode.getMeta(getName(), query);
     }
 
@@ -1009,42 +964,38 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Update topic metadata
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotConnectedException  if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<DP,DR> meta) {
-        if (!mTinode.isConnected()) {
-            throw new NotConnectedException();
-        }
-
+    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<DP, DR> meta) {
         return mTinode.setMeta(getName(), meta).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    Log.i(TAG, "setMeta.thenApply ctrl=" + result.ctrl);
-                    update(result.ctrl, meta);
-                    return null;
-                }
-            });
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        Log.i(TAG, "setMeta.thenApply ctrl=" + result.ctrl);
+                        update(result.ctrl, meta);
+                        return null;
+                    }
+                });
     }
 
     /**
      * Update topic description. Calls {@link #setMeta}.
-     * @param desc new description (public, private, default access)
      *
+     * @param desc new description (public, private, default access)
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotConnectedException  if there is no connection to the server
      */
-    protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<DP,DR> desc) {
+    protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<DP, DR> desc) {
         return setMeta(new MsgSetMeta<>(desc, null, null));
     }
 
     /**
      * Update topic description. Calls {@link #setMeta}.
-     * @param pub new public info
-     * @param priv new private info
      *
+     * @param pub  new public info
+     * @param priv new private info
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotConnectedException  if there is no connection to the server
      */
     public PromisedReply<ServerMessage> setDescription(final DP pub, final DR priv) {
         return setDescription(new MetaSetDesc<>(pub, priv));
@@ -1055,32 +1006,30 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param auth default access mode for authenticated users
      * @param anon default access mode for anonymous users
-     *
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotConnectedException  if there is no connection to the server
      */
     public PromisedReply<ServerMessage> updateDefAcs(String auth, String anon) {
-        return setDescription(new MetaSetDesc<DP,DR>(new Defacs(auth, anon)));
+        return setDescription(new MetaSetDesc<DP, DR>(new Defacs(auth, anon)));
     }
 
     /**
      * Update subscription. Calls {@link #setMeta}.
      *
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) {
-        return setMeta(new MsgSetMeta<DP,DR>(null, sub, null));
+        return setMeta(new MsgSetMeta<DP, DR>(null, sub, null));
     }
 
     /**
      * Update another user's access mode.
      *
-     * @param uid UID of the user to update
+     * @param uid    UID of the user to update
      * @param update string which defines the update. It could be a full value or a change.
-
      * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotConnectedException  if there is no connection to the server
      */
     public PromisedReply<ServerMessage> updateMode(String uid, final String update) {
         final Subscription sub;
@@ -1106,19 +1055,19 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         // The state is unchanged, return resolved promise.
         return new PromisedReply<>((ServerMessage) null);
     }
+
     /**
      * Invite user to the topic.
      *
-     * @param uid ID of the user to invite to topic
+     * @param uid  ID of the user to invite to topic
      * @param mode access mode granted to user
-     *
-     * @throws NotConnectedException if there is no connection to the server
+     * @throws NotConnectedException    if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> invite(String uid, String mode) {
 
-        final Subscription<SP,SR> sub;
+        final Subscription<SP, SR> sub;
         if (getSubscription(uid) != null) {
             sub = getSubscription(uid);
             sub.acs.setGiven(mode);
@@ -1146,7 +1095,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
         // Check if topic is already synchronized. If not, don't send the request, it will fail anyway.
         if (isNew()) {
-            throw new NotSynchronizedException();
+            return new PromisedReply<>(new NotSynchronizedException());
         }
 
         return setSubscription(new MetaSetSub(uid, mode)).thenApply(
@@ -1170,16 +1119,12 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param uid id of the user to unsubscribe from the topic
      * @param ban ban user (set mode.Given = 'N')
-     *
-     * @throws NotSubscribedException if the user is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
-     * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     public PromisedReply<ServerMessage> eject(String uid, boolean ban) {
-        final Subscription<SP,SR> sub = getSubscription(uid);
+        final Subscription<SP, SR> sub = getSubscription(uid);
 
         if (sub == null) {
-            throw new NotSubscribedException();
+            return new PromisedReply<>(new NotSubscribedException());
         }
 
         if (ban) {
@@ -1197,7 +1142,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                 mListener.onSubsUpdated();
             }
 
-            throw new NotSynchronizedException();
+            return new PromisedReply<>(new NotSynchronizedException());
         }
 
         return mTinode.delSubscription(getName(), uid).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -1220,9 +1165,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Delete message range.
      *
      * @param hard hard-delete messages
-     *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> delMessages(final int fromId, final int toId, final boolean hard) {
         if (mStore != null) {
@@ -1242,10 +1184,10 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
 
         if (mTinode.isConnected()) {
-            throw new NotSubscribedException();
+            return new PromisedReply<>(new NotSubscribedException());
         }
 
-        throw new NotConnectedException();
+        return new PromisedReply<>(new NotConnectedException());
     }
 
     /**
@@ -1253,9 +1195,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param list delete messages with ids in this list
      * @param hard hard-delete messages
-     *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) {
         if (mStore != null) {
@@ -1276,18 +1215,16 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
 
         if (mTinode.isConnected()) {
-            throw new NotSubscribedException();
+            return new PromisedReply<>(new NotSubscribedException());
         }
 
-        throw new NotConnectedException();
+        return new PromisedReply<>(new NotConnectedException());
     }
+
     /**
      * Delete all messages.
      *
      * @param hard hard-delete messages
-     *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> delMessages(final boolean hard) {
         return delMessages(0, getSeq() + 1, hard);
@@ -1295,17 +1232,9 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     /**
      * Delete topic
-     *
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException if there is no connection to the server
      */
     public PromisedReply<ServerMessage> delete() {
-        if (!mTinode.isConnected()) {
-            throw new NotConnectedException();
-        }
-
         // Delete works even if the topic is not attached.
-
         return mTinode.delTopic(getName()).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
@@ -1346,12 +1275,15 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
                     }
                     break;
             }
-        } catch (NotConnectedException ignored) {}
+        } catch (NotConnectedException ignored) {
+        }
 
         return result;
     }
 
-    /** Notify the server that the client read the message */
+    /**
+     * Notify the server that the client read the message
+     */
     @SuppressWarnings("UnusedReturnValue")
     public int noteRead() {
         return noteRead(false);
@@ -1365,7 +1297,9 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         return result;
     }
 
-    /** Notify the server that the messages is stored on the client */
+    /**
+     * Notify the server that the messages is stored on the client
+     */
     @SuppressWarnings("UnusedReturnValue")
     public int noteRecv() {
         return noteRecv(false);
@@ -1388,7 +1322,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             try {
                 mTinode.noteKeyPress(getName());
                 mLastKeyPress = now;
-            } catch (NotConnectedException ignored) {}
+            } catch (NotConnectedException ignored) {
+            }
         }
     }
 
@@ -1421,7 +1356,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param sub subscription to add to cache
      */
-    protected void addSubToCache(Subscription<SP,SR> sub) {
+    protected void addSubToCache(Subscription<SP, SR> sub) {
         if (mSubs == null) {
             mSubs = new HashMap<>();
         }
@@ -1434,20 +1369,20 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      *
      * @param sub subscription to remove from cache
      */
-    protected void removeSubFromCache(Subscription<SP,SR> sub) {
+    protected void removeSubFromCache(Subscription<SP, SR> sub) {
         if (mSubs != null) {
             mSubs.remove(sub.user);
         }
     }
 
-    public Subscription<SP,SR> getSubscription(String key) {
+    public Subscription<SP, SR> getSubscription(String key) {
         if (mSubs == null) {
             loadSubs();
         }
         return mSubs != null ? mSubs.get(key) : null;
     }
 
-    public Collection<Subscription<SP,SR>> getSubscriptions() {
+    public Collection<Subscription<SP, SR>> getSubscriptions() {
         if (mSubs == null) {
             loadSubs();
         }
@@ -1468,14 +1403,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Tells how many topic subscribers have reported the message as received.
      *
      * @param seq sequence id of the message to test
-     *
      * @return count of recepients who claim to have received the message
      */
     public int msgRecvCount(int seq) {
         int count = 0;
         if (seq > 0) {
             String me = mTinode.getMyId();
-            Collection<Subscription<SP,SR>> subs = getSubscriptions();
+            Collection<Subscription<SP, SR>> subs = getSubscriptions();
             if (subs != null) {
                 for (Subscription sub : subs) {
                     if (!sub.user.equals(me) && sub.recv >= seq) {
@@ -1491,14 +1425,13 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
      * Tells how many topic subscribers have reported the message as read.
      *
      * @param seq sequence id of the message to test.
-     *
      * @return count of recepients who claim to have read the message.
      */
     public int msgReadCount(int seq) {
         int count = 0;
         if (seq > 0) {
             String me = mTinode.getMyId();
-            Collection<Subscription<SP,SR>> subs = getSubscriptions();
+            Collection<Subscription<SP, SR>> subs = getSubscriptions();
             if (subs != null) {
                 for (Subscription sub : subs) {
                     if (!sub.user.equals(me) && sub.read >= seq) {
@@ -1508,21 +1441,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             }
         }
         return count;
-    }
-
-    public static TopicType getTopicTypeByName(String name) {
-        if (name != null) {
-            if (name.equals(Tinode.TOPIC_ME)) {
-                return TopicType.ME;
-            } else if (name.equals(Tinode.TOPIC_FND)) {
-                return TopicType.FND;
-            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
-                return TopicType.GRP;
-            } else if (name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
-                return TopicType.P2P;
-            }
-        }
-        return  TopicType.UNKNOWN;
     }
 
     public TopicType getTopicType() {
@@ -1545,11 +1463,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         return getTopicType() == TopicType.GRP;
     }
 
-    public static boolean getIsNewByName(String name) {
-        return name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
-                                                    // synced with the server
-    }
-
     /**
      * Check if topic is not yet synchronized to the server.
      *
@@ -1562,8 +1475,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     /**
      * Called when the topic receives leave() confirmation. Overriden in 'me'.
      *
-     * @param unsub - not just detached but also unsubscribed
-     * @param code result code, always 200
+     * @param unsub  - not just detached but also unsubscribed
+     * @param code   result code, always 200
      * @param reason usually "OK"
      */
     protected void topicLeft(boolean unsub, int code, String reason) {
@@ -1578,7 +1491,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected void routeMeta(MsgServerMeta<DP,DR,SP,SR> meta) {
+    protected void routeMeta(MsgServerMeta<DP, DR, SP, SR> meta) {
         if (meta.desc != null) {
             routeMetaDesc(meta);
         }
@@ -1599,7 +1512,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected void routeMetaDesc(MsgServerMeta<DP,DR,SP,SR> meta) {
+    protected void routeMetaDesc(MsgServerMeta<DP, DR, SP, SR> meta) {
         update(meta.desc);
 
         if (getTopicType() == TopicType.P2P) {
@@ -1612,11 +1525,11 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     }
 
     @SuppressWarnings("unchecked")
-    protected void processSub(Subscription<SP,SR> newsub) {
+    protected void processSub(Subscription<SP, SR> newsub) {
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
 
-        Subscription<SP,SR> sub;
+        Subscription<SP, SR> sub;
 
         if (newsub.deleted != null) {
             if (mStore != null) {
@@ -1661,8 +1574,8 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected void routeMetaSub(MsgServerMeta<DP,DR,SP,SR> meta) {
-        for (Subscription<SP,SR> newsub : meta.sub) {
+    protected void routeMetaSub(MsgServerMeta<DP, DR, SP, SR> meta) {
+        for (Subscription<SP, SR> newsub : meta.sub) {
             processSub(newsub);
         }
 
@@ -1692,7 +1605,6 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-
     protected void routeData(MsgServerData data) {
         if (mStore != null) {
             if (mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
@@ -1708,6 +1620,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
             mListener.onData(data);
         }
     }
+
     protected void allMessagesReceived(Integer count) {
         if (mListener != null) {
             mListener.onAllMessagesReceived(count);
@@ -1716,7 +1629,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     protected void routePres(MsgServerPres pres) {
         MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
-        Subscription<SP,SR> sub;
+        Subscription<SP, SR> sub;
         switch (what) {
             case ON:
             case OFF:
@@ -1765,7 +1678,7 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
 
     protected void routeInfo(MsgServerInfo info) {
         if (!info.what.equals(Tinode.NOTE_KP)) {
-            Subscription<SP,SR> sub = getSubscription(info.from);
+            Subscription<SP, SR> sub = getSubscription(info.from);
             if (sub != null) {
                 switch (info.what) {
                     case Tinode.NOTE_RECV:
@@ -1807,50 +1720,116 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
     }
 
     @Override
-    public void setLocal(Payload value) {
-        mLocal = value;
-    }
-
-    @Override
     public Payload getLocal() {
         return mLocal;
     }
 
-    public synchronized void setListener(Listener<DP,DR,SP,SR> l) {
+    @Override
+    public void setLocal(Payload value) {
+        mLocal = value;
+    }
+
+    public synchronized void setListener(Listener<DP, DR, SP, SR> l) {
         mListener = l;
     }
 
-    public static class Listener<DP,DR,SP,SR> {
+    public enum TopicType {
+        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08),
+        USER(0x04 | 0x08), SYSTEM(0x01 | 0x02), UNKNOWN(0x00),
+        ANY(0x01 | 0x02 | 0x04 | 0x08);
 
-        public void onSubscribe(int code, String text) {}
-        public void onLeave(boolean unsub, int code, String text) {}
+        private int val;
+
+        TopicType(int val) {
+            this.val = val;
+        }
+
+        public int val() {
+            return val;
+        }
+
+        public boolean match(TopicType v2) {
+            return (val & v2.val) != 0;
+        }
+    }
+
+    protected enum NoteType {READ, RECV}
+
+    public static class Listener<DP, DR, SP, SR> {
+
+        public void onSubscribe(int code, String text) {
+        }
+
+        public void onLeave(boolean unsub, int code, String text) {
+        }
 
         /**
          * Process {data} message.
+         *
          * @param data data packet
          */
-        public void onData(MsgServerData data) {}
-        /** All requested data messages received. */
-        public void onAllMessagesReceived(Integer count) {}
+        public void onData(MsgServerData data) {
+        }
 
-        /** {info} message received */
-        public void onInfo(MsgServerInfo info) {}
-        /** {meta} message received */
-        public void onMeta(MsgServerMeta<DP,DR,SP,SR> meta) {}
-        /** {meta what="sub"} message received, and this is one of the subs */
-        public void onMetaSub(Subscription<SP,SR> sub) {}
-        /** {meta what="desc"} message received */
-        public void onMetaDesc(Description<DP,DR> desc) {}
-        /** {meta what="tags"} message received */
-        public void onMetaTags(String[] tags) {}
-        /** {meta what="sub"} message received and all subs were processed */
-        public void onSubsUpdated() {}
-        /** {pres} received */
-        public void onPres(MsgServerPres pres) {}
-        /** {pres what="on|off"} is received */
-        public void onOnline(boolean online) {}
-        /** Called when topic descriptor as contact is updated */
-        public void onContUpdate(Subscription<SP,SR> sub) {}
+        /**
+         * All requested data messages received.
+         */
+        public void onAllMessagesReceived(Integer count) {
+        }
+
+        /**
+         * {info} message received
+         */
+        public void onInfo(MsgServerInfo info) {
+        }
+
+        /**
+         * {meta} message received
+         */
+        public void onMeta(MsgServerMeta<DP, DR, SP, SR> meta) {
+        }
+
+        /**
+         * {meta what="sub"} message received, and this is one of the subs
+         */
+        public void onMetaSub(Subscription<SP, SR> sub) {
+        }
+
+        /**
+         * {meta what="desc"} message received
+         */
+        public void onMetaDesc(Description<DP, DR> desc) {
+        }
+
+        /**
+         * {meta what="tags"} message received
+         */
+        public void onMetaTags(String[] tags) {
+        }
+
+        /**
+         * {meta what="sub"} message received and all subs were processed
+         */
+        public void onSubsUpdated() {
+        }
+
+        /**
+         * {pres} received
+         */
+        public void onPres(MsgServerPres pres) {
+        }
+
+        /**
+         * {pres what="on|off"} is received
+         */
+        public void onOnline(boolean online) {
+        }
+
+        /**
+         * Called when topic descriptor as contact is updated
+         */
+        public void onContUpdate(Subscription<SP, SR> sub) {
+        }
     }
 
     /**
@@ -1868,9 +1847,9 @@ public class Topic<DP,DR,SP,SR> implements LocalData, Comparable<Topic> {
         /**
          * Add query parameters to fetch messages within explicit limits. Any/all parameters can be null.
          *
-         * @param since messages newer than this;
+         * @param since  messages newer than this;
          * @param before older than this
-         * @param limit number of messages to fetch
+         * @param limit  number of messages to fetch
          */
         public MetaGetBuilder withGetData(Integer since, Integer before, Integer limit) {
             meta.setData(since, before, limit);

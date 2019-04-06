@@ -161,7 +161,7 @@ public interface Storage {
 
     interface Message {
         /** Get current message payload */
-        Object getContent();
+        Drafty getContent();
         /** Get current message unique ID (database ID) */
         long getId();
 

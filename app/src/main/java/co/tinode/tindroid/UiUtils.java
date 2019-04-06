@@ -117,7 +117,7 @@ public class UiUtils {
 
     static void setupToolbar(final Activity activity, final VxCard pub,
                              final String topicName, final boolean online) {
-        if (activity.isDestroyed() || activity.isFinishing()) {
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
 
@@ -223,6 +223,7 @@ public class UiUtils {
         if (toolbar == null) {
             return;
         }
+
         Drawable logo = toolbar.getLogo();
         if (!(logo instanceof LayerDrawable)) {
             return;
@@ -352,7 +353,7 @@ public class UiUtils {
     }
 
     private static void setConnectedStatus(final Activity activity, final boolean online) {
-        if (activity.isDestroyed() || activity.isFinishing()) {
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
 
@@ -364,6 +365,8 @@ public class UiUtils {
                     Menu menu = toolbar.getMenu();
                     if (menu != null) {
                         menu.setGroupVisible(R.id.offline, !online);
+                    } else {
+                        Log.i(TAG, "Toolbar menu is null");
                     }
                     View line = activity.findViewById(R.id.offline_indicator);
                     if (line != null) {
@@ -462,7 +465,8 @@ public class UiUtils {
         try {
             return MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
                     data.getData());
-        } catch (IOException ex) {
+        } catch (IOException | SecurityException ex) {
+            Log.w(TAG, "Failed to get bitmap", ex);
             return null;
         }
     }

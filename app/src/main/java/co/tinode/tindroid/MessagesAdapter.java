@@ -18,6 +18,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.loader.app.LoaderManager;
@@ -78,14 +79,17 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Handle display of a conversation
  */
-public class MessagesListAdapter
-        extends RecyclerView.Adapter<MessagesListAdapter.ViewHolder>
-        implements LoaderManager.LoaderCallbacks<Cursor> {
+public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHolder> {
     private static final String TAG = "MessagesListAdapter";
 
     private static final int MESSAGES_TO_LOAD = 20;
 
-    private static final int MESSAGES_QUERY_ID = 100;
+    private static final int MESSAGES_QUERY_ID = 200;
+
+    private static final String HARD_RESET = "hard_reset";
+    private static final int REFRESH_NONE = 0;
+    private static final int REFRESH_SOFT = 1;
+    private static final int REFRESH_HARD = 2;
 
     private static final int VIEWTYPE_FULL_LEFT = 0;
     private static final int VIEWTYPE_SIMPLE_LEFT = 1;
@@ -94,6 +98,7 @@ public class MessagesListAdapter
     private static final int VIEWTYPE_FULL_RIGHT = 4;
     private static final int VIEWTYPE_SIMPLE_RIGHT = 5;
     private static final int VIEWTYPE_FULL_CENTER = 6;
+    private static final int VIEWTYPE_INVALID = 100;
 
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -115,13 +120,15 @@ public class MessagesListAdapter
     private int mPagesToLoad;
     private SwipeRefreshLayout mRefresher;
 
+    private MessageLoaderCallbacks mMessageLoaderCallback;
+
     // This is a map of message IDs to their corresponding loader IDs.
     // This is needed for upload cancellations.
     private LongSparseArray<Integer> mLoaders;
 
     private SpanClicker mSpanFormatterClicker;
 
-    MessagesListAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
+    MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
 
         mActivity = context;
@@ -131,6 +138,8 @@ public class MessagesListAdapter
         mPagesToLoad = 1;
 
         mLoaders = new LongSparseArray<>();
+
+        mMessageLoaderCallback = new MessageLoaderCallbacks();
 
         mSelectionModeCallback = new ActionMode.Callback() {
             @Override
@@ -253,27 +262,21 @@ public class MessagesListAdapter
             }
 
             if (!toDelete.isEmpty()) {
-                try {
-                    topic.delMessages(toDelete, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            runLoader();
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    updateSelectionMode();
-                                }
-                            });
-                            return null;
-                        }
-                    }, null);
-                } catch (NotConnectedException ignored) {
-                } catch (Exception ex) {
-                    Log.w(TAG, "Delete messages failed", ex);
-                    Toast.makeText(mActivity, R.string.failed_to_delete_messages, Toast.LENGTH_SHORT).show();
-                }
+                topic.delMessages(toDelete, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        runLoader(false);
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateSelectionMode();
+                            }
+                        });
+                        return null;
+                    }
+                }, new UiUtils.ToastFailureListener(mActivity));
             } else if (discarded > 0) {
-                runLoader();
+                runLoader(false);
                 updateSelectionMode();
             }
         }
@@ -285,11 +288,18 @@ public class MessagesListAdapter
         StoredMessage m = getMessage(position);
         Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
 
+        if (m == null) {
+            return VIEWTYPE_INVALID;
+        }
+
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
         // Zero item position is on the bottom of the screen.
         long nextFrom = -2;
         if (position > 0) {
-            nextFrom = getMessage(position - 1).userId;
+            StoredMessage m2 = getMessage(position - 1);
+            if (m2 != null) {
+                nextFrom = m2.userId;
+            }
         }
 
         final boolean isMine = m.isMine();
@@ -311,7 +321,6 @@ public class MessagesListAdapter
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // Create a new message bubble view.
-
         View v;
 
         final Resources res = mActivity.getResources();
@@ -321,31 +330,38 @@ public class MessagesListAdapter
         int bgColor = 0;
         switch (viewType) {
             case VIEWTYPE_FULL_CENTER:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
+                        parent, false);
                 bgColor = metaBgColor;
                 break;
             case VIEWTYPE_FULL_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single,
+                        parent, false);
                 bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar,
+                        parent, false);
                 bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single,
+                        parent, false);
                 bgColor = rightBgColor;
                 break;
             case VIEWTYPE_SIMPLE_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left,
+                        parent, false);
                 bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar,
+                        parent, false);
                 bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right, parent, false);
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right,
+                        parent, false);
                 bgColor = rightBgColor;
                 break;
             default:
@@ -465,7 +481,7 @@ public class MessagesListAdapter
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
-                if (m.status <= BaseDb.STATUS_QUEUED) {
+                if (m.status <= BaseDb.STATUS_SENDING) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
                 } else {
                     if (topic.msgReadCount(m.seq) > 0) {
@@ -526,7 +542,7 @@ public class MessagesListAdapter
                 return MessageDb.getLocalId(mCursor);
             }
         }
-        return -1;
+        return View.NO_ID;
     }
 
     int getItemPositionById(long itemId, int first, int last) {
@@ -570,8 +586,19 @@ public class MessagesListAdapter
         return mSelectionMode != null;
     }
 
-    void swapCursor(final String topicName, final Cursor cursor, boolean refresh) {
+    void resetContent(@Nullable final String topicName) {
+        if (topicName == null) {
+            boolean hard = mTopicName != null;
+            mTopicName = null;
+            swapCursor(null, hard ? REFRESH_HARD : REFRESH_NONE);
+        } else {
+            boolean hard = !topicName.equals(mTopicName);
+            mTopicName = topicName;
+            runLoader(hard);
+        }
+    }
 
+    private void swapCursor(final Cursor cursor, final int refresh) {
         if (mCursor != null && mCursor == cursor) {
             return;
         }
@@ -582,19 +609,22 @@ public class MessagesListAdapter
             mSelectionMode = null;
         }
 
-        mTopicName = topicName;
         Cursor oldCursor = mCursor;
         mCursor = cursor;
         if (oldCursor != null) {
             oldCursor.close();
         }
 
-        if (refresh) {
+        if (refresh != REFRESH_NONE) {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     mRefresher.setRefreshing(false);
-                    mRecyclerView.setAdapter(MessagesListAdapter.this);
+                    if (refresh == REFRESH_HARD) {
+                        mRecyclerView.setAdapter(MessagesAdapter.this);
+                    } else {
+                        notifyDataSetChanged();
+                    }
                     if (cursor != null)
                         mRecyclerView.scrollToPosition(0);
                 }
@@ -618,16 +648,19 @@ public class MessagesListAdapter
     }
 
     // Run loader on UI thread
-    void runLoader() {
+    private void runLoader(final boolean hard) {
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.i(TAG, "runMessageLoader hard=" + hard);
                 final LoaderManager lm = LoaderManager.getInstance(mActivity);
                 final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
+                Bundle args = new Bundle();
+                args.putBoolean(HARD_RESET, hard);
                 if (loader != null && !loader.isReset()) {
-                    lm.restartLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this);
+                    lm.restartLoader(MESSAGES_QUERY_ID, args, mMessageLoaderCallback);
                 } else {
-                    lm.initLoader(MESSAGES_QUERY_ID, null, MessagesListAdapter.this);
+                    lm.initLoader(MESSAGES_QUERY_ID, args, mMessageLoaderCallback);
                 }
             }
         });
@@ -636,40 +669,11 @@ public class MessagesListAdapter
     boolean loadNextPage() {
         if (getItemCount() == mPagesToLoad * MESSAGES_TO_LOAD) {
             mPagesToLoad++;
-            runLoader();
+            runLoader(false);
             return true;
         }
 
         return false;
-    }
-
-    @NonNull
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (id == MESSAGES_QUERY_ID) {
-            return new MessageDb.Loader(mActivity, mTopicName, mPagesToLoad, MESSAGES_TO_LOAD);
-        }
-
-        throw new  IllegalArgumentException("Unknown loader id " + id);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> loader,
-                               Cursor cursor) {
-        switch (loader.getId()) {
-            case MESSAGES_QUERY_ID:
-                swapCursor(mTopicName, cursor, true);
-                break;
-        }
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-        switch (loader.getId()) {
-            case MESSAGES_QUERY_ID:
-                swapCursor(null, null, true);
-                break;
-        }
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -795,6 +799,43 @@ public class MessagesListAdapter
         }
     }
 
+    private class MessageLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
+        private boolean mHardReset;
+
+        @NonNull
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            if (id == MESSAGES_QUERY_ID) {
+                if (args != null) {
+                    mHardReset = args.getBoolean(HARD_RESET, false);
+                }
+                Log.i(TAG, "MessageLoaderCallbacks.onCreateLoader, topicName=" + mTopicName + ", hard=" + mHardReset);
+                return new MessageDb.Loader(mActivity, mTopicName, mPagesToLoad, MESSAGES_TO_LOAD);
+            }
+
+            throw new IllegalArgumentException("Unknown loader id " + id);
+        }
+
+        @Override
+        public void onLoadFinished(@NonNull Loader<Cursor> loader,
+                                   Cursor cursor) {
+            switch (loader.getId()) {
+                case MESSAGES_QUERY_ID:
+                    swapCursor(cursor, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+            switch (loader.getId()) {
+                case MESSAGES_QUERY_ID:
+                    swapCursor(null, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
+                    break;
+            }
+        }
+    }
+
     class SpanClicker implements SpanFormatter.ClickListener {
         private int mPosition = -1;
 
@@ -879,6 +920,7 @@ public class MessagesListAdapter
                                 // {"seq":6,"resp":{"yes":1}}
                                 if (!TextUtils.isEmpty(name)) {
                                     Map<String,Object> resp = new HashMap<>();
+                                    // noinspection ConstantConditions: false positive
                                     resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                                     json.put("resp", resp);
                                 }
