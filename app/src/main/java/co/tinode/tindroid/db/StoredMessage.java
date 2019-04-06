@@ -6,6 +6,7 @@ import android.database.Cursor;
 import java.util.Date;
 
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
@@ -58,7 +59,7 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     }
 
     @Override
-    public Object getContent() {
+    public Drafty getContent() {
         return content;
     }
 
