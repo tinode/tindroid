@@ -82,7 +82,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         setName(name);
         mDesc = new Description<>();
 
-        mTinode.startTrackingTopic(this);
+        // Tinode could be null if the topic does not need to be tracked, i.e.
+        // loaded by Firebase in response to a push notification.
+        if (mTinode != null) {
+            mTinode.startTrackingTopic(this);
+        }
     }
 
     protected Topic(Tinode tinode, Subscription<SP, SR> sub) {
