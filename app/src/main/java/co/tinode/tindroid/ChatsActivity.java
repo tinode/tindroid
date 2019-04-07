@@ -220,5 +220,13 @@ public class ChatsActivity extends AppCompatActivity {
             super.onLogin(code, txt);
             UiUtils.attachMeTopic(ChatsActivity.this, mMeTopicListener);
         }
+
+        @Override
+        public void onDisconnect(boolean byServer, int code, String reason) {
+            super.onDisconnect(byServer, code, reason);
+
+            // Update online status of contacts.
+            datasetChanged();
+        }
     }
 }

@@ -329,7 +329,6 @@ public class MessageActivity extends AppCompatActivity {
 
     // Try to send all pending messages.
     public void syncAllMessages(final boolean runLoader) {
-        Log.i(TAG, "syncAllMessages runLoader="+runLoader);
         syncMessages(-1, runLoader);
     }
 
@@ -338,19 +337,16 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "Sync started");
                 PromisedReply<ServerMessage> promise;
                 if (msgId >= 0) {
                     promise = mTopic.syncOne(msgId);
                 } else {
-                    Log.i(TAG, "Calling mTopic.syncAll()");
                     promise = mTopic.syncAll();
                 }
                 if (runLoader) {
                     promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            Log.i(TAG, "Sync succeeded");
                             runMessagesLoader();
                             return null;
                         }

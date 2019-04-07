@@ -38,6 +38,6 @@
         app:elevation="@dimen/fab_elevation"
         app:layout_anchor="@id/content"
         app:layout_anchorGravity="bottom|end"
-        app:srcCompat="@drawable/ic_check"/>
+        app:srcCompat="@drawable/ic_add"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

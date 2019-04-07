@@ -68,7 +68,6 @@ import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.LargeFileHelper;
-import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
@@ -80,7 +79,7 @@ import co.tinode.tinodesdk.model.Subscription;
  * Handle display of a conversation
  */
 public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHolder> {
-    private static final String TAG = "MessagesListAdapter";
+    private static final String TAG = "MessagesAdapter";
 
     private static final int MESSAGES_TO_LOAD = 20;
 
@@ -652,7 +651,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "runMessageLoader hard=" + hard);
                 final LoaderManager lm = LoaderManager.getInstance(mActivity);
                 final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
                 Bundle args = new Bundle();
@@ -809,7 +807,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 if (args != null) {
                     mHardReset = args.getBoolean(HARD_RESET, false);
                 }
-                Log.i(TAG, "MessageLoaderCallbacks.onCreateLoader, topicName=" + mTopicName + ", hard=" + mHardReset);
                 return new MessageDb.Loader(mActivity, mTopicName, mPagesToLoad, MESSAGES_TO_LOAD);
             }
 
