@@ -74,10 +74,8 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         });
 
         final HashMap<String,Integer> newTopicIndex = new HashMap<>(newTopics.size());
-        int i = 0;
         for (Topic t : newTopics) {
-            newTopicIndex.put(t.getName(), i);
-            i++;
+            newTopicIndex.put(t.getName(), newTopicIndex.size());
         }
 
         activity.runOnUiThread(new Runnable() {

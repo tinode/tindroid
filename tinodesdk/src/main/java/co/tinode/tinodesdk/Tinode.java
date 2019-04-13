@@ -1504,7 +1504,7 @@ public class Tinode {
     }
 
     /**
-     * Start tracking topic.
+     * Start tracking topic: add it to in-memory cache.
      */
     void startTrackingTopic(final Topic topic) {
         final String name = topic.getName();
@@ -1516,7 +1516,7 @@ public class Tinode {
     }
 
     /**
-     * Stop tracking the topic, delete it from local storage.
+     * Stop tracking the topic: remove it from in-memory cache.
      */
     void stopTrackingTopic(String topicName) {
         mTopics.remove(topicName);

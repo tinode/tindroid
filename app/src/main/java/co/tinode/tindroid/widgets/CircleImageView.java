@@ -29,17 +29,19 @@ import android.view.View;
 import android.view.animation.Animation;
 
 import androidx.appcompat.widget.AppCompatImageView;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 
 /**
  * This ImageView is used to display circular progress indicator. It matches the one in SwipeRefreshLayout.
  *
- * Copied from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
+ * Adopted from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
  */
 public class CircleImageView extends AppCompatImageView {
 
     private static final int CIRCLE_BG_LIGHT = 0xFFFAFAFA;
+
+    // Default offset in dips from the top of the view to where the progress spinner should appear.
+    private static final int DEFAULT_CIRCLE_TARGET = 64;
 
     private static final int KEY_SHADOW_COLOR = 0x1E000000;
     private static final int FILL_SHADOW_COLOR = 0x3D000000;
@@ -113,15 +115,6 @@ public class CircleImageView extends AppCompatImageView {
         if (mListener != null) {
             mListener.onAnimationEnd(getAnimation());
         }
-    }
-
-    /**
-     * Update the background color of the circle image view.
-     *
-     * @param colorRes Id of a color resource.
-     */
-    public void setBackgroundColorRes(int colorRes) {
-        setBackgroundColor(ContextCompat.getColor(getContext(), colorRes));
     }
 
     @Override
