@@ -3,6 +3,7 @@
 Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software.
 Debug APKs are available in [releases](https://github.com/tinode/tindroid/releases).
 
+
 ## Getting support
 
 * Read [client-side](http://tinode.github.io/java-api/) and [server-side](https://github.com/tinode/chat/blob/master/docs/API.md) API documentation.
@@ -52,9 +53,16 @@ config file contains Google-provided passwords and as such cannot be shared. If 
 app will crash with non-obvious exceptions. The Google-provided server key must be copied to `tinode.conf`, see
 details [here](https://github.com/tinode/chat).
 
+## Other
+
+Demo avatars and some other graphics are from https://www.pexels.com/ under [CC0 license](https://www.pexels.com/photo-license/).
+
+Background patterns from http://subtlepatterns.com/, commercial and non-commercial use allowed with attribution.
+
 The `contacts.vcf` contains a list of contacts which can be used for testing. Push it to your emulator using
 
   `adb push contacts.vcf /sdcard/contacts.vcf`
+
 
 ## Translations
 
