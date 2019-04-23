@@ -86,6 +86,7 @@ public class Tinode {
     private static final String PROTOVERSION = "0";
     private static final String VERSION = "0.15";
     private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
+
     protected static TypeFactory sTypeFactory;
     protected static SimpleDateFormat sDateFormat;
     private static ObjectMapper sJsonMapper;
@@ -137,6 +138,8 @@ public class Tinode {
     private HashMap<String, User> mUsers;
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
+    // Timestamp of the latest topic desc update.
+    private Date mTopicsUpdated = null;
     // The difference between server time and local time.
     private long mTimeAdjustment = 0;
     // Indicator that login is in progress
@@ -284,12 +287,23 @@ public class Tinode {
                 for (Topic tt : topics) {
                     tt.setStorage(mStore);
                     mTopics.put(tt.getName(), tt);
+                    setTopicsUpdated(tt.getUpdated());
                 }
 
                 mTopicsLoaded = true;
             }
         }
         return mTopicsLoaded;
+    }
+
+    private void setTopicsUpdated(Date date) {
+        if (mTopicsUpdated == null || mTopicsUpdated.before(date)) {
+            mTopicsUpdated = date;
+        }
+    }
+
+    Date getTopicsUpdated() {
+        return mTopicsUpdated;
     }
 
     /**
@@ -527,8 +541,9 @@ public class Tinode {
             if (topic != null) {
                 topic.routeMeta(pkt.meta);
             } else {
-                maybeCreateTopic(pkt.meta);
+                topic = maybeCreateTopic(pkt.meta);
             }
+            setTopicsUpdated(topic.getUpdated());
 
             if (mListener != null) {
                 mListener.onMetaMessage(pkt.meta);

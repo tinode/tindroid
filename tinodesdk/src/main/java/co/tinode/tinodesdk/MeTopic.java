@@ -72,6 +72,11 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public void setPriv(PrivateType priv) { /* do nothing */ }
 
     @Override
+    public Date getSubsUpdated() {
+        return mTinode.getTopicsUpdated();
+    }
+
+    @Override
     protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
 
         for (Subscription<DP,PrivateType> sub : meta.sub) {
