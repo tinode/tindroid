@@ -77,22 +77,22 @@ public class Drafty implements Serializable {
 
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end
-    private static final String INLINE_STYLE_NAME[] = {"ST", "EM", "DL", "CO"};
-    private static final Pattern INLINE_STYLE_RE[] = {
+    private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
+    private static final Pattern[] INLINE_STYLE_RE = {
             Pattern.compile("(?<=^|\\W)\\*([^\\s*]+)\\*(?=$|\\W)"),    // bold *bo*
             Pattern.compile("(?<=^|[\\W_])_([^\\s_]+)_(?=$|[\\W_])"),  // italic _it_
             Pattern.compile("(?<=^|\\W)~([^\\s~]+)~(?=$|\\W)"),        // strikethough ~st~
             Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")             // code/monospace `mono`
     };
 
-    private static final String ENTITY_NAME[] = {"LN", "MN", "HT"};
-    private static final EntityProc ENTITY_PROC[] = {
+    private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
+    private static final EntityProc[] ENTITY_PROC = {
             new EntityProc("LN",
-                    Pattern.compile("(?<=^|\\W)(https?:\\/\\/)?(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}" +
-                            "\\.[a-z]{2,4}\\b(?:[-a-zA-Z0-9@:%_\\+.~#?&\\/=]*)")) {
+                    Pattern.compile("(?<=^|\\W)(https?://)?(?:www\\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}" +
+                            "\\.[a-z]{2,4}\\b(?:[-a-zA-Z0-9@:%_+.~#?&/=]*)")) {
 
                 @Override
-                Map<String,Object> pack(Matcher m) {
+                Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
                     data.put("url", m.group(1) == null ? "http://" + m.group() : m.group());
                     return data;
@@ -100,7 +100,7 @@ public class Drafty implements Serializable {
             },
             new EntityProc("MN", Pattern.compile("\\B@(\\w\\w+)")) {
                 @Override
-                Map<String,Object> pack(Matcher m) {
+                Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
                     data.put("val", m.group());
                     return data;
@@ -108,7 +108,7 @@ public class Drafty implements Serializable {
             },
             new EntityProc("HT", Pattern.compile("(?<=[\\s,.!]|^)#(\\w\\w+)")) {
                 @Override
-                Map<String,Object> pack(Matcher m) {
+                Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
                     data.put("val", m.group());
                     return data;
@@ -447,6 +447,7 @@ public class Drafty implements Serializable {
      * @param fname name of the file to suggest to the receiver.
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname) {
         return insertImage(at, mime, bits, width, height, fname, null, 0);
     }
@@ -507,6 +508,7 @@ public class Drafty implements Serializable {
      * @param fname Optional file name to suggest to the receiver.
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty attachFile(String mime, byte[] bits, String fname) {
         return attachFile(mime, bits, fname, null, bits.length);
     }
@@ -520,6 +522,7 @@ public class Drafty implements Serializable {
      * @param size size of the attachment (untrusted).
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty attachFile(String mime, String fname, String refurl, long size) {
         return attachFile(mime, null, fname, refurl, size);
     }
@@ -569,6 +572,7 @@ public class Drafty implements Serializable {
      * @param json object to attach.
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty attachJSON(Map<String,Object> json) {
         prepareForEntity(-1, 1);
 
