@@ -445,18 +445,11 @@ public class Tinode {
     }
 
     private void handleDisconnect(boolean byServer, int code, String reason) {
-        mFutures.clear();
-
         mConnAuth = false;
 
         // TODO(gene): should this be cleared?
         mServerBuild = null;
         mServerVersion = null;
-
-        // Mark all topics as un-attached.
-        for (Topic topic : mTopics.values()) {
-            topic.topicLeft(false, 503, "disconnected");
-        }
 
         // Reject all pending promises.
         ServerResponseException ex = new ServerResponseException(503, "disconnected");
@@ -465,6 +458,13 @@ public class Tinode {
                 p.reject(ex);
             } catch (Exception ignored) {
             }
+        }
+
+        mFutures.clear();
+
+        // Mark all topics as un-attached.
+        for (Topic topic : mTopics.values()) {
+            topic.topicLeft(false, 503, "disconnected");
         }
 
         if (mListener != null) {

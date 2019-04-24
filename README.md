@@ -1,4 +1,4 @@
-# Tindroid: Tinode Android client.
+# Tindroid: Tinode Messaging Client for Android
 
 Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software.
 Debug APKs are available in [releases](https://github.com/tinode/tindroid/releases).
@@ -59,10 +59,10 @@ Demo avatars and some other graphics are from https://www.pexels.com/ under [CC0
 
 Background patterns from http://subtlepatterns.com/, commercial and non-commercial use allowed with attribution.
 
-The `contacts.vcf` contains a list of contacts which can be used for testing. Push it to your emulator using
-
-  `adb push contacts.vcf /sdcard/contacts.vcf`
-
+The [`contacts.vcf`](./contacts.vcf) contains a list of contacts which can be used for testing. Push it to your emulator using command
+```
+adb push contacts.vcf /sdcard/contacts.vcf`
+```
 
 ## Translations
 
