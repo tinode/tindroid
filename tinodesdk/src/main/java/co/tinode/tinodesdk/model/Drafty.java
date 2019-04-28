@@ -179,7 +179,7 @@ public class Drafty implements Serializable {
             Span chunk = new Span();
             chunk.type = span.type;
 
-            List<Span> chld = chunkify(line, span.start + 1, span.end - 1, span.children);
+            List<Span> chld = chunkify(line, span.start + 1, span.end, span.children);
             if (chld != null) {
                 chunk.children = chld;
             } else {
