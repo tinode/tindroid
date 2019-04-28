@@ -79,10 +79,10 @@ public class Drafty implements Serializable {
     // Name of the style, regexp start, regexp end
     private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
     private static final Pattern[] INLINE_STYLE_RE = {
-            Pattern.compile("(?<=^|\\W)\\*([^\\s*]+)\\*(?=$|\\W)"),    // bold *bo*
-            Pattern.compile("(?<=^|[\\W_])_([^\\s_]+)_(?=$|[\\W_])"),  // italic _it_
-            Pattern.compile("(?<=^|\\W)~([^\\s~]+)~(?=$|\\W)"),        // strikethough ~st~
-            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")             // code/monospace `mono`
+            Pattern.compile("(?<=^|\\W)\\*([^*]+[^\\s*])\\*(?=$|\\W)"),   // bold *bo*
+            Pattern.compile("(?<=^|[\\W_])_([^_]+[^\\s_])_(?=$|[\\W_])"), // italic _it_
+            Pattern.compile("(?<=^|\\W)~([^~]+[^\\s~])~(?=$|\\W)"),       // strikethough ~st~
+            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")               // code/monospace `mono`
     };
 
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
@@ -148,7 +148,7 @@ public class Drafty implements Serializable {
             s.start = matcher.start(0);  // 'hello *world*'
                                                 // ^ group(zero) -> index of the opening markup character
             s.end = matcher.end(1);      // group(one) -> index of the closing markup character
-            s.text = matcher.group(1);          // text without of the markup
+            s.text = matcher.group(1);          // text without the markup
             s.type = type;
             spans.add(s);
         }
@@ -198,6 +198,8 @@ public class Drafty implements Serializable {
         return chunks;
     }
 
+    // Convert linear array or spans into a tree representation.
+    // Keep standalone and nested spans, throw away partially overlapping spans.
     private static List<Span> toTree(List<Span> spans) {
         if (spans == null || spans.isEmpty()) {
             return null;
@@ -289,6 +291,12 @@ public class Drafty implements Serializable {
         return extracted;
     }
 
+    /**
+     * Parse plain text into structured representation.
+     *
+     * @param  content content with optional markdown-style markup to parse.
+     * @return parsed Drafty object.
+     */
     public static Drafty parse(String content) {
         // Break input into individual lines. Format cannot span multiple lines.
         String lines[] = content.split("\\r?\\n");
@@ -357,7 +365,10 @@ public class Drafty implements Serializable {
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
-                text.append(" ").append(b.txt);
+                text.append(" ");
+                if (b.txt != null) {
+                    text.append(b.txt);
+                }
                 if (b.fmt != null) {
                     for (Style s : b.fmt) {
                         s.at += offset;

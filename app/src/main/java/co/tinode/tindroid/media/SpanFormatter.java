@@ -288,15 +288,13 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     // Form
                     if (content instanceof List) {
                         // Add line breaks between form elements.
-                        // Don't insert a BR after the last element.
                         try {
                             @SuppressWarnings("unchecked")
                             List<TreeNode> children = (List<TreeNode>) content;
                             if (children.size() > 0) {
                                 span = new TreeNode();
-                                // span.addNode(children.get(0));
-                                for (int i = 0; i < children.size(); i++) {
-                                    span.addNode(children.get(i));
+                                for (TreeNode child : children) {
+                                    span.addNode(child);
                                     span.addNode("\n");
                                 }
                             }
