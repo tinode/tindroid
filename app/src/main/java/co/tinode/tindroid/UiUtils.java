@@ -471,17 +471,18 @@ public class UiUtils {
         }
     }
 
-    private static void acceptAvatar(final ImageView avatar, final Bitmap bmp) {
-        avatar.setImageDrawable(new RoundImageDrawable(avatar.getResources(), scaleSquareBitmap(bmp)));
-    }
-
     static void acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
+        if (activity == null || avatar == null) {
+            return;
+        }
+
         final Bitmap bmp = extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
             return;
         }
-        acceptAvatar(avatar, bmp);
+
+        avatar.setImageDrawable(new RoundImageDrawable(avatar.getResources(), scaleSquareBitmap(bmp)));
     }
 
     static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address) {
