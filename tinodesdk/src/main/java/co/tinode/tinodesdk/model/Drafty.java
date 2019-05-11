@@ -79,10 +79,10 @@ public class Drafty implements Serializable {
     // Name of the style, regexp start, regexp end
     private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
     private static final Pattern[] INLINE_STYLE_RE = {
-            Pattern.compile("(?<=^|\\W)\\*([^*]+[^\\s*])\\*(?=$|\\W)"),   // bold *bo*
-            Pattern.compile("(?<=^|[\\W_])_([^_]+[^\\s_])_(?=$|[\\W_])"), // italic _it_
-            Pattern.compile("(?<=^|\\W)~([^~]+[^\\s~])~(?=$|\\W)"),       // strikethough ~st~
-            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")               // code/monospace `mono`
+            Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])"),   // bold *bo*
+            Pattern.compile("(?<=^|\\W)_([^_]+[^\\s_])_(?=$|\\W)"),             // italic _it_
+            Pattern.compile("(?<=^|[\\W_])~([^~]+[^\\s~])~(?=$|[\\W_])"),       // strikethough ~st~
+            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")                     // code/monospace `mono`
     };
 
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
