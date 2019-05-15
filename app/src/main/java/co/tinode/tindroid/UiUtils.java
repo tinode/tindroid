@@ -1018,7 +1018,7 @@ public class UiUtils {
         String[] sizes = new String[]{"Bytes", "KB", "MB", "GB", "TB"};
         int bucket = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
         double count = bytes / Math.pow(1024, bucket);
-        int roundTo = bucket > 0 ? (count < 10 ? 2 : (count < 100 ? 1 : 0)) : 0;
+        int roundTo = bucket > 0 ? (count < 3 ? 2 : (count < 30 ? 1 : 0)) : 0;
         NumberFormat fmt = DecimalFormat.getInstance();
         fmt.setMaximumFractionDigits(roundTo);
         return fmt.format(count) + " " + sizes[bucket];
