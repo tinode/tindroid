@@ -42,8 +42,6 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     private List<ComTopic<VxCard>> mTopics;
     private HashMap<String,Integer> mTopicIndex;
 
-    private boolean mIsArchive;
-
     private SelectionTracker<String> mSelectionTracker;
     private ClickListener mClickListener;
 
@@ -81,7 +79,6 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mIsArchive = archive;
                     mTopics = newTopics;
                     mTopicIndex = newTopicIndex;
 
