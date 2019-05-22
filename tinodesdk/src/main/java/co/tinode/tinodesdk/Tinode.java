@@ -538,12 +538,14 @@ public class Tinode {
             }
         } else if (pkt.meta != null) {
             Topic topic = getTopic(pkt.meta.topic);
-            if (topic != null) {
-                topic.routeMeta(pkt.meta);
-            } else {
+            if (topic == null) {
                 topic = maybeCreateTopic(pkt.meta);
             }
-            setTopicsUpdated(topic.getUpdated());
+
+            if (topic != null) {
+                topic.routeMeta(pkt.meta);
+                setTopicsUpdated(topic.getUpdated());
+            }
 
             if (mListener != null) {
                 mListener.onMetaMessage(pkt.meta);
