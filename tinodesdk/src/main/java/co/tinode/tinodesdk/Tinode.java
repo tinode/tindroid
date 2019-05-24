@@ -87,6 +87,11 @@ public class Tinode {
     private static final String VERSION = "0.15";
     private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
 
+    // Reject unresolved futures after this many milliseconds.
+    private static final long EXPIRE_FUTURES_TIMEOUT = 5000L;
+    // Periodicity of garbage collection of unresolved futures.
+    private static final long EXPIRE_FUTURES_PERIOD = 1000L;
+
     protected static TypeFactory sTypeFactory;
     protected static SimpleDateFormat sDateFormat;
     private static ObjectMapper sJsonMapper;
@@ -133,7 +138,7 @@ public class Tinode {
     private int mMsgId;
     private int mPacketCount;
     private EventListener mListener;
-    private ConcurrentMap<String, PromisedReply<ServerMessage>> mFutures;
+    private ConcurrentMap<String, FutureHolder> mFutures;
     private HashMap<String, Topic> mTopics;
     private HashMap<String, User> mUsers;
     private transient int mNameCounter = 0;
@@ -163,7 +168,22 @@ public class Tinode {
         mTypeOfMetaPacket = new HashMap<>();
 
         mFutures = new ConcurrentHashMap<>(16, 0.75f, 4);
-
+        Timer futuresExpirer = new Timer("futures_expirer");
+        futuresExpirer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Date expiration = new Date(new Date().getTime() - EXPIRE_FUTURES_TIMEOUT);
+                ServerResponseException ex = new ServerResponseException(504, "timeout");
+                for (FutureHolder fh : mFutures.values()) {
+                    if (fh.timestamp.before(expiration)) {
+                        try {
+                            fh.future.reject(ex);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }
+        }, EXPIRE_FUTURES_TIMEOUT, EXPIRE_FUTURES_PERIOD);
         mTopics = new HashMap<>();
         mUsers = new HashMap<>();
 
@@ -430,10 +450,9 @@ public class Tinode {
      * If it's not initialized or already connected do nothing.
      *
      * @return true if it actually attempted to reconnect, false otherwise.
-     * @throws IOException thrown from {@link Connection#connect(boolean)}
      */
     @SuppressWarnings("UnusedReturnValue")
-    public boolean reconnectNow() throws IOException {
+    public boolean reconnectNow() {
         if (mConnection == null || mConnection.isConnected()) {
             // If the connection is live, return a resolved promise
             return false;
@@ -453,9 +472,9 @@ public class Tinode {
 
         // Reject all pending promises.
         ServerResponseException ex = new ServerResponseException(503, "disconnected");
-        for (PromisedReply<ServerMessage> p : mFutures.values()) {
+        for (FutureHolder fh : mFutures.values()) {
             try {
-                p.reject(ex);
+                fh.future.reject(ex);
             } catch (Exception ignored) {
             }
         }
@@ -514,12 +533,12 @@ public class Tinode {
             }
 
             if (pkt.ctrl.id != null) {
-                PromisedReply<ServerMessage> r = mFutures.remove(pkt.ctrl.id);
-                if (r != null) {
+                FutureHolder fh = mFutures.remove(pkt.ctrl.id);
+                if (fh != null) {
                     if (pkt.ctrl.code >= 200 && pkt.ctrl.code < 400) {
-                        r.resolve(pkt);
+                        fh.future.resolve(pkt);
                     } else {
-                        r.reject(new ServerResponseException(pkt.ctrl.code, pkt.ctrl.text,
+                        fh.future.reject(new ServerResponseException(pkt.ctrl.code, pkt.ctrl.text,
                                 pkt.ctrl.getStringParam("what", null)));
                     }
                 }
@@ -597,9 +616,9 @@ public class Tinode {
 
     private void resolveWithPacket(String id, ServerMessage pkt) throws Exception {
         if (id != null) {
-            PromisedReply<ServerMessage> r = mFutures.remove(id);
-            if (r != null && !r.isDone()) {
-                r.resolve(pkt);
+            FutureHolder fh = mFutures.remove(id);
+            if (fh != null && !fh.future.isDone()) {
+                fh.future.resolve(pkt);
             }
         }
     }
@@ -719,7 +738,6 @@ public class Tinode {
                 sTypeFactory.constructType(typeOfPrivate));
     }
 
-    @SuppressWarnings("WeakerAccess")
     private JavaType getDefaultTypeOfMetaPacket() {
         return mDefaultTypeOfMetaPacket;
     }
@@ -874,7 +892,6 @@ public class Tinode {
      * @param desc     default access parameters for this account
      * @return PromisedReply of the reply ctrl message
      */
-    @SuppressWarnings("WeakerAccess")
     protected <Pu, Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
                                                             boolean loginNow, String[] tags, MetaSetDesc<Pu, Pr> desc,
                                                             Credential[] cred) {
@@ -960,8 +977,9 @@ public class Tinode {
                 login, tags, desc, cred);
     }
 
-    @SuppressWarnings("unchecked")
-    protected PromisedReply<ServerMessage> updateAccountSecret(String uid, String scheme, String secret) {
+    protected PromisedReply<ServerMessage> updateAccountSecret(String uid,
+                                                               @SuppressWarnings("SameParameterValue") String scheme,
+                                                               String secret) {
         return account(uid, scheme, secret, false, null, null, null);
     }
 
@@ -1206,7 +1224,7 @@ public class Tinode {
      * @param data      payload to publish to topic
      * @return PromisedReply of the reply ctrl message
      */
-    @SuppressWarnings("unchecked, WeakerAccess")
+    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> publish(String topicName, Object data) {
         ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data));
         return sendWithPromise(msg, msg.pub.id);
@@ -1233,7 +1251,6 @@ public class Tinode {
      * @param meta      metadata to assign
      * @return PromisedReply of the reply ctrl or meta message
      */
-    @SuppressWarnings("WeakerAccess")
     public <Pu, Pr, T> PromisedReply<ServerMessage> setMeta(final String topicName,
                                                             final MsgSetMeta<Pu, Pr> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
@@ -1251,7 +1268,7 @@ public class Tinode {
      * @param topicName name of the topic to inform
      * @param fromId    minimum ID to delete, inclusive (closed)
      * @param toId      maximum ID to delete, exclusive (open)
-     * @return PromisedReply of the reply ctrl or meta message
+     * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delMessage(final String topicName, final int fromId,
@@ -1264,7 +1281,7 @@ public class Tinode {
      *
      * @param topicName name of the topic to inform
      * @param list      delete all messages with ids in this list
-     * @return PromisedReply of the reply ctrl or meta message
+     * @return PromisedReply of the reply ctrl message
      */
     public PromisedReply<ServerMessage> delMessage(final String topicName, final List<Integer> list, final boolean hard) {
         return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard)));
@@ -1275,7 +1292,7 @@ public class Tinode {
      *
      * @param topicName name of the topic to inform
      * @param seqId     seqID of the message to delete.
-     * @return PromisedReply of the reply ctrl or meta message
+     * @return PromisedReply of the reply ctrl message
      */
     public PromisedReply<ServerMessage> delMessage(final String topicName, final int seqId, final boolean hard) {
         return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, seqId, hard)));
@@ -1284,8 +1301,8 @@ public class Tinode {
     /**
      * Low-level request to delete topic. Use {@link Topic#delete()} instead.
      *
-     * @param topicName name of the topic to inform
-     * @return PromisedReply of the reply ctrl or meta message
+     * @param topicName name of the topic to delete
+     * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delTopic(final String topicName) {
@@ -1298,7 +1315,7 @@ public class Tinode {
      *
      * @param topicName name of the topic
      * @param user      user ID to unsubscribe
-     * @return PromisedReply of the reply ctrl or meta message
+     * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> delSubscription(final String topicName, final String user) {
@@ -1364,7 +1381,6 @@ public class Tinode {
      *
      * @param message string to write to websocket
      */
-    @SuppressWarnings("WeakerAccess")
     protected void send(String message) {
         if (mConnection == null || !mConnection.isConnected()) {
             throw new NotConnectedException("No connection");
@@ -1386,7 +1402,7 @@ public class Tinode {
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         try {
             send(message);
-            mFutures.put(id, future);
+            mFutures.put(id, new FutureHolder(future, new Date()));
         } catch (Exception ex1) {
             try {
                 future.reject(ex1);
@@ -1404,7 +1420,6 @@ public class Tinode {
      * @param l    event listener; could be null
      * @return topic of an appropriate class
      */
-    @SuppressWarnings("unchecked")
     public Topic newTopic(final String name, final Topic.Listener l) {
         return Tinode.newTopic(this, name, l);
     }
@@ -1458,6 +1473,7 @@ public class Tinode {
      *
      * @return 'me' topic or null if 'me' has never been subscribed to
      */
+    @SuppressWarnings("unchecked")
     public <DP> MeTopic<DP> getMeTopic() {
         return (MeTopic<DP>) getTopic(TOPIC_ME);
     }
@@ -1467,6 +1483,7 @@ public class Tinode {
      *
      * @return 'fnd' topic or null if 'fnd' has never been subscribed to
      */
+    @SuppressWarnings("unchecked")
     public <DP> FndTopic<DP> getFndTopic() {
         // Either I or Java really has problems with generics.
         return (FndTopic<DP>) getTopic(TOPIC_FND);
@@ -1477,7 +1494,7 @@ public class Tinode {
      *
      * @return a {@link List} of topics
      */
-    @SuppressWarnings("WeakerAccess, unchecked")
+    @SuppressWarnings("unchecked")
     public List<Topic> getTopics() {
         List<Topic> result = new ArrayList<>(mTopics.values());
         Collections.sort(result);
@@ -1512,7 +1529,6 @@ public class Tinode {
      * @param name name of the topic to find.
      * @return existing topic or null if no such topic was found
      */
-    @SuppressWarnings("unchecked")
     public Topic<?, ?, ?, ?> getTopic(String name) {
         if (name == null) {
             return null;
@@ -1742,7 +1758,7 @@ public class Tinode {
          * @param code a numeric value between 200 and 2999 on success, 400 or higher on failure
          * @param text "OK" on success or error message
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("unused")
         public void onLogin(int code, String text) {
         }
 
@@ -1849,6 +1865,16 @@ public class Tinode {
 
         public void post(String topic, int recv) {
             recvQueue.put(topic, recv);
+        }
+    }
+
+    private static class FutureHolder {
+        PromisedReply<ServerMessage> future;
+        Date timestamp;
+
+        FutureHolder(PromisedReply<ServerMessage> future, Date timestamp) {
+            this.future = future;
+            this.timestamp = timestamp;
         }
     }
 }

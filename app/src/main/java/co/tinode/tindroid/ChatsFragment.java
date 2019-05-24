@@ -224,14 +224,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 return true;
 
             case R.id.action_offline:
-                try {
-                    Cache.getTinode().reconnectNow();
-                } catch (IOException ex) {
-                    Log.d(TAG, "Reconnect failure", ex);
-                    String cause = ex.getCause().getMessage();
-                    Toast.makeText(activity, activity.getString(R.string.error_connection_failed) + cause,
-                            Toast.LENGTH_SHORT).show();
-                }
+                Cache.getTinode().reconnectNow();
                 break;
         }
         return false;
