@@ -174,8 +174,10 @@ public class Tinode {
             public void run() {
                 Date expiration = new Date(new Date().getTime() - EXPIRE_FUTURES_TIMEOUT);
                 ServerResponseException ex = new ServerResponseException(504, "timeout");
-                for (FutureHolder fh : mFutures.values()) {
+                for (Map.Entry<String,FutureHolder> entry : mFutures.entrySet()) {
+                    FutureHolder fh = entry.getValue();
                     if (fh.timestamp.before(expiration)) {
+                        mFutures.remove(entry.getKey());
                         try {
                             fh.future.reject(ex);
                         } catch (Exception ignored) {
