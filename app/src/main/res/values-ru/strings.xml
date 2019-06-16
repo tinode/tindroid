@@ -177,4 +177,9 @@
     <string name="topic_archived">В архиве</string>
     <string name="action_unarchive">Восстановить</string>
     <string name="action_invite">Пригласить</string>
+    <string name="tags_management">Таги для поиска</string>
+    <string name="contacts">Контакты</string>
+    <string name="add_contact">Добавить</string>
+    <string name="manage">Редактировать</string>
+
 </resources>

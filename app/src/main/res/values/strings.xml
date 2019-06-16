@@ -209,5 +209,9 @@
     <string name="topic_archived">Archived</string>
     <string name="action_unarchive">Unarchive</string>
     <string name="action_invite">Invite</string>
+    <string name="tags_management">Tags (content discovery)</string>
+    <string name="contacts">Contacts</string>
+    <string name="add_contact">Add another</string>
+    <string name="manage">Manage</string>
 
 </resources>
