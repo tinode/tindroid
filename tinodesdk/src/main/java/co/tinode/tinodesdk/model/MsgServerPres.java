@@ -4,7 +4,7 @@ package co.tinode.tinodesdk.model;
  * Presence notification.
  */
 public class MsgServerPres {
-    public enum What {ON, OFF, UPD, GONE, ACS, MSG, UA, RECV, READ, DEL, CRED, UNKNOWN}
+    public enum What {ON, OFF, UPD, GONE, ACS, MSG, UA, RECV, READ, DEL, TAGS, UNKNOWN}
 
     public String topic;
     public String src;
@@ -43,8 +43,8 @@ public class MsgServerPres {
             return What.READ;
         } else if (what.equals("del")) {
             return What.DEL;
-        } else if (what.equals("cred")) {
-            return What.CRED;
+        } else if (what.equals("tags")) {
+            return What.TAGS;
         } else {
             return What.UNKNOWN;
         }

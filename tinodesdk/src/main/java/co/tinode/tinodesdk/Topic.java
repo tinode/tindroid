@@ -18,6 +18,7 @@ import java.util.Map;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
+import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
@@ -355,6 +356,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (mListener != null) {
                 mListener.onMetaTags(mTags);
             }
+        }
+
+        if (meta.cred != null && this instanceof MeTopic) {
+            this.routeMetaCred(meta.cred);
         }
     }
 
@@ -976,7 +981,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        Log.i(TAG, "setMeta.thenApply ctrl=" + result.ctrl);
                         update(result.ctrl, meta);
                         return null;
                     }
@@ -1511,6 +1515,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (meta.tags != null) {
             routeMetaTags(meta.tags);
         }
+        if (meta.tags != null) {
+            routeMetaCred(meta.cred);
+        }
         if (mListener != null) {
             mListener.onMeta(meta);
         }
@@ -1567,7 +1574,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
                 // Notify listener that topic has updated.
                 if (mListener != null) {
-                    mListener.onContUpdate(sub);
+                    mListener.onContUpdated(sub);
                 }
             }
         }
@@ -1606,6 +1613,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mListener != null) {
             mListener.onMetaTags(tags);
         }
+    }
+
+    protected void routeMetaCred(Credential[] cred) {
+        // Do nothing. All processing is not in MeTopic in an overridden method.
+    }
+
+    protected void routeMetaCred(Credential cred) {
+        // Do nothing. All processing is not in MeTopic in an overridden method.
     }
 
     protected void routeData(MsgServerData data) {
@@ -1831,7 +1846,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         /**
          * Called when topic descriptor as contact is updated
          */
-        public void onContUpdate(Subscription<SP, SR> sub) {
+        public void onContUpdated(Subscription<SP, SR> sub) {
         }
     }
 
