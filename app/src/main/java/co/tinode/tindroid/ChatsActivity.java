@@ -204,7 +204,7 @@ public class ChatsActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onContUpdate(final Subscription<VxCard,PrivateType> sub) {
+        public void onContUpdated(final Subscription<VxCard,PrivateType> sub) {
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
         }

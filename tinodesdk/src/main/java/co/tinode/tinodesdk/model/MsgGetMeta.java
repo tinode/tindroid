@@ -61,6 +61,16 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    /**
+     * Generate query to get subscription:
+     *
+     * @param sub request subscriptions
+     */
+    public MsgGetMeta(MetaGetSub sub) {
+        this.sub = sub;
+        buildWhat();
+    }
+
     protected MsgGetMeta(String what) {
         this.what = what;
     }

@@ -468,10 +468,15 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.isGrpType()) {
             mAdapter.resetContent();
         } else {
-            ((TextView)activity.findViewById(R.id.userOne))
-                    .setText(mTopic.getAccessMode().getWant());
-            ((TextView)activity.findViewById(R.id.userTwo))
-                    .setText(mTopic.getSubscription(mTopic.getName()).acs.getGiven());
+            Acs acs = mTopic.getAccessMode();
+            if (acs != null) {
+                ((TextView) activity.findViewById(R.id.userOne)).setText(acs.getWant());
+            }
+            Subscription sub = mTopic.getSubscription(mTopic.getName());
+            if (sub != null && sub.acs != null) {
+                ((TextView) activity.findViewById(R.id.userTwo))
+                        .setText(sub.acs.getGiven());
+            }
         }
     }
 
