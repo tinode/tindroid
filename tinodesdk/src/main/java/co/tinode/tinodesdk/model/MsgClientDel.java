@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import java.util.List;
 
+import co.tinode.tinodesdk.Tinode;
+
 /**
  * Topic or message deletion packet
  *
@@ -18,23 +20,26 @@ public class MsgClientDel {
     private final static String STR_TOPIC = "topic";
     private final static String STR_MSG = "msg";
     private final static String STR_SUB = "sub";
+    private final static String STR_CRED = "cred";
 
     public String id;
     public String topic;
     public String what;
     public MsgDelRange[] delseq;
     public String user;
+    public Credential cred;
     public Boolean hard;
 
     public MsgClientDel() {}
 
-    private MsgClientDel(String id, String topic, String what, MsgDelRange[] ranges, String user, boolean hard) {
+    private MsgClientDel(String id, String topic, String what, MsgDelRange[] ranges, String user, Credential cred, boolean hard) {
         this.id = id;
         this.topic = topic;
         this.what = what;
         // null value will cause the field to be skipped during serialization instead of sending 0/null/[].
         this.delseq = what.equals(STR_MSG) ? ranges : null;
         this.user = what.equals(STR_SUB) ? user : null;
+        this.cred = what.equals(STR_CRED) ? cred : null;
         this.hard = hard ? true : null;
     }
 
@@ -42,34 +47,41 @@ public class MsgClientDel {
      * Delete messages with ids in the list
      */
     public MsgClientDel(String id, String topic, List<Integer> list, boolean hard) {
-        this(id, topic, STR_MSG, MsgDelRange.listToRanges(list), null, hard);
+        this(id, topic, STR_MSG, MsgDelRange.listToRanges(list), null, null, hard);
     }
 
     /**
      * Delete all messages in the range
      */
     public MsgClientDel(String id, String topic, int fromId, int toId, boolean hard) {
-        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(fromId, toId)}, null, hard);
+        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(fromId, toId)}, null, null, hard);
     }
 
     /**
      * Delete one message.
      */
     public MsgClientDel(String id, String topic, int seqId, boolean hard) {
-        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(seqId)}, null, hard);
+        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(seqId)}, null, null, hard);
     }
 
     /**
      * Delete topic
      */
     public MsgClientDel(String id, String topic) {
-        this(id, topic, STR_TOPIC, null, null, false);
+        this(id, topic, STR_TOPIC, null, null, null, false);
     }
 
     /**
      * Delete subscription of the given user. The server will reject request if the <i>user</i> is null.
      */
     public MsgClientDel(String id, String topic, String user) {
-        this(id, topic, STR_SUB, null, user, false);
+        this(id, topic, STR_SUB, null, user, null, false);
+    }
+
+    /**
+     * Delete selected credential.
+     */
+    public MsgClientDel(String id, Credential cred) {
+        this(id, Tinode.TOPIC_ME, STR_CRED, null, null, cred, false);
     }
 }

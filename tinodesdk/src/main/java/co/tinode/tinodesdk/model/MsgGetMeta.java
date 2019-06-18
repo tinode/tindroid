@@ -15,12 +15,14 @@ public class MsgGetMeta {
     private static final int DATA_SET = 0x04;
     private static final int DEL_SET = 0x08;
     private static final int TAGS_SET = 0x10;
+    private static final int CRED_SET = 0x20;
 
-    public static final String DESC = "desc";
-    public static final String SUB = "sub";
-    public static final String DATA = "data";
-    public static final String DEL = "del";
-    public static final String TAGS = "tags";
+    private static final String DESC = "desc";
+    private static final String SUB = "sub";
+    private static final String DATA = "data";
+    private static final String DEL = "del";
+    private static final String TAGS = "tags";
+    private static final String CRED = "cred";
 
     @JsonIgnore
     private int mSet = 0;
@@ -32,7 +34,7 @@ public class MsgGetMeta {
     public MetaGetData del;
 
     /**
-     * Generate query to get everything
+     * Generate query to get everything except credentials.
      */
     public MsgGetMeta() {
         this.what = DESC + " " + SUB + " " + DATA + " " + DEL + " " + TAGS;
@@ -45,13 +47,16 @@ public class MsgGetMeta {
      * @param sub request subscriptions
      * @param data request data messages
      */
-    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data, MetaGetData del, Boolean tags) {
+    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data, MetaGetData del, Boolean tags, Boolean cred) {
         this.desc = desc;
         this.sub = sub;
         this.data = data;
         this.del = del;
         if (tags != null && tags) {
             this.mSet |= TAGS_SET;
+        }
+        if (cred != null && cred) {
+            this.mSet |= CRED_SET;
         }
         buildWhat();
     }
@@ -68,7 +73,8 @@ public class MsgGetMeta {
                 " sub=[" + (sub != null? sub.toString() : "null") + "]," +
                 " data=[" + (data != null ? data.toString() : "null") + "]," +
                 " del=[" + (del != null ? del.toString() : "null") + "]" +
-                " tags=[" + ((mSet & TAGS_SET) != 0 ? "set" : "null") + "]";
+                " tags=[" + ((mSet & TAGS_SET) != 0 ? "set" : "null") + "]" +
+                " cred=[" + ((mSet & CRED_SET) != 0 ? "set" : "null") + "]";
     }
 
 
@@ -134,6 +140,11 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    public void setCred() {
+        mSet |= CRED_SET;
+        buildWhat();
+    }
+
     @JsonIgnore
     private void buildWhat() {
         List<String> parts = new LinkedList<>();
@@ -182,5 +193,9 @@ public class MsgGetMeta {
 
     public static MsgGetMeta tags() {
         return new MsgGetMeta(TAGS);
+    }
+
+    public static MsgGetMeta cred() {
+        return new MsgGetMeta(CRED);
     }
 }

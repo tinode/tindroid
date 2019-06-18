@@ -681,9 +681,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (mTags != null) {
                 tags = Arrays.asList(mTags);
             }
-            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, tags);
+            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, tags, null);
             mget = null;
         } else {
+            // FIXME: don't ask for tags if it's not a 'me' topic or the owner of a 'grp' topic.
             mget = getMetaGetBuilder()
                     .withGetDesc().withGetData().withGetSub().withGetTags().build();
         }
@@ -990,7 +991,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<DP, DR> desc) {
-        return setMeta(new MsgSetMeta<>(desc, null, null));
+        return setMeta(new MsgSetMeta<>(desc));
     }
 
     /**
@@ -1024,7 +1025,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) {
-        return setMeta(new MsgSetMeta<DP, DR>(null, sub, null));
+        return setMeta(new MsgSetMeta<DP, DR>(sub));
     }
 
     /**
@@ -1068,7 +1069,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException    if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
-    @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> invite(String uid, String mode) {
 
         final Subscription<SP, SR> sub;
@@ -1528,7 +1528,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     protected void processSub(Subscription<SP, SR> newsub) {
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
@@ -1940,6 +1939,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         public MetaGetBuilder withGetTags() {
             meta.setTags();
+            return this;
+        }
+
+        public MetaGetBuilder withGetCred() {
+            meta.setCred();
             return this;
         }
 

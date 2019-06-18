@@ -13,6 +13,7 @@ public class MsgServerMeta<DP,DR,SP,SR> {
     public Subscription<SP,SR>[] sub;
     public DelValues del;
     public String[] tags;
+    public Credential[] cred;
 
     public MsgServerMeta() {
     }
