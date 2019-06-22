@@ -139,10 +139,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                         new MsgSetMeta(new MetaSetDesc(null, contacts))).getResult();
 
                 // final MsgGetMeta meta = MsgGetMeta.sub();
-                final MsgGetMeta meta = new MsgGetMeta(
-                        null,
-                        new MetaGetSub(lastSyncMarker, null),
-                        null, null, null);
+                final MsgGetMeta meta = new MsgGetMeta(new MetaGetSub(lastSyncMarker, null));
                 PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
                 if (future.waitResult()) {
                     ServerMessage<?, ?, VxCard, PrivateType> pkt = future.getResult();

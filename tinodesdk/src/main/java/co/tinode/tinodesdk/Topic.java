@@ -18,6 +18,7 @@ import java.util.Map;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
+import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
@@ -356,6 +357,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 mListener.onMetaTags(mTags);
             }
         }
+
+        if (meta.cred != null && this instanceof MeTopic) {
+            this.routeMetaCred(meta.cred);
+        }
     }
 
     /**
@@ -681,9 +686,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (mTags != null) {
                 tags = Arrays.asList(mTags);
             }
-            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, tags);
+            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, tags, null);
             mget = null;
         } else {
+            // FIXME: don't ask for tags if it's not a 'me' topic or the owner of a 'grp' topic.
             mget = getMetaGetBuilder()
                     .withGetDesc().withGetData().withGetSub().withGetTags().build();
         }
@@ -975,7 +981,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        Log.i(TAG, "setMeta.thenApply ctrl=" + result.ctrl);
                         update(result.ctrl, meta);
                         return null;
                     }
@@ -990,7 +995,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<DP, DR> desc) {
-        return setMeta(new MsgSetMeta<>(desc, null, null));
+        return setMeta(new MsgSetMeta<>(desc));
     }
 
     /**
@@ -1024,7 +1029,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) {
-        return setMeta(new MsgSetMeta<DP, DR>(null, sub, null));
+        return setMeta(new MsgSetMeta<DP, DR>(sub));
     }
 
     /**
@@ -1068,7 +1073,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException    if there is no connection to the server
      * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
-    @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> invite(String uid, String mode) {
 
         final Subscription<SP, SR> sub;
@@ -1511,6 +1515,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (meta.tags != null) {
             routeMetaTags(meta.tags);
         }
+        if (meta.cred != null) {
+            routeMetaCred(meta.cred);
+        }
         if (mListener != null) {
             mListener.onMeta(meta);
         }
@@ -1528,7 +1535,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     protected void processSub(Subscription<SP, SR> newsub) {
         // In case of a generic (non-'me') topic, meta.sub contains topic subscribers.
         // I.e. sub.user is set, but sub.topic is equal to current topic.
@@ -1568,7 +1574,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
                 // Notify listener that topic has updated.
                 if (mListener != null) {
-                    mListener.onContUpdate(sub);
+                    mListener.onContUpdated(sub);
                 }
             }
         }
@@ -1607,6 +1613,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mListener != null) {
             mListener.onMetaTags(tags);
         }
+    }
+
+    protected void routeMetaCred(Credential[] cred) {
+        // Do nothing. All processing is not in MeTopic in an overridden method.
+    }
+
+    protected void routeMetaCred(Credential cred) {
+        // Do nothing. All processing is not in MeTopic in an overridden method.
     }
 
     protected void routeData(MsgServerData data) {
@@ -1832,7 +1846,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         /**
          * Called when topic descriptor as contact is updated
          */
-        public void onContUpdate(Subscription<SP, SR> sub) {
+        public void onContUpdated(Subscription<SP, SR> sub) {
         }
     }
 
@@ -1940,6 +1954,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         public MetaGetBuilder withGetTags() {
             meta.setTags();
+            return this;
+        }
+
+        public MetaGetBuilder withGetCred() {
+            meta.setCred();
             return this;
         }
 

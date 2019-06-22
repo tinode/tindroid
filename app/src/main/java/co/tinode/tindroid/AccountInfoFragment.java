@@ -28,6 +28,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.flexbox.FlexboxLayout;
+
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -120,6 +122,20 @@ public class AccountInfoFragment extends Fragment {
                     }
                 });
 
+        activity.findViewById(R.id.buttonManageTags).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+
+        activity.findViewById(R.id.buttonAddContact).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+
         activity.findViewById(R.id.buttonChangePassword).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -199,6 +215,18 @@ public class AccountInfoFragment extends Fragment {
         if (me != null) {
             ((TextView) activity.findViewById(R.id.authPermissions)).setText(me.getAuthAcsStr());
             ((TextView) activity.findViewById(R.id.anonPermissions)).setText(me.getAnonAcsStr());
+
+            String[] tags = me.getTags();
+            if (tags != null) {
+                FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
+                tagsView.removeAllViews();
+                LayoutInflater inflater = LayoutInflater.from(activity);
+                for (String tag : tags) {
+                    TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
+                    label.setText(tag);
+                    tagsView.addView(label);
+                }
+            }
 
             VxCard pub = me.getPub();
             if (pub != null) {

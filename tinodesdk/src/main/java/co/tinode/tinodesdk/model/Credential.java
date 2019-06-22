@@ -3,17 +3,19 @@ package co.tinode.tinodesdk.model;
 import java.util.Arrays;
 
 /**
- * Account credential: email, phone captcha
+ * Account credential: email, phone, captcha
  */
 public class Credential {
     // Confirmation method: email, phone, captcha.
     public String meth;
-    // Credential to be confirmed, e.g. email or a phone number.
+    // Credential to be validated, e.g. email or a phone number.
     public String val;
     // Confirmation response, such as '123456'.
     public String resp;
     // Confirmation parameters.
     public Object params;
+    // Indicator if credential is validated.
+    public Boolean done;
 
     public static Credential[] append(Credential[] creds, Credential c) {
         if (creds == null) {

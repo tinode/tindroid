@@ -88,7 +88,7 @@ public class Connection {
             ws.connect();
             if (s != null) {
                 String host = s.getSession().getPeerHost();
-                if (!host.equals(mEndpoint.getHost())) {
+                if (host == null || !host.equals(mEndpoint.getHost())) {
                     String reason = "Host '" + host + "' does not match '" + mEndpoint.getHost() + "'";
                     ws.close(-1, "SSL: " + reason);
                     throw new SSLPeerUnverifiedException(reason);

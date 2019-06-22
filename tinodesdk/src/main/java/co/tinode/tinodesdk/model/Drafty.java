@@ -77,22 +77,22 @@ public class Drafty implements Serializable {
 
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end
-    private static final String INLINE_STYLE_NAME[] = {"ST", "EM", "DL", "CO"};
-    private static final Pattern INLINE_STYLE_RE[] = {
-            Pattern.compile("(?<=^|\\W)\\*([^\\s*]+)\\*(?=$|\\W)"),    // bold *bo*
-            Pattern.compile("(?<=^|[\\W_])_([^\\s_]+)_(?=$|[\\W_])"),  // italic _it_
-            Pattern.compile("(?<=^|\\W)~([^\\s~]+)~(?=$|\\W)"),        // strikethough ~st~
-            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")             // code/monospace `mono`
+    private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
+    private static final Pattern[] INLINE_STYLE_RE = {
+            Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])"),   // bold *bo*
+            Pattern.compile("(?<=^|\\W)_([^_]+[^\\s_])_(?=$|\\W)"),             // italic _it_
+            Pattern.compile("(?<=^|[\\W_])~([^~]+[^\\s~])~(?=$|[\\W_])"),       // strikethough ~st~
+            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")                     // code/monospace `mono`
     };
 
-    private static final String ENTITY_NAME[] = {"LN", "MN", "HT"};
-    private static final EntityProc ENTITY_PROC[] = {
+    private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
+    private static final EntityProc[] ENTITY_PROC = {
             new EntityProc("LN",
-                    Pattern.compile("(?<=^|\\W)(https?:\\/\\/)?(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}" +
-                            "\\.[a-z]{2,4}\\b(?:[-a-zA-Z0-9@:%_\\+.~#?&\\/=]*)")) {
+                    Pattern.compile("(?<=^|\\W)(https?://)?(?:www\\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}" +
+                            "\\.[a-z]{2,4}\\b(?:[-a-zA-Z0-9@:%_+.~#?&/=]*)")) {
 
                 @Override
-                Map<String,Object> pack(Matcher m) {
+                Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
                     data.put("url", m.group(1) == null ? "http://" + m.group() : m.group());
                     return data;
@@ -100,7 +100,7 @@ public class Drafty implements Serializable {
             },
             new EntityProc("MN", Pattern.compile("\\B@(\\w\\w+)")) {
                 @Override
-                Map<String,Object> pack(Matcher m) {
+                Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
                     data.put("val", m.group());
                     return data;
@@ -108,7 +108,7 @@ public class Drafty implements Serializable {
             },
             new EntityProc("HT", Pattern.compile("(?<=[\\s,.!]|^)#(\\w\\w+)")) {
                 @Override
-                Map<String,Object> pack(Matcher m) {
+                Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
                     data.put("val", m.group());
                     return data;
@@ -148,7 +148,7 @@ public class Drafty implements Serializable {
             s.start = matcher.start(0);  // 'hello *world*'
                                                 // ^ group(zero) -> index of the opening markup character
             s.end = matcher.end(1);      // group(one) -> index of the closing markup character
-            s.text = matcher.group(1);          // text without of the markup
+            s.text = matcher.group(1);          // text without the markup
             s.type = type;
             spans.add(s);
         }
@@ -179,7 +179,7 @@ public class Drafty implements Serializable {
             Span chunk = new Span();
             chunk.type = span.type;
 
-            List<Span> chld = chunkify(line, span.start + 1, span.end - 1, span.children);
+            List<Span> chld = chunkify(line, span.start + 1, span.end, span.children);
             if (chld != null) {
                 chunk.children = chld;
             } else {
@@ -198,6 +198,8 @@ public class Drafty implements Serializable {
         return chunks;
     }
 
+    // Convert linear array or spans into a tree representation.
+    // Keep standalone and nested spans, throw away partially overlapping spans.
     private static List<Span> toTree(List<Span> spans) {
         if (spans == null || spans.isEmpty()) {
             return null;
@@ -289,6 +291,12 @@ public class Drafty implements Serializable {
         return extracted;
     }
 
+    /**
+     * Parse plain text into structured representation.
+     *
+     * @param  content content with optional markdown-style markup to parse.
+     * @return parsed Drafty object.
+     */
     public static Drafty parse(String content) {
         // Break input into individual lines. Format cannot span multiple lines.
         String lines[] = content.split("\\r?\\n");
@@ -357,7 +365,10 @@ public class Drafty implements Serializable {
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
-                text.append(" ").append(b.txt);
+                text.append(" ");
+                if (b.txt != null) {
+                    text.append(b.txt);
+                }
                 if (b.fmt != null) {
                     for (Style s : b.fmt) {
                         s.at += offset;
@@ -447,6 +458,7 @@ public class Drafty implements Serializable {
      * @param fname name of the file to suggest to the receiver.
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname) {
         return insertImage(at, mime, bits, width, height, fname, null, 0);
     }
@@ -507,6 +519,7 @@ public class Drafty implements Serializable {
      * @param fname Optional file name to suggest to the receiver.
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty attachFile(String mime, byte[] bits, String fname) {
         return attachFile(mime, bits, fname, null, bits.length);
     }
@@ -520,6 +533,7 @@ public class Drafty implements Serializable {
      * @param size size of the attachment (untrusted).
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty attachFile(String mime, String fname, String refurl, long size) {
         return attachFile(mime, null, fname, refurl, size);
     }
@@ -569,6 +583,7 @@ public class Drafty implements Serializable {
      * @param json object to attach.
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty attachJSON(Map<String,Object> json) {
         prepareForEntity(-1, 1);
 

@@ -232,6 +232,90 @@
         </LinearLayout>
 
         <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tags_management"/>
+
+            <Button
+                android:id="@+id/buttonManageTags"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/manage"
+                android:drawablePadding="4sp"
+                android:text="@string/manage"
+                android:textColor="@color/colorTextPrimary"
+                app:drawableStartCompat="@drawable/ic_edit_black"/>
+
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/tagList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:flexWrap="wrap"
+                app:alignItems="flex_start"
+                app:alignContent="flex_start" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@color/grey"/>
+
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/groupMembersWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/membersTitle"
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/group_members"
+                />
+
+            <Button
+                android:id="@+id/buttonAddMembers"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/membersTitle"
+                android:contentDescription="@string/add_members"
+                android:drawablePadding="4sp"
+                android:text="@string/add_members"
+                android:textColor="@color/colorTextPrimary"
+                app:drawableStartCompat="@drawable/ic_person_add"/>
+
+            <Button
+                android:id="@+id/buttonLeaveGroup"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/membersTitle"
+                android:layout_toEndOf="@id/buttonAddMembers"
+                android:drawablePadding="4sp"
+                android:text="@string/leave_group"
+                android:textColor="@color/colorDangerDark"
+                app:drawableStartCompat="@drawable/ic_exit_red"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/groupMembers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/buttonAddMembers"/>
+
+        </RelativeLayout>
+
+        <LinearLayout
             android:id="@+id/defaultPermissionsWrapper"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -300,60 +384,7 @@
 
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:background="@color/grey" />
-
         </LinearLayout>
-
-        <RelativeLayout
-            android:id="@+id/groupMembersWrapper"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/membersTitle"
-                style="@style/sectionTitleStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/group_members"
-                />
-
-            <Button
-                android:id="@+id/buttonAddMembers"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/membersTitle"
-                android:contentDescription="@string/add_members"
-                android:drawablePadding="4sp"
-                android:text="@string/add_members"
-                android:textColor="@color/colorTextPrimary"
-                app:drawableStartCompat="@drawable/ic_person_add"/>
-
-            <Button
-                android:id="@+id/buttonLeaveGroup"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/membersTitle"
-                android:layout_toEndOf="@id/buttonAddMembers"
-                android:drawablePadding="4sp"
-                android:text="@string/leave_group"
-                android:textColor="@color/colorDangerDark"
-                app:drawableStartCompat="@drawable/ic_exit_red"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/groupMembers"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/buttonAddMembers"/>
-
-        </RelativeLayout>
-
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -4,11 +4,15 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.JavaType;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerMeta;
@@ -22,6 +26,8 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private static final String TAG = "MeTopic";
+
+    protected ArrayList<Credential> mCreds;
 
     public MeTopic(Tinode tinode, Listener<DP,PrivateType,DP,PrivateType> l) {
         super(tinode, Tinode.TOPIC_ME, l);
@@ -72,6 +78,11 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public void setPriv(PrivateType priv) { /* do nothing */ }
 
     @Override
+    public Date getSubsUpdated() {
+        return mTinode.getTopicsUpdated();
+    }
+
+    @Override
     protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
 
         for (Subscription<DP,PrivateType> sub : meta.sub) {
@@ -98,7 +109,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 topic.update(sub);
                 // Notify topic to update self.
                 if (topic.mListener != null) {
-                    topic.mListener.onContUpdate(sub);
+                    topic.mListener.onContUpdated(sub);
                 }
 
                 if (topic.getTopicType() == TopicType.P2P && mStore != null) {
@@ -120,6 +131,82 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
         if (mListener != null) {
             mListener.onMetaSub(sub);
+        }
+    }
+
+    private int findCredential(Credential other, boolean anyUnconfirmed) {
+        int i = 0;
+        for (Credential cred : mCreds) {
+            if (cred.meth.equals(other.meth) && ((anyUnconfirmed && !cred.done) || cred.val.equals(other.val))) {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+
+    private void processOneCred(Credential cred) {
+        if (cred.meth == null) {
+            // Skip invalid method;
+            return;
+        }
+
+        if (cred.val != null) {
+            if (mCreds == null) {
+                // Empty list. Create and add.
+                mCreds = new ArrayList<>();
+                mCreds.add(cred);
+            } else {
+                // Try finding this credential among confirmed or not.
+                int idx = findCredential(cred, false);
+                if (idx < 0) {
+                    // Not found.
+                    if (!cred.done) {
+                        // Unconfirmed credential replaces previous unconfirmed credential of the same method.
+                        idx = findCredential(cred, true);
+                        if (idx >= 0) {
+                            // Remove previous unconfirmed credential.
+                            mCreds.remove(idx);
+                        }
+                    }
+                    mCreds.add(cred);
+                } else {
+                    // Found. Maybe change 'done' status.
+                    Credential el = this.mCreds.get(idx);
+                    el.done = cred.done;
+                }
+            }
+        } else if (cred.resp != null) {
+            // Handle credential confirmation.
+            int idx = findCredential(cred, true);
+            if (idx >= 0) {
+                Credential el = this.mCreds.get(idx);
+                el.done = true;
+            }
+        }
+    }
+
+    @Override
+    protected void routeMetaCred(Credential cred) {
+        processOneCred(cred);
+
+        if (mListener != null && mListener instanceof MeListener) {
+            ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
+        }
+    }
+
+
+    @Override
+    protected void routeMetaCred(Credential[] creds) {
+        mCreds = new ArrayList<>();
+        for (Credential cred : creds) {
+            if (cred.meth != null && cred.val != null) {
+                mCreds.add(cred);
+            }
+        }
+
+        if (mListener != null && mListener instanceof MeListener) {
+            ((MeListener) mListener).onCredUpdated(creds);
         }
     }
 
@@ -203,6 +290,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                         Log.d(TAG, "Unexpected access mode in presence: '" + pres.dacs.want + "'/'" + pres.dacs.given + "'");
                     }
                     break;
+                case TAGS:
+                    // Tags in 'me' topic updated.
+                    getMeta(getMetaGetBuilder().withGetTags().build());
+                    break;
                 default:
                     Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
                     break;
@@ -237,7 +328,9 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         /** {meta what="desc"} message received */
         public void onMetaDesc(Description<DP,PrivateType> desc) {}
         /** Called by MeTopic when topic descriptor as contact is updated */
-        public void onContUpdate(Subscription<DP,PrivateType> sub) {}
+        public void onContUpdated(Subscription<DP,PrivateType> sub) {}
+        /** Called by MeTopic when credentials are updated */
+        public void onCredUpdated(Credential[] cred) {}
     }
 
 }

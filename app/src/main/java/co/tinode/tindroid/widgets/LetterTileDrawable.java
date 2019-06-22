@@ -165,7 +165,7 @@ public class LetterTileDrawable extends Drawable {
             canvas.drawRect(bounds, sPaint);
         }
 
-        // Draw letter/digit only if the first character is an english letter or there's a override
+        // Draw the first letter/digit
         if (mLetter != null) {
             // Draw letter or digit.
             sFirstChar[0] = mLetter;

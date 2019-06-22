@@ -84,7 +84,9 @@ public class Cache {
             return me.subscribe(null, me
                     .getMetaGetBuilder()
                     .withGetDesc()
-                    .withGetSub().build());
+                    .withGetSub()
+                    .withGetTags()
+                    .build());
         } else {
             return new PromisedReply<>((ServerMessage) null);
         }

@@ -164,10 +164,9 @@ public class PromisedReply<T> {
      * thread which completed the promise: called either resolve() or reject().
      *
      * @param finished called when the promise is completed either way.
-     * @return promise for chaining
      */
-    public PromisedReply<T> thenFinally(final FinalListener<T> finished) {
-        return thenApply(new SuccessListener<T>() {
+    public void thenFinally(final FinalListener<T> finished) {
+        thenApply(new SuccessListener<T>() {
             @Override
             public PromisedReply<T> onSuccess(T result) throws Exception {
                 return finished.onFinally();
@@ -234,14 +233,17 @@ public class PromisedReply<T> {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public boolean isResolved() {
         return mState == State.RESOLVED;
     }
 
+    @SuppressWarnings("unused")
     public boolean isRejected() {
         return mState == State.REJECTED;
     }
 
+    @SuppressWarnings({"WeakerAccess", "BooleanMethodIsAlwaysInverted"})
     public boolean isDone() {
         return mState == State.RESOLVED || mState == State.REJECTED;
     }
@@ -250,9 +252,10 @@ public class PromisedReply<T> {
     /**
      * Make this promise resolved.
      * @param result results of resolution.
-     * @throws Exception
+     * @throws Exception if anything goes wrong during resolution.
      */
-    public void resolve(final T result) throws Exception {
+    @SuppressWarnings("WeakerAccess")
+    protected void resolve(final T result) throws Exception {
         synchronized (this) {
             if (mState == State.WAITING) {
                 mState = State.RESOLVED;
@@ -270,7 +273,8 @@ public class PromisedReply<T> {
         }
     }
 
-    public void reject(final Exception err) throws Exception {
+    @SuppressWarnings("WeakerAccess")
+    protected void reject(final Exception err) throws Exception {
         Log.d(TAG, "REJECTING promise " + this, err);
         synchronized (this) {
             if (mState == State.WAITING) {

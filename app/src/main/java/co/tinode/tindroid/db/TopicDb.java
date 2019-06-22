@@ -275,12 +275,16 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
-        Date lastUsed = topic.getTouched() != null ? topic.getTouched() : new Date();
-        values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
+        Date lastUsed = topic.getTouched();
+        if (lastUsed != null) {
+            values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
+        }
 
         int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
         if (updated > 0) {
-            st.lastUsed = lastUsed;
+            if (lastUsed != null) {
+                st.lastUsed = lastUsed;
+            }
             st.status = status;
         }
 

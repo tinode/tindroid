@@ -471,17 +471,18 @@ public class UiUtils {
         }
     }
 
-    private static void acceptAvatar(final ImageView avatar, final Bitmap bmp) {
-        avatar.setImageDrawable(new RoundImageDrawable(avatar.getResources(), scaleSquareBitmap(bmp)));
-    }
-
     static void acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
+        if (activity == null || avatar == null) {
+            return;
+        }
+
         final Bitmap bmp = extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
             return;
         }
-        acceptAvatar(avatar, bmp);
+
+        avatar.setImageDrawable(new RoundImageDrawable(avatar.getResources(), scaleSquareBitmap(bmp)));
     }
 
     static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address) {
@@ -1017,7 +1018,7 @@ public class UiUtils {
         String[] sizes = new String[]{"Bytes", "KB", "MB", "GB", "TB"};
         int bucket = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
         double count = bytes / Math.pow(1024, bucket);
-        int roundTo = bucket > 0 ? (count < 10 ? 2 : (count < 100 ? 1 : 0)) : 0;
+        int roundTo = bucket > 0 ? (count < 3 ? 2 : (count < 30 ? 1 : 0)) : 0;
         NumberFormat fmt = DecimalFormat.getInstance();
         fmt.setMaximumFractionDigits(roundTo);
         return fmt.format(count) + " " + sizes[bucket];
