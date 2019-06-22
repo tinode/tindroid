@@ -175,6 +175,9 @@ public class MsgGetMeta {
         if ((mSet & TAGS_SET) != 0) {
             parts.add(TAGS);
         }
+        if ((mSet & CRED_SET) != 0) {
+            parts.add(CRED);
+        }
 
         if (!parts.isEmpty()) {
             sb.append(parts.get(0));

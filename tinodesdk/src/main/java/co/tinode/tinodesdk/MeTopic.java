@@ -5,9 +5,7 @@ import android.util.Log;
 import com.fasterxml.jackson.databind.JavaType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -76,6 +74,11 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         return null;
     }
     public void setPriv(PrivateType priv) { /* do nothing */ }
+
+
+    public Credential[] getCreds() {
+        return mCreds != null ? mCreds.toArray(new Credential[]{}) : null;
+    }
 
     @Override
     public Date getSubsUpdated() {
@@ -232,7 +235,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     break;
 
                 case UPD: // pub/priv updated
-                    this.getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                    this.getMeta(getMetaGetBuilder().withSub(pres.src).build());
                     break;
 
                 case ACS: // access mode changed
@@ -285,14 +288,14 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     Acs acs = new Acs();
                     acs.update(pres.dacs);
                     if (acs.isModeDefined()) {
-                        getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                        getMeta(getMetaGetBuilder().withSub(pres.src).build());
                     } else {
                         Log.d(TAG, "Unexpected access mode in presence: '" + pres.dacs.want + "'/'" + pres.dacs.given + "'");
                     }
                     break;
                 case TAGS:
                     // Tags in 'me' topic updated.
-                    getMeta(getMetaGetBuilder().withGetTags().build());
+                    getMeta(getMetaGetBuilder().withTags().build());
                     break;
                 default:
                     Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);

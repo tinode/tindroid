@@ -691,7 +691,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         } else {
             // FIXME: don't ask for tags if it's not a 'me' topic or the owner of a 'grp' topic.
             mget = getMetaGetBuilder()
-                    .withGetDesc().withGetData().withGetSub().withGetTags().build();
+                    .withDesc().withData().withSub().withTags().build();
         }
         return subscribe(mset, mget);
     }
@@ -1674,7 +1674,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                         sub.updated = new Date();
                         User<SP> user = mTinode.getUser(pres.src);
                         if (user == null) {
-                            getMeta(getMetaGetBuilder().withGetSub(pres.src).build());
+                            getMeta(getMetaGetBuilder().withSub(pres.src).build());
                         } else {
                             sub.pub = user.pub;
                         }
@@ -1869,7 +1869,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * @param before older than this
          * @param limit  number of messages to fetch
          */
-        public MetaGetBuilder withGetData(Integer since, Integer before, Integer limit) {
+        public MetaGetBuilder withData(Integer since, Integer before, Integer limit) {
             meta.setData(since, before, limit);
             return this;
         }
@@ -1879,13 +1879,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          *
          * @param limit number of messages to fetch
          */
-        public MetaGetBuilder withGetLaterData(Integer limit) {
+        public MetaGetBuilder withLaterData(Integer limit) {
             Storage.Range r = topic.getCachedMessageRange();
 
             if (r == null) {
-                return withGetData(null, null, limit);
+                return withData(null, null, limit);
             }
-            return withGetData(r.max > 0 ? r.max + 1 : null, null, limit);
+            return withData(r.max > 0 ? r.max + 1 : null, null, limit);
         }
 
         /**
@@ -1893,32 +1893,32 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          *
          * @param limit number of messages to fetch
          */
-        public MetaGetBuilder withGetEarlierData(Integer limit) {
+        public MetaGetBuilder withEarlierData(Integer limit) {
             Storage.Range r = topic.getCachedMessageRange();
             if (r == null) {
-                return withGetData(null, null, limit);
+                return withData(null, null, limit);
             }
-            return withGetData(null, r.min > 0 ? r.min : null, limit);
+            return withData(null, r.min > 0 ? r.min : null, limit);
         }
 
         /**
-         * Default query - same as withGetLaterData with default number of
+         * Default query - same as withLaterData with default number of
          * messages to fetch.
          */
-        public MetaGetBuilder withGetData() {
-            return withGetLaterData(null);
+        public MetaGetBuilder withData() {
+            return withLaterData(null);
         }
 
-        public MetaGetBuilder withGetDesc(Date ims) {
+        public MetaGetBuilder withDesc(Date ims) {
             meta.setDesc(ims);
             return this;
         }
 
-        public MetaGetBuilder withGetDesc() {
-            return withGetDesc(topic.getUpdated());
+        public MetaGetBuilder withDesc() {
+            return withDesc(topic.getUpdated());
         }
 
-        public MetaGetBuilder withGetSub(String userOrTopic, Date ims, Integer limit) {
+        public MetaGetBuilder withSub(String userOrTopic, Date ims, Integer limit) {
             if (topic.getTopicType() == TopicType.ME) {
                 meta.setSubTopic(userOrTopic, ims, limit);
             } else {
@@ -1927,37 +1927,37 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return this;
         }
 
-        public MetaGetBuilder withGetSub(Date ims, Integer limit) {
-            return withGetSub(null, ims, limit);
+        public MetaGetBuilder withSub(Date ims, Integer limit) {
+            return withSub(null, ims, limit);
         }
 
-        public MetaGetBuilder withGetSub() {
-            return withGetSub(null, topic.getSubsUpdated(), null);
+        public MetaGetBuilder withSub() {
+            return withSub(null, topic.getSubsUpdated(), null);
         }
 
-        public MetaGetBuilder withGetSub(String userOrTopic) {
-            return withGetSub(userOrTopic, topic.getSubsUpdated(), null);
+        public MetaGetBuilder withSub(String userOrTopic) {
+            return withSub(userOrTopic, topic.getSubsUpdated(), null);
         }
 
-        public MetaGetBuilder withGetDel(Integer since, Integer limit) {
+        public MetaGetBuilder withDel(Integer since, Integer limit) {
             meta.setDel(since, limit);
             return this;
         }
 
-        public MetaGetBuilder withGetLaterDel(Integer limit) {
-            return withGetDel(topic.getMaxDel() + 1, limit);
+        public MetaGetBuilder withLaterDel(Integer limit) {
+            return withDel(topic.getMaxDel() + 1, limit);
         }
 
-        public MetaGetBuilder withGetDel() {
-            return withGetLaterDel(null);
+        public MetaGetBuilder withDel() {
+            return withLaterDel(null);
         }
 
-        public MetaGetBuilder withGetTags() {
+        public MetaGetBuilder withTags() {
             meta.setTags();
             return this;
         }
 
-        public MetaGetBuilder withGetCred() {
+        public MetaGetBuilder withCred() {
             meta.setCred();
             return this;
         }

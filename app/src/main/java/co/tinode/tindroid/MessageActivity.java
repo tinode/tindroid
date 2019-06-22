@@ -15,7 +15,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import java.io.File;
 import java.net.URI;
@@ -235,10 +234,10 @@ public class MessageActivity extends AppCompatActivity {
         setProgressIndicator(true);
         mTopic.subscribe(null,
                 mTopic.getMetaGetBuilder()
-                        .withGetDesc()
-                        .withGetSub()
-                        .withGetData()
-                        .withGetDel()
+                        .withDesc()
+                        .withSub()
+                        .withData()
+                        .withDel()
                         .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {

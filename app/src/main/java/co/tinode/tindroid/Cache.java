@@ -83,9 +83,10 @@ public class Cache {
         if (!me.isAttached()) {
             return me.subscribe(null, me
                     .getMetaGetBuilder()
-                    .withGetDesc()
-                    .withGetSub()
-                    .withGetTags()
+                    .withDesc()
+                    .withSub()
+                    .withTags()
+                    .withCred()
                     .build());
         } else {
             return new PromisedReply<>((ServerMessage) null);

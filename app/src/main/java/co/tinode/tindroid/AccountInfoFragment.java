@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +36,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.model.Credential;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -216,15 +218,29 @@ public class AccountInfoFragment extends Fragment {
             ((TextView) activity.findViewById(R.id.authPermissions)).setText(me.getAuthAcsStr());
             ((TextView) activity.findViewById(R.id.anonPermissions)).setText(me.getAnonAcsStr());
 
+            LayoutInflater inflater = LayoutInflater.from(activity);
+
             String[] tags = me.getTags();
             if (tags != null) {
                 FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
                 tagsView.removeAllViews();
-                LayoutInflater inflater = LayoutInflater.from(activity);
                 for (String tag : tags) {
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
                     label.setText(tag);
                     tagsView.addView(label);
+                }
+            }
+
+            Credential[] creds = me.getCreds();
+            if (creds != null) {
+                LinearLayout credList = activity.findViewById(R.id.credList);
+                for (Credential cred : creds) {
+                    View container = inflater.inflate(R.layout.credential, credList, false);
+                    ((TextView) container.findViewById(R.id.method)).setText(cred.meth);
+                    ((TextView) container.findViewById(R.id.value)).setText(cred.val);
+                    container.findViewById(R.id.buttonConfirm).setVisibility(cred.done ? View.GONE : View.VISIBLE);
+                    container.findViewById(R.id.buttonDelete).setOnClickListener(null);
+                    credList.addView(container, 0);
                 }
             }
 

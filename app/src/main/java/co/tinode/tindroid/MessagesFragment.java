@@ -161,7 +161,7 @@ public class MessagesFragment extends Fragment
             public void onRefresh() {
                 if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
                     try {
-                        mTopic.getMeta(mTopic.getMetaGetBuilder().withGetEarlierData(MESSAGES_TO_LOAD).build())
+                        mTopic.getMeta(mTopic.getMetaGetBuilder().withEarlierData(MESSAGES_TO_LOAD).build())
                                 .thenApply(
                                         new PromisedReply.SuccessListener<ServerMessage>() {
                                             @Override
