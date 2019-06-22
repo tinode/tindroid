@@ -321,13 +321,6 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:background="@color/grey" />
-
             <TextView
                 style="@style/sectionTitleStyle"
                 android:layout_width="wrap_content"

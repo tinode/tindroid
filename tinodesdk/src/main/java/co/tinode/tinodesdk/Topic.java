@@ -1515,7 +1515,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (meta.tags != null) {
             routeMetaTags(meta.tags);
         }
-        if (meta.tags != null) {
+        if (meta.cred != null) {
             routeMetaCred(meta.cred);
         }
         if (mListener != null) {

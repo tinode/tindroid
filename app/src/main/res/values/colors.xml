@@ -14,7 +14,7 @@
 
     <color name="colorLightGray">#eeeeee</color>
     <color name="colorGray">#cccccc</color>
-
+    <color name="colorDarkerGray">#999999</color>
 
     <color name="colorPillCounter">#FF98AFC7</color>
 
