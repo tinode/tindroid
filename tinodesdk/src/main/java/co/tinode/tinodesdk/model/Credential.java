@@ -6,6 +6,9 @@ import java.util.Arrays;
  * Account credential: email, phone, captcha
  */
 public class Credential {
+    public static final String METH_EMAIL = "email";
+    public static final String METH_PHONE = "tel";
+
     // Confirmation method: email, phone, captcha.
     public String meth;
     // Credential to be validated, e.g. email or a phone number.
@@ -40,5 +43,11 @@ public class Credential {
         this(meth, val);
         this.resp = resp;
         this.params = params;
+    }
+
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public String toString() {
+        return meth + ":" + val;
     }
 }

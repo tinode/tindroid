@@ -16,18 +16,22 @@ public class MsgClientSet<Pu,Pr> {
 
     public MetaSetDesc<Pu,Pr> desc;
     public MetaSetSub sub;
+    public String[] tags;
+    Credential cred;
 
     public MsgClientSet() {}
 
     public MsgClientSet(String id, String topic, MsgSetMeta<Pu,Pr> meta) {
-        this(id, topic, meta.desc, meta.sub);
+        this(id, topic, meta.desc, meta.sub, meta.tags, meta.cred);
     }
 
-    public MsgClientSet(String id, String topic, MetaSetDesc<Pu, Pr> desc,
-                        MetaSetSub sub) {
+    protected MsgClientSet(String id, String topic, MetaSetDesc<Pu, Pr> desc,
+                        MetaSetSub sub, String[] tags, Credential cred) {
         this.id = id;
         this.topic = topic;
         this.desc = desc;
         this.sub = sub;
+        this.tags = tags;
+        this.cred = cred;
     }
 }

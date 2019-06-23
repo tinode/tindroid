@@ -214,5 +214,8 @@
     <string name="add_contact">Add another</string>
     <string name="manage">Manage</string>
     <string name="delete">Delete</string>
+    <string name="add_credential">Enter email or phone number</string>
+    <string name="unrecognized_credential">INvalid or unrecognized validation method</string>
+    <string name="add_credential_title">Add contact</string>
 
 </resources>

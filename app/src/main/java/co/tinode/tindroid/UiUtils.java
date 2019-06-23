@@ -68,6 +68,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.preference.PreferenceManager;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -83,6 +86,7 @@ import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -1035,6 +1039,28 @@ public class UiUtils {
             return mimeTypeMap.getMimeTypeFromExtension(ext);
         }
         return null;
+    }
+
+    static Credential parseCredential(String cred) {
+        Credential result = null;
+
+        final PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+        final String country = Locale.getDefault().getCountry();
+        try {
+            // Normalize phone number format
+            cred = phoneUtil.format(phoneUtil.parse(cred, country), PhoneNumberUtil.PhoneNumberFormat.E164);
+            // Exception not thrown, we have a phone number.
+            result = new Credential(Credential.METH_PHONE, cred);
+        } catch (NumberParseException ignored) {}
+
+        if (result == null) {
+            // Not a phone number. Try parsing as email.
+            if (android.util.Patterns.EMAIL_ADDRESS.matcher(cred).matches()) {
+                result = new Credential(Credential.METH_EMAIL, cred);
+            }
+        }
+
+        return result;
     }
 
     public static class EventListener extends Tinode.EventListener {

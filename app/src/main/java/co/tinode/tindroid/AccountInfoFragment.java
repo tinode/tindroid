@@ -16,7 +16,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
+
+import android.text.Editable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -37,6 +40,7 @@ import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.model.Credential;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -134,7 +138,7 @@ public class AccountInfoFragment extends Fragment {
         activity.findViewById(R.id.buttonAddContact).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                showAddCredential();
             }
         });
 
@@ -220,10 +224,12 @@ public class AccountInfoFragment extends Fragment {
 
             LayoutInflater inflater = LayoutInflater.from(activity);
 
+            FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
+            tagsView.removeAllViews();
+
             String[] tags = me.getTags();
             if (tags != null) {
-                FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
-                tagsView.removeAllViews();
+
                 for (String tag : tags) {
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
                     label.setText(tag);
@@ -231,9 +237,18 @@ public class AccountInfoFragment extends Fragment {
                 }
             }
 
+            LinearLayout credList = activity.findViewById(R.id.credList);
+            while (credList.getChildCount() > 0) {
+                View v = credList.getChildAt(0);
+                if (v instanceof LinearLayout) {
+                    credList.removeViewAt(0);
+                } else {
+                    break;
+                }
+            }
+
             Credential[] creds = me.getCreds();
             if (creds != null) {
-                LinearLayout credList = activity.findViewById(R.id.credList);
                 for (Credential cred : creds) {
                     View container = inflater.inflate(R.layout.credential, credList, false);
                     ((TextView) container.findViewById(R.id.method)).setText(cred.meth);
@@ -269,13 +284,14 @@ public class AccountInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditAccountTitle() {
-        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
-        VxCard pub = me.getPub();
-        final String title = pub == null ? null : pub.fn;
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
+
+        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
+        VxCard pub = me.getPub();
+        final String title = pub == null ? null : pub.fn;
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_account, null);
@@ -296,7 +312,11 @@ public class AccountInfoFragment extends Fragment {
     }
 
     private void changePassword(String login, String password) {
-        Activity activity = getActivity();
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         try {
             // TODO: update stored record on success
             Cache.getTinode().updateAccountBasic(null, login, password).thenApply(
@@ -309,11 +329,48 @@ public class AccountInfoFragment extends Fragment {
         }
     }
 
+    private void showAddCredential() {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_add_credential, null);
+        builder.setView(editor).setTitle(R.string.add_credential_title);
+
+        final EditText credEditor = editor.findViewById(R.id.editCredential);
+        builder
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String cred = credEditor.getText().toString().trim().toLowerCase();
+                        if (TextUtils.isEmpty(cred)) {
+                            return;
+                        }
+                        Log.i(TAG, "Credential: " + cred);
+                        Credential parsed = UiUtils.parseCredential(cred);
+                        if (parsed != null) {
+                            Log.i(TAG, "Parsed credential: " + parsed);
+                            final MeTopic me = Cache.getTinode().getMeTopic();
+                            // noinspection unchecked
+                            me.setMeta(new MsgSetMeta(parsed))
+                                    .thenCatch(new UiUtils.ToastFailureListener(activity));
+                        } else {
+                            credEditor.setError(activity.getString(R.string.unrecognized_credential));
+                        }
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
     private void logout() {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
+
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setNegativeButton(android.R.string.cancel, null)
                 .setMessage(R.string.confirm_logout)
@@ -339,6 +396,7 @@ public class AccountInfoFragment extends Fragment {
 
         final MeTopic me = Cache.getTinode().getMeTopic();
         if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
+            //noinspection unchecked
             UiUtils.updateAvatar(activity, me, data);
         }
     }
