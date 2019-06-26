@@ -181,4 +181,11 @@
     <string name="contacts">Контакты</string>
     <string name="add_contact">Добавить</string>
     <string name="manage">Редактировать</string>
+    <string name="delete">Удалить</string>
+    <string name="add_credential">Еmail или телефон</string>
+    <string name="unrecognized_credential">Не распознан тип контакта</string>
+    <string name="add_credential_title">Контакты</string>
+    <string name="delete_credential_title">Удалить контакт</string>
+    <string name="delete_credential_confirmation">Удалить контакт %1$s:%2$s?</string>
+
 </resources>

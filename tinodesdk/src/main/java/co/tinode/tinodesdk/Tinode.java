@@ -1326,6 +1326,18 @@ public class Tinode {
     }
 
     /**
+     * Low-level request to delete a credential. Use {@link MeTopic#delCredential(String, String)} ()} instead.
+     *
+     * @param cred  credential to delete.
+     * @return PromisedReply of the reply ctrl message
+     */
+    @SuppressWarnings("WeakerAccess")
+    public PromisedReply<ServerMessage> delCredential(final Credential cred) {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), cred));
+        return sendWithPromise(msg, msg.del.id);
+    }
+
+    /**
      * Inform all other topic subscribers of activity, such as receiving/reading a message or a
      * typing notification.
      * This method does not return a PromisedReply because the server does not acknowledge {note}

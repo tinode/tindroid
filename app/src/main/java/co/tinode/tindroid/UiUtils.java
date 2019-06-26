@@ -31,6 +31,7 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Patterns;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -1042,25 +1043,26 @@ public class UiUtils {
     }
 
     static Credential parseCredential(String cred) {
-        Credential result = null;
-
         final PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
         final String country = Locale.getDefault().getCountry();
-        try {
-            // Normalize phone number format
-            cred = phoneUtil.format(phoneUtil.parse(cred, country), PhoneNumberUtil.PhoneNumberFormat.E164);
-            // Exception not thrown, we have a phone number.
-            result = new Credential(Credential.METH_PHONE, cred);
-        } catch (NumberParseException ignored) {}
-
-        if (result == null) {
-            // Not a phone number. Try parsing as email.
-            if (android.util.Patterns.EMAIL_ADDRESS.matcher(cred).matches()) {
-                result = new Credential(Credential.METH_EMAIL, cred);
+        if (Patterns.PHONE.matcher(cred).matches()) {
+            // Looks like a phone number.
+            try {
+                // Normalize phone number format
+                cred = phoneUtil.format(phoneUtil.parse(cred, country), PhoneNumberUtil.PhoneNumberFormat.E164);
+                // Exception not thrown, we have a phone number.
+                return new Credential(Credential.METH_PHONE, cred);
+            } catch (NumberParseException ignored) {
+                return null;
             }
         }
 
-        return result;
+        // Not a phone number. Try parsing as email.
+        if (Patterns.EMAIL_ADDRESS.matcher(cred).matches()) {
+            return new Credential(Credential.METH_EMAIL, cred);
+        }
+
+        return null;
     }
 
     public static class EventListener extends Tinode.EventListener {

@@ -266,6 +266,11 @@ public class SqlStore implements Storage {
         StoredMessage msg = new StoredMessage();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 
+        if (topic == null) {
+            Log.w(TAG, "Failed to insert message: topic is null");
+            return -1;
+        }
+
         msg.topic = topic.getName();
         msg.from = getMyUid();
         msg.ts = new Date(new Date().getTime() + mTimeAdjustment);

@@ -17,16 +17,16 @@ import androidx.preference.PreferenceManager;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
 
-import android.text.Editable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -229,7 +229,6 @@ public class AccountInfoFragment extends Fragment {
 
             String[] tags = me.getTags();
             if (tags != null) {
-
                 for (String tag : tags) {
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
                     label.setText(tag);
@@ -238,10 +237,10 @@ public class AccountInfoFragment extends Fragment {
             }
 
             LinearLayout credList = activity.findViewById(R.id.credList);
-            while (credList.getChildCount() > 0) {
-                View v = credList.getChildAt(0);
+            while (credList.getChildCount() > 2) {
+                View v = credList.getChildAt(1);
                 if (v instanceof LinearLayout) {
-                    credList.removeViewAt(0);
+                    credList.removeViewAt(1);
                 } else {
                     break;
                 }
@@ -253,9 +252,31 @@ public class AccountInfoFragment extends Fragment {
                     View container = inflater.inflate(R.layout.credential, credList, false);
                     ((TextView) container.findViewById(R.id.method)).setText(cred.meth);
                     ((TextView) container.findViewById(R.id.value)).setText(cred.val);
-                    container.findViewById(R.id.buttonConfirm).setVisibility(cred.done ? View.GONE : View.VISIBLE);
-                    container.findViewById(R.id.buttonDelete).setOnClickListener(null);
-                    credList.addView(container, 0);
+                    Button btn = container.findViewById(R.id.buttonConfirm);
+                    if (cred.done) {
+                        btn.setVisibility(View.GONE);
+                    } else {
+                        btn.setVisibility(View.VISIBLE);
+                        btn.setTag(cred);
+                    }
+                    btn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Credential cred = (Credential) view.getTag();
+                            showConfirmCredential(cred.meth, cred.val);
+                        }
+                    });
+
+                    ImageButton ibtn = container.findViewById(R.id.buttonDelete);
+                    ibtn.setTag(cred);
+                    ibtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Credential cred = (Credential) view.getTag();
+                            showDeleteCredential(cred.meth, cred.val);
+                        }
+                    });
+                    credList.addView(container, 1);
                 }
             }
 
@@ -329,40 +350,102 @@ public class AccountInfoFragment extends Fragment {
         }
     }
 
-    private void showAddCredential() {
+    // Dialog for confirming a credential.
+    private void showConfirmCredential(final String meth, final String val) {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
         }
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_add_credential, null);
-        builder.setView(editor).setTitle(R.string.add_credential_title);
-
-        final EditText credEditor = editor.findViewById(R.id.editCredential);
-        builder
+        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_validate, null);
+        builder.setView(editor).setTitle(R.string.validate_cred)
+                // FIXME: check for empty input and refuse to dismiss the dialog.
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String cred = credEditor.getText().toString().trim().toLowerCase();
-                        if (TextUtils.isEmpty(cred)) {
+                        String response = ((EditText) editor.findViewById(R.id.response)).getText().toString();
+                        if (TextUtils.isEmpty(response)) {
                             return;
                         }
-                        Log.i(TAG, "Credential: " + cred);
-                        Credential parsed = UiUtils.parseCredential(cred);
-                        if (parsed != null) {
-                            Log.i(TAG, "Parsed credential: " + parsed);
-                            final MeTopic me = Cache.getTinode().getMeTopic();
-                            // noinspection unchecked
-                            me.setMeta(new MsgSetMeta(parsed))
-                                    .thenCatch(new UiUtils.ToastFailureListener(activity));
-                        } else {
-                            credEditor.setError(activity.getString(R.string.unrecognized_credential));
-                        }
+
+                        final MeTopic me = Cache.getTinode().getMeTopic();
+                        // noinspection unchecked
+                        me.setMeta(new MsgSetMeta(new Credential(meth, null, response, null)))
+                                .thenApply(null /* FIXME: mark credential as confirmed in the UI */)
+                                .thenCatch(new UiUtils.ToastFailureListener(activity));
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    // Show dialog for deleting credential
+    private void showDeleteCredential(final String meth, final String val) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setNegativeButton(android.R.string.cancel, null)
+                .setTitle(R.string.delete_credential_title)
+                .setMessage(getString(R.string.delete_credential_confirmation, meth, val))
+                .setCancelable(true)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final MeTopic me = Cache.getTinode().getMeTopic();
+                        // noinspection unchecked
+                        me.delCredential(meth, val)
+                                .thenCatch(new UiUtils.ToastFailureListener(activity));
+                    }
+                })
+                .show();
+    }
+
+    private void showAddCredential() {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        final View editor = LayoutInflater.from(activity).inflate(R.layout.dialog_add_credential, null);
+        final AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(editor).setTitle(R.string.add_credential_title)
+                .setPositiveButton(android.R.string.ok, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View button) {
+                        EditText credEditor = editor.findViewById(R.id.editCredential);
+                        String cred = credEditor.getText().toString().trim().toLowerCase();
+                        if (TextUtils.isEmpty(cred)) {
+                            return;
+                        }
+                        Credential parsed = UiUtils.parseCredential(cred);
+                        if (parsed != null) {
+                            final MeTopic me = Cache.getTinode().getMeTopic();
+                            // noinspection unchecked
+                            me.setMeta(new MsgSetMeta(parsed))
+                                    .thenCatch(new UiUtils.ToastFailureListener(activity));
+
+                            // Dismiss once everything is OK.
+                            dialog.dismiss();
+                        } else {
+                            credEditor.setError(activity.getString(R.string.unrecognized_credential));
+                        }
+                    }
+                });
+            }
+        });
+
+        dialog.show();
     }
 
     private void logout() {

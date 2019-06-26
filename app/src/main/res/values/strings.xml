@@ -215,7 +215,8 @@
     <string name="manage">Manage</string>
     <string name="delete">Delete</string>
     <string name="add_credential">Enter email or phone number</string>
-    <string name="unrecognized_credential">INvalid or unrecognized validation method</string>
+    <string name="unrecognized_credential">Invalid or unrecognized validation method</string>
     <string name="add_credential_title">Add contact</string>
-
+    <string name="delete_credential_title">Delete contact</string>
+    <string name="delete_credential_confirmation">Are you sure you want to remove %1$s:%2$s?</string>
 </resources>

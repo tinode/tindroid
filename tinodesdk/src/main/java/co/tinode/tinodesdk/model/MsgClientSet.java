@@ -17,7 +17,7 @@ public class MsgClientSet<Pu,Pr> {
     public MetaSetDesc<Pu,Pr> desc;
     public MetaSetSub sub;
     public String[] tags;
-    Credential cred;
+    public Credential cred;
 
     public MsgClientSet() {}
 

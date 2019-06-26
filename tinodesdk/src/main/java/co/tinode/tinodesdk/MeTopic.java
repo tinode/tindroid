@@ -85,6 +85,38 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         return mTinode.getTopicsUpdated();
     }
 
+    /**
+     * Delete credential.
+     *
+     * @param meth  credential method (i.e. "tel" or "email").
+     * @param val   value of the credential being deleted, i.e. "alice@example.com".
+     */
+    public PromisedReply<ServerMessage> delCredential(String meth, String val) {
+        if (mAttached) {
+            final Credential cred = new Credential(meth, val);
+            return mTinode.delCredential(cred).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    if (mCreds == null) {
+                        return null;
+                    }
+
+                    int idx = findCredential(cred, false);
+                    if (idx >= 0) {
+                        mCreds.remove(idx);
+                    }
+                    return null;
+                }
+            });
+        }
+
+        if (mTinode.isConnected()) {
+            return new PromisedReply<>(new NotSubscribedException());
+        }
+
+        return new PromisedReply<>(new NotConnectedException());
+    }
+
     @Override
     protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
 
