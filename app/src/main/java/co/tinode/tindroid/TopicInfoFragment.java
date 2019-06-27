@@ -33,6 +33,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.flexbox.FlexboxLayout;
+
 import java.util.Collection;
 
 import co.tinode.tindroid.account.ContactsManager;
@@ -254,6 +256,20 @@ public class TopicInfoFragment extends Fragment {
                         showEditTags();
                     }
                 });
+
+                LayoutInflater inflater = LayoutInflater.from(activity);
+                FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
+                tagsView.removeAllViews();
+
+                String[] tags = mTopic.getTags();
+                if (tags != null) {
+                    for (String tag : tags) {
+                        TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
+                        label.setText(tag);
+                        tagsView.addView(label);
+                    }
+                }
+
             } else {
                 button.setEnabled(true);
                 button.setAlpha(1f);
@@ -321,6 +337,8 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.isOwner()) {
             if (!TextUtils.isEmpty(title)) {
                 titleEditor.setText(title);
+                // noinspection ConstantConditions: false positive.
+                titleEditor.setSelection(title.length());
             }
         } else {
             editor.findViewById(R.id.editTitleWrapper).setVisibility(View.GONE);
@@ -490,6 +508,7 @@ public class TopicInfoFragment extends Fragment {
 
         final EditText tagsEditor = editor.findViewById(R.id.editTags);
         tagsEditor.setText(tags);
+        tagsEditor.setSelection(tags.length());
         builder
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override

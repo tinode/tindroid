@@ -1839,7 +1839,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         /**
-         * Called when topic descriptor as contact is updated
+         * Called when contact is updated.
          */
         public void onContUpdated(Subscription<SP, SR> sub) {
         }

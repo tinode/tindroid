@@ -86,10 +86,13 @@ public class Description<DP,DR> implements Serializable {
             changed ++;
         }
 
+        // FIXME: this does not take into account partial updates,
+        // such as updated avatar but not the title and vice versa.
         if (desc.pub != null) {
             pub = Tinode.isNull(desc.pub) ? null : desc.pub;
         }
 
+        // FIXME: this does not take into account partial updates.
         if (desc.priv != null) {
             priv = Tinode.isNull(desc.priv) ? null : desc.priv;
         }

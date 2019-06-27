@@ -918,12 +918,12 @@ public class UiUtils {
             }
 
             String tag;
-            if (idx == length - 1) {
-                // Last char
-                tag = tagList.substring(start);
-            } else if (tagList.charAt(idx) == ',' && !quoted) {
+            if (tagList.charAt(idx) == ',' && !quoted) {
                 tag = tagList.substring(start, idx);
                 start = idx + 1;
+            } else if (idx == length - 1) {
+                // Last char
+                tag = tagList.substring(start);
             } else {
                 continue;
             }

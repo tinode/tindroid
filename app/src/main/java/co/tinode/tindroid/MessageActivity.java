@@ -42,6 +42,7 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -232,13 +233,17 @@ public class MessageActivity extends AppCompatActivity {
 
     private void topicAttach() {
         setProgressIndicator(true);
-        mTopic.subscribe(null,
-                mTopic.getMetaGetBuilder()
-                        .withDesc()
-                        .withSub()
-                        .withData()
-                        .withDel()
-                        .build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
+                .withDesc()
+                .withSub()
+                .withData()
+                .withDel();
+
+        if (mTopic.isOwner()) {
+            builder = builder.withTags();
+        }
+
+        mTopic.subscribe(null, builder.build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
@@ -653,6 +658,19 @@ public class MessageActivity extends AppCompatActivity {
         @Override
         public void onContUpdate(final Subscription<VxCard, PrivateType> sub) {
             onMetaDesc(null);
+        }
+
+        @Override
+        public void onMetaTags(String[] tags) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Fragment fragment = getVisibleFragment();
+                    if (fragment instanceof TopicInfoFragment) {
+                        ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                    }
+                }
+            });
         }
 
         @Override
