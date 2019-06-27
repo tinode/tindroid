@@ -105,6 +105,11 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     if (idx >= 0) {
                         mCreds.remove(idx);
                     }
+
+                    // Notify listeners
+                    if (mListener != null && mListener instanceof MeListener) {
+                        ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
+                    }
                     return null;
                 }
             });
@@ -172,7 +177,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private int findCredential(Credential other, boolean anyUnconfirmed) {
         int i = 0;
         for (Credential cred : mCreds) {
-            if (cred.meth.equals(other.meth) && ((anyUnconfirmed && !cred.done) || cred.val.equals(other.val))) {
+            if (cred.meth.equals(other.meth) && ((anyUnconfirmed && !cred.isDone()) || cred.val.equals(other.val))) {
                 return i;
             }
             i++;
@@ -196,7 +201,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 int idx = findCredential(cred, false);
                 if (idx < 0) {
                     // Not found.
-                    if (!cred.done) {
+                    if (!cred.isDone()) {
                         // Unconfirmed credential replaces previous unconfirmed credential of the same method.
                         idx = findCredential(cred, true);
                         if (idx >= 0) {
@@ -208,7 +213,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 } else {
                     // Found. Maybe change 'done' status.
                     Credential el = this.mCreds.get(idx);
-                    el.done = cred.done;
+                    el.done = cred.isDone();
                 }
             }
         } else if (cred.resp != null) {
@@ -239,7 +244,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 mCreds.add(cred);
             }
         }
-
         if (mListener != null && mListener instanceof MeListener) {
             ((MeListener) mListener).onCredUpdated(creds);
         }

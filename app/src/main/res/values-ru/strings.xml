@@ -72,6 +72,7 @@
     <string name="confirm">Подтвердить</string>
     <string name="validation_example">Только цифры</string>
     <string name="validate_cred">Введите код, полученный вами по %1$s:</string>
+    <string name="validate_cred_title">Подтвердите контакт</string>
     <string name="typing_notifications_enabled">Показывать когда печатают</string>
     <string name="topic_title">Название группы</string>
     <string name="topic_private">Дополнительная информация</string>

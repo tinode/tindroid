@@ -17,6 +17,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -150,6 +151,19 @@ public class ChatsActivity extends AppCompatActivity {
     // This is called on Websocket thread.
     private class MeListener extends MeTopic.MeListener<VxCard> {
 
+        private void updateAccountInfoFragment() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AccountInfoFragment fragment = (AccountInfoFragment) getSupportFragmentManager().
+                            findFragmentByTag(FRAGMENT_EDIT_ACCOUNT);
+                    if (fragment != null && fragment.isVisible()) {
+                        fragment.updateFormValues(ChatsActivity.this, mMeTopic);
+                    }
+                }
+            });
+        }
+
         @Override
         public void onInfo(MsgServerInfo info) {
             // FIXME: this is not supposed to happen.
@@ -186,16 +200,7 @@ public class ChatsActivity extends AppCompatActivity {
                 desc.pub.constructBitmap();
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AccountInfoFragment fragment = (AccountInfoFragment) getSupportFragmentManager().
-                            findFragmentByTag(FRAGMENT_EDIT_ACCOUNT);
-                    if (fragment != null && fragment.isVisible()) {
-                        fragment.updateFormValues(ChatsActivity.this, mMeTopic);
-                    }
-                }
-            });
+            updateAccountInfoFragment();
         }
 
         @Override
@@ -207,6 +212,16 @@ public class ChatsActivity extends AppCompatActivity {
         public void onContUpdated(final Subscription<VxCard,PrivateType> sub) {
             // Method makes no sense in context of MeTopic.
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void onMetaTags(String[] tags) {
+            updateAccountInfoFragment();
+        }
+
+        @Override
+        public  void onCredUpdated(Credential[] cred) {
+            updateAccountInfoFragment();
         }
     }
 

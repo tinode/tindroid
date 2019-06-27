@@ -131,7 +131,7 @@ public class AccountInfoFragment extends Fragment {
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                // TODO: implement.
             }
         });
 
@@ -253,7 +253,7 @@ public class AccountInfoFragment extends Fragment {
                     ((TextView) container.findViewById(R.id.method)).setText(cred.meth);
                     ((TextView) container.findViewById(R.id.value)).setText(cred.val);
                     Button btn = container.findViewById(R.id.buttonConfirm);
-                    if (cred.done) {
+                    if (cred.isDone()) {
                         btn.setVisibility(View.GONE);
                     } else {
                         btn.setVisibility(View.VISIBLE);
@@ -359,7 +359,8 @@ public class AccountInfoFragment extends Fragment {
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_validate, null);
-        builder.setView(editor).setTitle(R.string.validate_cred)
+        builder.setView(editor).setTitle(R.string.validate_cred_title)
+                .setMessage(getString(R.string.validate_cred, meth))
                 // FIXME: check for empty input and refuse to dismiss the dialog.
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override

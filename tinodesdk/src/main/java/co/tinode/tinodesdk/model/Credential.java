@@ -45,6 +45,10 @@ public class Credential {
         this.params = params;
     }
 
+    public boolean isDone() {
+        return done != null && done;
+    }
+
     @SuppressWarnings("NullableProblems")
     @Override
     public String toString() {
