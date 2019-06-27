@@ -681,12 +681,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         MsgSetMeta<DP, DR> mset = null;
         MsgGetMeta mget;
         if (isNew()) {
-            // If this is a new topic, sync topic description
-            List<String> tags = null;
-            if (mTags != null) {
-                tags = Arrays.asList(mTags);
-            }
-            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, tags, null);
+            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, mTags, null);
             mget = null;
         } else {
             // FIXME: don't ask for tags if it's not a 'me' topic or the owner of a 'grp' topic.

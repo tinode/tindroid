@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layout_margin="@dimen/activity_default_margin">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_margin="@dimen/activity_default_margin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/topic_tags"
+            android:inputType="textMultiLine"
+            android:lines="2"
+            android:minLines="1"
+            android:gravity="top|start"
+            android:maxLines="4"
+            android:scrollbars="vertical"
+            tools:text="ttag1, ttag2, ttag3"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>

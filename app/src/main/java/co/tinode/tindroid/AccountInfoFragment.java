@@ -131,7 +131,7 @@ public class AccountInfoFragment extends Fragment {
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: implement.
+                showEditTags();
             }
         });
 
@@ -332,6 +332,37 @@ public class AccountInfoFragment extends Fragment {
                 .show();
     }
 
+    // Dialog for editing tags.
+    private void showEditTags() {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        final MeTopic me = Cache.getTinode().getMeTopic();
+        String[] tagArray = me.getTags();
+        String tags = tagArray != null ? TextUtils.join(", ", tagArray) : "";
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
+        builder.setView(editor).setTitle(R.string.tags_management);
+
+        final EditText tagsEditor = editor.findViewById(R.id.editTags);
+        tagsEditor.setText(tags);
+        builder
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String[] tags = UiUtils.parseTags(tagsEditor.getText().toString());
+                        // noinspection unchecked
+                        me.setMeta(new MsgSetMeta(tags))
+                                .thenCatch(new UiUtils.ToastFailureListener(activity));
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
     private void changePassword(String login, String password) {
         final Activity activity = getActivity();
         if (activity == null) {
@@ -373,7 +404,6 @@ public class AccountInfoFragment extends Fragment {
                         final MeTopic me = Cache.getTinode().getMeTopic();
                         // noinspection unchecked
                         me.setMeta(new MsgSetMeta(new Credential(meth, null, response, null)))
-                                .thenApply(null /* FIXME: mark credential as confirmed in the UI */)
                                 .thenCatch(new UiUtils.ToastFailureListener(activity));
                     }
                 })

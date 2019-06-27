@@ -901,22 +901,47 @@ public class UiUtils {
         }
     }
 
+    // Parse comma separated list of possible quoted string into an array.
     static String[] parseTags(final String tagList) {
-        if (tagList == null) {
+        if (TextUtils.isEmpty(tagList)) {
             return null;
         }
 
-        String[] rawTags = TextUtils.split(tagList, ",");
         ArrayList<String> tags = new ArrayList<>();
-        for (String tag : rawTags) {
+        int start = 0;
+        final int length = tagList.length();
+        boolean quoted = false;
+        for (int idx = 0; idx < length; idx++) {
+            if (tagList.charAt(idx) == '\"') {
+                // Toggle 'inside of quotes' state.
+                quoted = !quoted;
+            }
+
+            String tag;
+            if (idx == length - 1) {
+                // Last char
+                tag = tagList.substring(start);
+            } else if (tagList.charAt(idx) == ',' && !quoted) {
+                tag = tagList.substring(start, idx);
+                start = idx + 1;
+            } else {
+                continue;
+            }
+
             tag = tag.trim();
+            // Remove possible quotes.
+            if (tag.length() > 1 && tag.charAt(0) == '\"' && tag.charAt(tag.length()-1) == '\"') {
+                tag = tag.substring(1, tag.length() - 1).trim();
+            }
             if (tag.length() >= MIN_TAG_LENGTH) {
                 tags.add(tag);
             }
         }
+
         if (tags.size() == 0) {
             return null;
         }
+
         return tags.toArray(new String[]{});
     }
 

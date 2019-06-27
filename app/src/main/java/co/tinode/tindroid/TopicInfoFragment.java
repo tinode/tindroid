@@ -45,6 +45,7 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -214,6 +215,7 @@ public class TopicInfoFragment extends Fragment {
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
         final View defaultPermissions = activity.findViewById(R.id.defaultPermissionsWrapper);
         final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
+        final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
 
         // Launch edit dialog when title or subtitle is clicked.
         final View.OnClickListener l = new View.OnClickListener() {
@@ -243,9 +245,20 @@ public class TopicInfoFragment extends Fragment {
             if (mTopic.isOwner()) {
                 button.setEnabled(false);
                 button.setAlpha(0.5f);
+
+                tagManager.setVisibility(View.VISIBLE);
+                tagManager.findViewById(R.id.buttonManageTags)
+                        .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        showEditTags();
+                    }
+                });
             } else {
                 button.setEnabled(true);
                 button.setAlpha(1f);
+
+                tagManager.setVisibility(View.GONE);
             }
 
             button = activity.findViewById(R.id.buttonAddMembers);
@@ -267,6 +280,8 @@ public class TopicInfoFragment extends Fragment {
             uploadAvatarButton.setVisibility(View.GONE);
 
             groupMembers.setVisibility(View.GONE);
+
+            tagManager.setVisibility(View.GONE);
 
             activity.findViewById(R.id.singleUserPermissions).setVisibility(View.GONE);
             activity.findViewById(R.id.p2pPermissions).setVisibility(View.VISIBLE);
@@ -457,6 +472,36 @@ public class TopicInfoFragment extends Fragment {
             actions.findViewById(R.id.buttonBlock).setVisibility(View.GONE);
         }
         dialog.show();
+    }
+
+    // Dialog for editing tags.
+    private void showEditTags() {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        String[] tagArray = mTopic.getTags();
+        String tags = tagArray != null ? TextUtils.join(", ", mTopic.getTags()) : "";
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
+        builder.setView(editor).setTitle(R.string.tags_management);
+
+        final EditText tagsEditor = editor.findViewById(R.id.editTags);
+        tagsEditor.setText(tags);
+        builder
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String[] tags = UiUtils.parseTags(tagsEditor.getText().toString());
+                        // noinspection unchecked
+                        mTopic.setMeta(new MsgSetMeta(tags))
+                                .thenCatch(new UiUtils.ToastFailureListener(activity));
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     void notifyDataSetChanged() {
