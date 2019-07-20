@@ -46,12 +46,7 @@ websocket support.
 
 * [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
 to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
-* [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications.
-In order to compile the app you need to [download your own](https://developers.google.com/android/guides/google-services-plugin)
-config file `google-services.json`. Once downloaded, copy it to the `./app/` folder. The
-config file contains Google-provided passwords and as such cannot be shared. If you don't do it the
-app will crash with non-obvious exceptions. The Google-provided server key must be copied to `tinode.conf`, see
-details [here](https://github.com/tinode/chat).
+* [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
 
 ## Other
 
@@ -63,6 +58,15 @@ The [`contacts.vcf`](./contacts.vcf) contains a list of contacts which can be us
 ```
 adb push contacts.vcf /sdcard/contacts.vcf`
 ```
+
+## Push notifications
+
+If you want to use the app with your own server and want push notification to work you have to set them up:
+
+* Register at https://firebase.google.com/, set up the project if you have not done so already.
+* [Download your own](https://developers.google.com/android/guides/google-services-plugin) config file `google-services.json` and place it to the `app/` folder of your copy of Tindroid project. The config file contains keys specific to your Firebase/FCM registration.
+* Copy Google-provided server key to `tinode.conf`, see details [here](https://github.com/tinode/chat/blob/master/docs/faq.md#q-how-to-setup-fcm-push-notifications).
+* Recompile the app. If you add `google-services.json` incorrectly the app will compile but will later crash with non-obvious exceptions.
 
 ## Translations
 
