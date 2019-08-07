@@ -357,9 +357,8 @@ public class FindFragment extends Fragment {
             setProgressBarVisible(true);
             fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
                 @Override
-                public PromisedReply<ServerMessage> onFinally() {
+                public void onFinally() {
                     setProgressBarVisible(false);
-                    return null;
                 }
             });
         } else {

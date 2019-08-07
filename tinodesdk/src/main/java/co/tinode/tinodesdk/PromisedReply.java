@@ -169,12 +169,14 @@ public class PromisedReply<T> {
         thenApply(new SuccessListener<T>() {
             @Override
             public PromisedReply<T> onSuccess(T result) throws Exception {
-                return finished.onFinally();
+                finished.onFinally();
+                return null;
             }
         }, new FailureListener<T>() {
             @Override
             public <E extends Exception> PromisedReply<T> onFailure(E err) throws Exception {
-                return finished.onFinally();
+                finished.onFinally();
+                return null;
             }
         });
     }
@@ -345,6 +347,6 @@ public class PromisedReply<T> {
     }
 
     public static abstract class FinalListener<U> {
-        public abstract PromisedReply<U> onFinally() throws Exception;
+        public abstract void onFinally() throws Exception;
     }
 }

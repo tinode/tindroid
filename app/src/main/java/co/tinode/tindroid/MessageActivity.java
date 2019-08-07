@@ -435,10 +435,9 @@ public class MessageActivity extends AppCompatActivity {
                     .thenCatch(new UiUtils.ToastFailureListener(this))
                     .thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onFinally() {
+                        public void onFinally() {
                             // Updates message list with "delivered" or "failed" icon.
                             runMessagesLoader();
-                            return null;
                         }
                     });
             return true;
