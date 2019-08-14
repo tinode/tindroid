@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Tindroid</string>
     <string name="app_version">Версия</string>
     <string name="login_hint">Логин</string>
     <string name="password_hint">Пароль</string>
