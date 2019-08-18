@@ -117,11 +117,11 @@ public class LargeFileHelper {
     public long download(String downloadFrom, OutputStream out, FileHelperProgress progress) throws IOException {
         URL url = new URL(downloadFrom);
         long size = 0;
-        if (!url.getHost().equals(mHost)) {
-            // As a security measure refuse to download from an absolute URL.
+        String scheme = url.getProtocol();
+        if (!url.getHost().equals(mHost) || (!scheme.equals("http") && !scheme.equals("https"))) {
+            // As a security measure refuse to download from an absolute URL or using non-http(s) protocols.
             return size;
         }
-
         HttpURLConnection urlConnection = null;
         try {
             urlConnection = (HttpURLConnection) url.openConnection();

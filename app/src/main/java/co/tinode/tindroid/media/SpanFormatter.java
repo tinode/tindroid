@@ -165,7 +165,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             } catch (ClassCastException ignored) {
             }
 
-            result.addNode( "\n");
+            // result.addNode( "\n");
 
             // Insert document icon
             Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_insert_drive_file);

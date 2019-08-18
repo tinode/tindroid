@@ -773,9 +773,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else {
                 Object ref = data.get("ref");
                 if (ref instanceof String) {
-                    LargeFileHelper lfh = Cache.getTinode().getFileUploader();
-                    mActivity.startDownload(Uri.parse(new URL(Cache.getTinode().getBaseUrl(), (String) ref).toString()),
-                            fname, mimeType, lfh.headers());
+                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
+                    String scheme = url.getProtocol();
+                    // Make sure the file is downloaded over http or https protocols.
+                    if (scheme.equals("http") || scheme.equals("https")) {
+                        LargeFileHelper lfh = Cache.getTinode().getFileUploader();
+                        mActivity.startDownload(Uri.parse(url.toString()), fname, mimeType, lfh.headers());
+                    } else {
+                        Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
+                        Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     Log.w(TAG, "Invalid or missing attachment");
                     Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
@@ -784,7 +791,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         } catch (NullPointerException | ClassCastException | IOException ex) {
             Log.w(TAG, "Failed to save attachment to storage", ex);
-            Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
         } catch (ActivityNotFoundException ex) {
             Log.w(TAG, "No application can handle downloaded file");
             Toast.makeText(mActivity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
@@ -854,8 +861,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     // Click on an URL
                     try {
                         if (data != null) {
-                            String url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url")).toString();
-                            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                            URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url"));
+                            String scheme = url.getProtocol();
+                            if (!scheme.equals("http") && !scheme.equals("https")) {
+                                // As a security measure refuse to follow URLs with non-http(s) protocols.
+                                break;
+                            }
+                            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
                         }
                     } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
                     }
@@ -930,8 +942,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 mActivity.sendMessage(newMsg);
 
                             } else if ("url".equals(actionType)) {
-                                String url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref")).toString();
-                                Uri uri =  Uri.parse(url);
+                                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));
+                                String scheme = url.getProtocol();
+                                if (!scheme.equals("http") && !scheme.equals("https")) {
+                                    // As a security measure refuse to follow URLs with non-http(s) protocols.
+                                    break;
+                                }
+                                Uri uri =  Uri.parse(url.toString());
                                 Uri.Builder builder = uri.buildUpon();
                                 if (!TextUtils.isEmpty(name)) {
                                     builder = builder.appendQueryParameter(name,

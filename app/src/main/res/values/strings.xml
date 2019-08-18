@@ -145,7 +145,8 @@
     <string name="file_manager_not_found">File manager not found</string>
     <string name="attachment_too_large">The file size %1$s exceeds the %2$s limit.</string>
 
-    <string name="failed_to_download">Failed to save downloaded file</string>
+    <string name="failed_to_download">Failed to download the file</string>
+    <string name="failed_to_save_download">Failed to save downloaded file</string>
     <string name="failed_to_open_file">No application can view the file of this type</string>
     <string name="failed_empty_password">Not changed: empty password</string>
     <string name="failed_credential_confirmation">Incorrect confirmation code</string>

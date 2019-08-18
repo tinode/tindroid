@@ -122,7 +122,8 @@
     <string name="group_members">Участники чата</string>
     <string name="forgot_password">Забыл пароль</string>
     <string name="failed_to_create_topic">Ошибка создания чата</string>
-    <string name="failed_to_download">Ошибка сохранения файла</string>
+    <string name="failed_to_download">Не удалось скачать файл</string>
+    <string name="failed_to_save_download">Ошибка сохранения файла</string>
     <string name="failed_to_open_file">Неизвестный тип файла</string>
     <string name="file_manager_not_found">Нет возможности просмотра файлов</string>
     <string name="confirm_logout">Вы действительно хотите выйти из приложения?</string>
