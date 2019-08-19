@@ -82,20 +82,9 @@ public class StartChatActivity extends AppCompatActivity {
         });
     }
 
-
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String permissions[], @NonNull int[] grantResults) {
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == UiUtils.READ_EXTERNAL_STORAGE_PERMISSION) {
             // If request is cancelled, the result arrays are empty.
             if (grantResults.length > 0
@@ -111,7 +100,7 @@ public class StartChatActivity extends AppCompatActivity {
         Fragment mById;
 
         PagerAdapter(FragmentManager fm) {
-            super(fm);
+            super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         }
 
         @Override

@@ -37,16 +37,14 @@ public class SplashActivity extends AppCompatActivity {
 
                 // Account found, try to use it for login
                 UiUtils.loginWithSavedAccount(this, accountManager, account);
+                finish();
                 return;
             }
         }
 
-        startActivity(new Intent(this, LoginActivity.class));
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+        startActivity(intent);
         finish();
     }
 }

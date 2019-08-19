@@ -123,12 +123,12 @@ public class LoginActivity extends AppCompatActivity {
 
         if (TextUtils.isEmpty(cred)) {
             // Display the login form.
-            showFragment(FRAGMENT_LOGIN);
+            showFragment(FRAGMENT_LOGIN, null, false);
         } else {
             // Ask for validation code
             Bundle args = new Bundle();
             args.putString("method", cred);
-            showFragment(FRAGMENT_CREDENTIALS, args);
+            showFragment(FRAGMENT_CREDENTIALS, args, false);
         }
 
         // Check and possibly request runtime permissions.
@@ -250,10 +250,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     void showFragment(String tag) {
-        showFragment(tag, null);
+        showFragment(tag, null, true);
     }
 
-    private void showFragment(String tag, Bundle args) {
+    private void showFragment(String tag, Bundle args, Boolean addToBackstack) {
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
@@ -282,11 +282,13 @@ public class LoginActivity extends AppCompatActivity {
             fragment.setArguments(args);
         }
 
-        fm.beginTransaction()
+        FragmentTransaction tx = fm.beginTransaction()
                 .replace(R.id.contentFragment, fragment)
-                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                .addToBackStack(null)
-                .commit();
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        if (addToBackstack) {
+            tx = tx.addToBackStack(null);
+        }
+        tx.commit();
     }
 
     /**

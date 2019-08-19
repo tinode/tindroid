@@ -324,6 +324,7 @@ public class UiUtils {
                         }
                     }
                 }
+                launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
                 activity.startActivity(launch);
             }
         }, null);

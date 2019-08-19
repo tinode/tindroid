@@ -18,8 +18,6 @@ import android.widget.SearchView;
 import androidx.appcompat.widget.ShareActionProvider;
 import android.widget.Toast;
 
-import java.io.IOException;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
