@@ -190,13 +190,13 @@ public class MessageActivity extends AppCompatActivity {
         mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
-            showFragment(FRAGMENT_MESSAGES, false, null);
+            showFragment(FRAGMENT_MESSAGES, null, false);
         } else {
             // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
             UiUtils.setupToolbar(this, null, mTopicName, false);
             mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
-            showFragment(FRAGMENT_INVALID, false, null);
+            showFragment(FRAGMENT_INVALID, null, false);
         }
         mTopic.setListener(new TListener());
 
@@ -248,7 +248,7 @@ public class MessageActivity extends AppCompatActivity {
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                         mTopicName, mTopic.getOnline());
-                showFragment(FRAGMENT_MESSAGES, false, null);
+                showFragment(FRAGMENT_MESSAGES, null, false);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -274,7 +274,7 @@ public class MessageActivity extends AppCompatActivity {
                 if (!(err instanceof NotConnectedException)) {
                     Log.w(TAG, "Subscribe failed", err);
                     if (err instanceof ServerResponseException) {
-                        showFragment(FRAGMENT_INVALID, false, null);
+                        showFragment(FRAGMENT_INVALID, null, false);
                     }
                 }
                 return null;
@@ -311,7 +311,7 @@ public class MessageActivity extends AppCompatActivity {
         int id = item.getItemId();
         switch (id) {
             case R.id.action_view_contact:
-                showFragment(FRAGMENT_INFO, true, null);
+                showFragment(FRAGMENT_INFO,null, false);
                 return true;
 
             case R.id.action_archive:
@@ -372,7 +372,7 @@ public class MessageActivity extends AppCompatActivity {
         return fragment != null && fragment.isVisible();
     }
 
-    void showFragment(String tag, boolean addToBackstack, Bundle args) {
+    void showFragment(String tag, Bundle args, boolean addToBackstack) {
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
