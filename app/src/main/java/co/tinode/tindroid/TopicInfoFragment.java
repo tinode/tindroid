@@ -154,7 +154,7 @@ public class TopicInfoFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS,
-                        true, null);
+                        null, false);
             }
         });
 

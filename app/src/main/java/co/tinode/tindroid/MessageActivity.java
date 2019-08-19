@@ -311,7 +311,7 @@ public class MessageActivity extends AppCompatActivity {
         int id = item.getItemId();
         switch (id) {
             case R.id.action_view_contact:
-                showFragment(FRAGMENT_INFO,null, false);
+                showFragment(FRAGMENT_INFO, null, true);
                 return true;
 
             case R.id.action_archive:

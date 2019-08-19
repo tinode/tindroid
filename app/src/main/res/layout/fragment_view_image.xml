@@ -25,8 +25,12 @@
         android:layout_height="wrap_content">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:maxWidth="10dp"
+            android:paddingStart="@dimen/label_h_padding"
+            android:paddingEnd="@dimen/label_h_padding"
             android:orientation="vertical">
 
             <TextView
@@ -39,14 +43,10 @@
                 android:id="@+id/file_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
+                android:ellipsize="middle"
+                android:singleLine="true"
                 tools:text="some_image.png"/>
         </LinearLayout>
-
-        <Space
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -67,14 +67,12 @@
                 tools:text="image/png"/>
         </LinearLayout>
 
-        <Space
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"/>
-
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:paddingStart="@dimen/label_h_padding"
+            android:paddingEnd="@dimen/label_h_padding"
             android:orientation="vertical">
 
             <TextView

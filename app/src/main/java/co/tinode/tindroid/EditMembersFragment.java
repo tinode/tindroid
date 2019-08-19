@@ -183,7 +183,7 @@ public class EditMembersFragment extends Fragment {
                 mTopic.eject(key, false).thenCatch(mFailureListener);
             }
 
-            ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_INFO, false, null);
+            ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_INFO, null, false);
 
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
