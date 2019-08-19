@@ -107,9 +107,11 @@ public class FindFragment extends Fragment {
             public void onCLick(final String topicName) {
                 Intent intent = new Intent(activity, MessageActivity.class);
                 // See discussion here: https://github.com/tinode/tindroid/issues/39
-                // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("topic", topicName);
                 activity.startActivity(intent);
+                // Remove StartChatActivity from stack.
+                activity.finish();
             }
         });
 

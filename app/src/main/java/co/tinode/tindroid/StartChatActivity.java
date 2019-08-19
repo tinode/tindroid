@@ -52,6 +52,7 @@ public class StartChatActivity extends AppCompatActivity {
                     Intent intent = new Intent(StartChatActivity.this, ChatsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
+                    finish();
                 }
             });
         }
