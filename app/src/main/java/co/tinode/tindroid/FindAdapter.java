@@ -198,7 +198,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     }
 
     private int getCursorItemCount() {
-        return mCursor == null ? 0 : mCursor.getCount();
+        return mCursor == null || mCursor.isClosed() ? 0 : mCursor.getCount();
     }
 
     private int getFoundItemCount() {
