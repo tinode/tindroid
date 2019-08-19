@@ -99,7 +99,6 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 getSupportFragmentManager().popBackStack();
-                //showFragment(FRAGMENT_LOGIN);
             }
         });
 

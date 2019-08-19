@@ -124,7 +124,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     .thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) throws Exception {
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) {
                                     return tinode.loginBasic(
                                             login,
                                             password);
