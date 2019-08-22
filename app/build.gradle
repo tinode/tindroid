@@ -39,6 +39,7 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
+    buildToolsVersion = '28.0.3'
 }
 
 static def gitVersionCode() {
@@ -69,7 +70,7 @@ dependencies {
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
     implementation 'com.google.android:flexbox:1.1.0'
     implementation 'com.google.android.material:material:1.1.0-alpha09'
-    implementation 'com.google.firebase:firebase-core:17.0.1'
-    implementation 'com.google.firebase:firebase-messaging:19.0.1'
+    implementation 'com.google.firebase:firebase-core:17.1.0'
+    implementation 'com.google.firebase:firebase-messaging:20.0.0'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.9.2'
 }
