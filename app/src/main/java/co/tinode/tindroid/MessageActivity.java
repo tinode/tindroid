@@ -374,7 +374,6 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     void showFragment(String tag, Bundle args, boolean addToBackstack) {
-        Log.w(TAG, "showFragment " + tag + "; addToBS:" + addToBackstack);
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
@@ -411,14 +410,11 @@ public class MessageActivity extends AppCompatActivity {
 
         FragmentTransaction trx = fm.beginTransaction();
         if (!fragment.isAdded()) {
-            Log.w(TAG, "showFragment " + tag + " added");
             trx = trx.replace(R.id.contentFragment, fragment, tag)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         } else if (!fragment.isVisible()) {
-            Log.w(TAG, "showFragment " + tag + " shown");
             trx = trx.show(fragment);
         } else {
-            Log.w(TAG, "showFragment " + tag + " NONE");
             addToBackstack = false;
         }
 
