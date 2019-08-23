@@ -56,13 +56,14 @@ import co.tinode.tinodesdk.model.Subscription;
  * View to display a single conversation
  */
 public class MessageActivity extends AppCompatActivity {
+    private static final String TAG = "MessageActivity";
 
     static final String FRAGMENT_MESSAGES = "msg";
     static final String FRAGMENT_INVALID = "invalid";
     static final String FRAGMENT_INFO = "info";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
-    private static final String TAG = "MessageActivity";
+
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
 
@@ -373,6 +374,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     void showFragment(String tag, Bundle args, boolean addToBackstack) {
+        Log.w(TAG, "showFragment " + tag + "; addToBS:" + addToBackstack);
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
@@ -407,13 +409,23 @@ public class MessageActivity extends AppCompatActivity {
             fragment.setArguments(args);
         }
 
-        if (!fragment.isVisible()) {
-            FragmentTransaction trx = fm.beginTransaction()
-                    .replace(R.id.contentFragment, fragment, tag)
+        FragmentTransaction trx = fm.beginTransaction();
+        if (!fragment.isAdded()) {
+            Log.w(TAG, "showFragment " + tag + " added");
+            trx = trx.replace(R.id.contentFragment, fragment, tag)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            if (addToBackstack) {
-                trx.addToBackStack(tag);
-            }
+        } else if (!fragment.isVisible()) {
+            Log.w(TAG, "showFragment " + tag + " shown");
+            trx = trx.show(fragment);
+        } else {
+            Log.w(TAG, "showFragment " + tag + " NONE");
+            addToBackstack = false;
+        }
+
+        if (addToBackstack) {
+            trx.addToBackStack(tag);
+        }
+        if (!trx.isEmpty()) {
             trx.commit();
         }
     }
