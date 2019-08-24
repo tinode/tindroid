@@ -202,7 +202,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     }
 
     private int getFoundItemCount() {
-        return mFound.size();
+        return mFound != null ? mFound.size() : 0;
     }
 
     private Object getItemAt(int position) {
