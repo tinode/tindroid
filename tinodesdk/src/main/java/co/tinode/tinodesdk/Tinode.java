@@ -319,6 +319,10 @@ public class Tinode {
     }
 
     private void setTopicsUpdated(Date date) {
+        if (date == null) {
+            return;
+        }
+
         if (mTopicsUpdated == null || mTopicsUpdated.before(date)) {
             mTopicsUpdated = date;
         }
@@ -565,7 +569,9 @@ public class Tinode {
 
             if (topic != null) {
                 topic.routeMeta(pkt.meta);
-                setTopicsUpdated(topic.getUpdated());
+                if (!topic.isFndType() && !topic.isMeType()) {
+                    setTopicsUpdated(topic.getUpdated());
+                }
             }
 
             if (mListener != null) {

@@ -153,13 +153,13 @@ public class LoginActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ArrayList<String> permissions = new ArrayList<>();
 
-            if (!UiUtils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
+            if (!UiUtils.isPermissionGranted(this, Manifest.permission.GET_ACCOUNTS)) {
                 permissions.add(Manifest.permission.GET_ACCOUNTS);
             }
-            if (!UiUtils.checkPermission(this, Manifest.permission.READ_CONTACTS)) {
+            if (!UiUtils.isPermissionGranted(this, Manifest.permission.READ_CONTACTS)) {
                 permissions.add(Manifest.permission.READ_CONTACTS);
             }
-            if (!UiUtils.checkPermission(this, Manifest.permission.WRITE_CONTACTS)) {
+            if (!UiUtils.isPermissionGranted(this, Manifest.permission.WRITE_CONTACTS)) {
                 permissions.add(Manifest.permission.WRITE_CONTACTS);
             }
 

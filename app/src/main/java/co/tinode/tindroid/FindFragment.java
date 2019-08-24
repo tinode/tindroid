@@ -1,8 +1,10 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -15,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
+
 import androidx.appcompat.widget.ShareActionProvider;
 import android.widget.Toast;
 
@@ -49,6 +52,8 @@ public class FindFragment extends Fragment {
 
     private static final String TAG = "FindFragment";
 
+    private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+
     // Delay in milliseconds between the last keystroke and time when the query is sent to the server.
     private static final int SEARCH_REQUEST_DELAY = 1000;
 
@@ -63,6 +68,9 @@ public class FindFragment extends Fragment {
     private String mSearchTerm; // Stores the current search query term
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
     private FindAdapter mAdapter = null;
+
+    // Limit the number of times permissions are requested per session.
+    private boolean mPermissionsAlreadyRequested = false;
 
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
@@ -167,6 +175,7 @@ public class FindFragment extends Fragment {
             Toast.makeText(fragment.getContext(), R.string.action_failed, Toast.LENGTH_LONG).show();
         }
 
+        mPermissionsAlreadyRequested = false;
         mAdapter.resetFound(getActivity(), mSearchTerm);
         // Refresh cursor.
         restartLoader(mSearchTerm);
@@ -391,9 +400,9 @@ public class FindFragment extends Fragment {
     }
 
     // TODO: Add onBackPressed handing to parent Activity.
-    public boolean onBackPressed() {
-        return false;
-    }
+    // public boolean onBackPressed() {
+    //    return false;
+    //}
 
     private class FndListener extends FndTopic.FndListener<VxCard> {
         @Override
@@ -417,8 +426,24 @@ public class FindFragment extends Fragment {
             return;
         }
 
-        Bundle args = new Bundle();
-        args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
-        LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
+        if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+            Bundle args = new Bundle();
+            args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
+            LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
+        } else if (!mPermissionsAlreadyRequested) {
+            mPermissionsAlreadyRequested = true;
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission is granted
+                restartLoader(mSearchTerm);
+            }
+        }
     }
 }

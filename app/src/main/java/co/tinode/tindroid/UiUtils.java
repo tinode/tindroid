@@ -262,8 +262,7 @@ public class UiUtils {
         activity.finish();
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    static boolean checkPermission(Context context, String permission) {
+    static boolean isPermissionGranted(Context context, String permission) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
@@ -336,7 +335,7 @@ public class UiUtils {
         Account account = null;
 
         // Run-time check for permission to GET_ACCOUNTS
-        if (!UiUtils.checkPermission(activity, android.Manifest.permission.GET_ACCOUNTS)) {
+        if (!UiUtils.isPermissionGranted(activity, android.Manifest.permission.GET_ACCOUNTS)) {
             // Don't have permission. It's the first launch or the user denied access.
             // Fail and go to full login. We should not ask for permission on the splash screen.
             Log.d(TAG, "NO permission to get accounts");
@@ -415,7 +414,7 @@ public class UiUtils {
             return;
         }
 
-        if (!checkPermission(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if (!isPermissionGranted(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
             ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
                     READ_EXTERNAL_STORAGE_PERMISSION);
         } else {
