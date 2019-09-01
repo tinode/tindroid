@@ -638,8 +638,10 @@ public class MessagesFragment extends Fragment
             return;
         }
         final EditText inputField = activity.findViewById(R.id.editMessage);
+        if (inputField == null) {
+            return;
+        }
         String message = inputField.getText().toString().trim();
-        // notifyDataSetChanged();
         if (!message.equals("")) {
             if (sendMessage(Drafty.parse(message))) {
                 // Message is successfully queued, clear text from the input field and redraw the list.
