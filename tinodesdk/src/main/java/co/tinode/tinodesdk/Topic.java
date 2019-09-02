@@ -802,8 +802,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             int seq = ctrl.getIntParam("seq", 0);
             if (seq > 0) {
                 setSeq(seq);
+                setTouched(ctrl.ts);
                 if (id > 0 && mStore != null) {
-                    if (mStore.msgDelivered(Topic.this, id, ctrl.ts, seq)) {
+                    if (mStore.msgDelivered(this, id, ctrl.ts, seq)) {
                         setRecv(seq);
                     }
                 } else {
@@ -811,7 +812,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 }
                 setRead(seq);
                 if (mStore != null) {
-                    mStore.setRead(Topic.this, seq);
+                    mStore.setRead(this, seq);
                 }
             }
         }
