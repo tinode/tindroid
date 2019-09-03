@@ -468,6 +468,10 @@ public class UiUtils {
     }
 
     private static Bitmap extractBitmap(final Activity activity, final Intent data) {
+        if (data == null) {
+            return null;
+        }
+        
         try {
             return MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
                     data.getData());
