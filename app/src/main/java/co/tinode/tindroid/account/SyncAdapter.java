@@ -15,13 +15,11 @@ import android.util.SparseArray;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tinodesdk.InProgressException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -96,9 +94,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         }
 
         // Load contacts and send them to server as fnd.Private.
-        SparseArray<Utils.ContactHolder> contactList =
-                Utils.fetchContacts(getContext().getContentResolver(),
-                        Utils.FETCH_EMAIL | Utils.FETCH_PHONE);
+        SparseArray<Utils.ContactHolder> contactList = Utils.fetchContacts(getContext().getContentResolver(),
+                Utils.FETCH_EMAIL | Utils.FETCH_PHONE);
         StringBuilder contactsBuilder = new StringBuilder();
         for (int i=0; i<contactList.size(); i++) {
             Utils.ContactHolder ch = contactList.get(contactList.keyAt(i));

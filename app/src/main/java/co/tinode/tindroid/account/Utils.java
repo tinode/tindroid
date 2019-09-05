@@ -10,6 +10,7 @@ import android.util.SparseArray;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -18,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
-
 
 /**
  * Constants and misc utils
@@ -160,12 +160,12 @@ public class Utils {
                 case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
                     // This is a phone number. Use mobile phones only.
                     if (type == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
-                        // Log.d(TAG, "Adding mobile phone '" + data + "' to contact=" + contact_id);
                         try {
                             // Normalize phone number format
-                            data = phoneUtil.format(phoneUtil.parse(data, country),
-                                    PhoneNumberUtil.PhoneNumberFormat.E164);
-                            holder.putPhone(data);
+                            Phonenumber.PhoneNumber number = phoneUtil.parse(data, country);
+                            if (phoneUtil.isValidNumber(number)) {
+                                holder.putPhone(phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.E164));
+                            }
                         } catch (NumberParseException e) {
                             e.printStackTrace();
                         }
