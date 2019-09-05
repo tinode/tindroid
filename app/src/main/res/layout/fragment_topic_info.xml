@@ -271,6 +271,69 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/buttonClearMessages"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawablePadding="4sp"
+                android:text="@string/clear_messages"
+                android:textColor="@color/colorTextPrimary"
+                app:drawableStartCompat="@drawable/ic_delete"/>
+
+            <Button
+                android:id="@+id/buttonLeaveP2P"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawablePadding="4sp"
+                android:text="@string/leave_conversation"
+                android:textColor="@color/colorDangerDark"
+                app:drawableStartCompat="@drawable/ic_exit_red"/>
+
+            <Button
+                android:id="@+id/buttonBlock"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawablePadding="4sp"
+                android:text="@string/block_contact"
+                android:textColor="@color/colorDangerDark"
+                app:drawableStartCompat="@drawable/ic_block_red"/>
+
+            <Button
+                android:id="@+id/buttonReportContact"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawablePadding="4sp"
+                android:text="@string/report_contact"
+                android:textColor="@color/colorDangerDark"
+                app:drawableStartCompat="@drawable/ic_report_red"/>
+
+            <Button
+                android:id="@+id/buttonReportGroup"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawablePadding="4sp"
+                android:text="@string/report_group"
+                android:textColor="@color/colorDangerDark"
+                app:drawableStartCompat="@drawable/ic_report_red"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@color/grey"/>
+        </LinearLayout>
+
         <RelativeLayout
             android:id="@+id/groupMembersWrapper"
             android:layout_width="match_parent"
@@ -290,23 +353,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/membersTitle"
-                android:contentDescription="@string/add_members"
+                android:contentDescription="@string/manage_members"
                 android:drawablePadding="4sp"
                 android:text="@string/add_members"
                 android:textColor="@color/colorTextPrimary"
                 app:drawableStartCompat="@drawable/ic_person_add"/>
-
-            <Button
-                android:id="@+id/buttonLeaveGroup"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/membersTitle"
-                android:layout_toEndOf="@id/buttonAddMembers"
-                android:drawablePadding="4sp"
-                android:text="@string/leave_group"
-                android:textColor="@color/colorDangerDark"
-                app:drawableStartCompat="@drawable/ic_exit_red"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/groupMembers"
