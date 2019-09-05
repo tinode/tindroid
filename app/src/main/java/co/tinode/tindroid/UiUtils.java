@@ -269,64 +269,77 @@ public class UiUtils {
 
     static void loginWithSavedAccount(final Activity activity,
                                       final AccountManager accountManager,
-                                      final Account account) {
+                                      final Account account,
+                                      final PromisedReply<ServerMessage> resolveWhenDone) {
         accountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
             @Override
             public void run(AccountManagerFuture<Bundle> future) {
-                Bundle result = null;
                 try {
-                    result = future.getResult(); // This blocks until the future is ready.
-                } catch (OperationCanceledException e) {
-                    Log.i(TAG, "Get Existing Account canceled.");
-                } catch (AuthenticatorException e) {
-                    Log.e(TAG, "AuthenticatorException: ", e);
-                } catch (IOException e) {
-                    Log.e(TAG, "IOException: ", e);
-                }
+                    Bundle result = future.getResult(); // This blocks until the future is ready.
 
-                Intent launch = new Intent(activity, LoginActivity.class);
-                if (result != null) {
-                    final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
-                    if (!TextUtils.isEmpty(token)) {
-                        final SharedPreferences sharedPref
-                                = PreferenceManager.getDefaultSharedPreferences(activity);
-                        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-                        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
-                        try {
-                            // Connecting with synchronous calls because this is not the UI thread.
-                            final Tinode tinode = Cache.getTinode();
-                            tinode.setAutoLoginToken(token);
-                            tinode.connect(hostName, tls).getResult();
-                            ServerMessage msg = tinode.loginToken(token).getResult();
-                            // Logged in successfully. Save refreshed token for future use.
-                            accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
-                            if (msg == null || msg.ctrl.code < 300) {
-                                // Logged in successfully.
-                                Log.d(TAG, "LoginWithSavedAccount succeeded, sending to contacts");
-                                // Go to Contacts
-                                launch = new Intent(activity, ChatsActivity.class);
-                            } else {
-                                Log.d(TAG, "LoginWithSavedAccount failed due to credentials, sending to login");
-                                Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
-                                launch.putExtra("credential", it.next());
+                    Intent launch = new Intent(activity, LoginActivity.class);
+                    if (result != null) {
+                        final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
+                        if (!TextUtils.isEmpty(token)) {
+                            final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
+                            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
+                            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
+                            try {
+                                // Connecting with synchronous calls because this is not the UI thread.
+                                final Tinode tinode = Cache.getTinode();
+                                tinode.setAutoLoginToken(token);
+                                tinode.connect(hostName, tls).getResult();
+                                ServerMessage msg = tinode.loginToken(token).getResult();
+                                // Logged in successfully. Save refreshed token for future use.
+                                accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+                                if (msg == null || msg.ctrl.code < 300) {
+                                    // Logged in successfully. Go to Contacts.
+                                    if (resolveWhenDone != null) {
+                                        resolveWhenDone.resolve(msg);
+                                        launch = null;
+                                    } else {
+                                        launch = new Intent(activity, ChatsActivity.class);
+                                    }
+                                } else {
+                                    Log.d(TAG, "LoginWithSavedAccount requires credentials, sending to login");
+                                    Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
+                                    if (it != null && it.hasNext()) {
+                                        launch.putExtra("credential", it.next());
+                                    } else {
+                                        Log.e(TAG, "LoginWithSavedAccount requires credentials but lists none");
+                                    }
+                                }
+                            } catch (IOException ex) {
+                                Log.d(TAG, "Network failure", ex);
+                                // Login failed due to network error. If we have UID, go to Contacts, otherwise to Login.
+                                launch = new Intent(activity, BaseDb.getInstance().isReady() ? ChatsActivity.class : LoginActivity.class);
+                                if (resolveWhenDone != null) {
+                                    resolveWhenDone.reject(ex);
+                                }
+                            } catch (Exception ex) {
+                                Log.d(TAG, "Other failure", ex);
+                                // Login failed due to invalid (expired) token
+                                accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                                if (resolveWhenDone != null) {
+                                    resolveWhenDone.reject(ex);
+                                }
                             }
-                        } catch (IOException ex) {
-                            // Login failed due to network error.
-                            // If we have UID, go to Contacts, otherwise to Login
-                            launch = new Intent(activity, BaseDb.getInstance().isReady() ?
-                                    ChatsActivity.class : LoginActivity.class);
-                            Log.d(TAG, "Network failure/" + (BaseDb.getInstance().isReady() ? "DB ready" : "DB NOT ready"));
-                        } catch (Exception ex) {
-                            Log.d(TAG, "Other failure", ex);
-                            // Login failed due to invalid (expired) token
-                            accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                         }
                     }
+                    if (launch != null) {
+                        launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+                        activity.startActivity(launch);
+                        activity.finish();
+                    }
                 }
-                launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-                activity.startActivity(launch);
-                activity.finish();
-            }
+                catch (OperationCanceledException e) {
+                    Log.i(TAG, "Request to get an existing account was canceled.", e);
+                } catch (AuthenticatorException e) {
+                    Log.e(TAG, "No access to saved account", e);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failure to login with saved account", e);
+                }
+        }
         }, null);
     }
 
@@ -471,7 +484,7 @@ public class UiUtils {
         if (data == null) {
             return null;
         }
-        
+
         try {
             return MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
                     data.getData());
@@ -866,44 +879,55 @@ public class UiUtils {
         }
     }
 
-    static void attachMeTopic(final Activity activity, MeTopic.MeListener l) {
-        boolean success = false;
-        try {
-            setProgressIndicator(activity, true);
-            Cache.attachMeTopic(l)
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            UiUtils.setProgressIndicator(activity, false);
-                            return null;
-                        }
-                    }, new PromisedReply.FailureListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onFailure(Exception err) {
-                            Log.w(TAG, "Error subscribing to 'me' topic", err);
-                            UiUtils.setProgressIndicator(activity, false);
-                            if (err instanceof ServerResponseException) {
-                                ServerResponseException sre = (ServerResponseException) err;
-                                if (sre.getCode() == 404) {
-                                    Cache.getTinode().logout();
-                                    activity.startActivity(new Intent(activity, LoginActivity.class));
-                                }
-                            }
-                            return null;
-                        }
-                    });
-            success = true;
-        } catch (NotSynchronizedException ignored) {
-        } catch (NotConnectedException ignored) {
-            /* offline - ignored */
-        } catch (Exception err) {
-            Log.i(TAG, "Subscription failed", err);
-            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_LONG).show();
-        } finally {
-            if (!success) {
-                setProgressIndicator(activity, false);
+    static void attachMeTopic(final Activity activity, final MeTopic.MeListener l) {
+        setProgressIndicator(activity, true);
+
+        PromisedReply<ServerMessage> connectionCheck = null;
+        if (!Cache.getTinode().isAuthenticated()) {
+            String uid = BaseDb.getInstance().getUid();
+            if (!TextUtils.isEmpty(uid)) {
+                AccountManager accountManager = AccountManager.get(activity);
+                Account account = getSavedAccount(activity, accountManager, uid);
+                connectionCheck = new PromisedReply<>();
+                UiUtils.loginWithSavedAccount(activity, accountManager, account, connectionCheck);
+            } else {
+                activity.startActivity(new Intent(activity, LoginActivity.class));
+                activity.finish();
+                return;
             }
+        } else {
+            connectionCheck = new PromisedReply<>((ServerMessage) null);
         }
+
+        connectionCheck.thenApply(
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        return Cache.attachMeTopic(l);
+                    }
+                })
+                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        Log.w(TAG, "Error subscribing to 'me' topic", err);
+                        if (err instanceof ServerResponseException) {
+                            ServerResponseException sre = (ServerResponseException) err;
+                            if (sre.getCode() == 404) {
+                                Cache.getTinode().logout();
+                                activity.startActivity(new Intent(activity, LoginActivity.class));
+                                activity.finish();
+                            }
+                        }
+                        return null;
+                    }
+                })
+                .thenFinally(new PromisedReply.FinalListener() {
+                    @Override
+                    public void onFinally() {
+                        UiUtils.setProgressIndicator(activity, false);
+                    }
+                });
+
     }
 
     // Parse comma separated list of possible quoted string into an array.

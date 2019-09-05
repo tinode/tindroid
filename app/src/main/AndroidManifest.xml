@@ -72,9 +72,7 @@
                 This is a catch-all URL pattern.
                 Retarded Android is unable to parse URLs with fragments
                 -->
-                <data
-                    android:host="api.tinode.co"
-                    android:scheme="https"/>
+                <data android:host="web.tinode.co" android:scheme="https"/>
             </intent-filter>
         </activity>
 

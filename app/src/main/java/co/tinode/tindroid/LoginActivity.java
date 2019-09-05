@@ -79,10 +79,6 @@ public class LoginActivity extends AppCompatActivity {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
 
-    //private LoginFragment mLoginFragment = null;
-    //private SignUpFragment mSignUpFragment = null;
-    //private LoginSettingsFragment mSettingsFragment = null;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -364,7 +364,7 @@ public class FindFragment extends Fragment {
                 new MetaSetDesc<String, String>(query == null ? Tinode.NULL_VALUE : query, null)));
         if (query != null) {
             setProgressBarVisible(true);
-            fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
+            fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
                 @Override
                 public void onFinally() {
                     setProgressBarVisible(false);

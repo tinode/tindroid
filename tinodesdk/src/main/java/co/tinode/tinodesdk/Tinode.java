@@ -872,8 +872,7 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> hello() {
-        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION,
-                makeUserAgent(), mDeviceToken, mLanguage));
+        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent(), mDeviceToken, mLanguage));
         return sendWithPromise(msg, msg.hi.id).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override

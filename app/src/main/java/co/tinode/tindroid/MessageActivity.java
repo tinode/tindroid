@@ -1,5 +1,7 @@
 package co.tinode.tindroid;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
@@ -36,6 +38,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -45,6 +48,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -234,6 +238,24 @@ public class MessageActivity extends AppCompatActivity {
 
     private void topicAttach() {
         setProgressIndicator(true);
+
+        PromisedReply<ServerMessage> connectionCheck = null;
+        if (!Cache.getTinode().isAuthenticated()) {
+            String uid = BaseDb.getInstance().getUid();
+            if (!TextUtils.isEmpty(uid)) {
+                AccountManager accountManager = AccountManager.get(this);
+                Account account = UiUtils.getSavedAccount(this, accountManager, uid);
+                connectionCheck = new PromisedReply<>();
+                UiUtils.loginWithSavedAccount(this, accountManager, account, connectionCheck);
+            } else {
+                startActivity(new Intent(this, LoginActivity.class));
+                finish();
+                return;
+            }
+        } else {
+            connectionCheck = new PromisedReply<>((ServerMessage) null);
+        }
+
         Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
                 .withDesc()
                 .withSub()
@@ -244,43 +266,52 @@ public class MessageActivity extends AppCompatActivity {
             builder = builder.withTags();
         }
 
-        mTopic.subscribe(null, builder.build()).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                        mTopicName, mTopic.getOnline());
-                showFragment(FRAGMENT_MESSAGES, null, false);
-                runOnUiThread(new Runnable() {
+        final MsgGetMeta getQuery = builder.build();
+
+        connectionCheck.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public void run() {
-                        setProgressIndicator(false);
-                        MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
-                                .findFragmentByTag(FRAGMENT_MESSAGES);
-                        if (fragmsg != null) {
-                            fragmsg.topicSubscribed();
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        return mTopic.subscribe(null, getQuery);
+                    }
+                }).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
+                                mTopicName, mTopic.getOnline());
+                        showFragment(FRAGMENT_MESSAGES, null, false);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                                        .findFragmentByTag(FRAGMENT_MESSAGES);
+                                if (fragmsg != null) {
+                                    fragmsg.topicSubscribed();
+                                }
+                            }
+                        });
+                        // Resume message sender and submit pending messages for processing:
+                        // publish queued, delete marked for deletion.
+                        mMessageSender.resume();
+                        syncAllMessages(true);
+                        return null;
+                    }
+                }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        if (!(err instanceof NotConnectedException)) {
+                            Log.w(TAG, "Subscribe failed", err);
+                            if (err instanceof ServerResponseException) {
+                                showFragment(FRAGMENT_INVALID, null, false);
+                            }
                         }
+                        return null;
+                    }
+                }).thenFinally(new PromisedReply.FinalListener() {
+                    @Override
+                    public void onFinally() {
+                        setProgressIndicator(false);
                     }
                 });
-                // Resume message sender and submit pending messages for processing:
-                // publish queued, delete marked for deletion.
-                mMessageSender.resume();
-                syncAllMessages(true);
-                return null;
-            }
-        }, new PromisedReply.FailureListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFailure(Exception err) {
-                setProgressIndicator(false);
-
-                if (!(err instanceof NotConnectedException)) {
-                    Log.w(TAG, "Subscribe failed", err);
-                    if (err instanceof ServerResponseException) {
-                        showFragment(FRAGMENT_INVALID, null, false);
-                    }
-                }
-                return null;
-            }
-        });
     }
 
     @Override
@@ -441,7 +472,7 @@ public class MessageActivity extends AppCompatActivity {
                         }
                     })
                     .thenCatch(new UiUtils.ToastFailureListener(this))
-                    .thenFinally(new PromisedReply.FinalListener<ServerMessage>() {
+                    .thenFinally(new PromisedReply.FinalListener() {
                         @Override
                         public void onFinally() {
                             // Updates message list with "delivered" or "failed" icon.

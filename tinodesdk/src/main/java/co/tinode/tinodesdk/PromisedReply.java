@@ -165,16 +165,16 @@ public class PromisedReply<T> {
      *
      * @param finished called when the promise is completed either way.
      */
-    public void thenFinally(final FinalListener<T> finished) {
+    public void thenFinally(final FinalListener finished) {
         thenApply(new SuccessListener<T>() {
             @Override
-            public PromisedReply<T> onSuccess(T result) throws Exception {
+            public PromisedReply<T> onSuccess(T result) {
                 finished.onFinally();
                 return null;
             }
         }, new FailureListener<T>() {
             @Override
-            public <E extends Exception> PromisedReply<T> onFailure(E err) throws Exception {
+            public <E extends Exception> PromisedReply<T> onFailure(E err) {
                 finished.onFinally();
                 return null;
             }
@@ -245,7 +245,7 @@ public class PromisedReply<T> {
         return mState == State.REJECTED;
     }
 
-    @SuppressWarnings({"WeakerAccess", "BooleanMethodIsAlwaysInverted"})
+    @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "WeakerAccess"})
     public boolean isDone() {
         return mState == State.RESOLVED || mState == State.REJECTED;
     }
@@ -253,11 +253,11 @@ public class PromisedReply<T> {
 
     /**
      * Make this promise resolved.
+     *
      * @param result results of resolution.
      * @throws Exception if anything goes wrong during resolution.
      */
-    @SuppressWarnings("WeakerAccess")
-    protected void resolve(final T result) throws Exception {
+    public void resolve(final T result) throws Exception {
         synchronized (this) {
             if (mState == State.WAITING) {
                 mState = State.RESOLVED;
@@ -275,8 +275,13 @@ public class PromisedReply<T> {
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected void reject(final Exception err) throws Exception {
+    /**
+     * Make this promise rejected.
+     *
+     * @param err reason for rejecting this promise.
+     * @throws Exception if anything goes wrong during rejection.
+     */
+    public void reject(final Exception err) throws Exception {
         Log.d(TAG, "REJECTING promise " + this, err);
         synchronized (this) {
             if (mState == State.WAITING) {
@@ -346,7 +351,7 @@ public class PromisedReply<T> {
         public abstract <E extends Exception> PromisedReply<U> onFailure(E err) throws Exception;
     }
 
-    public static abstract class FinalListener<U> {
-        public abstract void onFinally() throws Exception;
+    public static abstract class FinalListener {
+        public abstract void onFinally();
     }
 }
