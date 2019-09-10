@@ -66,13 +66,37 @@
                 android:textIsSelectable="false"
                 tools:text="Topic subtitle (private)"/>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_below="@id/imageAvatar"
-            android:background="@color/grey" />
+            <LinearLayout
+                android:id="@+id/topicAddressWrapper"
+                android:layout_below="@id/imageAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/address"/>
+
+                <TextView
+                    android:id="@+id/topicAddress"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="true"
+                    android:typeface="monospace"
+                    tools:text="p2p__fv2qrUr6vAdVURkv6q3w"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_below="@id/topicAddressWrapper"
+                android:background="@color/grey" />
 
         </RelativeLayout>
 
@@ -109,29 +133,6 @@
             android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/address"/>
-
-                <TextView
-                    android:id="@+id/topicAddress"
-                    style="@style/textPrimarySmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="true"
-                    android:typeface="monospace"
-                    tools:text="p2p__fv2qrUr6vAdVURkv6q3w"/>
-
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/singleUserPermissions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -164,8 +165,8 @@
                 android:layout_height="wrap_content">
 
                 <TextView
+                    style="@style/sectionTitleStyle"
                     android:id="@+id/permissionTitle"
-                    style="@style/textPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/permissions"
@@ -287,7 +288,7 @@
                 app:drawableStartCompat="@drawable/ic_delete"/>
 
             <Button
-                android:id="@+id/buttonLeaveP2P"
+                android:id="@+id/buttonLeave"
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -227,4 +227,7 @@
     <string name="report_group">Report Group</string>
     <string name="clear_messages">Clear Messages</string>
     <string name="manage_members">Manage Members</string>
+    <string name="new_chat_report">Block and report</string>
+    <string name="confirm_contact_ban">Block %1$s?</string>
+    <string name="confirm_report">Block and report %1$s?</string>
 </resources>

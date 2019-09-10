@@ -1031,7 +1031,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     /**
      * Update another user's access mode.
      *
-     * @param uid    UID of the user to update
+     * @param uid    UID of the user to update or null to update current user.
      * @param update string which defines the update. It could be a full value or a change.
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException  if there is no connection to the server

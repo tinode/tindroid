@@ -89,4 +89,22 @@
         app:layout_constraintTop_toBottomOf="@id/buttonIgnore"
         tools:ignore="RtlSymmetry"/>
 
+    <androidx.appcompat.widget.AppCompatTextView
+        style="@style/textSecondary"
+        android:id="@+id/buttonReport"
+        android:background="?attr/selectableItemBackground"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:clickable="true"
+        android:drawablePadding="4sp"
+        app:drawableStartCompat="@drawable/ic_report_gray"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:text="@string/new_chat_report"
+        android:paddingStart="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonBlock"
+        tools:ignore="RtlSymmetry"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

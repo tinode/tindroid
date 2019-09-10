@@ -62,10 +62,35 @@
                 android:textIsSelectable="true"
                 tools:text="Not sure what this should be"/>
 
+            <LinearLayout
+                android:id="@+id/topicAddressWrapper"
+                android:layout_below="@id/imageAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/address"/>
+
+                <TextView
+                    android:id="@+id/topicAddress"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="true"
+                    android:typeface="monospace"
+                    tools:text="usrfv2qrUr6vAd"/>
+
+            </LinearLayout>
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0.5dp"
-                android:layout_below="@id/imageAvatar"
+                android:layout_below="@id/topicAddressWrapper"
                 android:layout_marginTop="@dimen/activity_padding"
                 android:layout_marginBottom="@dimen/activity_padding"
                 android:background="@color/grey"/>
@@ -199,29 +224,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/address"/>
-
-                <TextView
-                    android:id="@+id/topicAddress"
-                    style="@style/textPrimarySmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="true"
-                    android:typeface="monospace"
-                    tools:text="usrfv2qrUr6vAd"/>
-
-            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

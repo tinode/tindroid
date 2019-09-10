@@ -68,6 +68,7 @@ public class Tinode {
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
+    public static final String TOPIC_SYS = "sys";
 
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_USR_PREFIX = "usr";

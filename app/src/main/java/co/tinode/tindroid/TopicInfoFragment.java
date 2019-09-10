@@ -36,6 +36,7 @@ import android.widget.Toast;
 import com.google.android.flexbox.FlexboxLayout;
 
 import java.util.Collection;
+import java.util.HashMap;
 
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.db.StoredSubscription;
@@ -45,8 +46,10 @@ import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -61,8 +64,10 @@ public class TopicInfoFragment extends Fragment {
 
     private static final String TAG = "TopicInfoFragment";
 
+    private static final int ACTION_REPORT = 3;
     private static final int ACTION_REMOVE = 4;
-    private static final int ACTION_BAN = 5;
+    private static final int ACTION_BAN_TOPIC = 5;
+    private static final int ACTION_BAN_MEMBER = 6;
 
     private ComTopic<VxCard> mTopic;
     private MembersAdapter mAdapter;
@@ -128,7 +133,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        view.findViewById(R.id.buttonLeaveGroup).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.buttonLeave).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mTopic.isOwner()) {
@@ -149,6 +154,32 @@ public class TopicInfoFragment extends Fragment {
                 }
             }
         });
+
+        view.findViewById(R.id.buttonBlock).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                VxCard pub = mTopic.getPub();
+                String topicTitle = pub != null ? pub.fn : null;
+                topicTitle = TextUtils.isEmpty(topicTitle) ?
+                        activity.getString(R.string.placeholder_topic_title) :
+                        topicTitle;
+                showConfirmationDialog(topicTitle, null, null, R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
+            }
+        });
+
+        final View.OnClickListener reportListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                VxCard pub = mTopic.getPub();
+                String topicTitle = pub != null ? pub.fn : null;
+                topicTitle = TextUtils.isEmpty(topicTitle) ?
+                        activity.getString(R.string.placeholder_topic_title) :
+                        topicTitle;
+                showConfirmationDialog(topicTitle, null, null, R.string.confirm_report, ACTION_REPORT);
+            }
+        };
+        view.findViewById(R.id.buttonReportContact).setOnClickListener(reportListener);
+        view.findViewById(R.id.buttonReportGroup).setOnClickListener(reportListener);
 
         view.findViewById(R.id.buttonAddMembers).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -209,6 +240,11 @@ public class TopicInfoFragment extends Fragment {
 
         String name = bundle.getString("topic");
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
+        if (mTopic == null) {
+            Log.d(TAG, "TopicInfo resumed with null topic.");
+            activity.finish();
+            return;
+        }
 
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
@@ -218,6 +254,8 @@ public class TopicInfoFragment extends Fragment {
         final View defaultPermissions = activity.findViewById(R.id.defaultPermissionsWrapper);
         final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
         final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
+        final View reportGroup = activity.findViewById(R.id.buttonReportGroup);
+        final View reportContact = activity.findViewById(R.id.buttonReportContact);
 
         // Launch edit dialog when title or subtitle is clicked.
         final View.OnClickListener l = new View.OnClickListener() {
@@ -239,14 +277,17 @@ public class TopicInfoFragment extends Fragment {
             uploadAvatarButton.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
             groupMembers.setVisibility(View.VISIBLE);
+            reportContact.setVisibility(View.GONE);
 
             activity.findViewById(R.id.singleUserPermissions).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.p2pPermissions).setVisibility(View.GONE);
 
-            Button button = activity.findViewById(R.id.buttonLeaveGroup);
+            Button button = activity.findViewById(R.id.buttonLeave);
             if (mTopic.isOwner()) {
                 button.setEnabled(false);
                 button.setAlpha(0.5f);
+
+                reportGroup.setVisibility(View.GONE);
 
                 tagManager.setVisibility(View.VISIBLE);
                 tagManager.findViewById(R.id.buttonManageTags)
@@ -274,6 +315,8 @@ public class TopicInfoFragment extends Fragment {
                 button.setEnabled(true);
                 button.setAlpha(1f);
 
+                reportGroup.setVisibility(View.VISIBLE);
+
                 tagManager.setVisibility(View.GONE);
             }
 
@@ -296,6 +339,8 @@ public class TopicInfoFragment extends Fragment {
             uploadAvatarButton.setVisibility(View.GONE);
 
             groupMembers.setVisibility(View.GONE);
+            reportGroup.setVisibility(View.GONE);
+            reportContact.setVisibility(View.VISIBLE);
 
             tagManager.setVisibility(View.GONE);
 
@@ -364,8 +409,11 @@ public class TopicInfoFragment extends Fragment {
     }
 
     // Confirmation dialog "Do you really want to do X?"
-    private void showConfirmationDialog(final String topicTitle,
-                                        final String title, final String uid, int message_id, final int what) {
+    //  uid - user to apply action to
+    //  message_id - id of the string resource to use as an explanation.
+    //  what - action to take on success, ACTION_*
+    private void showConfirmationDialog(final String arg1, final String arg2,
+                                        final String uid, int message_id, final int what) {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
@@ -373,7 +421,7 @@ public class TopicInfoFragment extends Fragment {
 
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
         confirmBuilder.setNegativeButton(android.R.string.no, null);
-        String message = activity.getString(message_id, title, topicTitle);
+        String message = activity.getString(message_id, arg1, arg2);
         confirmBuilder.setMessage(message);
 
         confirmBuilder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -381,11 +429,21 @@ public class TopicInfoFragment extends Fragment {
             public void onClick(DialogInterface dialog, int which) {
                 try {
                     switch (what) {
-                        case ACTION_REMOVE:
-                            mTopic.eject(uid, false).thenApply(null, mFailureListener);
+                        case ACTION_REPORT:
+                            HashMap<String, Object> json =  new HashMap<>();
+                            json.put("action", "report");
+                            json.put("target", mTopic.getName());
+                            Cache.getTinode().publish(Tinode.TOPIC_SYS, new Drafty().attachJSON(json));
+                            mTopic.updateMode(null, "-JP").thenCatch(mFailureListener);
                             break;
-                        case ACTION_BAN:
-                            mTopic.eject(uid, true).thenApply(null, mFailureListener);
+                        case ACTION_REMOVE:
+                            mTopic.eject(uid, false).thenCatch(mFailureListener);
+                            break;
+                        case ACTION_BAN_TOPIC:
+                            mTopic.updateMode(null, "-JP").thenCatch(mFailureListener);
+                            break;
+                        case ACTION_BAN_MEMBER:
+                            mTopic.eject(uid, true).thenCatch(mFailureListener);
                             break;
                     }
                 } catch (NotConnectedException ignored) {
@@ -399,7 +457,7 @@ public class TopicInfoFragment extends Fragment {
     }
 
     // Dialog-menu with actions for individual subscribers, like "send message", "change permissions", "ban", etc.
-    private void showMemberAction(final String topicTitle, final String title, final String uid, final String mode) {
+    private void showMemberAction(final String topicTitle, final String userTitle, final String uid, final String mode) {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
@@ -409,9 +467,9 @@ public class TopicInfoFragment extends Fragment {
             return;
         }
 
-        final String titleFixed = TextUtils.isEmpty(title) ?
+        final String userTitleFixed = TextUtils.isEmpty(userTitle) ?
                 activity.getString(R.string.placeholder_contact_title) :
-                title;
+                userTitle;
         final String topicTitleFixed = TextUtils.isEmpty(topicTitle) ?
                 activity.getString(R.string.placeholder_topic_title) :
                 topicTitle;
@@ -419,9 +477,9 @@ public class TopicInfoFragment extends Fragment {
         AlertDialog.Builder actionBuilder = new AlertDialog.Builder(activity);
         final LinearLayout actions = (LinearLayout) View.inflate(activity, R.layout.dialog_member_actions, null);
         actionBuilder
-                .setTitle(TextUtils.isEmpty(title) ?
+                .setTitle(TextUtils.isEmpty(userTitle) ?
                         activity.getString(R.string.placeholder_contact_title) :
-                        title)
+                        userTitle)
                 .setView(actions)
                 .setCancelable(true)
                 .setNegativeButton(android.R.string.cancel, null);
@@ -454,13 +512,13 @@ public class TopicInfoFragment extends Fragment {
                             mTopic.updateMode(uid, "+O").thenApply(null, mFailureListener);
                             break;
                         case R.id.buttonRemove: {
-                            showConfirmationDialog(topicTitleFixed, titleFixed, uid,
+                            showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
                                     R.string.confirm_member_removal, ACTION_REMOVE);
                             break;
                         }
                         case R.id.buttonBlock: {
-                            showConfirmationDialog(topicTitleFixed, titleFixed, uid,
-                                    R.string.confirm_member_ban, ACTION_BAN);
+                            showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
+                                    R.string.confirm_member_ban, ACTION_BAN_MEMBER);
                             break;
                         }
                     }

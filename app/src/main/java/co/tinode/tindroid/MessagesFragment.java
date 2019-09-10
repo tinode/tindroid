@@ -47,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -58,6 +59,7 @@ import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
@@ -529,9 +531,15 @@ public class MessagesFragment extends Fragment
                             break;
 
                         case R.id.buttonBlock:
-                            Acs am = new Acs(mTopic.getAccessMode());
-                            am.update(AccessChange.asWant("-JP"));
-                            response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(am.getWant())));
+                            mTopic.updateMode(null, "-JP");
+                            break;
+
+                        case R.id.buttonReport:
+                            mTopic.updateMode(null, "-JP");
+                            HashMap<String, Object> json = new HashMap<>();
+                            json.put("action", "report");
+                            json.put("tagret", mTopic.getName());
+                            Cache.getTinode().publish(Tinode.TOPIC_SYS, new Drafty().attachJSON(json));
                             break;
 
                         default:
