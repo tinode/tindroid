@@ -17,7 +17,10 @@ import androidx.preference.PreferenceManager;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
 
+import android.text.Html;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
+import android.text.method.MovementMethod;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -82,6 +85,19 @@ public class AccountInfoFragment extends Fragment {
                 }
             }
         });
+
+        // Make policy links clickable.
+        MovementMethod movementInstance = LinkMovementMethod.getInstance();
+        TextView link = fragment.findViewById(R.id.contactUs);
+        link.setText(Html.fromHtml(getString(R.string.contact_us)));
+        link.setMovementMethod(movementInstance);
+        link = fragment.findViewById(R.id.termsOfUse);
+        link.setText(Html.fromHtml(getString(R.string.terms_of_use)));
+        link.setMovementMethod(movementInstance);
+        link = fragment.findViewById(R.id.privacyPolicy);
+        link.setText(Html.fromHtml(getString(R.string.privacy_policy)));
+        link.setMovementMethod(movementInstance);
+
         return fragment;
     }
 
