@@ -62,12 +62,15 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     void resetContent(Activity activity, final boolean archive) {
+        if (activity == null) {
+            return;
+        }
 
         final List<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
             @Override
             public boolean isIncluded(Topic t) {
                 return t.getTopicType().match(Topic.TopicType.USER) &&
-                        (t.isArchived() == archive);
+                        (t.isArchived() == archive) && t.isJoiner();
             }
         });
 
