@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -64,6 +65,7 @@ public class TopicInfoFragment extends Fragment {
 
     private static final String TAG = "TopicInfoFragment";
 
+    private static final int ACTION_LEAVE = 2;
     private static final int ACTION_REPORT = 3;
     private static final int ACTION_REMOVE = 4;
     private static final int ACTION_BAN_TOPIC = 5;
@@ -144,13 +146,7 @@ public class TopicInfoFragment extends Fragment {
                             .setNegativeButton(android.R.string.ok, null)
                             .show();
                 } else {
-                    try {
-                        mTopic.delete().thenApply(null, mFailureListener);
-                    } catch (NotConnectedException ignored) {
-                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                    } catch (Exception ignored) {
-                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                    }
+                    showConfirmationDialog(null, null, null, R.string.confirm_leave_topic, ACTION_LEAVE);
                 }
             }
         });
@@ -161,8 +157,7 @@ public class TopicInfoFragment extends Fragment {
                 VxCard pub = mTopic.getPub();
                 String topicTitle = pub != null ? pub.fn : null;
                 topicTitle = TextUtils.isEmpty(topicTitle) ?
-                        activity.getString(R.string.placeholder_topic_title) :
-                        topicTitle;
+                        activity.getString(R.string.placeholder_topic_title) : topicTitle;
                 showConfirmationDialog(topicTitle, null, null, R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
             }
         });
@@ -427,29 +422,40 @@ public class TopicInfoFragment extends Fragment {
         confirmBuilder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                try {
-                    switch (what) {
-                        case ACTION_REPORT:
-                            HashMap<String, Object> json =  new HashMap<>();
-                            json.put("action", "report");
-                            json.put("target", mTopic.getName());
-                            Cache.getTinode().publish(Tinode.TOPIC_SYS, new Drafty().attachJSON(json));
-                            mTopic.updateMode(null, "-JP").thenCatch(mFailureListener);
-                            break;
-                        case ACTION_REMOVE:
-                            mTopic.eject(uid, false).thenCatch(mFailureListener);
-                            break;
-                        case ACTION_BAN_TOPIC:
-                            mTopic.updateMode(null, "-JP").thenCatch(mFailureListener);
-                            break;
-                        case ACTION_BAN_MEMBER:
-                            mTopic.eject(uid, true).thenCatch(mFailureListener);
-                            break;
-                    }
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                PromisedReply<ServerMessage> response = null;
+                switch (what) {
+                    case ACTION_LEAVE:
+                        response = mTopic.delete();
+                        break;
+                    case ACTION_REPORT:
+                        HashMap<String, Object> json =  new HashMap<>();
+                        json.put("action", "report");
+                        json.put("target", mTopic.getName());
+                        Cache.getTinode().publish(Tinode.TOPIC_SYS, new Drafty().attachJSON(json));
+                        response = mTopic.updateMode(null, "-JP");
+                        break;
+                    case ACTION_REMOVE:
+                        response = mTopic.eject(uid, false);
+                        break;
+                    case ACTION_BAN_TOPIC:
+                        response = mTopic.updateMode(null, "-JP");
+                        break;
+                    case ACTION_BAN_MEMBER:
+                        response = mTopic.eject(uid, true);
+                        break;
+                }
+
+                if (response != null) {
+                    response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            Intent intent = new Intent(activity, ChatsActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            startActivity(intent);
+                            activity.finish();
+                            return null;
+                        }
+                    }).thenCatch(mFailureListener);
                 }
             }
         });
@@ -561,6 +567,7 @@ public class TopicInfoFragment extends Fragment {
         String tags = tagArray != null ? TextUtils.join(", ", mTopic.getTags()) : "";
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        @SuppressLint("InflateParams")
         final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
         builder.setView(editor).setTitle(R.string.tags_management);
 
