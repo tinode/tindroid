@@ -127,6 +127,20 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
+        final Switch archived = view.findViewById(R.id.switchArchived);
+        archived.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+                try {
+                    mTopic.updateArchived(isChecked);
+                } catch (NotConnectedException ignored) {
+                    archived.setChecked(!isChecked);
+                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } catch (Exception ex) {
+                    archived.setChecked(!isChecked);
+                }
+            }
+        });
+
         view.findViewById(R.id.permissions).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -662,6 +676,8 @@ public class TopicInfoFragment extends Fragment {
         }
 
         ((Switch) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
+        ((Switch) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
+
         Acs acs = mTopic.getAccessMode();
         ((TextView) activity.findViewById(R.id.permissions)).setText(acs == null ? "" : acs.getMode());
 
