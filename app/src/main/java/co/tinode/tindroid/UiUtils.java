@@ -289,6 +289,7 @@ public class UiUtils {
                                 final Tinode tinode = Cache.getTinode();
                                 tinode.setAutoLoginToken(token);
                                 tinode.connect(hostName, tls).getResult();
+                                // This will throw if login was not successful.
                                 ServerMessage msg = tinode.loginToken(token).getResult();
                                 // Logged in successfully. Save refreshed token for future use.
                                 accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
@@ -326,7 +327,7 @@ public class UiUtils {
                             }
                         }
                     }
-                    if (launch != null) {
+                    if (launch != null && !activity.getComponentName().equals(launch.getComponent())) {
                         launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
                         activity.startActivity(launch);
                         activity.finish();
