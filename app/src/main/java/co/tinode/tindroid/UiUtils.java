@@ -81,7 +81,6 @@ import co.tinode.tindroid.widgets.RoundImageDrawable;
 
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
@@ -883,7 +882,7 @@ public class UiUtils {
     static void attachMeTopic(final Activity activity, final MeTopic.MeListener l) {
         setProgressIndicator(activity, true);
 
-        PromisedReply<ServerMessage> connectionCheck = null;
+        PromisedReply<ServerMessage> connectionCheck;
         if (!Cache.getTinode().isAuthenticated()) {
             String uid = BaseDb.getInstance().getUid();
             if (!TextUtils.isEmpty(uid)) {
@@ -997,8 +996,7 @@ public class UiUtils {
     // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
     static String getPath(Context context, Uri uri) {
         // DocumentProvider
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
-                DocumentsContract.isDocumentUri(context, uri)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && DocumentsContract.isDocumentUri(context, uri)) {
             final String docId = DocumentsContract.getDocumentId(uri);
             String authority = uri.getAuthority();
             if (authority != null) {
@@ -1012,18 +1010,26 @@ public class UiUtils {
                             return Environment.getExternalStorageDirectory() + "/" + split[1];
                         }
                         // TODO: handle non-primary volumes
+                        break;
                     }
-                    break;
                     case "com.android.providers.downloads.documents": {
                         // DownloadsProvider
+                        if (docId.startsWith("raw:")) {
+                            // "raw:/storage/emulated/0/Download/app-debug.apk"
+                            return docId.substring(4);
+                        }
 
-                        final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
+                        try {
+                            final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
                                 Long.valueOf(docId));
-                        return getDataColumn(context, contentUri, null, null);
+                            return getDataColumn(context, contentUri, null, null);
+                        } catch (NumberFormatException e) {
+                            Log.w(TAG, "Failed to parse document ID: " + docId);
+                            return null;
+                        }
                     }
                     case "com.android.providers.media.documents": {
                         // MediaProvider
-
                         final String[] split = docId.split(":");
                         final String type = split[0];
                         Uri contentUri = null;
