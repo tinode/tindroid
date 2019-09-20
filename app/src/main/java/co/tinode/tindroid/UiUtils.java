@@ -1015,7 +1015,7 @@ public class UiUtils {
                     case "com.android.providers.downloads.documents": {
                         // DownloadsProvider
                         if (docId.startsWith("raw:")) {
-                            // "raw:/storage/emulated/0/Download/app-debug.apk"
+                            // "raw:/storage/emulated/0/Download/app-debug.apk". Just return the path without 'raw:'.
                             return docId.substring(4);
                         }
 
