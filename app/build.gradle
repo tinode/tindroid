@@ -14,7 +14,7 @@ android {
         versionCode gitVersionCode()
         versionName gitVersionName()
     }
-
+/*
     splits {
         abi {
             enable true
@@ -23,7 +23,7 @@ android {
             universalApk true // generate an additional APK that contains all the ABIs
         }
     }
-
+*/
     buildTypes {
         release {
             minifyEnabled true
