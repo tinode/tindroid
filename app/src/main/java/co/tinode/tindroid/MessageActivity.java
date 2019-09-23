@@ -239,12 +239,17 @@ public class MessageActivity extends AppCompatActivity {
     private void topicAttach() {
         setProgressIndicator(true);
 
-        PromisedReply<ServerMessage> connectionCheck = null;
+        PromisedReply<ServerMessage> connectionCheck;
         if (!Cache.getTinode().isAuthenticated()) {
             String uid = BaseDb.getInstance().getUid();
+            Account account = null;
+            AccountManager accountManager = null;
             if (!TextUtils.isEmpty(uid)) {
-                AccountManager accountManager = AccountManager.get(this);
-                Account account = UiUtils.getSavedAccount(this, accountManager, uid);
+                accountManager = AccountManager.get(this);
+                account = UiUtils.getSavedAccount(this, accountManager, uid);
+            }
+
+            if (account != null) {
                 connectionCheck = new PromisedReply<>();
                 UiUtils.loginWithSavedAccount(this, accountManager, account, connectionCheck);
             } else {
