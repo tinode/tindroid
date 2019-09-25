@@ -165,27 +165,24 @@ public class Acs implements Serializable {
     public boolean update(AccessChange ac) {
         int change = 0;
         if (ac != null) {
-            if (ac.given != null) {
-                if (given != null) {
+            try {
+                if (ac.given != null) {
+                    if (given == null) {
+                        given = new AcsHelper();
+                    }
                     change += given.update(ac.given) ? 1 : 0;
-                } else {
-                    given = new AcsHelper(ac.given);
-                    change += given.isDefined() ? 1 : 0;
                 }
-            }
-            if (ac.want != null) {
-                if (want != null) {
+                if (ac.want != null) {
+                    if (want == null) {
+                        want = new AcsHelper();
+                    }
                     change += want.update(ac.want) ? 1 : 0;
-                } else {
-                    want = new AcsHelper(ac.want);
-                    change += want.isDefined() ? 1 : 0;
                 }
-            }
+            } catch (IllegalArgumentException ignore) {}
 
             if (change > 0) {
                 AcsHelper m2 = AcsHelper.and(want, given);
                 if (m2 != null && !m2.equals(mode)) {
-                    change++;
                     mode = m2;
                 }
             }
