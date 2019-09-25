@@ -139,7 +139,7 @@ public class EditMembersFragment extends Fragment {
         }, cancelable);
         rv.setAdapter(mSelectedAdapter);
 
-        // This button creates the new group.
+        // This button updates the group members.
         view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -183,7 +183,7 @@ public class EditMembersFragment extends Fragment {
                 mTopic.eject(key, false).thenCatch(mFailureListener);
             }
 
-            ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_INFO, null, false);
+            ((MessageActivity) activity).getSupportFragmentManager().popBackStack();
 
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
