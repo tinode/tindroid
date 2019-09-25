@@ -834,9 +834,10 @@ public class UiUtils {
             pub = new VxCard();
         }
 
-        pub.setBitmap(bmp);
+        pub.setBitmap(scaleSquareBitmap(bmp));
         try {
-            topic.setDescription(pub, null).thenApply(null, new ToastFailureListener(activity));
+            topic.setDescription(pub, null)
+                    .thenCatch(new ToastFailureListener(activity));
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception ignored) {
