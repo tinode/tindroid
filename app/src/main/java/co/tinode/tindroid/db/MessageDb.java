@@ -22,10 +22,10 @@ import co.tinode.tinodesdk.Topic;
  * public String id -- not stored
  * public String topic -> as topic_id
  * public String from; -> as user_id
- * public Map head -- not stored yet
  * public Date ts;
  * public int seq;
- * public T content;
+ * public Map head -> serialized into JSON;
+ * public T content -> serialized into JSON;
  */
 public class MessageDb implements BaseColumns {
     private static final String TAG = "MessageDb";
@@ -65,6 +65,10 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_SEQ = "seq";
     /**
+     * Serialized header.
+     */
+    private static final String COLUMN_NAME_HEAD = "head";
+    /**
      * Serialized message content
      */
     private static final String COLUMN_NAME_CONTENT = "content";
@@ -84,6 +88,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
+                    COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
     /**
      * SQL statement to drop Messages table.
@@ -116,7 +121,8 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_SENDER = 4;
     static final int COLUMN_IDX_TS = 5;
     static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_CONTENT = 7;
+    static final int COLUMN_IDX_HEAD = 7;
+    static final int COLUMN_IDX_CONTENT = 8;
 
     /**
      * Save message to DB
@@ -158,6 +164,7 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_SENDER, msg.from);
             values.put(COLUMN_NAME_TS, msg.ts.getTime());
             values.put(COLUMN_NAME_SEQ, msg.seq);
+            values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
             msg.id = db.insertOrThrow(TABLE_NAME, null, values);
