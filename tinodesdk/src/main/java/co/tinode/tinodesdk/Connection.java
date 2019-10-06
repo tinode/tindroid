@@ -242,7 +242,7 @@ public class Connection {
 
                             // In reconnect loop, make sure the previously opened socket is closed.
                             // Otherwise, when the server becomes available, this sockets will
-                            // open (unnecessary, orphaned) sessions.
+                            // open an unnecessary (orphaned from the very beginning) session.
                             if (reconnecting && mWsClient != null) {
                                 mWsClient.close();
                                 mWsClient = null;
