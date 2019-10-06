@@ -837,21 +837,23 @@ public class Tinode {
      *
      * @param token device token
      */
-    public void setDeviceToken(String token) {
+    public void setDeviceToken(final String token) {
         if (token == null) {
             return;
         }
 
         if (mDeviceToken == null || !mDeviceToken.equals(token)) {
-            // Token changed
-            mDeviceToken = token;
+            // Token has changed
             if (isConnected() && isAuthenticated()) {
-                ClientMessage msg = new ClientMessage(new MsgClientHi(null, null, null,
-                        mDeviceToken, null));
-                try {
-                    send(msg);
-                } catch (JsonProcessingException ignored) {
-                }
+                ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
+                        token, null));
+                sendWithPromise(msg, msg.hi.id).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        mDeviceToken = token;
+                        return null;
+                    }
+                });
             }
         }
     }
