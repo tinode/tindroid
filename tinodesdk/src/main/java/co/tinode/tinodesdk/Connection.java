@@ -208,7 +208,8 @@ public class Connection {
 
         @Override
         public void onClose(int code, String reason, boolean remote) {
-            Log.d(TAG, "onDisconnected for '" + reason + "' (" + code + "); reconnecting=" + reconnecting);
+            Log.d(TAG, "onDisconnected for '" + reason + "' (code: " + code + ", remote: " +
+                        remote + "); reconnecting=" + reconnecting);
 
             // Avoid infinite recursion
             if (reconnecting) {
@@ -222,6 +223,9 @@ public class Connection {
             }
 
             // The onClose is called while ws readystate is still OPEN. Therefore discard the client.
+            if (mWsClient != null) {
+                mWsClient.close();
+            }
             mWsClient = null;
             if (autoreconnect) {
                 new Thread(new Runnable() {
@@ -236,6 +240,13 @@ public class Connection {
                                 break;
                             }
 
+                            // In reconnect loop, make sure the previously opened socket is closed.
+                            // Otherwise, when the server becomes available, this sockets will
+                            // open an unnecessary (orphaned from the very beginning) session.
+                            if (reconnecting && mWsClient != null) {
+                                mWsClient.close();
+                                mWsClient = null;
+                            }
                             connectSocket(true);
                         }
                     }
