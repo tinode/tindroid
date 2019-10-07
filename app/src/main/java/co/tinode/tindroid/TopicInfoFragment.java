@@ -690,7 +690,7 @@ public class TopicInfoFragment extends Fragment {
         // Execution has to be delayed because the topic is not yet subscribed:
         // The image selection activity was on top while MessageActivity was paused. It just got
         // unpaused and did not have time to re-subscribe.
-        if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
+        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
             final MessageActivity activity = (MessageActivity) getActivity();
             if (activity != null) {
                 activity.submitForExecution(new Runnable() {

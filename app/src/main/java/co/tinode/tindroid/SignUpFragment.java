@@ -216,7 +216,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
             return;
         }
 
-        if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
+        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
             UiUtils.acceptAvatar(activity, (ImageView) activity.findViewById(R.id.imageAvatar), data);
         }
     }

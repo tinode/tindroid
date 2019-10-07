@@ -525,8 +525,8 @@ public class AccountInfoFragment extends Fragment {
         }
 
         final MeTopic me = Cache.getTinode().getMeTopic();
-        if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
-            //noinspection unchecked
+        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
+            // noinspection unchecked
             UiUtils.updateAvatar(activity, me, data);
         }
     }

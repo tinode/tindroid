@@ -174,6 +174,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 e.printStackTrace();
                 syncResult.stats.numAuthExceptions++;
             }
+        } else {
+            Log.d(TAG, "No contacts to sync");
+            success = true;
         }
 
         Log.i(TAG, "Network synchronization " + (success ? "completed" : "failed"));
