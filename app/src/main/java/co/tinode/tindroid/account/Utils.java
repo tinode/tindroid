@@ -2,7 +2,10 @@ package co.tinode.tindroid.account;
 
 import android.accounts.Account;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
 import android.util.Log;
@@ -19,6 +22,8 @@ import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+
+import static androidx.core.content.ContextCompat.checkSelfPermission;
 
 /**
  * Constants and misc utils
@@ -278,5 +283,10 @@ public class Utils {
             Stringify(ims, TAG_LABEL_TINODE, str);
             return str.toString();
         }
+    }
+
+    static boolean isPermissionGranted(Context context, String permission) {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+                checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 }

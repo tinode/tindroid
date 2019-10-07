@@ -30,6 +30,8 @@ public class StartChatActivity extends AppCompatActivity {
     private static final int TAB_NEW_GROUP = 1;
     private static final int TAB_BY_ID = 2;
 
+    // Limit the number of times permissions are requested per session.
+    private boolean mReadContactsPermissionsAlreadyRequested = false;
 
     static {
         // Otherwise crash on pre-Lollipop (API < 21)
@@ -93,6 +95,14 @@ public class StartChatActivity extends AppCompatActivity {
                 UiUtils.requestAvatar(getSupportFragmentManager().findFragmentById(R.id.contentFragment));
             }
         }
+    }
+
+    boolean isReadContactsPermissionRequested() {
+        return mReadContactsPermissionsAlreadyRequested;
+    }
+
+    void setReadContactsPermissionRequested() {
+        mReadContactsPermissionsAlreadyRequested = true;
     }
 
     private class PagerAdapter extends FragmentStatePagerAdapter {

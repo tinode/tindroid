@@ -1,7 +1,9 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -203,7 +205,7 @@ public class CreateGroupFragment extends Fragment {
             return;
         }
 
-        if (requestCode == UiUtils.SELECT_PICTURE && resultCode == RESULT_OK) {
+        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
             UiUtils.acceptAvatar(getActivity(), (ImageView) activity.findViewById(R.id.imageAvatar), data);
         }
     }
@@ -244,12 +246,27 @@ public class CreateGroupFragment extends Fragment {
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
     private void restartLoader() {
-        final FragmentActivity activity = getActivity();
+        final StartChatActivity activity = (StartChatActivity) getActivity();
         if (activity == null) {
             return;
         }
 
-        LoaderManager.getInstance(activity).restartLoader(LOADER_ID,
-                null, mContactsLoaderCallback);
+        if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+            LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
+        } else if (!activity.isReadContactsPermissionRequested()) {
+            activity.setReadContactsPermissionRequested();
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, UiUtils.READ_CONTACTS_PERMISSION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == UiUtils.READ_CONTACTS_PERMISSION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission is granted
+                restartLoader();
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package co.tinode.tindroid.account;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.AbstractThreadedSyncAdapter;
@@ -19,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -78,7 +80,14 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     @SuppressWarnings("unchecked")
     public void onPerformSync(final Account account, final Bundle extras, String authority,
                               ContentProviderClient provider, final SyncResult syncResult) {
-        //Log.i(TAG, "Beginning network synchronization");
+
+        if (!Utils.isPermissionGranted(mContext, Manifest.permission.READ_CONTACTS)) {
+            Log.i(TAG, "No permission to access contacts. Sync failed.");
+            syncResult.stats.numAuthExceptions++;
+            return;
+        }
+
+        // Log.i(TAG, "Beginning network synchronization");
         boolean success = false;
         final Tinode tinode = Cache.getTinode();
         Log.i(TAG, "Starting sync for account " + account.name);

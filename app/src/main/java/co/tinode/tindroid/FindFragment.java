@@ -27,7 +27,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuItemCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -52,8 +51,6 @@ public class FindFragment extends Fragment {
 
     private static final String TAG = "FindFragment";
 
-    private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
-
     // Delay in milliseconds between the last keystroke and time when the query is sent to the server.
     private static final int SEARCH_REQUEST_DELAY = 1000;
 
@@ -68,9 +65,6 @@ public class FindFragment extends Fragment {
     private String mSearchTerm; // Stores the current search query term
     private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
     private FindAdapter mAdapter = null;
-
-    // Limit the number of times permissions are requested per session.
-    private boolean mPermissionsAlreadyRequested = false;
 
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
@@ -175,7 +169,6 @@ public class FindFragment extends Fragment {
             Toast.makeText(fragment.getContext(), R.string.action_failed, Toast.LENGTH_LONG).show();
         }
 
-        mPermissionsAlreadyRequested = false;
         mAdapter.resetFound(getActivity(), mSearchTerm);
         // Refresh cursor.
         restartLoader(mSearchTerm);
@@ -421,7 +414,7 @@ public class FindFragment extends Fragment {
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
     private void restartLoader(String searchTerm) {
-        final FragmentActivity activity = getActivity();
+        final StartChatActivity activity = (StartChatActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -430,16 +423,16 @@ public class FindFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
-        } else if (!mPermissionsAlreadyRequested) {
-            mPermissionsAlreadyRequested = true;
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
+        } else if (activity.isReadContactsPermissionRequested()) {
+            activity.setReadContactsPermissionRequested();
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, UiUtils.READ_CONTACTS_PERMISSION);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
+        if (requestCode == UiUtils.READ_CONTACTS_PERMISSION) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
                 restartLoader(mSearchTerm);

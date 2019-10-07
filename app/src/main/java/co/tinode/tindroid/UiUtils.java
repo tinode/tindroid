@@ -98,8 +98,12 @@ public class UiUtils {
     static final int ACTION_UPDATE_SUB = 1;
     static final int ACTION_UPDATE_AUTH = 2;
     static final int ACTION_UPDATE_ANON = 3;
-    static final int SELECT_PICTURE = 1;
+
+    static final int ACTIVITY_RESULT_SELECT_PICTURE = 1;
+
     static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
+    static final int READ_CONTACTS_PERMISSION = 101;
+
     static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     static final String PREF_READ_RCPT = "pref_readReceipts";
     private static final String TAG = "UiUtils";
@@ -110,7 +114,7 @@ public class UiUtils {
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
     private static final int COLOR_RED_BORDER = 0xFFE57373;
     private static final int COLOR_GRAY_BORDER = 0xFF9E9E9E;
-    private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
+    // private static final int COLOR_BLUE_BORDER = 0xFF2196F3;
     private static final int COLOR_YELLOW_BORDER = 0xFFFFCA28;
     // Logo LayerDrawable IDs
     private static final int LOGO_LAYER_AVATAR = 0;
@@ -436,7 +440,7 @@ public class UiUtils {
             intent.setAction(Intent.ACTION_GET_CONTENT);
 
             fragment.startActivityForResult(Intent.createChooser(intent, fragment.getString(R.string.select_image)),
-                    UiUtils.SELECT_PICTURE);
+                    ACTIVITY_RESULT_SELECT_PICTURE);
         }
     }
 
