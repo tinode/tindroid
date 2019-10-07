@@ -841,16 +841,19 @@ public class Tinode {
         if (token == null) {
             return;
         }
-
+        // Check if token has changed
         if (mDeviceToken == null || !mDeviceToken.equals(token)) {
-            // Token has changed
+            // Cache token here assuming the call to server does not fail. If it fails clear the cached token.
+            // This prevents multiple unnecessary calls to the server with the same token.
+            mDeviceToken = token;
             if (isConnected() && isAuthenticated()) {
                 ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
-                        token, null));
-                sendWithPromise(msg, msg.hi.id).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        mDeviceToken, null));
+                sendWithPromise(msg, msg.hi.id).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        mDeviceToken = token;
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        // Clear cached value on failure to allow for retries.
+                        mDeviceToken = null;
                         return null;
                     }
                 });
