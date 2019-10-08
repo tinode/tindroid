@@ -890,9 +890,12 @@ public class UiUtils {
         PromisedReply<ServerMessage> connectionCheck;
         if (!Cache.getTinode().isAuthenticated()) {
             String uid = BaseDb.getInstance().getUid();
+            AccountManager accountManager = AccountManager.get(activity);
+            Account account = null;
             if (!TextUtils.isEmpty(uid)) {
-                AccountManager accountManager = AccountManager.get(activity);
-                Account account = getSavedAccount(activity, accountManager, uid);
+                account = getSavedAccount(activity, accountManager, uid);
+            }
+            if (account != null) {
                 connectionCheck = new PromisedReply<>();
                 UiUtils.loginWithSavedAccount(activity, accountManager, account, connectionCheck);
             } else {
