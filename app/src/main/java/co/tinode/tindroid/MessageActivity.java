@@ -184,15 +184,23 @@ public class MessageActivity extends AppCompatActivity {
             return;
         }
 
+        // Get a known topic. Make sure it's a comm topic.
+        try {
+            mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
+        } catch (ClassCastException ex) {
+            Log.w(TAG, "Activity resumed with non-comm topic");
+            finish();
+            return;
+        }
+
         // Cancel all pending notifications addressed to the current topic
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.cancel(mTopicName, 0);
         }
+
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        // Get a known topic.
-        mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
             showFragment(FRAGMENT_MESSAGES, null, false);
