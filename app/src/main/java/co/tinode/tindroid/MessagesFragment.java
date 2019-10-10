@@ -434,7 +434,7 @@ public class MessagesFragment extends Fragment
                     return true;
 
                 case R.id.action_offline:
-                    Cache.getTinode().reconnectNow();
+                    Cache.getTinode().reconnectNow(false);
                     break;
                 default:
                     return super.onOptionsItemSelected(item);

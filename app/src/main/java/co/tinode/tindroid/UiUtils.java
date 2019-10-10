@@ -897,7 +897,7 @@ public class UiUtils {
             }
             if (account != null) {
                 connectionCheck = new PromisedReply<>();
-                UiUtils.loginWithSavedAccount(activity, accountManager, account, connectionCheck);
+                loginWithSavedAccount(activity, accountManager, account, connectionCheck);
             } else {
                 activity.startActivity(new Intent(activity, LoginActivity.class));
                 activity.finish();
@@ -920,10 +920,13 @@ public class UiUtils {
                         Log.w(TAG, "Error subscribing to 'me' topic", err);
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
-                            if (sre.getCode() == 404) {
+                            int errCode = sre.getCode();
+                            if (errCode == 404) {
                                 Cache.getTinode().logout();
                                 activity.startActivity(new Intent(activity, LoginActivity.class));
                                 activity.finish();
+                            } else if (errCode >= 500) {
+                                Cache.getTinode().reconnectNow(true);
                             }
                         }
                         return null;

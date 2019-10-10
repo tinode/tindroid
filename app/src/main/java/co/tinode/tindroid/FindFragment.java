@@ -318,7 +318,7 @@ public class FindFragment extends Fragment {
                 return true;
 
             case R.id.action_offline:
-                Cache.getTinode().reconnectNow();
+                Cache.getTinode().reconnectNow(false);
                 return true;
         }
 

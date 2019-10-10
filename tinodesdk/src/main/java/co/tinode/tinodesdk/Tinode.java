@@ -370,6 +370,9 @@ public class Tinode {
                                         connected.resolve(pkt);
                                     }
 
+                                    // Success. Reset backoff counter.
+                                    mConnection.backoffReset();
+
                                     mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
                                     if (mStore != null) {
                                         mStore.setTimeAdjustment(mTimeAdjustment);
@@ -456,15 +459,20 @@ public class Tinode {
      * If websocket is valid and not connected, force an immediate reconnect attempt.
      * If it's not initialized or already connected do nothing.
      *
+     * @param force if true drop connection and reconnect.
+     *
      * @return true if it actually attempted to reconnect, false otherwise.
      */
     @SuppressWarnings("UnusedReturnValue")
-    public boolean reconnectNow() {
-        if (mConnection == null || mConnection.isConnected()) {
+    public boolean reconnectNow(boolean force) {
+        if (mConnection == null || (mConnection.isConnected() && !force)) {
             // If the connection is live, return a resolved promise
             return false;
         }
 
+        if (force) {
+            mConnection.disconnect();
+        }
         mConnection.connect(true);
 
         return true;
@@ -1754,6 +1762,7 @@ public class Tinode {
 
     /**
      * Callback interface called by Connection when it receives events from the websocket.
+     * Default no-op method implementations are provided for convenience.
      */
     public static class EventListener {
         /**

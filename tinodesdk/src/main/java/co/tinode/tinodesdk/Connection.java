@@ -39,6 +39,7 @@ public class Connection {
     // Exponential backoff/reconnecting
     final private ExpBackoff backoff = new ExpBackoff();
 
+    @SuppressWarnings("WeakerAccess")
     protected Connection(URI endpoint, String apikey, WsListener listener) {
 
         mEndpoint = endpoint;
@@ -126,11 +127,11 @@ public class Connection {
      *
      * This is a non-blocking call.
      *
-     * @param autoreconnect if connection is dropped, reconnect automatically
-     * @return true if a new attempt to open a connection was performed, false if connection already exists
+     * @param autoReconnect if connection is dropped, reconnect automatically
      */
-    public boolean connect(boolean autoreconnect) {
-        this.autoreconnect = autoreconnect;
+    @SuppressWarnings("WeakerAccess")
+    public void connect(boolean autoReconnect) {
+        this.autoreconnect = autoReconnect;
 
         if (autoreconnect && reconnecting) {
             // If we are waiting to reconnect, do it now.
@@ -139,14 +140,13 @@ public class Connection {
             // Create new socket and try to connect it.
             connectSocket(false);
         }
-
-        return true;
     }
 
     /**
      * Gracefully close websocket connection
      *
      */
+    @SuppressWarnings("WeakerAccess")
     public void disconnect() {
         // Actually close the socket
         if (mWsClient != null) {
@@ -165,8 +165,18 @@ public class Connection {
      *
      * @return true if the socket is OPEN, false otherwise;
      */
+    @SuppressWarnings("WeakerAccess")
     public boolean isConnected() {
         return mWsClient != null && mWsClient.isOpen();
+    }
+
+    /**
+     * Reset exponential backoff counter to zero.
+     * If autoreconnect is true and WsListener is provided, then WsListener.onConnect must call
+     * this method.
+     */
+    public void backoffReset() {
+        backoff.reset();
     }
 
     public void send(String message) {
@@ -184,14 +194,14 @@ public class Connection {
             try {
                 getSocket().setSoTimeout(0);
             } catch (SocketException ignored) {}
-            
-            backoff.reset();
 
             boolean r = reconnecting;
             reconnecting = false;
 
             if (mListener != null) {
                 mListener.onConnect(r);
+            } else {
+                backoff.reset();
             }
         }
 

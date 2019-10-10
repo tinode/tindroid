@@ -16,6 +16,7 @@ public class ExpBackoff {
     private final Random random = new Random();
     private int attempt;
 
+    @SuppressWarnings("WeakerAccess")
     public ExpBackoff() {
         this.attempt = 0;
     }
@@ -26,6 +27,7 @@ public class ExpBackoff {
      * Increment attempt counter and return time to sleep in milliseconds
      * @return time to sleep in milliseconds
      */
+    @SuppressWarnings("WeakerAccess")
     public long getNextDelay() {
         if (attempt > MAX_SHIFT) {
             attempt = MAX_SHIFT;
@@ -41,6 +43,7 @@ public class ExpBackoff {
      * Pause the current thread for the appropriate number of milliseconds
      * @return false if the sleep was interrupted, true otherwise
      */
+    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
     public boolean doSleep() {
         boolean result;
         try {
@@ -55,6 +58,7 @@ public class ExpBackoff {
         return result;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void reset() {
         this.attempt = 0;
     }
@@ -63,6 +67,7 @@ public class ExpBackoff {
         return attempt;
     }
 
+    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
     public boolean wakeUp() {
         reset();
         if (currentThread != null) {

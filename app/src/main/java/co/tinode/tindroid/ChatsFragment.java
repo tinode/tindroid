@@ -215,14 +215,11 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
             case R.id.action_about:
                 DialogFragment about = new AboutDialogFragment();
-                // The warning below is a false positive. If activity is not null, then
-                // getFragmentManager is also not null
-                // noinspection ConstantConditions
-                about.show(getFragmentManager(), "about");
+                about.show(getParentFragmentManager(), "about");
                 return true;
 
             case R.id.action_offline:
-                Cache.getTinode().reconnectNow();
+                Cache.getTinode().reconnectNow(false);
                 break;
         }
         return false;
