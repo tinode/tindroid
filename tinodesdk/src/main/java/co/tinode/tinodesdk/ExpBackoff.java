@@ -8,10 +8,10 @@ import java.util.Random;
 public class ExpBackoff {
     private static final String TAG = "ExpBackoff";
 
-    // Minimum delay = 500ms, expected ~1000ms;
-    private static final int BASE_SLEEP_MS = 500;
-    // Maximum delay 2^11 ~ 2000 seconds
-    private static final int MAX_SHIFT = 11;
+    // Minimum delay = 1000ms, expected ~1500ms;
+    private static final int BASE_SLEEP_MS = 1000;
+    // Maximum delay 2^10 ~ 2000 seconds ~ 34 min.
+    private static final int MAX_SHIFT = 10;
 
     private final Random random = new Random();
     private int attempt;

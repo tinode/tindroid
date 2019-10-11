@@ -175,6 +175,7 @@ public class Connection {
      * If autoreconnect is true and WsListener is provided, then WsListener.onConnect must call
      * this method.
      */
+    @SuppressWarnings("WeakerAccess")
     public void backoffReset() {
         backoff.reset();
     }
