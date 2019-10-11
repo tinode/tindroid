@@ -1581,11 +1581,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected void routeMetaSub(MsgServerMeta<DP, DR, SP, SR> meta) {
-        if (meta != null) {
-            for (Subscription<SP, SR> newsub : meta.sub) {
-                processSub(newsub);
-            }
+        for (Subscription<SP, SR> newsub : meta.sub) {
+            processSub(newsub);
         }
+
         if (mListener != null) {
             mListener.onSubsUpdated();
         }
@@ -1642,6 +1641,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
+    protected void allSubsReceived() {
+        if (mListener != null) {
+            mListener.onSubsUpdated();
+        }
+    }
     protected void routePres(MsgServerPres pres) {
         MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
         Subscription<SP, SR> sub;
