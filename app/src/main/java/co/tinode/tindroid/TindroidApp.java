@@ -58,7 +58,7 @@ public class TindroidApp extends Application {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String token = intent.getStringExtra("token");
-                if (token != null && !token.equals("")) {
+                if (token != null && !token.equals("") && sTinodeCache != null) {
                     sTinodeCache.setDeviceToken(token);
                 }
             }
