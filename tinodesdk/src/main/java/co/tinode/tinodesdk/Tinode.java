@@ -565,9 +565,17 @@ public class Tinode {
                     topic.topicLeft(unsub, pkt.ctrl.code, pkt.ctrl.text);
                 }
             } else if ("data".equals(pkt.ctrl.getStringParam("what", null))) {
+                // All data has been delivered.
                 Topic topic = getTopic(pkt.ctrl.topic);
                 if (topic != null) {
                     topic.allMessagesReceived(pkt.ctrl.getIntParam("count", 0));
+                }
+            }  else if ("sub".equals(pkt.ctrl.getStringParam("what", null))) {
+                // The topic has no subscriptions.
+                Topic topic = getTopic(pkt.ctrl.topic);
+                if (topic != null) {
+                    // Trigger Listener.onSubsUpdated.
+                    topic.routeMetaSub(null);
                 }
             }
         } else if (pkt.meta != null) {

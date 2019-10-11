@@ -1581,10 +1581,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected void routeMetaSub(MsgServerMeta<DP, DR, SP, SR> meta) {
-        for (Subscription<SP, SR> newsub : meta.sub) {
-            processSub(newsub);
+        if (meta != null) {
+            for (Subscription<SP, SR> newsub : meta.sub) {
+                processSub(newsub);
+            }
         }
-
         if (mListener != null) {
             mListener.onSubsUpdated();
         }
