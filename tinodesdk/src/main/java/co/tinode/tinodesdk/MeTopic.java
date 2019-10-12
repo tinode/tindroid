@@ -251,9 +251,14 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     @Override
     protected void routePres(MsgServerPres pres) {
+        MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
+        if (what == MsgServerPres.What.TERM) {
+            super.routePres(pres);
+            return;
+        }
+
         // FIXME(gene): pres.src may contain UID
         Topic topic = mTinode.getTopic(pres.src);
-        MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
         if (topic != null) {
             switch (what) {
                 case ON: // topic came online
