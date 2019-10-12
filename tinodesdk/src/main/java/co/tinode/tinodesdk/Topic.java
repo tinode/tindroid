@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -1662,6 +1661,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 routeMetaDel(pres.clear, pres.delseq);
                 break;
 
+            case TERM:
+                topicLeft(false, 500, "term");
+                break;
+
             case ACS:
                 sub = getSubscription(pres.src);
                 if (sub == null) {
@@ -1679,12 +1682,17 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                         } else {
                             sub.pub = user.pub;
                         }
+                    } else {
+                        Log.w(TAG, "Invalid access mode update '" + pres.dacs + "'");
                     }
                 } else {
                     // Update to an existing subscription.
                     sub.updateAccessMode(pres.dacs);
                 }
-                processSub(sub);
+
+                if (sub != null) {
+                    processSub(sub);
+                }
                 break;
             default:
                 Log.w(TAG, "Unknown presence update: " + pres.what);
