@@ -48,7 +48,7 @@ public class TindroidApp extends Application {
             Log.w(TAG, "Failed to retrieve app version", e);
         }
 
-        if (Build.PRODUCT.startsWith("sdk") || Build.PRODUCT.startsWith("vbox")) {
+        if (isEmulator()) {
             Log.i(TAG, "Running in emulator: disabling Crashlytics");
             CrashlyticsCore disabled = new CrashlyticsCore.Builder().disabled(true).build();
             Fabric.with(this, new Crashlytics.Builder().core(disabled).build());
@@ -77,6 +77,16 @@ public class TindroidApp extends Application {
         return sAppVersion;
     }
 
+    public static String getHostName(Context context) {
+        return context.getResources().getString(isEmulator() ?
+                R.string.emulator_host_name :
+                R.string.default_host_name);
+    }
+
+    public static boolean shouldUseTLS() {
+        return !isEmulator();
+    }
+
     public static void retainTinodeCache(Tinode tinode) {
         sTinodeCache = tinode;
     }
@@ -92,5 +102,21 @@ public class TindroidApp extends Application {
                 nm.createNotificationChannel(channel);
             }
         }
+    }
+
+    // Detect if the code is running in an emulator.
+    // Used mostly for convenience to use correct server address i.e. 10.0.2.2:6060 vs sandbox.tinode.co and
+    // to enable/disable Crashlytics. It's OK if it's imprecise.
+    public static boolean isEmulator() {
+        return Build.FINGERPRINT.startsWith("sdk_gphone_x86")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT)
+                || Build.PRODUCT.startsWith("sdk")
+                || Build.PRODUCT.startsWith("vbox");
     }
 }

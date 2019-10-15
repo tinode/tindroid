@@ -285,8 +285,8 @@ public class UiUtils {
                         final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
                         if (!TextUtils.isEmpty(token)) {
                             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
-                            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-                            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
+                            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getHostName(activity));
+                            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.shouldUseTLS());
                             try {
                                 // Connecting with synchronous calls because this is not the UI thread.
                                 final Tinode tinode = Cache.getTinode();

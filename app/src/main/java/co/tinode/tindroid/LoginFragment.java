@@ -115,8 +115,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         signIn.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
+        final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getHostName(parent));
+        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.shouldUseTLS());
         final Tinode tinode = Cache.getTinode();
         try {
             // This is called on the websocket thread.

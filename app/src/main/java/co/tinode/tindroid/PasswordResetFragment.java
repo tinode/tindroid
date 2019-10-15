@@ -97,8 +97,8 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
         confirm.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
+        final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getHostName(parent));
+        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.shouldUseTLS());
 
         try {
             final Tinode tinode = Cache.getTinode();

@@ -1,7 +1,10 @@
 package co.tinode.tindroid;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
+
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.CheckBoxPreference;
@@ -16,8 +19,7 @@ import androidx.preference.PreferenceManager;
 public class LoginSettingsFragment extends PreferenceFragmentCompat
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    public LoginSettingsFragment() {
-    }
+    private static final String TAG = "LoginSettingsFragment";
 
     @Override
     public void onCreatePreferences(Bundle bundle, String rootKey) {
@@ -36,6 +38,15 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
         }
 
         addPreferencesFromResource(R.xml.login_preferences);
+
+        Preference p = findPreference("pref_hostName");
+        if (p != null) {
+            p.setDefaultValue(TindroidApp.getHostName(activity));
+        }
+        p = findPreference("pref_useTLS");
+        if (p != null) {
+            p.setDefaultValue(TindroidApp.shouldUseTLS());
+        }
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         onSharedPreferenceChanged(sharedPreferences, "pref_hostName");
@@ -58,20 +69,29 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Preference preference = findPreference(key);
-        if (preference == null) {
+        Context context = getContext();
+        if (preference == null || context == null) {
             return;
         }
 
-        if (preference instanceof ListPreference) {
-            ListPreference listPreference = (ListPreference) preference;
-            int prefIndex = listPreference.findIndexOfValue(sharedPreferences.getString(key, ""));
-            if (prefIndex >= 0) {
-                preference.setSummary(listPreference.getEntries()[prefIndex]);
-            }
-        } else if (preference instanceof CheckBoxPreference) {
-            preference.setSummary("");
-        } else {
-            preference.setSummary(sharedPreferences.getString(key, ""));
+        switch (preference.getKey()) {
+            case "pref_wireTransport":
+                ListPreference listPreference = (ListPreference) preference;
+                int prefIndex = listPreference.findIndexOfValue(sharedPreferences.getString(key,null));
+                if (prefIndex >= 0) {
+                    preference.setSummary(getString(R.string.settings_wire_explained,
+                            listPreference.getEntries()[prefIndex]));
+                }
+                break;
+            case "pref_useTLS":
+                break;
+            case "pref_hostName":
+                preference.setSummary(getString(R.string.settings_host_name_explained,
+                        sharedPreferences.getString(key, TindroidApp.getHostName(context))));
+                break;
+            default:
+                Log.w(TAG, "Unknown preference '" + key + "'");
+                // do nothing.
         }
     }
 }

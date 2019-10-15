@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
@@ -129,8 +130,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             try {
                 final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
-                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-                boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
+                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getHostName(mContext));
+                boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.shouldUseTLS());
                 String token = AccountManager.get(mContext)
                         .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
                 tinode.connect(hostName, tls).getResult();

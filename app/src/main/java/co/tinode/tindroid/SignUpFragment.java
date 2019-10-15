@@ -122,8 +122,8 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
         signUp.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, Cache.HOST_NAME);
-        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, false);
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getHostName(parent));
+        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.shouldUseTLS());
         final String fullName = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
         final ImageView avatar = parent.findViewById(R.id.imageAvatar);
         final Tinode tinode = Cache.getTinode();

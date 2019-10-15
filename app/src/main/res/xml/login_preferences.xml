@@ -7,17 +7,15 @@
     <androidx.preference.EditTextPreference
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:defaultValue="@string/default_host_name"
         android:key="pref_hostName"
-        android:summary="%s"
+        android:summary="@string/settings_host_name_explained"
         android:title="@string/settings_host_name"/>
 
     <androidx.preference.CheckBoxPreference
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:defaultValue="false"
         android:key="pref_useTLS"
-        android:summary="%s"
+        android:summary="@string/settings_tls_explained"
         android:title="@string/settings_use_tls"
         />
 
@@ -28,6 +26,6 @@
         android:entries="@array/wire_transport"
         android:entryValues="@array/wire_transport_value"
         android:key="pref_wireTransport"
-        android:summary="%s"
+        android:summary="@string/settings_wire_explained"
         android:title="@string/settings_wire_transport"/>
 </androidx.preference.PreferenceScreen>
