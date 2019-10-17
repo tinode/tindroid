@@ -6,7 +6,7 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        applicationId "co.tinode.tindroid"
+        applicationId "co.tinode.tindroidx"
         minSdkVersion 19
         targetSdkVersion 28
         vectorDrawables.useSupportLibrary = true
