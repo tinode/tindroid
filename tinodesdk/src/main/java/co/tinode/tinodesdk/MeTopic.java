@@ -257,7 +257,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             return;
         }
 
-        // FIXME(gene): pres.src may contain UID
         Topic topic = mTinode.getTopic(pres.src);
         if (topic != null) {
             switch (what) {

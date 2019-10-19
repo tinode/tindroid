@@ -1694,8 +1694,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     processSub(sub);
                 }
                 break;
+            case MSG:
+            case READ:
+            case RECV:
+                // Explicitly ignore message-related notifications. They are handled in the 'me' topic.
+                break;
             default:
-                Log.w(TAG, "Unknown presence update: " + pres.what);
+                Log.w(TAG, "Unknown presence update '" + pres.what + "' in '" + getName() + "'");
         }
 
         if (mListener != null) {
