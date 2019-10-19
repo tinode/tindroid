@@ -3,6 +3,14 @@ apply plugin: 'io.fabric'
 apply plugin: 'com.google.gms.google-services'
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('/Users/gene/ventures/tinode/keystore')
+            keyAlias = 'tinode-prod-key'
+            storePassword 'test123'
+            keyPassword 'test123'
+        }
+    }
     compileSdkVersion 28
 
     defaultConfig {
@@ -10,8 +18,8 @@ android {
         minSdkVersion 19
         targetSdkVersion 28
         vectorDrawables.useSupportLibrary = true
+        versionCode = gitVersionCode()
 
-        versionCode gitVersionCode()
         versionName gitVersionName()
     }
 /*
