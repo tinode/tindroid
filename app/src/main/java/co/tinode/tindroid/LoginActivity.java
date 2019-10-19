@@ -115,8 +115,6 @@ public class LoginActivity extends AppCompatActivity {
         final Uri alUri = intent.getData();
         final String cred = intent.getStringExtra("credential");
 
-        Log.d(TAG, "Login app link: action=" + alAction + ", uri="+alUri+", cred="+cred);
-
         if (TextUtils.isEmpty(cred)) {
             // Display the login form.
             showFragment(FRAGMENT_LOGIN, null, false);

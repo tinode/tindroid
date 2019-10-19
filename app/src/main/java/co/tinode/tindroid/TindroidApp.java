@@ -7,15 +7,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 
+import androidx.preference.PreferenceManager;
 import co.tinode.tinodesdk.Tinode;
 
 import io.fabric.sdk.android.Fabric;
@@ -67,6 +71,17 @@ public class TindroidApp extends Application {
                 new IntentFilter("FCM_REFRESH_TOKEN"));
 
         createNotificationChannel();
+
+        // Check if preferences already exist. If not, create them.
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        String hostName = pref.getString("pref_hostName", null);
+        if (TextUtils.isEmpty(hostName)) {
+            // No preferences found. Save default values.
+            SharedPreferences.Editor editor= pref.edit();
+            editor.putString("pref_hostName", getHostName(this));
+            editor.putBoolean("pref_useTLS", !isEmulator());
+            editor.apply();
+        }
     }
 
     public static Context getAppContext() {

@@ -39,15 +39,6 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
 
         addPreferencesFromResource(R.xml.login_preferences);
 
-        Preference p = findPreference("pref_hostName");
-        if (p != null) {
-            p.setDefaultValue(TindroidApp.getHostName(activity));
-        }
-        p = findPreference("pref_useTLS");
-        if (p != null) {
-            p.setDefaultValue(TindroidApp.shouldUseTLS());
-        }
-
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         onSharedPreferenceChanged(sharedPreferences, "pref_hostName");
         onSharedPreferenceChanged(sharedPreferences, "pref_useTLS");
@@ -87,7 +78,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
                 break;
             case "pref_hostName":
                 preference.setSummary(getString(R.string.settings_host_name_explained,
-                        sharedPreferences.getString(key, TindroidApp.getHostName(context))));
+                        sharedPreferences.getString("pref_hostName", TindroidApp.getHostName(context))));
                 break;
             default:
                 Log.w(TAG, "Unknown preference '" + key + "'");
