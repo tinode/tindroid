@@ -31,9 +31,9 @@ public class VCard implements Serializable {
     public VCard() {
     }
 
-    public VCard(String fullName, byte[] avatar) {
+    public VCard(String fullName, byte[] avatar, String avatarImageType) {
         this.fn = fullName;
-        this.photo = new Photo(avatar);
+        this.photo = new Photo(avatar, avatarImageType);
     }
 
     private static String typeToString(ContactType tp) {
@@ -83,8 +83,12 @@ public class VCard implements Serializable {
         return photo == null ? null : photo.data;
     }
     @JsonIgnore
-    public void setPhotoBits(byte[] bits) {
-        photo = new Photo(bits);
+    public String getPhotoType() {
+        return photo == null ? null : photo.type;
+    }
+    @JsonIgnore
+    public void setPhotoBits(byte[] bits, String type) {
+        photo = new Photo(bits, type);
     }
 
     public void addPhone(String phone, ContactType type) {
@@ -222,16 +226,30 @@ public class VCard implements Serializable {
         }
     }
 
+    /**
+     * Generic container for image data.
+     */
     public static class Photo implements Serializable {
         public byte[] data;
         public String type;
 
         public Photo() {}
 
-        public Photo(byte[] bits) {
-            data = bits;
+        /**
+         * The main constructor.
+         *
+         * @param bits binary image data
+         * @param type the specific part of image/ mime type, i.e. 'jpeg' or 'png'.
+         */
+        public Photo(byte[] bits, String type) {
+            this.data = bits;
+            this.type = type;
         }
 
+        /**
+         * Creates a copy of a photo instance.
+         * @return new instance of Photo.
+         */
         public Photo copy() {
             Photo ret = new Photo();
             ret.data = data;

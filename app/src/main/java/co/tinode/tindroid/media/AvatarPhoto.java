@@ -55,7 +55,7 @@ public class AvatarPhoto implements Serializable {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             mImage.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
             this.data = byteArrayOutputStream.toByteArray();
-            this.type = "jpg";
+            this.type = "jpeg";
         }
     }
 }

@@ -18,15 +18,15 @@ public class VxCard extends VCard {
     public VxCard() {
     }
 
-    public VxCard(String fullName, byte[] avatar) {
-        super(fullName, avatar);
+    public VxCard(String fullName, byte[] avatar, String avatarImageType) {
+        super(fullName, avatar, avatarImageType);
         constructBitmap();
     }
 
     public VxCard(String fullName, Bitmap bmp) {
         fn = fullName;
         avatar = new AvatarPhoto(bmp);
-        photo = new Photo(avatar.data);
+        photo = new Photo(avatar.data, avatar.type);
     }
 
     @Override
@@ -46,12 +46,12 @@ public class VxCard extends VCard {
     @JsonIgnore
     public void setBitmap(Bitmap bmp) {
         avatar = new AvatarPhoto(bmp);
-        photo = new Photo(avatar.data);
+        photo = new Photo(avatar.data, avatar.type);
     }
     @JsonIgnore
     public void setAvatar(AvatarPhoto bmp) {
         avatar = bmp;
-        photo = new Photo(avatar.data);
+        photo = new Photo(avatar.data, avatar.type);
     }
 
     public void constructBitmap() {
