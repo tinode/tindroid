@@ -1,6 +1,6 @@
 # Add project specific ProGuard rules here.
 # By default, the flags in this file are appended to flags specified
-# in /home/gsokolov/Android/Sdk/tools/proguard/proguard-android.txt
+# in ~/Android/Sdk/tools/proguard/proguard-android.txt
 # You can edit the include path and order by changing the proguardFiles
 # directive in build.gradle.
 #
@@ -9,9 +9,13 @@
 
 # Add any project specific keep options here:
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Classes which define json wire protocol.
+-keep class co.tinode.tinodesdk.model.** {*;}
+-keepattributes *Annotation*,EnclosingMethod,Signature
+-keepnames class com.fasterxml.jackson.** {*;}
+-keepnames interface com.fasterxml.jackson.** {*;}
+-dontwarn com.fasterxml.jackson.databind.**
+-keep class org.codehaus.** {*;}
+
+# Don't mangle classes which are saved to DB.
+-keep class * implements java.io.Serializable

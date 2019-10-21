@@ -20,5 +20,14 @@
 -keep class java.beans.Transient.** {*;}
 -keep class java.beans.ConstructorProperties.** {*;}
 -keep class java.nio.file.Path.** {*;}
+
 # Classes which define json wire protocol.
 -keep class co.tinode.tinodesdk.model.** {*;}
+-keepattributes *Annotation*,EnclosingMethod,Signature
+-keepnames class com.fasterxml.jackson.** {*;}
+-keepnames interface com.fasterxml.jackson.** {*;}
+-dontwarn com.fasterxml.jackson.databind.**
+-keep class org.codehaus.** {*;}
+
+# Don't mangle serializable classes.
+-keep class * implements java.io.Serializable
