@@ -1,6 +1,6 @@
 # Add project specific ProGuard rules here.
 # By default, the flags in this file are appended to flags specified
-# in /Users/gene/Library/Android/sdk/tools/proguard/proguard-android.txt
+# in ~/Library/Android/sdk/tools/proguard/proguard-android.txt
 # You can edit the include path and order by changing the proguardFiles
 # directive in build.gradle.
 #
@@ -20,3 +20,5 @@
 -keep class java.beans.Transient.** {*;}
 -keep class java.beans.ConstructorProperties.** {*;}
 -keep class java.nio.file.Path.** {*;}
+# Classes which define json wire protocol.
+-keep class co.tinode.tinodesdk.model.** {*;}

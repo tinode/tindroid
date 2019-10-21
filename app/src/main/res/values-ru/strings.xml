@@ -10,7 +10,7 @@
     <string name="sign_in">Войти</string>
     <string name="action_signup">Зарегистрироваться</string>
     <string name="sign_up">Зарегистрироваться</string>
-    <string name="login_new">Войти</string>
+    <string name="login_new">Логин</string>
     <string name="password_new">Пароль</string>
     <string name="full_name">Полное имя, напр. Иван Петров</string>
     <string name="action_cancel">Отмена</string>

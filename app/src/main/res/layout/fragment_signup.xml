@@ -34,7 +34,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dip"
                     android:hint="@string/login_new"
-                    android:inputType="text"/>
+                    android:inputType="textShortMessage"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -94,7 +94,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:hint="@string/full_name"
-            android:inputType="text"/>
+            android:inputType="textPersonName"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -107,7 +107,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:hint="@string/email"
-            android:inputType="text"/>
+            android:inputType="textEmailAddress"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatButton
