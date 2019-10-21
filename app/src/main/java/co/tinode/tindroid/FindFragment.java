@@ -310,6 +310,9 @@ public class FindFragment extends Fragment {
 
             case R.id.action_invite:
                 ShareActionProvider provider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+                if (provider == null) {
+                    return false;
+                }
                 intent = new Intent(Intent.ACTION_SEND);
                 intent.setType("text/plain");
                 intent.putExtra(Intent.EXTRA_SUBJECT, activity.getResources().getString(R.string.tinode_invite_subject));
