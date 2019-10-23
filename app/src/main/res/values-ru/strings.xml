@@ -55,7 +55,7 @@
     <string name="request_pass_reset">Запросить код на %1$s</string>
     <string name="validated_address_to_use">Подтвержденный %1$s для получения кода</string>
     <string name="request">Запрос</string>
-    <string name="tinode_invite_subject">Попробуйте Tindroid Messenger</string>
+    <string name="tinode_invite_subject">Попробуйте Tinode Messenger</string>
     <string name="view_profile">Посмотреть профиль</string>
     <string name="account_settings">Настройки аккаунта</string>
     <string name="action_delete">Удалить</string>
@@ -136,7 +136,7 @@
     <string name="current_user">Вы</string>
     <string name="default_permissions">Права доступа по умолчанию</string>
     <string name="download_attachment">сохранить</string>
-    <string name="download_title">Tindroid скачать</string>
+    <string name="download_title">Tinode скачать</string>
     <string name="edit_account">Редактировать аккаунт</string>
     <string name="edit_permissions">Редактировать права доступа</string>
     <string name="edit_topic">Редакировать чат</string>
@@ -150,7 +150,7 @@
     <string name="placeholder_private">Видно только вам</string>
     <string name="profile_action">Tinode профиль</string>
     <string name="tinode_message">Отправить сообщение Tinode</string>
-    <string name="tinode_invite_body">Попробуйте Tinode Messenger. Check out Tindroid Messenger. Скачайте его из https://github.com/tinode/</string>
+    <string name="tinode_invite_body">Попробуйте Tinode Messenger: https://tinode.co/</string>
     <string name="user_not_found">Не найден</string>
     <string name="topic_tags">Тэги, список через запятую</string>
     <string name="sender_unknown">Неизвестный</string>
