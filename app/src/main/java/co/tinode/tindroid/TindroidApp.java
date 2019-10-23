@@ -78,7 +78,7 @@ public class TindroidApp extends Application {
         if (TextUtils.isEmpty(hostName)) {
             // No preferences found. Save default values.
             SharedPreferences.Editor editor= pref.edit();
-            editor.putString("pref_hostName", getHostName(this));
+            editor.putString("pref_hostName", getDefaultHostName(this));
             editor.putBoolean("pref_useTLS", !isEmulator());
             editor.apply();
         }
@@ -92,13 +92,13 @@ public class TindroidApp extends Application {
         return sAppVersion;
     }
 
-    public static String getHostName(Context context) {
+    public static String getDefaultHostName(Context context) {
         return context.getResources().getString(isEmulator() ?
                 R.string.emulator_host_name :
                 R.string.default_host_name);
     }
 
-    public static boolean shouldUseTLS() {
+    public static boolean getDefaultTLS() {
         return !isEmulator();
     }
 

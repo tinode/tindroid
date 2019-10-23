@@ -665,6 +665,15 @@ public class Tinode {
     }
 
     /**
+     * Get server address suitable for use as an Origin: header for CORS compliance.
+     *
+     * @return server internet address
+     */
+    public String getHttpOrigin() {
+        return (mUseTLS ? "https://" : "http://") + mServerHost;
+    }
+
+    /**
      * Get ID of the current logged in user.
      *
      * @return user ID of the current user.

@@ -55,7 +55,7 @@ public class LargeFileHelper {
             conn.setRequestProperty("User-Agent", mUserAgent);
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);
             conn.setRequestProperty("X-Tinode-APIKey", mApiKey);
-            conn.setRequestProperty("Authorization", "Token " + mAuthToken);
+            conn.setRequestProperty("X-Tinode-Auth", "Token " + mAuthToken);
             conn.setChunkedStreamingMode(0);
 
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
@@ -126,7 +126,7 @@ public class LargeFileHelper {
         try {
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestProperty("X-Tinode-APIKey", mApiKey);
-            urlConnection.setRequestProperty("Authorization", "Token " + mAuthToken);
+            urlConnection.setRequestProperty("X-Tinode-Auth", "Token " + mAuthToken);
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
             return copyStream(in, out, urlConnection.getContentLength(), progress);
         } finally {
@@ -209,7 +209,7 @@ public class LargeFileHelper {
     public Map<String,String> headers() {
         Map<String,String> headers = new HashMap<>();
         headers.put("X-Tinode-APIKey", mApiKey);
-        headers.put("Authorization", "Token " + mAuthToken);
+        headers.put("X-Tinode-Auth", "Token " + mAuthToken);
         return headers;
     }
 }

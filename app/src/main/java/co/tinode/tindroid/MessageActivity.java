@@ -37,6 +37,7 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -55,6 +56,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+
 
 /**
  * View to display a single conversation
@@ -97,7 +99,8 @@ public class MessageActivity extends AppCompatActivity {
                 query.setFilterById(mDownloadId);
                 Cursor c = mDownloadMgr.query(query);
                 if (c.moveToFirst()) {
-                    if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
+                    int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                    if (DownloadManager.STATUS_SUCCESSFUL == status) {
                         URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
                         String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
                         intent = new Intent();
@@ -110,6 +113,9 @@ public class MessageActivity extends AppCompatActivity {
                         } catch (ActivityNotFoundException ignored) {
                             startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
                         }
+                    } else if (DownloadManager.STATUS_FAILED == status) {
+                        int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
+                        Log.w(TAG, "Download failed. Reason: " + reason);
                     }
                 }
                 c.close();
@@ -515,12 +521,15 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(runnable);
     }
 
-    public void startDownload(Uri uri, String fname, String mime, Map<String, String> headers) {
+    public void startDownload(final Uri uri, final String fname, final String mime, final Map<String, String> headers) {
+        // Ensure directory exists.
         Environment
                 .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 .mkdirs();
 
         DownloadManager.Request req = new DownloadManager.Request(uri);
+        // Always add Origin header to satisfy CORS. If server does not need CORS it won't hurt anyway.
+        req.addRequestHeader("Origin", Cache.getTinode().getHttpOrigin());
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
                 req.addRequestHeader(entry.getKey(), entry.getValue());
@@ -536,7 +545,8 @@ public class MessageActivity extends AppCompatActivity {
                         .setDescription(getString(R.string.download_title))
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                         .setVisibleInDownloadsUi(true)
-                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fname));
+                        .setDestinationUri(Uri.fromFile(new File(Environment
+                                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname))));
     }
 
     /**

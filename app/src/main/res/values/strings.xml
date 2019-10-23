@@ -77,7 +77,7 @@
     <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
 
     <string name="tinode_invite_subject">Check out Tindroid Messenger</string>
-    <string name="tinode_invite_body">Check out Tindroid Messenger. Download it from https://github.com/tinode/</string>
+    <string name="tinode_invite_body">Check out Tindroid Messenger. Download it from https://tinode.co</string>
 
     <string name="profile_action">Tinode profile</string>
     <string name="view_profile">View Profile</string>

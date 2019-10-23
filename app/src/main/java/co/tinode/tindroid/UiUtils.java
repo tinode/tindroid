@@ -285,8 +285,13 @@ public class UiUtils {
                         final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
                         if (!TextUtils.isEmpty(token)) {
                             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
-                            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getHostName(activity));
-                            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.shouldUseTLS());
+                            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(activity));
+                            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
+                            if (TextUtils.isEmpty(hostName)) {
+                                // Something is misconfigured, use defaults anyway.
+                                hostName = TindroidApp.getDefaultHostName(activity);
+                                tls = TindroidApp.getDefaultTLS();
+                            }
                             try {
                                 // Connecting with synchronous calls because this is not the UI thread.
                                 final Tinode tinode = Cache.getTinode();
@@ -331,7 +336,7 @@ public class UiUtils {
                         }
                     }
                     if (launch != null && !activity.getComponentName().equals(launch.getComponent())) {
-                        launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+                        launch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);//Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
                         activity.startActivity(launch);
                         activity.finish();
                     }

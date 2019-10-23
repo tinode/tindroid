@@ -103,6 +103,7 @@ public class LoginActivity extends AppCompatActivity {
             // We already have a live connection to the server. All good.
             // Launch the contacts activity and stop.
             Intent intent = new Intent(this, ChatsActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
             return;
