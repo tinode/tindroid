@@ -76,8 +76,8 @@
      alphabet using ListView fast scroll. -->
     <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
 
-    <string name="tinode_invite_subject">Check out Tindroid Messenger</string>
-    <string name="tinode_invite_body">Check out Tindroid Messenger. Download it from https://tinode.co</string>
+    <string name="tinode_invite_subject">Check out Tinode Messenger</string>
+    <string name="tinode_invite_body">Check out Tinode Messenger. Download it from https://tinode.co</string>
 
     <string name="profile_action">Tinode profile</string>
     <string name="view_profile">View Profile</string>
@@ -169,7 +169,7 @@
     <string name="hint_search_tags">Search by tags</string>
     <string name="topic_not_found_or_invalid">Topic not found or invalid</string>
     <string name="sending_disabled">Not available</string>
-    <string name="download_title">Tindroid download</string>
+    <string name="download_title">Tinode download</string>
     <string name="some_permissions_missing">Some permissions missing.</string>
     <string name="invalid_file">Unable to attach this file</string>
     <string name="cancelled">cancelled</string>
