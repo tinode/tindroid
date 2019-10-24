@@ -9,7 +9,9 @@
         android:layout_height="wrap_content"
         android:key="pref_hostName"
         android:summary="@string/settings_host_name_explained"
-        android:title="@string/settings_host_name"/>
+        android:title="@string/settings_host_name"
+        android:inputType="textShortMessage"
+    />
 
     <androidx.preference.CheckBoxPreference
         android:layout_width="match_parent"

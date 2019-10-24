@@ -341,15 +341,21 @@ public class Tinode {
      * @return returns promise which will be resolved when the connection sequence is completed.
      */
     public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
-        mUseTLS = tls;
-
+        hostName = hostName.toLowerCase();
         if (mConnection != null && mConnection.isConnected()) {
-            // If the connection is live, return a resolved promise
-            return new PromisedReply<>((ServerMessage) null);
+            if (hostName.equals(mServerHost) && tls == mUseTLS) {
+                // If the connection is live and the server address has not changed, return a resolved promise
+                return new PromisedReply<>((ServerMessage) null);
+            } else {
+                mConnection.disconnect();
+                mConnection = null;
+            }
         }
 
         // Set up a new connection and a new promise
         mServerHost = hostName;
+        mUseTLS = tls;
+
         mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
 
         final PromisedReply<ServerMessage> connected = new PromisedReply<>();
