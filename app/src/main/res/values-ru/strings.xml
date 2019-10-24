@@ -203,6 +203,6 @@
     <string name="confirm_report">Заблокировать и сообщить о нарушении %1$s?</string>
     <string name="legal">Прочее</string>
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Пользовательское соглашение</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:info@tinode.co\">Обратная связь</a>]]></string>
+    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Обратная связь</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Политика конфиденциальности</a>]]></string>
 </resources>

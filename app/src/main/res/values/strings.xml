@@ -235,6 +235,6 @@
     <string name="confirm_report">Block and report %1$s?</string>
     <string name="legal">Legal</string>
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Terms of Use</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:info@tinode.co\">Contact Us</a>]]></string>
+    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contact Us</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Pricacy Policy</a>]]></string>
 </resources>
