@@ -80,7 +80,7 @@ public class MessagesFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<MessagesFragment.UploadResult> {
     private static final String TAG = "MessageFragment";
 
-    private static final int MESSAGES_TO_LOAD = 20;
+    private static final int MESSAGES_TO_LOAD = 24;
 
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;

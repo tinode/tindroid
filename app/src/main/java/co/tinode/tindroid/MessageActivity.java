@@ -70,6 +70,8 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
 
+    private static final int MESSAGES_TO_LOAD = 24;
+
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
 
@@ -278,7 +280,7 @@ public class MessageActivity extends AppCompatActivity {
         Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
                 .withDesc()
                 .withSub()
-                .withData()
+                .withLaterData(MESSAGES_TO_LOAD)
                 .withDel();
 
         if (mTopic.isOwner()) {
