@@ -140,7 +140,7 @@ public class MessagesFragment extends Fragment
                 try {
                     super.onLayoutChildren(recycler, state);
                 } catch (IndexOutOfBoundsException e) {
-                    Log.i("probe", "meet a IOOBE in RecyclerView", e);
+                    Log.i(TAG, "meet a IOOBE in RecyclerView", e);
                 }
             }
         };

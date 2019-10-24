@@ -172,7 +172,7 @@ public class Utils {
                                 holder.putPhone(phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.E164));
                             }
                         } catch (NumberParseException e) {
-                            e.printStackTrace();
+                            Log.i(TAG, "Failed to parse phone number '" + data + "' in country '" + country + "'");
                         }
                     }
                     break;
