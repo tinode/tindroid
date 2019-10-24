@@ -143,18 +143,20 @@ public class Connection {
     }
 
     /**
-     * Gracefully close websocket connection
-     *
+     * Gracefully close websocket connection.
      */
     @SuppressWarnings("WeakerAccess")
     public void disconnect() {
+        boolean wakeUp = autoreconnect;
+        autoreconnect = false;
+
         // Actually close the socket
         if (mWsClient != null) {
             mWsClient.close();
+            mWsClient = null;
         }
 
-        if (autoreconnect) {
-            autoreconnect = false;
+        if (wakeUp) {
             // Make sure we are not waiting to reconnect
             backoff.wakeUp();
         }
@@ -236,8 +238,9 @@ public class Connection {
             // The onClose is called while ws readystate is still OPEN. Therefore discard the client.
             if (mWsClient != null) {
                 mWsClient.close();
+                mWsClient = null;
             }
-            mWsClient = null;
+
             if (autoreconnect) {
                 new Thread(new Runnable() {
                     @Override

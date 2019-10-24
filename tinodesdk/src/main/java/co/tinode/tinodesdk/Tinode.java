@@ -127,6 +127,8 @@ public class Tinode {
     private String mAppName;
     private String mOsVersion;
     private Connection mConnection = null;
+    // Promise resolved or rejected on connection completion.
+    private PromisedReply<ServerMessage> mConnectionCompletion = null;
     // True is connection is authenticated
     private boolean mConnAuth = false;
     private String mServerVersion = null;
@@ -136,7 +138,7 @@ public class Tinode {
     private String mMyUid = null;
     private String mAuthToken = null;
     private Date mAuthTokenExpires = null;
-    private int mMsgId;
+    private int mMsgId = 0;
     private int mPacketCount;
     private EventListener mListener;
     private ConcurrentMap<String, FutureHolder> mFutures;
@@ -302,8 +304,7 @@ public class Tinode {
         mOsVersion = os;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    private boolean loadTopics() {
+    private void loadTopics() {
         if (mStore != null && mStore.isReady() && !mTopicsLoaded) {
             Topic[] topics = mStore.topicGetAll(this);
             if (topics != null) {
@@ -316,7 +317,6 @@ public class Tinode {
                 mTopicsLoaded = true;
             }
         }
-        return mTopicsLoaded;
     }
 
     private void setTopicsUpdated(Date date) {
@@ -336,110 +336,115 @@ public class Tinode {
     /**
      * Open a websocket connection to the server and process handshake exchange.
      *
-     * @param hostName address of the server to connect to
-     * @param tls      use transport layer security (wss)
-     * @return returns promise which will be resolved when the connection sequence is completed.
+     * @param hostName address of the server to connect to; if hostName is null a saved address will be used.
+     * @param tls      use transport layer security (wss); ignored if hostName is null.
+     * @return returns promise which will be resolved or rejected when the connection sequence is completed.
      */
     public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
-        hostName = hostName.toLowerCase();
+        if (hostName != null) {
+            // Convert to lowercase to ensure correct comparison.
+            hostName = hostName.toLowerCase();
+        }
+
         if (mConnection != null && mConnection.isConnected()) {
-            if (hostName.equals(mServerHost) && tls == mUseTLS) {
+            if (hostName == null || (hostName.equals(mServerHost) && tls == mUseTLS)) {
                 // If the connection is live and the server address has not changed, return a resolved promise
                 return new PromisedReply<>((ServerMessage) null);
             } else {
+                // Existing connection cannot be reused because server address has changed.
                 mConnection.disconnect();
-                mConnection = null;
             }
         }
 
-        // Set up a new connection and a new promise
-        mServerHost = hostName;
-        mUseTLS = tls;
+        mConnection = null;
+
+        if (hostName != null) {
+            mServerHost = hostName;
+            mUseTLS = tls;
+        }
 
         mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
 
-        final PromisedReply<ServerMessage> connected = new PromisedReply<>();
+        URI connectTo;
         try {
-            mConnection = new Connection(
-                    new URI((tls ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/"),
-                    mApiKey, new Connection.WsListener() {
-
-                @Override
-                protected void onConnect(final boolean autoreconnected) {
-                    // Connection established, send handshake, inform listener on success
-                    PromisedReply<ServerMessage> future = hello().thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                    // If this is an auto-reconnect, the promise is already resolved.
-                                    if (!connected.isDone()) {
-                                        connected.resolve(pkt);
-                                    }
-
-                                    // Success. Reset backoff counter.
-                                    mConnection.backoffReset();
-
-                                    mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
-                                    if (mStore != null) {
-                                        mStore.setTimeAdjustment(mTimeAdjustment);
-                                    }
-
-                                    if (mListener != null) {
-                                        mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
-                                    }
-
-                                    return null;
-                                }
-                            });
-                    // Login automatically if it's enabled and only if this is an auto-reconnect attempt.
-                    if (mAutologin && autoreconnected) {
-                        future.thenApply(
-                                new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
-                                        if (mLoginCredentials != null && !mLoginInProgress) {
-                                            login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
-                                        }
-                                        return null;
-                                    }
-                                });
-                    }
-                }
-
-                @Override
-                protected void onMessage(String message) {
-                    try {
-                        dispatchPacket(message);
-                    } catch (Exception ex) {
-                        Log.w(TAG, "Exception in dispatchPacket: ", ex);
-                    }
-                }
-
-                @Override
-                protected void onDisconnect(boolean byServer, int code, String reason) {
-                    handleDisconnect(byServer, -code, reason);
-                }
-
-                @Override
-                protected void onError(Exception err) {
-                    handleDisconnect(true, 0, err.getMessage());
-                    // If the promise is waiting, reject. Otherwise it's not our problem.
-                    if (!connected.isDone()) {
-                        try {
-                            connected.reject(err);
-                        } catch (Exception ignored) {
-                            // There is no rejection handler ths there should not be an exception
-                        }
-                    }
-                }
-            });
-
-            // true means autoreconnect
-            mConnection.connect(true);
+            connectTo = new URI((mUseTLS ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/");
         } catch (URISyntaxException ex) {
             return new PromisedReply<>(ex);
         }
 
+        final PromisedReply<ServerMessage> connected = new PromisedReply<>();
+        mConnection = new Connection(connectTo, mApiKey, new Connection.WsListener() {
+            @Override
+            protected void onConnect(final boolean autoreconnected) {
+                // Connection established, send handshake, inform listener on success
+                PromisedReply<ServerMessage> future = hello().thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                // If this is an auto-reconnect, the promise is already resolved.
+                                if (!connected.isDone()) {
+                                    connected.resolve(pkt);
+                                }
+
+                                // Success. Reset backoff counter.
+                                mConnection.backoffReset();
+
+                                mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
+                                if (mStore != null) {
+                                    mStore.setTimeAdjustment(mTimeAdjustment);
+                                }
+
+                                if (mListener != null) {
+                                    mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
+                                }
+
+                                return null;
+                            }
+                        });
+                // Login automatically if it's enabled and only if this is an auto-reconnect attempt.
+                if (mAutologin && autoreconnected) {
+                    future.thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
+                                    if (mLoginCredentials != null && !mLoginInProgress) {
+                                        login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
+                                    }
+                                    return null;
+                                }
+                            });
+                }
+            }
+
+            @Override
+            protected void onMessage(String message) {
+                try {
+                    dispatchPacket(message);
+                } catch (Exception ex) {
+                    Log.w(TAG, "Exception in dispatchPacket: ", ex);
+                }
+            }
+
+            @Override
+            protected void onDisconnect(boolean byServer, int code, String reason) {
+                handleDisconnect(byServer, -code, reason);
+            }
+
+            @Override
+            protected void onError(Exception err) {
+                handleDisconnect(true, 0, err.getMessage());
+                // If the promise is waiting, reject. Otherwise it's not our problem.
+                if (!connected.isDone()) {
+                    try {
+                        connected.reject(err);
+                    } catch (Exception ignored) {
+                        // There is no rejection handler ths there should not be an exception
+                    }
+                }
+            }
+        });
+
+        mConnection.connect(true);
         return connected;
     }
 
@@ -467,21 +472,24 @@ public class Tinode {
      *
      * @param force if true drop connection and reconnect.
      *
-     * @return true if it actually attempted to reconnect, false otherwise.
+     * @return returns promise which will be resolved or rejected when the connection sequence is completed.
      */
     @SuppressWarnings("UnusedReturnValue")
-    public boolean reconnectNow(boolean force) {
-        if (mConnection == null || (mConnection.isConnected() && !force)) {
-            // If the connection is live, return a resolved promise
-            return false;
+    public PromisedReply<ServerMessage> reconnectNow(boolean force) {
+        if (mConnection == null) {
+            return connect(null, false);
         }
 
-        if (force) {
+        if (mConnection.isConnected()) {
+            if (!force) {
+                // If the connection is live and reset is not requested, return a resolved promise
+                return new PromisedReply<>((ServerMessage) null);
+            }
+            // Forcing a new connection.
             mConnection.disconnect();
         }
-        mConnection.connect(true);
 
-        return true;
+        return connect(null, false);
     }
 
     private void handleDisconnect(boolean byServer, int code, String reason) {
@@ -1598,8 +1606,8 @@ public class Tinode {
         if (mTopics.containsKey(name)) {
             throw new IllegalStateException("Topic '" + name + "' is already registered");
         }
-        topic.setStorage(mStore);
         mTopics.put(name, topic);
+        topic.setStorage(mStore);
     }
 
     /**
