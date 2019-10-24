@@ -24,6 +24,7 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.core.content.FileProvider;
 import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
@@ -618,14 +619,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    int position = -1;
+                    if (cursor != null) {
+                        LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+                        if (lm != null) {
+                            position = lm.findFirstVisibleItemPosition();
+                        }
+                    }
                     mRefresher.setRefreshing(false);
                     if (refresh == REFRESH_HARD) {
                         mRecyclerView.setAdapter(MessagesAdapter.this);
                     } else {
                         notifyDataSetChanged();
                     }
-                    if (cursor != null)
-                        mRecyclerView.scrollToPosition(0);
+                    if (cursor != null) {
+                        if (position == 0) {
+                            mRecyclerView.scrollToPosition(0);
+                        }
+                    }
                 }
             });
         }
