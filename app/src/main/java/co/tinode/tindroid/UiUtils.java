@@ -272,8 +272,20 @@ public class UiUtils {
 
     static void loginWithSavedAccount(final Activity activity,
                                       final AccountManager accountManager,
-                                      final Account account,
-                                      final PromisedReply<ServerMessage> resolveWhenDone) {
+                                      final Account account) {
+        Log.i(TAG, "loginWithSavedAccount");
+
+        final Tinode tinode = Cache.getTinode();
+        if (tinode.isAuthenticated()) {
+            Intent launch = new Intent(activity, ChatsActivity.class);
+            if (!activity.getComponentName().equals(launch.getComponent())) {
+                launch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                activity.startActivity(launch);
+                activity.finish();
+            }
+            return;
+        }
+
         accountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
             @Override
             public void run(AccountManagerFuture<Bundle> future) {
@@ -303,12 +315,7 @@ public class UiUtils {
                                 accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
                                 if (msg == null || msg.ctrl.code < 300) {
                                     // Logged in successfully. Go to Contacts.
-                                    if (resolveWhenDone != null) {
-                                        resolveWhenDone.resolve(msg);
-                                        launch = null;
-                                    } else {
-                                        launch = new Intent(activity, ChatsActivity.class);
-                                    }
+                                    launch = new Intent(activity, ChatsActivity.class);
                                 } else {
                                     Log.d(TAG, "LoginWithSavedAccount requires credentials, sending to login");
                                     Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
@@ -322,21 +329,15 @@ public class UiUtils {
                                 Log.d(TAG, "Network failure", ex);
                                 // Login failed due to network error. If we have UID, go to Contacts, otherwise to Login.
                                 launch = new Intent(activity, BaseDb.getInstance().isReady() ? ChatsActivity.class : LoginActivity.class);
-                                if (resolveWhenDone != null) {
-                                    resolveWhenDone.reject(ex);
-                                }
                             } catch (Exception ex) {
                                 Log.d(TAG, "Other failure", ex);
                                 // Login failed due to invalid (expired) token
                                 accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                                if (resolveWhenDone != null) {
-                                    resolveWhenDone.reject(ex);
-                                }
                             }
                         }
                     }
-                    if (launch != null && !activity.getComponentName().equals(launch.getComponent())) {
-                        launch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);//Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+                    if (!activity.getComponentName().equals(launch.getComponent())) {
+                        launch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                         activity.startActivity(launch);
                         activity.finish();
                     }

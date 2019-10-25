@@ -36,7 +36,7 @@ public class SplashActivity extends AppCompatActivity {
                 }
 
                 // Account found, try to use it for login.
-                UiUtils.loginWithSavedAccount(this, accountManager, account, null);
+                UiUtils.loginWithSavedAccount(this, accountManager, account);
                 return;
             }
         }
