@@ -80,7 +80,7 @@ public class MessagesFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<MessagesFragment.UploadResult> {
     private static final String TAG = "MessageFragment";
 
-    private static final String MESSAGE_TO_SEND = "message";
+    static final String MESSAGE_TO_SEND = "messageText";
 
     private static final int MESSAGES_TO_LOAD = 24;
 
@@ -125,10 +125,6 @@ public class MessagesFragment extends Fragment
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
             return;
-        }
-
-        if (savedInstance != null) {
-            mMessageToSend = savedInstance.getString(MESSAGE_TO_SEND);
         }
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
@@ -272,11 +268,10 @@ public class MessagesFragment extends Fragment
 
         setHasOptionsMenu(true);
 
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            mTopicName = bundle.getString("topic");
-            mMessageToSend = bundle.getString("messageText");
-            setArguments(null);
+        Bundle args = getArguments();
+        if (args != null) {
+            mTopicName = args.getString("topic");
+            mMessageToSend = args.getString(MESSAGE_TO_SEND);
         } else {
             mTopicName = null;
         }
@@ -345,13 +340,11 @@ public class MessagesFragment extends Fragment
                 activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             } else {
-                EditText input = activity.findViewById(R.id.editMessage);
-                if (TextUtils.isEmpty(mMessageToSend)) {
-                    input.getText().clear();
-                } else {
+                if (!TextUtils.isEmpty(mMessageToSend)) {
+                    EditText input = activity.findViewById(R.id.editMessage);
                     input.setText(mMessageToSend);
+                    mMessageToSend = null;
                 }
-                mMessageToSend = null;
 
                 activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
                 activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
@@ -374,6 +367,20 @@ public class MessagesFragment extends Fragment
         // Stop reporting read messages
         mNoteTimer.cancel();
         mNoteTimer = null;
+
+        final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        // Save the text in the send field.
+        EditText input = activity.findViewById(R.id.editMessage);
+        String draft = input.getText().toString().trim();
+        Bundle args = getArguments();
+        if (args != null) {
+            args.putString(MESSAGE_TO_SEND, draft);
+            setArguments(args);
+        }
     }
 
     @Override
@@ -383,21 +390,6 @@ public class MessagesFragment extends Fragment
         mUploadProgress = null;
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        // Saves the text in the send field.
-        EditText input = activity.findViewById(R.id.editMessage);
-        String draft = input.getText().toString().trim();
-        if (!TextUtils.isEmpty(draft)) {
-            outState.putString(MESSAGE_TO_SEND, draft);
-        }
-    }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
