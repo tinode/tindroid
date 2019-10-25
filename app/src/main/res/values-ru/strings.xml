@@ -81,7 +81,7 @@
     <string name="topic_private">Дополнительная информация</string>
     <string name="topic_not_found_or_invalid">Чат не найден</string>
     <string name="topic_muted">Уведомления отключены</string>
-    <string name="some_permissions_missing">Не хватает прав доступа</string>
+    <string name="some_permissions_missing">Недостаточно прав доступа. Пожалуйста, дайте все запрошенные права.</string>
     <string name="sending_disabled">Нет доступа</string>
     <string name="send_message">Отправить сообщение</string>
     <string name="remove_from_group">Удалить</string>
