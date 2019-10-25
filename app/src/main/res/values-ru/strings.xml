@@ -124,7 +124,7 @@
     <string name="confirm_leave_topic">Вы действительно хотите покинуть этот чат?</string>
     <string name="confirm_delete_multiple_topics">Вы действительно хотите удалить эти чаты?</string>
     <string name="group_members">Участники чата</string>
-    <string name="forgot_password">Забыл пароль</string>
+    <string name="forgot_password">Напоминание пароля</string>
     <string name="failed_to_create_topic">Ошибка создания чата</string>
     <string name="failed_to_download">Не удалось скачать файл</string>
     <string name="failed_to_save_download">Ошибка сохранения файла</string>
