@@ -142,6 +142,7 @@
     <string name="edit_topic">Редакировать чат</string>
     <string name="email">Емейл</string>
     <string name="email_required">Требуется емейл</string>
+    <string name="full_name_required">Полное имя обязательно</string>
     <string name="enter_confirmation_code">Введите код подтверждения</string>
     <string name="enter_new_password">Введите пароль</string>
     <string name="enter_valid_address">Введите %1$s</string>
@@ -207,4 +208,5 @@
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Политика конфиденциальности</a>]]></string>
     <string name="button_hint_start_new_chat">Начать новый чат</string>
     <string name="app_server">Сервер</string>
+
 </resources>

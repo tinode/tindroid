@@ -120,6 +120,12 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
             return;
         }
 
+        final String fullName = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
+        if (fullName.isEmpty()) {
+            ((EditText) parent.findViewById(R.id.fullName)).setError(getText(R.string.full_name_required));
+            return;
+        }
+
         final Button signUp = parent.findViewById(R.id.signUp);
         signUp.setEnabled(false);
         signUp.getBackground().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
@@ -127,7 +133,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
-        final String fullName = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
+
         final ImageView avatar = parent.findViewById(R.id.imageAvatar);
         final Tinode tinode = Cache.getTinode();
         try {

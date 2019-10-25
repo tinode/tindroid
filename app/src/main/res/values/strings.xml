@@ -239,4 +239,5 @@
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Pricacy Policy</a>]]></string>
     <string name="button_hint_start_new_chat">Start new chat</string>
     <string name="app_server">Server</string>
+    <string name="full_name_required">Full name required</string>
 </resources>
