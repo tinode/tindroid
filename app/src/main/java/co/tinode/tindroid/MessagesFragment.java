@@ -80,6 +80,8 @@ public class MessagesFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<MessagesFragment.UploadResult> {
     private static final String TAG = "MessageFragment";
 
+    private static final String MESSAGE_TO_SEND = "message";
+
     private static final int MESSAGES_TO_LOAD = 24;
 
     private static final int ACTION_ATTACH_FILE = 100;
@@ -112,11 +114,6 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_messages, container, false);
@@ -128,6 +125,10 @@ public class MessagesFragment extends Fragment
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
             return;
+        }
+
+        if (savedInstance != null) {
+            mMessageToSend = savedInstance.getString(MESSAGE_TO_SEND);
         }
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
@@ -275,6 +276,7 @@ public class MessagesFragment extends Fragment
         if (bundle != null) {
             mTopicName = bundle.getString("topic");
             mMessageToSend = bundle.getString("messageText");
+            setArguments(null);
         } else {
             mTopicName = null;
         }
@@ -381,6 +383,21 @@ public class MessagesFragment extends Fragment
         mUploadProgress = null;
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        // Saves the text in the send field.
+        EditText input = activity.findViewById(R.id.editMessage);
+        String draft = input.getText().toString().trim();
+        if (!TextUtils.isEmpty(draft)) {
+            outState.putString(MESSAGE_TO_SEND, draft);
+        }
+    }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
