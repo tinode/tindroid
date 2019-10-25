@@ -192,7 +192,7 @@ public class MessageActivity extends AppCompatActivity {
             return;
         }
 
-        // Get a known topic. Make sure it's a comm topic.
+        // Get a known topic. Make sure it's a comm topic (not a 'me' or 'fnd').
         try {
             mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
         } catch (ClassCastException ex) {
@@ -255,44 +255,21 @@ public class MessageActivity extends AppCompatActivity {
     private void topicAttach() {
         setProgressIndicator(true);
 
-        PromisedReply<ServerMessage> connectionCheck;
-        if (!Cache.getTinode().isAuthenticated()) {
-            String uid = BaseDb.getInstance().getUid();
-            Account account = null;
-            AccountManager accountManager = null;
-            if (!TextUtils.isEmpty(uid)) {
-                accountManager = AccountManager.get(this);
-                account = UiUtils.getSavedAccount(this, accountManager, uid);
-            }
-
-            if (account != null) {
-                connectionCheck = new PromisedReply<>();
-                UiUtils.loginWithSavedAccount(this, accountManager, account, connectionCheck);
-            } else {
-                startActivity(new Intent(this, LoginActivity.class));
-                finish();
-                return;
-            }
-        } else {
-            connectionCheck = new PromisedReply<>((ServerMessage) null);
-        }
-
-        Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
-                .withDesc()
-                .withSub()
-                .withLaterData(MESSAGES_TO_LOAD)
-                .withDel();
-
-        if (mTopic.isOwner()) {
-            builder = builder.withTags();
-        }
-
-        final MsgGetMeta getQuery = builder.build();
-
-        connectionCheck.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        // If connection is already established, reconnectNow returns a resolved promise.
+        Cache.getTinode().reconnectNow(false)
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        return mTopic.subscribe(null, getQuery);
+                        Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
+                                .withDesc()
+                                .withSub()
+                                .withLaterData(MESSAGES_TO_LOAD)
+                                .withDel();
+
+                        if (mTopic.isOwner()) {
+                            builder = builder.withTags();
+                        }
+                        return mTopic.subscribe(null, builder.build());
                     }
                 }).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
@@ -453,7 +430,7 @@ public class MessageActivity extends AppCompatActivity {
 
         args = args != null ? args : new Bundle();
         args.putString("topic", mTopicName);
-        args.putString("messageText", mMessageText);
+        args.putString(MessagesFragment.MESSAGE_TO_SEND, mMessageText);
         if (fragment.getArguments() != null) {
             fragment.getArguments().putAll(args);
         } else {

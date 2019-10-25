@@ -351,6 +351,8 @@ public class Tinode {
                 // If the connection is live and the server address has not changed, return a resolved promise
                 return new PromisedReply<>((ServerMessage) null);
             } else {
+                // Clear auto-login because saved credentials won't work with the new server.
+                setAutoLogin(null, null);
                 // Existing connection cannot be reused because server address has changed.
                 mConnection.disconnect();
             }
@@ -401,8 +403,8 @@ public class Tinode {
                                 return null;
                             }
                         });
-                // Login automatically if it's enabled and only if this is an auto-reconnect attempt.
-                if (mAutologin && autoreconnected) {
+                // Login automatically if it's enabled.
+                if (mAutologin) {
                     future.thenApply(
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
@@ -1125,6 +1127,7 @@ public class Tinode {
      */
     protected synchronized PromisedReply<ServerMessage> login(String scheme, String secret, Credential[] creds) {
         if (mAutologin) {
+            // Update credentials.
             mLoginCredentials = new LoginCredentials(scheme, secret);
         }
 

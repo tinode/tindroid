@@ -892,27 +892,8 @@ public class UiUtils {
     static void attachMeTopic(final Activity activity, final MeTopic.MeListener l) {
         setProgressIndicator(activity, true);
 
-        PromisedReply<ServerMessage> connectionCheck;
-        if (!Cache.getTinode().isAuthenticated()) {
-            String uid = BaseDb.getInstance().getUid();
-            AccountManager accountManager = AccountManager.get(activity);
-            Account account = null;
-            if (!TextUtils.isEmpty(uid)) {
-                account = getSavedAccount(activity, accountManager, uid);
-            }
-            if (account != null) {
-                connectionCheck = new PromisedReply<>();
-                loginWithSavedAccount(activity, accountManager, account, connectionCheck);
-            } else {
-                activity.startActivity(new Intent(activity, LoginActivity.class));
-                activity.finish();
-                return;
-            }
-        } else {
-            connectionCheck = new PromisedReply<>((ServerMessage) null);
-        }
-
-        connectionCheck.thenApply(
+        // If connection exists reconnectNow returns resolved promise.
+        Cache.getTinode().reconnectNow(false).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
