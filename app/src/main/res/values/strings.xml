@@ -170,7 +170,7 @@
     <string name="topic_not_found_or_invalid">Topic not found or invalid</string>
     <string name="sending_disabled">Not available</string>
     <string name="download_title">Tinode download</string>
-    <string name="some_permissions_missing">Some permissions missing.</string>
+    <string name="some_permissions_missing">Please grant all requested permissions.</string>
     <string name="invalid_file">Unable to attach this file</string>
     <string name="cancelled">cancelled</string>
     <string name="login_rejected">Login rejected</string>
