@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -511,11 +512,17 @@ public class TopicInfoFragment extends Fragment {
                     Intent intent;
                     switch (v.getId()) {
                         case R.id.buttonViewProfile:
-                            String lookupKey = ContactsManager.getLookupKey(activity.getContentResolver(), uid);
-                            intent = new Intent(Intent.ACTION_VIEW,
-                                    Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey));
-                            if (intent.resolveActivity(activity.getPackageManager()) != null) {
-                                startActivity(intent);
+                            if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+                                // This requires READ_CONTACTS permission
+                                String lookupKey = ContactsManager.getLookupKey(activity.getContentResolver(), uid);
+                                intent = new Intent(Intent.ACTION_VIEW,
+                                        Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey));
+                                if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                                    startActivity(intent);
+                                }
+                            } else {
+                                Log.i(TAG, "Missing READ_CONTACTS permissions");
+                                Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
                             }
                             break;
                         case R.id.buttonSendMessage:
