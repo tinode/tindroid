@@ -207,6 +207,7 @@ public class LoginActivity extends AppCompatActivity {
             public void run() {
                 if (button != null) {
                     button.setEnabled(true);
+                    button.getBackground().setColorFilter(null);
                 }
                 if (field != null) {
                     field.setError(finalMessage);

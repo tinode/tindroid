@@ -62,13 +62,14 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/signIn"
+        style="?attr/buttonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/sign_in"
         android:layout_below="@+id/editPasswordWrapper"
         android:textSize="@dimen/button_text"
-        app:backgroundTint="@color/colorAccent"
         android:textColor="@color/white"
+        app:backgroundTint="@color/colorAccent"
         android:layout_centerHorizontal="true"/>
 
     <Button

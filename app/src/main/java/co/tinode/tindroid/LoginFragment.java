@@ -5,6 +5,8 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -113,6 +115,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
         final Button signIn = parent.findViewById(R.id.signIn);
         signIn.setEnabled(false);
+        signIn.getBackground().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
@@ -146,6 +149,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                         parent.runOnUiThread(new Runnable() {
                                             public void run() {
                                                 signIn.setEnabled(true);
+                                                signIn.getBackground().setColorFilter(null);
                                                 FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
                                                 CredentialsFragment cf = new CredentialsFragment();
                                                 Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
