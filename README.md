@@ -30,9 +30,13 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 * Offline mode is mostly functional.
 * Editing of personal details.
 
-## Does not work yet:
+## Not done yet:
 
-* No end-to-end encryption.
+* End-to-end encryption.
+* No support for multiple servers.
+* Mentions, hashtags.
+* Replying or forwarding messages.
+* Previews not generated for videos, audio, links or docs.
 
 ## Dependencies
 
