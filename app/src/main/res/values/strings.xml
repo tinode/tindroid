@@ -1,6 +1,6 @@
 <resources>
     <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
-    <string name="tinode_url" translatable="false">https://github.com/tinode/</string>
+    <string name="tinode_url" translatable="false">https://tinode.co</string>
     <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
 
     <string name="app_name" translatable="false">Tinode</string>
@@ -238,4 +238,5 @@
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contact Us</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Pricacy Policy</a>]]></string>
     <string name="button_hint_start_new_chat">Start new chat</string>
+    <string name="app_server">Server</string>
 </resources>

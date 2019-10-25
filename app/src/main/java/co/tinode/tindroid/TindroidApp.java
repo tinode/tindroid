@@ -37,6 +37,7 @@ public class TindroidApp extends Application {
     private static Tinode sTinodeCache;
 
     private static String sAppVersion = null;
+    private static int sAppBuild = 0;
 
     public TindroidApp() {
         sContext = this;
@@ -48,6 +49,7 @@ public class TindroidApp extends Application {
         try {
             PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
             sAppVersion = pi.versionName;
+            sAppBuild = pi.versionCode;
         } catch (PackageManager.NameNotFoundException e) {
             Log.w(TAG, "Failed to retrieve app version", e);
         }
@@ -90,6 +92,10 @@ public class TindroidApp extends Application {
 
     public static String getAppVersion() {
         return sAppVersion;
+    }
+
+    public static int getAppBuild() {
+        return sAppBuild;
     }
 
     public static String getDefaultHostName(Context context) {

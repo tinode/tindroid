@@ -29,15 +29,65 @@
             android:layout_gravity="center"
             android:text="@string/app_version"
             android:paddingEnd="8dp"
-            android:textAppearance="?android:attr/textAppearanceMedium"/>
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            tools:ignore="RtlSymmetry" />
 
         <TextView
             android:id="@+id/app_version"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:paddingEnd="8dp"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:text="0.15.5-rc5" />
+            tools:text="0.15.5-rc5"
+            tools:ignore="RtlSymmetry"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            tools:text="(" />
+
+        <TextView
+            android:id="@+id/app_build"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            tools:text="850" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            tools:text=")" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/app_server"
+            android:paddingEnd="8dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            tools:ignore="RtlSymmetry" />
+
+        <TextView
+            android:id="@+id/app_server"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingEnd="8dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            tools:text="https://api.tinode.co"
+            tools:ignore="RtlSymmetry"/>
 
     </LinearLayout>
 
