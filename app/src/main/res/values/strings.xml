@@ -1,5 +1,5 @@
 <resources>
-    <string name="asset_statements" translatable="false">[{ \"include\": \"https://api.tinode.co/.well-known/assetlinks.json\" }]</string>
+    <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
     <string name="tinode_url" translatable="false">https://github.com/tinode/</string>
     <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
 
@@ -237,4 +237,5 @@
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Terms of Use</a>]]></string>
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contact Us</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Pricacy Policy</a>]]></string>
+    <string name="button_hint_start_new_chat">Start new chat</string>
 </resources>
