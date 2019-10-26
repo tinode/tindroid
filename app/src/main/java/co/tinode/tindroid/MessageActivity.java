@@ -1,7 +1,5 @@
 package co.tinode.tindroid;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
@@ -39,7 +37,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -49,7 +46,6 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -209,11 +205,13 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
+        // Clear back stack.
+        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
             showFragment(FRAGMENT_MESSAGES, null, false);
         } else {
-            // New topic by name, either an actual grp* or p2p* topic name or a usr*
             Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
             UiUtils.setupToolbar(this, null, mTopicName, false);
             mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
@@ -404,6 +402,7 @@ public class MessageActivity extends AppCompatActivity {
 
     void showFragment(String tag, Bundle args, boolean addToBackstack) {
         FragmentManager fm = getSupportFragmentManager();
+
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
             switch (tag) {
