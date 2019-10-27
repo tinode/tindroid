@@ -165,22 +165,15 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                     // Flip back to login screen on success;
                                     parent.runOnUiThread(new Runnable() {
                                         public void run() {
-                                            FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
                                             if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
                                                 signUp.setEnabled(true);
                                                 signUp.getBackground().setColorFilter(null);
-                                                CredentialsFragment cf = new CredentialsFragment();
-                                                Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
-                                                if (it != null) {
-                                                    cf.setMethod(it.next());
-                                                }
-                                                trx.replace(R.id.contentFragment, cf);
+                                                parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
                                             } else {
                                                 // We are requesting immediate login with the new account.
                                                 // If the action succeeded, assume we have logged in.
                                                 UiUtils.onLoginSuccess(parent, signUp);
                                             }
-                                            trx.commit();
                                         }
                                     });
                                     return null;

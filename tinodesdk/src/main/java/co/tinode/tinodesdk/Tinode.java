@@ -27,6 +27,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -119,25 +121,31 @@ public class Tinode {
     private HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
     private MimeTypeResolver mMimeResolver = null;
     private Storage mStore;
+
     private String mApiKey;
     private String mServerHost = null;
     private boolean mUseTLS;
+    private String mServerVersion = null;
+    private String mServerBuild = null;
+
     private String mDeviceToken = null;
     private String mLanguage = null;
     private String mAppName;
     private String mOsVersion;
+
     private Connection mConnection = null;
-    // Promise resolved or rejected on connection completion.
-    private PromisedReply<ServerMessage> mConnectionCompletion = null;
     // True is connection is authenticated
     private boolean mConnAuth = false;
-    private String mServerVersion = null;
-    private String mServerBuild = null;
+    // True if Tinode should use mLoginCredentials to automatically log in after connecting.
     private boolean mAutologin = false;
     private LoginCredentials mLoginCredentials = null;
+    // Server provided a list of credential methods to validate e.g. ["email", "tel", ...].
+    private List<String> mCredToValidate = null;
+
     private String mMyUid = null;
     private String mAuthToken = null;
     private Date mAuthTokenExpires = null;
+
     private int mMsgId = 0;
     private int mPacketCount;
     private EventListener mListener;
@@ -334,7 +342,7 @@ public class Tinode {
     }
 
     /**
-     * Open a websocket connection to the server and process handshake exchange.
+     * Open a websocket connection to the server, process handshake exchange then login optionally.
      *
      * @param hostName address of the server to connect to; if hostName is null a saved address will be used.
      * @param tls      use transport layer security (wss); ignored if hostName is null.
@@ -346,15 +354,17 @@ public class Tinode {
             hostName = hostName.toLowerCase();
         }
 
-        if (mConnection != null && mConnection.isConnected()) {
-            if (hostName == null || (hostName.equals(mServerHost) && tls == mUseTLS)) {
-                // If the connection is live and the server address has not changed, return a resolved promise
-                return new PromisedReply<>((ServerMessage) null);
-            } else {
-                // Clear auto-login because saved credentials won't work with the new server.
-                setAutoLogin(null, null);
-                // Existing connection cannot be reused because server address has changed.
-                mConnection.disconnect();
+        if (mConnection != null) {
+            if (mConnection.isConnected()) {
+                if (hostName == null || (hostName.equals(mServerHost) && tls == mUseTLS)) {
+                    // If the connection is live and the server address has not changed, return a resolved promise
+                    return new PromisedReply<>((ServerMessage) null);
+                } else {
+                    // Clear auto-login because saved credentials won't work with the new server.
+                    setAutoLogin(null, null);
+                    // Existing connection cannot be reused because server address has changed.
+                    mConnection.disconnect();
+                }
             }
         }
 
@@ -379,12 +389,14 @@ public class Tinode {
             @Override
             protected void onConnect(final boolean autoreconnected) {
                 // Connection established, send handshake, inform listener on success
-                PromisedReply<ServerMessage> future = hello().thenApply(
+                hello().thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                boolean doLogin = mAutologin && mLoginCredentials != null;
+
                                 // If this is an auto-reconnect, the promise is already resolved.
-                                if (!connected.isDone()) {
+                                if (!connected.isDone() && !doLogin) {
                                     connected.resolve(pkt);
                                 }
 
@@ -400,22 +412,23 @@ public class Tinode {
                                     mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
                                 }
 
-                                return null;
-                            }
-                        });
-                // Login automatically if it's enabled.
-                if (mAutologin) {
-                    future.thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
-                                    if (mLoginCredentials != null && !mLoginInProgress) {
-                                        login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
-                                    }
+                                // Login automatically if it's enabled.
+                                if (doLogin) {
+                                    return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
+                                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                        @Override
+                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                            if (!connected.isDone()) {
+                                                connected.resolve(pkt);
+                                            }
+                                            return null;
+                                        }
+                                    });
+                                } else {
                                     return null;
                                 }
-                            });
-                }
+                            }
+                        });
             }
 
             @Override
@@ -885,6 +898,9 @@ public class Tinode {
             // Cache token here assuming the call to server does not fail. If it fails clear the cached token.
             // This prevents multiple unnecessary calls to the server with the same token.
             mDeviceToken = token;
+            if (mStore != null) {
+                mStore.saveDeviceToken(token);
+            }
             if (isConnected() && isAuthenticated()) {
                 ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
                         mDeviceToken, null));
@@ -893,6 +909,9 @@ public class Tinode {
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         // Clear cached value on failure to allow for retries.
                         mDeviceToken = null;
+                        if (mStore != null) {
+                            mStore.saveDeviceToken(null);
+                        }
                         return null;
                     }
                 });
@@ -1104,18 +1123,36 @@ public class Tinode {
 
         mMyUid = newUid;
 
-        if (mStore != null) {
-            mStore.setMyUid(mMyUid);
-        }
-        // If topics were not loaded earlier, load them now.
-        loadTopics();
         mAuthToken = ctrl.getStringParam("token", null);
         mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires", ""));
+
         if (ctrl.code < 300) {
-            mConnAuth = true;
-            if (mListener != null) {
-                mListener.onLogin(ctrl.code, ctrl.text);
+            if (mStore != null) {
+                mStore.setMyUid(mMyUid);
             }
+
+            // If topics were not loaded earlier, load them now.
+            loadTopics();
+        } else {
+            // Maybe we got request to enter validation code.
+            Iterator<String> it = ctrl.getStringIteratorParam("cred");
+            if (it != null) {
+                if (mCredToValidate == null) {
+                    mCredToValidate = new LinkedList<>();
+                }
+                while (it.hasNext()) {
+                    mCredToValidate.add(it.next());
+                }
+
+                if (mStore != null) {
+                    mStore.setMyUid(mMyUid, mCredToValidate.toArray(new String[]{}));
+                }
+            }
+        }
+
+        mConnAuth = true;
+        if (mListener != null) {
+            mListener.onLogin(ctrl.code, ctrl.text);
         }
     }
 
@@ -1165,7 +1202,7 @@ public class Tinode {
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
                             final int code = sre.getCode();
-                            if (code >= 400 && code < 500) {
+                            if (code == 401) {
                                 mLoginCredentials = null;
                                 mAuthToken = null;
                                 mAuthTokenExpires = null;

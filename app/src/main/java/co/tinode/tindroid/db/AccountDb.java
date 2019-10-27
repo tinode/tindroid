@@ -17,6 +17,7 @@ public class AccountDb implements BaseColumns {
     static final String TABLE_NAME = "accounts";
     private static final String COLUMN_NAME_UID = "uid";
     private static final String COLUMN_NAME_ACTIVE = "last_active";
+    private static final String COLUMN_NAME_CRED_METHODS = "cred_methods";
     private static final String COLUMN_NAME_DEVICE_ID = "device_id";
 
     private static final String INDEX_UID = "accounts_uid";
@@ -30,6 +31,7 @@ public class AccountDb implements BaseColumns {
                     _ID + " INTEGER PRIMARY KEY," +
                     COLUMN_NAME_UID + " TEXT," +
                     COLUMN_NAME_ACTIVE + " INTEGER," +
+                    COLUMN_NAME_CRED_METHODS + " TEXT," +
                     COLUMN_NAME_DEVICE_ID + " TEXT)";
     /**
      * Add index on account name
@@ -58,28 +60,31 @@ public class AccountDb implements BaseColumns {
     static final String DROP_INDEX_2 =
             "DROP INDEX IF EXISTS " + INDEX_ACTIVE;
 
-    static StoredAccount addOrActivateAccount(SQLiteDatabase db, String uid) {
-        StoredAccount acc = null;
+    static StoredAccount addOrActivateAccount(SQLiteDatabase db, String uid, String[] credMethods) {
+        StoredAccount acc;
         db.beginTransaction();
         try {
             // Clear Last Active
             deactivateAll(db);
-            acc = new StoredAccount();
-            acc.uid = uid;
-            acc.id = getByUid(db, uid);
-            if (acc.id >= 0) {
-                db.execSQL("UPDATE " + TABLE_NAME +
-                        " SET " + COLUMN_NAME_ACTIVE + "=1" +
-                        " WHERE " + _ID + "=" + acc.id);
+            acc = getByUid(db, uid);
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_ACTIVE, 1);
+            values.put(COLUMN_NAME_CRED_METHODS, BaseDb.serializeArray(credMethods));
+            if (acc != null) {
+                // Account exists, updating active status and list of un-validated methods.
+                db.update(TABLE_NAME, values, _ID + "=" + acc.id, null);
             } else {
-                // Insert new account as active
-                ContentValues values = new ContentValues();
+                // Creating new record.
+                acc = new StoredAccount();
+                acc.uid = uid;
                 values.put(COLUMN_NAME_UID, uid);
-                values.put(COLUMN_NAME_ACTIVE, 1);
+                // Insert new account as active
                 acc.id = db.insert(TABLE_NAME, null, values);
             }
             if (acc.id < 0) {
                 acc = null;
+            } else {
+                acc.credMethods = credMethods;
             }
             db.setTransactionSuccessful();
         } catch (SQLException ignored) {
@@ -95,31 +100,35 @@ public class AccountDb implements BaseColumns {
         StoredAccount acc = null;
         Cursor c = db.query(
                 TABLE_NAME,
-                new String[]{_ID, COLUMN_NAME_UID},
+                new String[]{_ID, COLUMN_NAME_UID, COLUMN_NAME_CRED_METHODS},
                 COLUMN_NAME_ACTIVE + "=1",
                 null, null, null, null);
         if (c.moveToFirst()) {
             acc = new StoredAccount();
             acc.id = c.getLong(0);
             acc.uid = c.getString(1);
+            acc.credMethods = BaseDb.deserializeArray(c.getString(2));
         }
         c.close();
         return acc;
     }
 
-    private static long getByUid(SQLiteDatabase db, String uid) {
-        long id = -1;
+    private static StoredAccount getByUid(SQLiteDatabase db, String uid) {
+        StoredAccount acc = null;
         Cursor c = db.query(
                 TABLE_NAME,
-                new String[]{ _ID },
+                new String[]{ _ID, COLUMN_NAME_CRED_METHODS },
                 COLUMN_NAME_UID + "=?",
                 new String[] { uid },
                 null, null, null);
         if (c.moveToFirst()) {
-            id = c.getLong(0);
+            acc = new StoredAccount();
+            acc.id = c.getLong(0);
+            acc.uid = uid;
+            acc.credMethods = BaseDb.deserializeArray(c.getString(1));
         }
         c.close();
-        return id;
+        return acc;
     }
 
     static void deactivateAll(SQLiteDatabase db) {

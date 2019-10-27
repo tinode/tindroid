@@ -29,6 +29,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.Tinode;
 
 /**
@@ -98,33 +99,19 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        Tinode tinode = Cache.getTinode();
-        if (tinode.isAuthenticated()) {
-            // We already have a live connection to the server. All good.
-            // Launch the contacts activity and stop.
+        BaseDb db = BaseDb.getInstance();
+        if (db.isReady()) {
+            // We already have a configured account. All good. Launch ContactsActivity and stop.
             Intent intent = new Intent(this, ChatsActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             finish();
             return;
         }
 
-        // Check if the activity asks for credentials instead of login/password.
-
-        final Intent intent = getIntent();
-        final String alAction = intent.getAction();
-        final Uri alUri = intent.getData();
-        final String cred = intent.getStringExtra("credential");
-
-        if (TextUtils.isEmpty(cred)) {
-            // Display the login form.
-            showFragment(FRAGMENT_LOGIN, null, false);
-        } else {
-            // Ask for validation code
-            Bundle args = new Bundle();
-            args.putString("method", cred);
-            showFragment(FRAGMENT_CREDENTIALS, args, false);
-        }
+        // Check if we need full authentication or just credentials.
+        showFragment(db.isCredValidationRequired() ? FRAGMENT_CREDENTIALS : FRAGMENT_LOGIN,
+                null, false);
 
         // Check and possibly request runtime permissions.
         requestPermissions();
@@ -202,13 +189,13 @@ public class LoginActivity extends AppCompatActivity {
         final String finalMessage = message +
                 (errMessage != null ? " (" + errMessage + ")" : "");
 
-        final EditText field = attachTo != 0 ? (EditText) findViewById(attachTo) : null;
         runOnUiThread(new Runnable() {
             public void run() {
                 if (button != null) {
                     button.setEnabled(true);
                     button.getBackground().setColorFilter(null);
                 }
+                EditText field = attachTo != 0 ? (EditText) findViewById(attachTo) : null;
                 if (field != null) {
                     field.setError(finalMessage);
                 } else {

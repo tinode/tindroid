@@ -10,6 +10,8 @@ import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.util.List;
+
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Acs;
@@ -24,7 +26,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
 
     /**
      * Filename for SQLite file.
@@ -172,25 +174,25 @@ public class BaseDb extends SQLiteOpenHelper {
         return result;
     }
 
-    static String serializeTags(String[] tags) {
+    static String serializeArray(String[] arr) {
         String result = null;
-        if (tags != null) {
+        if (arr != null && arr.length > 0) {
             StringBuilder sb = new StringBuilder();
-            for (String tag : tags) {
+            for (String val : arr) {
                 if (sb.length() > 0) {
                     sb.append(',');
                 }
-                sb.append(tag);
+                sb.append(val);
             }
             result = sb.toString();
         }
         return result;
     }
 
-    static String[] deserializeTags(String m) {
+    static String[] deserializeArray(String str) {
         String[] result = null;
-        if (m != null && m.length() > 0) {
-            result = m.split(",");
+        if (str != null && str.length() > 0) {
+            result = str.split(",");
         }
         return result;
     }
@@ -209,26 +211,31 @@ public class BaseDb extends SQLiteOpenHelper {
         return mAcc != null ? mAcc.uid : null;
     }
 
-    public void setUid(String uid) {
+    @SuppressWarnings("WeakerAccess")
+    public void setUid(String uid, String[] credMethods) {
         if (uid == null) {
             mAcc = null;
+            AccountDb.deactivateAll(sInstance.getWritableDatabase());
         } else {
-            if (mAcc == null) {
-                mAcc = AccountDb.addOrActivateAccount(sInstance.getReadableDatabase(), uid);
-            } else if (!mAcc.uid.equals(uid)) {
-                AccountDb.deactivateAll(sInstance.getWritableDatabase());
-                mAcc = AccountDb.addOrActivateAccount(sInstance.getReadableDatabase(), uid);
-            }
+            mAcc = AccountDb.addOrActivateAccount(sInstance.getWritableDatabase(), uid, credMethods);
         }
     }
 
     public void logout() {
         AccountDb.deactivateAll(sInstance.getWritableDatabase());
-        setUid(null);
+        setUid(null, null);
     }
 
     public boolean isReady() {
-        return mAcc != null;
+        return mAcc != null && !isCredValidationRequired();
+    }
+
+    public boolean isCredValidationRequired() {
+        return mAcc != null && mAcc.credMethods != null && mAcc.credMethods.length > 0;
+    }
+
+    public String getFirstValidationMethod() {
+        return isCredValidationRequired() ? mAcc.credMethods[0] : null;
     }
 
     /**

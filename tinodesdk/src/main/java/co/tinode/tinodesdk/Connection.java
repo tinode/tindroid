@@ -33,7 +33,7 @@ public class Connection {
 
     private boolean useTls;
 
-    private Boolean reconnecting;
+    private boolean reconnecting;
     private boolean autoreconnect;
 
     // Exponential backoff/reconnecting
@@ -172,6 +172,14 @@ public class Connection {
         return mWsClient != null && mWsClient.isOpen();
     }
 
+    /**
+     * Check if the socket is waiting to reconnect.
+     *
+     * @return true if the socket is OPEN, false otherwise;
+     */
+    public boolean isWaitingToReconnect() {
+        return reconnecting;
+    }
     /**
      * Reset exponential backoff counter to zero.
      * If autoreconnect is true and WsListener is provided, then WsListener.onConnect must call
