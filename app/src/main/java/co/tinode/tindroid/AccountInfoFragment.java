@@ -341,7 +341,19 @@ public class AccountInfoFragment extends Fragment {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        UiUtils.updateTitle(activity, me, titleEditor.getText().toString(), null);
+                        UiUtils.updateTitle(activity, me, titleEditor.getText().toString(), null,
+                                new UiUtils.TitleUpdateCallbackInterface() {
+                                    @Override
+                                    public void onTitleUpdated() {
+                                        activity.runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                final MeTopic me = Cache.getTinode().getMeTopic();
+                                                updateFormValues(activity, me);
+                                            }
+                                        });
+                                    }
+                                });
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)

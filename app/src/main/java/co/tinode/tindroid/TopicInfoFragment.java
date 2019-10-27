@@ -411,7 +411,18 @@ public class TopicInfoFragment extends Fragment {
                     newTitle = titleEditor.getText().toString();
                 }
                 String newPriv = subtitleEditor.getText().toString();
-                UiUtils.updateTitle(activity, mTopic, newTitle, newPriv);
+                UiUtils.updateTitle(activity, mTopic, newTitle, newPriv,
+                        new UiUtils.TitleUpdateCallbackInterface() {
+                            @Override
+                            public void onTitleUpdated() {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        notifyContentChanged();
+                                    }
+                                });
+                            }
+                        });
             }
         });
         builder.setNegativeButton(android.R.string.cancel, null);
