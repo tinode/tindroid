@@ -855,8 +855,14 @@ public class UiUtils {
         }
     }
 
+    // Provides callback for when title/subtitle get successfully updated.
+    interface TitleUpdateCallbackInterface {
+        void onTitleUpdated();
+    }
+
     static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTitle(final Activity activity,
-                                                                         T topic, String title, String comment) {
+                                                                         T topic, String title, String comment,
+                                                                         final TitleUpdateCallbackInterface done) {
         VxCard pub = null;
         if (title != null) {
             VxCard oldPub = topic.getPub();
@@ -881,7 +887,14 @@ public class UiUtils {
                     priv = new PrivateType();
                     priv.setComment(comment);
                 }
-                topic.setDescription(pub, priv).thenApply(null, new ToastFailureListener(activity));
+                topic.setDescription(pub, priv).thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                                done.onTitleUpdated();
+                                return null;
+                            }
+                        }, new ToastFailureListener(activity));
             } catch (NotConnectedException ignored) {
                 Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
             } catch (Exception ignored) {
