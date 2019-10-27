@@ -229,7 +229,6 @@ public class MessagesFragment extends Fragment
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 if (count > 0 || before > 0) {
@@ -388,6 +387,8 @@ public class MessagesFragment extends Fragment
         super.onDestroy();
 
         mUploadProgress = null;
+        // Close cursor.
+        mMessagesAdapter.resetContent(null);
     }
 
 
@@ -443,7 +444,7 @@ public class MessagesFragment extends Fragment
                     return true;
 
                 case R.id.action_offline:
-                    Cache.getTinode().reconnectNow(false);
+                    Cache.getTinode().reconnectNow(true,false);
                     break;
                 default:
                     return super.onOptionsItemSelected(item);
@@ -918,6 +919,7 @@ public class MessagesFragment extends Fragment
                         // This assignment is needed to ensure that the loader does not keep
                         // a strong reference to activity while potentially slow upload process
                         // is running.
+                        //noinspection UnusedAssignment
                         start = null;
                     }
 

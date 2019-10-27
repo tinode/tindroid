@@ -21,6 +21,7 @@ import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -191,6 +192,7 @@ public class TindroidApp extends Application {
                     Bundle result = future.getResult(); // This blocks until the future is ready.
                     if (result != null) {
                         final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
+                        // If token is not empty use it to connect to server. If it's empty don't try to connect.
                         if (!TextUtils.isEmpty(token)) {
                             // Get server address.
                             final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
@@ -238,7 +240,7 @@ public class TindroidApp extends Application {
                 }
 
             }
-        }, null);
+        }, new Handler());
 
     }
 }

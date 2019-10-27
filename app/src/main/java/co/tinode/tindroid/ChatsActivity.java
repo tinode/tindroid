@@ -37,6 +37,7 @@ public class ChatsActivity extends AppCompatActivity {
     static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
     static final String FRAGMENT_ARCHIVE = "archive";
 
+    private ContactsEventListener mTinodeListener = null;
     private MeListener mMeTopicListener = null;
     private MeTopic<VxCard> mMeTopic = null;
 
@@ -71,13 +72,12 @@ public class ChatsActivity extends AppCompatActivity {
      * onResume restores subscription to 'me' topic and sets listener.
      */
     @Override
-    @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
-
-        tinode.setListener(new ContactsEventListener(tinode.isConnected()));
+        mTinodeListener = new ContactsEventListener(tinode.isConnected());
+        tinode.addListener(mTinodeListener);
 
         UiUtils.setupToolbar(this, null, null, false);
 
@@ -101,11 +101,10 @@ public class ChatsActivity extends AppCompatActivity {
     public void onPause() {
         super.onPause();
 
-        Cache.getTinode().setListener(null);
+        Cache.getTinode().removeListener(mTinodeListener);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void onStop() {
         super.onStop();
         if (mMeTopic != null) {

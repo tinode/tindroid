@@ -219,7 +219,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
                 return true;
 
             case R.id.action_offline:
-                Cache.getTinode().reconnectNow(false);
+                Cache.getTinode().reconnectNow(true,false);
                 break;
         }
         return false;

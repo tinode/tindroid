@@ -825,15 +825,16 @@ public class UiUtils {
     static void attachMeTopic(final Activity activity, final MeTopic.MeListener l) {
         setProgressIndicator(activity, true);
 
+        Tinode tinode = Cache.getTinode();
+        if (!tinode.isAuthenticated()) {
+            // If connection is not ready, wait for completion. This method will be called again
+            // from the onLogin callback;
+            Cache.getTinode().reconnectNow(true, false);
+            return;
+        }
+
         // If connection exists reconnectNow returns resolved promise.
-        Cache.getTinode().reconnectNow(false).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        return Cache.attachMeTopic(l);
-                    }
-                })
-                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+        Cache.attachMeTopic(l).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         Log.w(TAG, "Error subscribing to 'me' topic", err);
@@ -842,10 +843,13 @@ public class UiUtils {
                             int errCode = sre.getCode();
                             if (errCode == 404) {
                                 Cache.getTinode().logout();
-                                activity.startActivity(new Intent(activity, LoginActivity.class));
+                                Intent intent = new Intent(activity, LoginActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                activity.startActivity(intent);
                                 activity.finish();
-                            } else if (errCode >= 500) {
-                                Cache.getTinode().reconnectNow(true);
+                            } else if (errCode == 502 && "cluster unreachable".equals(sre.getMessage())) {
+                                // Must reset connection.
+                                Cache.getTinode().reconnectNow(false,true);
                             }
                         }
                         return null;
@@ -854,7 +858,7 @@ public class UiUtils {
                 .thenFinally(new PromisedReply.FinalListener() {
                     @Override
                     public void onFinally() {
-                        UiUtils.setProgressIndicator(activity, false);
+                        setProgressIndicator(activity, false);
                     }
                 });
 
