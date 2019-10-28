@@ -121,69 +121,57 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
         final Tinode tinode = Cache.getTinode();
-        try {
             // This is called on the websocket thread.
-            tinode.connect(hostName, tls)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) {
-                                    return tinode.loginBasic(
-                                            login,
-                                            password);
-                                }
-                            },
-                            null)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
-                                    sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
+        tinode.connect(hostName, tls)
+                .thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) {
+                                return tinode.loginBasic(
+                                        login,
+                                        password);
+                            }
+                        },
+                        null)
+                .thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
+                                sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
 
-                                    final Account acc = addAndroidAccount(
-                                            tinode.getMyId(),
-                                            AuthScheme.basicInstance(login, password).toString(),
-                                            tinode.getAuthToken());
+                                final Account acc = addAndroidAccount(
+                                        tinode.getMyId(),
+                                        AuthScheme.basicInstance(login, password).toString(),
+                                        tinode.getAuthToken());
 
-                                    if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
-                                        parent.runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                signIn.setEnabled(true);
-                                                signIn.getBackground().setColorFilter(null);
-                                                FragmentTransaction trx = parent.getSupportFragmentManager().beginTransaction();
-                                                CredentialsFragment cf = new CredentialsFragment();
-                                                Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
-                                                if (it != null) {
-                                                    cf.setMethod(it.next());
-                                                }
-                                                trx.replace(R.id.contentFragment, cf);
-                                                trx.commit();
-                                            }
-                                        });
-                                    } else {
-                                        // Force immediate sync, otherwise Contacts tab may be unusable.
-                                        Bundle bundle = new Bundle();
-                                        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-                                        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-                                        ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
-                                        ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
-                                        UiUtils.onLoginSuccess(parent, signIn);
-                                    }
-                                    return null;
+                                if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
+                                    parent.runOnUiThread(new Runnable() {
+                                        public void run() {
+                                            signIn.setEnabled(true);
+                                            signIn.getBackground().setColorFilter(null);
+                                            parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
+                                        }
+                                    });
+                                } else {
+                                    // Force immediate sync, otherwise Contacts tab may be unusable.
+                                    Bundle bundle = new Bundle();
+                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+                                    ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
+                                    UiUtils.onLoginSuccess(parent, signIn);
                                 }
-                            },
-                            new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                    Log.d(TAG, "Login failed", err);
-                                    parent.reportError(err, signIn, 0, R.string.error_login_failed);
-                                    return null;
-                                }
-                            });
-        } catch (Exception err) {
-            Log.e(TAG, "Something went wrong", err);
-            parent.reportError(err, signIn, 0, R.string.error_login_failed);
-        }
+                                return null;
+                            }
+                        },
+                        new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                Log.i(TAG, "Login failed", err);
+                                parent.reportError(err, signIn, 0, R.string.error_login_failed);
+                                return null;
+                            }
+                        });
     }
 
 

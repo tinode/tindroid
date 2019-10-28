@@ -256,11 +256,13 @@ public class UiUtils {
             activity.runOnUiThread(new Runnable() {
                 public void run() {
                     button.setEnabled(true);
+                    button.getBackground().setColorFilter(null);
                 }
             });
         }
 
         Intent intent = new Intent(activity, ChatsActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         activity.startActivity(intent);
         activity.finish();
     }
@@ -270,95 +272,12 @@ public class UiUtils {
                 ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
-    static void loginWithSavedAccount(final Activity activity,
-                                      final AccountManager accountManager,
-                                      final Account account) {
-        Log.i(TAG, "loginWithSavedAccount");
-
-        final Tinode tinode = Cache.getTinode();
-        if (tinode.isAuthenticated()) {
-            Intent launch = new Intent(activity, ChatsActivity.class);
-            if (!activity.getComponentName().equals(launch.getComponent())) {
-                launch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                activity.startActivity(launch);
-                activity.finish();
-            }
-            return;
-        }
-
-        accountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
-            @Override
-            public void run(AccountManagerFuture<Bundle> future) {
-                try {
-                    Bundle result = future.getResult(); // This blocks until the future is ready.
-
-                    Intent launch = new Intent(activity, LoginActivity.class);
-                    if (result != null) {
-                        final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
-                        if (!TextUtils.isEmpty(token)) {
-                            final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
-                            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(activity));
-                            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
-                            if (TextUtils.isEmpty(hostName)) {
-                                // Something is misconfigured, use defaults anyway.
-                                hostName = TindroidApp.getDefaultHostName(activity);
-                                tls = TindroidApp.getDefaultTLS();
-                            }
-                            try {
-                                // Connecting with synchronous calls because this is not the UI thread.
-                                final Tinode tinode = Cache.getTinode();
-                                tinode.setAutoLoginToken(token);
-                                tinode.connect(hostName, tls).getResult();
-                                // This will throw if login was not successful.
-                                ServerMessage msg = tinode.loginToken(token).getResult();
-                                // Logged in successfully. Save refreshed token for future use.
-                                accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
-                                if (msg == null || msg.ctrl.code < 300) {
-                                    // Logged in successfully. Go to Contacts.
-                                    launch = new Intent(activity, ChatsActivity.class);
-                                } else {
-                                    Log.d(TAG, "LoginWithSavedAccount requires credentials, sending to login");
-                                    Iterator<String> it = msg.ctrl.getStringIteratorParam("cred");
-                                    if (it != null && it.hasNext()) {
-                                        launch.putExtra("credential", it.next());
-                                    } else {
-                                        Log.e(TAG, "LoginWithSavedAccount requires credentials but lists none");
-                                    }
-                                }
-                            } catch (IOException ex) {
-                                Log.d(TAG, "Network failure", ex);
-                                // Login failed due to network error. If we have UID, go to Contacts, otherwise to Login.
-                                launch = new Intent(activity, BaseDb.getInstance().isReady() ? ChatsActivity.class : LoginActivity.class);
-                            } catch (Exception ex) {
-                                Log.d(TAG, "Other failure", ex);
-                                // Login failed due to invalid (expired) token
-                                accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                            }
-                        }
-                    }
-                    if (!activity.getComponentName().equals(launch.getComponent())) {
-                        launch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        activity.startActivity(launch);
-                        activity.finish();
-                    }
-                }
-                catch (OperationCanceledException e) {
-                    Log.i(TAG, "Request to get an existing account was canceled.", e);
-                } catch (AuthenticatorException e) {
-                    Log.e(TAG, "No access to saved account", e);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failure to login with saved account", e);
-                }
-        }
-        }, null);
-    }
-
-    static Account getSavedAccount(final Activity activity, final AccountManager accountManager,
+    static Account getSavedAccount(final Context context, final AccountManager accountManager,
                                    final @NonNull String uid) {
         Account account = null;
 
         // Run-time check for permission to GET_ACCOUNTS
-        if (!UiUtils.isPermissionGranted(activity, android.Manifest.permission.GET_ACCOUNTS)) {
+        if (!UiUtils.isPermissionGranted(context, android.Manifest.permission.GET_ACCOUNTS)) {
             // Don't have permission. It's the first launch or the user denied access.
             // Fail and go to full login. We should not ask for permission on the splash screen.
             Log.d(TAG, "NO permission to get accounts");
@@ -906,15 +825,16 @@ public class UiUtils {
     static void attachMeTopic(final Activity activity, final MeTopic.MeListener l) {
         setProgressIndicator(activity, true);
 
+        Tinode tinode = Cache.getTinode();
+        if (!tinode.isAuthenticated()) {
+            // If connection is not ready, wait for completion. This method will be called again
+            // from the onLogin callback;
+            Cache.getTinode().reconnectNow(true, false);
+            return;
+        }
+
         // If connection exists reconnectNow returns resolved promise.
-        Cache.getTinode().reconnectNow(false).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        return Cache.attachMeTopic(l);
-                    }
-                })
-                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+        Cache.attachMeTopic(l).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         Log.w(TAG, "Error subscribing to 'me' topic", err);
@@ -923,10 +843,13 @@ public class UiUtils {
                             int errCode = sre.getCode();
                             if (errCode == 404) {
                                 Cache.getTinode().logout();
-                                activity.startActivity(new Intent(activity, LoginActivity.class));
+                                Intent intent = new Intent(activity, LoginActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                activity.startActivity(intent);
                                 activity.finish();
-                            } else if (errCode >= 500) {
-                                Cache.getTinode().reconnectNow(true);
+                            } else if (errCode == 502 && "cluster unreachable".equals(sre.getMessage())) {
+                                // Must reset connection.
+                                Cache.getTinode().reconnectNow(false,true);
                             }
                         }
                         return null;
@@ -935,7 +858,7 @@ public class UiUtils {
                 .thenFinally(new PromisedReply.FinalListener() {
                     @Override
                     public void onFinally() {
-                        UiUtils.setProgressIndicator(activity, false);
+                        setProgressIndicator(activity, false);
                     }
                 });
 

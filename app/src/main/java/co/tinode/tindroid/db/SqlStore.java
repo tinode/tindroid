@@ -42,12 +42,12 @@ public class SqlStore implements Storage {
 
     @Override
     public void setMyUid(String uid) {
-        mDbh.setUid(uid);
+        mDbh.setUid(uid, null);
     }
 
     @Override
-    public void updateDeviceToken(String token) {
-        AccountDb.updateDeviceToken(mDbh.getWritableDatabase(), token);
+    public void setMyUid(String uid, String[] credMethods) {
+        mDbh.setUid(uid, credMethods);
     }
 
     @Override
@@ -55,6 +55,10 @@ public class SqlStore implements Storage {
         return AccountDb.getDeviceToken(mDbh.getReadableDatabase());
     }
 
+    @Override
+    public void saveDeviceToken(String token) {
+        AccountDb.updateDeviceToken(mDbh.getWritableDatabase(), token);
+    }
     @Override
     public void setTimeAdjustment(long adj) {
         mTimeAdjustment = adj;
@@ -66,7 +70,7 @@ public class SqlStore implements Storage {
 
     public void logout() {
         AccountDb.deactivateAll(mDbh.getWritableDatabase());
-        mDbh.setUid(null);
+        mDbh.setUid(null, null);
     }
 
     @Override

@@ -84,11 +84,15 @@ public class MessageActivity extends AppCompatActivity {
     };
     private Timer mTypingAnimationTimer;
     private String mMessageText = null;
+    private PausableSingleThreadExecutor mMessageSender = null;
+
     private String mTopicName = null;
     private ComTopic<VxCard> mTopic = null;
-    private PausableSingleThreadExecutor mMessageSender = null;
+
     private DownloadManager mDownloadMgr = null;
     private long mDownloadId = -1;
+    private MessageEventListener mTinodeListener;
+
     BroadcastReceiver onComplete = new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction()) &&
@@ -160,7 +164,8 @@ public class MessageActivity extends AppCompatActivity {
         super.onResume();
 
         final Tinode tinode = Cache.getTinode();
-        tinode.setListener(new MessageEventListener(tinode.isConnected()));
+        mTinodeListener = new MessageEventListener(tinode.isConnected());
+        tinode.addListener(mTinodeListener);
 
         final Intent intent = getIntent();
 
@@ -220,7 +225,8 @@ public class MessageActivity extends AppCompatActivity {
         mTopic.setListener(new TListener());
 
         if (!mTopic.isAttached()) {
-            topicAttach();
+            // Try immediate reconnect.
+            topicAttach(true);
         } else {
             MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                     .findFragmentByTag(FRAGMENT_MESSAGES);
@@ -239,7 +245,7 @@ public class MessageActivity extends AppCompatActivity {
             mTypingAnimationTimer = null;
         }
 
-        Cache.getTinode().setListener(null);
+        Cache.getTinode().removeListener(mTinodeListener);
         if (mTopic != null) {
             mTopic.setListener(null);
 
@@ -250,26 +256,29 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
-    private void topicAttach() {
+    private void topicAttach(boolean interactive) {
         setProgressIndicator(true);
 
-        // If connection is already established, reconnectNow returns a resolved promise.
-        Cache.getTinode().reconnectNow(false)
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
-                                .withDesc()
-                                .withSub()
-                                .withLaterData(MESSAGES_TO_LOAD)
-                                .withDel();
+        Tinode tinode = Cache.getTinode();
+        if (!tinode.isAuthenticated()) {
+            // If connection is not ready, wait for completion. This method will be called again
+            // from the onLogin callback;
+            Cache.getTinode().reconnectNow(interactive, false);
+            return;
+        }
 
-                        if (mTopic.isOwner()) {
-                            builder = builder.withTags();
-                        }
-                        return mTopic.subscribe(null, builder.build());
-                    }
-                }).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
+                .withDesc()
+                .withSub()
+                .withLaterData(MESSAGES_TO_LOAD)
+                .withDel();
+
+        if (mTopic.isOwner()) {
+            builder = builder.withTags();
+        }
+
+        mTopic.subscribe(null, builder.build())
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
@@ -734,7 +743,7 @@ public class MessageActivity extends AppCompatActivity {
             super.onLogin(code, txt);
 
             UiUtils.attachMeTopic(MessageActivity.this, null);
-            topicAttach();
+            topicAttach(false);
         }
     }
 }

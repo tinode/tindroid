@@ -15,10 +15,13 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 public interface Storage {
     String getMyUid();
+    // Update UID and clear unvalidated credentials.
     void setMyUid(String uid);
+    // Server requested credential validation.
+    void setMyUid(String uid, String[] credRequired);
 
     String getDeviceToken();
-    void updateDeviceToken(String token);
+    void saveDeviceToken(String token);
 
     void logout();
 
@@ -32,26 +35,35 @@ public interface Storage {
     // Fetch one topic by name
     Topic topicGet(Tinode tinode, String name);
     // Add new topic
+    @SuppressWarnings("UnusedReturnValue")
     long topicAdd(Topic topic);
     /** Incoming change to topic description: the already mutated topic in memory is synchronized to DB */
+    @SuppressWarnings("UnusedReturnValue")
     boolean topicUpdate(Topic topic);
     /** Delete topic */
+    @SuppressWarnings("UnusedReturnValue")
     boolean topicDelete(Topic topic);
 
     /** Get seq IDs of the stored messages as a Range */
     Range getCachedMessagesRange(Topic topic);
     /** Local user reported messages as read */
+    @SuppressWarnings("UnusedReturnValue")
     boolean setRead(Topic topic, int read);
     /** Local user reported messages as received */
+    @SuppressWarnings("UnusedReturnValue")
     boolean setRecv(Topic topic, int recv);
 
     /** Add subscription in a generic topic. The subscription is received from the server. */
+    @SuppressWarnings("UnusedReturnValue")
     long subAdd(Topic topic, Subscription sub);
     /** Update subscription in a generic topic */
+    @SuppressWarnings("UnusedReturnValue")
     boolean subUpdate(Topic topic, Subscription sub);
     /** Add a new subscriber to topic. The new subscriber is being added locally. */
+    @SuppressWarnings("UnusedReturnValue")
     long subNew(Topic topic, Subscription sub);
     /** Delete existing subscription */
+    @SuppressWarnings("UnusedReturnValue")
     boolean subDelete(Topic topic, Subscription sub);
 
     /** Get a list o topic subscriptions from DB. */

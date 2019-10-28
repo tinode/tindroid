@@ -27,12 +27,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -119,28 +122,34 @@ public class Tinode {
     private HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
     private MimeTypeResolver mMimeResolver = null;
     private Storage mStore;
+
     private String mApiKey;
     private String mServerHost = null;
     private boolean mUseTLS;
+    private String mServerVersion = null;
+    private String mServerBuild = null;
+
     private String mDeviceToken = null;
     private String mLanguage = null;
     private String mAppName;
     private String mOsVersion;
+
     private Connection mConnection = null;
-    // Promise resolved or rejected on connection completion.
-    private PromisedReply<ServerMessage> mConnectionCompletion = null;
     // True is connection is authenticated
     private boolean mConnAuth = false;
-    private String mServerVersion = null;
-    private String mServerBuild = null;
+    // True if Tinode should use mLoginCredentials to automatically log in after connecting.
     private boolean mAutologin = false;
     private LoginCredentials mLoginCredentials = null;
+    // Server provided a list of credential methods to validate e.g. ["email", "tel", ...].
+    private List<String> mCredToValidate = null;
+
     private String mMyUid = null;
     private String mAuthToken = null;
     private Date mAuthTokenExpires = null;
+
     private int mMsgId = 0;
     private int mPacketCount;
-    private EventListener mListener;
+    private ListenerNotifier mNotifier;
     private ConcurrentMap<String, FutureHolder> mFutures;
     private HashMap<String, Topic> mTopics;
     private HashMap<String, User> mUsers;
@@ -166,7 +175,10 @@ public class Tinode {
         mOsVersion = System.getProperty("os.version");
 
         mApiKey = apikey;
-        mListener = listener;
+        mNotifier = new ListenerNotifier();
+        if (listener != null) {
+            mNotifier.addListener(listener);
+        }
 
         mTypeOfMetaPacket = new HashMap<>();
 
@@ -290,11 +302,23 @@ public class Tinode {
         return new ComTopic(tinode, name, l);
     }
 
+    /**
+     * Add listener which will receive event notifications.
+     *
+     * @param listener event listener to be notified. Should not be null.
+     */
+    public void addListener(EventListener listener) {
+        mNotifier.addListener(listener);
+    }
+
+    /**
+     * Remove listener.
+     *
+     * @param listener event listener to be removed. Should not be null.
+     */
     @SuppressWarnings("UnusedReturnValue")
-    public EventListener setListener(EventListener listener) {
-        EventListener oldListener = mListener;
-        mListener = listener;
-        return oldListener;
+    public boolean removeListener(EventListener listener) {
+        return mNotifier.delListener(listener);
     }
 
     /**
@@ -334,7 +358,7 @@ public class Tinode {
     }
 
     /**
-     * Open a websocket connection to the server and process handshake exchange.
+     * Open a websocket connection to the server, process handshake exchange then optionally login.
      *
      * @param hostName address of the server to connect to; if hostName is null a saved address will be used.
      * @param tls      use transport layer security (wss); ignored if hostName is null.
@@ -346,15 +370,17 @@ public class Tinode {
             hostName = hostName.toLowerCase();
         }
 
-        if (mConnection != null && mConnection.isConnected()) {
-            if (hostName == null || (hostName.equals(mServerHost) && tls == mUseTLS)) {
-                // If the connection is live and the server address has not changed, return a resolved promise
-                return new PromisedReply<>((ServerMessage) null);
-            } else {
-                // Clear auto-login because saved credentials won't work with the new server.
-                setAutoLogin(null, null);
-                // Existing connection cannot be reused because server address has changed.
-                mConnection.disconnect();
+        if (mConnection != null) {
+            if (mConnection.isConnected()) {
+                if (hostName == null || (hostName.equals(mServerHost) && tls == mUseTLS)) {
+                    // If the connection is live and the server address has not changed, return a resolved promise
+                    return new PromisedReply<>((ServerMessage) null);
+                } else {
+                    // Clear auto-login because saved credentials won't work with the new server.
+                    setAutoLogin(null, null);
+                    // Existing connection cannot be reused because server address has changed.
+                    mConnection.disconnect();
+                }
             }
         }
 
@@ -379,12 +405,14 @@ public class Tinode {
             @Override
             protected void onConnect(final boolean autoreconnected) {
                 // Connection established, send handshake, inform listener on success
-                PromisedReply<ServerMessage> future = hello().thenApply(
+                hello().thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                boolean doLogin = mAutologin && mLoginCredentials != null;
+
                                 // If this is an auto-reconnect, the promise is already resolved.
-                                if (!connected.isDone()) {
+                                if (!connected.isDone() && !doLogin) {
                                     connected.resolve(pkt);
                                 }
 
@@ -396,26 +424,25 @@ public class Tinode {
                                     mStore.setTimeAdjustment(mTimeAdjustment);
                                 }
 
-                                if (mListener != null) {
-                                    mListener.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
-                                }
+                                mNotifier.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
 
-                                return null;
-                            }
-                        });
-                // Login automatically if it's enabled.
-                if (mAutologin) {
-                    future.thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
-                                    if (mLoginCredentials != null && !mLoginInProgress) {
-                                        login(mLoginCredentials.scheme, mLoginCredentials.secret, null);
-                                    }
+                                // Login automatically if it's enabled.
+                                if (doLogin) {
+                                    return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
+                                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                        @Override
+                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                            if (!connected.isDone()) {
+                                                connected.resolve(pkt);
+                                            }
+                                            return null;
+                                        }
+                                    });
+                                } else {
                                     return null;
                                 }
-                            });
-                }
+                            }
+                        });
             }
 
             @Override
@@ -440,7 +467,7 @@ public class Tinode {
                     try {
                         connected.reject(err);
                     } catch (Exception ignored) {
-                        // There is no rejection handler ths there should not be an exception
+                        // Don't throw an exception as no one can catch it.
                     }
                 }
             }
@@ -448,6 +475,35 @@ public class Tinode {
 
         mConnection.connect(true);
         return connected;
+    }
+
+    /**
+     * Make sure connection is either already established already or being established.
+     *
+     * @param interactive set to true if user directly requested a reconnect.
+     * @param reset if true drop connection and reconnect; happens when cluster is reconfigured.
+     */
+    public void reconnectNow(boolean interactive, boolean reset) {
+        if (mConnection == null) {
+            // New connection using saved parameters.
+            connect(null, false);
+        }
+
+        if (mConnection.isConnected()) {
+            if (!reset) {
+                // If the connection is live and reset is not requested, return a resolved promise
+                return;
+            }
+            // Forcing a new connection.
+            mConnection.disconnect();
+            interactive = true;
+        }
+
+        // Connection exists but not connected.
+        if (interactive || !mConnection.isWaitingToReconnect()) {
+            // If not interactive, don't reset backoff.
+            mConnection.connect(true);
+        }
     }
 
     /**
@@ -466,32 +522,6 @@ public class Tinode {
      */
     public URL getBaseUrl() throws MalformedURLException {
         return new URL((mUseTLS ? "https://" : "http://") + mServerHost + "/v" + PROTOVERSION + "/");
-    }
-
-    /**
-     * If websocket is valid and not connected, force an immediate reconnect attempt.
-     * If it's not initialized or already connected do nothing.
-     *
-     * @param force if true drop connection and reconnect.
-     *
-     * @return returns promise which will be resolved or rejected when the connection sequence is completed.
-     */
-    @SuppressWarnings("UnusedReturnValue")
-    public PromisedReply<ServerMessage> reconnectNow(boolean force) {
-        if (mConnection == null) {
-            return connect(null, false);
-        }
-
-        if (mConnection.isConnected()) {
-            if (!force) {
-                // If the connection is live and reset is not requested, return a resolved promise
-                return new PromisedReply<>((ServerMessage) null);
-            }
-            // Forcing a new connection.
-            mConnection.disconnect();
-        }
-
-        return connect(null, false);
     }
 
     private void handleDisconnect(boolean byServer, int code, String reason) {
@@ -517,9 +547,7 @@ public class Tinode {
             topic.topicLeft(false, 503, "disconnected");
         }
 
-        if (mListener != null) {
-            mListener.onDisconnect(byServer, code, reason);
-        }
+        mNotifier.onDisconnect(byServer, code, reason);
     }
 
     /**
@@ -539,9 +567,7 @@ public class Tinode {
 
         mPacketCount++;
 
-        if (mListener != null) {
-            mListener.onRawMessage(message);
-        }
+        mNotifier.onRawMessage(message);
 
         if (message.length() == 1 && message.charAt(0) == '0') {
             // This is a network probe. No further processing is necessary.
@@ -554,14 +580,10 @@ public class Tinode {
             return;
         }
 
-        if (mListener != null) {
-            mListener.onMessage(pkt);
-        }
+        mNotifier.onMessage(pkt);
 
         if (pkt.ctrl != null) {
-            if (mListener != null) {
-                mListener.onCtrlMessage(pkt.ctrl);
-            }
+            mNotifier.onCtrlMessage(pkt.ctrl);
 
             if (pkt.ctrl.id != null) {
                 FutureHolder fh = mFutures.remove(pkt.ctrl.id);
@@ -605,9 +627,7 @@ public class Tinode {
                 }
             }
 
-            if (mListener != null) {
-                mListener.onMetaMessage(pkt.meta);
-            }
+            mNotifier.onMetaMessage(pkt.meta);
 
             resolveWithPacket(pkt.meta.id, pkt);
 
@@ -617,9 +637,7 @@ public class Tinode {
                 topic.routeData(pkt.data);
             }
 
-            if (mListener != null) {
-                mListener.onDataMessage(pkt.data);
-            }
+            mNotifier.onDataMessage(pkt.data);
 
             resolveWithPacket(pkt.data.id, pkt);
 
@@ -636,18 +654,14 @@ public class Tinode {
                 }
             }
 
-            if (mListener != null) {
-                mListener.onPresMessage(pkt.pres);
-            }
+            mNotifier.onPresMessage(pkt.pres);
         } else if (pkt.info != null) {
             Topic topic = getTopic(pkt.info.topic);
             if (topic != null) {
                 topic.routeInfo(pkt.info);
             }
 
-            if (mListener != null) {
-                mListener.onInfoMessage(pkt.info);
-            }
+            mNotifier.onInfoMessage(pkt.info);
         }
 
         // TODO(gene): decide what to do on unknown message type
@@ -885,6 +899,9 @@ public class Tinode {
             // Cache token here assuming the call to server does not fail. If it fails clear the cached token.
             // This prevents multiple unnecessary calls to the server with the same token.
             mDeviceToken = token;
+            if (mStore != null) {
+                mStore.saveDeviceToken(token);
+            }
             if (isConnected() && isAuthenticated()) {
                 ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
                         mDeviceToken, null));
@@ -893,6 +910,9 @@ public class Tinode {
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         // Clear cached value on failure to allow for retries.
                         mDeviceToken = null;
+                        if (mStore != null) {
+                            mStore.saveDeviceToken(null);
+                        }
                         return null;
                     }
                 });
@@ -1096,27 +1116,42 @@ public class Tinode {
         String newUid = ctrl.getStringParam("user", null);
         if (mMyUid != null && !mMyUid.equals(newUid)) {
             logout();
-            if (mListener != null) {
-                mListener.onLogin(400, "UID mismatch");
-            }
+            mNotifier.onLogin(400, "UID mismatch");
+
             throw new IllegalStateException("UID mismatch: received '" + newUid + "', expected '" + mMyUid + "'");
         }
 
         mMyUid = newUid;
 
-        if (mStore != null) {
-            mStore.setMyUid(mMyUid);
-        }
-        // If topics were not loaded earlier, load them now.
-        loadTopics();
         mAuthToken = ctrl.getStringParam("token", null);
         mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires", ""));
+
         if (ctrl.code < 300) {
-            mConnAuth = true;
-            if (mListener != null) {
-                mListener.onLogin(ctrl.code, ctrl.text);
+            if (mStore != null) {
+                mStore.setMyUid(mMyUid);
+            }
+
+            // If topics were not loaded earlier, load them now.
+            loadTopics();
+        } else {
+            // Maybe we got request to enter validation code.
+            Iterator<String> it = ctrl.getStringIteratorParam("cred");
+            if (it != null) {
+                if (mCredToValidate == null) {
+                    mCredToValidate = new LinkedList<>();
+                }
+                while (it.hasNext()) {
+                    mCredToValidate.add(it.next());
+                }
+
+                if (mStore != null) {
+                    mStore.setMyUid(mMyUid, mCredToValidate.toArray(new String[]{}));
+                }
             }
         }
+
+        mConnAuth = true;
+        mNotifier.onLogin(ctrl.code, ctrl.text);
     }
 
     /**
@@ -1165,17 +1200,14 @@ public class Tinode {
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
                             final int code = sre.getCode();
-                            if (code >= 400 && code < 500) {
+                            if (code == 401) {
                                 mLoginCredentials = null;
                                 mAuthToken = null;
                                 mAuthTokenExpires = null;
                             }
 
                             mConnAuth = false;
-
-                            if (mListener != null) {
-                                mListener.onLogin(sre.getCode(), sre.getMessage());
-                            }
+                            mNotifier.onLogin(sre.getCode(), sre.getMessage());
                         }
                         // The next handler is rejected as well.
                         return new PromisedReply<>(err);
@@ -1277,7 +1309,6 @@ public class Tinode {
      * @param data      payload to publish to topic
      * @return PromisedReply of the reply ctrl message
      */
-    @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> publish(String topicName, Object data) {
         ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data));
         return sendWithPromise(msg, msg.pub.id);
@@ -1891,6 +1922,118 @@ public class Tinode {
          */
         @SuppressWarnings("unused, WeakerAccess")
         public void onPresMessage(MsgServerPres pres) {
+        }
+    }
+
+    // Helper class which calls given method of all added EventListener(s).
+    private class ListenerNotifier {
+        private Vector<EventListener> listeners;
+
+        ListenerNotifier() {
+            listeners = new Vector<>();
+        }
+
+        synchronized void addListener(EventListener l) {
+            if (!listeners.contains(l)) {
+                listeners.add(l);
+            }
+        }
+        synchronized boolean delListener(EventListener l) {
+            return listeners.remove(l);
+        }
+
+        void onConnect(int code, String reason, Map<String, Object> params) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onConnect(code, reason, params);
+            }
+        }
+
+        void onDisconnect(boolean byServer, int code, String reason) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onDisconnect(byServer, code, reason);
+            }
+        }
+        void onLogin(int code, String text) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onLogin(code, text);
+            }
+        }
+        void onMessage(ServerMessage msg) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onMessage(msg);
+            }
+        }
+        void onRawMessage(String msg) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onRawMessage(msg);
+            }
+        }
+        void onCtrlMessage(MsgServerCtrl ctrl) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onCtrlMessage(ctrl);
+            }
+        }
+        void onDataMessage(MsgServerData data) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onDataMessage(data);
+            }
+        }
+        void onInfoMessage(MsgServerInfo info) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onInfoMessage(info);
+            }
+        }
+        void onMetaMessage(MsgServerMeta meta) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onMetaMessage(meta);
+            }
+        }
+        void onPresMessage(MsgServerPres pres) {
+            EventListener[] local;
+            synchronized (this) {
+                local = listeners.toArray(new EventListener[]{});
+            }
+            for (int i = local.length - 1; i >= 0; i--) {
+                local[i].onPresMessage(pres);
+            }
         }
     }
 

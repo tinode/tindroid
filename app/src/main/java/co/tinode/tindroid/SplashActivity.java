@@ -1,14 +1,10 @@
 package co.tinode.tindroid;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-import android.text.TextUtils;
 
-import co.tinode.tindroid.account.Utils;
+import androidx.appcompat.app.AppCompatActivity;
+
 import co.tinode.tindroid.db.BaseDb;
 
 /**
@@ -21,29 +17,15 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize database helper with global context.
-        String uid = BaseDb.getInstance().getUid();
-        if (!TextUtils.isEmpty(uid)) {
-            final AccountManager accountManager = AccountManager.get(this);
-            // If uid is non-null, get account to use it to login by saved token
-            final Account account = UiUtils.getSavedAccount(this, accountManager, uid);
-            if (account != null) {
-                // Check if sync is enabled.
-                if (ContentResolver.getMasterSyncAutomatically()) {
-                    if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
-                        ContentResolver.setSyncAutomatically(account, Utils.SYNC_AUTHORITY, true);
-                    }
-                }
+        // No need to check for live connection here.
 
-                // Account found, try to use it for login.
-                UiUtils.loginWithSavedAccount(this, accountManager, account);
-                return;
-            }
-        }
-
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-        startActivity(intent);
+        // Send user to appropriate screen:
+        // 1. If we have an account and no credential validation is needed, send to ChatsActivity.
+        // 2. If we don't have an account or credential validation is required send to LoginActivity.
+        Intent launch = new Intent(this, BaseDb.getInstance().isReady() ?
+                ChatsActivity.class : LoginActivity.class);
+        launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(launch);
         finish();
     }
 }

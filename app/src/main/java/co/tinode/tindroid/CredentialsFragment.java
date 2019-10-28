@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Credential;
@@ -24,16 +25,11 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class CredentialsFragment extends Fragment implements View.OnClickListener{
     private static final String TAG = "CredentialsFragment";
 
-    private static final String ARG_KEY = "method";
+    private String mMethod = null;
 
     public CredentialsFragment() {
     }
 
-    public void setMethod(String method) {
-        Bundle args = new Bundle();
-        args.putString(ARG_KEY, method);
-        setArguments(args);
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,7 +40,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        LoginActivity parent = (LoginActivity) getActivity();
+        final LoginActivity parent = (LoginActivity) getActivity();
         if (parent == null) {
             return null;
         }
@@ -60,26 +56,31 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         fragment.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((LoginActivity) getActivity()).showFragment(LoginActivity.FRAGMENT_LOGIN);
+                parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
             }
         });
 
         return fragment;
     }
 
+
     @Override
-    public void onActivityCreated(Bundle unused) {
-        super.onActivityCreated(unused);
+    public void onResume() {
+        super.onResume();
 
         LoginActivity parent = (LoginActivity) getActivity();
         if (parent == null) {
             return;
         }
 
-        Bundle args = getArguments();
-        String method = args != null ? args.getString(ARG_KEY) : "email";
-        TextView callToAction = parent.findViewById(R.id.call_to_validate);
-        callToAction.setText(getString(R.string.validate_cred, method));
+        // Get the first credential to be validated.
+        mMethod = BaseDb.getInstance().getFirstValidationMethod();
+        if (TextUtils.isEmpty(mMethod)) {
+            parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
+        } else {
+            TextView callToAction = parent.findViewById(R.id.call_to_validate);
+            callToAction.setText(getString(R.string.validate_cred, mMethod));
+        }
     }
 
     @Override
@@ -106,11 +107,8 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         confirm.setEnabled(false);
 
         try {
-            Bundle args = getArguments();
-            String method = args != null ? args.getString(ARG_KEY) : "email";
-
             Credential[] cred = new Credential[1];
-            cred[0] = new Credential(method, null, code, null);
+            cred[0] = new Credential(mMethod, null, code, null);
 
             tinode.loginToken(token, cred).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {

@@ -217,7 +217,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
-        values.put(COLUMN_NAME_TAGS, BaseDb.serializeTags(topic.getTags()));
+        values.put(COLUMN_NAME_TAGS, BaseDb.serializeArray(topic.getTags()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
@@ -246,7 +246,6 @@ public class TopicDb implements BaseColumns {
      *
      * @return true if the record was updated, false otherwise
      */
-    @SuppressWarnings("unchecked")
     public static boolean update(SQLiteDatabase db, Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
@@ -271,7 +270,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_CLEAR, topic.getClear());
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
-        values.put(COLUMN_NAME_TAGS, BaseDb.serializeTags(topic.getTags()));
+        values.put(COLUMN_NAME_TAGS, BaseDb.serializeArray(topic.getTags()));
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
@@ -378,7 +377,7 @@ public class TopicDb implements BaseColumns {
      * @param c Cursor to read from
      * @return Subscription
      */
-    @SuppressWarnings("unchecked, WeakerAccess")
+    @SuppressWarnings("WeakerAccess")
     protected static Topic readOne(Tinode tinode, Cursor c) {
         // Instantiate topic of an appropriate class ('me' or 'fnd' or group)
         Topic topic = Tinode.newTopic(tinode, c.getString(COLUMN_IDX_TOPIC), null);
@@ -416,7 +415,6 @@ public class TopicDb implements BaseColumns {
      * @param id of the topic to delete
      * @return true if table was actually deleted, false if table was not found
      */
-    @SuppressWarnings("WeakerAccess")
     public static boolean delete(SQLiteDatabase db, long id) {
         return db.delete(TABLE_NAME, _ID + "=" + id, null) > 0;
     }
@@ -467,7 +465,6 @@ public class TopicDb implements BaseColumns {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_SEQ, topicId, seq);
     }
 
-    @SuppressWarnings("WeakerAccess")
     public static boolean updateClear(SQLiteDatabase db, long topicId, int clear) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_CLEAR, topicId, clear);
     }

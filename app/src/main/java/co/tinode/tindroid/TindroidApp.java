@@ -1,9 +1,16 @@
 package co.tinode.tindroid;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.accounts.AuthenticatorException;
+import android.accounts.OperationCanceledException;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,15 +20,24 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 
+import java.io.IOException;
+import java.util.Iterator;
+
 import androidx.preference.PreferenceManager;
+import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 
+import co.tinode.tinodesdk.model.ServerMessage;
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -79,10 +95,32 @@ public class TindroidApp extends Application {
         String hostName = pref.getString("pref_hostName", null);
         if (TextUtils.isEmpty(hostName)) {
             // No preferences found. Save default values.
-            SharedPreferences.Editor editor= pref.edit();
+            SharedPreferences.Editor editor = pref.edit();
             editor.putString("pref_hostName", getDefaultHostName(this));
             editor.putBoolean("pref_useTLS", !isEmulator());
             editor.apply();
+        }
+
+        // Check if the app has an account already. If so, initialize the shared connection with the server.
+        // Initialization may fail if device is not connected to the network.
+        String uid = BaseDb.getInstance().getUid();
+        if (!TextUtils.isEmpty(uid)) {
+            final AccountManager accountManager = AccountManager.get(this);
+            // If uid is non-null, get account to use it to login by saved token
+            final Account account = UiUtils.getSavedAccount(this, accountManager, uid);
+            if (account != null) {
+                // Check if sync is enabled.
+                if (ContentResolver.getMasterSyncAutomatically()) {
+                    if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
+                        ContentResolver.setSyncAutomatically(account, Utils.SYNC_AUTHORITY, true);
+                    }
+                }
+
+                // Account found, establish connection to the server and use save account credentials for login.
+                loginWithSavedAccount(accountManager, account);
+            } else {
+                Log.i(TAG, "Account not found or no permission to access accounts");
+            }
         }
     }
 
@@ -139,5 +177,70 @@ public class TindroidApp extends Application {
                 || "google_sdk".equals(Build.PRODUCT)
                 || Build.PRODUCT.startsWith("sdk")
                 || Build.PRODUCT.startsWith("vbox");
+    }
+
+    // Read saved account credentials and try to connect to server using them.
+    private void loginWithSavedAccount(final AccountManager accountManager,
+                                       final Account account) {
+        Log.i(TAG, "loginWithSavedAccount");
+
+        accountManager.getAuthToken(account, Utils.TOKEN_TYPE, null, false, new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> future) {
+                try {
+                    // Got tinode authentication token. Use it to connect to the server.
+                    Bundle result = future.getResult(); // This blocks until the future is ready.
+                    if (result != null) {
+                        final String token = result.getString(AccountManager.KEY_AUTHTOKEN);
+                        // If token is not empty use it to connect to server. If it's empty don't try to connect.
+                        if (!TextUtils.isEmpty(token)) {
+                            // Get server address.
+                            final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
+                            String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(TindroidApp.this));
+                            boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
+                            if (TextUtils.isEmpty(hostName)) {
+                                // Something is misconfigured, use defaults.
+                                hostName = TindroidApp.getDefaultHostName(TindroidApp.this);
+                                tls = TindroidApp.getDefaultTLS();
+                            }
+
+                            // Connecting with synchronous calls because this is not the UI thread.
+                            final Tinode tinode = Cache.getTinode();
+                            tinode.setAutoLoginToken(token);
+                            // Connect and login.
+                            try {
+                                // Sync call throws on error.
+                                tinode.connect(hostName, tls).getResult();
+
+                                // Logged in successfully. Save refreshed token for future use.
+                                accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+                            } catch (IOException ex) {
+                                Log.d(TAG, "Network failure during login", ex);
+                                // Do not invalidate token on network failure.
+                            } catch (Exception ex) {
+                                if (ex instanceof ServerResponseException) {
+                                    Log.w(TAG, "Server rejected login sequence", ex);
+                                    // Login failed due to invalid (expired) token or missing/disabled account.
+                                    accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                                    // Force login.
+                                    BaseDb.getInstance().logout();
+                                    // 409 Already authenticated should not be possible here.
+                                } else {
+                                    Log.e(TAG, "Other failure during login", ex);
+                                }
+                            }
+                        }
+                    }
+                } catch (OperationCanceledException e) {
+                    Log.i(TAG, "Request to get an existing account was canceled.", e);
+                } catch (AuthenticatorException e) {
+                    Log.e(TAG, "No access to saved account", e);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failure to login with saved account", e);
+                }
+
+            }
+        }, new Handler());
+
     }
 }

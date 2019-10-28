@@ -169,10 +169,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
                 success = true;
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Network error while syncing contacts", e);
                 syncResult.stats.numIoExceptions++;
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Failed to sync contacts", e);
                 syncResult.stats.numAuthExceptions++;
             }
         } else {
@@ -180,7 +180,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             success = true;
         }
 
-        Log.i(TAG, "Network synchronization " + (success ? "completed" : "failed"));
+        Log.d(TAG, "Network synchronization " + (success ? "completed" : "failed"));
     }
 
     private Date getServerSyncMarker(Account account) {
