@@ -44,7 +44,7 @@ public class ExpBackoff {
      * @return false if the sleep was interrupted, true otherwise
      */
     @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
-    public boolean doSleep() {
+    synchronized public boolean doSleep() {
         boolean result;
         try {
             currentThread = Thread.currentThread();
@@ -58,7 +58,6 @@ public class ExpBackoff {
         return result;
     }
 
-    @SuppressWarnings("WeakerAccess")
     public void reset() {
         this.attempt = 0;
     }
@@ -68,7 +67,7 @@ public class ExpBackoff {
     }
 
     @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
-    public boolean wakeUp() {
+    synchronized public boolean wakeUp() {
         reset();
         if (currentThread != null) {
             currentThread.interrupt();

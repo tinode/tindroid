@@ -452,7 +452,7 @@ public class MessagesFragment extends Fragment
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
         } catch (Exception ex) {
-            Log.d(TAG, "Muting failed", ex);
+            Log.w(TAG, "Muting failed", ex);
             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
         }
 

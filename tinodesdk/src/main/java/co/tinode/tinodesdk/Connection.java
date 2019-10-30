@@ -130,7 +130,7 @@ public class Connection {
      * @param autoReconnect if connection is dropped, reconnect automatically
      */
     @SuppressWarnings("WeakerAccess")
-    public void connect(boolean autoReconnect) {
+    synchronized public void connect(boolean autoReconnect) {
         this.autoreconnect = autoReconnect;
 
         if (autoreconnect && reconnecting) {
@@ -146,7 +146,7 @@ public class Connection {
      * Gracefully close websocket connection.
      */
     @SuppressWarnings("WeakerAccess")
-    public void disconnect() {
+    synchronized public void disconnect() {
         boolean wakeUp = autoreconnect;
         autoreconnect = false;
 
