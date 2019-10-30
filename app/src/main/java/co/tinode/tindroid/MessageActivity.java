@@ -306,7 +306,10 @@ public class MessageActivity extends AppCompatActivity {
                         if (!(err instanceof NotConnectedException)) {
                             Log.w(TAG, "Subscribe failed", err);
                             if (err instanceof ServerResponseException) {
-                                showFragment(FRAGMENT_INVALID, null, false);
+                                int code = ((ServerResponseException) err).getCode();
+                                if (code >= 400 && code < 500) {
+                                    showFragment(FRAGMENT_INVALID, null, false);
+                                }
                             }
                         }
                         return null;
