@@ -17,7 +17,9 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
 import android.os.AsyncTask;
 import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -87,22 +89,31 @@ public class TindroidApp extends Application {
 
         createNotificationChannel();
 
-        // Register for connectivity status broadcasts
-        registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-                NetworkInfo ni = cm.getActiveNetworkInfo();
-                if (ni == null) {
-                    return;
+        // Listen to connectivity changes.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            cm.registerNetworkCallback(new NetworkRequest.Builder().build(), new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(Network network) {
+                        super.onAvailable(network);
+                        if (sTinodeCache != null) {
+                            sTinodeCache.reconnectNow(true, false);
+                        }
+                    }
+                });
+        } else {
+            // Register for connectivity status broadcasts (deprecated method).
+            registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+                    NetworkInfo ni = cm.getActiveNetworkInfo();
+                    if (ni != null && ni.isConnected() && sTinodeCache != null) {
+                        sTinodeCache.reconnectNow(true, false);
+                    }
                 }
-                if (ni.isConnected()) {
-                    Log.i(TAG, "Network connected");
-                } else {
-                    Log.i(TAG, "Network DISconnected");
-                }
-            }
-        }, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+            }, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        }
 
         // Check if preferences already exist. If not, create them.
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);

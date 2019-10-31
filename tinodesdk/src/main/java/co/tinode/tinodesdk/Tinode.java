@@ -364,7 +364,7 @@ public class Tinode {
      * @param tls      use transport layer security (wss); ignored if hostName is null.
      * @return returns promise which will be resolved or rejected when the connection sequence is completed.
      */
-    public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
+    synchronized public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
         boolean newHost = false;
         if (hostName != null) {
             // Convert to lowercase to ensure correct comparison.
@@ -481,7 +481,10 @@ public class Tinode {
     }
 
     /**
-     * Make sure connection is either already established already or being established.
+     * Make sure connection is either already established already or being established:
+     *  - If connection is already established do nothing
+     *  - If connection does not exist, create
+     *  - If not connected and waiting for backoff timer, wake it up.
      *
      * @param interactive set to true if user directly requested a reconnect.
      * @param reset if true drop connection and reconnect; happens when cluster is reconfigured.

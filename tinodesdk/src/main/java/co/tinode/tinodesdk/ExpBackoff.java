@@ -40,11 +40,13 @@ public class ExpBackoff {
     }
 
     /**
-     * Pause the current thread for the appropriate number of milliseconds
+     * Pause the current thread for the appropriate number of milliseconds.
+     * This method cannot be synchronized!
+     *
      * @return false if the sleep was interrupted, true otherwise
      */
     @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
-    synchronized public boolean doSleep() {
+    public boolean doSleep() {
         boolean result;
         try {
             currentThread = Thread.currentThread();
