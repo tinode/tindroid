@@ -135,6 +135,7 @@ public class Tinode {
     private String mOsVersion;
 
     private Connection mConnection = null;
+
     // True is connection is authenticated
     private boolean mConnAuth = false;
     // True if Tinode should use mLoginCredentials to automatically log in after connecting.
@@ -364,30 +365,33 @@ public class Tinode {
      * @return returns promise which will be resolved or rejected when the connection sequence is completed.
      */
     public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
+        boolean newHost = false;
         if (hostName != null) {
             // Convert to lowercase to ensure correct comparison.
             hostName = hostName.toLowerCase();
+            // Check if host address has changed.
+            newHost = !hostName.equals(mServerHost) || tls != mUseTLS;
+            // Save updated host name & security.
+            mServerHost = hostName;
+            mUseTLS = tls;
         }
 
+        // Connection already exists.
         if (mConnection != null) {
             if (mConnection.isConnected()) {
-                if (hostName == null || (hostName.equals(mServerHost) && tls == mUseTLS)) {
-                    // If the connection is live and the server address has not changed, return a resolved promise
+                // If the connection is live and the server address has not changed, return a resolved promise.
+                if (!newHost) {
                     return new PromisedReply<>((ServerMessage) null);
                 } else {
                     // Clear auto-login because saved credentials won't work with the new server.
                     setAutoLogin(null, null);
-                    // Existing connection cannot be reused because server address has changed.
-                    mConnection.disconnect();
                 }
             }
-        }
 
-        mConnection = null;
-
-        if (hostName != null) {
-            mServerHost = hostName;
-            mUseTLS = tls;
+            // Stop exponential backoff timer if it's running.
+            mConnection.disconnect();
+            // Free up resources.
+            mConnection = null;
         }
 
         mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
@@ -399,7 +403,7 @@ public class Tinode {
             return new PromisedReply<>(ex);
         }
 
-        final PromisedReply<ServerMessage> connected = new PromisedReply<>();
+        final PromisedReply<ServerMessage> completion = new PromisedReply<>();
         mConnection = new Connection(connectTo, mApiKey, new Connection.WsListener() {
             @Override
             protected void onConnect(final boolean autoreconnected) {
@@ -411,8 +415,8 @@ public class Tinode {
                                 boolean doLogin = mAutologin && mLoginCredentials != null;
 
                                 // If this is an auto-reconnect, the promise is already resolved.
-                                if (!connected.isDone() && !doLogin) {
-                                    connected.resolve(pkt);
+                                if (!completion.isDone() && !doLogin) {
+                                    completion.resolve(pkt);
                                 }
 
                                 // Success. Reset backoff counter.
@@ -428,15 +432,15 @@ public class Tinode {
                                 // Login automatically if it's enabled.
                                 if (doLogin) {
                                     return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
-                                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                        @Override
-                                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                            if (!connected.isDone()) {
-                                                connected.resolve(pkt);
+                                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                            @Override
+                                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                                if (!completion.isDone()) {
+                                                    completion.resolve(pkt);
+                                                }
+                                                return null;
                                             }
-                                            return null;
-                                        }
-                                    });
+                                        });
                                 } else {
                                     return null;
                                 }
@@ -462,9 +466,9 @@ public class Tinode {
             protected void onError(Exception err) {
                 handleDisconnect(true, 0, err.getMessage());
                 // If the promise is waiting, reject. Otherwise it's not our problem.
-                if (!connected.isDone()) {
+                if (!completion.isDone()) {
                     try {
-                        connected.reject(err);
+                        completion.reject(err);
                     } catch (Exception ignored) {
                         // Don't throw an exception as no one can catch it.
                     }
@@ -473,7 +477,7 @@ public class Tinode {
         });
 
         mConnection.connect(true);
-        return connected;
+        return completion;
     }
 
     /**
@@ -490,7 +494,7 @@ public class Tinode {
 
         if (mConnection.isConnected()) {
             if (!reset) {
-                // If the connection is live and reset is not requested, return a resolved promise
+                // If the connection is live and reset is not requested, all is fine.
                 return;
             }
             // Forcing a new connection.
@@ -498,9 +502,9 @@ public class Tinode {
             interactive = true;
         }
 
-        // Connection exists but not connected.
+        // Connection exists but not connected. Try to connect immediately only if requested or if
+        // autoreconnect is not enabled.
         if (interactive || !mConnection.isWaitingToReconnect()) {
-            // If not interactive, don't reset backoff.
             mConnection.connect(true);
         }
     }
@@ -1122,16 +1126,19 @@ public class Tinode {
 
         mMyUid = newUid;
 
+        if (mStore != null) {
+            mStore.setMyUid(mMyUid);
+        }
+
+        // If topics were not loaded earlier, load them now.
+        loadTopics();
+
         mAuthToken = ctrl.getStringParam("token", null);
         mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires", ""));
 
         if (ctrl.code < 300) {
-            if (mStore != null) {
-                mStore.setMyUid(mMyUid);
-            }
-
-            // If topics were not loaded earlier, load them now.
-            loadTopics();
+            mConnAuth = true;
+            mNotifier.onLogin(ctrl.code, ctrl.text);
         } else {
             // Maybe we got request to enter validation code.
             Iterator<String> it = ctrl.getStringIteratorParam("cred");
@@ -1148,9 +1155,6 @@ public class Tinode {
                 }
             }
         }
-
-        mConnAuth = true;
-        mNotifier.onLogin(ctrl.code, ctrl.text);
     }
 
     /**
