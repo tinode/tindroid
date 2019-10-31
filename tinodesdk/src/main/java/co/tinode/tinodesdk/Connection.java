@@ -31,10 +31,10 @@ public class Connection {
     private URI mEndpoint;
     private String mApiKey;
 
-    private boolean useTls;
+    private boolean mUseTls;
 
-    private boolean reconnecting;
-    private boolean autoreconnect;
+    private boolean mReconnecting;
+    private boolean mAutoreconnect;
 
     // Exponential backoff/reconnecting
     final private ExpBackoff backoff = new ExpBackoff();
@@ -54,10 +54,10 @@ public class Connection {
         path += "channels"; // ws://www.example.com:12345/v0/channels
 
         String scheme = endpoint.getScheme();
-        useTls = scheme.equals("wss") || scheme.equals("https");
+        mUseTls = scheme.equals("wss") || scheme.equals("https");
         int port = endpoint.getPort();
         if (port < 0) {
-            port = useTls ? 443 : 80;
+            port = mUseTls ? 443 : 80;
         }
         try {
             mEndpoint = new URI(scheme,
@@ -73,14 +73,14 @@ public class Connection {
         }
 
         mListener = listener;
-        reconnecting = false;
-        autoreconnect = false;
+        mReconnecting = false;
+        mAutoreconnect = false;
     }
 
     private void socketConnectionRunnable(final WebSocketClient ws) {
         try {
             SSLSocket s = null;
-            if (useTls) {
+            if (mUseTls) {
                 SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                 s = (SSLSocket) factory.createSocket(mEndpoint.getHost(), mEndpoint.getPort());
                 s.setSoTimeout(CONNECTION_TIMEOUT);
@@ -97,10 +97,10 @@ public class Connection {
             }
             mWsClient = ws;
 
-        } catch (IOException e) {
-            Log.d(TAG, "socketConnectionRunnable exception!", e);
+        } catch (IOException ex) {
+            Log.d(TAG, "socketConnectionRunnable exception!", ex);
             if (mListener != null) {
-                mListener.onError(e);
+                mListener.onError(ex);
             }
         }
     }
@@ -131,9 +131,9 @@ public class Connection {
      */
     @SuppressWarnings("WeakerAccess")
     synchronized public void connect(boolean autoReconnect) {
-        this.autoreconnect = autoReconnect;
+        mAutoreconnect = autoReconnect;
 
-        if (autoreconnect && reconnecting) {
+        if (mAutoreconnect && mReconnecting) {
             // If we are waiting to reconnect, do it now.
             backoff.wakeUp();
         } else {
@@ -143,12 +143,12 @@ public class Connection {
     }
 
     /**
-     * Gracefully close websocket connection.
+     * Gracefully close websocket connection. The call is idempotent.
      */
     @SuppressWarnings("WeakerAccess")
     synchronized public void disconnect() {
-        boolean wakeUp = autoreconnect;
-        autoreconnect = false;
+        boolean wakeUp = mAutoreconnect;
+        mAutoreconnect = false;
 
         // Actually close the socket
         if (mWsClient != null) {
@@ -177,8 +177,9 @@ public class Connection {
      *
      * @return true if the socket is OPEN, false otherwise;
      */
+    @SuppressWarnings("WeakerAccess")
     public boolean isWaitingToReconnect() {
-        return reconnecting;
+        return mReconnecting;
     }
     /**
      * Reset exponential backoff counter to zero.
@@ -206,8 +207,8 @@ public class Connection {
                 getSocket().setSoTimeout(0);
             } catch (SocketException ignored) {}
 
-            boolean r = reconnecting;
-            reconnecting = false;
+            boolean r = mReconnecting;
+            mReconnecting = false;
 
             if (mListener != null) {
                 mListener.onConnect(r);
@@ -230,13 +231,13 @@ public class Connection {
         @Override
         public void onClose(int code, String reason, boolean remote) {
             Log.d(TAG, "onDisconnected for '" + reason + "' (code: " + code + ", remote: " +
-                        remote + "); reconnecting=" + reconnecting);
+                        remote + "); reconnecting=" + mReconnecting);
 
             // Avoid infinite recursion
-            if (reconnecting) {
+            if (mReconnecting) {
                 return;
             } else {
-                reconnecting = autoreconnect;
+                mReconnecting = mAutoreconnect;
             }
 
             if (mListener != null) {
@@ -249,7 +250,7 @@ public class Connection {
                 mWsClient = null;
             }
 
-            if (autoreconnect) {
+            if (mAutoreconnect) {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -257,15 +258,15 @@ public class Connection {
                             backoff.doSleep();
 
                             // Check if an explicit disconnect has been requested.
-                            if (!autoreconnect || isConnected()) {
-                                reconnecting = false;
+                            if (!mAutoreconnect || isConnected()) {
+                                mReconnecting = false;
                                 break;
                             }
 
                             // In reconnect loop, make sure the previously opened socket is closed.
                             // Otherwise, when the server becomes available, this sockets will
                             // open an unnecessary (orphaned from the very beginning) session.
-                            if (reconnecting && mWsClient != null) {
+                            if (mReconnecting && mWsClient != null) {
                                 mWsClient.close();
                                 mWsClient = null;
                             }
