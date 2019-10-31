@@ -59,8 +59,8 @@ public class Utils {
     public static final String DATA_SUMMARY = Data.DATA2;
     public static final String DATA_DETAIL = Data.DATA3;
 
-    public static Account createAccount(String accountName) {
-        return new Account(accountName, ACCOUNT_TYPE);
+    public static Account createAccount(String uid) {
+        return new Account(uid, ACCOUNT_TYPE);
     }
 
     /**
