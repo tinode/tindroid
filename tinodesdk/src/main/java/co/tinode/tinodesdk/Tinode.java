@@ -337,9 +337,8 @@ public class Tinode {
                     mTopics.put(tt.getName(), tt);
                     setTopicsUpdated(tt.getUpdated());
                 }
-
-                mTopicsLoaded = true;
             }
+            mTopicsLoaded = true;
         }
     }
 
