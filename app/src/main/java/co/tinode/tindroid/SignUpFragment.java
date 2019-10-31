@@ -30,6 +30,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -41,9 +42,6 @@ import static android.app.Activity.RESULT_OK;
  */
 public class SignUpFragment extends Fragment implements View.OnClickListener {
     private static final String TAG = "SignUpFragment";
-
-    public SignUpFragment() {
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -162,6 +160,10 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                             new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
+                                    UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
+                                            AuthScheme.basicInstance(login, password).toString(),
+                                            tinode.getAuthToken());
+
                                     // Flip back to login screen on success;
                                     parent.runOnUiThread(new Runnable() {
                                         public void run() {
@@ -172,7 +174,8 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                             } else {
                                                 // We are requesting immediate login with the new account.
                                                 // If the action succeeded, assume we have logged in.
-                                                UiUtils.onLoginSuccess(parent, signUp);
+                                                tinode.setAutoLoginToken(tinode.getAuthToken());
+                                                UiUtils.onLoginSuccess(parent, signUp, tinode.getMyId(), true);
                                             }
                                         }
                                     });

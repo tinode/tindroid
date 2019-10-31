@@ -75,6 +75,8 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
 
         // Get the first credential to be validated.
         mMethod = BaseDb.getInstance().getFirstValidationMethod();
+        // TODO: convert method like 'tel' or 'email' to localazable human-readable string.
+        // use cred_methods string-array from resource.
         if (TextUtils.isEmpty(mMethod)) {
             parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
         } else {
@@ -119,7 +121,8 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                             parent.reportError(null, confirm, R.id.response, R.string.invalid_confirmation_code);
                         } else {
                             // Login succeeded.
-                            UiUtils.onLoginSuccess(parent, confirm);
+                            tinode.setAutoLoginToken(tinode.getAuthToken());
+                            UiUtils.onLoginSuccess(parent, confirm, tinode.getMyId(), true);
                         }
                         return null;
                     }

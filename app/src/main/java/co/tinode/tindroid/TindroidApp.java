@@ -16,6 +16,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -81,10 +83,26 @@ public class TindroidApp extends Application {
                 }
             }
         };
-        LocalBroadcastManager.getInstance(this).registerReceiver(br,
-                new IntentFilter("FCM_REFRESH_TOKEN"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("FCM_REFRESH_TOKEN"));
 
         createNotificationChannel();
+
+        // Register for connectivity status broadcasts
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+                NetworkInfo ni = cm.getActiveNetworkInfo();
+                if (ni == null) {
+                    return;
+                }
+                if (ni.isConnected()) {
+                    Log.i(TAG, "Network connected");
+                } else {
+                    Log.i(TAG, "Network DISconnected");
+                }
+            }
+        }, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
         // Check if preferences already exist. If not, create them.
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -223,7 +241,7 @@ public class TindroidApp extends Application {
                         Log.w(TAG, "Server rejected login sequence", ex);
                         // Login failed due to invalid (expired) token or missing/disabled account.
                         accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                        // Force login.
+                        // Force new login.
                         BaseDb.getInstance().logout();
                         // 409 Already authenticated should not be possible here.
                     } else {
@@ -233,6 +251,8 @@ public class TindroidApp extends Application {
 
             } else {
                 Log.i(TAG, "Account not found or no permission to access accounts");
+                // Force new login in case account existed before but was deleted.
+                BaseDb.getInstance().logout();
             }
             return null;
         }

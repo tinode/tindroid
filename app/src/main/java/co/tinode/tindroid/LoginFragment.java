@@ -139,8 +139,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                             public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
                                 sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
 
-                                final Account acc = addAndroidAccount(
-                                        tinode.getMyId(),
+                                UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
                                         AuthScheme.basicInstance(login, password).toString(),
                                         tinode.getAuthToken());
 
@@ -153,14 +152,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                         }
                                     });
                                 } else {
-                                    // Force immediate sync, otherwise Contacts tab may be unusable.
-                                    Bundle bundle = new Bundle();
-                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-                                    bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-                                    ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
-                                    ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
                                     tinode.setAutoLoginToken(tinode.getAuthToken());
-                                    UiUtils.onLoginSuccess(parent, signIn);
+                                    // Force immediate sync, otherwise Contacts tab may be unusable.
+                                    UiUtils.onLoginSuccess(parent, signIn, tinode.getMyId(), true);
                                 }
                                 return null;
                             }
@@ -173,23 +167,5 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 return null;
                             }
                         });
-    }
-
-
-    private Account addAndroidAccount(final String uid, final String secret, final String token) {
-        final Activity a = getActivity();
-        if (a == null) {
-            return null;
-        }
-        final AccountManager am = AccountManager.get(a.getBaseContext());
-        final Account acc = Utils.createAccount(uid);
-        am.addAccountExplicitly(acc, secret, null);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.notifyAccountAuthenticated(acc);
-        }
-        if (!TextUtils.isEmpty(token)) {
-            am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
-        }
-        return acc;
     }
 }

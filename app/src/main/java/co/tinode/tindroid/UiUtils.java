@@ -9,6 +9,7 @@ import android.accounts.OperationCanceledException;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -251,7 +252,7 @@ public class UiUtils {
     /**
      * Login successful. Show contacts activity
      */
-    static void onLoginSuccess(Activity activity, final Button button) {
+    static void onLoginSuccess(Activity activity, final Button button, final String uid, final boolean immediateSync) {
         if (button != null) {
             activity.runOnUiThread(new Runnable() {
                 public void run() {
@@ -259,6 +260,17 @@ public class UiUtils {
                     button.getBackground().setColorFilter(null);
                 }
             });
+        }
+
+        if (immediateSync) {
+            Account acc = getSavedAccount(activity, AccountManager.get(activity), uid);
+            if (acc != null) {
+                Bundle bundle = new Bundle();
+                bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+                bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+                ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
+            }
         }
 
         Intent intent = new Intent(activity, ChatsActivity.class);
@@ -270,6 +282,20 @@ public class UiUtils {
     static boolean isPermissionGranted(Context context, String permission) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    // Creates or updates the Android account associated with the given UID.
+    static void updateAndroidAccount(final Context context, final String uid, final String secret, final String token) {
+        final AccountManager am = AccountManager.get(context);
+        final Account acc = Utils.createAccount(uid);
+        // It's OK to call even if the account already exists.
+        am.addAccountExplicitly(acc, secret, null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            am.notifyAccountAuthenticated(acc);
+        }
+        if (!TextUtils.isEmpty(token)) {
+            am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
+        }
     }
 
     static Account getSavedAccount(final Context context, final AccountManager accountManager,
