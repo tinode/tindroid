@@ -208,6 +208,5 @@
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Политика конфиденциальности</a>]]></string>
     <string name="button_hint_start_new_chat">Начать новый чат</string>
     <string name="app_server">Сервер</string>
-    <string name="default_contact_name">Tinode пользователь %1$s</string>
 
 </resources>
