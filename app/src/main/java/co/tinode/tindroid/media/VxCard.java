@@ -25,8 +25,10 @@ public class VxCard extends VCard {
 
     public VxCard(String fullName, Bitmap bmp) {
         fn = fullName;
-        avatar = new AvatarPhoto(bmp);
-        photo = new Photo(avatar.data, avatar.type);
+        if (bmp != null) {
+            avatar = new AvatarPhoto(bmp);
+            photo = new Photo(avatar.data, avatar.type);
+        }
     }
 
     @Override

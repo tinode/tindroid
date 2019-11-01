@@ -18,6 +18,7 @@ import android.provider.ContactsContract.Settings;
 import java.util.Collection;
 import java.util.Date;
 
+import co.tinode.tindroid.R;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
 import co.tinode.tinodesdk.model.VCard;
@@ -44,8 +45,7 @@ public class ContactsManager {
      * sync request.
      */
     static synchronized Date updateContacts(Context context, Account account,
-                                                   Collection<Subscription<VxCard,?>> rawContacts,
-                                                   Date lastSyncMarker, boolean isSyncContext) {
+                                                   Collection<Subscription<VxCard,?>> rawContacts, Date lastSyncMarker) {
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
@@ -59,7 +59,7 @@ public class ContactsManager {
             }
 
             // Send contact to database.
-            processContact(context, resolver, account, rawContact, batchOperation, isSyncContext);
+            processContact(context, resolver, account, rawContact, batchOperation);
 
             // A sync adapter should batch operations on multiple contacts,
             // because it will make a dramatic performance difference.
@@ -88,8 +88,7 @@ public class ContactsManager {
                                                    ContentResolver resolver,
                                                    Account account,
                                                    Subscription<VxCard,?> rawContact,
-                                                   BatchOperation batchOperation,
-                                                   boolean isSyncContext) {
+                                                   BatchOperation batchOperation) {
         boolean noBatching = false;
         if (batchOperation == null) {
             batchOperation = new BatchOperation(resolver);
@@ -99,14 +98,19 @@ public class ContactsManager {
         long rawContactId = lookupRawContact(resolver, rawContact.getUnique());
         if (rawContact.deleted != null) {
             if (rawContactId > 0) {
-                deleteContact(rawContactId, batchOperation, isSyncContext);
+                deleteContact(rawContactId, batchOperation);
             }
         } else {
+            if (rawContact.pub == null) {
+                rawContact.pub = new VxCard();
+                rawContact.pub.fn = context.getString(R.string.default_contact_name, rawContact.getUnique());
+            }
+
             // Contact already exists
             if (rawContactId > 0) {
-                updateContact(context, resolver, rawContact, rawContactId, batchOperation, isSyncContext);
+                updateContact(context, resolver, rawContact, rawContactId, batchOperation);
             } else {
-                addContact(context, account, rawContact, batchOperation, isSyncContext);
+                addContact(context, account, rawContact, batchOperation);
             }
         }
 
@@ -128,18 +132,13 @@ public class ContactsManager {
      *                       into a single provider call
      */
     private static void addContact(Context context, Account account, Subscription<VxCard,?> rawContact,
-                                  BatchOperation batchOperation, boolean isSyncContext) {
-
-        // noinspection ConstantConditions
-        if (!(rawContact.pub instanceof VxCard) || rawContact.pub == null) {
-            return;
-        }
+                                  BatchOperation batchOperation) {
 
         // Initiate adding data to contacts provider.
 
         // Create new RAW_CONTACTS record.
         final ContactOperations contactOp = ContactOperations.createNewContact(
-                context, rawContact.getUnique(), account.name, batchOperation, isSyncContext);
+                context, rawContact.getUnique(), account.name, batchOperation);
 
         contactOp.addName(rawContact.pub.fn,
                 rawContact.pub.n != null ? rawContact.pub.n.given : null,
@@ -189,12 +188,7 @@ public class ContactsManager {
      *                       into a single provider call
      */
     private static void updateContact(Context context, ContentResolver resolver, Subscription<VxCard,?> rawContact,
-                                     long rawContactId, BatchOperation batchOperation, boolean isSyncContext) {
-
-        // noinspection ConstantConditions
-        if (!(rawContact.pub instanceof VxCard) || rawContact.pub == null) {
-            return;
-        }
+                                     long rawContactId, BatchOperation batchOperation) {
 
         boolean existingCellPhone = false;
         boolean existingHomePhone = false;
@@ -203,7 +197,7 @@ public class ContactsManager {
         boolean existingAvatar = false;
 
         final ContactOperations contactOp = ContactOperations.updateExistingContact(context,
-                rawContactId, batchOperation, isSyncContext);
+                rawContactId, batchOperation);
 
         final Cursor c = resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[]{String.valueOf(rawContactId)}, null);
@@ -304,9 +298,8 @@ public class ContactsManager {
      *
      * @param id     the unique Id for this rawContact in contacts provider, locally issued
      */
-    private static void deleteContact(long id, BatchOperation batchOperation, boolean isSyncContext) {
-        batchOperation.add(ContactOperations.newDeleteCpo(
-                ContentUris.withAppendedId(RawContacts.CONTENT_URI, id), isSyncContext).build());
+    private static void deleteContact(long id, BatchOperation batchOperation) {
+        batchOperation.add(ContactOperations.newDeleteCpo(ContentUris.withAppendedId(RawContacts.CONTENT_URI, id)).build());
     }
 
     /**

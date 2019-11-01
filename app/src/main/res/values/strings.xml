@@ -240,4 +240,6 @@
     <string name="button_hint_start_new_chat">Start new chat</string>
     <string name="app_server">Server</string>
     <string name="full_name_required">Full name required</string>
+
+    <string name="default_contact_name">Tinode user %1$s</string>
 </resources>

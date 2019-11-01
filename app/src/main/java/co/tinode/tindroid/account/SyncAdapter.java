@@ -164,7 +164,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                         }
                     }
                     Date upd = ContactsManager.updateContacts(mContext, account, updated,
-                            lastSyncMarker, true);
+                            lastSyncMarker);
                     setServerSyncMarker(account, upd);
                 }
                 success = true;
