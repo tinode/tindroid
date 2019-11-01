@@ -6,13 +6,12 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 
-import java.io.IOException;
-import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
@@ -21,17 +20,11 @@ import javax.net.ssl.SSLSocketFactory;
 /**
  * A thinly wrapped websocket connection.
  */
-public class Connection {
+public class Connection extends WebSocketClient {
     private static final String TAG = "Connection";
     private static int CONNECTION_TIMEOUT = 3000; // in milliseconds
 
-    private WebSocketClient mWsClient;
     private WsListener mListener;
-
-    private URI mEndpoint;
-    private String mApiKey;
-
-    private boolean mUseTls;
 
     private boolean mReconnecting;
     private boolean mAutoreconnect;
@@ -41,10 +34,21 @@ public class Connection {
 
     @SuppressWarnings("WeakerAccess")
     protected Connection(URI endpoint, String apikey, WsListener listener) {
+        super(normalizeEndpoint(endpoint), new Draft_6455(), wrapApiKey(apikey), CONNECTION_TIMEOUT);
+        setReuseAddr(true);
 
-        mEndpoint = endpoint;
-        mApiKey = apikey;
+        mListener = listener;
+        mReconnecting = false;
+        mAutoreconnect = false;
+    }
 
+    private static Map<String,String> wrapApiKey(String apikey) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("X-Tinode-APIKey",apikey);
+        return headers;
+    }
+
+    private static URI normalizeEndpoint(URI endpoint) {
         String path = endpoint.getPath();
         if (path.equals("")) {
             path = "/";
@@ -54,13 +58,15 @@ public class Connection {
         path += "channels"; // ws://www.example.com:12345/v0/channels
 
         String scheme = endpoint.getScheme();
-        mUseTls = scheme.equals("wss") || scheme.equals("https");
+        // Normalize scheme to ws or wss.
+        scheme = ("wss".equals(scheme) || "https".equals(scheme)) ? "wss" : "ws";
+
         int port = endpoint.getPort();
         if (port < 0) {
-            port = mUseTls ? 443 : 80;
+            port = "wss".equals(scheme) ? 443 : 80;
         }
         try {
-            mEndpoint = new URI(scheme,
+            endpoint = new URI(scheme,
                     endpoint.getUserInfo(),
                     endpoint.getHost(),
                     port,
@@ -68,57 +74,44 @@ public class Connection {
                     endpoint.getQuery(),
                     endpoint.getFragment());
         } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return;
+            Log.w(TAG, "Invalid endpoint URI", e);
         }
 
-        mListener = listener;
-        mReconnecting = false;
-        mAutoreconnect = false;
+        return endpoint;
     }
 
-    private void socketConnectionRunnable(final WebSocketClient ws) {
-        try {
-            SSLSocket s = null;
-            if (mUseTls) {
-                SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                s = (SSLSocket) factory.createSocket(mEndpoint.getHost(), mEndpoint.getPort());
-                s.setSoTimeout(CONNECTION_TIMEOUT);
-                ws.setSocket(s);
-            }
-            ws.connect();
-            if (s != null) {
-                String host = s.getSession().getPeerHost();
-                if (host == null || !host.equals(mEndpoint.getHost())) {
-                    String reason = "Host '" + host + "' does not match '" + mEndpoint.getHost() + "'";
-                    ws.close(-1, "SSL: " + reason);
-                    throw new SSLPeerUnverifiedException(reason);
+    private void connectSocket() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    SSLSocket s = null;
+                    URI endpoint = getURI();
+                    String scheme = endpoint.getScheme();
+                    if ("wss".equals(scheme)) {
+                        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                        s = (SSLSocket) factory.createSocket(endpoint.getHost(), endpoint.getPort());
+                        setSocket(s);
+                    }
+                    connectBlocking(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+                    if (s != null) {
+                        // This is a potentially blocking call.
+                        String host = s.getSession().getPeerHost();
+                        // Verify host name.
+                        if (host == null || !host.equals(endpoint.getHost())) {
+                            String reason = "Host '" + host + "' does not match '" + endpoint.getHost() + "'";
+                            close(-1, "SSL: " + reason);
+                            throw new SSLPeerUnverifiedException(reason);
+                        }
+                    }
+                } catch (Exception ex) {
+                    Log.d(TAG, "socketConnectionRunnable exception!", ex);
+                    if (mListener != null) {
+                        mListener.onError(Connection.this, ex);
+                    }
                 }
             }
-            mWsClient = ws;
-
-        } catch (IOException ex) {
-            Log.d(TAG, "socketConnectionRunnable exception!", ex);
-            if (mListener != null) {
-                mListener.onError(ex);
-            }
-        }
-    }
-
-    private void connectSocket(boolean noNewThread) {
-        Map<String,String> headers = new HashMap<>();
-        headers.put("X-Tinode-APIKey", mApiKey);
-        final WebSocketClient ws = new TinodeWSClient(mEndpoint, headers, CONNECTION_TIMEOUT);
-        if (noNewThread) {
-            socketConnectionRunnable(ws);
-        } else {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    socketConnectionRunnable(ws);
-                }
-            }).start();
-        }
+        }).start();
     }
 
     /**
@@ -131,19 +124,24 @@ public class Connection {
      */
     @SuppressWarnings("WeakerAccess")
     synchronized public void connect(boolean autoReconnect) {
+        Log.i(TAG, "WS.connect: " + hashCode(), new Exception("stacktrace"));
+
         mAutoreconnect = autoReconnect;
 
         if (mAutoreconnect && mReconnecting) {
             // If we are waiting to reconnect, do it now.
             backoff.wakeUp();
         } else {
-            // Create new socket and try to connect it.
-            connectSocket(false);
+            // Set up new connection.
+            connectSocket();
         }
     }
 
     /**
-     * Gracefully close websocket connection. The call is idempotent.
+     * Gracefully close websocket connection. The socket will attempt
+     * to send a frame to the server.
+     *
+     * The call is idempotent: if connection is already closed it does nothing.
      */
     @SuppressWarnings("WeakerAccess")
     synchronized public void disconnect() {
@@ -151,10 +149,7 @@ public class Connection {
         mAutoreconnect = false;
 
         // Actually close the socket
-        if (mWsClient != null) {
-            mWsClient.close();
-            mWsClient = null;
-        }
+        close();
 
         if (wakeUp) {
             // Make sure we are not waiting to reconnect
@@ -169,7 +164,7 @@ public class Connection {
      */
     @SuppressWarnings("WeakerAccess")
     public boolean isConnected() {
-        return mWsClient != null && mWsClient.isOpen();
+        return isOpen();
     }
 
     /**
@@ -191,111 +186,82 @@ public class Connection {
         backoff.reset();
     }
 
-    public void send(String message) {
-        mWsClient.send(message);
+    @Override
+    public void onOpen(ServerHandshake handshakeData) {
+        boolean r = mReconnecting;
+        mReconnecting = false;
+
+        if (mListener != null) {
+            mListener.onConnect(this, r);
+        } else {
+            backoff.reset();
+        }
     }
 
-    private class TinodeWSClient extends WebSocketClient {
+    @Override
+    public void onMessage(String message) {
+        if (mListener != null) {
+            mListener.onMessage(this, message);
+        }
+    }
 
-        TinodeWSClient(URI endpoint, Map<String,String> headers, int timeout) {
-            super(endpoint, new Draft_6455(), headers, timeout);
+    @Override
+    public void onMessage(ByteBuffer blob) {
+        // do nothing, server does not send binary frames
+        Log.w(TAG, "binary message received (should not happen)");
+    }
+
+    @Override
+    public void onClose(int code, String reason, boolean remote) {
+        // Avoid infinite recursion
+        if (mReconnecting) {
+            return;
+        } else {
+            mReconnecting = mAutoreconnect;
         }
 
-        @Override
-        public void onOpen(ServerHandshake handshakedata) {
-            try {
-                getSocket().setSoTimeout(0);
-            } catch (SocketException ignored) {}
-
-            boolean r = mReconnecting;
-            mReconnecting = false;
-
-            if (mListener != null) {
-                mListener.onConnect(r);
-            } else {
-                backoff.reset();
-            }
+        if (mListener != null) {
+            mListener.onDisconnect(this, remote, code, reason);
         }
 
-        @Override
-        public void onMessage(String message) {
-            mListener.onMessage(message);
-        }
-
-        @Override
-        public void onMessage(ByteBuffer blob) {
-            // do nothing, server does not send binary frames
-            Log.e(TAG, "binary message received (should not happen)");
-        }
-
-        @Override
-        public void onClose(int code, String reason, boolean remote) {
-            Log.d(TAG, "onDisconnected for '" + reason + "' (code: " + code + ", remote: " +
-                        remote + "); reconnecting=" + mReconnecting);
-
-            // Avoid infinite recursion
-            if (mReconnecting) {
-                return;
-            } else {
-                mReconnecting = mAutoreconnect;
-            }
-
-            if (mListener != null) {
-                mListener.onDisconnect(remote, code, reason);
-            }
-
-            // The onClose is called while ws readystate is still OPEN. Therefore discard the client.
-            if (mWsClient != null) {
-                mWsClient.close();
-                mWsClient = null;
-            }
-
-            if (mAutoreconnect) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (!isConnected()) {
-                            backoff.doSleep();
-
-                            // Check if an explicit disconnect has been requested.
-                            if (!mAutoreconnect || isConnected()) {
-                                mReconnecting = false;
-                                break;
-                            }
-
-                            // In reconnect loop, make sure the previously opened socket is closed.
-                            // Otherwise, when the server becomes available, this sockets will
-                            // open an unnecessary (orphaned from the very beginning) session.
-                            if (mReconnecting && mWsClient != null) {
-                                mWsClient.close();
-                                mWsClient = null;
-                            }
-                            connectSocket(true);
+        if (mAutoreconnect) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (mAutoreconnect && !isConnected()) {
+                        backoff.doSleep();
+                        // Check if an explicit disconnect has been requested.
+                        if (!mAutoreconnect || isConnected()) {
+                            mReconnecting = false;
+                            return;
                         }
+                        reconnect();
                     }
-                }).start();
-            }
+                }
+            }).start();
         }
+    }
 
-        @Override
-        public void onError(Exception ex) {
-            mListener.onError(ex);
+    @Override
+    public void onError(Exception ex) {
+        if (mListener != null) {
+            mListener.onError(this, ex);
         }
     }
 
     static class WsListener {
         WsListener() {}
 
-        protected void onConnect(boolean reconnected) {
+        protected void onConnect(Connection conn, boolean reconnected) {
         }
 
-        protected void onMessage(String message) {
+        protected void onMessage(Connection conn, String message) {
         }
 
-        protected void onDisconnect(boolean byServer, int code, String reason) {
+        protected void onDisconnect(Connection conn, boolean byServer, int code, String reason) {
         }
 
-        protected void onError(Exception err) {
+        protected void onError(Connection conn, Exception err) {
         }
     }
 }

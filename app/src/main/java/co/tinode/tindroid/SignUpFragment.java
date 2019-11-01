@@ -134,87 +134,81 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
 
         final ImageView avatar = parent.findViewById(R.id.imageAvatar);
         final Tinode tinode = Cache.getTinode();
-        try {
-            // This is called on the websocket thread.
-            tinode.connect(hostName, tls)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
-                                    // Try to create a new account.
-                                    Bitmap bmp = null;
-                                    try {
-                                        bmp = ((BitmapDrawable) avatar.getDrawable()).getBitmap();
-                                    } catch (ClassCastException ignored) {
-                                        // If image is not loaded, the drawable is a vector.
-                                        // Ignore it.
-                                    }
-                                    VxCard vcard = new VxCard(fullName, bmp);
-                                    return tinode.createAccountBasic(
-                                            login, password, true, null,
-                                            new MetaSetDesc<VxCard,String>(vcard, null),
-                                            Credential.append(null, new Credential("email", email)));
+        // This is called on the websocket thread.
+        tinode.connect(hostName, tls)
+                .thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
+                                // Try to create a new account.
+                                Bitmap bmp = null;
+                                try {
+                                    bmp = ((BitmapDrawable) avatar.getDrawable()).getBitmap();
+                                } catch (ClassCastException ignored) {
+                                    // If image is not loaded, the drawable is a vector.
+                                    // Ignore it.
                                 }
-                            }, null)
-                    .thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
-                                    UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
-                                            AuthScheme.basicInstance(login, password).toString(),
-                                            tinode.getAuthToken());
+                                VxCard vcard = new VxCard(fullName, bmp);
+                                return tinode.createAccountBasic(
+                                        login, password, true, null,
+                                        new MetaSetDesc<VxCard,String>(vcard, null),
+                                        Credential.append(null, new Credential("email", email)));
+                            }
+                        })
+                .thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
+                                UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
+                                        AuthScheme.basicInstance(login, password).toString(),
+                                        tinode.getAuthToken());
 
-                                    // Flip back to login screen on success;
+                                // Flip back to login screen on success;
+                                parent.runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
+                                            signUp.setEnabled(true);
+                                            signUp.getBackground().setColorFilter(null);
+                                            parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
+                                        } else {
+                                            // We are requesting immediate login with the new account.
+                                            // If the action succeeded, assume we have logged in.
+                                            tinode.setAutoLoginToken(tinode.getAuthToken());
+                                            UiUtils.onLoginSuccess(parent, signUp, tinode.getMyId(), true);
+                                        }
+                                    }
+                                });
+                                return null;
+                            }
+                        })
+                .thenCatch(
+                        new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                final String cause = ((ServerResponseException)err).getReason();
+                                if (cause != null) {
                                     parent.runOnUiThread(new Runnable() {
+                                        @Override
                                         public void run() {
-                                            if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
-                                                signUp.setEnabled(true);
-                                                signUp.getBackground().setColorFilter(null);
-                                                parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
-                                            } else {
-                                                // We are requesting immediate login with the new account.
-                                                // If the action succeeded, assume we have logged in.
-                                                tinode.setAutoLoginToken(tinode.getAuthToken());
-                                                UiUtils.onLoginSuccess(parent, signUp, tinode.getMyId(), true);
+                                            signUp.setEnabled(true);
+                                            signUp.getBackground().setColorFilter(null);
+                                            switch (cause) {
+                                                case "auth":
+                                                    // Invalid login
+                                                    ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.login_rejected));
+                                                    break;
+                                                case "email":
+                                                    // Duplicate email:
+                                                    ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_rejected));
+                                                    break;
                                             }
                                         }
                                     });
-                                    return null;
                                 }
-                            },
-                            new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                    final String cause = ((ServerResponseException)err).getReason();
-                                    if (cause != null) {
-                                        parent.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                signUp.setEnabled(true);
-                                                signUp.getBackground().setColorFilter(null);
-                                                switch (cause) {
-                                                    case "auth":
-                                                        // Invalid login
-                                                        ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.login_rejected));
-                                                        break;
-                                                    case "email":
-                                                        // Duplicate email:
-                                                        ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_rejected));
-                                                        break;
-                                                }
-                                            }
-                                        });
-                                    }
-                                    parent.reportError(err, signUp, 0, R.string.error_new_account_failed);
-                                    return null;
-                                }
-                            });
-
-        } catch (Exception e) {
-            Log.w(TAG, "Signup failed", e);
-            signUp.setEnabled(true);
-            signUp.getBackground().setColorFilter(null);
-        }
+                                parent.reportError(err, signUp, 0, R.string.error_new_account_failed);
+                                return null;
+                            }
+                        });
     }
 
     @Override

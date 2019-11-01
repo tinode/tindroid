@@ -135,6 +135,7 @@ public class Tinode {
     private String mOsVersion;
 
     private Connection mConnection = null;
+    private ConnectedWsListener mConnectionListener = null;
 
     // True is connection is authenticated
     private boolean mConnAuth = false;
@@ -362,7 +363,8 @@ public class Tinode {
      *
      * @param hostName address of the server to connect to; if hostName is null a saved address will be used.
      * @param tls      use transport layer security (wss); ignored if hostName is null.
-     * @return returns promise which will be resolved or rejected when the connection sequence is completed.
+     *
+     * @return PromisedReply to be resolved or rejected when the connection is completed.
      */
     synchronized public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
         boolean newHost = false;
@@ -376,22 +378,18 @@ public class Tinode {
             mUseTLS = tls;
         }
 
-        // Connection already exists.
-        if (mConnection != null) {
-            if (mConnection.isConnected()) {
-                // If the connection is live and the server address has not changed, return a resolved promise.
-                if (!newHost) {
-                    return new PromisedReply<>((ServerMessage) null);
-                } else {
-                    // Clear auto-login because saved credentials won't work with the new server.
-                    setAutoLogin(null, null);
-                }
+        // Connection already exists and connected.
+        if (mConnection != null && mConnection.isConnected()) {
+            // If the connection is live and the server address has not changed, return a resolved promise.
+            if (!newHost) {
+                return new PromisedReply<>((ServerMessage) null);
+            } else {
+                // Clear auto-login because saved credentials won't work with the new server.
+                setAutoLogin(null, null);
+                // Stop exponential backoff timer if it's running.
+                mConnection.disconnect();
+                mConnection = null;
             }
-
-            // Stop exponential backoff timer if it's running.
-            mConnection.disconnect();
-            // Free up resources.
-            mConnection = null;
         }
 
         mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
@@ -403,81 +401,126 @@ public class Tinode {
             return new PromisedReply<>(ex);
         }
 
-        final PromisedReply<ServerMessage> completion = new PromisedReply<>();
-        mConnection = new Connection(connectTo, mApiKey, new Connection.WsListener() {
-            @Override
-            protected void onConnect(final boolean autoreconnected) {
-                // Connection established, send handshake, inform listener on success
-                hello().thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                boolean doLogin = mAutologin && mLoginCredentials != null;
+        PromisedReply<ServerMessage> completion = new PromisedReply<>();
 
-                                // If this is an auto-reconnect, the promise is already resolved.
-                                if (!completion.isDone() && !doLogin) {
-                                    completion.resolve(pkt);
-                                }
+        if (mConnectionListener == null) {
+            mConnectionListener = new ConnectedWsListener();
+        }
+        mConnectionListener.addPromise(completion);
 
-                                // Success. Reset backoff counter.
-                                mConnection.backoffReset();
+        if (mConnection == null) {
+            mConnection = new Connection(connectTo, mApiKey, mConnectionListener);
+        }
+        mConnection.connect(true);
 
-                                mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
-                                if (mStore != null) {
-                                    mStore.setTimeAdjustment(mTimeAdjustment);
-                                }
+        return completion;
+    }
 
-                                mNotifier.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
+    // Class which listens for websocket to connect.
+    private class ConnectedWsListener extends Connection.WsListener {
+        final Vector<PromisedReply<ServerMessage>> mCompletionPromises;
 
-                                // Login automatically if it's enabled.
-                                if (doLogin) {
-                                    return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
+        ConnectedWsListener() {
+            mCompletionPromises = new Vector<>();
+        }
+
+        void addPromise(PromisedReply<ServerMessage> promise) {
+            mCompletionPromises.add(promise);
+        }
+
+        @Override
+        protected void onConnect(final Connection conn, final boolean autoreconnected) {
+            // Connection established, send handshake, inform listener on success
+            hello().thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                            boolean doLogin = mAutologin && mLoginCredentials != null;
+
+                            // Resolve outstanding promises;
+                            if (!doLogin) {
+                                resolvePromises(pkt);
+                            }
+
+                            // Success. Reset backoff counter.
+                            conn.backoffReset();
+
+                            mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
+                            if (mStore != null) {
+                                mStore.setTimeAdjustment(mTimeAdjustment);
+                            }
+
+                            mNotifier.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
+
+                            // Login automatically if it's enabled.
+                            if (doLogin) {
+                                return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
                                         .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                                             @Override
                                             public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                                if (!completion.isDone()) {
-                                                    completion.resolve(pkt);
-                                                }
+                                                resolvePromises(pkt);
                                                 return null;
                                             }
                                         });
-                                } else {
-                                    return null;
-                                }
+                            } else {
+                                return null;
                             }
-                        });
+                        }
+                    }
+            );
+        }
+
+        @Override
+        protected void onMessage(Connection conn, String message) {
+            try {
+                dispatchPacket(message);
+            } catch (Exception ex) {
+                Log.w(TAG, "Exception in dispatchPacket: ", ex);
+            }
+        }
+
+        @Override
+        protected void onDisconnect(Connection conn, boolean byServer, int code, String reason) {
+            handleDisconnect(byServer, -code, reason);
+        }
+
+        @Override
+        protected void onError(Connection conn, Exception err) {
+            // No need to call handleDisconnect here. It will be called from onDisconnect().
+
+            // If the promise is waiting, reject. Otherwise it's not our problem.
+            try {
+                rejectPromises(err);
+            } catch (Exception ignored) {
+                // Don't throw an exception as no one can catch it.
+            }
+        }
+
+        private void completePromises(ServerMessage pkt, Exception ex) throws Exception {
+            PromisedReply<ServerMessage>[] promises;
+            synchronized (mCompletionPromises) {
+                //noinspection unchecked
+                promises = mCompletionPromises.toArray(new PromisedReply[]{});
+                mCompletionPromises.removeAllElements();
             }
 
-            @Override
-            protected void onMessage(String message) {
-                try {
-                    dispatchPacket(message);
-                } catch (Exception ex) {
-                    Log.w(TAG, "Exception in dispatchPacket: ", ex);
-                }
-            }
-
-            @Override
-            protected void onDisconnect(boolean byServer, int code, String reason) {
-                handleDisconnect(byServer, -code, reason);
-            }
-
-            @Override
-            protected void onError(Exception err) {
-                handleDisconnect(true, 0, err.getMessage());
-                // If the promise is waiting, reject. Otherwise it's not our problem.
-                if (!completion.isDone()) {
-                    try {
-                        completion.reject(err);
-                    } catch (Exception ignored) {
-                        // Don't throw an exception as no one can catch it.
+            for (int i = promises.length - 1; i >= 0; i--) {
+                if (!promises[i].isDone()) {
+                    if (ex != null) {
+                        promises[i].reject(ex);
+                    } else {
+                        promises[i].resolve(pkt);
                     }
                 }
             }
-        });
+        }
+        private void resolvePromises(ServerMessage pkt) throws Exception {
+            completePromises(pkt, null);
+        }
 
-        mConnection.connect(true);
-        return completion;
+        private void rejectPromises(Exception ex) throws Exception {
+            completePromises(null, ex);
+        }
     }
 
     /**
@@ -531,6 +574,9 @@ public class Tinode {
     }
 
     private void handleDisconnect(boolean byServer, int code, String reason) {
+        Log.d(TAG, "Disconnected for '" + reason + "' (code: " + code + ", remote: " +
+                byServer + ");");
+
         mConnAuth = false;
 
         // TODO(gene): should this be cleared?
@@ -569,7 +615,7 @@ public class Tinode {
         if (message == null || message.equals(""))
             return;
 
-        Log.i(TAG, "in: " + message);
+        Log.d(TAG, "in: " + message);
 
         mPacketCount++;
 
@@ -1487,7 +1533,7 @@ public class Tinode {
         if (mConnection == null || !mConnection.isConnected()) {
             throw new NotConnectedException("No connection");
         }
-        Log.i(TAG, "out: " + message);
+        Log.d(TAG, "out: " + message);
         mConnection.send(message);
     }
 

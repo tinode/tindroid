@@ -100,16 +100,16 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
         final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
-        try {
-            final Tinode tinode = Cache.getTinode();
-            Cache.getTinode().connect(hostName, tls).thenApply(
+        final Tinode tinode = Cache.getTinode();
+        Cache.getTinode().connect(hostName, tls)
+                .thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
                             return tinode.requestResetSecret("basic", method, value);
                         }
-                    }, null
-            ).thenApply(
+                    })
+                .thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
@@ -117,7 +117,8 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
                             parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
                             return null;
                         }
-                    },
+                    })
+                .thenCatch(
                     new PromisedReply.FailureListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onFailure(Exception err) {
@@ -126,11 +127,6 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
                             return null;
                         }
                     });
-
-        } catch (Exception ex) {
-            Log.w(TAG, "Password reset failed", ex);
-            confirm.setEnabled(true);
-        }
     }
 }
 

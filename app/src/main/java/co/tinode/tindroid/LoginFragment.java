@@ -131,8 +131,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                         login,
                                         password);
                             }
-                        },
-                        null)
+                        })
                 .thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
@@ -158,7 +157,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 }
                                 return null;
                             }
-                        },
+                        })
+                .thenCatch(
                         new PromisedReply.FailureListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
