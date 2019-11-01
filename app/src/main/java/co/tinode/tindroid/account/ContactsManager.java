@@ -18,6 +18,7 @@ import android.provider.ContactsContract.Settings;
 import java.util.Collection;
 import java.util.Date;
 
+import co.tinode.tindroid.R;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
 import co.tinode.tinodesdk.model.VCard;
@@ -44,8 +45,10 @@ public class ContactsManager {
      * sync request.
      */
     static synchronized Date updateContacts(Context context, Account account,
-                                                   Collection<Subscription<VxCard,?>> rawContacts,
-                                                   Date lastSyncMarker, boolean isSyncContext) {
+                                            Collection<Subscription<VxCard,?>> rawContacts,
+                                            Date lastSyncMarker,
+                                            // It's a false positive.
+                                            @SuppressWarnings("SameParameterValue") boolean isSyncContext) {
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
@@ -102,6 +105,11 @@ public class ContactsManager {
                 deleteContact(rawContactId, batchOperation, isSyncContext);
             }
         } else {
+            if (rawContact.pub == null) {
+                rawContact.pub = new VxCard();
+                rawContact.pub.fn = context.getString(R.string.default_contact_name, rawContact.getUnique());
+            }
+
             // Contact already exists
             if (rawContactId > 0) {
                 updateContact(context, resolver, rawContact, rawContactId, batchOperation, isSyncContext);
@@ -129,11 +137,6 @@ public class ContactsManager {
      */
     private static void addContact(Context context, Account account, Subscription<VxCard,?> rawContact,
                                   BatchOperation batchOperation, boolean isSyncContext) {
-
-        // noinspection ConstantConditions
-        if (!(rawContact.pub instanceof VxCard) || rawContact.pub == null) {
-            return;
-        }
 
         // Initiate adding data to contacts provider.
 
@@ -190,11 +193,6 @@ public class ContactsManager {
      */
     private static void updateContact(Context context, ContentResolver resolver, Subscription<VxCard,?> rawContact,
                                      long rawContactId, BatchOperation batchOperation, boolean isSyncContext) {
-
-        // noinspection ConstantConditions
-        if (!(rawContact.pub instanceof VxCard) || rawContact.pub == null) {
-            return;
-        }
 
         boolean existingCellPhone = false;
         boolean existingHomePhone = false;
