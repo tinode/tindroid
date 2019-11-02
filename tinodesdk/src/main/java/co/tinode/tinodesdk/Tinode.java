@@ -429,7 +429,7 @@ public class Tinode {
         }
 
         @Override
-        protected void onConnect(final Connection conn, final boolean autoreconnected) {
+        protected void onConnect(final Connection conn) {
             // Connection established, send handshake, inform listener on success
             hello().thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {

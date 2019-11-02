@@ -13,20 +13,35 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-
 /**
  * A thinly wrapped websocket connection.
  */
 public class Connection extends WebSocketClient {
     private static final String TAG = "Connection";
+
     private static int CONNECTION_TIMEOUT = 3000; // in milliseconds
+
+    // Connection states
+    // TODO: consider extending ReadyState
+    private enum State {
+        // Created. No attempts were made to reconnect.
+        NEW,
+        // Created, in process of creating or restoring connection.
+        CONNECTING,
+        // Connected.
+        CONNECTED,
+        // Disconnected. A thread is waiting to reconnect again.
+        WAITING_TO_RECONNECT,
+        // Disconnected. Not waiting to reconnect.
+        CLOSED
+    }
 
     private WsListener mListener;
 
-    private boolean mReconnecting;
+    // Connection status
+    private State mStatus;
+
+    // If connection should try to reconnect automatically.
     private boolean mAutoreconnect;
 
     // Exponential backoff/reconnecting
@@ -38,7 +53,7 @@ public class Connection extends WebSocketClient {
         setReuseAddr(true);
 
         mListener = listener;
-        mReconnecting = false;
+        mStatus = State.NEW;
         mAutoreconnect = false;
     }
 
@@ -80,29 +95,15 @@ public class Connection extends WebSocketClient {
         return endpoint;
     }
 
-    private void connectSocket() {
+    private void connectSocket(final boolean reconnect) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    SSLSocket s = null;
-                    URI endpoint = getURI();
-                    String scheme = endpoint.getScheme();
-                    if ("wss".equals(scheme)) {
-                        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                        s = (SSLSocket) factory.createSocket(endpoint.getHost(), endpoint.getPort());
-                        setSocket(s);
-                    }
-                    connectBlocking(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-                    if (s != null) {
-                        // This is a potentially blocking call.
-                        String host = s.getSession().getPeerHost();
-                        // Verify host name.
-                        if (host == null || !host.equals(endpoint.getHost())) {
-                            String reason = "Host '" + host + "' does not match '" + endpoint.getHost() + "'";
-                            close(-1, "SSL: " + reason);
-                            throw new SSLPeerUnverifiedException(reason);
-                        }
+                    if (reconnect) {
+                        reconnectBlocking();
+                    } else {
+                        connectBlocking(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
                     }
                 } catch (Exception ex) {
                     Log.d(TAG, "socketConnectionRunnable exception!", ex);
@@ -115,7 +116,7 @@ public class Connection extends WebSocketClient {
     }
 
     /**
-     * Establish a connection with the server. It opens a websocket in a separate
+     * Establish a connection with the server. It opens or reopens a websocket in a separate
      * thread.
      *
      * This is a non-blocking call.
@@ -124,16 +125,25 @@ public class Connection extends WebSocketClient {
      */
     @SuppressWarnings("WeakerAccess")
     synchronized public void connect(boolean autoReconnect) {
-        Log.i(TAG, "WS.connect: " + hashCode(), new Exception("stacktrace"));
-
         mAutoreconnect = autoReconnect;
 
-        if (mAutoreconnect && mReconnecting) {
-            // If we are waiting to reconnect, do it now.
-            backoff.wakeUp();
-        } else {
-            // Set up new connection.
-            connectSocket();
+        switch (mStatus) {
+            case CONNECTED:
+            case CONNECTING:
+                // Already connected or in process of connecting: do nothing.
+                break;
+            case WAITING_TO_RECONNECT:
+                backoff.wakeUp();
+                break;
+            case NEW:
+                mStatus = State.CONNECTING;
+                connectSocket(false);
+                break;
+            case CLOSED:
+                mStatus = State.CONNECTING;
+                connectSocket(true);
+                break;
+            // exhaustive, no default:
         }
     }
 
@@ -148,7 +158,7 @@ public class Connection extends WebSocketClient {
         boolean wakeUp = mAutoreconnect;
         mAutoreconnect = false;
 
-        // Actually close the socket
+        // Actually close the socket (non-blocking).
         close();
 
         if (wakeUp) {
@@ -174,7 +184,7 @@ public class Connection extends WebSocketClient {
      */
     @SuppressWarnings("WeakerAccess")
     public boolean isWaitingToReconnect() {
-        return mReconnecting;
+        return mStatus == State.WAITING_TO_RECONNECT;
     }
     /**
      * Reset exponential backoff counter to zero.
@@ -188,11 +198,12 @@ public class Connection extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshakeData) {
-        boolean r = mReconnecting;
-        mReconnecting = false;
+        synchronized (this) {
+            mStatus = State.CONNECTED;
+        }
 
         if (mListener != null) {
-            mListener.onConnect(this, r);
+            mListener.onConnect(this);
         } else {
             backoff.reset();
         }
@@ -214,10 +225,14 @@ public class Connection extends WebSocketClient {
     @Override
     public void onClose(int code, String reason, boolean remote) {
         // Avoid infinite recursion
-        if (mReconnecting) {
-            return;
-        } else {
-            mReconnecting = mAutoreconnect;
+        synchronized (this) {
+            if (mStatus == State.WAITING_TO_RECONNECT) {
+                return;
+            } else if (mAutoreconnect) {
+                mStatus = State.WAITING_TO_RECONNECT;
+            } else {
+                mStatus = State.CLOSED;
+            }
         }
 
         if (mListener != null) {
@@ -228,14 +243,17 @@ public class Connection extends WebSocketClient {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    while (mAutoreconnect && !isConnected()) {
+                    while (mStatus == State.WAITING_TO_RECONNECT) {
                         backoff.doSleep();
-                        // Check if an explicit disconnect has been requested.
-                        if (!mAutoreconnect || isConnected()) {
-                            mReconnecting = false;
-                            return;
+
+                        synchronized (Connection.this) {
+                            // Check if we no longer need to connect.
+                            if (mStatus != State.WAITING_TO_RECONNECT) {
+                                break;
+                            }
+                            mStatus = State.CONNECTING;
                         }
-                        reconnect();
+                        connectSocket(true);
                     }
                 }
             }).start();
@@ -252,7 +270,7 @@ public class Connection extends WebSocketClient {
     static class WsListener {
         WsListener() {}
 
-        protected void onConnect(Connection conn, boolean reconnected) {
+        protected void onConnect(Connection conn) {
         }
 
         protected void onMessage(Connection conn, String message) {
