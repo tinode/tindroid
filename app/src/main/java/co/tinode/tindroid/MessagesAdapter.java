@@ -220,8 +220,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
-        for (int position : positions) {
-            StoredMessage msg = getMessage(position);
+        // The list is inverted, so iterating messages in inverse order as well.
+        for (int i = positions.length - 1; i >= 0; i--) {
+            StoredMessage msg = getMessage(positions[i]);
             if (msg != null) {
                 Subscription<VxCard, ?> sub = (Subscription<VxCard, ?>) topic.getSubscription(msg.from);
                 String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
@@ -231,6 +232,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (sb.length() > 1) {
+            // Delete unnecessary CR in the beginning.
             sb.deleteCharAt(0);
             String text = sb.toString();
 
