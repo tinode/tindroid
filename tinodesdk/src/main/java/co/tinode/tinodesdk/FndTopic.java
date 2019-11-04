@@ -13,7 +13,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 // Topic's Public and Private are String. Subscription Public is VCard, Private is String[].
-public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
+public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
     @SuppressWarnings("unused")
     private static final String TAG = "FndTopic";
 
@@ -28,7 +28,7 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
     }
 
     @Override
-    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<String,String> meta) {
+    public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<String, String> meta) {
         if (mSubs != null) {
             mSubs = null;
             mSubsUpdated = null;
@@ -60,7 +60,7 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
     }
 
     @Override
-    protected void routeMetaSub(MsgServerMeta<String,String,SP,String[]> meta) {
+    protected void routeMetaSub(MsgServerMeta<String, String,SP,String[]> meta) {
         for (Subscription<SP,String[]> upd : meta.sub) {
             Subscription<SP,String[]> sub = getSubscription(upd.getUnique());
             if (sub != null) {
@@ -95,12 +95,12 @@ public class FndTopic<SP> extends Topic<String,String,SP,String[]> {
         /* Do nothing: all fnd data is transient. */
     }
 
-    public static class FndListener<SP> extends Listener<String,String,SP,String[]> {
+    public static class FndListener<SP> extends Listener<String, String, SP, String[]> {
         /** {meta} message received */
-        public void onMeta(MsgServerMeta<String,String,SP,String[]> meta) {}
+        public void onMeta(MsgServerMeta<String, String, SP, String[]> meta) {}
         /** {meta what="sub"} message received, and this is one of the subs */
         public void onMetaSub(Subscription<SP,String[]> sub) {}
         /** {meta what="desc"} message received */
-        public void onMetaDesc(Description<String,String> desc) {}
+        public void onMetaDesc(Description<String, String> desc) {}
     }
 }

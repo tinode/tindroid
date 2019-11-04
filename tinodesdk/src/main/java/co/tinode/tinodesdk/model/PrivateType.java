@@ -3,6 +3,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -10,7 +11,7 @@ import co.tinode.tinodesdk.Tinode;
  * Common type of the `private` field of {meta}: holds structured
  * data, such as comment and archival status.
  */
-public class PrivateType extends HashMap<String,Object> {
+public class PrivateType extends HashMap<String,Object> implements Mergeable {
     public PrivateType() {
         super();
     }
@@ -50,4 +51,13 @@ public class PrivateType extends HashMap<String,Object> {
         put("arch", arch ? true : Tinode.NULL_VALUE);
     }
 
+    @JsonIgnore
+    public int merge(Mergeable another) {
+        if (!(another instanceof PrivateType)) return 0;
+        PrivateType apt = (PrivateType)another;
+        for (Map.Entry<String, Object> e : apt.entrySet()) {
+            put(e.getKey(), e.getValue());
+        }
+        return apt.size();
+    }
 }

@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * Metadata packet
  */
-public class MsgServerMeta<DP,DR,SP,SR> {
+public class MsgServerMeta<DP, DR, SP, SR> {
     public String id;
     public String topic;
     public Date ts;
