@@ -13,8 +13,10 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
@@ -86,6 +88,8 @@ public class MessagesFragment extends Fragment
 
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
+
+    private static final int READ_EXTERNAL_STORAGE_PERMISSION = 1;
 
     // Maximum size of file to send in-band. 256KB.
     private static final long MAX_INBAND_ATTACHMENT_SIZE = 1 << 17;
@@ -623,18 +627,24 @@ public class MessagesFragment extends Fragment
             switch (requestCode) {
                 case ACTION_ATTACH_IMAGE:
                 case ACTION_ATTACH_FILE: {
-                    final Bundle args = new Bundle();
-                    args.putParcelable("uri", data.getData());
-                    args.putInt("requestCode", requestCode);
-                    args.putString("topic", mTopicName);
                     final FragmentActivity activity = getActivity();
                     if (activity == null) {
                         return;
                     }
 
-                    // Must use unique ID for each upload. Otherwise trouble.
-                    LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+                    if (!UiUtils.isPermissionGranted(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
+                            READ_EXTERNAL_STORAGE_PERMISSION);
+                        Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
+                    } else {
+                        final Bundle args = new Bundle();
+                        args.putParcelable("uri", data.getData());
+                        args.putInt("requestCode", requestCode);
+                        args.putString("topic", mTopicName);
 
+                        // Must use unique ID for each upload. Otherwise trouble.
+                        LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+                    }
                     break;
                 }
             }
@@ -846,6 +856,7 @@ public class MessagesFragment extends Fragment
                                  final WeakReference<UploadProgress> callbackProgress) {
 
         final UploadResult result = new UploadResult();
+
         Storage store = BaseDb.getInstance().getStore();
 
         final int requestCode = args.getInt("requestCode");

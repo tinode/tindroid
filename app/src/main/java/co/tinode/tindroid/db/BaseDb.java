@@ -248,7 +248,7 @@ public class BaseDb extends SQLiteOpenHelper {
     }
 
     long getAccountId() {
-        return mAcc.id;
+        return mAcc != null ? mAcc.id : -1;
     }
 
     @Override

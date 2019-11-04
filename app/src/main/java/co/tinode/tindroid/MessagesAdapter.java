@@ -14,9 +14,9 @@ import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
@@ -30,6 +30,7 @@ import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -647,14 +648,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
      *
      * If the app does not has permission then the user will be prompted to grant permission.
      */
-    private void verifyStoragePermissions() {
+    private boolean verifyStoragePermissions() {
         // Check if we have write permission
         if (!UiUtils.isPermissionGranted(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             // We don't have permission so prompt the user
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
-            }
+            ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+            return false;
         }
+        return true;
     }
 
     // Run loader on UI thread
@@ -909,21 +910,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                 case "EX":
                     // Attachment
-                    verifyStoragePermissions();
+                    if (verifyStoragePermissions()) {
+                        String fname = null;
+                        String mimeType = null;
+                        try {
+                            fname = (String) data.get("name");
+                            mimeType = (String) data.get("mime");
+                        } catch (ClassCastException ignored) {
+                        }
 
-                    String fname = null;
-                    String mimeType = null;
-                    try {
-                        fname = (String) data.get("name");
-                        mimeType = (String) data.get("mime");
-                    } catch (ClassCastException ignored) {
+                        if (TextUtils.isEmpty(fname)) {
+                            fname = mActivity.getString(R.string.default_attachment_name);
+                        }
+
+                        downloadAttachment(data, fname, mimeType);
+                    } else {
+                        Toast.makeText(mActivity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
                     }
-
-                    if (TextUtils.isEmpty(fname)) {
-                        fname = mActivity.getString(R.string.default_attachment_name);
-                    }
-
-                    downloadAttachment(data, fname, mimeType);
                     break;
 
                 case "BN":
