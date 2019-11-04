@@ -210,18 +210,19 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        // Clear back stack.
-        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
-            showFragment(FRAGMENT_MESSAGES, null, false);
+            // Check of another fragment is already visible. If so, don't change it.
+            if (getVisibleFragment() == null) {
+                showFragment(FRAGMENT_MESSAGES, null, false);
+            }
         } else {
             Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
             UiUtils.setupToolbar(this, null, mTopicName, false);
             mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
             showFragment(FRAGMENT_INVALID, null, false);
         }
+
         mTopic.setListener(new TListener());
 
         if (!mTopic.isAttached()) {
@@ -283,13 +284,12 @@ public class MessageActivity extends AppCompatActivity {
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                                 mTopicName, mTopic.getOnline());
-                        showFragment(FRAGMENT_MESSAGES, null, false);
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                                         .findFragmentByTag(FRAGMENT_MESSAGES);
-                                if (fragmsg != null) {
+                                if (fragmsg != null && fragmsg.isVisible()) {
                                     fragmsg.topicSubscribed();
                                 }
                             }
@@ -307,7 +307,7 @@ public class MessageActivity extends AppCompatActivity {
                             Log.w(TAG, "Subscribe failed", err);
                             if (err instanceof ServerResponseException) {
                                 int code = ((ServerResponseException) err).getCode();
-                                if (code >= 400 && code < 500) {
+                                if (code == 404) {
                                     showFragment(FRAGMENT_INVALID, null, false);
                                 }
                             }

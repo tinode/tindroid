@@ -242,13 +242,13 @@ public class TopicInfoFragment extends Fragment {
         super.onResume();
 
         final Activity activity = getActivity();
-        final Bundle bundle = getArguments();
+        final Bundle args = getArguments();
 
-        if (activity == null || bundle == null) {
+        if (activity == null || args == null) {
             return;
         }
 
-        String name = bundle.getString("topic");
+        String name = args.getString("topic");
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         if (mTopic == null) {
             Log.d(TAG, "TopicInfo resumed with null topic.");
