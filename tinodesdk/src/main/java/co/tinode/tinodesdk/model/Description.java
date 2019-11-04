@@ -10,7 +10,7 @@ import co.tinode.tinodesdk.Tinode;
 /**
  * Topic description as deserialized from the server packet.
  */
-public class Description<DP extends Mergeable, DR extends Mergeable> implements Serializable {
+public class Description<DP, DR> implements Serializable {
     public Date created;
     public Date updated;
     public Date touched;
@@ -36,8 +36,8 @@ public class Description<DP extends Mergeable, DR extends Mergeable> implements 
             pub = null;
             changed++;
         } else {
-            if (pub != null) {
-                if (pub.merge(spub) > 0) changed++;
+            if (pub != null && (pub instanceof Mergeable)) {
+                if (((Mergeable)pub).merge((Mergeable)spub) > 0) changed++;
             } else {
                 pub = spub;
                 changed++;
@@ -52,8 +52,8 @@ public class Description<DP extends Mergeable, DR extends Mergeable> implements 
             priv = null;
             changed++;
         } else {
-            if (priv != null) {
-                if (priv.merge(spriv) > 0) changed++;
+            if (priv != null && (priv instanceof Mergeable)) {
+                if (((Mergeable)priv).merge((Mergeable)spriv) > 0) changed++;
             } else {
                 priv = spriv;
                 changed++;

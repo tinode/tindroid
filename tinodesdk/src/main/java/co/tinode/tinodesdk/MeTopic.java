@@ -13,7 +13,6 @@ import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
@@ -23,7 +22,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * MeTopic manages contact list. MeTopic::Private is unused.
  */
-public class MeTopic<DP extends Mergeable> extends Topic<DP,PrivateType,DP,PrivateType> {
+public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private static final String TAG = "MeTopic";
 
     protected ArrayList<Credential> mCreds;
@@ -364,7 +363,7 @@ public class MeTopic<DP extends Mergeable> extends Topic<DP,PrivateType,DP,Priva
         }
     }
 
-    public static class MeListener<DP extends Mergeable> extends Listener<DP,PrivateType,DP,PrivateType> {
+    public static class MeListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
         /** {meta what="sub"} message received, and this is one of the subs */
