@@ -102,15 +102,12 @@ public class UserDb implements BaseColumns {
      * @return ID of the newly added user
      */
     static long insert(SQLiteDatabase db, String uid, Date updated, Object pub) {
-        // Log.d(TAG, "Inserting user " + uid + " from invite");
-
-        // Convert subscription description to a map of values
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
         values.put(COLUMN_NAME_UID, uid);
-        values.put(COLUMN_NAME_UPDATED,
-                updated == null ? new Date().getTime() : updated.getTime() );
-        // values.put(COLUMN_NAME_DELETED, NULL);
+        if (updated != null) {
+            values.put(COLUMN_NAME_UPDATED, updated.getTime());
+        }
         if (pub != null) {
             values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(pub));
         }
@@ -158,13 +155,11 @@ public class UserDb implements BaseColumns {
      * @return true if the record was updated, false otherwise
      */
     public static boolean update(SQLiteDatabase db, long userId, Date updated, Object pub) {
-
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
         if (updated != null) {
             values.put(COLUMN_NAME_UPDATED, updated.getTime());
         }
-        // values.put(COLUMN_NAME_DELETED, NULL);
         if (pub != null) {
             values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(pub));
         }

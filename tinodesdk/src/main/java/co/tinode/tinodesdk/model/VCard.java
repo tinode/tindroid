@@ -153,11 +153,11 @@ public class VCard implements Serializable, Mergeable {
         if (vc.fn != null) {
             fn = vc.fn;
             changed++;
-            }
+        }
         if (vc.n != null) {
             n = vc.n;
             changed++;
-            }
+        }
         if (vc.org != null) {
             org = vc.org;
             changed++;

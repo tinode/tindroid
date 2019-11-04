@@ -136,7 +136,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     @SuppressWarnings("unchecked")
     void processOneSub(Subscription<DP,PrivateType> sub) {
-        // Log.d(TAG, "Sub " + sub.topic + " is " + sub.online);
+        // Handle topic.
         Topic topic = mTinode.getTopic(sub.topic);
         if (topic != null) {
             // This is an existing topic.
@@ -144,6 +144,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 // Expunge deleted topic
                 mTinode.stopTrackingTopic(sub.topic);
                 topic.persist(false);
+                topic = null;
             } else {
                 // Update its record in memory and in the database.
                 topic.update(sub);
@@ -151,22 +152,25 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 if (topic.mListener != null) {
                     topic.mListener.onContUpdated(sub);
                 }
-
-                if (topic.getTopicType() == TopicType.P2P && mStore != null) {
-                    // Use P2P description to generate and update user
-                    User user = mTinode.getUser(topic.getName());
-                    if (user == null) {
-                        user = mTinode.addUser(topic.getName());
-                    }
-                    if (user.merge(topic.mDesc)) {
-                        mStore.userUpdate(user);
-                    }
-                }
             }
         } else if (sub.deleted == null) {
             // This is a new topic. Register it and write to DB.
             topic = mTinode.newTopic(sub);
             topic.persist(true);
+        } else {
+            Log.i(TAG, "Request to delete an unknown topic: " + sub.topic);
+        }
+
+        // Convert p2p topics to users.
+        if (topic !=  null && topic.getTopicType() == TopicType.P2P && mStore != null) {
+            // Use P2P description to generate and update user
+            User user = mTinode.getUser(topic.getName());
+            if (user == null) {
+                user = mTinode.addUser(topic.getName());
+            }
+            if (user.merge(topic.mDesc)) {
+                mStore.userUpdate(user);
+            }
         }
 
         if (mListener != null) {

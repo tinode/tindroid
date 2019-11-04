@@ -3,6 +3,7 @@ package co.tinode.tinodesdk;
 import java.util.Date;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -41,17 +42,30 @@ public class User<P> implements LocalData {
         } catch (ClassCastException ignored) {}
     }
 
+    private boolean mergePub(P pub) {
+        boolean changed = false;
+        if (pub != null) {
+            try {
+                if (Tinode.isNull(pub)) {
+                    this.pub = null;
+                    changed = true;
+                } else if (this.pub != null && (this.pub instanceof Mergeable)) {
+                    changed = (((Mergeable) this.pub).merge((Mergeable) pub) > 0);
+                } else {
+                    this.pub = pub;
+                    changed = true;
+                }
+            } catch (ClassCastException ignored) { }
+        }
+        return changed;
+    }
+
     public boolean merge(User<P> user) {
         boolean changed = false;
 
         if ((user.updated != null) && (updated == null || updated.before(user.updated))) {
             updated = user.updated;
-
-            if (user.pub != null) {
-                pub = user.pub;
-            }
-
-            changed = true;
+            changed = mergePub(user.pub);
         } else if (pub == null && user.pub != null) {
             pub = user.pub;
             changed = true;
@@ -65,12 +79,7 @@ public class User<P> implements LocalData {
 
         if ((sub.updated != null) && (updated == null || updated.before(sub.updated))) {
             updated = sub.updated;
-
-            if (sub.pub != null) {
-                pub = sub.pub;
-            }
-
-            changed = true;
+            changed = mergePub(sub.pub);
         } else if (pub == null && sub.pub != null) {
             pub = sub.pub;
             changed = true;
@@ -81,19 +90,15 @@ public class User<P> implements LocalData {
 
     public boolean merge(Description<P,?> desc) {
         boolean changed = false;
-        if (desc.pub != null) {
-            try {
-                if ((desc.updated != null) && (updated == null || updated.before(desc.updated))) {
-                    pub = desc.pub;
-                    updated = desc.updated;
-                    changed = true;
-                } else if (pub == null) {
-                    pub = desc.pub;
-                    changed = true;
-                }
-            } catch (ClassCastException ignored) {
-            }
+
+        if ((desc.updated != null) && (updated == null || updated.before(desc.updated))) {
+            updated = desc.updated;
+            changed = mergePub(desc.pub);
+        } else if (pub == null && desc.pub != null) {
+            pub = desc.pub;
+            changed = true;
         }
+
         return changed;
     }
 

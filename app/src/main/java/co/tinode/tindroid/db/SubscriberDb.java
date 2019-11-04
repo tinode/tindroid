@@ -158,7 +158,6 @@ public class SubscriberDb implements BaseColumns {
             values.put(COLUMN_NAME_STATUS, ss.status);
             values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
             values.put(COLUMN_NAME_UPDATED, (sub.updated != null ? sub.updated : new Date()).getTime());
-            // values.put(COLUMN_NAME_DELETED, NULL);
             values.put(COLUMN_NAME_READ, sub.read);
             values.put(COLUMN_NAME_RECV, sub.recv);
             values.put(COLUMN_NAME_CLEAR, sub.clear);
