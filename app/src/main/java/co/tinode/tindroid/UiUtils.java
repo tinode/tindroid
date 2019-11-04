@@ -327,6 +327,11 @@ public class UiUtils {
     }
 
     private static void setConnectedStatus(final Activity activity, final boolean online) {
+        // Connected status is disabled for production builds.
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }

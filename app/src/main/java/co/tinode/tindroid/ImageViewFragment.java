@@ -35,18 +35,18 @@ public class ImageViewFragment extends Fragment {
         super.onResume();
 
         Activity activity = getActivity();
-        Bundle bundle = getArguments();
-        if (activity == null || bundle == null) {
+        Bundle args = getArguments();
+        if (activity == null || args == null) {
             return;
         }
 
-        byte[] bits = bundle.getByteArray("image");
+        byte[] bits = args.getByteArray("image");
         if (bits != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
             String size = bmp.getWidth() + " \u00D7 " + bmp.getHeight() + "; ";
             ((ImageView) activity.findViewById(R.id.image)).setImageDrawable(new BitmapDrawable(getResources(), bmp));
-            ((TextView) activity.findViewById(R.id.content_type)).setText(bundle.getString("mime"));
-            ((TextView) activity.findViewById(R.id.file_name)).setText(bundle.getString("name"));
+            ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
+            ((TextView) activity.findViewById(R.id.file_name)).setText(args.getString("name"));
             ((TextView) activity.findViewById(R.id.image_size)).setText(size + UiUtils.bytesToHumanSize(bits.length));
         }
     }
