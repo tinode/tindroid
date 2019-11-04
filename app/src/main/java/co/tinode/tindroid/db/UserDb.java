@@ -8,7 +8,6 @@ import android.provider.BaseColumns;
 import java.util.Date;
 
 import co.tinode.tinodesdk.User;
-import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -123,7 +122,7 @@ public class UserDb implements BaseColumns {
      *
      * @return ID of the newly added user
      */
-    static <Pu extends Mergeable> long insert(SQLiteDatabase db, User<Pu> user) {
+    static <Pu> long insert(SQLiteDatabase db, User<Pu> user) {
         long id = insert(db, user.uid, user.updated, user.pub);
         if (id > 0) {
             StoredUser su = new StoredUser();
@@ -201,7 +200,7 @@ public class UserDb implements BaseColumns {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static <Pu extends Mergeable> User<Pu> readOne(SQLiteDatabase db, String uid) {
+    public static <Pu> User<Pu> readOne(SQLiteDatabase db, String uid) {
         // Instantiate topic of an appropriate class ('me' or group)
         User<Pu> user = null;
         String sql =

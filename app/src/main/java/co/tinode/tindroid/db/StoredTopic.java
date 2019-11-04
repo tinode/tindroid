@@ -7,7 +7,6 @@ import java.util.Date;
 
 import co.tinode.tinodesdk.LocalData;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Mergeable;
 
 /**
  * Representation of a topic stored in a database;
@@ -46,8 +45,8 @@ public class StoredTopic implements LocalData.Payload {
         topic.setMaxDel(c.getInt(TopicDb.COLUMN_IDX_MAX_DEL));
 
         topic.setTags(BaseDb.deserializeArray(c.getString(TopicDb.COLUMN_IDX_TAGS)));
-        topic.setPub((Mergeable) BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PUBLIC)));
-        topic.setPriv((Mergeable) BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PRIVATE)));
+        topic.setPub(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PUBLIC)));
+        topic.setPriv(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PRIVATE)));
 
         topic.setAccessMode(BaseDb.deserializeMode(c.getString(TopicDb.COLUMN_IDX_ACCESSMODE)));
         topic.setDefacs(BaseDb.deserializeDefacs(c.getString(TopicDb.COLUMN_IDX_DEFACS)));
