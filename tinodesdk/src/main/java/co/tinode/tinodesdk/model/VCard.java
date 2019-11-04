@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class VCard implements Serializable {
+public class VCard implements Serializable, Mergeable {
 
     public final static String TYPE_HOME = "HOME";
     public final static String TYPE_WORK = "WORK";
@@ -140,6 +140,49 @@ public class VCard implements Serializable {
 
     public VCard copy() {
         return copy(new VCard(), this);
+    }
+
+    @JsonIgnore
+    @Override
+    public int merge(Mergeable another) {
+        if (!(another instanceof VCard)) {
+            return 0;
+        }
+        int changed = 0;
+        VCard vc = (VCard)another;
+        if (vc.fn != null) {
+            fn = vc.fn;
+            changed++;
+            }
+        if (vc.n != null) {
+            n = vc.n;
+            changed++;
+            }
+        if (vc.org != null) {
+            org = vc.org;
+            changed++;
+        }
+        if (vc.title != null) {
+            title = vc.title;
+            changed++;
+        }
+        if (vc.tel != null) {
+            tel = vc.tel;
+            changed++;
+        }
+        if (vc.email != null) {
+            email = vc.email;
+            changed++;
+        }
+        if (vc.impp != null) {
+            impp = vc.impp;
+            changed++;
+        }
+        if (vc.photo != null) {
+            photo = vc.photo;
+            changed++;
+        }
+        return changed;
     }
 
     public static class Name implements Serializable {

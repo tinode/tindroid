@@ -10,7 +10,7 @@ import co.tinode.tinodesdk.Tinode;
 /**
  * Topic description as deserialized from the server packet.
  */
-public class Description<DP,DR> implements Serializable {
+public class Description<DP extends Mergeable, DR extends Mergeable> implements Serializable {
     public Date created;
     public Date updated;
     public Date touched;
@@ -28,6 +28,38 @@ public class Description<DP,DR> implements Serializable {
     public DR priv;
 
     public Description() {
+    }
+
+    private int mergePub(DP spub) {
+        int changed = 0;
+        if (Tinode.isNull(spub)) {
+            pub = null;
+            changed++;
+        } else {
+            if (pub != null) {
+                if (pub.merge(spub) > 0) changed++;
+            } else {
+                pub = spub;
+                changed++;
+            }
+        }
+        return changed;
+    }
+
+    private int mergePriv(DR spriv) {
+        int changed = 0;
+        if (Tinode.isNull(spriv)) {
+            priv = null;
+            changed++;
+        } else {
+            if (priv != null) {
+                if (priv.merge(spriv) > 0) changed++;
+            } else {
+                priv = spriv;
+                changed++;
+            }
+        }
+        return changed;
     }
 
     /**
@@ -86,15 +118,13 @@ public class Description<DP,DR> implements Serializable {
             changed ++;
         }
 
-        // FIXME: this does not take into account partial updates,
-        // such as updated avatar but not the title and vice versa.
         if (desc.pub != null) {
-            pub = Tinode.isNull(desc.pub) ? null : desc.pub;
+            if (mergePub(desc.pub) > 0) changed++;
         }
 
         // FIXME: this does not take into account partial updates.
         if (desc.priv != null) {
-            priv = Tinode.isNull(desc.priv) ? null : desc.priv;
+            if (mergePriv(desc.priv) > 0) changed++;
         }
 
         return changed > 0;
@@ -148,15 +178,13 @@ public class Description<DP,DR> implements Serializable {
         if (sub.pub != null) {
             // This may throw a ClassCastException.
             // This is intentional behavior to catch cases of wrong assignment.
-            //noinspection unchecked
-            pub = (DP) (Tinode.isNull(sub.pub) ? null : sub.pub);
-            changed++;
+            if (mergePub((DP) sub.pub) > 0) changed++;
         }
 
         if (sub.priv != null) {
             try {
                 //noinspection unchecked
-                priv = (DR) (Tinode.isNull(sub.priv) ? null : sub.priv);
+                if (mergePriv((DR)sub.priv) > 0) changed++;
                 changed++;
             } catch (ClassCastException ignored) {}
 
@@ -178,11 +206,11 @@ public class Description<DP,DR> implements Serializable {
         }
 
         if (desc.pub != null) {
-            pub = Tinode.isNull(desc.pub) ? null : desc.pub;
+            if (mergePub(desc.pub) > 0) changed++;
         }
 
         if (desc.priv != null) {
-            priv = Tinode.isNull(desc.priv) ? null : desc.priv;
+            if (mergePriv(desc.priv) > 0) changed++;
         }
 
         return changed > 0;

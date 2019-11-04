@@ -1,6 +1,7 @@
 package co.tinode.tinodesdk;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -11,7 +12,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Communication topic: a P2P or Group.
  */
-public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
+public class ComTopic<DP extends Mergeable> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     public ComTopic(Tinode tinode, Subscription<DP,PrivateType> sub) {
         super(tinode, sub);
@@ -79,7 +80,7 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         return setMeta(new MsgSetMeta<>(new MetaSetDesc<DP,PrivateType>(null, priv)));
     }
 
-    public static class ComListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
+    public static class ComListener<DP extends Mergeable> extends Listener<DP,PrivateType,DP,PrivateType> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
         /** {meta what="sub"} message received, and this is one of the subs */

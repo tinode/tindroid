@@ -43,6 +43,7 @@ import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientDel;
@@ -1582,7 +1583,7 @@ public class Tinode {
         return new ComTopic(this, sub);
     }
 
-    public <DP> MeTopic<DP> getOrCreateMeTopic() {
+    public <DP extends Mergeable> MeTopic<DP> getOrCreateMeTopic() {
         MeTopic<DP> me = getMeTopic();
         if (me == null) {
             me = new MeTopic<>(this, (MeTopic.MeListener<DP>) null);
@@ -1590,7 +1591,7 @@ public class Tinode {
         return me;
     }
 
-    public <DP> FndTopic<DP> getOrCreateFndTopic() {
+    public <DP extends Mergeable> FndTopic<DP> getOrCreateFndTopic() {
         FndTopic<DP> fnd = getFndTopic();
         if (fnd == null) {
             fnd = new FndTopic<>(this, null);
@@ -1622,7 +1623,7 @@ public class Tinode {
      * @return 'me' topic or null if 'me' has never been subscribed to
      */
     @SuppressWarnings("unchecked")
-    public <DP> MeTopic<DP> getMeTopic() {
+    public <DP extends Mergeable> MeTopic<DP> getMeTopic() {
         return (MeTopic<DP>) getTopic(TOPIC_ME);
     }
 
@@ -1632,7 +1633,7 @@ public class Tinode {
      * @return 'fnd' topic or null if 'fnd' has never been subscribed to
      */
     @SuppressWarnings("unchecked")
-    public <DP> FndTopic<DP> getFndTopic() {
+    public <DP extends Mergeable> FndTopic<DP> getFndTopic() {
         // Either I or Java really has problems with generics.
         return (FndTopic<DP>) getTopic(TOPIC_FND);
     }
@@ -1734,7 +1735,7 @@ public class Tinode {
      * @return {@link User} object or null if no such user is found in local cache.
      */
     @SuppressWarnings("unchecked")
-    <SP> User<SP> getUser(String uid) {
+    <SP extends Mergeable> User<SP> getUser(String uid) {
         User<SP> user = mUsers.get(uid);
         if (user == null && mStore != null) {
             user = mStore.userGet(uid);
@@ -1751,7 +1752,7 @@ public class Tinode {
      * @param uid ID of the user to create.
      * @return {@link User} created user.
      */
-    <SP> User<SP> addUser(String uid) {
+    <SP extends Mergeable> User<SP> addUser(String uid) {
         User<SP> user = new User<>(uid);
         mUsers.put(uid, user);
         if (mStore != null) {

@@ -22,6 +22,7 @@ import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.LastSeen;
+import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgDelRange;
@@ -45,7 +46,8 @@ import co.tinode.tinodesdk.model.Subscription;
  * @param <SR> is the type of Subscription.Private
  */
 @SuppressWarnings("WeakerAccess, unused")
-public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
+public class Topic<DP extends Mergeable, DR extends Mergeable, SP extends Mergeable, SR>
+        implements LocalData, Comparable<Topic> {
     private static final String TAG = "tinodesdk.Topic";
     protected Tinode mTinode;
     protected String mName;
@@ -1787,7 +1789,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     protected enum NoteType {READ, RECV}
 
-    public static class Listener<DP, DR, SP, SR> {
+    public static class Listener<DP extends Mergeable, DR extends Mergeable, SP, SR> {
 
         public void onSubscribe(int code, String text) {
         }

@@ -3,12 +3,13 @@ package co.tinode.tinodesdk;
 import java.util.Date;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
  * Information about specific user
  */
-public class User<P> implements LocalData {
+public class User<P extends Mergeable> implements LocalData {
 
     public Date updated;
     public String uid;

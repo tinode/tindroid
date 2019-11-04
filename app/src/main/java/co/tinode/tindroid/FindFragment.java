@@ -38,6 +38,7 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.MergeableString;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -357,7 +358,8 @@ public class FindFragment extends Fragment {
 
         final FndTopic<?> fnd = Cache.getTinode().getFndTopic();
         fnd.setMeta(new MsgSetMeta<>(
-                new MetaSetDesc<String, String>(query == null ? Tinode.NULL_VALUE : query, null)));
+                new MetaSetDesc<MergeableString, MergeableString>(
+                        new MergeableString(query == null ? Tinode.NULL_VALUE : query), null)));
         if (query != null) {
             setProgressBarVisible(true);
             fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
