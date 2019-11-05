@@ -214,6 +214,8 @@ public class MessageActivity extends AppCompatActivity {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
             // Check of another fragment is already visible. If so, don't change it.
             if (getVisibleFragment() == null) {
+                // No fragment is visible. Show default and clear back stack.
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 showFragment(FRAGMENT_MESSAGES, null, false);
             }
         } else {
