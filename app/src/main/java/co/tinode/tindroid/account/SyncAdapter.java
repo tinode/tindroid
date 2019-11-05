@@ -159,7 +159,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     Collection<Subscription<VxCard, ?>> updated = new ArrayList<>();
                     for (Subscription<VxCard, ?> sub : pkt.meta.sub) {
                         if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
-                            // Log.d(TAG, "contact " + sub.topic + "/" + sub.with + " added to list");
                             updated.add(sub);
                         }
                     }

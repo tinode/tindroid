@@ -56,19 +56,19 @@ public class ContactsManager {
 
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
-            if (currentSyncMarker == null ||
-                    (rawContact.updated != null && rawContact.updated.after(currentSyncMarker))) {
+            if (currentSyncMarker == null || (rawContact.updated != null && rawContact.updated.after(currentSyncMarker))) {
+
                 currentSyncMarker = rawContact.updated;
-            }
 
-            // Send contact to database.
-            processContact(context, resolver, account, rawContact, batchOperation, isSyncContext);
+                // Send updated contact to database.
+                processContact(context, resolver, account, rawContact, batchOperation, isSyncContext);
 
-            // A sync adapter should batch operations on multiple contacts,
-            // because it will make a dramatic performance difference.
-            // (UI updates, etc)
-            if (batchOperation.size() >= BATCH_SIZE) {
-                batchOperation.execute();
+                // A sync adapter should batch operations on multiple contacts,
+                // because it will make a dramatic performance difference.
+                // (UI updates, etc)
+                if (batchOperation.size() >= BATCH_SIZE) {
+                    batchOperation.execute();
+                }
             }
         }
         batchOperation.execute();
