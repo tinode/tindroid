@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.VCard;
 
 
@@ -60,5 +61,20 @@ public class VxCard extends VCard {
         if (photo != null) {
             avatar = new AvatarPhoto(photo.data);
         }
+    }
+
+    @JsonIgnore
+    @Override
+    public int merge(Mergeable another) {
+        if (!(another instanceof VxCard)) {
+            return 0;
+        }
+        int changed = super.merge(another);
+        VxCard avc = (VxCard)another;
+        if (avc.avatar != null) {
+            avatar = avc.avatar;
+            changed++;
+        }
+        return changed;
     }
 }
