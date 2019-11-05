@@ -14,12 +14,13 @@
         android:layout_above="@id/annotation"
         android:adjustViewBounds="true"
         android:contentDescription=""
-        android:scaleType="fitCenter"
+        android:scaleType="matrix"
         tools:ignore="ContentDescription"
         tools:src="@drawable/logo_src"/>
 
     <LinearLayout
         android:id="@+id/annotation"
+        android:background="@color/white_50"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
