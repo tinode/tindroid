@@ -1,5 +1,6 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
@@ -121,6 +122,9 @@ public class Drafty implements Serializable {
     public Entity[] ent;
 
     public Drafty() {
+        txt = null;
+        fmt = null;
+        ent = null;
     }
 
     public Drafty(String content) {
@@ -129,6 +133,16 @@ public class Drafty implements Serializable {
         this.txt = that.txt;
         this.fmt = that.fmt;
         this.ent = that.ent;
+    }
+
+    // Used by Jackson XML to deserialize plain text Drafty received from the server.
+    // This is needed in order to disable secondary parsing of received text messages.
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public static Drafty toPlainDrafty(String content) {
+        Drafty that = new Drafty();
+        that.txt = content;
+        return that;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -795,7 +809,7 @@ public class Drafty implements Serializable {
         return formatter.apply(null, null, forEach(txt, 0, txt.length(), spans, formatter));
     }
 
-    private String toPlainText() {
+    public String toPlainText() {
         return "{txt: '" + txt + "'," +
                 "fmt: " + Arrays.toString(fmt) + "," +
                 "ent: " + Arrays.toString(ent) + "}";

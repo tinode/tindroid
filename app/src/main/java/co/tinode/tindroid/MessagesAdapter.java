@@ -411,10 +411,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         holder.mText.setText(SpanFormatter.toSpanned(holder.mText, m.content,
                 disableEnt ? null : mSpanFormatterClicker));
         if (SpanFormatter.hasClickableSpans(m.content)) {
+            holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
             holder.mText.setLinksClickable(true);
             holder.mText.setFocusable(true);
             holder.mText.setClickable(true);
-            holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
+        } else {
+            holder.mText.setMovementMethod(null);
+            holder.mText.setLinksClickable(false);
+            holder.mText.setFocusable(false);
+            holder.mText.setClickable(false);
+            holder.mText.setAutoLinkMask(0);
         }
         if (holder.mProgressInclude != null) {
             if (disableEnt) {
