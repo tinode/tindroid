@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.VCard;
 
@@ -72,7 +73,7 @@ public class VxCard extends VCard {
         int changed = super.merge(another);
         VxCard avc = (VxCard)another;
         if (avc.avatar != null) {
-            avatar = avc.avatar;
+            avatar = !Tinode.isNull(avc.avatar) ? avc.avatar : null;
             changed++;
         }
         return changed;
