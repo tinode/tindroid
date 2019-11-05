@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import co.tinode.tinodesdk.Tinode;
+
 public class VCard implements Serializable, Mergeable {
 
     public final static String TYPE_HOME = "HOME";
@@ -151,35 +153,35 @@ public class VCard implements Serializable, Mergeable {
         int changed = 0;
         VCard vc = (VCard)another;
         if (vc.fn != null) {
-            fn = vc.fn;
+            fn = !Tinode.isNull(vc.fn) ? vc.fn : null;
             changed++;
         }
         if (vc.n != null) {
-            n = vc.n;
+            n = !Tinode.isNull(vc.n) ? vc.n : null;
             changed++;
         }
         if (vc.org != null) {
-            org = vc.org;
+            org = !Tinode.isNull(vc.org) ? vc.org : null;
             changed++;
         }
         if (vc.title != null) {
-            title = vc.title;
+            title = !Tinode.isNull(vc.title) ? vc.title : null;
             changed++;
         }
         if (vc.tel != null) {
-            tel = vc.tel;
+            tel = !Tinode.isNull(vc.tel) ? vc.tel : null;
             changed++;
         }
         if (vc.email != null) {
-            email = vc.email;
+            email = !Tinode.isNull(vc.email) ? vc.email : null;
             changed++;
         }
         if (vc.impp != null) {
-            impp = vc.impp;
+            impp = !Tinode.isNull(vc.impp) ? vc.impp : null;
             changed++;
         }
         if (vc.photo != null) {
-            photo = vc.photo;
+            photo = !Tinode.isNull(vc.photo) ? vc.photo : null;
             changed++;
         }
         return changed;
