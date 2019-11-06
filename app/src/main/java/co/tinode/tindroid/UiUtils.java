@@ -817,15 +817,21 @@ public class UiUtils {
                                                                          T topic, String title, String comment,
                                                                          final TitleUpdateCallbackInterface done) {
         VxCard pub = null;
-        if (title != null) {
+        if (!TextUtils.isEmpty(title)) {
             VxCard oldPub = topic.getPub();
+            if (title.length() > MAX_TITLE_LENGTH) {
+                title = title.substring(0, MAX_TITLE_LENGTH);
+            }
             if (oldPub != null && !title.equals(oldPub.fn)) {
                 pub = new VxCard();
                 pub.fn = title;
             }
         }
 
-        if (comment != null) {
+        if (!TextUtils.isEmpty(comment)) {
+            if (comment.length() > MAX_TITLE_LENGTH) {
+                comment = comment.substring(0, MAX_TITLE_LENGTH);
+            }
             PrivateType priv = topic.getPriv();
             String oldComment = priv != null ? priv.getComment() : null;
             if (comment.equals(oldComment)) {

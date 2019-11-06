@@ -408,9 +408,9 @@ public class TopicInfoFragment extends Fragment {
             public void onClick(DialogInterface dialog, int which) {
                 String newTitle = null;
                 if (mTopic.isOwner()) {
-                    newTitle = titleEditor.getText().toString();
+                    newTitle = titleEditor.getText().toString().trim();
                 }
-                String newPriv = subtitleEditor.getText().toString();
+                String newPriv = subtitleEditor.getText().toString().trim();
                 UiUtils.updateTitle(activity, mTopic, newTitle, newPriv,
                         new UiUtils.TitleUpdateCallbackInterface() {
                             @Override
