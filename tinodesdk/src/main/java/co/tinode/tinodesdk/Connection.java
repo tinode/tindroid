@@ -317,20 +317,18 @@ public class Connection extends WebSocketClient {
         @Override
         public Socket createSocket() throws IOException {
             URI uri = getURI();
-            Socket socket = mWrapped.createSocket(uri.getHost(), uri.getPort());
-            fixHostname(socket);
-            return socket;
+            return createSocket(uri.getHost(), uri.getPort());
         }
 
         @Override
-        public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
+        public Socket createSocket(String host, int port) throws IOException {
             Socket socket = mWrapped.createSocket(host, port);
             fixHostname(socket);
             return socket;
         }
 
         @Override
-        public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+        public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
             Socket socket = mWrapped.createSocket(host, port, localHost, localPort);
             fixHostname(socket);
             return socket;
