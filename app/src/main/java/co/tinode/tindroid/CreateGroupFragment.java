@@ -146,13 +146,21 @@ public class CreateGroupFragment extends Fragment {
         view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final EditText titleEdit = activity.findViewById(R.id.editTitle);
-                final String topicTitle = titleEdit.getText().toString();
+                EditText titleEdit = activity.findViewById(R.id.editTitle);
+                String topicTitle = titleEdit.getText().toString();
                 if (TextUtils.isEmpty(topicTitle)) {
                     titleEdit.setError(getString(R.string.name_required));
                     return;
                 }
-                final String subtitle = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
+                // Make sure topic title is not too long.
+                if (topicTitle.length() > UiUtils.MAX_TITLE_LENGTH) {
+                    topicTitle = topicTitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
+                }
+
+                String subtitle = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
+                if (subtitle.length() > UiUtils.MAX_TITLE_LENGTH) {
+                    subtitle = subtitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
+                }
 
                 final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
 

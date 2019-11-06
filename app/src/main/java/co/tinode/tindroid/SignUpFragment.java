@@ -118,10 +118,17 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
             return;
         }
 
-        final String fullName = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
-        if (fullName.isEmpty()) {
+        String fn = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
+        if (fn.isEmpty()) {
             ((EditText) parent.findViewById(R.id.fullName)).setError(getText(R.string.full_name_required));
             return;
+        }
+        // Make sure user name is not too long.
+        final String fullName;
+        if (fn.length() > UiUtils.MAX_TITLE_LENGTH) {
+            fullName = fn.substring(0, UiUtils.MAX_TITLE_LENGTH);
+        } else {
+            fullName = fn;
         }
 
         final Button signUp = parent.findViewById(R.id.signUp);

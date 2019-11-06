@@ -107,6 +107,10 @@ public class UiUtils {
 
     static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     static final String PREF_READ_RCPT = "pref_readReceipts";
+
+    // Maximum length of user name or topic title.
+    static final int MAX_TITLE_LENGTH = 60;
+
     private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
     private static final int MAX_BITMAP_SIZE = 1024;
