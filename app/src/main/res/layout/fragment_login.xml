@@ -69,7 +69,8 @@
         android:layout_below="@+id/editPasswordWrapper"
         android:textSize="@dimen/button_text"
         android:textColor="@color/white"
-        app:backgroundTint="@color/colorAccent"
+        android:enabled="true"
+        app:backgroundTint="@color/button_background"
         android:layout_centerHorizontal="true"/>
 
     <Button

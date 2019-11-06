@@ -44,7 +44,7 @@
             android:text="@string/confirm"
             android:textColor="@color/white"
             android:textSize="@dimen/button_text"
-            app:backgroundTint="@color/colorAccent"/>
+            app:backgroundTint="@color/button_background"/>
 
         <Button
             android:id="@+id/cancel"

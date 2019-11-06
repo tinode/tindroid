@@ -193,7 +193,6 @@ public class LoginActivity extends AppCompatActivity {
             public void run() {
                 if (button != null) {
                     button.setEnabled(true);
-                    button.getBackground().setColorFilter(null);
                 }
                 EditText field = attachTo != 0 ? (EditText) findViewById(attachTo) : null;
                 if (field != null) {

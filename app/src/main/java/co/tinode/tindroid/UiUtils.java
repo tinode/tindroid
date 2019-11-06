@@ -257,7 +257,6 @@ public class UiUtils {
             activity.runOnUiThread(new Runnable() {
                 public void run() {
                     button.setEnabled(true);
-                    button.getBackground().setColorFilter(null);
                 }
             });
         }

@@ -119,5 +119,5 @@
         android:text="@string/sign_up"
         android:textColor="@color/white"
         android:textSize="@dimen/button_text"
-        app:backgroundTint="@color/colorAccent"/>
+        app:backgroundTint="@color/button_background"/>
 </LinearLayout>

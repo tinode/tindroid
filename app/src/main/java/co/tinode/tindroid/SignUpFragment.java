@@ -126,7 +126,6 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
 
         final Button signUp = parent.findViewById(R.id.signUp);
         signUp.setEnabled(false);
-        signUp.getBackground().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
@@ -168,7 +167,6 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                     public void run() {
                                         if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
                                             signUp.setEnabled(true);
-                                            signUp.getBackground().setColorFilter(null);
                                             parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
                                         } else {
                                             // We are requesting immediate login with the new account.
@@ -191,7 +189,6 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                         @Override
                                         public void run() {
                                             signUp.setEnabled(true);
-                                            signUp.getBackground().setColorFilter(null);
                                             switch (cause) {
                                                 case "auth":
                                                     // Invalid login

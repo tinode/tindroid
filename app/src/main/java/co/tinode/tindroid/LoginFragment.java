@@ -1,17 +1,9 @@
 package co.tinode.tindroid;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
@@ -25,8 +17,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import java.util.Iterator;
 
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
@@ -115,7 +105,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
         final Button signIn = parent.findViewById(R.id.signIn);
         signIn.setEnabled(false);
-        signIn.getBackground().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
@@ -146,7 +135,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                     parent.runOnUiThread(new Runnable() {
                                         public void run() {
                                             signIn.setEnabled(true);
-                                            signIn.getBackground().setColorFilter(null);
                                             parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
                                         }
                                     });
