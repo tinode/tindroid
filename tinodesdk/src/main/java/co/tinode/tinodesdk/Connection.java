@@ -6,12 +6,24 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * A thinly wrapped websocket connection.
@@ -55,6 +67,18 @@ public class Connection extends WebSocketClient {
         mListener = listener;
         mStatus = State.NEW;
         mAutoreconnect = false;
+
+        // Horrible hack to support SNI on API<21
+        if ("wss".equals(getURI().getScheme())) {
+            try {
+                SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+                sslContext.init(null, null, null);
+                SSLSocketFactory factory = sslContext.getSocketFactory();
+                setSocketFactory(new SNISocketFactory(factory));
+            } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+                Log.w(TAG, "Failed to set up SSL", ex);
+            }
+        }
     }
 
     private static Map<String,String> wrapApiKey(String apikey) {
@@ -280,6 +304,61 @@ public class Connection extends WebSocketClient {
         }
 
         protected void onError(Connection conn, Exception err) {
+        }
+    }
+
+    private class SNISocketFactory extends SocketFactory {
+        SocketFactory mWrapped;
+
+        SNISocketFactory(SocketFactory parent) {
+            mWrapped = parent;
+        }
+
+        @Override
+        public Socket createSocket() throws IOException {
+            URI uri = getURI();
+            Socket socket = mWrapped.createSocket(uri.getHost(), uri.getPort());
+            fixHostname(socket);
+            return socket;
+        }
+
+        @Override
+        public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
+            Socket socket = mWrapped.createSocket(host, port);
+            fixHostname(socket);
+            return socket;
+        }
+
+        @Override
+        public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+            Socket socket = mWrapped.createSocket(host, port, localHost, localPort);
+            fixHostname(socket);
+            return socket;
+        }
+
+        @Override
+        public Socket createSocket(InetAddress address, int port) throws IOException {
+            Socket socket = mWrapped.createSocket(address, port);
+            fixHostname(socket);
+            return socket;
+        }
+
+        @Override
+        public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+            Socket socket = mWrapped.createSocket(address, port, localAddress, localPort);
+            fixHostname(socket);
+            return socket;
+        }
+
+        // SNI hack for earlier versions of Android
+        private void fixHostname(Socket socket) {
+            try {
+                // We don't know the actual class of the socket. Using reflection.
+                Method method = socket.getClass().getMethod("setHostname", String.class);
+                method.invoke(socket, getURI().getHost());
+            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
+                Log.w(TAG, "SNI configuration failed", ex);
+            }
         }
     }
 }
