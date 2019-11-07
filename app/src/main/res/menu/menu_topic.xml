@@ -16,9 +16,9 @@
     <item
         android:id="@+id/action_view_contact"
         android:orderInCategory="101"
-        android:title="@string/action_view_contact"
+        android:title="@string/action_view_details"
         android:icon="@drawable/ic_info"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_mute"
