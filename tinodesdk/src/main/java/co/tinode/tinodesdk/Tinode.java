@@ -940,24 +940,21 @@ public class Tinode {
     /**
      * Set device token for push notifications
      *
-     * @param token device token
+     * @param token device token; to delete token pass NULL_VALUE
      */
-    public void setDeviceToken(final String token) {
-        if (token == null) {
-            return;
-        }
+    public PromisedReply<ServerMessage> setDeviceToken(final String token) {
         // Check if token has changed
         if (mDeviceToken == null || !mDeviceToken.equals(token)) {
             // Cache token here assuming the call to server does not fail. If it fails clear the cached token.
             // This prevents multiple unnecessary calls to the server with the same token.
-            mDeviceToken = token;
+            mDeviceToken = NULL_VALUE.equals(token) ? null : token;
             if (mStore != null) {
-                mStore.saveDeviceToken(token);
+                mStore.saveDeviceToken(mDeviceToken);
             }
-            if (isConnected() && isAuthenticated()) {
-                ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
-                        mDeviceToken, null));
-                sendWithPromise(msg, msg.hi.id).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+
+            ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
+                    token, null));
+            return sendWithPromise(msg, msg.hi.id).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         // Clear cached value on failure to allow for retries.
@@ -968,7 +965,10 @@ public class Tinode {
                         return null;
                     }
                 });
-            }
+
+        } else {
+            // No change: return resolved promise.
+            return new PromisedReply<>((ServerMessage) null);
         }
     }
 
@@ -1318,12 +1318,19 @@ public class Tinode {
     }
 
     public void logout() {
-        disconnect();
-        mMyUid = null;
+        // Best effort to clear device token on logout.
+        // The app logs out even if the token request has failed.
+        setDeviceToken(NULL_VALUE).thenFinally(new PromisedReply.FinalListener() {
+            @Override
+            public void onFinally() {
+                disconnect();
+                mMyUid = null;
 
-        if (mStore != null) {
-            mStore.logout();
-        }
+                if (mStore != null) {
+                    mStore.logout();
+                }
+            }
+        });
     }
 
     /**
