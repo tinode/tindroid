@@ -41,6 +41,7 @@ import co.tinode.tinodesdk.model.Drafty;
 public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
     private static final float FORM_LINE_SPACING = 1.5f;
+    private static final float BUTTON_HEIGHT = FORM_LINE_SPACING + 0.4f;
 
     private final TextView mContainer;
     private final int mViewport;
@@ -62,8 +63,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         if (content.isPlain()) {
             return new SpannedString(content.toString());
         }
-        // This is needed for button shadows.
-        container.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         TreeNode result = content.format(new SpanFormatter(container, clicker));
         return result.toSpanned();
     }
@@ -182,8 +181,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             }
             if (TextUtils.isEmpty(fname)) {
                 fname = ctx.getResources().getString(R.string.default_attachment_name);
-            } else //noinspection ConstantConditions
-                if (fname.length() > 32) {
+            } else if (fname.length() > 32) {
                 fname = fname.substring(0, 14) + "…" + fname.substring(fname.length() - 14);
             }
             result.addNode(new TypefaceSpan("monospace"), fname);
@@ -213,10 +211,13 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
     // Button: URLSpan wrapped into LineHeightSpan and then BorderedSpan.
     private TreeNode handleButton(final Map<String,Object> data, final Object content) {
+        // This is needed for button shadows.
+        mContainer.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
         // Create BorderSpan.
         final TreeNode span = new TreeNode(
                 new BorderedSpan(mContainer.getContext(),
-                        mFontSize * (FORM_LINE_SPACING + 0.2f),
+                        mFontSize * BUTTON_HEIGHT,
                         mContainer.getPaint().measureText("0")),
                 (CharSequence) null);
 

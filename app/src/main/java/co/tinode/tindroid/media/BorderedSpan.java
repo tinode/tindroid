@@ -12,13 +12,12 @@ import android.text.style.ReplacementSpan;
 public class BorderedSpan extends ReplacementSpan {
     private static final String TAG = "BorderedSpan";
 
-    private static final float RADIUS_CORNER = 4f;
-    private static final float SHADOW_SIZE = 3f;
-    private static final float BORDER_WIDTH = 3f;
+    private static final float RADIUS_CORNER = 6f;
+    private static final float SHADOW_SIZE = 6f;
 
     // Minimum button width in '0' characters.
     private static final int MIN_BUTTON_WIDTH = 10;
-    private final Paint mPaintBorder, mPaintBackground;
+    private final Paint mPaintBackground;
     private float mHeight;
     private int mWidth;
     private int mWidthActual;
@@ -26,12 +25,6 @@ public class BorderedSpan extends ReplacementSpan {
     private int mMinButtonWidth;
 
     BorderedSpan(final Context context, final float lineHeight, final float charWidth) {
-        mPaintBorder = new Paint();
-        mPaintBorder.setStyle(Paint.Style.STROKE);
-        mPaintBorder.setStrokeWidth(BORDER_WIDTH);
-        mPaintBorder.setAntiAlias(true);
-        mPaintBorder.setColor(Color.argb(0xFF, 0xCC, 0xCC, 0xEE));
-
         mPaintBackground = new Paint();
         mPaintBackground.setStyle(Paint.Style.FILL);
         mPaintBackground.setAntiAlias(true);
@@ -44,7 +37,7 @@ public class BorderedSpan extends ReplacementSpan {
         mTextColor = colors.getColor(0, 0x7bc9c2);
         colors.recycle();
 
-        mHeight = lineHeight - charWidth * 0.1f;
+        mHeight = lineHeight - charWidth * 0.05f;
         mMinButtonWidth = (int) (MIN_BUTTON_WIDTH * charWidth);
     }
 
@@ -71,13 +64,13 @@ public class BorderedSpan extends ReplacementSpan {
 
         // Draw colored background
         canvas.drawRoundRect(outline, RADIUS_CORNER, RADIUS_CORNER, mPaintBackground);
-        // Draw border
-        canvas.drawRoundRect(outline, RADIUS_CORNER, RADIUS_CORNER, mPaintBorder);
+
         // Don't underline the text.
         paint.setUnderlineText(false);
         paint.setColor(mTextColor);
         canvas.drawText(text, start, end,
-                x + (mWidth - mWidthActual) * 0.5f,
-                y + (mHeight - textHeight) * 0.5f, paint);
+                x + (mWidth - mWidthActual) * 0.5f - SHADOW_SIZE,
+                y + (mHeight - textHeight) * 0.5f - SHADOW_SIZE,
+                paint);
     }
 }
