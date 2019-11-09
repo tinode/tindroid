@@ -25,6 +25,7 @@ import android.text.style.URLSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 
@@ -214,11 +215,13 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         // This is needed for button shadows.
         mContainer.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
+        DisplayMetrics metrics = mContainer.getContext().getResources().getDisplayMetrics();
+        // Size of a DIP pixel.
+        float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f, metrics);
+
         // Create BorderSpan.
         final TreeNode span = new TreeNode(
-                new BorderedSpan(mContainer.getContext(),
-                        mFontSize * BUTTON_HEIGHT,
-                        mContainer.getPaint().measureText("0")),
+                new BorderedSpan(mContainer.getContext(), mFontSize * BUTTON_HEIGHT, dipSize),
                 (CharSequence) null);
 
         // Wrap URLSpan into BorderSpan.
