@@ -21,6 +21,7 @@ oc_framework/local.properties
 oc_framework-test-project/local.properties
 tests/local.properties
 lint.xml
+keystore.properties
 
 # Mac .DS_Store files
 .DS_Store
@@ -41,4 +42,3 @@ tinodesdk/*.iml
 
 # Config file for Google services with secret keys
 app/google-services.json
-

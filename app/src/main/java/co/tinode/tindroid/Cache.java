@@ -51,11 +51,11 @@ public class Cache {
                 .getInstance()
                 .getInstanceId()
                 .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
-            @Override
-            public void onSuccess(InstanceIdResult instanceIdResult) {
-                sTinode.setDeviceToken(instanceIdResult.getToken());
-            }
-        });
+                    @Override
+                    public void onSuccess(InstanceIdResult instanceIdResult) {
+                        sTinode.setDeviceToken(instanceIdResult.getToken());
+                    }
+                });
         return sTinode;
     }
 

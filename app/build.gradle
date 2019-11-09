@@ -2,24 +2,35 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 apply plugin: 'com.google.gms.google-services'
 
+// See explanation here: https://stackoverflow.com/questions/20562189/sign-apk-without-putting-keystore-info-in-build-gradle
+def keystorePropertiesFile = rootProject.file("keystore.properties");
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
+    compileSdkVersion 29
+
     signingConfigs {
         release {
-            storeFile file('/Users/gene/ventures/tinode/keystore')
-            keyAlias = 'tinode-prod-key'
-            storePassword 'test123'
-            keyPassword 'test123'
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
         }
     }
-    compileSdkVersion 28
 
     defaultConfig {
         applicationId "co.tinode.tindroidx"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 29
         vectorDrawables.useSupportLibrary = true
-        versionCode = gitVersionCode()
 
+        // If you are getting errors due to git not being set up comment out lines gitVersion*()
+        // and uncomment lines with static assignments.
+
+        // versionCode 100
+        versionCode gitVersionCode()
+        // versionName "1.0.0"
         versionName gitVersionName()
     }
 
@@ -32,6 +43,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
