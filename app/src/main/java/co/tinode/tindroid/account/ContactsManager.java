@@ -52,12 +52,11 @@ public class ContactsManager {
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
-        for (final Subscription<VxCard,?> rawContact : rawContacts) {
+        for (Subscription<VxCard,?> rawContact : rawContacts) {
 
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
             if (currentSyncMarker == null || (rawContact.updated != null && rawContact.updated.after(currentSyncMarker))) {
-
                 currentSyncMarker = rawContact.updated;
 
                 // Send updated contact to database.
@@ -105,15 +104,19 @@ public class ContactsManager {
                 deleteContact(rawContactId, batchOperation, isSyncContext);
             }
         } else {
-            if (rawContact.pub == null) {
-                rawContact.pub = new VxCard();
-                rawContact.pub.fn = context.getString(R.string.default_contact_name, rawContact.getUnique());
-            }
-
-            // Contact already exists
             if (rawContactId > 0) {
-                updateContact(context, resolver, rawContact, rawContactId, batchOperation, isSyncContext);
+                // Contact already exists
+
+                if (rawContact.pub != null) {
+                    updateContact(context, resolver, rawContact, rawContactId, batchOperation, isSyncContext);
+                }
             } else {
+                // New contact. Don't allow new contacts without a name.
+                if (rawContact.pub == null) {
+                    rawContact.pub = new VxCard();
+                    rawContact.pub.fn = context.getString(R.string.default_contact_name, rawContact.getUnique());
+                }
+
                 addContact(context, account, rawContact, batchOperation, isSyncContext);
             }
         }
