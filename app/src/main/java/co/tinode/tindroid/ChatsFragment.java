@@ -182,7 +182,9 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
-        mSelectionTracker.onSaveInstanceState(outState);
+        if (mSelectionTracker != null) {
+            mSelectionTracker.onSaveInstanceState(outState);
+        }
     }
 
     @Override
