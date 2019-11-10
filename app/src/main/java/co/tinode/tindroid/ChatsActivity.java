@@ -64,8 +64,6 @@ public class ChatsActivity extends AppCompatActivity {
 
         mMeTopic = Cache.getTinode().getOrCreateMeTopic();
         mMeTopicListener = new MeListener();
-
-        mAccount = UiUtils.getSavedAccount(this, AccountManager.get(this), Cache.getTinode().getMyId());
     }
 
     /**
@@ -185,6 +183,10 @@ public class ChatsActivity extends AppCompatActivity {
                     sub.pub.constructBitmap();
                 }
 
+                if (mAccount == null) {
+                    mAccount = UiUtils.getSavedAccount(ChatsActivity.this,
+                            AccountManager.get(ChatsActivity.this), Cache.getTinode().getMyId());
+                }
                 if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
                     ContactsManager.processContact(ChatsActivity.this,
                             ChatsActivity.this.getContentResolver(),
