@@ -178,8 +178,6 @@ public class LoginActivity extends AppCompatActivity {
         String message = getText(errId).toString();
         String errMessage = err != null ? err.getMessage() : "";
 
-        Log.i(TAG, message + " (" + errMessage + ")", err);
-
         if (err != null) {
             Throwable cause = err;
             while ((cause = cause.getCause()) != null) {
@@ -187,7 +185,8 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
         final String finalMessage = message +
-                (errMessage != null ? " (" + errMessage + ")" : "");
+                (!TextUtils.isEmpty(errMessage) ? (": " + errMessage + "") : "");
+        Log.i(TAG, finalMessage, err);
 
         runOnUiThread(new Runnable() {
             public void run() {

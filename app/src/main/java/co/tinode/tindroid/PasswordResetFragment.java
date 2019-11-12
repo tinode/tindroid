@@ -87,7 +87,7 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
         Bundle args = getArguments();
         final String method = args != null ? args.getString(ARG_KEY) : "email";
 
-        final String value = ((EditText) parent.findViewById(R.id.response)).getText().toString().trim();
+        final String value = ((EditText) parent.findViewById(R.id.response)).getText().toString().trim().toLowerCase();
         if (value.isEmpty()) {
             ((EditText) parent.findViewById(R.id.response)).setError(getString(R.string.enter_valid_address, method));
             return;

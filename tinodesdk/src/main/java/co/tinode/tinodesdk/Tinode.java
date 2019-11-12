@@ -1159,6 +1159,7 @@ public class Tinode {
         return new PromisedReply<>(new IllegalArgumentException());
     }
 
+    // This may be called when login is indeed successful or when password reset is successful.
     private void loginSuccessful(final MsgServerCtrl ctrl) throws IllegalStateException,
             InvalidObjectException, ParseException {
         if (ctrl == null) {
@@ -1183,7 +1184,11 @@ public class Tinode {
         loadTopics();
 
         mAuthToken = ctrl.getStringParam("token", null);
-        mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires", ""));
+        if (mAuthToken != null) {
+            mAuthTokenExpires = sDateFormat.parse(ctrl.getStringParam("expires", ""));
+        } else {
+            mAuthTokenExpires = null;
+        }
 
         if (ctrl.code < 300) {
             mConnAuth = true;
