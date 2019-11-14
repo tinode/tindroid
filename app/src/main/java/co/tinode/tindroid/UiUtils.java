@@ -142,9 +142,12 @@ public class UiUtils {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (pub != null) {
-                    toolbar.setTitle(" " + pub.fn);
-                    constructToolbarLogo(activity, pub.getBitmap(), pub.fn, topicName, online);
+                if (!TextUtils.isEmpty(topicName)) {
+                    final String title = pub != null && pub.fn != null ?
+                            pub.fn : activity.getString(R.string.placeholder_contact_title);
+                    toolbar.setTitle(title);
+                    constructToolbarLogo(activity, pub != null ? pub.getBitmap() : null,
+                            pub != null ? pub.fn  : null, topicName, online);
                 } else {
                     toolbar.setTitle(R.string.app_name);
                     toolbar.setLogo(null);

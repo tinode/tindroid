@@ -654,32 +654,27 @@ public class TopicInfoFragment extends Fragment {
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
 
         VxCard pub = mTopic.getPub();
-        if (pub != null) {
-            if (!TextUtils.isEmpty(pub.fn)) {
-                title.setText(pub.fn);
-                title.setTypeface(null, Typeface.NORMAL);
-                title.setTextIsSelectable(true);
-            } else {
-                title.setText(R.string.placeholder_contact_title);
-                title.setTypeface(null, Typeface.ITALIC);
-                title.setTextIsSelectable(false);
-            }
-            final Bitmap bmp = pub.getBitmap();
-            if (bmp != null) {
-                avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
-            } else {
-                avatar.setImageDrawable(
-                        new LetterTileDrawable(requireContext())
-                                .setIsCircular(true)
-                                .setContactTypeAndColor(
-                                        mTopic.getTopicType() == Topic.TopicType.P2P ?
-                                            LetterTileDrawable.TYPE_PERSON :
-                                                LetterTileDrawable.TYPE_GROUP)
-                                .setLetterAndColor(pub.fn, mTopic.getName()));
-            }
+        if (pub != null && !TextUtils.isEmpty(pub.fn)) {
+            title.setText(pub.fn);
+            title.setTypeface(null, Typeface.NORMAL);
+            title.setTextIsSelectable(true);
+        } else {
+            title.setText(R.string.placeholder_contact_title);
+            title.setTypeface(null, Typeface.ITALIC);
+            title.setTextIsSelectable(false);
+        }
+
+        final Bitmap bmp = pub != null ? pub.getBitmap() : null;
+        if (bmp != null) {
+            avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
         } else {
             avatar.setImageDrawable(
-                    new LetterTileDrawable(requireContext()).setIsCircular(true));
+                    new LetterTileDrawable(requireContext())
+                            .setIsCircular(true)
+                            .setContactTypeAndColor(
+                                    mTopic.getTopicType() == Topic.TopicType.P2P ? LetterTileDrawable.TYPE_PERSON :
+                                                LetterTileDrawable.TYPE_GROUP)
+                            .setLetterAndColor(pub != null ? pub.fn : null, mTopic.getName()));
         }
 
         PrivateType priv = mTopic.getPriv();

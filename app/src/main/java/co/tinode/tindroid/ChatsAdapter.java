@@ -250,7 +250,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             details.id = topic.getName();
 
             VxCard pub = topic.getPub();
-            if (pub != null) {
+            if (pub != null && pub.fn != null) {
                 name.setText(pub.fn);
                 name.setTypeface(null, Typeface.NORMAL);
             } else {
