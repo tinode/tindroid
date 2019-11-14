@@ -159,20 +159,111 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+
+        String newTopic = readTopicNameFromIntent(intent);
+        if (newTopic != null && !newTopic.equals(mTopicName)) {
+            // Unsubscribe from the current topic and remove listeners.
+            topicDetach();
+            // Attach the new topic and refresh the view.
+            changeTopic(newTopic);
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+
+        final Intent intent = getIntent();
 
         final Tinode tinode = Cache.getTinode();
         mTinodeListener = new MessageEventListener(tinode.isConnected());
         tinode.addListener(mTinodeListener);
 
-        final Intent intent = getIntent();
+        // Get the topic name from intent, internal or external.
+        String topicName = readTopicNameFromIntent(intent);
+        if (!changeTopic(topicName)) {
+            finish();
+            return;
+        }
 
+        mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
+    }
+
+    // Topic has changed. Update all the views with the new data.
+    private boolean changeTopic(String topicName) {
+        final Tinode tinode = Cache.getTinode();
+
+        if (TextUtils.isEmpty(topicName)) {
+            Log.w(TAG, "Activity resumed with an empty topic name");
+            return false;
+        }
+
+        ComTopic<VxCard> topic;
+        try {
+            //noinspection unchecked
+            topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
+        } catch (ClassCastException ex) {
+            Log.w(TAG, "Activity resumed with non-comm topic");
+            return false;
+        }
+
+        mTopicName = topicName;
+        mTopic = topic;
+
+        if (mTopic != null) {
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
+            // Check of another fragment is already visible. If so, don't change it.
+            if (getVisibleFragment() == null) {
+                // No fragment is visible. Show default and clear back stack.
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                showFragment(FRAGMENT_MESSAGES, null, false);
+            }
+        } else {
+            Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+            UiUtils.setupToolbar(this, null, mTopicName, false);
+            try {
+                //noinspection unchecked
+                mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
+            } catch (ClassCastException ex) {
+                Log.w(TAG, "The unknown topic is a non-comm topic: " + mTopicName);
+                return false;
+            }
+
+            showFragment(FRAGMENT_INVALID, null, false);
+        }
+
+        // Cancel all pending notifications addressed to the current topic
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(mTopicName, 0);
+        }
+
+
+        mTopic.setListener(new TListener());
+
+        if (!mTopic.isAttached()) {
+            // Try immediate reconnect.
+            topicAttach(true);
+        } else {
+            MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
+                    .findFragmentByTag(FRAGMENT_MESSAGES);
+            if (fragmsg != null) {
+                fragmsg.topicSubscribed();
+            }
+        }
+
+        return true;
+    }
+
+    // Get topic name from Intent it was launched with (push notification, other app, other activity).
+    private String readTopicNameFromIntent(Intent intent) {
         // Check if the activity was launched by internally-generated intent.
-        mTopicName = intent.getStringExtra("topic");
+        String name = intent.getStringExtra("topic");
 
-        if (TextUtils.isEmpty(mTopicName)) {
+        if (TextUtils.isEmpty(name)) {
             // mTopicName is empty, so this is an external intent
             Uri contactUri = intent.getData();
             if (contactUri != null) {
@@ -187,76 +278,16 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
 
-        if (TextUtils.isEmpty(mTopicName)) {
-            Log.w(TAG, "Activity resumed with an empty topic name");
-            finish();
-            return;
-        }
-
-        // Get a known topic. Make sure it's a comm topic (not a 'me' or 'fnd').
-        try {
-            mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
-        } catch (ClassCastException ex) {
-            Log.w(TAG, "Activity resumed with non-comm topic");
-            finish();
-            return;
-        }
-
-        // Cancel all pending notifications addressed to the current topic
-        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) {
-            nm.cancel(mTopicName, 0);
-        }
-
-        mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
-
-        if (mTopic != null) {
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
-            // Check of another fragment is already visible. If so, don't change it.
-            if (getVisibleFragment() == null) {
-                // No fragment is visible. Show default and clear back stack.
-                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                showFragment(FRAGMENT_MESSAGES, null, false);
-            }
-        } else {
-            Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
-            UiUtils.setupToolbar(this, null, mTopicName, false);
-            mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
-            showFragment(FRAGMENT_INVALID, null, false);
-        }
-
-        mTopic.setListener(new TListener());
-
-        if (!mTopic.isAttached()) {
-            // Try immediate reconnect.
-            topicAttach(true);
-        } else {
-            MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
-                    .findFragmentByTag(FRAGMENT_MESSAGES);
-            if (fragmsg != null) {
-                fragmsg.topicSubscribed();
-            }
-        }
+        return name;
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mMessageSender.pause();
-        if (mTypingAnimationTimer != null) {
-            mTypingAnimationTimer.cancel();
-            mTypingAnimationTimer = null;
-        }
 
         Cache.getTinode().removeListener(mTinodeListener);
-        if (mTopic != null) {
-            mTopic.setListener(null);
 
-            // Deactivate current topic
-            if (mTopic.isAttached()) {
-                mTopic.leave();
-            }
-        }
+        topicDetach();
     }
 
     private void topicAttach(boolean interactive) {
@@ -324,6 +355,24 @@ public class MessageActivity extends AppCompatActivity {
                 });
     }
 
+    // Clean up everything related to the topic being replaced of removed.
+    private void topicDetach() {
+        mMessageSender.pause();
+        if (mTypingAnimationTimer != null) {
+            mTypingAnimationTimer.cancel();
+            mTypingAnimationTimer = null;
+        }
+
+        if (mTopic != null) {
+            mTopic.setListener(null);
+
+            // Deactivate current topic
+            if (mTopic.isAttached()) {
+                mTopic.leave();
+            }
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -333,11 +382,6 @@ public class MessageActivity extends AppCompatActivity {
         unregisterReceiver(onNotificationClick);
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-    }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
