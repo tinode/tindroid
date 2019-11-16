@@ -205,6 +205,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     private int[] getSelectedArray() {
+        if (mSelectedItems == null || mSelectedItems.size() == 0) {
+            return null;
+        }
+
         int[] items = new int[mSelectedItems.size()];
         for (int i = 0; i < items.length; i++) {
             items[i] = mSelectedItems.keyAt(i);
@@ -214,6 +218,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     @SuppressWarnings("unchecked")
     private void copyMessageText(int[] positions) {
+        if (positions == null || positions.length == 0) {
+            return;
+        }
+
         StringBuilder sb = new StringBuilder();
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
         if (topic == null) {
@@ -245,6 +253,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     @SuppressWarnings("unchecked")
     private void sendDeleteMessages(final int[] positions) {
+        if (positions == null || positions.length == 0) {
+            return;
+        }
+
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
         final Storage store = BaseDb.getInstance().getStore();
         if (topic != null) {
