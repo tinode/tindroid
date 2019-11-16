@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -161,15 +162,8 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        setIntent(intent);
 
-        String newTopic = readTopicNameFromIntent(intent);
-        if (newTopic != null && !newTopic.equals(mTopicName)) {
-            // Unsubscribe from the current topic and remove listeners.
-            topicDetach();
-            // Attach the new topic and refresh the view.
-            changeTopic(newTopic);
-        }
+        setIntent(intent);
     }
 
     @Override
@@ -235,7 +229,7 @@ public class MessageActivity extends AppCompatActivity {
             showFragment(FRAGMENT_INVALID, null, false);
         }
 
-        // Cancel all pending notifications addressed to the current topic
+        // Cancel all pending notifications addressed to the current topic.
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.cancel(mTopicName, 0);
@@ -262,7 +256,6 @@ public class MessageActivity extends AppCompatActivity {
     private String readTopicNameFromIntent(Intent intent) {
         // Check if the activity was launched by internally-generated intent.
         String name = intent.getStringExtra("topic");
-
         if (TextUtils.isEmpty(name)) {
             // mTopicName is empty, so this is an external intent
             Uri contactUri = intent.getData();
@@ -389,7 +382,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (mTopic == null || !mTopic.isValid()) {
             return false;
         }

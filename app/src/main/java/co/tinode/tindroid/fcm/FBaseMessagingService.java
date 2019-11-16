@@ -9,6 +9,8 @@ import android.graphics.Bitmap;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -67,6 +69,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         String body = null;
         String topicName = null;
         Bitmap avatar = null;
+        int requestCode = 0;
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
@@ -118,16 +121,18 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 Log.w(TAG, "Unexpected topic type=" + tp);
                 return;
             }
+            // Workaround for an FCM bug or poor documentation.
+            requestCode = topicName.hashCode();
         } else if (remoteMessage.getNotification() != null) {
             RemoteMessage.Notification data = remoteMessage.getNotification();
-            Log.d(TAG, "MessageDb Notification Body: " + data.getBody());
+            Log.d(TAG, "RemoteMessage Body: " + data.getBody());
 
             topicName = null;
             title = data.getTitle();
             body = data.getBody();
         }
 
-        showNotification(title, body, avatar, topicName);
+        showNotification(title, body, avatar, topicName, requestCode);
     }
 
     /**
@@ -137,7 +142,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      * @param body  message body.
      * @param topic topic handle for action
      */
-    private void showNotification(String title, String body, Bitmap avatar, String topic) {
+    private void showNotification(String title, String body, Bitmap avatar, String topic, int code) {
         // Log.d(TAG, "Notification title=" + title + ", body=" + body + ", topic=" + topic);
 
         Intent intent;
@@ -151,7 +156,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         }
 
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, code, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -188,7 +193,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     }
 
     @Override
-    public void onNewToken(final String refreshedToken) {
+    public void onNewToken(@NonNull final String refreshedToken) {
         super.onNewToken(refreshedToken);
         Log.d(TAG, "Refreshed token: " + refreshedToken);
 
