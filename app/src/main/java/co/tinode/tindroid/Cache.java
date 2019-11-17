@@ -6,6 +6,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
+import java.io.IOException;
 import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
@@ -63,6 +64,12 @@ public class Cache {
     static void invalidate() {
         if (sTinode != null) {
             sTinode.logout();
+            try {
+                FirebaseInstanceId
+                        .getInstance()
+                        .deleteInstanceId();
+            } catch (IOException e) {
+            }
             sTinode = null;
         }
     }
