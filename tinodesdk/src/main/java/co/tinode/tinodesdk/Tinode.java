@@ -532,7 +532,7 @@ public class Tinode {
      * @param interactive set to true if user directly requested a reconnect.
      * @param reset if true drop connection and reconnect; happens when cluster is reconfigured.
      */
-    public void reconnectNow(boolean interactive, boolean reset) {
+    synchronized public void reconnectNow(boolean interactive, boolean reset) {
         if (mConnection == null) {
             // New connection using saved parameters.
             connect(null, false);

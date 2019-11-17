@@ -23,6 +23,8 @@ import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.AsyncTask;
 import android.os.Build;
+
+import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.text.TextUtils;
@@ -93,11 +95,14 @@ public class TindroidApp extends Application {
         // Listen to connectivity changes.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            if (cm == null) {
+                return;
+            }
             NetworkRequest req = new NetworkRequest.
                     Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build();
             cm.registerNetworkCallback(req, new ConnectivityManager.NetworkCallback() {
                     @Override
-                    public void onAvailable(Network network) {
+                    public void onAvailable(@NonNull Network network) {
                         super.onAvailable(network);
                         if (sTinodeCache != null) {
                             sTinodeCache.reconnectNow(true, false);
@@ -110,6 +115,9 @@ public class TindroidApp extends Application {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+                    if (cm == null) {
+                        return;
+                    }
                     NetworkInfo ni = cm.getActiveNetworkInfo();
                     if (ni != null && ni.isConnected() && sTinodeCache != null) {
                         sTinodeCache.reconnectNow(true, false);
