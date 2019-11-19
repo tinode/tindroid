@@ -235,7 +235,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showFragment(String tag, Bundle args, Boolean addToBackstack) {
-        if (isFinishing()) {
+        if (isFinishing() || isDestroyed()) {
             return;
         }
 

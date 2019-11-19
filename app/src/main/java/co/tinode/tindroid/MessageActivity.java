@@ -452,7 +452,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     void showFragment(String tag, Bundle args, boolean addToBackstack) {
-        if (isFinishing()) {
+        if (isFinishing() || isDestroyed()) {
             return;
         }
 

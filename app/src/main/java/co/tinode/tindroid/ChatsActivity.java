@@ -117,6 +117,10 @@ public class ChatsActivity extends AppCompatActivity {
     }
 
     void showFragment(String tag) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
         final FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         FragmentTransaction trx = fm.beginTransaction();
