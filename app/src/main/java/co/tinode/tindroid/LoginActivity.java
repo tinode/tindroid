@@ -235,6 +235,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showFragment(String tag, Bundle args, Boolean addToBackstack) {
+        if (isFinishing()) {
+            return;
+        }
+
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
@@ -269,7 +273,7 @@ public class LoginActivity extends AppCompatActivity {
         if (addToBackstack) {
             tx = tx.addToBackStack(null);
         }
-        tx.commitAllowingStateLoss();
+        tx.commit();
     }
 
     /**

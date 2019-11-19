@@ -452,6 +452,10 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     void showFragment(String tag, Bundle args, boolean addToBackstack) {
+        if (isFinishing()) {
+            return;
+        }
+
         FragmentManager fm = getSupportFragmentManager();
 
         Fragment fragment = fm.findFragmentByTag(tag);
