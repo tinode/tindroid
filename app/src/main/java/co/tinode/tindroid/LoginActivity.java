@@ -269,7 +269,7 @@ public class LoginActivity extends AppCompatActivity {
         if (addToBackstack) {
             tx = tx.addToBackStack(null);
         }
-        tx.commit();
+        tx.commitAllowingStateLoss();
     }
 
     /**
