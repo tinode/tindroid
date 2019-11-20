@@ -304,6 +304,14 @@ public class MessagesFragment extends Fragment
         mMessagesAdapter.resetContent(topicName);
     }
 
+    private static void setVisibility(MessageActivity activity, int resourceId, int visibility) {
+        View view = activity.findViewById(resourceId);
+        if (view == null) {
+            return;
+        }
+        view.setVisibility(visibility);
+    }
+
     private void updateFormValues() {
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
@@ -312,16 +320,11 @@ public class MessagesFragment extends Fragment
 
         if (mTopic == null) {
             // Default view when the topic is not available.
-            View view = activity.findViewById(R.id.notReadable);
-            if (view == null) {
-                // Fragment is not set up. Let's not crash.
-                return;
-            }
-            view.setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+            MessagesFragment.setVisibility(activity, R.id.notReadable, View.VISIBLE);
+            MessagesFragment.setVisibility(activity, R.id.notReadableNote, View.VISIBLE);
+            MessagesFragment.setVisibility(activity, R.id.sendMessagePanel, View.GONE);
+            MessagesFragment.setVisibility(activity, R.id.peersMessagingDisabled, View.GONE);
+            MessagesFragment.setVisibility(activity, R.id.sendMessageDisabled, View.VISIBLE);
             return;
         }
 
@@ -331,22 +334,22 @@ public class MessagesFragment extends Fragment
         }
 
         if (mTopic.isReader()) {
-            activity.findViewById(R.id.notReadable).setVisibility(View.GONE);
+            MessagesFragment.setVisibility(activity, R.id.notReadable, View.GONE);
         } else {
-            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.notReadableNote).setVisibility(
+            MessagesFragment.setVisibility(activity, R.id.notReadable, View.VISIBLE);
+            MessagesFragment.setVisibility(activity, R.id.notReadableNote,
                     acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
         }
 
         if (mTopic.isWriter()) {
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
+            MessagesFragment.setVisibility(activity, R.id.sendMessageDisabled, View.GONE);
 
             Subscription peer = mTopic.getPeer();
             if (peer != null && peer.acs != null &&
                     peer.acs.isJoiner(Acs.Side.WANT) &&
                     peer.acs.getMissing().toString().contains("RW")) {
-                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+                MessagesFragment.setVisibility(activity, R.id.peersMessagingDisabled, View.VISIBLE);
+                MessagesFragment.setVisibility(activity, R.id.sendMessagePanel, View.GONE);
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
@@ -354,13 +357,13 @@ public class MessagesFragment extends Fragment
                     mMessageToSend = null;
                 }
 
-                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+                MessagesFragment.setVisibility(activity, R.id.peersMessagingDisabled, View.GONE);
+                MessagesFragment.setVisibility(activity, R.id.sendMessagePanel, View.VISIBLE);
             }
         } else {
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+            MessagesFragment.setVisibility(activity, R.id.sendMessagePanel, View.GONE);
+            MessagesFragment.setVisibility(activity, R.id.peersMessagingDisabled, View.GONE);
+            MessagesFragment.setVisibility(activity, R.id.sendMessageDisabled, View.VISIBLE);
         }
 
         if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {
