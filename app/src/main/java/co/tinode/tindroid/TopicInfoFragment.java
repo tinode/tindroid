@@ -645,7 +645,7 @@ public class TopicInfoFragment extends Fragment {
     private void notifyContentChanged() {
 
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

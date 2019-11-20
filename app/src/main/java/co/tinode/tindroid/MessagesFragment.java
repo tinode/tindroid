@@ -306,18 +306,13 @@ public class MessagesFragment extends Fragment
 
     private void updateFormValues() {
         final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
         if (mTopic == null) {
             // Default view when the topic is not available.
-            View view = activity.findViewById(R.id.notReadable);
-            if (view == null) {
-                // Fragment is not set up. Let's not crash.
-                return;
-            }
-            view.setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
