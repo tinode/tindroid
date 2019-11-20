@@ -1700,7 +1700,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 // Explicitly ignore message-related notifications. They are handled in the 'me' topic.
                 break;
             default:
-                Log.w(TAG, "Unknown presence update '" + pres.what + "' in '" + getName() + "'");
+                Log.w(TAG, "Unhandled presence update '" + pres.what + "' in '" + getName() + "'");
         }
 
         if (mListener != null) {

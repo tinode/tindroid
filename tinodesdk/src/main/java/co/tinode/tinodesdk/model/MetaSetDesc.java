@@ -3,7 +3,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Topic intiation parameters
+ * Topic initiation parameters
  */
 public class MetaSetDesc<P,R> {
     public Defacs defacs;

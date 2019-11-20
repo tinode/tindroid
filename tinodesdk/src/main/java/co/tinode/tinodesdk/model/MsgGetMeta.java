@@ -110,6 +110,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    @JsonIgnore
     public void setSubUser(String user, Date ims, Integer limit) {
         if (ims != null || limit != null || user != null) {
             sub = new MetaGetSub(ims, limit);
@@ -119,6 +120,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    @JsonIgnore
     public void setSubTopic(String topic, Date ims, Integer limit) {
         if (ims != null || limit != null || topic != null) {
             sub = new MetaGetSub(ims, limit);
@@ -127,7 +129,6 @@ public class MsgGetMeta {
         mSet |= SUB_SET;
         buildWhat();
     }
-
 
     public void setData(Integer since, Integer before, Integer limit) {
         if (since != null || before != null || limit != null) {
