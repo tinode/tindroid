@@ -275,6 +275,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
                 case MSG: // new message received
                     topic.setSeq(pres.seq);
+                    if (pres.act == null || mTinode.isMe(pres.act)) {
+                        // Message is sent by the current user.
+                        assignRead(topic, pres.seq);
+                    }
                     topic.setTouched(new Date());
                     break;
 
@@ -293,27 +297,11 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     break;
 
                 case RECV: // user's other session marked some messages as received
-                    if (topic.getRecv() < pres.seq) {
-                        topic.setRecv(pres.seq);
-                        if (mStore != null) {
-                            mStore.setRecv(topic, pres.seq);
-                        }
-                    }
+                    assignRecv(topic, pres.seq);
                     break;
 
                 case READ: // user's other session marked some messages as read
-                    if (topic.getRead() < pres.seq) {
-                        topic.setRead(pres.seq);
-                        if (mStore != null) {
-                            mStore.setRead(topic, pres.seq);
-                        }
-                        if (topic.getRecv() < topic.getRead()) {
-                            topic.setRecv(topic.getRead());
-                            if (mStore != null) {
-                                mStore.setRecv(topic, topic.getRead());
-                            }
-                        }
-                    }
+                    assignRead(topic, pres.seq);
                     break;
 
                 case DEL: // messages deleted
@@ -352,6 +340,25 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 mListener.onSubsUpdated();
             }
             mListener.onPres(pres);
+        }
+    }
+
+    private void assignRead(Topic topic, int seq) {
+        if (topic.getRead() < seq) {
+            topic.setRead(seq);
+            if (mStore != null) {
+                mStore.setRead(topic, seq);
+            }
+            assignRecv(topic, topic.getRead());
+        }
+    }
+
+    private void assignRecv(Topic topic, int seq) {
+        if (topic.getRecv() < seq) {
+            topic.setRecv(seq);
+            if (mStore != null) {
+                mStore.setRecv(topic, seq);
+            }
         }
     }
 
