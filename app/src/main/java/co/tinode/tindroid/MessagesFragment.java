@@ -66,6 +66,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
@@ -338,9 +339,9 @@ public class MessagesFragment extends Fragment
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
-            if (peer != null && peer.acs != null &&
-                    peer.acs.isJoiner(Acs.Side.WANT) &&
-                    peer.acs.getMissing().toString().contains("RW")) {
+            boolean isJoiner = peer != null && peer.acs != null && peer.acs.isJoiner(Acs.Side.WANT);
+            AcsHelper missing = peer != null && peer.acs != null ? peer.acs.getMissing() : new AcsHelper();
+            if (isJoiner && (missing.isReader() || missing.isWriter())) {
                 activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             } else {
