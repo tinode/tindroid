@@ -900,12 +900,14 @@ public class MessagesFragment extends Fragment
             // Image is being attached.
             if (requestCode == ACTION_ATTACH_IMAGE) {
                 Bitmap bmp = null;
-                is = resolver.openInputStream(uri);
 
                 // Make sure the image is not too large.
                 if (fsize > MAX_INBAND_ATTACHMENT_SIZE) {
                     // Resize image to ensure it's under the maximum in-band size.
+                    is = resolver.openInputStream(uri);
                     bmp = BitmapFactory.decodeStream(is, null, null);
+                    //noinspection ConstantConditions
+                    is.close();
 
                     // noinspection ConstantConditions: NullPointerException is handled explicitly.
                     bmp = UiUtils.scaleBitmap(bmp);
@@ -913,14 +915,19 @@ public class MessagesFragment extends Fragment
 
                 // Also ensure the image has correct orientation.
                 try {
+                    is = resolver.openInputStream(uri);
                     //noinspection ConstantConditions
                     ExifInterface exif = new ExifInterface(is);
+                    is.close();
                     int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
                     if (orientation != ExifInterface.ORIENTATION_UNDEFINED &&
                             orientation != ExifInterface.ORIENTATION_NORMAL) {
                         // Rotate image to ensure correct orientation.
                         if (bmp == null) {
+                            is = resolver.openInputStream(uri);
                             bmp = BitmapFactory.decodeStream(is, null, null);
+                            //noinspection ConstantConditions
+                            is.close();
                         }
 
                         bmp = UiUtils.rotateBitmap(bmp, orientation);
@@ -928,8 +935,6 @@ public class MessagesFragment extends Fragment
                 } catch (IOException ex) {
                     Log.w(TAG, "Failed to obtain image orientation", ex);
                 }
-
-                is.close();
 
                 if (bmp != null) {
                     imageWidth = bmp.getWidth();
