@@ -299,6 +299,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
 
                 itemView.setActivated(false);
             }
+
+            // Field lengths may have changed.
+            itemView.invalidate();
         }
     }
 
