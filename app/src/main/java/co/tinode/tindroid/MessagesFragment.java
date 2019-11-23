@@ -102,6 +102,7 @@ public class MessagesFragment extends Fragment
     private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
+    private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
 
@@ -150,8 +151,8 @@ public class MessagesFragment extends Fragment
         // mMessageViewLayoutManager.setStackFromEnd(true);
         mMessageViewLayoutManager.setReverseLayout(true);
 
-        RecyclerView ml = view.findViewById(R.id.messages_container);
-        ml.setLayoutManager(mMessageViewLayoutManager);
+        mRecyclerView = view.findViewById(R.id.messages_container);
+        mRecyclerView.setLayoutManager(mMessageViewLayoutManager);
 
         // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
         mUploadProgress = new UploadProgress();
@@ -160,7 +161,7 @@ public class MessagesFragment extends Fragment
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
-        ml.setAdapter(mMessagesAdapter);
+        mRecyclerView.setAdapter(mMessagesAdapter);
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -363,6 +364,11 @@ public class MessagesFragment extends Fragment
         if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {
             showChatInvitationDialog();
         }
+    }
+
+
+    private void scrollToBottom() {
+        mRecyclerView.scrollToPosition(0);
     }
 
     @Override
@@ -657,7 +663,11 @@ public class MessagesFragment extends Fragment
     private boolean sendMessage(Drafty content) {
         MessageActivity  activity = (MessageActivity) getActivity();
         if (activity != null) {
-            return activity.sendMessage(content);
+            boolean done = activity.sendMessage(content);
+            if (done) {
+                scrollToBottom();
+            }
+            return done;
         }
         return false;
     }
