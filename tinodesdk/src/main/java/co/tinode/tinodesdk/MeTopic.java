@@ -261,6 +261,12 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             return;
         }
 
+        if (what == MsgServerPres.What.UPD && Tinode.TOPIC_ME.equals(pres.src)) {
+            // Update to me topic itself.
+            this.getMeta(getMetaGetBuilder().withDesc().build());
+            return;
+        }
+
         Topic topic = mTinode.getTopic(pres.src);
         if (topic != null) {
             switch (what) {

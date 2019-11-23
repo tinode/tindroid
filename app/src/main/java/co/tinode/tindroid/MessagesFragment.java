@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
@@ -895,23 +896,52 @@ public class MessagesFragment extends Fragment
             }
 
             final ContentResolver resolver = context.getContentResolver();
-            if (requestCode == ACTION_ATTACH_IMAGE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+
+            // Image is being attached.
+            if (requestCode == ACTION_ATTACH_IMAGE) {
+                Bitmap bmp = null;
                 is = resolver.openInputStream(uri);
-                // Resize image to ensure it's under the maximum in-band size.
-                Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
-                // noinspection ConstantConditions: NullPointerException is handled explicitly.
-                bmp = UiUtils.scaleBitmap(bmp);
-                imageWidth = bmp.getWidth();
-                imageHeight = bmp.getHeight();
-                //noinspection ConstantConditions
+
+                // Make sure the image is not too large.
+                if (fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                    // Resize image to ensure it's under the maximum in-band size.
+                    bmp = BitmapFactory.decodeStream(is, null, null);
+
+                    // noinspection ConstantConditions: NullPointerException is handled explicitly.
+                    bmp = UiUtils.scaleBitmap(bmp);
+                }
+
+                // Also ensure the image has correct orientation.
+                try {
+                    //noinspection ConstantConditions
+                    ExifInterface exif = new ExifInterface(is);
+                    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+                    if (orientation != ExifInterface.ORIENTATION_UNDEFINED &&
+                            orientation != ExifInterface.ORIENTATION_NORMAL) {
+                        // Rotate image to ensure correct orientation.
+                        if (bmp == null) {
+                            bmp = BitmapFactory.decodeStream(is, null, null);
+                        }
+
+                        bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    }
+                } catch (IOException ex) {
+                    Log.w(TAG, "Failed to obtain image orientation", ex);
+                }
+
                 is.close();
 
-                is = UiUtils.bitmapToStream(bmp, mimeType);
-                fsize = (long) is.available();
+                if (bmp != null) {
+                    imageWidth = bmp.getWidth();
+                    imageHeight = bmp.getHeight();
+
+                    is = UiUtils.bitmapToStream(bmp, mimeType);
+                    fsize = (long) is.available();
+                }
             }
 
             if (fsize > MAX_ATTACHMENT_SIZE) {
-                Log.w(TAG, "File is too big, size=" + fsize);
+                Log.w(TAG, "Unable to process attachment: too big, size=" + fsize);
                 result.error = context.getString(R.string.attachment_too_large,
                         UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
             } else {
