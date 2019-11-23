@@ -678,8 +678,27 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onPres(MsgServerPres pres) {
-            // FIXME: handle {pres}
-            Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "'");
+            //noinspection SwitchStatementWithTooFewBranches
+            switch (pres.what) {
+                case "acs":
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Fragment fragment = getVisibleFragment();
+                            if (fragment != null) {
+                                if (fragment instanceof TopicInfoFragment) {
+                                    ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                                } else if (fragment instanceof MessagesFragment) {
+                                    ((MessagesFragment) fragment).notifyDataSetChanged(true);
+                                }
+                            }
+                        }
+                    });
+                    break;
+                default:
+                    Log.d(TAG, "Topic '" + mTopicName + "' onPres what='" + pres.what + "' (unhandled)");
+            }
+
         }
 
         @Override
