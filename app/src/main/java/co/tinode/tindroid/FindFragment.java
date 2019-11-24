@@ -121,6 +121,7 @@ public class FindFragment extends Fragment {
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);
 
         mAdapter.swapCursor(null, mSearchTerm);
+        mAdapter.setContactsPermission(UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS));
         rv.setAdapter(mAdapter);
 
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -388,9 +389,9 @@ public class FindFragment extends Fragment {
             @Override
             public void run() {
                 if (visible) {
-                    mProgress.start();
+                    mProgress.show();
                 } else {
-                    mProgress.stop();
+                    mProgress.hide();
                 }
             }
         });
@@ -424,10 +425,12 @@ public class FindFragment extends Fragment {
         }
 
         if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+            mAdapter.setContactsPermission(true);
             Bundle args = new Bundle();
             args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
         } else if (activity.isReadContactsPermissionRequested()) {
+            mAdapter.setContactsPermission(false);
             activity.setReadContactsPermissionRequested();
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, UiUtils.READ_CONTACTS_PERMISSION);
         }

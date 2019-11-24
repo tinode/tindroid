@@ -210,4 +210,6 @@
     <string name="app_server">Сервер</string>
 
     <string name="default_contact_name">Tinode Пользователь %1$s</string>
+    <string name="contacts_permission_missing">Нет прав доступа</string>
+    <string name="enter_seqrch_query">Введите происковый запрос</string>
 </resources>

@@ -127,7 +127,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
-                // mProgress.hide();
+                mProgressView.hide();
                 super.onChanged();
             }
         });
@@ -195,7 +195,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             return;
         }
 
-        mProgressView.start();
+        mProgressView.show();
         mAdapter.resetContent(activity, mIsArchive);
     }
 
