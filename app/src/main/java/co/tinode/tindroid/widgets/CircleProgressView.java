@@ -35,11 +35,23 @@ import androidx.core.view.ViewCompat;
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 /**
- * This class is used to display circular progress indicator. It matches the one in SwipeRefreshLayout.
+ * This class is used to display circular progress indicator (infinite spinner).
+ * It matches the style of the spinner in SwipeRefreshLayout + optionally can be shown only after a
+ * 500 ms delay like ContentLoadingProgressBar.
  *
  * Adopted from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
  */
 public class CircleProgressView extends AppCompatImageView {
+
+    // This is the same functionality as ContentLoadingProgressBar.
+    // If stop is called earlier than this, the spinner is not shown at all.
+    private static final int MIN_SHOW_TIME = 300; // ms
+    private static final int MIN_DELAY = 500; // ms
+
+    private long mStartTime = -1;
+    private boolean mPostedHide = false;
+    private boolean mPostedShow = false;
+    private boolean mDismissed = false;
 
     private static final int CIRCLE_BG_LIGHT = 0xFFFAFAFA;
 
@@ -57,13 +69,15 @@ public class CircleProgressView extends AppCompatImageView {
     private CircularProgressDrawable mProgress;
     private Animation.AnimationListener mListener;
     int mShadowRadius;
+
     private Animation.AnimationListener mProgressStartListener = new AnimationEndListener() {
         @Override
         public void onAnimationEnd(Animation animation) {
-            // mProgressView is already visible.
+            // mProgressView is already visible, start the spinner.
             mProgress.start();
         }
     };
+
     private Animation.AnimationListener mProgressStopListener = new AnimationEndListener() {
         @Override
         public void onAnimationEnd(Animation animation) {
@@ -71,6 +85,25 @@ public class CircleProgressView extends AppCompatImageView {
             mProgress.stop();
             setVisibility(View.GONE);
             setAnimationProgress(0);
+        }
+    };
+
+    private final Runnable mDelayedHide = new Runnable() {
+        @Override
+        public void run() {
+            mPostedHide = false;
+            mStartTime = -1;
+            stop();
+        }
+    };
+    private final Runnable mDelayedShow = new Runnable() {
+        @Override
+        public void run() {
+            mPostedShow = false;
+            if (!mDismissed) {
+                mStartTime = System.currentTimeMillis();
+                start();
+            }
         }
     };
 
@@ -118,6 +151,52 @@ public class CircleProgressView extends AppCompatImageView {
         setImageDrawable(mProgress);
     }
 
+    /**
+     * Hide the progress view if it's visible. The progress view will not be
+     * hidden until it has been shown for at least a minimum show time. If the
+     * progress view was not yet visible, cancels showing the progress view.
+     */
+    public synchronized void hide() {
+        mDismissed = true;
+        removeCallbacks(mDelayedShow);
+        mPostedShow = false;
+        long diff = System.currentTimeMillis() - mStartTime;
+        if (diff >= MIN_SHOW_TIME || mStartTime == -1) {
+            // The progress spinner has been shown long enough
+            // OR was not shown yet. If it wasn't shown yet,
+            // it will just never be shown.
+            if (getVisibility() == View.VISIBLE) {
+                stop();
+            }
+        } else {
+            // The progress spinner is shown, but not long enough,
+            // so put a delayed message in to hide it when its been
+            // shown long enough.
+            if (!mPostedHide) {
+                postDelayed(mDelayedHide, MIN_SHOW_TIME - diff);
+                mPostedHide = true;
+            }
+        }
+    }
+    /**
+     * Show the progress view after waiting for a minimum delay. If
+     * during that time, hide() is called, the view is never made visible.
+     */
+    public synchronized void show() {
+        // Reset the start time.
+        mStartTime = -1;
+        mDismissed = false;
+        removeCallbacks(mDelayedHide);
+        mPostedHide = false;
+        if (!mPostedShow) {
+            postDelayed(mDelayedShow, MIN_DELAY);
+            mPostedShow = true;
+        }
+    }
+
+    /**
+     * Start progress animation immediately: scale the circle from 0 to 1, then start the spinner.
+     */
     public void start() {
         setVisibility(View.VISIBLE);
         Animation scale = new Animation() {
@@ -130,9 +209,11 @@ public class CircleProgressView extends AppCompatImageView {
         setAnimationListener(mProgressStartListener);
         clearAnimation();
         startAnimation(scale);
-
     }
 
+    /**
+     * Stop progress animation immediately: scale the circle from 1 to 0.
+     */
     public void stop() {
         Animation down = new Animation() {
             @Override
@@ -146,10 +227,6 @@ public class CircleProgressView extends AppCompatImageView {
         startAnimation(down);
     }
 
-    private boolean elevationSupported() {
-        return android.os.Build.VERSION.SDK_INT >= 21;
-    }
-
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -157,6 +234,10 @@ public class CircleProgressView extends AppCompatImageView {
             setMeasuredDimension(getMeasuredWidth() + mShadowRadius * 2, getMeasuredHeight()
                     + mShadowRadius * 2);
         }
+    }
+
+    private boolean elevationSupported() {
+        return android.os.Build.VERSION.SDK_INT >= 21;
     }
 
     public void setAnimationListener(Animation.AnimationListener listener) {
@@ -189,6 +270,20 @@ public class CircleProgressView extends AppCompatImageView {
     private void setAnimationProgress(float progress) {
         setScaleX(progress);
         setScaleY(progress);
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        removeCallbacks(mDelayedHide);
+        removeCallbacks(mDelayedShow);
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        removeCallbacks(mDelayedHide);
+        removeCallbacks(mDelayedShow);
     }
 
     private static class OvalShadow extends OvalShape {
