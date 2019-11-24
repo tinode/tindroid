@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
@@ -69,7 +70,7 @@ public class FindFragment extends Fragment {
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
 
-    private ContentLoadingProgressBar mProgress = null;
+    private CircleProgressView mProgress = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -134,7 +135,7 @@ public class FindFragment extends Fragment {
             }
         });
 
-        mProgress = fragment.findViewById(R.id.progressBar);
+        mProgress = fragment.findViewById(R.id.progressCircle);
     }
 
     @Override
@@ -387,9 +388,9 @@ public class FindFragment extends Fragment {
             @Override
             public void run() {
                 if (visible) {
-                    mProgress.show();
+                    mProgress.start();
                 } else {
-                    mProgress.hide();
+                    mProgress.stop();
                 }
             }
         });

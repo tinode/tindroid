@@ -25,23 +25,23 @@ import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
+import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.Animation;
+import android.view.animation.Transformation;
 
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.view.ViewCompat;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 /**
- * This ImageView is used to display circular progress indicator. It matches the one in SwipeRefreshLayout.
+ * This class is used to display circular progress indicator. It matches the one in SwipeRefreshLayout.
  *
  * Adopted from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
  */
-public class CircleImageView extends AppCompatImageView {
+public class CircleProgressView extends AppCompatImageView {
 
     private static final int CIRCLE_BG_LIGHT = 0xFFFAFAFA;
-
-    // Default offset in dips from the top of the view to where the progress spinner should appear.
-    private static final int DEFAULT_CIRCLE_TARGET = 64;
 
     private static final int KEY_SHADOW_COLOR = 0x1E000000;
     private static final int FILL_SHADOW_COLOR = 0x3D000000;
@@ -51,15 +51,44 @@ public class CircleImageView extends AppCompatImageView {
     private static final float SHADOW_RADIUS = 3.5f;
     private static final int SHADOW_ELEVATION = 4;
 
+    private int mMediumAnimationDuration;
+    private static final int SCALE_DOWN_DURATION = 150;
+
+    private CircularProgressDrawable mProgress;
     private Animation.AnimationListener mListener;
     int mShadowRadius;
+    private Animation.AnimationListener mProgressStartListener = new AnimationEndListener() {
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            // mProgressView is already visible.
+            mProgress.start();
+        }
+    };
+    private Animation.AnimationListener mProgressStopListener = new AnimationEndListener() {
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            clearAnimation();
+            mProgress.stop();
+            setVisibility(View.GONE);
+            setAnimationProgress(0);
+        }
+    };
 
-    public CircleImageView(Context context) {
+    public CircleProgressView(Context context) {
         this(context, CIRCLE_BG_LIGHT);
     }
 
-    public CircleImageView(Context context, int color) {
+    public CircleProgressView(Context context, AttributeSet attrSet) {
+        super(context, attrSet);
+        init(context, CIRCLE_BG_LIGHT);
+    }
+
+    public CircleProgressView(Context context, int color) {
         super(context);
+        init(context, color);
+    }
+
+    private void init(Context context, int color) {
         final float density = getContext().getResources().getDisplayMetrics().density;
         final int shadowYOffset = (int) (density * Y_OFFSET);
         final int shadowXOffset = (int) (density * X_OFFSET);
@@ -71,8 +100,7 @@ public class CircleImageView extends AppCompatImageView {
             circle = new ShapeDrawable(new OvalShape());
             ViewCompat.setElevation(this, SHADOW_ELEVATION * density);
         } else {
-            OvalShape oval = new OvalShadow(mShadowRadius);
-            circle = new ShapeDrawable(oval);
+            circle = new ShapeDrawable(new OvalShadow(this, mShadowRadius));
             setLayerType(View.LAYER_TYPE_SOFTWARE, circle.getPaint());
             circle.getPaint().setShadowLayer(mShadowRadius, shadowXOffset, shadowYOffset,
                     KEY_SHADOW_COLOR);
@@ -82,6 +110,40 @@ public class CircleImageView extends AppCompatImageView {
         }
         circle.getPaint().setColor(color);
         ViewCompat.setBackground(this, circle);
+
+        mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
+
+        mProgress = new CircularProgressDrawable(context);
+        mProgress.setStyle(CircularProgressDrawable.DEFAULT);
+        setImageDrawable(mProgress);
+    }
+
+    public void start() {
+        setVisibility(View.VISIBLE);
+        Animation scale = new Animation() {
+            @Override
+            public void applyTransformation(float interpolatedTime, Transformation t) {
+                setAnimationProgress(interpolatedTime);
+            }
+        };
+        scale.setDuration(mMediumAnimationDuration);
+        setAnimationListener(mProgressStartListener);
+        clearAnimation();
+        startAnimation(scale);
+
+    }
+
+    public void stop() {
+        Animation down = new Animation() {
+            @Override
+            public void applyTransformation(float interpolatedTime, Transformation t) {
+                setAnimationProgress(1 - interpolatedTime);
+            }
+        };
+        down.setDuration(SCALE_DOWN_DURATION);
+        setAnimationListener(mProgressStopListener);
+        clearAnimation();
+        startAnimation(down);
     }
 
     private boolean elevationSupported() {
@@ -124,12 +186,19 @@ public class CircleImageView extends AppCompatImageView {
         }
     }
 
-    private class OvalShadow extends OvalShape {
-        private RadialGradient mRadialGradient;
-        private Paint mShadowPaint;
+    private void setAnimationProgress(float progress) {
+        setScaleX(progress);
+        setScaleY(progress);
+    }
 
-        OvalShadow(int shadowRadius) {
+    private static class OvalShadow extends OvalShape {
+        private Paint mShadowPaint;
+        private int mShadowRadius;
+        private CircleProgressView mCircleProgressView;
+
+        OvalShadow(CircleProgressView circleProgressView, int shadowRadius) {
             super();
+            mCircleProgressView = circleProgressView;
             mShadowPaint = new Paint();
             mShadowRadius = shadowRadius;
             updateRadialGradient((int) rect().width());
@@ -143,17 +212,30 @@ public class CircleImageView extends AppCompatImageView {
 
         @Override
         public void draw(Canvas canvas, Paint paint) {
-            final int viewWidth = CircleImageView.this.getWidth();
-            final int viewHeight = CircleImageView.this.getHeight();
-            canvas.drawCircle(viewWidth * .5f, viewHeight * .5f, viewWidth * .5f, mShadowPaint);
-            canvas.drawCircle(viewWidth * .5f, viewHeight * .5f, viewWidth * .5f - mShadowRadius, paint);
+            final int width = mCircleProgressView.getWidth() / 2;
+            final int height = mCircleProgressView.getHeight() / 2;
+            canvas.drawCircle(width, height, width, mShadowPaint);
+            canvas.drawCircle(width, height, width - mShadowRadius, paint);
         }
 
         private void updateRadialGradient(int diameter) {
-            mRadialGradient = new RadialGradient(diameter  * .5f, diameter  * .5f,
-                    mShadowRadius, new int[] { FILL_SHADOW_COLOR, Color.TRANSPARENT },
-                    null, Shader.TileMode.CLAMP);
-            mShadowPaint.setShader(mRadialGradient);
+            mShadowPaint.setShader(new RadialGradient(
+                    diameter  * .5f,
+                    diameter  * .5f,
+                    mShadowRadius,
+                    new int[] { FILL_SHADOW_COLOR, Color.TRANSPARENT },
+                    null,
+                    Shader.TileMode.CLAMP));
+        }
+    }
+
+    // Boilerplate hidden.
+    private static abstract class AnimationEndListener implements Animation.AnimationListener {
+        @Override
+        public void onAnimationStart(Animation animation) {
+        }
+        @Override
+        public void onAnimationRepeat(Animation animation) {
         }
     }
 }

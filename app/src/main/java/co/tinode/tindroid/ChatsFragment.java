@@ -11,6 +11,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,7 +30,9 @@ import androidx.recyclerview.selection.StorageStrategy;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSubscribedException;
@@ -41,6 +45,9 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
 
     private Boolean mIsArchive;
     private boolean mSelectionMuted;
+
+    // "Loading..." indicator.
+    private CircleProgressView mProgressView;
 
     private ChatsAdapter mAdapter = null;
     private SelectionTracker<String> mSelectionTracker = null;
@@ -114,6 +121,17 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         });
         rv.setAdapter(mAdapter);
 
+        // Progress indicator.
+        mProgressView = view.findViewById(R.id.progressCircle);
+
+        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                // mProgress.hide();
+                super.onChanged();
+            }
+        });
+
         mSelectionTracker = new SelectionTracker.Builder<>(
                 "contacts-selection",
                 rv,
@@ -177,6 +195,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             return;
         }
 
+        mProgressView.start();
         mAdapter.resetContent(activity, mIsArchive);
     }
 
