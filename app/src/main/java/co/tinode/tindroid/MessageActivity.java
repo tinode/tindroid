@@ -18,7 +18,6 @@ import android.view.View;
 
 import java.io.File;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -210,7 +209,7 @@ public class MessageActivity extends AppCompatActivity {
         if (mTopic != null) {
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
             // Check of another fragment is already visible. If so, don't change it.
-            if (getVisibleFragment() == null) {
+            if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
                 // No fragment is visible. Show default and clear back stack.
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 showFragment(FRAGMENT_MESSAGES, null, false);
@@ -603,16 +602,6 @@ public class MessageActivity extends AppCompatActivity {
         });
     }
 
-    Fragment getVisibleFragment() {
-        List<Fragment> fragments = getSupportFragmentManager().getFragments();
-        for (Fragment f : fragments) {
-            if (f.isVisible()) {
-                return f;
-            }
-        }
-        return null;
-    }
-
     /**
      * Utility class to send messages queued while offline.
      * The execution is paused while the activity is in background and unpaused
@@ -684,7 +673,7 @@ public class MessageActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Fragment fragment = getVisibleFragment();
+                            Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                             if (fragment != null) {
                                 if (fragment instanceof TopicInfoFragment) {
                                     ((TopicInfoFragment) fragment).notifyDataSetChanged();
@@ -737,7 +726,7 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Fragment fragment = getVisibleFragment();
+                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                     if (fragment != null) {
                         if (fragment instanceof TopicInfoFragment) {
                             ((TopicInfoFragment) fragment).notifyDataSetChanged();
@@ -756,7 +745,7 @@ public class MessageActivity extends AppCompatActivity {
                 public void run() {
                     UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
                             mTopic.getOnline());
-                    Fragment fragment = getVisibleFragment();
+                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                     if (fragment != null) {
                         if (fragment instanceof TopicInfoFragment) {
                             ((TopicInfoFragment) fragment).notifyDataSetChanged();
@@ -778,7 +767,7 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Fragment fragment = getVisibleFragment();
+                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                     if (fragment instanceof TopicInfoFragment) {
                         ((TopicInfoFragment) fragment).notifyDataSetChanged();
                     }

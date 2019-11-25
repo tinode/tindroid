@@ -16,7 +16,6 @@ package co.tinode.tindroid.widgets;
  * limitations under the License.
  */
 
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -42,6 +41,7 @@ import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
  * Adopted from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
  */
 public class CircleProgressView extends AppCompatImageView {
+    private static final String TAG = "CircleProgressView";
 
     // This is the same functionality as ContentLoadingProgressBar.
     // If stop is called earlier than this, the spinner is not shown at all.
@@ -173,7 +173,6 @@ public class CircleProgressView extends AppCompatImageView {
             // so put a delayed message in to hide it when its been
             // shown long enough.
             if (!mPostedHide) {
-                postDelayed(mDelayedHide, MIN_SHOW_TIME - diff);
                 mPostedHide = true;
             }
         }
@@ -270,13 +269,6 @@ public class CircleProgressView extends AppCompatImageView {
     private void setAnimationProgress(float progress) {
         setScaleX(progress);
         setScaleY(progress);
-    }
-
-    @Override
-    public void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        removeCallbacks(mDelayedHide);
-        removeCallbacks(mDelayedShow);
     }
 
     @Override

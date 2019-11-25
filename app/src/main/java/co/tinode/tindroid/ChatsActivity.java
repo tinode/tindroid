@@ -13,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 
+import java.util.List;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
@@ -29,7 +31,7 @@ import co.tinode.tindroid.account.ContactsManager;
 /**
  * This activity owns 'me' topic.
  */
-public class ChatsActivity extends AppCompatActivity {
+public class ChatsActivity extends AppCompatActivity implements UiUtils.ProgressIndicator {
 
     private static final String TAG = "ContactsActivity";
 
@@ -56,7 +58,7 @@ public class ChatsActivity extends AppCompatActivity {
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
-        Fragment fragment = new ChatsFragment();
+        ChatsFragment fragment = new ChatsFragment();
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.contentFragment, fragment, FRAGMENT_CHATLIST)
                 .setPrimaryNavigationFragment(fragment)
@@ -79,17 +81,19 @@ public class ChatsActivity extends AppCompatActivity {
 
         UiUtils.setupToolbar(this, null, null, false);
 
+        if (!mMeTopic.isAttached()) {
+            toggleProgressIndicator(true);
+        }
         // This will issue a subscription request.
         UiUtils.attachMeTopic(this, mMeTopicListener);
     }
 
     private void datasetChanged() {
         final FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentByTag(FRAGMENT_ARCHIVE);
-        if (fragment != null && fragment.isVisible()) {
-            ((ChatsFragment) fragment).datasetChanged();
+        Fragment fragment = fm.findFragmentByTag(FRAGMENT_CHATLIST);
+        if (fragment == null || !fragment.isVisible()) {
+            fragment = fm.findFragmentByTag(FRAGMENT_ARCHIVE);
         }
-        fragment = fm.findFragmentByTag(FRAGMENT_CHATLIST);
         if (fragment != null && fragment.isVisible()) {
             ((ChatsFragment) fragment).datasetChanged();
         }
@@ -149,8 +153,18 @@ public class ChatsActivity extends AppCompatActivity {
                 .commit();
     }
 
+    @Override
+    public void toggleProgressIndicator(boolean on) {
+        List<Fragment> fragments = getSupportFragmentManager().getFragments();
+        for (Fragment f : fragments) {
+            if (f instanceof UiUtils.ProgressIndicator) {
+                ((UiUtils.ProgressIndicator) f).toggleProgressIndicator(on);
+            }
+        }
+    }
+
     // This is called on Websocket thread.
-    private class MeListener extends MeTopic.MeListener<VxCard> {
+    private class MeListener extends UiUtils.MeEventListener {
 
         private void updateAccountInfoFragment() {
             runOnUiThread(new Runnable() {
@@ -211,6 +225,19 @@ public class ChatsActivity extends AppCompatActivity {
         @Override
         public void onSubsUpdated() {
             datasetChanged();
+        }
+
+        @Override
+        public void onSubscriptionError(Exception ex) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+                    if (fragment instanceof UiUtils.ProgressIndicator) {
+                        ((UiUtils.ProgressIndicator) fragment).toggleProgressIndicator(false);
+                    }
+                }
+            });
         }
 
         @Override

@@ -11,8 +11,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -30,7 +28,6 @@ import androidx.recyclerview.selection.StorageStrategy;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.ComTopic;
@@ -39,7 +36,7 @@ import co.tinode.tinodesdk.NotSubscribedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-public class ChatsFragment extends Fragment implements ActionMode.Callback {
+public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUtils.ProgressIndicator {
 
     private static final String TAG = "ChatsFragment";
 
@@ -124,14 +121,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         // Progress indicator.
         mProgressView = view.findViewById(R.id.progressCircle);
 
-        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onChanged() {
-                mProgressView.hide();
-                super.onChanged();
-            }
-        });
-
         mSelectionTracker = new SelectionTracker.Builder<>(
                 "contacts-selection",
                 rv,
@@ -161,13 +150,11 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             @Override
             public void onItemStateChanged(@NonNull String topicName, boolean selected) {
                 int after = mSelectionTracker.getSelection().size();
-                Log.i(TAG, "onItemStateChanged, topic=" + topicName + ", after="+after);
                 int before = selected ? after - 1 : after + 1;
                 if (after == 1) {
                     ComTopic topic = (ComTopic) Cache.getTinode().getTopic(topicName);
                     if (topic != null) {
                         mSelectionMuted = topic.isMuted();
-                        Log.i(TAG, "Setting muted to " + mSelectionMuted);
                     }
                 }
                 if (mActionMode != null) {
@@ -195,7 +182,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             return;
         }
 
-        mProgressView.show();
         mAdapter.resetContent(activity, mIsArchive);
     }
 
@@ -263,8 +249,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         menu.setGroupVisible(R.id.single_selection, single);
 
         if (single) {
-            Log.i(TAG, "Creating menu muted=" + mSelectionMuted);
-
             menu.findItem(R.id.action_mute).setVisible(!mSelectionMuted);
             menu.findItem(R.id.action_unmute).setVisible(mSelectionMuted);
 
@@ -433,10 +417,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
         confirmBuilder.show();
     }
 
-    /**
-     * Wraps mAdapter.notifyDataSetChanged() into runOnUiThread()
-     */
     void datasetChanged() {
+        toggleProgressIndicator(false);
         mAdapter.resetContent(getActivity(), mIsArchive);
     }
 
@@ -448,5 +430,24 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void toggleProgressIndicator(final boolean on) {
+        Activity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (on) {
+                    mProgressView.show();
+                } else {
+                    mProgressView.hide();
+                }
+            }
+        });
     }
 }

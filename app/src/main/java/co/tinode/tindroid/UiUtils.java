@@ -19,7 +19,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -52,6 +51,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
@@ -62,12 +62,14 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
+import androidx.fragment.app.FragmentManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -254,7 +256,7 @@ public class UiUtils {
     /**
      * Login successful. Show contacts activity
      */
-    static void onLoginSuccess(Activity activity, final Button button, final String uid, final boolean immediateSync) {
+    static void onLoginSuccess(Activity activity, final Button button, final String uid) {
         if (button != null) {
             activity.runOnUiThread(new Runnable() {
                 public void run() {
@@ -263,15 +265,13 @@ public class UiUtils {
             });
         }
 
-        if (immediateSync) {
-            Account acc = getSavedAccount(activity, AccountManager.get(activity), uid);
-            if (acc != null) {
-                Bundle bundle = new Bundle();
-                bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-                bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-                ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
-                ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
-            }
+        Account acc = getSavedAccount(activity, AccountManager.get(activity), uid);
+        if (acc != null) {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+            bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+            ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+            ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
         }
 
         Intent intent = new Intent(activity, ChatsActivity.class);
@@ -903,9 +903,7 @@ public class UiUtils {
         }
     }
 
-    static void attachMeTopic(final Activity activity, final MeTopic.MeListener l) {
-        setProgressIndicator(activity, true);
-
+    static void attachMeTopic(final Activity activity, final MeEventListener l) {
         Tinode tinode = Cache.getTinode();
         if (!tinode.isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
@@ -919,6 +917,7 @@ public class UiUtils {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         Log.w(TAG, "Error subscribing to 'me' topic", err);
+                        l.onSubscriptionError(err);
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
                             int errCode = sre.getCode();
@@ -934,12 +933,6 @@ public class UiUtils {
                             }
                         }
                         return null;
-                    }
-                })
-                .thenFinally(new PromisedReply.FinalListener() {
-                    @Override
-                    public void onFinally() {
-                        setProgressIndicator(activity, false);
                     }
                 });
 
@@ -987,25 +980,6 @@ public class UiUtils {
         }
 
         return tags.toArray(new String[]{});
-    }
-
-    /**
-     * Show or hide progress indicator.
-     *
-     * @param activity activity making the call.
-     * @param active   show when true, hide when false.
-     */
-    private static void setProgressIndicator(final Activity activity, final boolean active) {
-        if (activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // TODO: show progress indicator while loading contacts.
-            }
-        });
     }
 
     // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
@@ -1105,6 +1079,16 @@ public class UiUtils {
         return fmt.format(count) + " " + sizes[bucket];
     }
 
+    static Fragment getVisibleFragment(FragmentManager fm) {
+        List<Fragment> fragments = fm.getFragments();
+        for (Fragment f : fragments) {
+            if (f.isVisible()) {
+                return f;
+            }
+        }
+        return null;
+    }
+
     static String getMimeType(Uri uri) {
         if (uri == null) {
             return null;
@@ -1141,7 +1125,13 @@ public class UiUtils {
         return null;
     }
 
-    public static class EventListener extends Tinode.EventListener {
+    static class MeEventListener extends MeTopic.MeListener<VxCard> {
+        // Called on failed subscription request.
+        public void onSubscriptionError(Exception ex) {
+        }
+    }
+
+    static class EventListener extends Tinode.EventListener {
         private Activity mActivity;
         private Boolean mConnected;
 
@@ -1180,7 +1170,7 @@ public class UiUtils {
         }
     }
 
-    public static class AccessModeLabel {
+    static class AccessModeLabel {
         public int color;
         int nameId;
 
@@ -1215,5 +1205,9 @@ public class UiUtils {
             });
             return null;
         }
+    }
+
+    interface ProgressIndicator {
+        void toggleProgressIndicator(boolean on);
     }
 }

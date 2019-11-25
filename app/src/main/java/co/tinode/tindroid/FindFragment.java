@@ -48,7 +48,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * FindFragment contains a RecyclerView with results from searching local Contacts and remote 'fnd' topic.
  */
-public class FindFragment extends Fragment {
+public class FindFragment extends Fragment implements UiUtils.ProgressIndicator {
 
     private static final String TAG = "FindFragment";
 
@@ -361,11 +361,11 @@ public class FindFragment extends Fragment {
         fnd.setMeta(new MsgSetMeta<>(
                 new MetaSetDesc<String, String>(query == null ? Tinode.NULL_VALUE : query, null)));
         if (query != null) {
-            setProgressBarVisible(true);
+            toggleProgressIndicator(true);
             fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
                 @Override
                 public void onFinally() {
-                    setProgressBarVisible(false);
+                    toggleProgressIndicator(false);
                 }
             });
         } else {
@@ -376,7 +376,8 @@ public class FindFragment extends Fragment {
         return query;
     }
 
-    private void setProgressBarVisible(final boolean visible) {
+    @Override
+    public void toggleProgressIndicator(final boolean visible) {
         if (mProgress == null) {
             return;
         }
