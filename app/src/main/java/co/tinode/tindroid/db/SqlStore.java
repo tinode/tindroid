@@ -216,6 +216,17 @@ public class SqlStore implements Storage {
     }
 
     @Override
+    public boolean msgAvailable(String topicName, int seq) {
+        boolean result = false;
+        final SQLiteDatabase db = mDbh.getWritableDatabase();
+        long topicId = TopicDb.getId(db, topicName);
+        if (topicId > 0) {
+            result = TopicDb.updateSeq(db, topicId, seq);
+        }
+        return result;
+    }
+
+    @Override
     public long msgReceived(Topic topic, Subscription sub, MsgServerData m) {
         final SQLiteDatabase db = mDbh.getWritableDatabase();
         long topicId, userId;

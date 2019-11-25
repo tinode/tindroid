@@ -69,7 +69,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         String body = null;
         String topicName = null;
         Bitmap avatar = null;
-        int requestCode = 0;
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
@@ -89,8 +88,16 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 return;
             }
 
-            // Fetch locally stored contacts
+
             Storage store = BaseDb.getInstance().getStore();
+
+            // Indicate that the topic has new messages.
+            String seqStr = data.get("seq");
+            if (seqStr != null) {
+                store.msgAvailable(topicName, Integer.parseInt(seqStr));
+            }
+
+            // Fetch locally stored contacts
             User<VxCard> sender = (User<VxCard>) store.userGet(data.get("xfrom"));
             String senderName  = (sender == null || sender.pub == null) ?
                     getResources().getString(R.string.sender_unknown) : sender.pub.fn;
@@ -121,16 +128,17 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 Log.w(TAG, "Unexpected topic type=" + tp);
                 return;
             }
-            // Workaround for an FCM bug or poor documentation.
-            requestCode = topicName.hashCode();
         } else if (remoteMessage.getNotification() != null) {
             RemoteMessage.Notification data = remoteMessage.getNotification();
             Log.d(TAG, "RemoteMessage Body: " + data.getBody());
 
-            topicName = null;
+            topicName = data.getTag();
             title = data.getTitle();
             body = data.getBody();
         }
+
+        // Workaround for an FCM bug or poor documentation.
+        int requestCode = topicName != null ? topicName.hashCode() : 0;
 
         showNotification(title, body, avatar, topicName, requestCode);
     }
