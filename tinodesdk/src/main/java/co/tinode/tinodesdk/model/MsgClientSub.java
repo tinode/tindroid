@@ -7,6 +7,7 @@ package co.tinode.tinodesdk.model;
 public class MsgClientSub<Pu,Pr,T> {
     public String id;
     public String topic;
+    public boolean bkg;
     public MsgSetMeta<Pu,Pr> set;
     public MsgGetMeta get;
 
