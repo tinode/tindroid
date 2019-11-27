@@ -48,15 +48,17 @@ public class Cache {
             TindroidApp.retainTinodeCache(sTinode);
         }
 
-        FirebaseInstanceId
-                .getInstance()
-                .getInstanceId()
+        FirebaseInstanceId fbId = FirebaseInstanceId.getInstance();
+        //noinspection ConstantConditions: Google lies about getInstance not returning null.
+        if (fbId != null) {
+            fbId.getInstanceId()
                 .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
                     @Override
                     public void onSuccess(InstanceIdResult instanceIdResult) {
                         sTinode.setDeviceToken(instanceIdResult.getToken());
                     }
                 });
+        }
         return sTinode;
     }
 
