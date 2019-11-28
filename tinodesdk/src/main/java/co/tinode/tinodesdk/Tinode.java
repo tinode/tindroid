@@ -524,7 +524,7 @@ public class Tinode {
     }
 
     /**
-     * Make sure connection is either already established already or being established:
+     * Make sure connection is either already established or being established:
      *  - If connection is already established do nothing
      *  - If connection does not exist, create
      *  - If not connected and waiting for backoff timer, wake it up.
@@ -1343,12 +1343,16 @@ public class Tinode {
      * be automatically dispatched. A {@link Topic#subscribe()} should be normally used instead.
      *
      * @param topicName name of the topic to subscribe to
+     * @param set values to be assign to topic on success.
+     * @param get query for topic values.
+     * @param background indicator that this request should be treated as a service request,
+     *                   i.e. presence notifications will be delayed.
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu, Pr, T> PromisedReply<ServerMessage> subscribe(String topicName,
                                                               MsgSetMeta<Pu, Pr> set,
-                                                              MsgGetMeta get) {
-        ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
+                                                              MsgGetMeta get, boolean background) {
+        ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get, background));
         return sendWithPromise(msg, msg.sub.id);
     }
 

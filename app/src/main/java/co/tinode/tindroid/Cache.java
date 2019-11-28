@@ -70,8 +70,7 @@ public class Cache {
                 FirebaseInstanceId
                         .getInstance()
                         .deleteInstanceId();
-            } catch (IOException e) {
-            }
+            } catch (IOException ignored) { }
             sTinode = null;
         }
     }

@@ -674,7 +674,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Subscribe to topic
+     * Subscribe to topic.
      */
     public PromisedReply<ServerMessage> subscribe() {
         MsgSetMeta<DP, DR> mset = null;
@@ -683,21 +683,38 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, mTags, null);
             mget = null;
         } else {
-            // FIXME: don't ask for tags if it's not a 'me' topic or the owner of a 'grp' topic.
-            mget = getMetaGetBuilder()
-                    .withDesc().withData().withSub().withTags().build();
+            MetaGetBuilder mgb = getMetaGetBuilder()
+                    .withDesc().withData().withSub();
+            if (isMeType() || (isGrpType() && isOwner())) {
+                // Ask for tags only if it's a 'me' topic or the user is the owner of a 'grp' topic.
+                mgb = mgb.withTags();
+            }
+            mget = mgb.build();
         }
         return subscribe(mset, mget);
     }
 
     /**
-     * Subscribe to topic with parameters
+     * Service subscription to topic with explicit parameters.
+     *
+     * @param set values to be assigned to topic on successful subscription.
+     * @param get query topic for data.
+     *
+     * @throws NotConnectedException      if there is no live connection to the server
+     * @throws AlreadySubscribedException if the client is already subscribed to the given topic
+     */
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
+        return subscribe(set, get, false);
+    }
+
+    /**
+     * Subscribe to topic with parameters, optionally in background.
      *
      * @throws NotConnectedException      if there is no live connection to the server
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get, boolean background) {
         if (mAttached) {
             if (set == null && get == null) {
                 // If the topic is already attached and the user does not attempt to set or
@@ -712,7 +729,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             persist(true);
         }
 
-        return mTinode.subscribe(topicName, set, get).thenApply(
+        return mTinode.subscribe(topicName, set, get, background).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
