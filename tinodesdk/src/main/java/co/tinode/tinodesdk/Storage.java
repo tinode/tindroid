@@ -78,10 +78,6 @@ public interface Storage {
     @SuppressWarnings("UnusedReturnValue")
     boolean userUpdate(User user);
 
-    /** Local user got seq value out of band, i.e. from a push */
-    @SuppressWarnings("UnusedReturnValue")
-    boolean msgAvailable(String topicName, int seq);
-
     /**
      * Message received from the server.
      */

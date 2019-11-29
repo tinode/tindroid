@@ -280,7 +280,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     break;
 
                 case MSG: // new message received
-                    topic.setSeq(pres.seq);
+                    topic.setSeqAndFetch(pres.seq);
                     if (pres.act == null || mTinode.isMe(pres.act)) {
                         // Message is sent by the current user.
                         assignRead(topic, pres.seq);

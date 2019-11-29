@@ -1,12 +1,9 @@
 package co.tinode.tindroid.fcm;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.media.RingtoneManager;
@@ -25,12 +22,9 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
-import androidx.preference.PreferenceManager;
-import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -38,7 +32,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Storage;
-import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
 
@@ -100,7 +93,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             // Check and maybe download new messages right away *before* showing the notification.
             String seqStr = data.get("seq");
             if (seqStr != null) {
-                fetchNewMessages(topicName, Integer.parseInt(seqStr));
+                Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr));
             }
 
             Storage store = BaseDb.getInstance().getStore();
@@ -219,66 +212,5 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         lbm.sendBroadcast(intent);
 
         // The token is currently retrieved in co.tinode.tindroid.Cache.
-    }
-
-    private void fetchNewMessages(String topicName, int seq) {
-        Log.d(TAG, "Background fetch for " + topicName);
-        Context context = getApplicationContext();
-
-        String uid = BaseDb.getInstance().getUid();
-        if (TextUtils.isEmpty(uid)) {
-            Log.w(TAG, "Data fetch failed: not logged in");
-            return;
-        }
-
-        final AccountManager am = AccountManager.get(context);
-        final Account account = UiUtils.getSavedAccount(context, am, uid);
-        if (account == null) {
-            Log.w(TAG, "Data fetch failed: account not found");
-            return;
-        }
-
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(context));
-        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
-        final Tinode tinode = Cache.getTinode();
-        // noinspection unchecked
-        ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
-        Topic.MetaGetBuilder builder;
-        if (topic == null) {
-            // New topic. Create it.
-            // noinspection unchecked
-            topic = (ComTopic<VxCard>) tinode.newTopic(topicName, null);
-            builder = topic.getMetaGetBuilder().withDesc().withSub();
-        } else {
-            // Existing topic.
-            builder = topic.getMetaGetBuilder();
-        }
-        if (topic.isAttached()) {
-            Log.d(TAG, "Topic is already attached");
-            // No need to fetch: topic is already subscribed and got data notification through normal channel.
-            return;
-        }
-
-        if (topic.getSeq() < seq) {
-            // Won't fetch if anything throws.
-            try {
-                // Will return immediately if it's already connected.
-                tinode.connect(hostName, tls).getResult();
-
-                String token = AccountManager.get(context).blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-
-                tinode.loginToken(token).getResult();
-
-                // We don't need to do anything with the result. It will be automatically saved.
-                topic.subscribe(null, builder.withLaterData(24).withDel().build(), true).getResult();
-                topic.leave();
-            } catch (Exception ex) {
-                Log.w(TAG, "Failed to sync messages on push. Topic=" + topicName);
-                // TODO: hand sync over to Worker.
-            }
-        } else {
-            Log.d(TAG, "All messages are already received: oldSeq=" + topic.getSeq() + "; newSeq="+seq);
-        }
     }
 }

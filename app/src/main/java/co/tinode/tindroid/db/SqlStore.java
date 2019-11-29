@@ -59,6 +59,7 @@ public class SqlStore implements Storage {
     public void saveDeviceToken(String token) {
         AccountDb.updateDeviceToken(mDbh.getWritableDatabase(), token);
     }
+
     @Override
     public void setTimeAdjustment(long adj) {
         mTimeAdjustment = adj;
@@ -213,17 +214,6 @@ public class SqlStore implements Storage {
     @Override
     public boolean userUpdate(User user) {
         return UserDb.update(mDbh.getWritableDatabase(), user);
-    }
-
-    @Override
-    public boolean msgAvailable(String topicName, int seq) {
-        boolean result = false;
-        final SQLiteDatabase db = mDbh.getWritableDatabase();
-        long topicId = TopicDb.getId(db, topicName);
-        if (topicId > 0) {
-            result = TopicDb.updateSeq(db, topicId, seq);
-        }
-        return result;
     }
 
     @Override

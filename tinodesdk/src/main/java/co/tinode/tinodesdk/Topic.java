@@ -438,6 +438,27 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
+    /**
+     * Set new seq value and if it's greater than the current value make a network call to fetch new messages.
+     * @param seq sequential ID to assign.
+     */
+    protected void setSeqAndFetch(int seq) {
+        if (seq > mDesc.seq) {
+            int limit = seq - mDesc.seq;
+            mDesc.seq = seq;
+            // Fetch only if not attached. If it's attached it will be fetched elsewhere.
+            if (!isAttached()) {
+                try {
+                    // Fully asynchronous fire and forget.
+                    subscribe(null, getMetaGetBuilder().withLaterData(limit).build(), true);
+                    leave();
+                } catch (Exception ex) {
+                    Log.w(TAG, "Failed to sync data", ex);
+                }
+            }
+        }
+    }
+
     public int getClear() {
         return mDesc.clear;
     }
@@ -1751,14 +1772,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     default:
                         break;
                 }
-            }
 
-            // If this is an update from the current user, update the contact with the new count too.
-            if (mTinode.isMe(info.from)) {
-                MeTopic me = mTinode.getMeTopic();
-                if (me != null) {
-                    //noinspection unchecked
-                    me.processOneSub(sub);
+                // If this is an update from the current user, update the contact with the new count too.
+                if (mTinode.isMe(info.from)) {
+                    MeTopic me = mTinode.getMeTopic();
+                    if (me != null) {
+                        //noinspection unchecked
+                        me.processOneSub(sub);
+                    }
                 }
             }
         }

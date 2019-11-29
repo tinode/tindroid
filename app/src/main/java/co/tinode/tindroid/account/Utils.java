@@ -1,13 +1,16 @@
 package co.tinode.tindroid.account;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -22,6 +25,15 @@ import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
+import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.TindroidApp;
+import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 
 import static androidx.core.content.ContextCompat.checkSelfPermission;
 
@@ -288,5 +300,75 @@ public class Utils {
     static boolean isPermissionGranted(Context context, String permission) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Fetch messages (and maybe topic description and subscriptions) in background.
+     *
+     * This method SHOULD NOT be called on UI thread.
+     *
+     * @param context context to use for resources.
+     * @param topicName name of the topic to sync.
+     * @param seq sequence ID of the new message to fetch.
+     */
+    public static void backgroundDataFetch(Context context, String topicName, int seq) {
+        Log.d(TAG, "Background fetch for " + topicName);
+
+        String uid = BaseDb.getInstance().getUid();
+        if (TextUtils.isEmpty(uid)) {
+            Log.w(TAG, "Data fetch failed: not logged in");
+            return;
+        }
+
+        final AccountManager am = AccountManager.get(context);
+        final Account account = UiUtils.getSavedAccount(context, am, uid);
+        if (account == null) {
+            Log.w(TAG, "Data fetch failed: account not found");
+            return;
+        }
+
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(context));
+        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
+        final Tinode tinode = Cache.getTinode();
+        // noinspection unchecked
+        ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
+        Topic.MetaGetBuilder builder;
+        if (topic == null) {
+            // New topic. Create it.
+            // noinspection unchecked
+            topic = (ComTopic<VxCard>) tinode.newTopic(topicName, null);
+            builder = topic.getMetaGetBuilder().withDesc().withSub();
+        } else {
+            // Existing topic.
+            builder = topic.getMetaGetBuilder();
+        }
+        if (topic.isAttached()) {
+            Log.d(TAG, "Topic is already attached");
+            // No need to fetch: topic is already subscribed and got data notification through normal channel.
+            return;
+        }
+
+        if (topic.getSeq() < seq) {
+            // Won't fetch if anything throws.
+            try {
+                // Will return immediately if it's already connected.
+                tinode.connect(hostName, tls).getResult();
+
+                String token = AccountManager.get(context).blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
+
+                tinode.loginToken(token).getResult();
+
+                // Fully asynchronous. We don't need to do anything with the result.
+                // The new data will be automatically saved.
+                topic.subscribe(null, builder.withLaterData(24).withDel().build(), true);
+                topic.leave();
+            } catch (Exception ex) {
+                Log.w(TAG, "Failed to sync messages on push. Topic=" + topicName);
+                // TODO: hand sync over to Worker.
+            }
+        } else {
+            Log.d(TAG, "All messages are already received: oldSeq=" + topic.getSeq() + "; newSeq="+seq);
+        }
     }
 }
