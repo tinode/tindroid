@@ -299,7 +299,7 @@ public class UiUtils {
         }
     }
 
-    static Account getSavedAccount(final Context context, final AccountManager accountManager,
+    public static Account getSavedAccount(final Context context, final AccountManager accountManager,
                                    final @NonNull String uid) {
         Account account = null;
 
