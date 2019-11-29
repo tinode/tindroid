@@ -222,6 +222,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     }
 
     private void fetchNewMessages(String topicName, int seq) {
+        Log.d(TAG, "Background fetch for " + topicName);
         Context context = getApplicationContext();
 
         String uid = BaseDb.getInstance().getUid();
@@ -253,6 +254,11 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             // Existing topic.
             builder = topic.getMetaGetBuilder();
         }
+        if (topic.isAttached()) {
+            Log.d(TAG, "Topic is already attached");
+            // No need to fetch: topic is already subscribed and got data notification through normal channel.
+            return;
+        }
 
         if (topic.getSeq() < seq) {
             // Won't fetch if anything throws.
@@ -265,12 +271,14 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 tinode.loginToken(token).getResult();
 
                 // We don't need to do anything with the result. It will be automatically saved.
-                topic.subscribe(null, builder.withLaterData(10).withDel().build(), true).getResult();
-
+                topic.subscribe(null, builder.withLaterData(24).withDel().build(), true).getResult();
+                topic.leave();
             } catch (Exception ex) {
                 Log.w(TAG, "Failed to sync messages on push. Topic=" + topicName);
                 // TODO: hand sync over to Worker.
             }
+        } else {
+            Log.d(TAG, "All messages are already received: oldSeq=" + topic.getSeq() + "; newSeq="+seq);
         }
     }
 }
