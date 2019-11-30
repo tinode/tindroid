@@ -45,6 +45,8 @@ public class Utils {
 
     // Account management constants
     public static final String TOKEN_TYPE = "co.tinode.token";
+    public static final String TOKEN_EXPIRATION_TIME = "co.tinode.token_expires";
+
     public static final String ACCOUNT_TYPE = "co.tinode.account";
     public static final String SYNC_AUTHORITY = "com.android.contacts";
     public static final String TINODE_IM_PROTOCOL = "Tinode";

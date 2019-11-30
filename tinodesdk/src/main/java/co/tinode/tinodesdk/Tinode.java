@@ -1177,6 +1177,7 @@ public class Tinode {
         mMyUid = newUid;
 
         if (mStore != null) {
+            // FIXME: pass expiration time too.
             mStore.setMyUid(mMyUid);
         }
 
@@ -1192,6 +1193,7 @@ public class Tinode {
 
         if (ctrl.code < 300) {
             mConnAuth = true;
+            setAutoLoginToken(mAuthToken);
             mNotifier.onLogin(ctrl.code, ctrl.text);
         } else {
             // Maybe we got request to enter validation code.
@@ -1205,6 +1207,7 @@ public class Tinode {
                 }
 
                 if (mStore != null) {
+                    // FIXME: pass expiration time too.
                     mStore.setMyUid(mMyUid, mCredToValidate.toArray(new String[]{}));
                 }
             }
