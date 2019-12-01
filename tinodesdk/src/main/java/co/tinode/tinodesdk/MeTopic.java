@@ -261,83 +261,83 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             return;
         }
 
-        if (what == MsgServerPres.What.UPD && Tinode.TOPIC_ME.equals(pres.src)) {
-            // Update to me topic itself.
-            this.getMeta(getMetaGetBuilder().withDesc().build());
-            return;
-        }
-
-        Topic topic = mTinode.getTopic(pres.src);
-        if (topic != null) {
-            switch (what) {
-                case ON: // topic came online
-                    topic.setOnline(true);
-                    break;
-
-                case OFF: // topic went offline
-                    topic.setOnline(false);
-                    topic.setLastSeen(new Date());
-                    break;
-
-                case MSG: // new message received
-                    topic.setSeqAndFetch(pres.seq);
-                    if (pres.act == null || mTinode.isMe(pres.act)) {
-                        // Message is sent by the current user.
-                        assignRead(topic, pres.seq);
-                    }
-                    topic.setTouched(new Date());
-                    break;
-
-                case UPD: // pub/priv updated
-                    this.getMeta(getMetaGetBuilder().withSub(pres.src).build());
-                    break;
-
-                case ACS: // access mode changed
-                    if (topic.updateAccessMode(pres.dacs) && mStore != null) {
-                        mStore.topicUpdate(topic);
-                    }
-                    break;
-
-                case UA: // user agent changed
-                    topic.setLastSeen(new Date(), pres.ua);
-                    break;
-
-                case RECV: // user's other session marked some messages as received
-                    assignRecv(topic, pres.seq);
-                    break;
-
-                case READ: // user's other session marked some messages as read
-                    assignRead(topic, pres.seq);
-                    break;
-
-                case DEL: // messages deleted
-                    // TODO(gene): add handling for del
-                    break;
-
-                case GONE:
-                    // If topic is unknown (==null), then we don't care to unregister it.
-                    mTinode.stopTrackingTopic(pres.src);
-                    topic.persist(false);
-                    break;
+        if (what == MsgServerPres.What.UPD) {
+            if (Tinode.TOPIC_ME.equals(pres.src)) {
+                // Update to me topic itself.
+                getMeta(getMetaGetBuilder().withDesc().build());
+            } else {
+                // pub/priv updated: fetch subscription update.
+                getMeta(getMetaGetBuilder().withSub(pres.src).build());
             }
         } else {
-            switch (what) {
-                case ACS:
-                    Acs acs = new Acs();
-                    acs.update(pres.dacs);
-                    if (acs.isModeDefined()) {
-                        getMeta(getMetaGetBuilder().withSub(pres.src).build());
-                    } else {
-                        Log.d(TAG, "Unexpected access mode in presence: '" + pres.dacs.want + "'/'" + pres.dacs.given + "'");
-                    }
-                    break;
-                case TAGS:
-                    // Tags in 'me' topic updated.
-                    getMeta(getMetaGetBuilder().withTags().build());
-                    break;
-                default:
-                    Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
-                    break;
+            Topic topic = mTinode.getTopic(pres.src);
+            if (topic != null) {
+                switch (what) {
+                    case ON: // topic came online
+                        topic.setOnline(true);
+                        break;
+
+                    case OFF: // topic went offline
+                        topic.setOnline(false);
+                        topic.setLastSeen(new Date());
+                        break;
+
+                    case MSG: // new message received
+                        topic.setSeqAndFetch(pres.seq);
+                        if (pres.act == null || mTinode.isMe(pres.act)) {
+                            // Message is sent by the current user.
+                            assignRead(topic, pres.seq);
+                        }
+                        topic.setTouched(new Date());
+                        break;
+
+                    case ACS: // access mode changed
+                        if (topic.updateAccessMode(pres.dacs) && mStore != null) {
+                            mStore.topicUpdate(topic);
+                        }
+                        break;
+
+                    case UA: // user agent changed
+                        topic.setLastSeen(new Date(), pres.ua);
+                        break;
+
+                    case RECV: // user's other session marked some messages as received
+                        assignRecv(topic, pres.seq);
+                        break;
+
+                    case READ: // user's other session marked some messages as read
+                        assignRead(topic, pres.seq);
+                        break;
+
+                    case DEL: // messages deleted
+                        // TODO(gene): add handling for del
+                        break;
+
+                    case GONE:
+                        // If topic is unknown (==null), then we don't care to unregister it.
+                        mTinode.stopTrackingTopic(pres.src);
+                        topic.persist(false);
+                        break;
+                }
+            } else {
+                switch (what) {
+                    case ACS:
+                        Acs acs = new Acs();
+                        acs.update(pres.dacs);
+                        if (acs.isModeDefined()) {
+                            getMeta(getMetaGetBuilder().withSub(pres.src).build());
+                        } else {
+                            Log.d(TAG, "Unexpected access mode in presence: '" + pres.dacs.want + "'/'" + pres.dacs.given + "'");
+                        }
+                        break;
+                    case TAGS:
+                        // Tags in 'me' topic updated.
+                        getMeta(getMetaGetBuilder().withTags().build());
+                        break;
+                    default:
+                        Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
+                        break;
+                }
             }
         }
 
