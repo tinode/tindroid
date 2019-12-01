@@ -10,7 +10,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 /**
  * Parameter of MsgGetMeta
  */
-
 @JsonInclude(NON_DEFAULT)
 public class MetaGetSub {
     public String user;
