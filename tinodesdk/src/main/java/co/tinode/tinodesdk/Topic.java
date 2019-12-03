@@ -1607,7 +1607,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
                 // Notify listener that topic has updated.
                 if (mListener != null) {
-                    mListener.onContUpdated(sub);
+                    mListener.onContUpdated(sub.user);
                 }
             }
         }
@@ -1777,8 +1777,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 if (mTinode.isMe(info.from)) {
                     MeTopic me = mTinode.getMeTopic();
                     if (me != null) {
-                        //noinspection unchecked
-                        me.processOneSub(sub);
+                        me.setMsgReadRecv(getName(), info.what, info.seq);
                     }
                 }
             }
@@ -1898,7 +1897,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         /**
          * Called when contact is updated.
          */
-        public void onContUpdated(Subscription<SP, SR> sub) {
+        public void onContUpdated(String contact) {
         }
     }
 

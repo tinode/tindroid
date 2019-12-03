@@ -51,7 +51,9 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable {
     }
 
     public int merge(Mergeable another) {
-        if (!(another instanceof PrivateType)) return 0;
+        if (!(another instanceof PrivateType)) {
+            return 0;
+        }
         PrivateType apt = (PrivateType)another;
         for (Map.Entry<String, Object> e : apt.entrySet()) {
             put(e.getKey(), e.getValue());

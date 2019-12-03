@@ -84,8 +84,11 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         if (!mMeTopic.isAttached()) {
             toggleProgressIndicator(true);
         }
+
         // This will issue a subscription request.
-        UiUtils.attachMeTopic(this, mMeTopicListener);
+        if (!UiUtils.attachMeTopic(this, mMeTopicListener)) {
+            toggleProgressIndicator(false);
+        }
     }
 
     private void datasetChanged() {
@@ -241,9 +244,8 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         }
 
         @Override
-        public void onContUpdated(final Subscription<VxCard,PrivateType> sub) {
-            // Method makes no sense in context of MeTopic.
-            throw new UnsupportedOperationException();
+        public void onContUpdated(final String contact) {
+            Log.d(TAG, "Contacts got onContUpdated update '" + contact + "'");
         }
 
         @Override

@@ -903,16 +903,16 @@ public class UiUtils {
         }
     }
 
-    static void attachMeTopic(final Activity activity, final MeEventListener l) {
+    static boolean attachMeTopic(final Activity activity, final MeEventListener l) {
         Tinode tinode = Cache.getTinode();
         if (!tinode.isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
             // from the onLogin callback;
             Cache.getTinode().reconnectNow(true, false);
-            return;
+            return false;
         }
 
-        // If connection exists reconnectNow returns resolved promise.
+        // If connection exists attachMeTopic returns resolved promise.
         Cache.attachMeTopic(l).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
@@ -936,6 +936,7 @@ public class UiUtils {
                     }
                 });
 
+        return true;
     }
 
     // Parse comma separated list of possible quoted string into an array.

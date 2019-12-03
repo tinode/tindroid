@@ -135,7 +135,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     @SuppressWarnings("unchecked")
-    void processOneSub(Subscription<DP,PrivateType> sub) {
+    private void processOneSub(Subscription<DP,PrivateType> sub) {
         // Handle topic.
         Topic topic = mTinode.getTopic(sub.topic);
         if (topic != null) {
@@ -150,7 +150,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 topic.update(sub);
                 // Notify topic to update self.
                 if (topic.mListener != null) {
-                    topic.mListener.onContUpdated(sub);
+                    topic.mListener.onContUpdated(sub.topic);
                 }
             }
         } else if (sub.deleted == null) {
@@ -368,6 +368,27 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
     }
 
+    void setMsgReadRecv(String topicName, String what, int seq) {
+        Topic topic = mTinode.getTopic(topicName);
+        if (topic == null) {
+            return;
+        }
+
+        switch (what) {
+            case Tinode.NOTE_RECV:
+                assignRecv(topic, seq);
+                break;
+            case Tinode.NOTE_READ:
+                assignRead(topic, seq);
+                break;
+            default:
+        }
+
+        if (mListener != null) {
+            mListener.onContUpdated(topicName);
+        }
+    }
+
     @Override
     protected void topicLeft(boolean unsub, int code, String reason) {
         super.topicLeft(unsub, code, reason);
@@ -388,7 +409,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         /** {meta what="desc"} message received */
         public void onMetaDesc(Description<DP,PrivateType> desc) {}
         /** Called by MeTopic when topic descriptor as contact is updated */
-        public void onContUpdated(Subscription<DP,PrivateType> sub) {}
+        public void onContUpdated(String contact) {}
         /** Called by MeTopic when credentials are updated */
         public void onCredUpdated(Credential[] cred) {}
     }
