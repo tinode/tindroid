@@ -153,8 +153,8 @@ public class Tinode {
     private int mPacketCount;
     private ListenerNotifier mNotifier;
     private ConcurrentMap<String, FutureHolder> mFutures;
-    private HashMap<String, Topic> mTopics;
-    private HashMap<String, User> mUsers;
+    private ConcurrentHashMap<String, Topic> mTopics;
+    private ConcurrentHashMap<String, User> mUsers;
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
     // Timestamp of the latest topic desc update.
@@ -203,8 +203,8 @@ public class Tinode {
                 }
             }
         }, EXPIRE_FUTURES_TIMEOUT, EXPIRE_FUTURES_PERIOD);
-        mTopics = new HashMap<>();
-        mUsers = new HashMap<>();
+        mTopics = new ConcurrentHashMap<>();
+        mUsers = new ConcurrentHashMap<>();
 
         mStore = store;
         if (mStore != null) {
