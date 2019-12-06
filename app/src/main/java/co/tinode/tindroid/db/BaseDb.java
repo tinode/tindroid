@@ -26,7 +26,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 8;
 
     /**
      * Filename for SQLite file.
@@ -281,6 +281,11 @@ public class BaseDb extends SQLiteOpenHelper {
         db.execSQL(AccountDb.DROP_INDEX_1);
         db.execSQL(AccountDb.DROP_TABLE);
         onCreate(db);
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        onUpgrade(db, oldVersion, newVersion);
     }
 
     @Override

@@ -38,7 +38,7 @@
 
     <color name="colorMessageBubbleMine">#00000000</color>
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
-    <color name="colorMessageBubbleMeta">#FFCFD8DC</color>
+    <color name="colorMessageBubbleMeta">#FFe8eaf6</color>
 
     <!-- Indicator of user's online/offline status -->
     <color name="online">#FF40C040</color>

@@ -1,18 +1,27 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:paddingLeft="6sp"
-    android:paddingRight="6sp">
+    android:paddingRight="6sp"
+    android:layout_gravity="center_horizontal"
+    android:background="@drawable/bubble">
+
+    <ImageView
+        android:id="@+id/icon"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_block_gray"
+        tools:ignore="ContentDescription" />
 
     <TextView
         android:id="@+id/messageText"
-        android:background="@drawable/bubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
+        android:layout_gravity="center"
         android:maxWidth="200dp"
         android:minWidth="100dp"
         android:paddingStart="12dp"

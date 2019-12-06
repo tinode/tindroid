@@ -1657,6 +1657,19 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected void routeData(MsgServerData data) {
+        if (data.delseq != null) {
+            if (mStore == null) {
+                return;
+            }
+            /*
+            // This is a message with indicators of deleted content.
+            for (MsgDelRange range : data.delseq) {
+                mStore.msgDelete(this, -1, range.low, range.hi == null ? range.low + 1 : range.hi);
+            }
+            */
+            return;
+        }
+
         if (mStore != null) {
             if (mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
                 noteRecv(mTinode.isMe(data.from));

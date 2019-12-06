@@ -65,6 +65,15 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_SEQ = "seq";
     /**
+     * If message indicated a deleted range, lowest seq ID in the range.
+     */
+    private static final String COLUMN_NAME_DEL_LOW = "del_low";
+    /**
+     * If message indicated a deleted range, highest seq ID in the range.
+     */
+    private static final String COLUMN_NAME_DEL_HI = "del_hi";
+
+    /**
      * Serialized header.
      */
     private static final String COLUMN_NAME_HEAD = "head";
@@ -88,6 +97,8 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
+                    COLUMN_NAME_DEL_LOW + " INT," +
+                    COLUMN_NAME_DEL_HI + " INT," +
                     COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
     /**
@@ -121,8 +132,10 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_SENDER = 4;
     static final int COLUMN_IDX_TS = 5;
     static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_HEAD = 7;
-    static final int COLUMN_IDX_CONTENT = 8;
+    static final int COLUMN_IDX_DEL_LOW = 7;
+    static final int COLUMN_IDX_DEL_HI = 8;
+    static final int COLUMN_IDX_HEAD = 9;
+    static final int COLUMN_IDX_CONTENT = 10;
 
     /**
      * Save message to DB
@@ -164,6 +177,12 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_SENDER, msg.from);
             values.put(COLUMN_NAME_TS, msg.ts.getTime());
             values.put(COLUMN_NAME_SEQ, msg.seq);
+            if (msg.delLow > 0) {
+                values.put(COLUMN_NAME_DEL_LOW, msg.delLow);
+            }
+            if (msg.delHi > 0) {
+                values.put(COLUMN_NAME_DEL_HI, msg.delHi);
+            }
             values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
@@ -212,13 +231,16 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the messages
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int from, int to, int limit) {
-        String sql = "SELECT * FROM " + TABLE_NAME +
-                " WHERE " +
-                COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
-                (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
-                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
-                " ORDER BY " + COLUMN_NAME_TS +
+        final String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE "
+                        + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                        (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
+                        (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
+                    " AND "
+                        + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                " ORDER BY "
+                    + COLUMN_NAME_TS + ","
+                    + COLUMN_NAME_SEQ +
                 (limit > 0 ? " LIMIT " + limit : "");
 
         return db.rawQuery(sql, null);
@@ -234,11 +256,15 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the messages.
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
-        String sql = "SELECT * FROM " + TABLE_NAME +
-                " WHERE " +
-                COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
-                " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
+        final String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE "
+                    + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND "
+                    + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                " ORDER BY "
+                    + COLUMN_NAME_TS + " DESC, "
+                    + COLUMN_NAME_SEQ + " DESC" +
+                " LIMIT " + (pageCount * pageSize);
 
         return db.rawQuery(sql, null);
     }
@@ -251,7 +277,7 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the message.
      */
     static Cursor getMessageById(SQLiteDatabase db, long msgId) {
-        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE _id=" + msgId;
+        final String sql = "SELECT * FROM " + TABLE_NAME + " WHERE _id=" + msgId;
 
         return db.rawQuery(sql, null);
     }
@@ -264,7 +290,7 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the messages
      */
     static Cursor queryUnsent(SQLiteDatabase db, long topicId) {
-        String sql = "SELECT * FROM " + TABLE_NAME +
+        final String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_QUEUED +
@@ -284,7 +310,7 @@ public class MessageDb implements BaseColumns {
     static Cursor queryDeleted(SQLiteDatabase db, long topicId, boolean hard) {
         int status = hard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT;
 
-        String sql = "SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
+        final String sql = "SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "=" + status +
                 " ORDER BY " + COLUMN_NAME_TS;

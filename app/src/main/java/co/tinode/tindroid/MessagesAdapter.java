@@ -98,7 +98,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int VIEWTYPE_SIMPLE_AVATAR = 3;
     private static final int VIEWTYPE_FULL_RIGHT = 4;
     private static final int VIEWTYPE_SIMPLE_RIGHT = 5;
-    private static final int VIEWTYPE_FULL_CENTER = 6;
+    private static final int VIEWTYPE_CENTER = 6;
     private static final int VIEWTYPE_INVALID = 100;
 
     // Storage Permissions
@@ -307,6 +307,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return VIEWTYPE_INVALID;
         }
 
+        if (m.delseq != null) {
+            return VIEWTYPE_CENTER;
+        }
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
         // Zero item position is on the bottom of the screen.
         long nextFrom = -2;
@@ -344,7 +347,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final int metaBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMeta, null);
         int bgColor = 0;
         switch (viewType) {
-            case VIEWTYPE_FULL_CENTER:
+            case VIEWTYPE_CENTER:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
                         parent, false);
                 bgColor = metaBgColor;
@@ -417,7 +420,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         // Disable attachment clicker.
         boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED || m.status == BaseDb.STATUS_DRAFT) &&
-                (m.content.getEntReferences() != null);
+                (m.content != null && m.content.getEntReferences() != null);
 
         mSpanFormatterClicker.setPosition(position);
         holder.mText.setText(SpanFormatter.toSpanned(holder.mText, m.content,
