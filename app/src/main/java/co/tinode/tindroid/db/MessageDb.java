@@ -230,7 +230,7 @@ public class MessageDb implements BaseColumns {
      * @param to      maximum seq value to select, inclusive
      * @return cursor with the messages
      */
-    public static Cursor query(SQLiteDatabase db, long topicId, int from, int to, int limit) {
+    private static Cursor query(SQLiteDatabase db, long topicId, int from, int to, int limit) {
         final String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE "
                         + COLUMN_NAME_TOPIC_ID + "=" + topicId +
@@ -239,8 +239,8 @@ public class MessageDb implements BaseColumns {
                     " AND "
                         + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY "
-                    + COLUMN_NAME_TS + ","
-                    + COLUMN_NAME_SEQ +
+                    + COLUMN_NAME_TS + " DESC, "
+                    + COLUMN_NAME_SEQ + " DESC" +
                 (limit > 0 ? " LIMIT " + limit : "");
 
         return db.rawQuery(sql, null);
