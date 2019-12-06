@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,9 +11,15 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
+import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 
 import androidx.annotation.NonNull;
@@ -50,7 +57,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -114,6 +124,8 @@ public class MessagesFragment extends Fragment
     private Timer mNoteTimer = null;
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
+
+    private String mCurrentPhotoPath;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -207,7 +219,7 @@ public class MessagesFragment extends Fragment
         view.findViewById(R.id.attachImage).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openFileSelector("image/*", R.string.select_image, ACTION_ATTACH_IMAGE);
+                openImageSelector(activity);
             }
         });
 
@@ -215,7 +227,7 @@ public class MessagesFragment extends Fragment
         view.findViewById(R.id.attachFile).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openFileSelector("*/*", R.string.select_file, ACTION_ATTACH_FILE);
+                openFileSelector(activity);
             }
         });
 
@@ -617,16 +629,91 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private void openFileSelector(String mimeType, int title, int resultCode) {
+    private void openFileSelector(Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType(mimeType);
+        intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         try {
             startActivityForResult(
-                    Intent.createChooser(intent, getString(title)), resultCode);
+                    Intent.createChooser(intent, getString(R.string.select_file)), ACTION_ATTACH_FILE);
         } catch (ActivityNotFoundException ex) {
             Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void openImageSelector(Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        // Pick image from gallery.
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png"});
+
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Make sure camera is available.
+        if (cameraIntent.resolveActivity(activity.getPackageManager()) != null) {
+            // Create temp file for storing the photo.
+            File photoFile = null;
+            try {
+                photoFile = createImageFile(activity);
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                Log.w(TAG, "Unable to create temp file for storing camera photo", ex);
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(activity,
+                        "co.tinode.tindroid.provider", photoFile);
+
+                cameraIntent.putExtra("return-data", true);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                // See explanation here: http://medium.com/@quiro91/ceb9bb0eec3a
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+                    cameraIntent.setClipData(ClipData.newRawUri("", photoURI));
+                    cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+                Log.d(TAG, "Photo Uri: " + photoURI);
+            } else {
+                cameraIntent = null;
+            }
+        } else {
+            cameraIntent = null;
+        }
+
+        // Pack two intents into a chooser.
+        Intent chooserIntent = Intent.createChooser(galleryIntent, getString(R.string.select_image));
+        if (cameraIntent != null) {
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
+        }
+
+        startActivityForResult(chooserIntent, ACTION_ATTACH_IMAGE);
+    }
+
+    private File createImageFile(Activity activity) throws IOException {
+        // Create an image file name
+        String imageFileName = "IMG_" +
+                new SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + "_";
+        File storageDir = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File imageFile = File.createTempFile(
+                imageFileName,  // prefix
+                ".jpg",  // suffix
+                storageDir      // directory
+        );
+
+        // Make sure directories exist.
+        File path = imageFile.getParentFile();
+        if (path != null) {
+            path.mkdirs();
+        }
+
+        // Path for use with ACTION_VIEW intents.
+        mCurrentPhotoPath = imageFile.getAbsolutePath();
+        return imageFile;
     }
 
     @Override
@@ -645,15 +732,26 @@ public class MessagesFragment extends Fragment
                             READ_EXTERNAL_STORAGE_PERMISSION);
                         Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
                     } else {
+                        Uri imageUri;
+                        if (data == null || data.getData() == null) {
+                            // Camera
+                            imageUri = Uri.parse(mCurrentPhotoPath);
+                            mCurrentPhotoPath = null;
+                        } else {
+                            // Gallery
+                            imageUri = data.getData();
+                        }
                         final Bundle args = new Bundle();
-                        args.putParcelable("uri", data.getData());
+                        args.putParcelable("uri", imageUri);
                         args.putInt("requestCode", requestCode);
                         args.putString("topic", mTopicName);
+
+                        Log.d(TAG, "Got image uri: " + imageUri);
 
                         // Must use unique ID for each upload. Otherwise trouble.
                         LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
                     }
-                    break;
+                    return;
                 }
             }
         }
