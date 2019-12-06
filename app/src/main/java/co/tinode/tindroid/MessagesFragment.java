@@ -125,7 +125,7 @@ public class MessagesFragment extends Fragment
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
 
-    private String mCurrentPhotoPath;
+    private Uri mCurrentPhotoUri;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -667,17 +667,16 @@ public class MessagesFragment extends Fragment
             }
             // Continue only if the File was successfully created
             if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(activity,
+                Uri photoUri = FileProvider.getUriForFile(activity,
                         "co.tinode.tindroid.provider", photoFile);
 
-                cameraIntent.putExtra("return-data", true);
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                 // See explanation here: http://medium.com/@quiro91/ceb9bb0eec3a
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-                    cameraIntent.setClipData(ClipData.newRawUri("", photoURI));
+                    cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
                     cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
-                Log.d(TAG, "Photo Uri: " + photoURI);
+                mCurrentPhotoUri = photoUri;
             } else {
                 cameraIntent = null;
             }
@@ -711,8 +710,6 @@ public class MessagesFragment extends Fragment
             path.mkdirs();
         }
 
-        // Path for use with ACTION_VIEW intents.
-        mCurrentPhotoPath = imageFile.getAbsolutePath();
         return imageFile;
     }
 
@@ -731,26 +728,27 @@ public class MessagesFragment extends Fragment
                         ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
                             READ_EXTERNAL_STORAGE_PERMISSION);
                         Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
-                    } else {
-                        Uri imageUri;
-                        if (data == null || data.getData() == null) {
-                            // Camera
-                            imageUri = Uri.parse(mCurrentPhotoPath);
-                            mCurrentPhotoPath = null;
-                        } else {
-                            // Gallery
-                            imageUri = data.getData();
-                        }
-                        final Bundle args = new Bundle();
-                        args.putParcelable("uri", imageUri);
-                        args.putInt("requestCode", requestCode);
-                        args.putString("topic", mTopicName);
 
-                        Log.d(TAG, "Got image uri: " + imageUri);
-
-                        // Must use unique ID for each upload. Otherwise trouble.
-                        LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+                        return;
                     }
+
+                    Uri imageUri;
+                    if (data == null || data.getData() == null) {
+                        // Camera
+                        imageUri = mCurrentPhotoUri;
+                        mCurrentPhotoUri = null;
+                    } else {
+                        // Gallery
+                        imageUri = data.getData();
+                    }
+                    final Bundle args = new Bundle();
+                    args.putParcelable("uri", imageUri);
+                    args.putInt("requestCode", requestCode);
+                    args.putString("topic", mTopicName);
+
+                    // Must use unique ID for each upload. Otherwise trouble.
+                    LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+
                     return;
                 }
             }
@@ -943,7 +941,7 @@ public class MessagesFragment extends Fragment
         }
 
         // Still no size? Try opening directly.
-        if (fsize == 0) {
+        if (fsize <= 0) {
             String path = UiUtils.getPath(context, uri);
             if (path != null) {
                 File file = new File(path);

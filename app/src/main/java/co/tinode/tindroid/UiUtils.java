@@ -986,7 +986,7 @@ public class UiUtils {
     // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
     static String getPath(Context context, Uri uri) {
         // DocumentProvider
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && DocumentsContract.isDocumentUri(context, uri)) {
+        if (DocumentsContract.isDocumentUri(context, uri)) {
             final String docId = DocumentsContract.getDocumentId(uri);
             String authority = uri.getAuthority();
             if (authority != null) {
