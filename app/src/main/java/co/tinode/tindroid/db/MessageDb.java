@@ -212,13 +212,16 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the messages
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int from, int to, int limit) {
-        String sql = "SELECT * FROM " + TABLE_NAME +
-                " WHERE " +
-                COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
-                (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
-                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
-                " ORDER BY " + COLUMN_NAME_TS +
+        final String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE "
+                        + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                        (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
+                        (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
+                    " AND "
+                        + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                " ORDER BY "
+                    + COLUMN_NAME_TS + ","
+                    + COLUMN_NAME_SEQ +
                 (limit > 0 ? " LIMIT " + limit : "");
 
         return db.rawQuery(sql, null);
@@ -234,11 +237,15 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the messages.
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
-        String sql = "SELECT * FROM " + TABLE_NAME +
-                " WHERE " +
-                COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
-                " ORDER BY " + COLUMN_NAME_TS + " DESC LIMIT " + (pageCount * pageSize);
+        final String sql = "SELECT * FROM " + TABLE_NAME +
+                " WHERE "
+                        + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND "
+                        + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                " ORDER BY "
+                    + COLUMN_NAME_TS + " DESC, "
+                    + COLUMN_NAME_SEQ + " DESC" +
+                " LIMIT " + (pageCount * pageSize);
 
         return db.rawQuery(sql, null);
     }
