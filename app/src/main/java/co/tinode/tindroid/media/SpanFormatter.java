@@ -271,7 +271,21 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         }, content);
                     } catch (ClassCastException | NullPointerException ignored) {}
                     break;
-                case "MN": break;
+                case "MN": 
+                    span = new TreeNode(new MentionSpan("") {
+                            @Override
+                            public void onClick(View widget) {
+                                String checkMention = data.get("val").toString();
+                                if (checkMention.charAt(0) == '@') {
+                                    Toast.makeText(mContainer.getContext(), "(@)This mentions don't supported yet", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                if (mClicker != null) {
+                                    mClicker.onClick("MN", data);
+                                }
+                            }
+                        }, content);
+                    break;
                 case "HT": break;
                 case "HD":
                     // Hidden text
@@ -327,6 +341,19 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         void onClick(String type, Map<String,Object> data);
     }
 
+    private class MentionSpan extends URLSpan {
+
+        @Override
+        public void updateDrawState(@NonNull TextPaint ds) {
+            super.updateDrawState(ds);
+            ds.setUnderlineText(false);
+        }
+
+        public MentionSpan(String url) {
+            super(url);
+        }
+    }
+    
     // Structure representing Drafty as a tree of formatting nodes.
     static class TreeNode {
         private CharacterStyle cStyle;
