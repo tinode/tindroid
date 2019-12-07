@@ -396,6 +396,116 @@ public class Drafty implements Serializable {
                 refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
     }
 
+    /**
+     * Parse 2 for mentions
+     *
+     * @return
+     */
+    public static Drafty parse(String content, List<Entity> exEntities,
+                               List<Style> exStyles, List<String> value) {
+        // Break input into individual lines. Format cannot span multiple lines.
+        String lines[] = content.split("\\r?\\n");
+        List<Block> blks = new ArrayList<>();
+        List<Entity> refs = new ArrayList<>();
+
+        List<Span> spans = new ArrayList<>();
+        Map<String, Integer> entityMap = new HashMap<>();
+        List<ExtractedEnt> entities;
+        for (String line : lines) {
+            spans.clear();
+            // Select styled spans.
+            for (int i = 0; i < INLINE_STYLE_NAME.length; i++) {
+                spans.addAll(spannify(line, INLINE_STYLE_RE[i], INLINE_STYLE_NAME[i]));
+            }
+
+            Block b;
+            if (!spans.isEmpty()) {
+                // Sort styled spans in ascending order by .start
+                Collections.sort(spans);
+
+                // Rearrange linear list of styled spans into a tree, throw away invalid spans.
+                spans = toTree(spans);
+
+                // Parse the entire string into spans, styled or unstyled.
+                spans = chunkify(line, 0, line.length(), spans);
+
+                // Convert line into a block.
+                b = draftify(spans, 0);
+            } else {
+                b = new Block(line);
+            }
+
+            // Extract entities from the string already cleared of markup.
+            entities = extractEntities(b.txt);
+
+            /**
+             *  initiate addition data for mentions
+             */
+            if (exEntities != null && exStyles != null) {
+                for (int i = 0; i < exEntities.size(); i++) {
+                    ExtractedEnt ee = new ExtractedEnt();
+                    ee.at = exStyles.get(i).at;
+                    ee.len = exStyles.get(i).len;
+                    ee.tp = exEntities.get(i).tp;
+                    ee.data = exEntities.get(i).data;
+                    ee.value = value.get(i);
+                    entities.add(ee);
+                }
+            }
+
+            // Normalize entities by splitting them into spans and references.
+            for (ExtractedEnt ent : entities) {
+                // Check if the entity has been indexed already
+                Integer index = entityMap.get(ent.value);
+                if (index == null) {
+                    index = refs.size();
+                    entityMap.put(ent.value, index);
+                    refs.add(new Entity(ent.tp, ent.data));
+                }
+
+                b.addStyle(new Style(ent.at, ent.len, index));
+            }
+
+            blks.add(b);
+        }
+
+        StringBuilder text = new StringBuilder();
+        List<Style> fmt = new ArrayList<>();
+        // Merge lines and save line breaks as BR inline formatting.
+        if (blks.size() > 0) {
+            Block b = blks.get(0);
+            if (b.txt != null) {
+                text.append(b.txt);
+            }
+            if (b.fmt != null) {
+                fmt.addAll(b.fmt);
+            }
+
+            for (int i = 1; i < blks.size(); i++) {
+                int offset = text.length() + 1;
+                fmt.add(new Style("BR", offset - 1, 1));
+
+                b = blks.get(i);
+                text.append(" ");
+                if (b.txt != null) {
+                    text.append(b.txt);
+                }
+                if (b.fmt != null) {
+                    for (Style s : b.fmt) {
+                        s.at += offset;
+                        fmt.add(s);
+                    }
+                }
+            }
+        }
+
+        return new Drafty(text.toString(),
+                fmt.size() > 0 ? fmt.toArray(new Style[0]) : null,
+                refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
+    }
+
+
+
     @JsonIgnore
     public Style[] getStyles() {
         return fmt;

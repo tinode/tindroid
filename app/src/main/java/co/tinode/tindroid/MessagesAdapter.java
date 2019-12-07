@@ -21,6 +21,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.loader.app.LoaderManager;
 import androidx.core.content.FileProvider;
 import androidx.loader.content.Loader;
@@ -872,6 +875,44 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
+    /**
+     * Method for Account info fragment present when clicked mention
+     */
+    void showFragment(String mTopicName, Bundle args, boolean addToBackstack) {
+        FragmentManager fm = mActivity.getSupportFragmentManager();
+        String tag = "info";
+        Fragment fragment = fm.findFragmentByTag(tag);
+        if (fragment == null) {
+            fragment = new TopicInfoFragment();
+        }
+
+        args = args != null ? args : new Bundle();
+        args.putString("topic", mTopicName);
+
+        if (fragment.getArguments() != null) {
+            fragment.getArguments().putAll(args);
+        } else {
+            fragment.setArguments(args);
+        }
+
+        FragmentTransaction trx = fm.beginTransaction();
+        if (!fragment.isAdded()) {
+            trx = trx.replace(R.id.contentFragment, fragment, tag)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        } else if (!fragment.isVisible()) {
+            trx = trx.show(fragment);
+        } else {
+            addToBackstack = false;
+        }
+
+        if (addToBackstack) {
+            trx.addToBackStack(tag);
+        }
+        if (!trx.isEmpty()) {
+            trx.commit();
+        }
+    }
+
     class SpanClicker implements SpanFormatter.ClickListener {
         private int mPosition = -1;
 
@@ -889,6 +930,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             switch (type) {
+                case "MN":
+                    String topicNameForMention = data.get("val").toString();
+                    showFragment(topicNameForMention, null, true);
+                    break;
                 case "LN":
                     // Click on an URL
                     try {

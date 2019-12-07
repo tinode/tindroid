@@ -11,6 +11,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
+import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
@@ -28,6 +29,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -271,7 +273,21 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         }, content);
                     } catch (ClassCastException | NullPointerException ignored) {}
                     break;
-                case "MN": break;
+                case "MN":
+                    span = new TreeNode(new MentionSpan("") {
+                        @Override
+                        public void onClick(View widget) {
+                            String checkMention = data.get("val").toString();
+                            if (checkMention.charAt(0) == '@') {
+                                Toast.makeText(mContainer.getContext(), "(@)This mentions aren't supported yet", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            if (mClicker != null) {
+                                mClicker.onClick("MN", data);
+                            }
+                        }
+                    }, content);
+                    break;
                 case "HT": break;
                 case "HD":
                     // Hidden text
@@ -325,6 +341,22 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
     public interface ClickListener {
         void onClick(String type, Map<String,Object> data);
+    }
+
+    /**
+     * Custom URLSpan for Mentions
+     */
+    private class MentionSpan extends URLSpan {
+
+        @Override
+        public void updateDrawState(@NonNull TextPaint ds) {
+            super.updateDrawState(ds);
+            ds.setUnderlineText(false);
+        }
+
+        public MentionSpan(String url) {
+            super(url);
+        }
     }
 
     // Structure representing Drafty as a tree of formatting nodes.
