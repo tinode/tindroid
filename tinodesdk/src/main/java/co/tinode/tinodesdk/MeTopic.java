@@ -135,7 +135,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     @SuppressWarnings("unchecked")
-    void processOneSub(Subscription<DP,PrivateType> sub) {
+    private void processOneSub(Subscription<DP,PrivateType> sub) {
         // Handle topic.
         Topic topic = mTinode.getTopic(sub.topic);
         if (topic != null) {
@@ -150,7 +150,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 topic.update(sub);
                 // Notify topic to update self.
                 if (topic.mListener != null) {
-                    topic.mListener.onContUpdated(sub);
+                    topic.mListener.onContUpdated(sub.topic);
                 }
             }
         } else if (sub.deleted == null) {
@@ -261,89 +261,83 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             return;
         }
 
-        Topic topic = mTinode.getTopic(pres.src);
-        if (topic != null) {
-            switch (what) {
-                case ON: // topic came online
-                    topic.setOnline(true);
-                    break;
-
-                case OFF: // topic went offline
-                    topic.setOnline(false);
-                    topic.setLastSeen(new Date());
-                    break;
-
-                case MSG: // new message received
-                    topic.setSeq(pres.seq);
-                    topic.setTouched(new Date());
-                    break;
-
-                case UPD: // pub/priv updated
-                    this.getMeta(getMetaGetBuilder().withSub(pres.src).build());
-                    break;
-
-                case ACS: // access mode changed
-                    if (topic.updateAccessMode(pres.dacs) && mStore != null) {
-                        mStore.topicUpdate(topic);
-                    }
-                    break;
-
-                case UA: // user agent changed
-                    topic.setLastSeen(new Date(), pres.ua);
-                    break;
-
-                case RECV: // user's other session marked some messages as received
-                    if (topic.getRecv() < pres.seq) {
-                        topic.setRecv(pres.seq);
-                        if (mStore != null) {
-                            mStore.setRecv(topic, pres.seq);
-                        }
-                    }
-                    break;
-
-                case READ: // user's other session marked some messages as read
-                    if (topic.getRead() < pres.seq) {
-                        topic.setRead(pres.seq);
-                        if (mStore != null) {
-                            mStore.setRead(topic, pres.seq);
-                        }
-                        if (topic.getRecv() < topic.getRead()) {
-                            topic.setRecv(topic.getRead());
-                            if (mStore != null) {
-                                mStore.setRecv(topic, topic.getRead());
-                            }
-                        }
-                    }
-                    break;
-
-                case DEL: // messages deleted
-                    // TODO(gene): add handling for del
-                    break;
-
-                case GONE:
-                    // If topic is unknown (==null), then we don't care to unregister it.
-                    mTinode.stopTrackingTopic(pres.src);
-                    topic.persist(false);
-                    break;
+        if (what == MsgServerPres.What.UPD) {
+            if (Tinode.TOPIC_ME.equals(pres.src)) {
+                // Update to me topic itself.
+                getMeta(getMetaGetBuilder().withDesc().build());
+            } else {
+                // pub/priv updated: fetch subscription update.
+                getMeta(getMetaGetBuilder().withSub(pres.src).build());
             }
         } else {
-            switch (what) {
-                case ACS:
-                    Acs acs = new Acs();
-                    acs.update(pres.dacs);
-                    if (acs.isModeDefined()) {
-                        getMeta(getMetaGetBuilder().withSub(pres.src).build());
-                    } else {
-                        Log.d(TAG, "Unexpected access mode in presence: '" + pres.dacs.want + "'/'" + pres.dacs.given + "'");
-                    }
-                    break;
-                case TAGS:
-                    // Tags in 'me' topic updated.
-                    getMeta(getMetaGetBuilder().withTags().build());
-                    break;
-                default:
-                    Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
-                    break;
+            Topic topic = mTinode.getTopic(pres.src);
+            if (topic != null) {
+                switch (what) {
+                    case ON: // topic came online
+                        topic.setOnline(true);
+                        break;
+
+                    case OFF: // topic went offline
+                        topic.setOnline(false);
+                        topic.setLastSeen(new Date());
+                        break;
+
+                    case MSG: // new message received
+                        topic.setSeqAndFetch(pres.seq);
+                        if (pres.act == null || mTinode.isMe(pres.act)) {
+                            // Message is sent by the current user.
+                            assignRead(topic, pres.seq);
+                        }
+                        topic.setTouched(new Date());
+                        break;
+
+                    case ACS: // access mode changed
+                        if (topic.updateAccessMode(pres.dacs) && mStore != null) {
+                            mStore.topicUpdate(topic);
+                        }
+                        break;
+
+                    case UA: // user agent changed
+                        topic.setLastSeen(new Date(), pres.ua);
+                        break;
+
+                    case RECV: // user's other session marked some messages as received
+                        assignRecv(topic, pres.seq);
+                        break;
+
+                    case READ: // user's other session marked some messages as read
+                        assignRead(topic, pres.seq);
+                        break;
+
+                    case DEL: // messages deleted
+                        // TODO(gene): add handling for del
+                        break;
+
+                    case GONE:
+                        // If topic is unknown (==null), then we don't care to unregister it.
+                        mTinode.stopTrackingTopic(pres.src);
+                        topic.persist(false);
+                        break;
+                }
+            } else {
+                switch (what) {
+                    case ACS:
+                        Acs acs = new Acs();
+                        acs.update(pres.dacs);
+                        if (acs.isModeDefined()) {
+                            getMeta(getMetaGetBuilder().withSub(pres.src).build());
+                        } else {
+                            Log.d(TAG, "Unexpected access mode in presence: '" + pres.dacs.want + "'/'" + pres.dacs.given + "'");
+                        }
+                        break;
+                    case TAGS:
+                        // Tags in 'me' topic updated.
+                        getMeta(getMetaGetBuilder().withTags().build());
+                        break;
+                    default:
+                        Log.d(TAG, "Topic not found in me.routePres: " + pres.what + " in " + pres.src);
+                        break;
+                }
             }
         }
 
@@ -352,6 +346,46 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 mListener.onSubsUpdated();
             }
             mListener.onPres(pres);
+        }
+    }
+
+    private void assignRead(Topic topic, int seq) {
+        if (topic.getRead() < seq) {
+            topic.setRead(seq);
+            if (mStore != null) {
+                mStore.setRead(topic, seq);
+            }
+            assignRecv(topic, topic.getRead());
+        }
+    }
+
+    private void assignRecv(Topic topic, int seq) {
+        if (topic.getRecv() < seq) {
+            topic.setRecv(seq);
+            if (mStore != null) {
+                mStore.setRecv(topic, seq);
+            }
+        }
+    }
+
+    void setMsgReadRecv(String topicName, String what, int seq) {
+        Topic topic = mTinode.getTopic(topicName);
+        if (topic == null) {
+            return;
+        }
+
+        switch (what) {
+            case Tinode.NOTE_RECV:
+                assignRecv(topic, seq);
+                break;
+            case Tinode.NOTE_READ:
+                assignRead(topic, seq);
+                break;
+            default:
+        }
+
+        if (mListener != null) {
+            mListener.onContUpdated(topicName);
         }
     }
 
@@ -375,7 +409,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         /** {meta what="desc"} message received */
         public void onMetaDesc(Description<DP,PrivateType> desc) {}
         /** Called by MeTopic when topic descriptor as contact is updated */
-        public void onContUpdated(Subscription<DP,PrivateType> sub) {}
+        public void onContUpdated(String contact) {}
         /** Called by MeTopic when credentials are updated */
         public void onCredUpdated(Credential[] cred) {}
     }

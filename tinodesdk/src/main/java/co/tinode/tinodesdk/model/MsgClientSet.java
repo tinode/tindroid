@@ -1,5 +1,9 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Metadata update packet
  *
@@ -9,7 +13,7 @@ package co.tinode.tinodesdk.model;
  *  Subscription parameters
  *  Sub *MsgSetSub `json:"sub,omitempty"`
  */
-
+@JsonInclude(NON_DEFAULT)
 public class MsgClientSet<Pu,Pr> {
     public String id;
     public String topic;

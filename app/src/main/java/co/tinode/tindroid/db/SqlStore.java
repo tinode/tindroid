@@ -59,6 +59,7 @@ public class SqlStore implements Storage {
     public void saveDeviceToken(String token) {
         AccountDb.updateDeviceToken(mDbh.getWritableDatabase(), token);
     }
+
     @Override
     public void setTimeAdjustment(long adj) {
         mTimeAdjustment = adj;

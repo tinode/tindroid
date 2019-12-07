@@ -26,9 +26,11 @@ import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
@@ -69,7 +71,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         String body = null;
         String topicName = null;
         Bitmap avatar = null;
-        int requestCode = 0;
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
@@ -89,8 +90,14 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 return;
             }
 
-            // Fetch locally stored contacts
+            // Check and maybe download new messages right away *before* showing the notification.
+            String seqStr = data.get("seq");
+            if (seqStr != null) {
+                Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr));
+            }
+
             Storage store = BaseDb.getInstance().getStore();
+            // Fetch locally stored contacts
             User<VxCard> sender = (User<VxCard>) store.userGet(data.get("xfrom"));
             String senderName  = (sender == null || sender.pub == null) ?
                     getResources().getString(R.string.sender_unknown) : sender.pub.fn;
@@ -106,7 +113,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             } else if (tp == Topic.TopicType.GRP) {
                 // Group message
 
-                Topic<VxCard,?,?,?> topic = (Topic<VxCard,?,?,?>) store.topicGet(null, topicName);
+                ComTopic<VxCard> topic = (ComTopic<VxCard>) store.topicGet(null, topicName);
                 if (topic == null) {
                     Log.w(TAG, "Unknown topic: " + topicName);
                     return;
@@ -121,16 +128,17 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 Log.w(TAG, "Unexpected topic type=" + tp);
                 return;
             }
-            // Workaround for an FCM bug or poor documentation.
-            requestCode = topicName.hashCode();
         } else if (remoteMessage.getNotification() != null) {
             RemoteMessage.Notification data = remoteMessage.getNotification();
             Log.d(TAG, "RemoteMessage Body: " + data.getBody());
 
-            topicName = null;
+            topicName = data.getTag();
             title = data.getTitle();
             body = data.getBody();
         }
+
+        // Workaround for an FCM bug or poor documentation.
+        int requestCode = topicName != null ? topicName.hashCode() : 0;
 
         showNotification(title, body, avatar, topicName, requestCode);
     }

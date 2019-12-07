@@ -11,6 +11,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
@@ -87,6 +88,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
@@ -122,6 +124,7 @@ public class MessagesFragment extends Fragment
     private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
+    private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
 
@@ -244,8 +247,8 @@ public class MessagesFragment extends Fragment
         // mMessageViewLayoutManager.setStackFromEnd(true);
         mMessageViewLayoutManager.setReverseLayout(true);
 
-        RecyclerView ml = view.findViewById(R.id.messages_container);
-        ml.setLayoutManager(mMessageViewLayoutManager);
+        mRecyclerView = view.findViewById(R.id.messages_container);
+        mRecyclerView.setLayoutManager(mMessageViewLayoutManager);
 
         // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
         mUploadProgress = new UploadProgress();
@@ -254,7 +257,7 @@ public class MessagesFragment extends Fragment
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
-        ml.setAdapter(mMessagesAdapter);
+        mRecyclerView.setAdapter(mMessagesAdapter);
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -397,18 +400,13 @@ public class MessagesFragment extends Fragment
 
     private void updateFormValues() {
         final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
         if (mTopic == null) {
             // Default view when the topic is not available.
-            View view = activity.findViewById(R.id.notReadable);
-            if (view == null) {
-                // Fragment is not set up. Let's not crash.
-                return;
-            }
-            view.setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
@@ -433,9 +431,9 @@ public class MessagesFragment extends Fragment
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
-            if (peer != null && peer.acs != null &&
-                    peer.acs.isJoiner(Acs.Side.WANT) &&
-                    peer.acs.getMissing().toString().contains("RW")) {
+            boolean isJoiner = peer != null && peer.acs != null && peer.acs.isJoiner(Acs.Side.WANT);
+            AcsHelper missing = peer != null && peer.acs != null ? peer.acs.getMissing() : new AcsHelper();
+            if (isJoiner && (missing.isReader() || missing.isWriter())) {
                 activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             } else {
@@ -457,6 +455,11 @@ public class MessagesFragment extends Fragment
         if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {
             showChatInvitationDialog();
         }
+    }
+
+
+    private void scrollToBottom() {
+        mRecyclerView.scrollToPosition(0);
     }
 
     @Override
@@ -751,7 +754,11 @@ public class MessagesFragment extends Fragment
     private boolean sendMessage(Drafty content) {
         MessageActivity  activity = (MessageActivity) getActivity();
         if (activity != null) {
-            return activity.sendMessage(content);
+            boolean done = activity.sendMessage(content);
+            if (done) {
+                scrollToBottom();
+            }
+            return done;
         }
         return false;
     }
@@ -1015,23 +1022,57 @@ public class MessagesFragment extends Fragment
             }
 
             final ContentResolver resolver = context.getContentResolver();
-            if (requestCode == ACTION_ATTACH_IMAGE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
-                is = resolver.openInputStream(uri);
-                // Resize image to ensure it's under the maximum in-band size.
-                Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
-                // noinspection ConstantConditions: NullPointerException is handled explicitly.
-                bmp = UiUtils.scaleBitmap(bmp);
-                imageWidth = bmp.getWidth();
-                imageHeight = bmp.getHeight();
-                //noinspection ConstantConditions
-                is.close();
 
-                is = UiUtils.bitmapToStream(bmp, mimeType);
-                fsize = (long) is.available();
+            // Image is being attached.
+            if (requestCode == ACTION_ATTACH_IMAGE) {
+                Bitmap bmp = null;
+
+                // Make sure the image is not too large.
+                if (fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                    // Resize image to ensure it's under the maximum in-band size.
+                    is = resolver.openInputStream(uri);
+                    bmp = BitmapFactory.decodeStream(is, null, null);
+                    //noinspection ConstantConditions
+                    is.close();
+
+                    // noinspection ConstantConditions: NullPointerException is handled explicitly.
+                    bmp = UiUtils.scaleBitmap(bmp);
+                }
+
+                // Also ensure the image has correct orientation.
+                try {
+                    is = resolver.openInputStream(uri);
+                    //noinspection ConstantConditions
+                    ExifInterface exif = new ExifInterface(is);
+                    is.close();
+                    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+                    if (orientation != ExifInterface.ORIENTATION_UNDEFINED &&
+                            orientation != ExifInterface.ORIENTATION_NORMAL) {
+                        // Rotate image to ensure correct orientation.
+                        if (bmp == null) {
+                            is = resolver.openInputStream(uri);
+                            bmp = BitmapFactory.decodeStream(is, null, null);
+                            //noinspection ConstantConditions
+                            is.close();
+                        }
+
+                        bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    }
+                } catch (IOException ex) {
+                    Log.w(TAG, "Failed to obtain image orientation", ex);
+                }
+
+                if (bmp != null) {
+                    imageWidth = bmp.getWidth();
+                    imageHeight = bmp.getHeight();
+
+                    is = UiUtils.bitmapToStream(bmp, mimeType);
+                    fsize = (long) is.available();
+                }
             }
 
             if (fsize > MAX_ATTACHMENT_SIZE) {
-                Log.w(TAG, "File is too big, size=" + fsize);
+                Log.w(TAG, "Unable to process attachment: too big, size=" + fsize);
                 result.error = context.getString(R.string.attachment_too_large,
                         UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
             } else {

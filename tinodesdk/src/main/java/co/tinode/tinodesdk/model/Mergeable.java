@@ -6,5 +6,5 @@ package co.tinode.tinodesdk.model;
 public interface Mergeable {
     // Merges this with |another|.
     // Returns the total number of modified fields.
-    public int merge(Mergeable another);
+    int merge(Mergeable another);
 }

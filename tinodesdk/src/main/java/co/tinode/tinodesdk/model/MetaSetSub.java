@@ -1,9 +1,13 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Parameter of MsgSetMeta
  */
-
+@JsonInclude(NON_DEFAULT)
 public class MetaSetSub {
     public String user;
     public String mode;

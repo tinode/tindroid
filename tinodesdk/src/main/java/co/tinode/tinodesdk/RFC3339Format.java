@@ -17,6 +17,7 @@ public class RFC3339Format extends SimpleDateFormat {
         mShortDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 
         setTimeZone(TimeZone.getTimeZone("UTC"));
+        mShortDate.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     // Server may generate timestamps without milliseconds.

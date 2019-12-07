@@ -1,8 +1,13 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Create client handshake packet.
  */
+@JsonInclude(NON_DEFAULT)
 public class MsgClientHi {
 
     public String id;

@@ -438,6 +438,27 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
+    /**
+     * Set new seq value and if it's greater than the current value make a network call to fetch new messages.
+     * @param seq sequential ID to assign.
+     */
+    protected void setSeqAndFetch(int seq) {
+        if (seq > mDesc.seq) {
+            int limit = seq - mDesc.seq;
+            mDesc.seq = seq;
+            // Fetch only if not attached. If it's attached it will be fetched elsewhere.
+            if (!isAttached()) {
+                try {
+                    // Fully asynchronous fire and forget.
+                    subscribe(null, getMetaGetBuilder().withLaterData(limit).build(), true);
+                    leave();
+                } catch (Exception ex) {
+                    Log.w(TAG, "Failed to sync data", ex);
+                }
+            }
+        }
+    }
+
     public int getClear() {
         return mDesc.clear;
     }
@@ -674,7 +695,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Subscribe to topic
+     * Subscribe to topic.
      */
     public PromisedReply<ServerMessage> subscribe() {
         MsgSetMeta<DP, DR> mset = null;
@@ -683,21 +704,38 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, mTags, null);
             mget = null;
         } else {
-            // FIXME: don't ask for tags if it's not a 'me' topic or the owner of a 'grp' topic.
-            mget = getMetaGetBuilder()
-                    .withDesc().withData().withSub().withTags().build();
+            MetaGetBuilder mgb = getMetaGetBuilder()
+                    .withDesc().withData().withSub();
+            if (isMeType() || (isGrpType() && isOwner())) {
+                // Ask for tags only if it's a 'me' topic or the user is the owner of a 'grp' topic.
+                mgb = mgb.withTags();
+            }
+            mget = mgb.build();
         }
         return subscribe(mset, mget);
     }
 
     /**
-     * Subscribe to topic with parameters
+     * Service subscription to topic with explicit parameters.
+     *
+     * @param set values to be assigned to topic on successful subscription.
+     * @param get query topic for data.
+     *
+     * @throws NotConnectedException      if there is no live connection to the server
+     * @throws AlreadySubscribedException if the client is already subscribed to the given topic
+     */
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
+        return subscribe(set, get, false);
+    }
+
+    /**
+     * Subscribe to topic with parameters, optionally in background.
      *
      * @throws NotConnectedException      if there is no live connection to the server
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get, boolean background) {
         if (mAttached) {
             if (set == null && get == null) {
                 // If the topic is already attached and the user does not attempt to set or
@@ -712,7 +750,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             persist(true);
         }
 
-        return mTinode.subscribe(topicName, set, get).thenApply(
+        return mTinode.subscribe(topicName, set, get, background).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
@@ -1569,7 +1607,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
                 // Notify listener that topic has updated.
                 if (mListener != null) {
-                    mListener.onContUpdated(sub);
+                    mListener.onContUpdated(sub.user);
                 }
             }
         }
@@ -1700,7 +1738,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 // Explicitly ignore message-related notifications. They are handled in the 'me' topic.
                 break;
             default:
-                Log.w(TAG, "Unknown presence update '" + pres.what + "' in '" + getName() + "'");
+                Log.i(TAG, "Unhandled presence update '" + pres.what + "' in '" + getName() + "'");
         }
 
         if (mListener != null) {
@@ -1734,14 +1772,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     default:
                         break;
                 }
-            }
 
-            // If this is an update from the current user, update the contact with the new count too.
-            if (mTinode.isMe(info.from)) {
-                MeTopic me = mTinode.getMeTopic();
-                if (me != null) {
-                    //noinspection unchecked
-                    me.processOneSub(sub);
+                // If this is an update from the current user, update the contact with the new count too.
+                if (mTinode.isMe(info.from)) {
+                    MeTopic me = mTinode.getMeTopic();
+                    if (me != null) {
+                        me.setMsgReadRecv(getName(), info.what, info.seq);
+                    }
                 }
             }
         }
@@ -1860,7 +1897,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         /**
          * Called when contact is updated.
          */
-        public void onContUpdated(Subscription<SP, SR> sub) {
+        public void onContUpdated(String contact) {
         }
     }
 
