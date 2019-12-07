@@ -871,7 +871,41 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
         }
     }
+void showFragment(String mTopicName, Bundle args, boolean addToBackstack) {
+        FragmentManager fm = mActivity.getSupportFragmentManager();
+        String tag = "info";
+        Fragment fragment = fm.findFragmentByTag(tag);
+        if (fragment == null) {
+            fragment = new TopicInfoFragment();
+        }
 
+        args = args != null ? args : new Bundle();
+        args.putString("topic", mTopicName);
+
+        if (fragment.getArguments() != null) {
+            fragment.getArguments().putAll(args);
+        } else {
+            fragment.setArguments(args);
+        }
+
+        FragmentTransaction trx = fm.beginTransaction();
+        if (!fragment.isAdded()) {
+            trx = trx.replace(R.id.contentFragment, fragment, tag)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        } else if (!fragment.isVisible()) {
+            trx = trx.show(fragment);
+        } else {
+            addToBackstack = false;
+        }
+
+        if (addToBackstack) {
+            trx.addToBackStack(tag);
+        }
+        if (!trx.isEmpty()) {
+            trx.commit();
+        }
+    }
+    
     class SpanClicker implements SpanFormatter.ClickListener {
         private int mPosition = -1;
 
@@ -889,6 +923,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             switch (type) {
+                case "MN":
+                    String topicNameForMention = data.get("val").toString();
+                    showFragment(topicNameForMention, null, true);
+                    break;
                 case "LN":
                     // Click on an URL
                     try {
