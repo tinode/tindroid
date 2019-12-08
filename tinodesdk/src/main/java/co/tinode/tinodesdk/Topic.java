@@ -440,7 +440,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     /**
      * Set new seq value and if it's greater than the current value make a network call to fetch new messages.
-     *
      * @param seq sequential ID to assign.
      */
     protected void setSeqAndFetch(int seq) {
@@ -721,6 +720,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      *
      * @param set values to be assigned to topic on successful subscription.
      * @param get query topic for data.
+     *
      * @throws NotConnectedException      if there is no live connection to the server
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */

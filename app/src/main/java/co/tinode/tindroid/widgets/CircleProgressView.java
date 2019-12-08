@@ -37,7 +37,7 @@ import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
  * This class is used to display circular progress indicator (infinite spinner).
  * It matches the style of the spinner in SwipeRefreshLayout + optionally can be shown only after a
  * 500 ms delay like ContentLoadingProgressBar.
- * <p>
+ *
  * Adopted from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
  */
 public class CircleProgressView extends AppCompatImageView {
@@ -174,7 +174,6 @@ public class CircleProgressView extends AppCompatImageView {
             postDelayed(mDelayedHide, MIN_SHOW_TIME - diff);
         }
     }
-
     /**
      * Show the progress view after waiting for a minimum delay. If
      * during that time, hide() is called, the view is never made visible.
@@ -305,10 +304,10 @@ public class CircleProgressView extends AppCompatImageView {
 
         private void updateRadialGradient(int diameter) {
             mShadowPaint.setShader(new RadialGradient(
-                    diameter * .5f,
-                    diameter * .5f,
+                    diameter  * .5f,
+                    diameter  * .5f,
                     mShadowRadius,
-                    new int[]{FILL_SHADOW_COLOR, Color.TRANSPARENT},
+                    new int[] { FILL_SHADOW_COLOR, Color.TRANSPARENT },
                     null,
                     Shader.TileMode.CLAMP));
         }
@@ -319,7 +318,6 @@ public class CircleProgressView extends AppCompatImageView {
         @Override
         public void onAnimationStart(Animation animation) {
         }
-
         @Override
         public void onAnimationRepeat(Animation animation) {
         }

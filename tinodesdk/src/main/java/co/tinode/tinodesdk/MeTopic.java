@@ -135,7 +135,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     @SuppressWarnings("unchecked")
-    private void processOneSub(Subscription<DP, PrivateType> sub) {
+    private void processOneSub(Subscription<DP,PrivateType> sub) {
         // Handle topic.
         Topic topic = mTinode.getTopic(sub.topic);
         if (topic != null) {
@@ -409,8 +409,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         /** {meta what="desc"} message received */
         public void onMetaDesc(Description<DP,PrivateType> desc) {}
         /** Called by MeTopic when topic descriptor as contact is updated */
-        public void onContUpdated(String contact) {
-        }
+        public void onContUpdated(String contact) {}
         /** Called by MeTopic when credentials are updated */
         public void onCredUpdated(Credential[] cred) {}
     }

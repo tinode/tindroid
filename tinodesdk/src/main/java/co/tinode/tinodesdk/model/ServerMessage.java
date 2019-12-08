@@ -38,11 +38,11 @@ public class ServerMessage<DP, DR, SP, SR>
     public static final int STATUS_CONFLICT               = 409; // RFC 7231, 6.5.8
     public static final int STATUS_GONE                   = 410; // RFC 7231, 6.5.9
 
-    public static final int STATUS_INTERNAL_SERVER_ERROR = 500; // RFC 7231, 6.6.1
-    public static final int STATUS_NOT_IMPLEMENTED = 501; // RFC 7231, 6.6.2
-    public static final int STATUS_BAD_GATEWAY = 502; // RFC 7231, 6.6.3
-    public static final int STATUS_SERVICE_UNAVAILABLE = 503; // RFC 7231, 6.6.4
-    public static final int STATUS_GATEWAY_TIMEOUT = 504; // RFC 7231, 6.6.5
+    public static final int STATUS_INTERNAL_SERVER_ERROR  = 500; // RFC 7231, 6.6.1
+    public static final int STATUS_NOT_IMPLEMENTED        = 501; // RFC 7231, 6.6.2
+    public static final int STATUS_BAD_GATEWAY            = 502; // RFC 7231, 6.6.3
+    public static final int STATUS_SERVICE_UNAVAILABLE    = 503; // RFC 7231, 6.6.4
+    public static final int STATUS_GATEWAY_TIMEOUT        = 504; // RFC 7231, 6.6.5
     public static final int STATUS_HTTP_VERSION_NOT_SUPPORTED = 505; // RFC 7231, 6.6.6
 
     public MsgServerData data;

@@ -223,7 +223,7 @@ public class TindroidApp extends Application {
                 Date expires = null;
                 try {
                     token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-                    String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
+                    String strExp =accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
                     // FIXME: remove this check when all clients are updated.
                     if (!TextUtils.isEmpty(strExp)) {
                         expires = new Date(Long.parseLong(strExp));

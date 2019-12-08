@@ -37,7 +37,7 @@ public class Description<DP, DR> implements Serializable {
             changed++;
         } else {
             if (pub != null && (pub instanceof Mergeable)) {
-                if (((Mergeable) pub).merge((Mergeable) spub) > 0) {
+                if (((Mergeable)pub).merge((Mergeable)spub) > 0) {
                     changed++;
                 }
             } else {
@@ -55,7 +55,7 @@ public class Description<DP, DR> implements Serializable {
             changed++;
         } else {
             if (priv != null && (priv instanceof Mergeable)) {
-                if (((Mergeable) priv).merge((Mergeable) spriv) > 0) {
+                if (((Mergeable)priv).merge((Mergeable)spriv) > 0) {
                     changed++;
                 }
             } else {
@@ -190,7 +190,7 @@ public class Description<DP, DR> implements Serializable {
         if (sub.priv != null) {
             try {
                 //noinspection unchecked
-                if (mergePriv((DR) sub.priv) > 0) {
+                if (mergePriv((DR)sub.priv) > 0) {
                     changed++;
                 }
             } catch (ClassCastException ignored) {}

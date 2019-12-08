@@ -52,12 +52,12 @@ public class Cache {
         //noinspection ConstantConditions: Google lies about getInstance not returning null.
         if (fbId != null) {
             fbId.getInstanceId()
-                    .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
-                        @Override
-                        public void onSuccess(InstanceIdResult instanceIdResult) {
-                            sTinode.setDeviceToken(instanceIdResult.getToken());
-                        }
-                    });
+                .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+                    @Override
+                    public void onSuccess(InstanceIdResult instanceIdResult) {
+                        sTinode.setDeviceToken(instanceIdResult.getToken());
+                    }
+                });
         }
         return sTinode;
     }
@@ -70,8 +70,7 @@ public class Cache {
                 FirebaseInstanceId
                         .getInstance()
                         .deleteInstanceId();
-            } catch (IOException ignored) {
-            }
+            } catch (IOException ignored) { }
             sTinode = null;
         }
     }

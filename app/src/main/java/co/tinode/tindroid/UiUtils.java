@@ -19,7 +19,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -63,7 +62,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
-
+import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -301,7 +300,7 @@ public class UiUtils {
     }
 
     public static Account getSavedAccount(final Context context, final AccountManager accountManager,
-                                          final @NonNull String uid) {
+                                   final @NonNull String uid) {
         Account account = null;
 
         // Run-time check for permission to GET_ACCOUNTS

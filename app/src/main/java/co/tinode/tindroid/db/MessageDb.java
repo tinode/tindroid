@@ -214,12 +214,12 @@ public class MessageDb implements BaseColumns {
     public static Cursor query(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
         final String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE "
-                + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND "
-                + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                        + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND "
+                        + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY "
-                + COLUMN_NAME_TS + " DESC, "
-                + COLUMN_NAME_SEQ + " DESC" +
+                    + COLUMN_NAME_TS + " DESC, "
+                    + COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
 
         return db.rawQuery(sql, null);

@@ -26,7 +26,6 @@ import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
-
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.UiUtils;
@@ -307,12 +306,12 @@ public class Utils {
 
     /**
      * Fetch messages (and maybe topic description and subscriptions) in background.
-     * <p>
+     *
      * This method SHOULD NOT be called on UI thread.
      *
-     * @param context   context to use for resources.
+     * @param context context to use for resources.
      * @param topicName name of the topic to sync.
-     * @param seq       sequence ID of the new message to fetch.
+     * @param seq sequence ID of the new message to fetch.
      */
     public static void backgroundDataFetch(Context context, String topicName, int seq) {
         Log.d(TAG, "Background fetch for " + topicName);
@@ -371,7 +370,7 @@ public class Utils {
                 // TODO: hand sync over to Worker.
             }
         } else {
-            Log.d(TAG, "All messages are already received: oldSeq=" + topic.getSeq() + "; newSeq=" + seq);
+            Log.d(TAG, "All messages are already received: oldSeq=" + topic.getSeq() + "; newSeq="+seq);
         }
     }
 }
