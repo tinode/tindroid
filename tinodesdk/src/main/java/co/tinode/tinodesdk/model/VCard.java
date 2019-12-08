@@ -1,6 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -8,6 +9,9 @@ import java.util.Comparator;
 
 import co.tinode.tinodesdk.Tinode;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
+@JsonInclude(NON_DEFAULT)
 public class VCard implements Serializable, Mergeable {
 
     public final static String TYPE_HOME = "HOME";
@@ -84,10 +88,12 @@ public class VCard implements Serializable, Mergeable {
     public byte[] getPhotoBits() {
         return photo == null ? null : photo.data;
     }
+
     @JsonIgnore
     public String getPhotoType() {
         return photo == null ? null : photo.type;
     }
+
     @JsonIgnore
     public void setPhotoBits(byte[] bits, String type) {
         photo = new Photo(bits, type);
@@ -233,7 +239,7 @@ public class VCard implements Serializable, Mergeable {
             Contact[] dst = null;
             if (src != null) {
                 dst = Arrays.copyOf(src, src.length);
-                for (int i=0; i<src.length;i++) {
+                for (int i = 0; i < src.length; i++) {
                     dst[i] = src[i].copy();
                 }
             }

@@ -42,12 +42,13 @@
     </LinearLayout>
 
     <include
-        android:id="@+id/mentioned_users_container"
-        layout="@layout/mentioned_users_layout"
+        layout="@layout/attachment_container"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:visibility="gone"
         android:layout_above="@id/sendMessageFragment"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone" />
+        android:layout_width="wrap_content" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/sendMessageFragment"
@@ -61,7 +62,6 @@
         card_view:cardUseCompatPadding="true"
         card_view:cardElevation="@dimen/cardview_elevation"
         tools:layout="@layout/fragment_send_message">
-
 
         <include layout="@layout/fragment_send_message" />
         <include layout="@layout/fragment_messaging_disabled" />

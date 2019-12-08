@@ -11,7 +11,7 @@
 
     <string name="login_hint">Login</string>
     <string name="password_hint">Password</string>
-    <string name="new_message_hint">New message</string>
+    <string name="new_message_hint">Type a message</string>
     <string name="send_message_button_hint">Send message</string>
     <string name="send_image_button_hint">Send image</string>
     <string name="send_file_button_hint">Send file</string>
@@ -242,4 +242,6 @@
     <string name="full_name_required">Full name required</string>
 
     <string name="default_contact_name">Tinode User %1$s</string>
+    <string name="contacts_permission_missing">Required permission missing</string>
+    <string name="enter_seqrch_query">Enter search query</string>
 </resources>

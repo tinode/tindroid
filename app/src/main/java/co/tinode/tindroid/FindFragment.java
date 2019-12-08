@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
@@ -47,7 +48,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * FindFragment contains a RecyclerView with results from searching local Contacts and remote 'fnd' topic.
  */
-public class FindFragment extends Fragment {
+public class FindFragment extends Fragment implements UiUtils.ProgressIndicator {
 
     private static final String TAG = "FindFragment";
 
@@ -69,7 +70,7 @@ public class FindFragment extends Fragment {
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
 
-    private ContentLoadingProgressBar mProgress = null;
+    private CircleProgressView mProgress = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -120,6 +121,7 @@ public class FindFragment extends Fragment {
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);
 
         mAdapter.swapCursor(null, mSearchTerm);
+        mAdapter.setContactsPermission(UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS));
         rv.setAdapter(mAdapter);
 
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -134,7 +136,7 @@ public class FindFragment extends Fragment {
             }
         });
 
-        mProgress = fragment.findViewById(R.id.progressBar);
+        mProgress = fragment.findViewById(R.id.progressCircle);
     }
 
     @Override
@@ -359,11 +361,11 @@ public class FindFragment extends Fragment {
         fnd.setMeta(new MsgSetMeta<>(
                 new MetaSetDesc<String, String>(query == null ? Tinode.NULL_VALUE : query, null)));
         if (query != null) {
-            setProgressBarVisible(true);
+            toggleProgressIndicator(true);
             fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
                 @Override
                 public void onFinally() {
-                    setProgressBarVisible(false);
+                    toggleProgressIndicator(false);
                 }
             });
         } else {
@@ -374,7 +376,8 @@ public class FindFragment extends Fragment {
         return query;
     }
 
-    private void setProgressBarVisible(final boolean visible) {
+    @Override
+    public void toggleProgressIndicator(final boolean visible) {
         if (mProgress == null) {
             return;
         }
@@ -423,10 +426,12 @@ public class FindFragment extends Fragment {
         }
 
         if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+            mAdapter.setContactsPermission(true);
             Bundle args = new Bundle();
             args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
         } else if (activity.isReadContactsPermissionRequested()) {
+            mAdapter.setContactsPermission(false);
             activity.setReadContactsPermissionRequested();
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, UiUtils.READ_CONTACTS_PERMISSION);
         }

@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.net.URL;
@@ -16,6 +17,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 
 /**
@@ -67,7 +70,7 @@ import java.util.regex.Pattern;
  }
  </pre>
  */
-
+@JsonInclude(NON_DEFAULT)
 public class Drafty implements Serializable {
     public static final String MIME_TYPE = "text/x-drafty";
     public static final String JSON_MIME_TYPE = "application/json";
@@ -396,116 +399,6 @@ public class Drafty implements Serializable {
                 refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
     }
 
-    /**
-     * Parse 2 for mentions
-     *
-     * @return
-     */
-    public static Drafty parse(String content, List<Entity> exEntities,
-                               List<Style> exStyles, List<String> value) {
-        // Break input into individual lines. Format cannot span multiple lines.
-        String lines[] = content.split("\\r?\\n");
-        List<Block> blks = new ArrayList<>();
-        List<Entity> refs = new ArrayList<>();
-
-        List<Span> spans = new ArrayList<>();
-        Map<String, Integer> entityMap = new HashMap<>();
-        List<ExtractedEnt> entities;
-        for (String line : lines) {
-            spans.clear();
-            // Select styled spans.
-            for (int i = 0; i < INLINE_STYLE_NAME.length; i++) {
-                spans.addAll(spannify(line, INLINE_STYLE_RE[i], INLINE_STYLE_NAME[i]));
-            }
-
-            Block b;
-            if (!spans.isEmpty()) {
-                // Sort styled spans in ascending order by .start
-                Collections.sort(spans);
-
-                // Rearrange linear list of styled spans into a tree, throw away invalid spans.
-                spans = toTree(spans);
-
-                // Parse the entire string into spans, styled or unstyled.
-                spans = chunkify(line, 0, line.length(), spans);
-
-                // Convert line into a block.
-                b = draftify(spans, 0);
-            } else {
-                b = new Block(line);
-            }
-
-            // Extract entities from the string already cleared of markup.
-            entities = extractEntities(b.txt);
-
-            /**
-             *  initiate addition data for mentions
-             */
-            if (exEntities != null && exStyles != null) {
-                for (int i = 0; i < exEntities.size(); i++) {
-                    ExtractedEnt ee = new ExtractedEnt();
-                    ee.at = exStyles.get(i).at;
-                    ee.len = exStyles.get(i).len;
-                    ee.tp = exEntities.get(i).tp;
-                    ee.data = exEntities.get(i).data;
-                    ee.value = value.get(i);
-                    entities.add(ee);
-                }
-            }
-
-            // Normalize entities by splitting them into spans and references.
-            for (ExtractedEnt ent : entities) {
-                // Check if the entity has been indexed already
-                Integer index = entityMap.get(ent.value);
-                if (index == null) {
-                    index = refs.size();
-                    entityMap.put(ent.value, index);
-                    refs.add(new Entity(ent.tp, ent.data));
-                }
-
-                b.addStyle(new Style(ent.at, ent.len, index));
-            }
-
-            blks.add(b);
-        }
-
-        StringBuilder text = new StringBuilder();
-        List<Style> fmt = new ArrayList<>();
-        // Merge lines and save line breaks as BR inline formatting.
-        if (blks.size() > 0) {
-            Block b = blks.get(0);
-            if (b.txt != null) {
-                text.append(b.txt);
-            }
-            if (b.fmt != null) {
-                fmt.addAll(b.fmt);
-            }
-
-            for (int i = 1; i < blks.size(); i++) {
-                int offset = text.length() + 1;
-                fmt.add(new Style("BR", offset - 1, 1));
-
-                b = blks.get(i);
-                text.append(" ");
-                if (b.txt != null) {
-                    text.append(b.txt);
-                }
-                if (b.fmt != null) {
-                    for (Style s : b.fmt) {
-                        s.at += offset;
-                        fmt.add(s);
-                    }
-                }
-            }
-        }
-
-        return new Drafty(text.toString(),
-                fmt.size() > 0 ? fmt.toArray(new Style[0]) : null,
-                refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
-    }
-
-
-
     @JsonIgnore
     public Style[] getStyles() {
         return fmt;
@@ -753,6 +646,47 @@ public class Drafty implements Serializable {
             data.put("ref", refUrl);
         }
         ent[ent.length - 1] = new Entity("BN", data);
+        return this;
+    }
+
+    /**
+     * Insert video attachment
+     */
+    public Drafty insertVideo(int at, String mime, byte[] bits, int width, int height,
+                              String fname, String refurl, long size, long duration) {
+        if (bits == null && refurl == null) {
+            throw new IllegalArgumentException("Either image bits or reference URL must not be null.");
+        }
+
+        if (txt == null || txt.length() < at + 1 || at < 0) {
+            throw new IndexOutOfBoundsException("Invalid insertion position");
+        }
+
+        prepareForEntity(at, 1);
+
+        Map<String, Object> data = new HashMap<>();
+        if (mime != null && !mime.equals("")) {
+            data.put("mime", mime);
+        }
+        if (bits != null) {
+            data.put("val", bits);
+        }
+        data.put("width", width);
+        data.put("height", height);
+        if (fname != null && !fname.equals("")) {
+            data.put("name", fname);
+        }
+        if (refurl != null) {
+            data.put("ref", refurl.toString());
+        }
+        if (size > 0) {
+            data.put("size", size);
+        }
+        if (duration != 0) {
+            data.put("duration", duration);
+        }
+        ent[ent.length - 1] = new Entity("VD", data);
+
         return this;
     }
 

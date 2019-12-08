@@ -37,7 +37,9 @@ public class Description<DP, DR> implements Serializable {
             changed++;
         } else {
             if (pub != null && (pub instanceof Mergeable)) {
-                if (((Mergeable)pub).merge((Mergeable)spub) > 0) changed++;
+                if (((Mergeable) pub).merge((Mergeable) spub) > 0) {
+                    changed++;
+                }
             } else {
                 pub = spub;
                 changed++;
@@ -53,7 +55,9 @@ public class Description<DP, DR> implements Serializable {
             changed++;
         } else {
             if (priv != null && (priv instanceof Mergeable)) {
-                if (((Mergeable)priv).merge((Mergeable)spriv) > 0) changed++;
+                if (((Mergeable) priv).merge((Mergeable) spriv) > 0) {
+                    changed++;
+                }
             } else {
                 priv = spriv;
                 changed++;
@@ -178,14 +182,17 @@ public class Description<DP, DR> implements Serializable {
         if (sub.pub != null) {
             // This may throw a ClassCastException.
             // This is intentional behavior to catch cases of wrong assignment.
-            if (mergePub((DP) sub.pub) > 0) changed++;
+            if (mergePub((DP) sub.pub) > 0) {
+                changed++;
+            }
         }
 
         if (sub.priv != null) {
             try {
                 //noinspection unchecked
-                if (mergePriv((DR)sub.priv) > 0) changed++;
-                changed++;
+                if (mergePriv((DR) sub.priv) > 0) {
+                    changed++;
+                }
             } catch (ClassCastException ignored) {}
 
         }

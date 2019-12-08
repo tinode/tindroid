@@ -1,8 +1,12 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.List;
 
 import co.tinode.tinodesdk.Tinode;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Topic or message deletion packet
@@ -16,6 +20,7 @@ import co.tinode.tinodesdk.Tinode;
  *  // Request to hard-delete messages for all users, if such option is available.
  *  Hard bool `json:"hard,omitempty"`
  */
+@JsonInclude(NON_DEFAULT)
 public class MsgClientDel {
     private final static String STR_TOPIC = "topic";
     private final static String STR_MSG = "msg";

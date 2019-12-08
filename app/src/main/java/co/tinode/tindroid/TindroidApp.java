@@ -34,6 +34,7 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 
 import java.io.IOException;
+import java.util.Date;
 
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
@@ -207,8 +208,6 @@ public class TindroidApp extends Application {
 
         @Override
         protected Void doInBackground(String... uidWrapper) {
-            Log.i(TAG, "loginWithSavedAccount");
-
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
             final Account account = UiUtils.getSavedAccount(TindroidApp.this, accountManager, uidWrapper[0]);
             if (account != null) {
@@ -221,8 +220,14 @@ public class TindroidApp extends Application {
 
                 // Account found, establish connection to the server and use save account credentials for login.
                 String token = null;
+                Date expires = null;
                 try {
                     token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
+                    String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
+                    // FIXME: remove this check when all clients are updated.
+                    if (!TextUtils.isEmpty(strExp)) {
+                        expires = new Date(Long.parseLong(strExp));
+                    }
                 } catch (OperationCanceledException e) {
                     Log.i(TAG, "Request to get an existing account was canceled.", e);
                 } catch (AuthenticatorException e) {
@@ -231,7 +236,8 @@ public class TindroidApp extends Application {
                     Log.e(TAG, "Failure to login with saved account", e);
                 }
 
-                if (TextUtils.isEmpty(token)) {
+                // FIXME: when all clients are updated, treat expires == null as a reason to reject.
+                if (TextUtils.isEmpty(token) || (expires != null && expires.before(new Date()))) {
                     return null;
                 }
 
@@ -255,20 +261,20 @@ public class TindroidApp extends Application {
 
                     // Logged in successfully. Save refreshed token for future use.
                     accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
+                            String.valueOf(tinode.getAuthTokenExpiration().getTime()));
                 } catch (IOException ex) {
                     Log.d(TAG, "Network failure during login", ex);
                     // Do not invalidate token on network failure.
+                } catch (ServerResponseException ex) {
+                    Log.w(TAG, "Server rejected login sequence", ex);
+                    // Login failed due to invalid (expired) token or missing/disabled account.
+                    accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                    // Force new login.
+                    BaseDb.getInstance().logout();
+                    // 409 Already authenticated should not be possible here.
                 } catch (Exception ex) {
-                    if (ex instanceof ServerResponseException) {
-                        Log.w(TAG, "Server rejected login sequence", ex);
-                        // Login failed due to invalid (expired) token or missing/disabled account.
-                        accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                        // Force new login.
-                        BaseDb.getInstance().logout();
-                        // 409 Already authenticated should not be possible here.
-                    } else {
-                        Log.e(TAG, "Other failure during login", ex);
-                    }
+                    Log.e(TAG, "Other failure during login", ex);
                 }
 
             } else {

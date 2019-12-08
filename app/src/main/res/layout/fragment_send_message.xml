@@ -11,35 +11,24 @@
     android:visibility="visible"
     tools:ignore="RtlSymmetry">
 
-    <ImageButton
-        android:id="@+id/attachImage"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="0.1"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/send_image_button_hint"
-        android:paddingLeft="6sp"
-        android:paddingRight="6sp"
-        android:tint="?attr/colorAccent"
-        app:srcCompat="@drawable/ic_photo"/>
 
     <ImageButton
-        android:id="@+id/attachFile"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="0.1"
+        android:id="@+id/showEmojiContainer"
+        android:layout_width="32dp"
+        android:layout_height="48dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/send_file_button_hint"
-        android:paddingLeft="6sp"
-        android:paddingRight="6sp"
-        android:tint="?attr/colorAccent"
-        app:srcCompat="@drawable/ic_attach"/>
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:scaleType="centerInside"
+        app:srcCompat="@drawable/ic_emoji" />
 
     <EditText
         android:id="@+id/editMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:paddingStart="10dp"
+        android:backgroundTint="@android:color/transparent"
         android:hint="@string/new_message_hint"
         android:imeOptions="actionSend"
         android:textColor="@color/colorTextPrimary"
@@ -48,15 +37,42 @@
         android:importantForAutofill="no" />
 
     <ImageButton
-        android:id="@+id/chatSendButton"
+        android:id="@+id/attachImage"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_weight="0.1"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/send_image_button_hint"
+        android:paddingLeft="8dp"
+        android:paddingRight="4dp"
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:scaleType="centerInside"
+        app:srcCompat="@drawable/ib_camera" />
+
+    <ImageButton
+        android:id="@+id/attachFile"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="0.1"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/send_file_button_hint"
+        android:paddingLeft="4dp"
+        android:paddingRight="8dp"
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:scaleType="centerInside"
+        app:srcCompat="@drawable/ib_attach" />
+
+
+    <ImageButton
+        android:id="@+id/chatSendButton"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/send_message_button_hint"
-        android:paddingLeft="4sp"
-        android:paddingRight="8sp"
-        android:tint="?attr/colorAccent"
-        app:srcCompat="@drawable/ic_send"/>
+        android:paddingStart="10sp"
+        android:paddingEnd="8sp"
+        app:srcCompat="@drawable/ic_mic_none_white_24dp" />
 
 </LinearLayout>

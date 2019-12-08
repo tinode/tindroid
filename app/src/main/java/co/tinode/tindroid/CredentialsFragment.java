@@ -121,7 +121,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                     } else {
                         // Login succeeded.
                         tinode.setAutoLoginToken(tinode.getAuthToken());
-                        UiUtils.onLoginSuccess(parent, confirm, tinode.getMyId(), true);
+                        UiUtils.onLoginSuccess(parent, confirm, tinode.getMyId());
                     }
                     return null;
                 }

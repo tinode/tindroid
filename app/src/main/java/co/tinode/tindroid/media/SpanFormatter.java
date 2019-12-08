@@ -11,7 +11,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
-import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
@@ -29,7 +28,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,12 +86,58 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     case "HT":
                     case "IM":
                     case "EX":
+                    case "VD":
                         return true;
                     default:
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Determine attachment type for presentation on UI
+     */
+    public static String getAttachmentType(final Drafty content) {
+        if (content != null) {
+            Drafty.Entity[] entities = content.getEntities();
+            if (entities == null) {
+                return "";
+            }
+
+            for (Drafty.Entity ent : entities) {
+                if (ent == null || ent.tp == null) {
+                    continue;
+                }
+                switch (ent.tp) {
+                    case "BN":
+                        return AttachmentType.BUTTON;
+                    case "LN":
+                        return AttachmentType.LINK;
+                    case "MN":
+                        return AttachmentType.MENTION;
+                    case "HT":
+                        return AttachmentType.HASHTAG;
+                    case "IM":
+                        return AttachmentType.IMAGE;
+                    case "EX":
+                        return AttachmentType.FILE;
+                    case "VD":
+                        return AttachmentType.VIDEO;
+                    case "AU":
+                        return AttachmentType.AUDIO;
+                    case "PD":
+                        return AttachmentType.DOCUMENT;
+                    case "LC":
+                        return AttachmentType.LOCATION;
+                    case "CT":
+                        return AttachmentType.CONTACT;
+                    default:
+                        return "";
+                }
+            }
+        }
+        return "";
     }
 
     private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data) {
@@ -274,19 +318,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     } catch (ClassCastException | NullPointerException ignored) {}
                     break;
                 case "MN":
-                    span = new TreeNode(new MentionSpan("") {
-                        @Override
-                        public void onClick(View widget) {
-                            String checkMention = data.get("val").toString();
-                            if (checkMention.charAt(0) == '@') {
-                                Toast.makeText(mContainer.getContext(), "(@)This mentions aren't supported yet", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            if (mClicker != null) {
-                                mClicker.onClick("MN", data);
-                            }
-                        }
-                    }, content);
                     break;
                 case "HT": break;
                 case "HD":
@@ -341,22 +372,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
     public interface ClickListener {
         void onClick(String type, Map<String,Object> data);
-    }
-
-    /**
-     * Custom URLSpan for Mentions
-     */
-    private class MentionSpan extends URLSpan {
-
-        @Override
-        public void updateDrawState(@NonNull TextPaint ds) {
-            super.updateDrawState(ds);
-            ds.setUnderlineText(false);
-        }
-
-        public MentionSpan(String url) {
-            super(url);
-        }
     }
 
     // Structure representing Drafty as a tree of formatting nodes.

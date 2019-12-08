@@ -88,6 +88,5 @@
         <item>#D84315</item>
     </array>
     <color name="letter_tile_text_color_dark">#dedede</color>
-    <color name="mentions_default_color">#008577</color>
 
 </resources>

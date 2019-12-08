@@ -10,16 +10,14 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
@@ -30,29 +28,22 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.text.Editable;
-import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Filter;
-import android.widget.Filterable;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,24 +51,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.mention.mentions.Mentions;
-import co.tinode.tindroid.mention.mentions.QueryListener;
-import co.tinode.tindroid.mention.mentions.SuggestionsListener;
-import co.tinode.tindroid.mention.models.Mention;
-import co.tinode.tindroid.mention.models.User;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -87,6 +67,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
@@ -122,6 +103,7 @@ public class MessagesFragment extends Fragment
     private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
+    private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
 
@@ -136,26 +118,7 @@ public class MessagesFragment extends Fragment
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    private Mentions mentions;
-    private MembersAdapter mentionAdapter;
-    private EditText editor;
-
     public MessagesFragment() {
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        Bundle args = getArguments();
-        if (args != null) {
-            mTopicName = args.getString("topic");
-            mMessageToSend = args.getString(MESSAGE_TO_SEND);
-        } else {
-            mTopicName = null;
-        }
-        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
-
-        super.onCreate(savedInstanceState);
-
     }
 
     @Override
@@ -171,61 +134,6 @@ public class MessagesFragment extends Fragment
         if (activity == null) {
             return;
         }
-
-        /**
-         * Setting mentions components
-         */
-        RecyclerView suggestionRecyclerview = view.findViewById(R.id.mention_suggest_recyclerview);
-        editor = view.findViewById(R.id.editMessage);
-        try {
-            if (mTopic.isGrpType()) {
-                mentionAdapter = new MembersAdapter();
-                suggestionRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
-                suggestionRecyclerview.setHasFixedSize(true);
-                suggestionRecyclerview.setAdapter(mentionAdapter);
-                // set on item click listener
-                suggestionRecyclerview.addOnItemTouchListener(new RecyclerItemClickListener(getContext(), new RecyclerItemClickListener.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(final View view, final int position) {
-                        final User user = mentionAdapter.getItem(position);
-                        /*
-                         * We are creating a mentions object which implements the
-                         * <code>Mentionable</code> interface this allows the library to set the offset
-                         * and length of the mention.
-                         */
-                        if (user != null) {
-                            final Mention mention = new Mention();
-                            mention.setMentionName(user.getName());
-                            mention.setMentionUID(user.getUid());
-                            mentions.insertMention(mention);
-                        }
-
-                    }
-                }));
-
-                mentions = new Mentions.Builder(getContext(), editor)
-                        .suggestionsListener(new SuggestionsListener() {
-                            @Override
-                            public void displaySuggestions(boolean display) {
-                                if (display)
-                                    view.findViewById(R.id.mentioned_users_container).setVisibility(View.VISIBLE);
-                                else
-                                    view.findViewById(R.id.mentioned_users_container).setVisibility(View.GONE);
-                            }
-                        })
-                        .queryListener(new QueryListener() {
-                            @Override
-                            public void onQueryReceived(String query) {
-                                view.findViewById(R.id.mentioned_users_container).setVisibility(View.VISIBLE);
-                                mentionAdapter.getFilter().filter(query);
-                            }
-                        })
-                        .build();
-            }
-        } catch (NullPointerException ex) {
-            Log.d(TAG, "onViewCreated: isGrpType() is null");
-        }
-
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override
@@ -244,8 +152,8 @@ public class MessagesFragment extends Fragment
         // mMessageViewLayoutManager.setStackFromEnd(true);
         mMessageViewLayoutManager.setReverseLayout(true);
 
-        RecyclerView ml = view.findViewById(R.id.messages_container);
-        ml.setLayoutManager(mMessageViewLayoutManager);
+        mRecyclerView = view.findViewById(R.id.messages_container);
+        mRecyclerView.setLayoutManager(mMessageViewLayoutManager);
 
         // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
         mUploadProgress = new UploadProgress();
@@ -254,7 +162,7 @@ public class MessagesFragment extends Fragment
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
-        ml.setAdapter(mMessagesAdapter);
+        mRecyclerView.setAdapter(mMessagesAdapter);
         mRefresher.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -312,7 +220,8 @@ public class MessagesFragment extends Fragment
             }
         });
 
-        editor = view.findViewById(R.id.editMessage);
+        EditText editor = view.findViewById(R.id.editMessage);
+        final ImageButton chatSendButton = view.findViewById(R.id.chatSendButton);
         // Send message on Enter
         editor.setOnEditorActionListener(
                 new TextView.OnEditorActionListener() {
@@ -327,6 +236,7 @@ public class MessagesFragment extends Fragment
         editor.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
             }
 
             @Override
@@ -338,6 +248,15 @@ public class MessagesFragment extends Fragment
 
             @Override
             public void afterTextChanged(Editable editable) {
+                if (!editable.toString().trim().equals("")) {
+                    view.findViewById(R.id.attachImage).setVisibility(View.GONE);
+                    view.findViewById(R.id.attachFile).setVisibility(View.GONE);
+                    chatSendButton.setImageResource(R.drawable.ic_send);
+                } else {
+                    view.findViewById(R.id.attachImage).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.attachFile).setVisibility(View.VISIBLE);
+                    chatSendButton.setImageResource(R.drawable.ic_mic_none_white_24dp);
+                }
             }
         });
 
@@ -358,8 +277,6 @@ public class MessagesFragment extends Fragment
                 }
             }
         });
-
-
     }
 
     @Override
@@ -369,13 +286,20 @@ public class MessagesFragment extends Fragment
 
         setHasOptionsMenu(true);
 
+        Bundle args = getArguments();
+        if (args != null) {
+            mTopicName = args.getString("topic");
+            mMessageToSend = args.getString(MESSAGE_TO_SEND);
+        } else {
+            mTopicName = null;
+        }
+
         if (mTopicName != null) {
             mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
             runMessagesLoader(mTopicName);
         } else {
             mTopic = null;
         }
-        if (mTopic != null && mTopic.isGrpType()) notifyDataSetChanged();
 
         // Check periodically if all messages were read;
         mNoteTimer = new Timer();
@@ -397,18 +321,13 @@ public class MessagesFragment extends Fragment
 
     private void updateFormValues() {
         final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
         if (mTopic == null) {
             // Default view when the topic is not available.
-            View view = activity.findViewById(R.id.notReadable);
-            if (view == null) {
-                // Fragment is not set up. Let's not crash.
-                return;
-            }
-            view.setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
@@ -433,9 +352,9 @@ public class MessagesFragment extends Fragment
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
-            if (peer != null && peer.acs != null &&
-                    peer.acs.isJoiner(Acs.Side.WANT) &&
-                    peer.acs.getMissing().toString().contains("RW")) {
+            boolean isJoiner = peer != null && peer.acs != null && peer.acs.isJoiner(Acs.Side.WANT);
+            AcsHelper missing = peer != null && peer.acs != null ? peer.acs.getMissing() : new AcsHelper();
+            if (isJoiner && (missing.isReader() || missing.isWriter())) {
                 activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             } else {
@@ -457,6 +376,11 @@ public class MessagesFragment extends Fragment
         if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {
             showChatInvitationDialog();
         }
+    }
+
+
+    private void scrollToBottom() {
+        mRecyclerView.scrollToPosition(0);
     }
 
     @Override
@@ -751,7 +675,11 @@ public class MessagesFragment extends Fragment
     private boolean sendMessage(Drafty content) {
         MessageActivity  activity = (MessageActivity) getActivity();
         if (activity != null) {
-            return activity.sendMessage(content);
+            boolean done = activity.sendMessage(content);
+            if (done) {
+                scrollToBottom();
+            }
+            return done;
         }
         return false;
     }
@@ -761,42 +689,25 @@ public class MessagesFragment extends Fragment
         if (activity == null) {
             return;
         }
-        List<Drafty.Entity> exEnt = null;
-        List<Drafty.Style> exSty = null;
-        List<String> value = null;
-
-        /**
-         * Additional style, entities and values for mentions
-         */
-        if (mentions != null) {
-            exEnt = new ArrayList<>();
-            exSty = new ArrayList<>();
-            value = new ArrayList<>();
-            for (int i = 0; i < mentions.getInsertedMentions().size(); i++) {
-                HashMap<String, Object> data = new HashMap<>();
-                data.put("val", mentions.getInsertedMentions().get(i).getMentionUID());
-                exEnt.add(new Drafty.Entity("MN", data));
-                exSty.add(new Drafty.Style(
-                        mentions.getInsertedMentions().get(i).getMentionOffset(),
-                        mentions.getInsertedMentions().get(i).getMentionLength(),
-                        i
-                ));
-                value.add(mentions.getInsertedMentions().get(i).getMentionName());
-            }
-            mentions.getInsertedMentions().clear();
-        }
-
         final EditText inputField = activity.findViewById(R.id.editMessage);
         if (inputField == null) {
             return;
         }
         String message = inputField.getText().toString().trim();
         if (!message.equals("")) {
-            if (sendMessage(Drafty.parse(message, exEnt, exSty, value))) {
+            if (sendMessage(Drafty.parse(message))) {
                 // Message is successfully queued, clear text from the input field and redraw the list.
                 inputField.getText().clear();
             }
         }
+    }
+
+    // Send video as a link
+    private static Drafty draftyVideo(String mimeType, byte[] bits, int width, int height, String fname,
+                                      String refUrl, long size, long duration) {
+        Drafty content = Drafty.parse(" ");
+        content.insertVideo(0, mimeType, bits, width, height, fname, refUrl, size, duration);
+        return content;
     }
 
     // Send image in-band
@@ -819,6 +730,7 @@ public class MessagesFragment extends Fragment
         content.attachFile(mimeType, fname, refUrl, size);
         return content;
     }
+
 
     private void sendReadNotification() {
         if (mTopic != null) {
@@ -1015,23 +927,57 @@ public class MessagesFragment extends Fragment
             }
 
             final ContentResolver resolver = context.getContentResolver();
-            if (requestCode == ACTION_ATTACH_IMAGE && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
-                is = resolver.openInputStream(uri);
-                // Resize image to ensure it's under the maximum in-band size.
-                Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
-                // noinspection ConstantConditions: NullPointerException is handled explicitly.
-                bmp = UiUtils.scaleBitmap(bmp);
-                imageWidth = bmp.getWidth();
-                imageHeight = bmp.getHeight();
-                //noinspection ConstantConditions
-                is.close();
 
-                is = UiUtils.bitmapToStream(bmp, mimeType);
-                fsize = (long) is.available();
+            // Image is being attached.
+            if (requestCode == ACTION_ATTACH_IMAGE) {
+                Bitmap bmp = null;
+
+                // Make sure the image is not too large.
+                if (fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                    // Resize image to ensure it's under the maximum in-band size.
+                    is = resolver.openInputStream(uri);
+                    bmp = BitmapFactory.decodeStream(is, null, null);
+                    //noinspection ConstantConditions
+                    is.close();
+
+                    // noinspection ConstantConditions: NullPointerException is handled explicitly.
+                    bmp = UiUtils.scaleBitmap(bmp);
+                }
+
+                // Also ensure the image has correct orientation.
+                try {
+                    is = resolver.openInputStream(uri);
+                    //noinspection ConstantConditions
+                    @SuppressLint({"NewApi", "LocalSuppress"}) ExifInterface exif = new ExifInterface(is);
+                    is.close();
+                    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+                    if (orientation != ExifInterface.ORIENTATION_UNDEFINED &&
+                            orientation != ExifInterface.ORIENTATION_NORMAL) {
+                        // Rotate image to ensure correct orientation.
+                        if (bmp == null) {
+                            is = resolver.openInputStream(uri);
+                            bmp = BitmapFactory.decodeStream(is, null, null);
+                            //noinspection ConstantConditions
+                            is.close();
+                        }
+
+                        bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    }
+                } catch (IOException ex) {
+                    Log.w(TAG, "Failed to obtain image orientation", ex);
+                }
+
+                if (bmp != null) {
+                    imageWidth = bmp.getWidth();
+                    imageHeight = bmp.getHeight();
+
+                    is = UiUtils.bitmapToStream(bmp, mimeType);
+                    fsize = (long) is.available();
+                }
             }
 
             if (fsize > MAX_ATTACHMENT_SIZE) {
-                Log.w(TAG, "File is too big, size=" + fsize);
+                Log.w(TAG, "Unable to process attachment: too big, size=" + fsize);
                 result.error = context.getString(R.string.attachment_too_large,
                         UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
             } else {
@@ -1202,289 +1148,4 @@ public class MessagesFragment extends Fragment
             return true;
         }
     }
-
-    private void notifyDataSetChanged() {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        if (mTopic == null)
-            return;
-        if (mTopic.isGrpType()) {
-            mentionAdapter.resetContent();
-        }
-    }
-
-    /**
-     * RecyclerView adapter for mentions
-     */
-    private class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberViewHolder> implements Filterable {
-
-        private List<Subscription<VxCard, PrivateType>> mItems;
-        private List<Subscription<VxCard, PrivateType>> mItemsFiltered = new ArrayList<>();
-
-
-        /**
-         * Current search string typed by the user.  It is used highlight the query in the
-         * search results.  Ex: @bill.
-         */
-        private String currentQuery;
-
-        /**
-         * {@link ForegroundColorSpan}.
-         */
-        private ForegroundColorSpan colorSpan;
-
-        @SuppressWarnings("unchecked")
-        MembersAdapter() {
-            Activity activity = getActivity();
-            mItems = Arrays.asList((Subscription<VxCard, PrivateType>[]) new Subscription[8]);
-            mItemsFiltered = mItems;
-
-            final int orange = ContextCompat.getColor(getContext(), R.color.colorAccent);
-            this.colorSpan = new ForegroundColorSpan(orange);
-        }
-
-        /**
-         * Setter for what user has queried.
-         */
-        public void setCurrentQuery(final String currentQuery) {
-            if (StringUtils.isNotBlank(currentQuery)) {
-                this.currentQuery = currentQuery.toLowerCase(Locale.US);
-            }
-        }
-
-        /**
-         * Must be run on UI thread
-         */
-        void resetContent() {
-            if (mTopic != null) {
-                Collection<Subscription<VxCard, PrivateType>> c = mTopic.getSubscriptions();
-                if (c != null) {
-                    mItems = new ArrayList<>(c);
-                    mItemsFiltered = mItems;
-                }
-                notifyDataSetChanged();
-            }
-        }
-
-        public User getItem(int position) {
-
-            final Subscription<VxCard, PrivateType> sub = mItemsFiltered.get(position);
-            final boolean isMe = Cache.getTinode().isMe(sub.user);
-
-            Bitmap bmp = null;
-            String title = isMe ? getActivity().getString(R.string.current_user) : null;
-            if (sub.pub != null) {
-                if (title == null) {
-                    title = !TextUtils.isEmpty(sub.pub.fn) ? sub.pub.fn :
-                            getActivity().getString(R.string.placeholder_contact_title);
-                }
-                bmp = sub.pub.getBitmap();
-            } else {
-                Log.w(TAG, "Pub is null for " + sub.user);
-            }
-
-
-            Drawable drawable = UiUtils.avatarDrawable(getActivity(), bmp,
-                    sub.pub != null ? sub.pub.fn : null, sub.user);
-
-            return new User(
-                    title,
-                    sub.user,
-                    drawable
-            );
-        }
-
-        @Override
-        public int getItemCount() {
-            return mItemsFiltered.size();
-        }
-
-        @Override
-        public long getItemId(int i) {
-            return StoredSubscription.getId(mItems.get(i));
-        }
-
-        @NonNull
-        @Override
-        public MemberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            // create a new view
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.mention_list_item, parent, false);
-            return new MemberViewHolder(v);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull final MemberViewHolder holder, int position) {
-            final Activity activity = getActivity();
-            if (activity == null) {
-                return;
-            }
-
-            final Subscription<VxCard, PrivateType> sub = mItemsFiltered.get(position);
-            if (sub == null) {
-                Log.d("##debug", "sub is null");
-            }
-            boolean isMe = false;
-            if (sub.user != null)
-                isMe = Cache.getTinode().isMe(sub.user);
-
-            Bitmap bmp = null;
-            String title = isMe ? activity.getString(R.string.current_user) : null;
-            if (sub.pub != null) {
-                if (title == null) {
-                    title = !TextUtils.isEmpty(sub.pub.fn) ? sub.pub.fn :
-                            activity.getString(R.string.placeholder_contact_title);
-                }
-                bmp = sub.pub.getBitmap();
-            } else {
-                Log.w(TAG, "Pub is null for " + sub.user);
-            }
-
-
-            Drawable drawable = UiUtils.avatarDrawable(activity, bmp,
-                    sub.pub != null ? sub.pub.fn : null, sub.user);
-
-            User mentionsUser = new User(
-                    title,
-                    sub.user,
-                    drawable
-            );
-
-            if (StringUtils.isNotBlank(mentionsUser.getName())) {
-                holder.name.setText(mentionsUser.getName(), TextView.BufferType.SPANNABLE);
-                highlightSearchQueryInUserName(holder.name.getText());
-                holder.icon.setImageDrawable(mentionsUser.getImage());
-            }
-
-            final View.OnClickListener action = new View.OnClickListener() {
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void onClick(View v) {
-                    int position = holder.getAdapterPosition();
-                    final Subscription<VxCard, PrivateType> sub = mItemsFiltered.get(position);
-                    VxCard pub = mTopic.getPub();
-                    String text = editor.getText().toString().substring(1);
-                    editor.setText("@" + text.replace(text, sub.user));
-//                    showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub.user,
-//                            sub.acs.getGiven());
-                }
-            };
-
-            if (isMe) {
-//                holder.more.setVisibility(View.INVISIBLE);
-            } else {
-//                holder.more.setVisibility(View.VISIBLE);
-//                holder.more.setOnClickListener(action);
-            }
-        }
-
-        /**
-         * Highlights the current search text in the mentions list.
-         */
-        private void highlightSearchQueryInUserName(CharSequence userName) {
-            if (StringUtils.isNotBlank(currentQuery)) {
-                int searchQueryLocation = userName.toString().toLowerCase(Locale.US).indexOf(currentQuery);
-
-                if (searchQueryLocation != -1) {
-                    Spannable userNameSpannable = (Spannable) userName;
-                    userNameSpannable.setSpan(
-                            colorSpan,
-                            searchQueryLocation,
-                            searchQueryLocation + currentQuery.length(),
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
-            }
-        }
-
-
-        @Override
-        public Filter getFilter() {
-            return new Filter() {
-                @Override
-                protected FilterResults performFiltering(CharSequence constraint) {
-                    String charString = constraint.toString();
-                    if (charString.isEmpty()) {
-                        mItemsFiltered = mItems;
-                    } else {
-                        List<Subscription<VxCard, PrivateType>> filtered = new ArrayList<>();
-                        for (Subscription<VxCard, PrivateType> row : mItems) {
-                            if (row.pub.fn.toLowerCase().contains(charString.toLowerCase())) {
-                                filtered.add(row);
-                            }
-                        }
-                        mItemsFiltered = filtered;
-                    }
-                    FilterResults results = new FilterResults();
-                    results.values = mItemsFiltered;
-                    return results;
-                }
-
-                @Override
-                protected void publishResults(CharSequence constraint, FilterResults results) {
-
-                    mItemsFiltered = (ArrayList<Subscription<VxCard, PrivateType>>) results.values;
-                    notifyDataSetChanged();
-
-                }
-            };
-        }
-
-        /**
-         * ViewHolder of
-         */
-        private class MemberViewHolder extends RecyclerView.ViewHolder {
-            TextView name;
-            AppCompatImageView icon;
-
-
-            MemberViewHolder(View item) {
-                super(item);
-                name = item.findViewById(R.id.suggestion_item_textview);
-                icon = item.findViewById(android.R.id.icon);
-            }
-        }
-    }
-
-    public static class RecyclerItemClickListener implements RecyclerView.OnItemTouchListener {
-        private final OnItemClickListener mListener;
-
-        public interface OnItemClickListener {
-            void onItemClick(View view, int position);
-        }
-
-        private final GestureDetector mGestureDetector;
-
-        public RecyclerItemClickListener(Context context, OnItemClickListener listener) {
-            mListener = listener;
-            mGestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public boolean onSingleTapUp(MotionEvent e) {
-                    return true;
-                }
-            });
-        }
-
-        @Override
-        public boolean onInterceptTouchEvent(RecyclerView view, MotionEvent e) {
-            View childView = view.findChildViewUnder(e.getX(), e.getY());
-            if (childView != null && mListener != null && mGestureDetector.onTouchEvent(e)) {
-                mListener.onItemClick(childView, view.getChildAdapterPosition(childView));
-            }
-            return false;
-        }
-
-        @Override
-        public void onTouchEvent(RecyclerView view, MotionEvent motionEvent) {
-        }
-
-        @Override
-        public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-            // do nothing
-        }
-    }
-
-
 }
-
