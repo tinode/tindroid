@@ -650,6 +650,47 @@ public class Drafty implements Serializable {
     }
 
     /**
+     * Insert video attachment
+     */
+    public Drafty insertVideo(int at, String mime, byte[] bits, int width, int height,
+                              String fname, String refurl, long size, long duration) {
+        if (bits == null && refurl == null) {
+            throw new IllegalArgumentException("Either image bits or reference URL must not be null.");
+        }
+
+        if (txt == null || txt.length() < at + 1 || at < 0) {
+            throw new IndexOutOfBoundsException("Invalid insertion position");
+        }
+
+        prepareForEntity(at, 1);
+
+        Map<String, Object> data = new HashMap<>();
+        if (mime != null && !mime.equals("")) {
+            data.put("mime", mime);
+        }
+        if (bits != null) {
+            data.put("val", bits);
+        }
+        data.put("width", width);
+        data.put("height", height);
+        if (fname != null && !fname.equals("")) {
+            data.put("name", fname);
+        }
+        if (refurl != null) {
+            data.put("ref", refurl.toString());
+        }
+        if (size > 0) {
+            data.put("size", size);
+        }
+        if (duration != 0) {
+            data.put("duration", duration);
+        }
+        ent[ent.length - 1] = new Entity("VD", data);
+
+        return this;
+    }
+
+    /**
      * Check if the give Drafty can be represented by plain text.
      *
      * @return true if this Drafty has no markup other thn line breaks.

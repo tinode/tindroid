@@ -86,12 +86,58 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     case "HT":
                     case "IM":
                     case "EX":
+                    case "VD":
                         return true;
                     default:
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Determine attachment type for presentation on UI
+     */
+    public static String getAttachmentType(final Drafty content) {
+        if (content != null) {
+            Drafty.Entity[] entities = content.getEntities();
+            if (entities == null) {
+                return "";
+            }
+
+            for (Drafty.Entity ent : entities) {
+                if (ent == null || ent.tp == null) {
+                    continue;
+                }
+                switch (ent.tp) {
+                    case "BN":
+                        return AttachmentType.BUTTON;
+                    case "LN":
+                        return AttachmentType.LINK;
+                    case "MN":
+                        return AttachmentType.MENTION;
+                    case "HT":
+                        return AttachmentType.HASHTAG;
+                    case "IM":
+                        return AttachmentType.IMAGE;
+                    case "EX":
+                        return AttachmentType.FILE;
+                    case "VD":
+                        return AttachmentType.VIDEO;
+                    case "AU":
+                        return AttachmentType.AUDIO;
+                    case "PD":
+                        return AttachmentType.DOCUMENT;
+                    case "LC":
+                        return AttachmentType.LOCATION;
+                    case "CT":
+                        return AttachmentType.CONTACT;
+                    default:
+                        return "";
+                }
+            }
+        }
+        return "";
     }
 
     private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data) {

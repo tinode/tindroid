@@ -10,7 +10,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import androidx.exifinterface.media.ExifInterface;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
@@ -690,6 +690,14 @@ public class MessagesFragment extends Fragment
         }
     }
 
+    // Send video as a link
+    private static Drafty draftyVideo(String mimeType, byte[] bits, int width, int height, String fname,
+                                      String refUrl, long size, long duration) {
+        Drafty content = Drafty.parse(" ");
+        content.insertVideo(0, mimeType, bits, width, height, fname, refUrl, size, duration);
+        return content;
+    }
+
     // Send image in-band
     private static Drafty draftyImage(String mimeType, byte[] bits, int width, int height, String fname) {
         Drafty content = Drafty.parse(" ");
@@ -928,7 +936,7 @@ public class MessagesFragment extends Fragment
                 try {
                     is = resolver.openInputStream(uri);
                     //noinspection ConstantConditions
-                    ExifInterface exif = new ExifInterface(is);
+                    @SuppressLint({"NewApi", "LocalSuppress"}) ExifInterface exif = new ExifInterface(is);
                     is.close();
                     int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
                     if (orientation != ExifInterface.ORIENTATION_UNDEFINED &&
