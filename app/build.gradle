@@ -88,4 +88,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:17.2.1'
     implementation 'com.google.firebase:firebase-messaging:20.0.1'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.10.22'
+    implementation 'org.apache.commons:commons-lang3:3.4'
 }
