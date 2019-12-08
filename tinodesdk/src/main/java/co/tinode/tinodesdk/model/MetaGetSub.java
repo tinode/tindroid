@@ -10,7 +10,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 /**
  * Parameter of MsgGetMeta
  */
-
 @JsonInclude(NON_DEFAULT)
 public class MetaGetSub {
     public String user;
@@ -25,13 +24,19 @@ public class MetaGetSub {
         this.limit = limit;
     }
 
-    @JsonIgnore
     public void setUser(String user) {
         this.user = user;
     }
 
-    @JsonIgnore
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    @Override
+    public String toString() {
+        return "user=[" + user + "]," +
+                " topic=[" + topic + "]," +
+                " ims=[" + ims + "]," +
+                " limit=[" + limit + "]";
     }
 }

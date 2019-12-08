@@ -153,8 +153,8 @@ public class Tinode {
     private int mPacketCount;
     private ListenerNotifier mNotifier;
     private ConcurrentMap<String, FutureHolder> mFutures;
-    private HashMap<String, Topic> mTopics;
-    private HashMap<String, User> mUsers;
+    private ConcurrentHashMap<String, Topic> mTopics;
+    private ConcurrentHashMap<String, User> mUsers;
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
     // Timestamp of the latest topic desc update.
@@ -203,8 +203,8 @@ public class Tinode {
                 }
             }
         }, EXPIRE_FUTURES_TIMEOUT, EXPIRE_FUTURES_PERIOD);
-        mTopics = new HashMap<>();
-        mUsers = new HashMap<>();
+        mTopics = new ConcurrentHashMap<>();
+        mUsers = new ConcurrentHashMap<>();
 
         mStore = store;
         if (mStore != null) {
@@ -524,7 +524,7 @@ public class Tinode {
     }
 
     /**
-     * Make sure connection is either already established already or being established:
+     * Make sure connection is either already established or being established:
      *  - If connection is already established do nothing
      *  - If connection does not exist, create
      *  - If not connected and waiting for backoff timer, wake it up.
@@ -1177,6 +1177,7 @@ public class Tinode {
         mMyUid = newUid;
 
         if (mStore != null) {
+            // FIXME: pass expiration time too.
             mStore.setMyUid(mMyUid);
         }
 
@@ -1192,6 +1193,7 @@ public class Tinode {
 
         if (ctrl.code < 300) {
             mConnAuth = true;
+            setAutoLoginToken(mAuthToken);
             mNotifier.onLogin(ctrl.code, ctrl.text);
         } else {
             // Maybe we got request to enter validation code.
@@ -1205,6 +1207,7 @@ public class Tinode {
                 }
 
                 if (mStore != null) {
+                    // FIXME: pass expiration time too.
                     mStore.setMyUid(mMyUid, mCredToValidate.toArray(new String[]{}));
                 }
             }
@@ -1343,12 +1346,16 @@ public class Tinode {
      * be automatically dispatched. A {@link Topic#subscribe()} should be normally used instead.
      *
      * @param topicName name of the topic to subscribe to
+     * @param set values to be assign to topic on success.
+     * @param get query for topic values.
+     * @param background indicator that this request should be treated as a service request,
+     *                   i.e. presence notifications will be delayed.
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu, Pr, T> PromisedReply<ServerMessage> subscribe(String topicName,
                                                               MsgSetMeta<Pu, Pr> set,
-                                                              MsgGetMeta get) {
-        ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
+                                                              MsgGetMeta get, boolean background) {
+        ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get, background));
         return sendWithPromise(msg, msg.sub.id);
     }
 

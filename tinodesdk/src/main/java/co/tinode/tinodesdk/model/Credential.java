@@ -1,10 +1,15 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.Arrays;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Account credential: email, phone, captcha
  */
+@JsonInclude(NON_DEFAULT)
 public class Credential {
     public static final String METH_EMAIL = "email";
     public static final String METH_PHONE = "tel";

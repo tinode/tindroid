@@ -179,7 +179,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                             // We are requesting immediate login with the new account.
                                             // If the action succeeded, assume we have logged in.
                                             tinode.setAutoLoginToken(tinode.getAuthToken());
-                                            UiUtils.onLoginSuccess(parent, signUp, tinode.getMyId(), true);
+                                            UiUtils.onLoginSuccess(parent, signUp, tinode.getMyId());
                                         }
                                     }
                                 });

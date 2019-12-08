@@ -1,6 +1,10 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.io.Serializable;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Client message:
@@ -16,7 +20,7 @@ import java.io.Serializable;
  * Del   *MsgClientDel   `json:"del"`
  * Note  *MsgClientNote  `json:"note"`
  */
-
+@JsonInclude(NON_DEFAULT)
 public class ClientMessage<Pu,Pr> implements Serializable {
     public MsgClientHi hi;
     public MsgClientAcc<Pu,Pr> acc;

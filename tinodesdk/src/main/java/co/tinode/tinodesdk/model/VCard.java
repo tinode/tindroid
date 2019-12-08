@@ -1,6 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -8,6 +9,9 @@ import java.util.Comparator;
 
 import co.tinode.tinodesdk.Tinode;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
+@JsonInclude(NON_DEFAULT)
 public class VCard implements Serializable, Mergeable {
 
     public final static String TYPE_HOME = "HOME";

@@ -72,8 +72,10 @@ public interface Storage {
     /** Read user description */
     User userGet(String uid);
     /** Insert new user */
+    @SuppressWarnings("UnusedReturnValue")
     long userAdd(User user);
     /** Update existing user */
+    @SuppressWarnings("UnusedReturnValue")
     boolean userUpdate(User user);
 
     /**
@@ -109,6 +111,7 @@ public interface Storage {
      * @param data updated content of the message. Must not be null.
      * @return true on success, false otherwise
      */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgDraftUpdate(Topic topic, long dbMessageId, Drafty data);
 
     /**
@@ -119,6 +122,7 @@ public interface Storage {
      * @param data updated content of the message. If null only status is updated.
      * @return true on success, false otherwise
      */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgReady(Topic topic, long dbMessageId, Drafty data);
 
     /**
@@ -129,11 +133,13 @@ public interface Storage {
      * @return true on success, false otherwise
      *
      */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgSyncing(Topic topic, long dbMessageId, boolean sync);
 
     /**
      * Delete message by database id.
      */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgDiscard(Topic topic, long dbMessageId);
 
     /**
@@ -147,16 +153,22 @@ public interface Storage {
      */
     boolean msgDelivered(Topic topic, long dbMessageId, Date timestamp, int seq);
     /** Mark messages for deletion by range */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard);
     /** Mark messages for deletion by seq ID list */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgMarkToDelete(Topic topic, List<Integer> list, boolean markAsHard);
     /** Delete messages */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgDelete(Topic topic, int delId, int fromId, int toId);
     /** Delete messages */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgDelete(Topic topic, int delId, List<Integer> list);
     /** Set recv value for a given subscriber */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgRecvByRemote(Subscription sub, int recv);
     /** Set read value for a given subscriber */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgReadByRemote(Subscription sub, int read);
 
     /** Retrieve a single message by database id */

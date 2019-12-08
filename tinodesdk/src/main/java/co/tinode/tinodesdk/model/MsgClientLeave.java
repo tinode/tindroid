@@ -1,8 +1,13 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Topic unsubscribe packet.
  */
+@JsonInclude(NON_DEFAULT)
 public class MsgClientLeave {
     public String id;
     public String topic;

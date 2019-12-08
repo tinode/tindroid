@@ -1,8 +1,13 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Typing and read/received notifications packet.
  */
+@JsonInclude(NON_DEFAULT)
 public class MsgClientNote {
     public String topic; // topic to notify, required
     public String what;  // one of "kp" (key press), "read" (read notification),

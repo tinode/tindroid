@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.net.URL;
@@ -16,6 +17,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 
 /**
@@ -67,7 +70,7 @@ import java.util.regex.Pattern;
  }
  </pre>
  */
-
+@JsonInclude(NON_DEFAULT)
 public class Drafty implements Serializable {
     public static final String MIME_TYPE = "text/x-drafty";
     public static final String JSON_MIME_TYPE = "application/json";

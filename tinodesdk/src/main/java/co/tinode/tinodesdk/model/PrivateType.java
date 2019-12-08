@@ -38,7 +38,6 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable {
         put("comment", comment != null && comment.length() > 0 ? comment : Tinode.NULL_VALUE);
     }
 
-    @JsonIgnore
     public Boolean isArchived() {
         try {
             return (Boolean) getValue("arch");
@@ -51,9 +50,10 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable {
         put("arch", arch ? true : Tinode.NULL_VALUE);
     }
 
-    @JsonIgnore
     public int merge(Mergeable another) {
-        if (!(another instanceof PrivateType)) return 0;
+        if (!(another instanceof PrivateType)) {
+            return 0;
+        }
         PrivateType apt = (PrivateType)another;
         for (Map.Entry<String, Object> e : apt.entrySet()) {
             put(e.getKey(), e.getValue());

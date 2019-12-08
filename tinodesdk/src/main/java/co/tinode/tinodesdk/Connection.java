@@ -286,6 +286,8 @@ public class Connection extends WebSocketClient {
 
     @Override
     public void onError(Exception ex) {
+        Log.w(TAG, "Websocket error", ex);
+
         if (mListener != null) {
             mListener.onError(this, ex);
         }

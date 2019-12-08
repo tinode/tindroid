@@ -1,5 +1,9 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Metadata query packet
  * 	Id    string `json:"id,omitempty"`
@@ -9,7 +13,7 @@ package co.tinode.tinodesdk.model;
  *  Sub *MsgGetOpts `json:"sub,omitempty"`
  *  Data *MsgBrowseOpts `json:"data,omitempty"`
  */
-
+@JsonInclude(NON_DEFAULT)
 public class MsgClientGet {
     public String id;
     public String topic;

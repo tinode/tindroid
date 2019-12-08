@@ -141,7 +141,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 } else {
                                     tinode.setAutoLoginToken(tinode.getAuthToken());
                                     // Force immediate sync, otherwise Contacts tab may be unusable.
-                                    UiUtils.onLoginSuccess(parent, signIn, tinode.getMyId(), true);
+                                    UiUtils.onLoginSuccess(parent, signIn, tinode.getMyId());
                                 }
                                 return null;
                             }

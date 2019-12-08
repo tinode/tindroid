@@ -140,7 +140,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 tinode.loginToken(token).getResult();
 
                 // It throws if rejected and we just fail to sync.
-                tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();
+                // FND sends no presence notifications thus background flag is not needed.
+                tinode.subscribe(Tinode.TOPIC_FND, null, null, false).getResult();
 
                 tinode.setMeta(Tinode.TOPIC_FND,
                         new MsgSetMeta(new MetaSetDesc(null, contacts))).getResult();

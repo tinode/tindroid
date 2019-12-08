@@ -1,13 +1,17 @@
 package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Publish to topic packet.
  */
+@JsonInclude(NON_DEFAULT)
 public class MsgClientPub {
     public String id;
     public String topic;

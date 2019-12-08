@@ -1,14 +1,18 @@
 package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
 /**
  * Topic metadata request.
  */
+@JsonInclude(NON_DEFAULT)
 public class MsgGetMeta {
     private static final int DESC_SET = 0x01;
     private static final int SUB_SET = 0x02;
@@ -110,6 +114,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    @JsonIgnore
     public void setSubUser(String user, Date ims, Integer limit) {
         if (ims != null || limit != null || user != null) {
             sub = new MetaGetSub(ims, limit);
@@ -119,6 +124,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    @JsonIgnore
     public void setSubTopic(String topic, Date ims, Integer limit) {
         if (ims != null || limit != null || topic != null) {
             sub = new MetaGetSub(ims, limit);
@@ -127,7 +133,6 @@ public class MsgGetMeta {
         mSet |= SUB_SET;
         buildWhat();
     }
-
 
     public void setData(Integer since, Integer before, Integer limit) {
         if (since != null || before != null || limit != null) {

@@ -43,6 +43,9 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
     private ClickListener mClickListener;
 
+    // TRUE is user granted access to contacts, FALSE otherwise.
+    private boolean mPermissionGranted = false;
+
     FindAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
         super();
 
@@ -76,6 +79,10 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         }
     }
 
+    void setContactsPermission(boolean granted) {
+        mPermissionGranted = granted;
+    }
+
     @Override
     public void swapCursor(Cursor newCursor, String searchTerm) {
         mSearchTerm = searchTerm;
@@ -104,6 +111,8 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         View view = inflater.inflate(viewType, parent, false);
         switch (viewType) {
             case R.layout.not_found:
+            case R.layout.no_permission:
+            case R.layout.not_search_query:
                 return new ViewHolderEmpty(view);
             case R.layout.contact_section:
                 return new ViewHolderSection(view);
@@ -129,7 +138,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         if (count == 0) {
             if (position == 0) {
                 // The 'empty' element in the 'PHONE CONTACTS' section.
-                return R.layout.not_found;
+                return mPermissionGranted ? R.layout.not_found : R.layout.no_permission;
             }
             // One 'empty' element
             count = 1;
@@ -147,7 +156,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
         count = getFoundItemCount();
         if (count == 0 && position == 0) {
-            return R.layout.not_found;
+            return TextUtils.isEmpty(mSearchTerm) ? R.layout.not_search_query : R.layout.not_found;
         }
 
         return R.layout.contact;
@@ -166,7 +175,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         if (count == 0) {
             if (position == 0) {
                 // The 'empty' element in the 'PHONE CONTACTS' section.
-                return "empty_one".hashCode();
+                return ("empty_one" + mPermissionGranted).hashCode();
             }
 
             count = 1;
@@ -191,7 +200,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         count = getFoundItemCount();
         if (count == 0 && position == 0) {
             // The 'empty' element in the DIRECTORY section.
-            return "empty_two".hashCode();
+            return ("empty_two" + TextUtils.isEmpty(mSearchTerm)).hashCode();
         }
 
         return ("found:" + mFound.get(position).getUnique()).hashCode();
