@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -21,6 +22,7 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -102,6 +104,7 @@ public class MessagesFragment extends Fragment
     private static final int ACTION_ATTACH_IMAGE = 101;
 
     private static final int READ_EXTERNAL_STORAGE_PERMISSION = 1;
+    private static final int USE_CAMERA_PERMISSION = 2;
 
     // Maximum size of file to send in-band. 256KB.
     private static final long MAX_INBAND_ATTACHMENT_SIZE = 1 << 17;
@@ -125,6 +128,7 @@ public class MessagesFragment extends Fragment
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
 
+    private String mCurrentPhotoFile;
     private Uri mCurrentPhotoUri;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -650,6 +654,14 @@ public class MessagesFragment extends Fragment
             return;
         }
 
+        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA},
+                    USE_CAMERA_PERMISSION);
+            Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
+
+            return;
+        }
+
         // Pick image from gallery.
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png"});
@@ -676,7 +688,10 @@ public class MessagesFragment extends Fragment
                     cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
                     cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
+
+                mCurrentPhotoFile = photoFile.getAbsolutePath();
                 mCurrentPhotoUri = photoUri;
+
             } else {
                 cameraIntent = null;
             }
@@ -732,17 +747,18 @@ public class MessagesFragment extends Fragment
                         return;
                     }
 
-                    Uri imageUri;
+                    final Bundle args = new Bundle();
                     if (data == null || data.getData() == null) {
                         // Camera
-                        imageUri = mCurrentPhotoUri;
+                        args.putString("file", mCurrentPhotoFile);
+                        args.putParcelable("uri", mCurrentPhotoUri);
+                        mCurrentPhotoFile = null;
                         mCurrentPhotoUri = null;
                     } else {
                         // Gallery
-                        imageUri = data.getData();
+                        args.putParcelable("uri", data.getData());
                     }
-                    final Bundle args = new Bundle();
-                    args.putParcelable("uri", imageUri);
+
                     args.putInt("requestCode", requestCode);
                     args.putString("topic", mTopicName);
 
@@ -922,28 +938,47 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private static Bundle getFileDetails(final Context context, Uri uri) {
+    private static Bundle getFileDetails(final Context context, Uri uri, String filePath) {
         final ContentResolver resolver = context.getContentResolver();
         String fname = null;
         long fsize = 0L;
+        int orientation = -1;
+
+        Bundle result = new Bundle();
 
         String mimeType = resolver.getType(uri);
         if (mimeType == null) {
             mimeType = UiUtils.getMimeType(uri);
         }
+        result.putString("mime", mimeType);
 
-        Cursor cursor = resolver.query(uri, null, null, null, null);
-        if (cursor != null) {
-            cursor.moveToFirst();
-            fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-            fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
-            cursor.close();
+        String[] projection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};
+        } else {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
         }
+        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    int idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
+                    if (idx >= 0) {
+                        orientation = cursor.getInt(idx);
+                    }
+                }
+            }
+        }
+        // In degrees.
+        result.putInt("orientation", orientation);
 
         // Still no size? Try opening directly.
-        if (fsize <= 0) {
-            String path = UiUtils.getPath(context, uri);
+        if (fsize <= 0 || orientation < 0) {
+            String path = filePath != null ? filePath : UiUtils.getPath(context, uri);
             if (path != null) {
+                result.putString("path", path);
+
                 File file = new File(path);
                 if (fname == null) {
                     fname = file.getName();
@@ -952,10 +987,9 @@ public class MessagesFragment extends Fragment
             }
         }
 
-        Bundle result = new Bundle();
-        result.putString("mime", mimeType);
         result.putString("name", fname);
         result.putLong("size", fsize);
+
         return result;
     }
 
@@ -969,12 +1003,15 @@ public class MessagesFragment extends Fragment
 
         final int requestCode = args.getInt("requestCode");
         final String topicName = args.getString("topic");
+        // URI must exist, file is optional.
         final Uri uri = args.getParcelable("uri");
+        final String file = args.getString("file");
+
         result.msgId = args.getLong("msgId");
 
         if (uri == null) {
             Log.w(TAG, "Received null URI");
-            result.error = "Null URI";
+            result.error = "Null input data";
             return result;
         }
 
@@ -987,13 +1024,13 @@ public class MessagesFragment extends Fragment
         try {
             int imageWidth = 0, imageHeight = 0;
 
-            Bundle fileDetails = getFileDetails(context, uri);
+            Bundle fileDetails = getFileDetails(context, uri, file);
             String fname = fileDetails.getString("name");
             long fsize = fileDetails.getLong("size");
             String mimeType = fileDetails.getString("mime");
 
             if (fsize == 0) {
-                Log.w(TAG, "File size is zero " + uri);
+                Log.w(TAG, "File size is zero; uri=" + uri + "; file="+file);
                 result.error = context.getString(R.string.invalid_file);
                 return result;
             }
@@ -1021,23 +1058,63 @@ public class MessagesFragment extends Fragment
                 }
 
                 // Also ensure the image has correct orientation.
+                int orientation = ExifInterface.ORIENTATION_UNDEFINED;
                 try {
-                    is = resolver.openInputStream(uri);
-                    //noinspection ConstantConditions
-                    ExifInterface exif = new ExifInterface(is);
-                    is.close();
-                    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
-                    if (orientation != ExifInterface.ORIENTATION_UNDEFINED &&
-                            orientation != ExifInterface.ORIENTATION_NORMAL) {
-                        // Rotate image to ensure correct orientation.
-                        if (bmp == null) {
+                    // Opening original image, not a scaled copy.
+                    int degrees = fileDetails.getInt("orientation");
+                    if (degrees == -1) {
+                        ExifInterface exif = null;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)  {
                             is = resolver.openInputStream(uri);
-                            bmp = BitmapFactory.decodeStream(is, null, null);
                             //noinspection ConstantConditions
+                            exif = new ExifInterface(is);
+                        } else {
+                            String path = fileDetails.getString("path");
+                            if (path != null) {
+                                exif = new ExifInterface(path);
+                            }
+                        }
+                        if (exif != null) {
+                            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                                    ExifInterface.ORIENTATION_UNDEFINED);
+                        }
+                        if (is != null) {
                             is.close();
                         }
+                    } else {
+                        switch (degrees) {
+                            case 0:
+                                orientation = ExifInterface.ORIENTATION_NORMAL;
+                                break;
+                            case 90:
+                                orientation = ExifInterface.ORIENTATION_ROTATE_90;
+                                break;
+                            case 180:
+                                orientation = ExifInterface.ORIENTATION_ROTATE_180;
+                                break;
+                            case 270:
+                                orientation = ExifInterface.ORIENTATION_ROTATE_270;
+                                break;
+                            default:
+                        }
+                    }
 
-                        bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    switch (orientation) {
+                        default:
+                            // Rotate image to ensure correct orientation.
+                            if (bmp == null) {
+                                is = resolver.openInputStream(uri);
+                                bmp = BitmapFactory.decodeStream(is, null, null);
+                                //noinspection ConstantConditions
+                                is.close();
+                            }
+
+                            bmp = UiUtils.rotateBitmap(bmp, orientation);
+                            break;
+                        case ExifInterface.ORIENTATION_NORMAL:
+                            break;
+                        case ExifInterface.ORIENTATION_UNDEFINED:
+                            Log.d(TAG, "Unable to obtain image orientation");
                     }
                 } catch (IOException ex) {
                     Log.w(TAG, "Failed to obtain image orientation", ex);

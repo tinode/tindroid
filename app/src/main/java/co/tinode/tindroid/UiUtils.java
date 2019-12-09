@@ -1059,9 +1059,10 @@ public class UiUtils {
         final String[] projection = {column};
         try (Cursor cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null)) {
             if (cursor != null && cursor.moveToFirst()) {
-                final int index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(index);
+                final int index = cursor.getColumnIndex(column);
+                return index >= 0 ? cursor.getString(index) : null;
             }
+
         }
         return null;
     }
