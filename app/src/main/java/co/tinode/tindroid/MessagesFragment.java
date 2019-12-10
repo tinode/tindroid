@@ -1,8 +1,10 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,10 +12,17 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
+import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,7 +59,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -92,6 +104,7 @@ public class MessagesFragment extends Fragment
     private static final int ACTION_ATTACH_IMAGE = 101;
 
     private static final int READ_EXTERNAL_STORAGE_PERMISSION = 1;
+    private static final int USE_CAMERA_PERMISSION = 2;
 
     // Maximum size of file to send in-band. 256KB.
     private static final long MAX_INBAND_ATTACHMENT_SIZE = 1 << 17;
@@ -114,6 +127,9 @@ public class MessagesFragment extends Fragment
     private Timer mNoteTimer = null;
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
+
+    private String mCurrentPhotoFile;
+    private Uri mCurrentPhotoUri;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -207,7 +223,7 @@ public class MessagesFragment extends Fragment
         view.findViewById(R.id.attachImage).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openFileSelector("image/*", R.string.select_image, ACTION_ATTACH_IMAGE);
+                openImageSelector(activity);
             }
         });
 
@@ -215,7 +231,7 @@ public class MessagesFragment extends Fragment
         view.findViewById(R.id.attachFile).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openFileSelector("*/*", R.string.select_file, ACTION_ATTACH_FILE);
+                openFileSelector(activity);
             }
         });
 
@@ -617,16 +633,99 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private void openFileSelector(String mimeType, int title, int resultCode) {
+    private void openFileSelector(Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType(mimeType);
+        intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         try {
             startActivityForResult(
-                    Intent.createChooser(intent, getString(title)), resultCode);
+                    Intent.createChooser(intent, getString(R.string.select_file)), ACTION_ATTACH_FILE);
         } catch (ActivityNotFoundException ex) {
             Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void openImageSelector(Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA},
+                    USE_CAMERA_PERMISSION);
+            Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
+
+            return;
+        }
+
+        // Pick image from gallery.
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png"});
+
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Make sure camera is available.
+        if (cameraIntent.resolveActivity(activity.getPackageManager()) != null) {
+            // Create temp file for storing the photo.
+            File photoFile = null;
+            try {
+                photoFile = createImageFile(activity);
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                Log.w(TAG, "Unable to create temp file for storing camera photo", ex);
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoUri = FileProvider.getUriForFile(activity,
+                        "co.tinode.tindroid.provider", photoFile);
+
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                // See explanation here: http://medium.com/@quiro91/ceb9bb0eec3a
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+                    cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
+                    cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+
+                mCurrentPhotoFile = photoFile.getAbsolutePath();
+                mCurrentPhotoUri = photoUri;
+
+            } else {
+                cameraIntent = null;
+            }
+        } else {
+            cameraIntent = null;
+        }
+
+        // Pack two intents into a chooser.
+        Intent chooserIntent = Intent.createChooser(galleryIntent, getString(R.string.select_image));
+        if (cameraIntent != null) {
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
+        }
+
+        startActivityForResult(chooserIntent, ACTION_ATTACH_IMAGE);
+    }
+
+    private File createImageFile(Activity activity) throws IOException {
+        // Create an image file name
+        String imageFileName = "IMG_" +
+                new SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + "_";
+        File storageDir = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File imageFile = File.createTempFile(
+                imageFileName,  // prefix
+                ".jpg",  // suffix
+                storageDir      // directory
+        );
+
+        // Make sure directories exist.
+        File path = imageFile.getParentFile();
+        if (path != null) {
+            path.mkdirs();
+        }
+
+        return imageFile;
     }
 
     @Override
@@ -644,16 +743,29 @@ public class MessagesFragment extends Fragment
                         ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
                             READ_EXTERNAL_STORAGE_PERMISSION);
                         Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
-                    } else {
-                        final Bundle args = new Bundle();
-                        args.putParcelable("uri", data.getData());
-                        args.putInt("requestCode", requestCode);
-                        args.putString("topic", mTopicName);
 
-                        // Must use unique ID for each upload. Otherwise trouble.
-                        LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+                        return;
                     }
-                    break;
+
+                    final Bundle args = new Bundle();
+                    if (data == null || data.getData() == null) {
+                        // Camera
+                        args.putString("file", mCurrentPhotoFile);
+                        args.putParcelable("uri", mCurrentPhotoUri);
+                        mCurrentPhotoFile = null;
+                        mCurrentPhotoUri = null;
+                    } else {
+                        // Gallery
+                        args.putParcelable("uri", data.getData());
+                    }
+
+                    args.putInt("requestCode", requestCode);
+                    args.putString("topic", mTopicName);
+
+                    // Must use unique ID for each upload. Otherwise trouble.
+                    LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+
+                    return;
                 }
             }
         }
@@ -826,28 +938,47 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private static Bundle getFileDetails(final Context context, Uri uri) {
+    private static Bundle getFileDetails(final Context context, Uri uri, String filePath) {
         final ContentResolver resolver = context.getContentResolver();
         String fname = null;
         long fsize = 0L;
+        int orientation = -1;
+
+        Bundle result = new Bundle();
 
         String mimeType = resolver.getType(uri);
         if (mimeType == null) {
             mimeType = UiUtils.getMimeType(uri);
         }
+        result.putString("mime", mimeType);
 
-        Cursor cursor = resolver.query(uri, null, null, null, null);
-        if (cursor != null) {
-            cursor.moveToFirst();
-            fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-            fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
-            cursor.close();
+        String[] projection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};
+        } else {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
         }
+        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    int idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
+                    if (idx >= 0) {
+                        orientation = cursor.getInt(idx);
+                    }
+                }
+            }
+        }
+        // In degrees.
+        result.putInt("orientation", orientation);
 
         // Still no size? Try opening directly.
-        if (fsize == 0) {
-            String path = UiUtils.getPath(context, uri);
+        if (fsize <= 0 || orientation < 0) {
+            String path = filePath != null ? filePath : UiUtils.getPath(context, uri);
             if (path != null) {
+                result.putString("path", path);
+
                 File file = new File(path);
                 if (fname == null) {
                     fname = file.getName();
@@ -856,10 +987,9 @@ public class MessagesFragment extends Fragment
             }
         }
 
-        Bundle result = new Bundle();
-        result.putString("mime", mimeType);
         result.putString("name", fname);
         result.putLong("size", fsize);
+
         return result;
     }
 
@@ -873,12 +1003,15 @@ public class MessagesFragment extends Fragment
 
         final int requestCode = args.getInt("requestCode");
         final String topicName = args.getString("topic");
+        // URI must exist, file is optional.
         final Uri uri = args.getParcelable("uri");
+        final String file = args.getString("file");
+
         result.msgId = args.getLong("msgId");
 
         if (uri == null) {
             Log.w(TAG, "Received null URI");
-            result.error = "Null URI";
+            result.error = "Null input data";
             return result;
         }
 
@@ -891,13 +1024,13 @@ public class MessagesFragment extends Fragment
         try {
             int imageWidth = 0, imageHeight = 0;
 
-            Bundle fileDetails = getFileDetails(context, uri);
+            Bundle fileDetails = getFileDetails(context, uri, file);
             String fname = fileDetails.getString("name");
             long fsize = fileDetails.getLong("size");
             String mimeType = fileDetails.getString("mime");
 
             if (fsize == 0) {
-                Log.w(TAG, "File size is zero " + uri);
+                Log.w(TAG, "File size is zero; uri=" + uri + "; file="+file);
                 result.error = context.getString(R.string.invalid_file);
                 return result;
             }
@@ -925,23 +1058,63 @@ public class MessagesFragment extends Fragment
                 }
 
                 // Also ensure the image has correct orientation.
+                int orientation = ExifInterface.ORIENTATION_UNDEFINED;
                 try {
-                    is = resolver.openInputStream(uri);
-                    //noinspection ConstantConditions
-                    ExifInterface exif = new ExifInterface(is);
-                    is.close();
-                    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
-                    if (orientation != ExifInterface.ORIENTATION_UNDEFINED &&
-                            orientation != ExifInterface.ORIENTATION_NORMAL) {
-                        // Rotate image to ensure correct orientation.
-                        if (bmp == null) {
+                    // Opening original image, not a scaled copy.
+                    int degrees = fileDetails.getInt("orientation");
+                    if (degrees == -1) {
+                        ExifInterface exif = null;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)  {
                             is = resolver.openInputStream(uri);
-                            bmp = BitmapFactory.decodeStream(is, null, null);
                             //noinspection ConstantConditions
+                            exif = new ExifInterface(is);
+                        } else {
+                            String path = fileDetails.getString("path");
+                            if (path != null) {
+                                exif = new ExifInterface(path);
+                            }
+                        }
+                        if (exif != null) {
+                            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                                    ExifInterface.ORIENTATION_UNDEFINED);
+                        }
+                        if (is != null) {
                             is.close();
                         }
+                    } else {
+                        switch (degrees) {
+                            case 0:
+                                orientation = ExifInterface.ORIENTATION_NORMAL;
+                                break;
+                            case 90:
+                                orientation = ExifInterface.ORIENTATION_ROTATE_90;
+                                break;
+                            case 180:
+                                orientation = ExifInterface.ORIENTATION_ROTATE_180;
+                                break;
+                            case 270:
+                                orientation = ExifInterface.ORIENTATION_ROTATE_270;
+                                break;
+                            default:
+                        }
+                    }
 
-                        bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    switch (orientation) {
+                        default:
+                            // Rotate image to ensure correct orientation.
+                            if (bmp == null) {
+                                is = resolver.openInputStream(uri);
+                                bmp = BitmapFactory.decodeStream(is, null, null);
+                                //noinspection ConstantConditions
+                                is.close();
+                            }
+
+                            bmp = UiUtils.rotateBitmap(bmp, orientation);
+                            break;
+                        case ExifInterface.ORIENTATION_NORMAL:
+                            break;
+                        case ExifInterface.ORIENTATION_UNDEFINED:
+                            Log.d(TAG, "Unable to obtain image orientation");
                     }
                 } catch (IOException ex) {
                     Log.w(TAG, "Failed to obtain image orientation", ex);

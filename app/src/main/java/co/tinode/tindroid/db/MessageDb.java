@@ -221,33 +221,9 @@ public class MessageDb implements BaseColumns {
         return updated > 0;
     }
 
-    /**
-     * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
-     *
-     * @param db      database to select from;
-     * @param topicId Tinode topic ID (topics._id) to select from
-     * @param from    minimum seq value to select, exclusive
-     * @param to      maximum seq value to select, inclusive
-     * @return cursor with the messages
-     */
-    private static Cursor query(SQLiteDatabase db, long topicId, int from, int to, int limit) {
-        final String sql = "SELECT * FROM " + TABLE_NAME +
-                " WHERE "
-                        + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                        (from > 0 ? " AND " + COLUMN_NAME_SEQ + ">" + from : "") +
-                        (to > 0 ? " AND " + COLUMN_NAME_SEQ + "<=" + to : "") +
-                    " AND "
-                        + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
-                " ORDER BY "
-                    + COLUMN_NAME_TS + " DESC, "
-                    + COLUMN_NAME_SEQ + " DESC" +
-                (limit > 0 ? " LIMIT " + limit : "");
-
-        return db.rawQuery(sql, null);
-    }
 
     /**
-     * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
+     * Query latest messages messages.
      *
      * @param db        database to select from;
      * @param topicId   Tinode topic ID (topics._id) to select from

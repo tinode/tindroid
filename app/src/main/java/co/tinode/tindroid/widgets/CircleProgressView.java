@@ -162,19 +162,16 @@ public class CircleProgressView extends AppCompatImageView {
         mPostedShow = false;
         long diff = System.currentTimeMillis() - mStartTime;
         if (diff >= MIN_SHOW_TIME || mStartTime == -1) {
-            // The progress spinner has been shown long enough
-            // OR was not shown yet. If it wasn't shown yet,
-            // it will just never be shown.
+            // The progress spinner has been shown long enough OR was not shown yet.
+            // If it wasn't shown yet, it will just never be shown.
             if (getVisibility() == View.VISIBLE) {
                 stop();
             }
-        } else {
+        } else if (!mPostedHide) {
             // The progress spinner is shown, but not long enough,
-            // so put a delayed message in to hide it when its been
-            // shown long enough.
-            if (!mPostedHide) {
-                mPostedHide = true;
-            }
+            // so post a delayed message to hide it when its been shown long enough.
+            mPostedHide = true;
+            postDelayed(mDelayedHide, MIN_SHOW_TIME - diff);
         }
     }
     /**
