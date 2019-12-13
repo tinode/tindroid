@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JavaType;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
@@ -41,7 +42,7 @@ public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
     }
 
     @Override
-    protected PromisedReply<ServerMessage> publish(Drafty content, long id) {
+    protected PromisedReply<ServerMessage> publish(Drafty content, Map<String, Object> head, long id) {
         throw new UnsupportedOperationException();
     }
 
