@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -45,7 +46,7 @@ public interface Storage {
     boolean topicDelete(Topic topic);
 
     /** Get seq IDs of the stored messages as a Range */
-    Range getCachedMessagesRange(Topic topic);
+    MsgRange getCachedMessagesRange(Topic topic);
     /** Local user reported messages as read */
     @SuppressWarnings("UnusedReturnValue")
     boolean setRead(Topic topic, int read);
@@ -157,13 +158,13 @@ public interface Storage {
     boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard);
     /** Mark messages for deletion by seq ID list */
     @SuppressWarnings("UnusedReturnValue")
-    boolean msgMarkToDelete(Topic topic, List<Integer> list, boolean markAsHard);
+    boolean msgMarkToDelete(Topic topic, MsgRange[] ranges, boolean markAsHard);
     /** Delete messages */
     @SuppressWarnings("UnusedReturnValue")
     boolean msgDelete(Topic topic, int delId, int fromId, int toId);
     /** Delete messages */
     @SuppressWarnings("UnusedReturnValue")
-    boolean msgDelete(Topic topic, int delId, List<Integer> list);
+    boolean msgDelete(Topic topic, int delId, MsgRange[] ranges);
     /** Set recv value for a given subscriber */
     @SuppressWarnings("UnusedReturnValue")
     boolean msgRecvByRemote(Subscription sub, int recv);
@@ -197,18 +198,5 @@ public interface Storage {
         boolean isDeleted();
         boolean isDeleted(boolean hard);
         boolean isSynced();
-    }
-
-    /**
-     * Min and max values.
-     */
-    class Range {
-        int min;
-        int max;
-
-        public Range(int from, int to) {
-            min = from;
-            max = to;
-        }
     }
 }

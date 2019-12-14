@@ -307,7 +307,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return VIEWTYPE_INVALID;
         }
 
-        if (m.delseq != null) {
+        if (m.delHi > 0) {
             return VIEWTYPE_CENTER;
         }
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
@@ -550,10 +550,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
-        if (mCursor != null) {
-            if (mCursor.moveToPosition(position)) {
-                return StoredMessage.readMessage(mCursor);
-            }
+        if (mCursor != null && mCursor.moveToPosition(position)) {
+            return StoredMessage.readMessage(mCursor);
         }
         return null;
     }

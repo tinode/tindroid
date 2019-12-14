@@ -11,7 +11,7 @@ public class MsgServerPres {
     public String what;
     public Integer seq;
     public Integer clear;
-    public MsgDelRange[] delseq;
+    public MsgRange[] delseq;
     public String ua;
     public String act;
     public String tgt;

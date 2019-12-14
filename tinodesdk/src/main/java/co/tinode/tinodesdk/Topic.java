@@ -24,7 +24,7 @@ import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MetaSetSub;
-import co.tinode.tinodesdk.model.MsgDelRange;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -1238,17 +1238,19 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param hard hard-delete messages
      */
     public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) {
+        MsgRange[] ranges = MsgRange.listToRanges(list);
+
         if (mStore != null) {
-            mStore.msgMarkToDelete(this, list, hard);
+            mStore.msgMarkToDelete(this, ranges, hard);
         }
 
         if (mAttached) {
-            return mTinode.delMessage(getName(), list, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            return mTinode.delMessage(getName(), ranges, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     int delId = result.ctrl.getIntParam("del", 0);
                     if (mStore != null && delId > 0) {
-                        mStore.msgDelete(Topic.this, delId, list);
+                        mStore.msgDelete(Topic.this, delId, ranges);
                     }
                     return null;
                 }
@@ -1627,9 +1629,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected void routeMetaDel(int clear, MsgDelRange[] delseq) {
+    protected void routeMetaDel(int clear, MsgRange[] delseq) {
         if (mStore != null) {
-            for (MsgDelRange range : delseq) {
+            for (MsgRange range : delseq) {
                 mStore.msgDelete(this, clear, range.low, range.hi == null ? range.low + 1 : range.hi);
             }
         }
@@ -1657,19 +1659,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected void routeData(MsgServerData data) {
-        if (data.delseq != null) {
-            if (mStore == null) {
-                return;
-            }
-            /*
-            // This is a message with indicators of deleted content.
-            for (MsgDelRange range : data.delseq) {
-                mStore.msgDelete(this, -1, range.low, range.hi == null ? range.low + 1 : range.hi);
-            }
-            */
-            return;
-        }
-
         if (mStore != null) {
             if (mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
                 noteRecv(mTinode.isMe(data.from));

@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MsgRange;
 
 /**
  * Storage structure for messages:
@@ -61,13 +62,10 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_TS = "ts";
     /**
-     * Server-issued sequence ID, integer, indexed
+     * Server-issued sequence ID, integer, indexed. If the message represents
+     * a deleted range, then <tt>seq</tt> is the lowest bound of the range.
      */
     private static final String COLUMN_NAME_SEQ = "seq";
-    /**
-     * If message indicated a deleted range, lowest seq ID in the range.
-     */
-    private static final String COLUMN_NAME_DEL_LOW = "del_low";
     /**
      * If message indicated a deleted range, highest seq ID in the range.
      */
@@ -97,7 +95,6 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
-                    COLUMN_NAME_DEL_LOW + " INT," +
                     COLUMN_NAME_DEL_HI + " INT," +
                     COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
@@ -132,10 +129,9 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_SENDER = 4;
     static final int COLUMN_IDX_TS = 5;
     static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_DEL_LOW = 7;
-    static final int COLUMN_IDX_DEL_HI = 8;
-    static final int COLUMN_IDX_HEAD = 9;
-    static final int COLUMN_IDX_CONTENT = 10;
+    static final int COLUMN_IDX_DEL_HI = 7;
+    static final int COLUMN_IDX_HEAD = 8;
+    static final int COLUMN_IDX_CONTENT = 9;
 
     /**
      * Save message to DB
@@ -175,11 +171,8 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_USER_ID, msg.userId);
             values.put(COLUMN_NAME_STATUS, status);
             values.put(COLUMN_NAME_SENDER, msg.from);
-            values.put(COLUMN_NAME_TS, msg.ts.getTime());
+            values.put(COLUMN_NAME_TS, msg.ts != null ? msg.ts.getTime() : null);
             values.put(COLUMN_NAME_SEQ, msg.seq);
-            if (msg.delLow > 0) {
-                values.put(COLUMN_NAME_DEL_LOW, msg.delLow);
-            }
             if (msg.delHi > 0) {
                 values.put(COLUMN_NAME_DEL_HI, msg.delHi);
             }
@@ -238,7 +231,6 @@ public class MessageDb implements BaseColumns {
                     " AND "
                         + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY "
-                    + COLUMN_NAME_TS + " DESC, "
                     + COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
 
@@ -302,25 +294,24 @@ public class MessageDb implements BaseColumns {
      * @param topicId       Tinode topic ID to delete messages from.
      * @param fromId        minimum seq value to delete, inclusive (closed).
      * @param toId          maximum seq value to delete, exclusive (open).
-     * @param list          list of message IDs to delete.
+     * @param ranges        ranges of message IDs to delete.
      * @param markAsHard    mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
     private static boolean deleteOrMarkDeleted(SQLiteDatabase db, boolean doDelete, long topicId,
-                                               int fromId, int toId, List<Integer> list, boolean markAsHard) {
+                                               int fromId, int toId, MsgRange[] ranges, boolean markAsHard) {
         int affected = 0;
         db.beginTransaction();
         String messageSelector;
-        if (list != null) {
-            StringBuilder sb = new StringBuilder();
-            for (int i : list) {
-                sb.append(",");
-                sb.append(i);
+        ArrayList<String> parts = new ArrayList<>();
+        if (ranges != null) {
+            for (MsgRange r : ranges) {
+                int low = r.low;
+                int hi = r.hi != null ? r.hi - 1 : r.low;
+                parts.add(COLUMN_NAME_SEQ + " BETWEEN "+ low + " AND " + hi);
             }
-            sb.deleteCharAt(0);
-            messageSelector = COLUMN_NAME_SEQ + " IN (" + sb.toString() + ")";
+            messageSelector = TextUtils.join(" OR ", parts);
         } else {
-            ArrayList<String> parts = new ArrayList<>();
             if (fromId > 0) {
                 parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
             }
@@ -335,19 +326,23 @@ public class MessageDb implements BaseColumns {
         }
 
         try {
-            if (!doDelete) {
-                // Mark sent messages as deleted
-                ContentValues values = new ContentValues();
-                values.put(COLUMN_NAME_STATUS, markAsHard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT);
-                affected = db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                        messageSelector +
-                        " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_SYNCED, null);
-            }
-            // Unsent messages are deleted.
-            affected += db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+            // Unsent messages are always deleted, sent messages are deleted only when doDelete is set.
+            affected = db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
                     messageSelector +
                     // Either delete all messages or just unsent+draft messages.
                     (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
+
+            if (doDelete) {
+                // Insert a placeholder for deleted content.
+            } else  {
+                // Mark sent messages as deleted
+                ContentValues values = new ContentValues();
+                values.put(COLUMN_NAME_STATUS, markAsHard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT);
+                values.put(COLUMN_NAME_CONTENT, (String) null);
+                affected += db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                        messageSelector +
+                        " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_SYNCED, null);
+            }
             db.setTransactionSuccessful();
         } catch (SQLException ex) {
             Log.w(TAG, "Delete failed", ex);
@@ -362,12 +357,12 @@ public class MessageDb implements BaseColumns {
      *
      * @param db            Database to use.
      * @param topicId       Tinode topic ID to delete messages from.
-     * @param list          list of message IDs to delete.
+     * @param ranges        ranges of message IDs to delete.
      * @param markAsHard    mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
-    static boolean markDeleted(SQLiteDatabase db, long topicId, List<Integer> list, boolean markAsHard) {
-        return deleteOrMarkDeleted(db, false, topicId, Integer.MAX_VALUE, 0, list, markAsHard);
+    static boolean markDeleted(SQLiteDatabase db, long topicId, MsgRange[] ranges, boolean markAsHard) {
+        return deleteOrMarkDeleted(db, false, topicId, Integer.MAX_VALUE, 0, ranges, markAsHard);
     }
 
     /**
@@ -391,7 +386,7 @@ public class MessageDb implements BaseColumns {
      * @param topicId Tinode topic ID to delete messages from.
      * @param fromId  minimum seq value to delete, inclusive (closed).
      * @param toId    maximum seq value to delete, exclusive (open)
-     * @return number of deleted messages
+     * @return true if any messages were deleted.
      */
     public static boolean delete(SQLiteDatabase db, long topicId, int fromId, int toId) {
         return deleteOrMarkDeleted(db, true, topicId, fromId, toId, null, false);
@@ -402,15 +397,32 @@ public class MessageDb implements BaseColumns {
      *
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
-     * @param list    maximum seq value to delete, inclusive.
-     * @return number of deleted messages
+     * @param ranges  message ranges to delete.
+     * @return true if any messages were deleted.
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, List<Integer> list) {
-        return deleteOrMarkDeleted(db, true, topicId, Integer.MAX_VALUE, 0, list, false);
+    public static boolean delete(SQLiteDatabase db, long topicId, MsgRange[] ranges) {
+        return deleteOrMarkDeleted(db, true, topicId, Integer.MAX_VALUE, 0, ranges, false);
     }
 
     /**
-     * Delete messages by database ID.
+     * Delete all messages in a given topic.
+     *
+     * @param db      Database to use.
+     * @param topicId Tinode topic ID to delete messages from.
+     * @return  true if any messages were deleted.
+     */
+    static boolean deleteAll(SQLiteDatabase db, long topicId) {
+        int affected = 0;
+        try {
+            affected = db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId, null);
+        } catch (SQLException ex) {
+            Log.w(TAG, "Delete failed", ex);
+        }
+        return affected > 0;
+    }
+
+    /**
+     * Delete single message by database ID.
      *
      * @param db      Database to use.
      * @param msgId   Database ID of the message (_id).

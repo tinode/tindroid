@@ -5,7 +5,7 @@ package co.tinode.tinodesdk.model;
  */
 public class DelValues {
     public Integer clear;
-    public MsgDelRange[] delseq;
+    public MsgRange[] delseq;
 
     public DelValues() {}
 }

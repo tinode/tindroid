@@ -17,6 +17,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -114,7 +115,7 @@ public class SqlStore implements Storage {
             try {
                 db.beginTransaction();
 
-                MessageDb.delete(db, st.id, 0, -1);
+                MessageDb.deleteAll(db, st.id);
                 SubscriberDb.deleteForTopic(db, st.id);
                 TopicDb.delete(db, st.id);
 
@@ -132,10 +133,10 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public Range getCachedMessagesRange(Topic topic) {
+    public MsgRange getCachedMessagesRange(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
-            return new Range(st.minLocalSeq, st.maxLocalSeq);
+            return new MsgRange(st.minLocalSeq, st.maxLocalSeq);
         }
         return null;
     }
@@ -279,7 +280,7 @@ public class SqlStore implements Storage {
         msg.topic = topic.getName();
         msg.from = getMyUid();
         msg.ts = new Date(new Date().getTime() + mTimeAdjustment);
-        // Set seq to zero. MessageDb will assign a unique temporary (nagative int) seq.
+        // Set seq to zero. MessageDb will assign a unique temporary (very large int, >= 2E9) seq.
         // The temp seq will be updated later, when the message is received by the server.
         msg.seq = 0;
         msg.status = initialStatus;
@@ -351,9 +352,9 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgMarkToDelete(Topic topic, List<Integer> list, boolean markAsHard) {
+    public boolean msgMarkToDelete(Topic topic, MsgRange[] ranges, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, list, markAsHard);
+        return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, ranges, markAsHard);
     }
 
     @Override
@@ -364,7 +365,7 @@ public class SqlStore implements Storage {
         try {
             db.beginTransaction();
 
-            if (TopicDb.msgDeleted(db, topic, delId) &&
+            if ((delId <= 0 || TopicDb.msgDeleted(db, topic, delId)) &&
                 MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId)) {
                 db.setTransactionSuccessful();
                 result = true;
@@ -379,15 +380,15 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgDelete(Topic topic, int delId, List<Integer> list) {
+    public boolean msgDelete(Topic topic, int delId, MsgRange[] ranges) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
         boolean result = false;
         try {
             db.beginTransaction();
 
-            if (TopicDb.msgDeleted(db, topic, delId) &&
-                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, list)) {
+            if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId)) &&
+                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, ranges)) {
                 db.setTransactionSuccessful();
                 result = true;
             }
@@ -480,7 +481,6 @@ public class SqlStore implements Storage {
             return !mCursor.isAfterLast();
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public StoredMessage next() {
             StoredMessage msg = StoredMessage.readMessage(mCursor);

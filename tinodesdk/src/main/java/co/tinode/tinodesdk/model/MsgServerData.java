@@ -16,7 +16,6 @@ public class MsgServerData {
     public String from;
     public Date ts;
     public int seq;
-    public MsgDelRange[] delseq;
     public Drafty content;
 
     public MsgServerData() {

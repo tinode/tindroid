@@ -18,7 +18,6 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     public long userId;
     public int status;
     // Message represents a range of deletions.
-    public int delLow;
     public int delHi;
 
     StoredMessage() {
@@ -48,7 +47,6 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         msg.from = c.getString(MessageDb.COLUMN_IDX_SENDER);
         msg.ts = new Date(c.getLong(MessageDb.COLUMN_IDX_TS));
         msg.seq = c.getInt(MessageDb.COLUMN_IDX_SEQ);
-        msg.delLow = c.getInt(MessageDb.COLUMN_IDX_DEL_LOW);
         msg.delHi = c.getInt(MessageDb.COLUMN_IDX_DEL_HI);
         msg.head = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_HEAD));
         msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
@@ -56,7 +54,7 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         return msg;
     }
 
-    public static int readSeqId(Cursor c) {
+    static int readSeqId(Cursor c) {
         return c.getInt(0);
     }
 

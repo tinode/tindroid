@@ -9,24 +9,24 @@ import java.util.List;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
- * MsgDelRange is either an individual ID (hi=0 || hi==null) or a range of deleted IDs, low end inclusive (closed),
+ * Range is either an individual ID (hi=0 || hi==null) or a range of deleted IDs, low end inclusive (closed),
  * high-end exclusive (open): [low .. hi), e.g. 1..5 &rarr; 1, 2, 3, 4
  */
 @JsonInclude(NON_DEFAULT)
 @SuppressWarnings("WeakerAccess")
-public class MsgDelRange {
+public class MsgRange {
     public Integer low;
     public Integer hi;
 
-    public MsgDelRange() {
+    public MsgRange() {
         low = 0;
     }
 
-    public MsgDelRange(int id) {
+    public MsgRange(int id) {
         low = id;
     }
 
-    public MsgDelRange(int low, int hi) {
+    public MsgRange(int low, int hi) {
         this.low = low;
         this.hi = hi;
     }
@@ -54,7 +54,7 @@ public class MsgDelRange {
         }
     }
 
-    public static MsgDelRange[] listToRanges(final List<Integer> list) {
+    public static MsgRange[] listToRanges(final List<Integer> list) {
         if (list == null || list.size() == 0) {
             return null;
         }
@@ -62,18 +62,18 @@ public class MsgDelRange {
         // Make sure the IDs are sorted in ascending order.
         Collections.sort(list);
 
-        ArrayList<MsgDelRange> ranges = new ArrayList<>();
-        MsgDelRange curr = new MsgDelRange(list.get(0));
+        ArrayList<MsgRange> ranges = new ArrayList<>();
+        MsgRange curr = new MsgRange(list.get(0));
         ranges.add(curr);
         for (int i = 1; i < list.size(); i++) {
             if (!curr.tryExtending(list.get(i))) {
                 curr.normalize();
                 // Start a new range
-                curr = new MsgDelRange(list.get(i));
+                curr = new MsgRange(list.get(i));
                 ranges.add(curr);
             }
         }
 
-        return ranges.toArray(new MsgDelRange[]{});
+        return ranges.toArray(new MsgRange[]{});
     }
 }

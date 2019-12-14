@@ -438,7 +438,7 @@ public class TopicDb implements BaseColumns {
         }
     }
 
-    public static int getNextUnsentSeq(SQLiteDatabase db, Topic topic) {
+    public static synchronized int getNextUnsentSeq(SQLiteDatabase db, Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
             st.nextUnsentId ++;
