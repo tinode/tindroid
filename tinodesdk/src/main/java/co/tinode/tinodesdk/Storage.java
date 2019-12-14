@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgRange;
@@ -89,20 +90,22 @@ public interface Storage {
      *
      * @param topic topic which sent the message
      * @param data message data to save
+     * @param head message headers
      * @return database ID of the message suitable for use in
      *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
      */
-    long msgSend(Topic topic, Drafty data);
+    long msgSend(Topic topic, Drafty data, Map<String, Object> head);
 
     /**
      * Save message to database as a draft. Draft will not be sent to server until it status changes.
      *
      * @param topic topic which sent the message
      * @param data message data to save
+     * @param head message headers
      * @return database ID of the message suitable for use in
      *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
      */
-    long msgDraft(Topic topic, Drafty data);
+    long msgDraft(Topic topic, Drafty data, Map<String, Object> head);
 
     /**
      * Update message draft content without
@@ -185,6 +188,7 @@ public interface Storage {
     List<Integer> getQueuedMessageDeletes(Topic topic, boolean hard);
 
     interface Message {
+        Map<String, Object> getHead();
         /** Get current message payload */
         Drafty getContent();
         /** Get current message unique ID (database ID) */

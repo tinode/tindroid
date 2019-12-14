@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
@@ -268,7 +269,7 @@ public class SqlStore implements Storage {
         return msg.id;
     }
 
-    private long insertMessage(Topic topic, Drafty data, int initialStatus) {
+    private long insertMessage(Topic topic, Drafty data, Map<String, Object> head, int initialStatus) {
         StoredMessage msg = new StoredMessage();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 
@@ -285,6 +286,7 @@ public class SqlStore implements Storage {
         msg.seq = 0;
         msg.status = initialStatus;
         msg.content = data;
+        msg.head = head;
 
         msg.topicId = StoredTopic.getId(topic);
         if (mMyId < 0) {
@@ -296,13 +298,13 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public long msgSend(Topic topic, Drafty data) {
-        return insertMessage(topic, data, BaseDb.STATUS_SENDING);
+    public long msgSend(Topic topic, Drafty data, Map<String, Object> head) {
+        return insertMessage(topic, data, head, BaseDb.STATUS_SENDING);
     }
 
     @Override
-    public long msgDraft(Topic topic, Drafty data) {
-        return insertMessage(topic, data, BaseDb.STATUS_DRAFT);
+    public long msgDraft(Topic topic, Drafty data, Map<String, Object> head) {
+        return insertMessage(topic, data, head, BaseDb.STATUS_DRAFT);
     }
 
     @Override

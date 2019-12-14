@@ -855,8 +855,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected PromisedReply<ServerMessage> publish(final Drafty content, final long msgId) {
-        return mTinode.publish(getName(), content.isPlain() ? content.toString() : content).thenApply(
+    protected PromisedReply<ServerMessage> publish(final Drafty content, Map<String, Object> head, final long msgId) {
+        if (content.isPlain() && head != null) {
+            // Plain text content should not be sent with the "mine" header. Clear it.
+            head.remove("mime");
+        }
+        return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -882,21 +886,22 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param content payload
      */
     public PromisedReply<ServerMessage> publish(final Drafty content) {
+        final Map<String, Object> head = !content.isPlain() ? Tinode.draftyHeadersFor(content) : null;
         final long id;
         if (mStore != null) {
-            id = mStore.msgSend(this, content);
+            id = mStore.msgSend(this, content, head);
         } else {
             id = -1;
         }
 
         if (mAttached) {
-            return publish(content, id);
+            return publish(content, head, id);
         } else {
             return subscribe()
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            return publish(content, id);
+                            return publish(content, head, id);
                         }
                     })
                     .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
@@ -959,7 +964,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 Storage.Message msg = toSend.next();
                 final long msgId = msg.getId();
                 mStore.msgSyncing(this, msgId, true);
-                last = publish(msg.getContent(), msgId);
+                last = publish(msg.getContent(), msg.getHead(), msgId);
             }
         } finally {
             try {
@@ -989,7 +994,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 result = mTinode.delMessage(getName(), m.getSeqId(), m.isDeleted(true));
             } else if (m.isReady()) {
                 mStore.msgSyncing(this, m.getId(), true);
-                result = publish(m.getContent(), m.getId());
+                result = publish(m.getContent(), m.getHead(), m.getId());
             }
         }
 

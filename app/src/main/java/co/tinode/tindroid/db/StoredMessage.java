@@ -4,6 +4,7 @@ package co.tinode.tindroid.db;
 import android.database.Cursor;
 
 import java.util.Date;
+import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.model.Drafty;
@@ -66,6 +67,9 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     public Drafty getContent() {
         return content;
     }
+
+    @Override
+    public Map<String, Object> getHead() { return head; }
 
     @Override
     public long getId() {

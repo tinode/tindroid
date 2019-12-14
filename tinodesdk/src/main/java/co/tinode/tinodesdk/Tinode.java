@@ -43,6 +43,7 @@ import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientDel;
@@ -1374,6 +1375,22 @@ public class Tinode {
     }
 
     /**
+     * Headers to be sent with an outgoing message.
+     *
+     * @param content message content
+     * @return headers in as map "header key : header value"
+     */
+    public static Map<String, Object> draftyHeadersFor(final Drafty content) {
+        Map<String, Object> head = new HashMap<>();
+        head.put("mime", Drafty.MIME_TYPE);
+        String[] refs = content.getEntReferences();
+        if (refs != null) {
+            head.put("attachments", refs);
+        }
+        return head;
+    }
+
+    /**
      * Low-level request to publish data. A {@link Topic#publish} should be normally
      * used instead.
      *
@@ -1381,8 +1398,8 @@ public class Tinode {
      * @param data      payload to publish to topic
      * @return PromisedReply of the reply ctrl message
      */
-    public PromisedReply<ServerMessage> publish(String topicName, Object data) {
-        ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data));
+    public PromisedReply<ServerMessage> publish(String topicName, Object data, Map<String, Object> head) {
+        ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data, head));
         return sendWithPromise(msg, msg.pub.id);
     }
 
