@@ -458,7 +458,7 @@ public class TopicInfoFragment extends Fragment {
                         json.put("action", "report");
                         json.put("target", mTopic.getName());
                         Drafty msg = new Drafty().attachJSON(json);
-                        Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.getDraftyHeaders(msg));
+                        Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
                         response = mTopic.updateMode(null, "-JP");
                         break;
                     case ACTION_REMOVE:

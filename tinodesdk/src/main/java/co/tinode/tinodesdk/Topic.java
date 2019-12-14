@@ -856,6 +856,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected PromisedReply<ServerMessage> publish(final Drafty content, Map<String, Object> head, final long msgId) {
+        if (content.isPlain() && head != null) {
+            // Plain text content should not be sent with the "mine" header. Clear it.
+            head.remove("mime");
+        }
         return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
@@ -882,7 +886,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param content payload
      */
     public PromisedReply<ServerMessage> publish(final Drafty content) {
-        final Map<String, Object> head = !content.isPlain() ? Tinode.getDraftyHeaders(content) : null;
+        final Map<String, Object> head = !content.isPlain() ? Tinode.draftyHeadersFor(content) : null;
         final long id;
         if (mStore != null) {
             id = mStore.msgSend(this, content, head);

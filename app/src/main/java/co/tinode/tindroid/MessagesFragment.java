@@ -578,8 +578,7 @@ public class MessagesFragment extends Fragment
                             json.put("action", "report");
                             json.put("tagret", mTopic.getName());
                             Drafty msg = new Drafty().attachJSON(json);
-                            Cache.getTinode().publish(Tinode.TOPIC_SYS, msg,
-                                    !msg.isPlain() ? Tinode.getDraftyHeaders(msg) : null);
+                            Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
                             break;
 
                         default:
@@ -915,7 +914,7 @@ public class MessagesFragment extends Fragment
                 Storage store = BaseDb.getInstance().getStore();
                 Drafty msg = new Drafty();
                 long msgId = store.msgDraft(Cache.getTinode().getTopic(mArgs.getString("topic")),
-                        msg, Tinode.getDraftyHeaders(msg));
+                        msg, Tinode.draftyHeadersFor(msg));
                 mArgs.putLong("msgId", msgId);
                 UploadProgress p = sProgress.get();
                 if (p != null) {

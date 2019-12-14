@@ -1379,7 +1379,7 @@ public class Tinode {
      * @param content message content
      * @return headers in as map "header key : header value"
      */
-    public static Map<String, Object> getDraftyHeaders(final Drafty content) {
+    public static Map<String, Object> draftyHeadersFor(final Drafty content) {
         Map<String, Object> head = new HashMap<>();
         head.put("mime", Drafty.MIME_TYPE);
         String[] refs = content.getEntReferences();
