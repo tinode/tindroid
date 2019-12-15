@@ -46,7 +46,7 @@ public interface Storage {
     @SuppressWarnings("UnusedReturnValue")
     boolean topicDelete(Topic topic);
 
-    /** Get seq IDs of the stored messages as a Range */
+    /** Get seq IDs of the stored messages as a MsgRange, inclusive-exclusive [low, hi) */
     MsgRange getCachedMessagesRange(Topic topic);
     /** Local user reported messages as read */
     @SuppressWarnings("UnusedReturnValue")
@@ -167,7 +167,7 @@ public interface Storage {
     boolean msgDelete(Topic topic, int delId, int fromId, int toId);
     /** Delete messages */
     @SuppressWarnings("UnusedReturnValue")
-    boolean msgDelete(Topic topic, int delId, MsgRange[] ranges);
+    boolean msgDelete(Topic topic, int delId, MsgRange[] ranges, int lowId, int hiId);
     /** Set recv value for a given subscriber */
     @SuppressWarnings("UnusedReturnValue")
     boolean msgRecvByRemote(Subscription sub, int recv);

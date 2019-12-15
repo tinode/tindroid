@@ -137,7 +137,7 @@ public class SqlStore implements Storage {
     public MsgRange getCachedMessagesRange(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
-            return new MsgRange(st.minLocalSeq, st.maxLocalSeq);
+            return new MsgRange(st.minLocalSeq, st.maxLocalSeq + 1);
         }
         return null;
     }
@@ -350,6 +350,9 @@ public class SqlStore implements Storage {
     @Override
     public boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
+        if (toId <= 0) {
+            toId = st.maxLocalSeq + 1;
+        }
         return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, fromId, toId, markAsHard);
     }
 
@@ -363,11 +366,14 @@ public class SqlStore implements Storage {
     public boolean msgDelete(Topic topic, int delId, int fromId, int toId) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
+        if (toId <= 0) {
+            toId = st.maxLocalSeq + 1;
+        }
         boolean result = false;
         try {
             db.beginTransaction();
 
-            if ((delId <= 0 || TopicDb.msgDeleted(db, topic, delId)) &&
+            if ((delId <= 0 || TopicDb.msgDeleted(db, topic, delId, fromId, toId)) &&
                 MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId)) {
                 db.setTransactionSuccessful();
                 result = true;
@@ -382,14 +388,14 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgDelete(Topic topic, int delId, MsgRange[] ranges) {
+    public boolean msgDelete(Topic topic, int delId, MsgRange[] ranges, int lowId, int hiId) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
         boolean result = false;
         try {
             db.beginTransaction();
 
-            if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId)) &&
+            if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId, lowId, hiId)) &&
                     MessageDb.delete(mDbh.getWritableDatabase(), st.id, ranges)) {
                 db.setTransactionSuccessful();
                 result = true;

@@ -315,9 +315,7 @@ public class MessageDb implements BaseColumns {
             if (fromId > 0) {
                 parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
             }
-            if (toId != -1) {
-                parts.add(COLUMN_NAME_SEQ + "<" + toId);
-            }
+            parts.add(COLUMN_NAME_SEQ + "<" + toId);
             messageSelector = TextUtils.join(" AND ", parts);
         }
 
@@ -333,7 +331,36 @@ public class MessageDb implements BaseColumns {
                     (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
 
             if (doDelete) {
-                // Insert a placeholder for deleted content.
+                // Insert a placeholders for deleted content.
+                ContentValues values = new ContentValues();
+                int minId = Integer.MAX_VALUE, maxId = 0;
+                if (ranges != null) {
+                    for (MsgRange r : ranges) {
+                        int hi = r.hi != null ? r.hi - 1: r.low;
+                        if (minId > r.low) {
+                            minId = r.low;
+                        }
+                        if (maxId < hi) {
+                            maxId = hi;
+                        }
+                        values.clear();
+                        values.put(COLUMN_NAME_TOPIC_ID, topicId);
+                        values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED_FINAL);
+                        values.put(COLUMN_NAME_SEQ, r.low);
+                        values.put(COLUMN_NAME_DEL_HI, hi);
+                        db.insert(TABLE_NAME, null, values);
+                    }
+                } else {
+                    minId = fromId > 0 ? fromId : 1;
+                    maxId = toId - 1;
+                    values.put(COLUMN_NAME_TOPIC_ID, topicId);
+                    values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED_FINAL);
+                    values.put(COLUMN_NAME_SEQ, minId);
+                    values.put(COLUMN_NAME_DEL_HI, maxId);
+                    db.insert(TABLE_NAME, null, values);
+                }
+                // Newly inserted ranges may have overlapped the previous ranges. Collapse them.
+                // TODO: implement range collapsing.
             } else  {
                 // Mark sent messages as deleted
                 ContentValues values = new ContentValues();

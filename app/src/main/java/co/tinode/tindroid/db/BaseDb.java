@@ -58,8 +58,8 @@ public class BaseDb extends SQLiteOpenHelper {
     public static final int STATUS_DELETED_HARD = 5;
     // Object is soft-deleted
     public static final int STATUS_DELETED_SOFT = 6;
-    // Object is rejected by the server.
-    public static final int STATUS_REJECTED = 7;
+    // Object represents a deleted marker.
+    public static final int STATUS_DELETED_FINAL = 7;
 
     private static BaseDb sInstance = null;
 

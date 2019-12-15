@@ -10,6 +10,7 @@ import java.util.Date;
 
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MsgRange;
 
 /**
  * Store for topics
@@ -341,19 +342,34 @@ public class TopicDb implements BaseColumns {
      *
      * @return true on success
      */
-    public static boolean msgDeleted(SQLiteDatabase db, Topic topic, int delId) {
+    public static boolean msgDeleted(SQLiteDatabase db, Topic topic, int delId, int lowId, int hiId) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
             return false;
         }
 
+        ContentValues values = new ContentValues();
         if (delId > topic.getMaxDel()) {
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
-
-            int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
-            return updated > 0;
+            values.put(COLUMN_NAME_MAX_DEL, delId);
         }
+
+        if (lowId < st.minLocalSeq) {
+            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, lowId);
+        }
+        if (hiId - 1 > st.maxLocalSeq) {
+            values.put(COLUMN_NAME_MAX_LOCAL_SEQ, hiId - 1);
+        }
+
+        if (values.size() > 0) {
+            int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
+            if (updated <= 0) {
+                return false;
+            }
+
+            st.minLocalSeq = lowId;
+            st.maxLocalSeq = hiId - 1;
+        }
+
         return true;
     }
     /**

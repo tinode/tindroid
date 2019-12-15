@@ -67,6 +67,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected long mLastKeyPress = 0;
     protected boolean mOnline = false;
     protected LastSeen mLastSeen = null;
+    // ID of the last applied delete transaction. Different from 'clear' which is the highest known.
     protected int mMaxDel = 0;
     /**
      * The mStore is set by Tinode when the topic calls {@link Tinode#startTrackingTopic(Topic)}
@@ -533,7 +534,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
 
-    public Storage.Range getCachedMessageRange() {
+    public MsgRange getCachedMessageRange() {
         return mStore == null ? null : mStore.getCachedMessagesRange(this);
     }
 
@@ -945,13 +946,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         // Get soft-deleted message IDs.
         final List<Integer> toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
         if (toSoftDelete != null) {
-            last = mTinode.delMessage(getName(), toSoftDelete, false);
+            last = mTinode.delMessage(getName(), MsgRange.listToRanges(toSoftDelete), false);
         }
 
         // Get hard-deleted message IDs.
         final List<Integer> toHardDelete = mStore.getQueuedMessageDeletes(this, true);
         if (toHardDelete != null) {
-            last = mTinode.delMessage(getName(), toHardDelete, true);
+            last = mTinode.delMessage(getName(), MsgRange.listToRanges(toHardDelete), true);
         }
 
         ML toSend = mStore.getQueuedMessages(this);
@@ -1221,6 +1222,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     int delId = result.ctrl.getIntParam("del", 0);
+                    setClear(delId);
+                    setMaxDel(delId);
                     if (mStore != null && delId > 0) {
                         mStore.msgDelete(Topic.this, delId, fromId, toId);
                     }
@@ -1243,7 +1246,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param hard hard-delete messages
      */
     public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) {
-        MsgRange[] ranges = MsgRange.listToRanges(list);
+        // The result of listToRanges is sorted and non-overlapping.
+        final MsgRange[] ranges = MsgRange.listToRanges(list);
 
         if (mStore != null) {
             mStore.msgMarkToDelete(this, ranges, hard);
@@ -1254,8 +1258,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     int delId = result.ctrl.getIntParam("del", 0);
+                    MsgRange span = MsgRange.enclosing(ranges);
+                    setClear(delId);
+                    setMaxDel(delId);
                     if (mStore != null && delId > 0) {
-                        mStore.msgDelete(Topic.this, delId, ranges);
+                        mStore.msgDelete(Topic.this, delId, ranges, span.low, span.hi);
                     }
                     return null;
                 }
@@ -1938,12 +1945,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * @param limit number of messages to fetch
          */
         public MetaGetBuilder withLaterData(Integer limit) {
-            Storage.Range r = topic.getCachedMessageRange();
+            MsgRange r = topic.getCachedMessageRange();
 
             if (r == null) {
                 return withData(null, null, limit);
             }
-            return withData(r.max > 0 ? r.max + 1 : null, null, limit);
+            return withData(r.hi > 0 ? r.hi : null, null, limit);
         }
 
         /**
@@ -1952,11 +1959,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * @param limit number of messages to fetch
          */
         public MetaGetBuilder withEarlierData(Integer limit) {
-            Storage.Range r = topic.getCachedMessageRange();
+            MsgRange r = topic.getCachedMessageRange();
             if (r == null) {
                 return withData(null, null, limit);
             }
-            return withData(null, r.min > 0 ? r.min : null, limit);
+            return withData(null, r.low > 0 ? r.low : null, limit);
         }
 
         /**
