@@ -38,11 +38,9 @@ public class MsgGetMeta {
     public MetaGetData del;
 
     /**
-     * Generate query to get everything except credentials.
+     * Empty query.
      */
-    public MsgGetMeta() {
-        this.what = DESC + " " + SUB + " " + DATA + " " + DEL + " " + TAGS;
-    }
+    public MsgGetMeta() { }
 
     /**
      * Generate query to get specific data:
