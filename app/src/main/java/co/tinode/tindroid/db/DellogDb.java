@@ -85,7 +85,6 @@ public class DellogDb implements BaseColumns {
      * @return ID of the newly added message
      */
     static long insert(SQLiteDatabase db, Topic topic, int del_id, int low, int high) {
-        Log.d(TAG, "Inserting one range " + low + ":" + high);
         long id = -1;
         db.beginTransaction();
         try {
@@ -120,7 +119,6 @@ public class DellogDb implements BaseColumns {
      * @return number of successfully inserted ranges.
      */
     static int insert(SQLiteDatabase db, Topic topic, int del_id, MsgRange[] ranges) {
-        Log.d(TAG, "Inserting multiple ranges " + ranges.length);
         int count = 0;
         db.beginTransaction();
         try {

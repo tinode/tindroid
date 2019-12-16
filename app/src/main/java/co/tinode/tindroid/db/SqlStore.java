@@ -138,7 +138,6 @@ public class SqlStore implements Storage {
     public MsgRange getCachedMessagesRange(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
-            Log.d(TAG, "getCachedMessagesRange min=" + st.minLocalSeq + "; max=" + st.maxLocalSeq + 1);
             return new MsgRange(st.minLocalSeq, st.maxLocalSeq + 1);
         }
         return null;
@@ -395,9 +394,7 @@ public class SqlStore implements Storage {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
         ranges = MsgRange.collapse(ranges);
-        Log.d(TAG, "Collapsed ranges " + Arrays.toString(ranges));
         MsgRange span = MsgRange.enclosing(ranges);
-        Log.d(TAG, "Enclosing span " + span);
         boolean result = false;
         try {
             db.beginTransaction();
