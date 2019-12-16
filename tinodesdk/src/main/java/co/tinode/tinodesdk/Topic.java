@@ -1950,7 +1950,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (r == null) {
                 return withData(null, null, limit);
             }
-            return withData(r.hi > 0 ? r.hi : null, null, limit);
+            return withData(r.hi > 1 ? r.hi : null, null, limit);
         }
 
         /**
@@ -1963,7 +1963,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (r == null) {
                 return withData(null, null, limit);
             }
-            return withData(null, r.low > 0 ? r.low : null, limit);
+            return withData(null, r.low > 1 ? r.low : null, limit);
         }
 
         /**
@@ -2010,7 +2010,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         public MetaGetBuilder withLaterDel(Integer limit) {
-            return withDel(topic.getMaxDel() + 1, limit);
+            int del_id = topic.getMaxDel();
+            return withDel(del_id > 0 ? del_id + 1 : null, limit);
         }
 
         public MetaGetBuilder withDel() {
@@ -2028,6 +2029,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         public MsgGetMeta build() {
+            Log.d(TAG, "MetaGet: " + meta.toString());
             return meta;
         }
     }
