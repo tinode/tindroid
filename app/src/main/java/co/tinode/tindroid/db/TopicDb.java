@@ -354,13 +354,13 @@ public class TopicDb implements BaseColumns {
             values.put(COLUMN_NAME_MAX_DEL, delId);
         }
 
-        if (lowId < st.minLocalSeq) {
-            Log.d(TAG, "low id was=" + st.minLocalSeq + "; now="+lowId);
+        if (st.minLocalSeq == 0 || (lowId > 0 && lowId < st.minLocalSeq)) {
             values.put(COLUMN_NAME_MIN_LOCAL_SEQ, lowId);
         }
-        if (hiId - 1 > st.maxLocalSeq) {
-            Log.d(TAG, "MAX ID was=" + st.maxLocalSeq + "; now=" + (hiId-1));
-            values.put(COLUMN_NAME_MAX_LOCAL_SEQ, hiId - 1);
+
+        hiId --;
+        if (hiId > st.maxLocalSeq) {
+            values.put(COLUMN_NAME_MAX_LOCAL_SEQ, hiId);
         }
 
         if (values.size() > 0) {
@@ -369,8 +369,9 @@ public class TopicDb implements BaseColumns {
                 return false;
             }
 
-            st.minLocalSeq = lowId;
-            st.maxLocalSeq = hiId - 1;
+            st.minLocalSeq = lowId > 0 && (st.minLocalSeq == 0 || lowId < st.minLocalSeq) ?
+                    lowId : st.minLocalSeq;
+            st.maxLocalSeq = hiId > st.maxLocalSeq ? hiId : st.maxLocalSeq;
         }
 
         return true;
