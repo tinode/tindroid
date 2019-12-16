@@ -5,13 +5,11 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
-import android.util.Log;
 
 import java.util.Date;
 
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.MsgRange;
 
 /**
  * Store for topics
@@ -20,7 +18,7 @@ import co.tinode.tinodesdk.model.MsgRange;
 public class TopicDb implements BaseColumns {
     private static final String TAG = "TopicsDb";
 
-    private static final int UNSENT_ID_START = 2000000000;
+    private static final int UNSENT_ID_START = 2_000_000_000;
 
     /**
      * The name of the main table.

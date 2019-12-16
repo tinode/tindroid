@@ -10,8 +10,6 @@ import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import java.util.List;
-
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Acs;
@@ -58,8 +56,6 @@ public class BaseDb extends SQLiteOpenHelper {
     public static final int STATUS_DELETED_HARD = 5;
     // Object is soft-deleted
     public static final int STATUS_DELETED_SOFT = 6;
-    // Object represents a deleted marker.
-    public static final int STATUS_DELETED_FINAL = 7;
 
     private static BaseDb sInstance = null;
 

@@ -206,7 +206,7 @@ public class MessageDb implements BaseColumns {
 
 
     /**
-     * Query latest messages messages.
+     * Query latest messages. DEPRECATED. To be removed.
      *
      * @param db        database to select from;
      * @param topicId   Tinode topic ID (topics._id) to select from
@@ -228,7 +228,7 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Query latest messages messages. The query returns NULL-filled rows whenever there is a gap in seq values.
+     * Query for the latest messages. The query returns NULL-filled rows whenever there is a gap in seq values.
      * See explanation here: https://stackoverflow.com/questions/31589843/how-do-i-find-gap-in-sqlite-table
      *
      * @param db        database to select from;

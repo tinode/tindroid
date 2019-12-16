@@ -1,7 +1,6 @@
 package co.tinode.tindroid.db;
 
 import android.database.Cursor;
-import android.util.Log;
 
 import java.util.Date;
 
