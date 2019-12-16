@@ -26,7 +26,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 10;
 
     /**
      * Filename for SQLite file.
@@ -264,11 +264,15 @@ public class BaseDb extends SQLiteOpenHelper {
         db.execSQL(SubscriberDb.CREATE_INDEX);
         db.execSQL(MessageDb.CREATE_TABLE);
         db.execSQL(MessageDb.CREATE_INDEX);
+        db.execSQL(DellogDb.CREATE_TABLE);
+        db.execSQL(DellogDb.CREATE_INDEX);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // This is just a cache. Drop then re-fetch everything from the server.
+        db.execSQL(DellogDb.DROP_INDEX);
+        db.execSQL(DellogDb.DROP_TABLE);
         db.execSQL(MessageDb.DROP_INDEX);
         db.execSQL(MessageDb.DROP_TABLE);
         db.execSQL(SubscriberDb.DROP_INDEX);

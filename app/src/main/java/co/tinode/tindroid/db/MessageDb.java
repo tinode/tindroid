@@ -13,14 +13,13 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgRange;
 
 /**
  * Storage structure for messages:
- * public String id -- not stored
+ * public String id -> _id
  * public String topic -> as topic_id
  * public String from; -> as user_id
  * public Date ts;
@@ -66,10 +65,6 @@ public class MessageDb implements BaseColumns {
      * a deleted range, then <tt>seq</tt> is the lowest bound of the range.
      */
     private static final String COLUMN_NAME_SEQ = "seq";
-    /**
-     * If message indicated a deleted range, highest seq ID in the range.
-     */
-    private static final String COLUMN_NAME_DEL_HI = "del_hi";
 
     /**
      * Serialized header.
@@ -95,7 +90,6 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
-                    COLUMN_NAME_DEL_HI + " INT," +
                     COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
     /**
@@ -114,13 +108,13 @@ public class MessageDb implements BaseColumns {
     static final String DROP_INDEX =
             "DROP INDEX IF EXISTS " + INDEX_NAME;
     /**
-     * Add index on account_id-topic-seq, in descending order
+     * Add index on topic-seq, in descending order
      */
     static final String CREATE_INDEX =
             "CREATE INDEX " + INDEX_NAME +
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_TOPIC_ID + "," +
-                    COLUMN_NAME_TS + " DESC)";
+                    COLUMN_NAME_SEQ + " DESC)";
 
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_TOPIC_ID = 1;
@@ -129,9 +123,8 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_SENDER = 4;
     static final int COLUMN_IDX_TS = 5;
     static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_DEL_HI = 7;
-    static final int COLUMN_IDX_HEAD = 8;
-    static final int COLUMN_IDX_CONTENT = 9;
+    static final int COLUMN_IDX_HEAD = 7;
+    static final int COLUMN_IDX_CONTENT = 8;
 
     /**
      * Save message to DB
@@ -173,9 +166,6 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_SENDER, msg.from);
             values.put(COLUMN_NAME_TS, msg.ts != null ? msg.ts.getTime() : null);
             values.put(COLUMN_NAME_SEQ, msg.seq);
-            if (msg.delHi > 0) {
-                values.put(COLUMN_NAME_DEL_HI, msg.delHi);
-            }
             values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
@@ -237,6 +227,42 @@ public class MessageDb implements BaseColumns {
         return db.rawQuery(sql, null);
     }
 
+    /**
+     * Query latest messages messages. The query returns NULL-filled rows whenever there is a gap in seq values.
+     * See explanation here: https://stackoverflow.com/questions/31589843/how-do-i-find-gap-in-sqlite-table
+     *
+     * @param db        database to select from;
+     * @param topicId   Tinode topic ID (topics._id) to select from
+     * @param maxSeq    Maximum known seqId in the table.
+     * @param pageCount number of pages to return
+     * @param pageSize  number of messages per page
+     * @return cursor with the messages.
+     */
+    public static Cursor query(SQLiteDatabase db, long topicId, int maxSeq, int pageCount, int pageSize) {
+        final String sql ="SELECT " +
+                    _ID + "," + COLUMN_NAME_TOPIC_ID + "," + COLUMN_NAME_USER_ID + "," + COLUMN_NAME_STATUS + "," +
+                    COLUMN_NAME_SENDER + "," + COLUMN_NAME_TS + "," + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HEAD + "," +
+                    COLUMN_NAME_CONTENT +
+                " FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                " UNION ALL " +
+                // The following query returns gaps.
+                " SELECT NULL, NULL, NULL, NULL, NULL, NULL, m1." + COLUMN_NAME_SEQ + "+1, NULL, NULL" +
+                " FROM " + TABLE_NAME + " AS m1" +
+                " WHERE NOT EXISTS" +
+                    " (SELECT m2." + COLUMN_NAME_SEQ +
+                        " FROM " + TABLE_NAME + " AS m2" +
+                        " WHERE m2." + COLUMN_NAME_SEQ + "=m1." + COLUMN_NAME_SEQ + "+1" +
+                        " AND " + COLUMN_NAME_TOPIC_ID + "=" + topicId + ")" +
+                // The following excludes the gap at the end of messages.
+                " AND " + COLUMN_NAME_SEQ + "<" + maxSeq +
+                    // " (SELECT MAX(m3." + COLUMN_NAME_SEQ +") FROM " + TABLE_NAME + " AS m3)" +
+                " ORDER BY "+ COLUMN_NAME_SEQ + " DESC" +
+                " LIMIT " + (pageCount * pageSize);
+
+        return db.rawQuery(sql, null);
+    }
     /**
      * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
      *
@@ -347,7 +373,6 @@ public class MessageDb implements BaseColumns {
                         values.put(COLUMN_NAME_TOPIC_ID, topicId);
                         values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED_FINAL);
                         values.put(COLUMN_NAME_SEQ, r.low);
-                        values.put(COLUMN_NAME_DEL_HI, hi);
                         db.insert(TABLE_NAME, null, values);
                     }
                 } else {
@@ -356,7 +381,6 @@ public class MessageDb implements BaseColumns {
                     values.put(COLUMN_NAME_TOPIC_ID, topicId);
                     values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED_FINAL);
                     values.put(COLUMN_NAME_SEQ, minId);
-                    values.put(COLUMN_NAME_DEL_HI, maxId);
                     db.insert(TABLE_NAME, null, values);
                 }
                 // Newly inserted ranges may have overlapped the previous ranges. Collapse them.
