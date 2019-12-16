@@ -356,36 +356,7 @@ public class MessageDb implements BaseColumns {
                     // Either delete all messages or just unsent+draft messages.
                     (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
 
-            if (doDelete) {
-                // Insert a placeholders for deleted content.
-                ContentValues values = new ContentValues();
-                int minId = Integer.MAX_VALUE, maxId = 0;
-                if (ranges != null) {
-                    for (MsgRange r : ranges) {
-                        int hi = r.hi != null ? r.hi - 1: r.low;
-                        if (minId > r.low) {
-                            minId = r.low;
-                        }
-                        if (maxId < hi) {
-                            maxId = hi;
-                        }
-                        values.clear();
-                        values.put(COLUMN_NAME_TOPIC_ID, topicId);
-                        values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED_FINAL);
-                        values.put(COLUMN_NAME_SEQ, r.low);
-                        db.insert(TABLE_NAME, null, values);
-                    }
-                } else {
-                    minId = fromId > 0 ? fromId : 1;
-                    maxId = toId - 1;
-                    values.put(COLUMN_NAME_TOPIC_ID, topicId);
-                    values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_DELETED_FINAL);
-                    values.put(COLUMN_NAME_SEQ, minId);
-                    db.insert(TABLE_NAME, null, values);
-                }
-                // Newly inserted ranges may have overlapped the previous ranges. Collapse them.
-                // TODO: implement range collapsing.
-            } else  {
+            if (!doDelete) {
                 // Mark sent messages as deleted
                 ContentValues values = new ContentValues();
                 values.put(COLUMN_NAME_STATUS, markAsHard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT);
@@ -452,7 +423,7 @@ public class MessageDb implements BaseColumns {
      * @return true if any messages were deleted.
      */
     public static boolean delete(SQLiteDatabase db, long topicId, MsgRange[] ranges) {
-        return deleteOrMarkDeleted(db, true, topicId, Integer.MAX_VALUE, 0, ranges, false);
+        return deleteOrMarkDeleted(db, true, topicId, -1, -1, ranges, false);
     }
 
     /**

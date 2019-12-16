@@ -6,6 +6,7 @@ import android.provider.BaseColumns;
 import android.util.Log;
 
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MsgRange;
 
 /**
  * Log of deletions
@@ -70,7 +71,7 @@ public class DellogDb implements BaseColumns {
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_TOPIC_ID + "," +
                     COLUMN_NAME_LOW + "," +
-                    COLUMN_NAME_HIGH ;
+                    COLUMN_NAME_HIGH + ")";
 
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_TOPIC_ID = 1;
@@ -79,11 +80,12 @@ public class DellogDb implements BaseColumns {
     static final int COLUMN_IDX_HIGH = 4;
 
     /**
-     * Save message to DB
+     * Save deleted range record to DB
      *
      * @return ID of the newly added message
      */
     static long insert(SQLiteDatabase db, Topic topic, int del_id, int low, int high) {
+        Log.d(TAG, "Inserting one range " + low + ":" + high);
         long id = -1;
         db.beginTransaction();
         try {
@@ -110,6 +112,47 @@ public class DellogDb implements BaseColumns {
         }
 
         return id;
+    }
+
+    /**
+     * Save multiple deleted range records to DB.
+     *
+     * @return number of successfully inserted ranges.
+     */
+    static int insert(SQLiteDatabase db, Topic topic, int del_id, MsgRange[] ranges) {
+        Log.d(TAG, "Inserting multiple ranges " + ranges.length);
+        int count = 0;
+        db.beginTransaction();
+        try {
+            long topic_id = StoredTopic.getId(topic);
+
+            if (topic_id <= 0) {
+                Log.w(TAG, "Failed to insert deletion log " + del_id);
+                return -1;
+            }
+
+            ContentValues values = new ContentValues();
+
+            for (MsgRange r : ranges) {
+                // Convert message to a map of values
+                values.clear();
+                values.put(COLUMN_NAME_TOPIC_ID, topic_id);
+                values.put(COLUMN_NAME_DEL_ID, del_id);
+                values.put(COLUMN_NAME_LOW, r.low);
+                values.put(COLUMN_NAME_HIGH, r.hi != null && r.hi != 0 ? r.hi : r.low);
+
+                db.insertOrThrow(TABLE_NAME, null, values);
+                count ++;
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+            Log.w(TAG, "Insert failed", ex);
+            count = -1;
+        } finally {
+            db.endTransaction();
+        }
+
+        return count;
     }
 
 }

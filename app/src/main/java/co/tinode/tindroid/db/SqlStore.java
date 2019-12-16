@@ -374,7 +374,8 @@ public class SqlStore implements Storage {
             db.beginTransaction();
 
             if ((delId <= 0 || TopicDb.msgDeleted(db, topic, delId, fromId, toId)) &&
-                MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId)) {
+                    DellogDb.insert(db, topic, delId, fromId, toId) > 0 &&
+                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId)) {
                 db.setTransactionSuccessful();
                 result = true;
             }
@@ -396,6 +397,7 @@ public class SqlStore implements Storage {
             db.beginTransaction();
 
             if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId, lowId, hiId)) &&
+                    DellogDb.insert(db, topic, delId, ranges) > 0 &&
                     MessageDb.delete(mDbh.getWritableDatabase(), st.id, ranges)) {
                 db.setTransactionSuccessful();
                 result = true;
@@ -430,13 +432,14 @@ public class SqlStore implements Storage {
 
     @Override
     public <T extends Storage.Message> T getMessageById(Topic topic, long dbMessageId) {
-        Storage.Message msg = null;
+        T msg = null;
         Cursor c = MessageDb.getMessageById(mDbh.getReadableDatabase(), dbMessageId);
         if (c != null && c.moveToFirst()) {
-            msg = StoredMessage.readMessage(c);
+            //noinspection unchecked
+            msg = (T) StoredMessage.readMessage(c);
             c.close();
         }
-        return (T) msg;
+        return msg;
     }
 
     @SuppressWarnings("unchecked")
