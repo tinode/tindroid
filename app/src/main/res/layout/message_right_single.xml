@@ -20,7 +20,8 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/bubble_r"
                 android:layout_gravity="right"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                tools:ignore="RtlHardcoded,UselessParent">
 
                 <TextView
                     android:id="@+id/messageText"
@@ -59,8 +60,6 @@
                         android:layout_height="11sp"
                         android:layout_gravity="center_vertical"
                         android:paddingEnd="3dp"
-                        android:paddingLeft="5dp"
-                        android:paddingRight="3dp"
                         android:paddingStart="5dp"
                         android:tint="@color/colorTextSecondary"
                         tools:ignore="SmallSp"

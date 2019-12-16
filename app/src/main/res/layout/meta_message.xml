@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingBottom="4dp">
 
     <LinearLayout
         android:id="@+id/messageBubble"
@@ -13,7 +14,8 @@
         android:paddingLeft="6sp"
         android:paddingRight="6sp"
         android:layout_gravity="center_horizontal"
-        android:background="@drawable/bubble">
+        android:background="@drawable/bubble"
+        tools:ignore="UselessParent">
 
         <ImageView
             android:id="@+id/icon"
