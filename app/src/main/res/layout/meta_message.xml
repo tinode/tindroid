@@ -1,33 +1,40 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:paddingLeft="6sp"
-    android:paddingRight="6sp"
-    android:layout_gravity="center_horizontal"
-    android:background="@drawable/bubble">
+    android:orientation="vertical">
 
-    <ImageView
-        android:id="@+id/icon"
-        android:visibility="gone"
+    <LinearLayout
+        android:id="@+id/messageBubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/ic_block_gray"
-        tools:ignore="ContentDescription" />
+        android:orientation="horizontal"
+        android:paddingLeft="6sp"
+        android:paddingRight="6sp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bubble">
 
-    <TextView
-        android:id="@+id/messageText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:maxWidth="200dp"
-        android:minWidth="100dp"
-        android:paddingStart="12dp"
-        android:textColor="@color/colorTextSecondary"
-        style="@style/textMetaBubble"
-        tools:text="Lorem ipsum"
-        tools:ignore="RtlSymmetry"/>
+        <ImageView
+            android:id="@+id/icon"
+            android:visibility="gone"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            app:srcCompat="@drawable/ic_block_gray"
+            tools:ignore="ContentDescription" />
+
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:maxWidth="200dp"
+            android:minWidth="100dp"
+            android:paddingStart="12dp"
+            android:textColor="@color/colorTextSecondary"
+            style="@style/textMetaBubble"
+            tools:text="Lorem ipsum"
+            tools:ignore="RtlSymmetry"/>
 
  </LinearLayout>
+</LinearLayout>

@@ -478,6 +478,7 @@ public class MessageDb implements BaseColumns {
         SQLiteDatabase mDb;
 
         private long topicId;
+        private int maxId;
         private int pageCount;
         private int pageSize;
 
@@ -486,6 +487,7 @@ public class MessageDb implements BaseColumns {
 
             mDb = BaseDb.getInstance().getReadableDatabase();
             this.topicId = TopicDb.getId(mDb, topic);
+            this.maxId = TopicDb.getMaxSeq(mDb, this.topicId);
             this.pageCount = pageCount;
             this.pageSize = pageSize;
             if (topicId < 0) {
@@ -495,7 +497,7 @@ public class MessageDb implements BaseColumns {
 
         @Override
         public Cursor loadInBackground() {
-            return query(mDb, topicId, pageCount, pageSize);
+            return query(mDb, topicId, maxId, pageCount, pageSize);
         }
     }
 }

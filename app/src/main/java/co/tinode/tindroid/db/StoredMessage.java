@@ -18,8 +18,6 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     public long topicId;
     public long userId;
     public int status;
-    // Message represents a range of deletions.
-    public int delHi;
 
     StoredMessage() {
     }

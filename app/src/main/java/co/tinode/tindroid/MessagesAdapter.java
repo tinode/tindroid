@@ -307,7 +307,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return VIEWTYPE_INVALID;
         }
 
-        if (m.delHi > 0) {
+        if (m.id <= 0) {
             return VIEWTYPE_CENTER;
         }
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
@@ -415,6 +415,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final StoredMessage m = getMessage(position);
 
         if (topic == null || m == null) {
+            return;
+        }
+
+        if (holder.mIcon != null) {
+            // Meta bubble in the center of the screen
+            holder.mIcon.setVisibility(View.VISIBLE);
+            holder.mText.setText(R.string.content_deleted);
             return;
         }
 
@@ -709,6 +716,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         int mViewType;
+        ImageView mIcon;
         ImageView mAvatar;
         View mMessageBubble;
         AppCompatImageView mDeliveredIcon;
@@ -727,6 +735,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             super(itemView);
 
             mViewType = viewType;
+            mIcon = itemView.findViewById(R.id.icon);
             mAvatar = itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = itemView.findViewById(R.id.messageViewedIcon);

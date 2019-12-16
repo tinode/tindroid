@@ -264,18 +264,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         Acs acs;
         if (acsMap != null) {
             acs = new Acs(acsMap);
-            Log.i(TAG, "Mode from map " + acs.toString());
         } else {
             acs = new Acs();
-            Log.i(TAG, "Blank mode " + acs.toString());
             if (user == null) {
                 acs.setWant(sSub.mode);
             } else {
                 acs.setGiven(sSub.mode);
             }
         }
-
-        Log.i(TAG, "Mode is " + acs.toString());
 
         if (user == null || mTinode.isMe(user)) {
             user = mTinode.getMyId();
@@ -284,10 +280,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (mDesc.acs == null) {
                 mDesc.acs = acs;
                 changed = true;
-                Log.i(TAG, "Desc set to " + mDesc.acs.toString());
             } else {
                 changed = mDesc.acs.merge(acs);
-                Log.i(TAG, "Merged to Desc " + mDesc.acs.toString());
             }
 
             if (changed && mStore != null) {
@@ -1644,7 +1638,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected void routeMetaDel(int clear, MsgRange[] delseq) {
         if (mStore != null) {
             for (MsgRange range : delseq) {
-                mStore.msgDelete(this, clear, range.low, range.hi == null ? range.low + 1 : range.hi);
+                mStore.msgDelete(this, clear, range.low, range.hi == null ? range.low : range.hi);
             }
         }
         setMaxDel(clear);
@@ -2029,7 +2023,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         public MsgGetMeta build() {
-            Log.d(TAG, "MetaGet: " + meta.toString());
             return meta;
         }
     }

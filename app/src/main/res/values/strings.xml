@@ -198,6 +198,7 @@
     <string name="new_chat_ignore">Ignore</string>
     <string name="new_chat_block">Block</string>
     <string name="messages_not_readable">No access to new messages</string>
+    <string name="content_deleted">content deleted</string>
     <string name="peers_messaging_disabled">Peer\'s messaging is disabled</string>
     <string name="action_enable">Enable</string>
     <string name="find">Find</string>

@@ -454,6 +454,16 @@ public class TopicDb implements BaseColumns {
         }
     }
 
+    static int getMaxSeq(SQLiteDatabase db, long topicId) {
+        try {
+            return (int) db.compileStatement("SELECT " + COLUMN_NAME_MAX_LOCAL_SEQ + " FROM " + TABLE_NAME +
+                    " WHERE " + _ID + "='" + topicId + "'").simpleQueryForLong();
+        } catch (SQLException ignored) {
+            // Something went wrong.
+            return -1;
+        }
+    }
+
     public static synchronized int getNextUnsentSeq(SQLiteDatabase db, Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
