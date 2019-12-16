@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.util.Date;
 
@@ -354,9 +355,11 @@ public class TopicDb implements BaseColumns {
         }
 
         if (lowId < st.minLocalSeq) {
+            Log.d(TAG, "low id was=" + st.minLocalSeq + "; now="+lowId);
             values.put(COLUMN_NAME_MIN_LOCAL_SEQ, lowId);
         }
         if (hiId - 1 > st.maxLocalSeq) {
+            Log.d(TAG, "MAX ID was=" + st.maxLocalSeq + "; now=" + (hiId-1));
             values.put(COLUMN_NAME_MAX_LOCAL_SEQ, hiId - 1);
         }
 

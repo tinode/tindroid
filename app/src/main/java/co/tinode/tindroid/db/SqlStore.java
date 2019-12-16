@@ -7,6 +7,7 @@ import android.util.Log;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -137,6 +138,7 @@ public class SqlStore implements Storage {
     public MsgRange getCachedMessagesRange(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
+            Log.d(TAG, "getCachedMessagesRange min=" + st.minLocalSeq + "; max=" + st.maxLocalSeq + 1);
             return new MsgRange(st.minLocalSeq, st.maxLocalSeq + 1);
         }
         return null;
@@ -389,14 +391,18 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public boolean msgDelete(Topic topic, int delId, MsgRange[] ranges, int lowId, int hiId) {
+    public boolean msgDelete(Topic topic, int delId, MsgRange[] ranges) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
+        ranges = MsgRange.collapse(ranges);
+        Log.d(TAG, "Collapsed ranges " + Arrays.toString(ranges));
+        MsgRange span = MsgRange.enclosing(ranges);
+        Log.d(TAG, "Enclosing span " + span);
         boolean result = false;
         try {
             db.beginTransaction();
 
-            if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId, lowId, hiId)) &&
+            if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId, span.low, span.hi)) &&
                     DellogDb.insert(db, topic, delId, ranges) > 0 &&
                     MessageDb.delete(mDbh.getWritableDatabase(), st.id, ranges)) {
                 db.setTransactionSuccessful();

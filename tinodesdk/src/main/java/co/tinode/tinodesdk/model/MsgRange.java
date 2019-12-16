@@ -46,6 +46,11 @@ public class MsgRange implements Comparable<MsgRange> {
         return r;
     }
 
+    @Override
+    public String toString() {
+        return "{low: " + low + (hi != null ? (", hi: " + hi) : "") + "}";
+    }
+
     protected boolean tryExtending(int h) {
         boolean done = false;
         if (h == low) {
@@ -111,22 +116,29 @@ public class MsgRange implements Comparable<MsgRange> {
             int prev = 0;
             for (int i = 1; i < ranges.length; i++) {
                 if (ranges[prev].low.equals(ranges[i].low)) {
+                    // Same starting point.
+
                     // Earlier range is guaranteed to be wider or equal to the later range,
                     // collapse two ranges into one (by doing nothing)
                     continue;
                 }
+
                 // Check for full or partial overlap
-                int hi = ranges[prev].hi != null ? ranges[prev].hi : 0;
-                if (hi > ranges[i].low) {
-                    // Partial overlap
-                    if (nullableCompare(ranges[prev].hi, ranges[i].hi) < 0) {
-                        ranges[prev].hi = ranges[i].hi;
+                int prev_hi = ranges[prev].hi != null ? ranges[prev].hi : ranges[prev].low + 1;
+                if (prev_hi >= ranges[i].low) {
+                    // Partial overlap: previous hi is above or equal to current low.
+                    int curr_hi = ranges[i].hi != null ? ranges[i].hi : ranges[i].low + 1;
+                    if (curr_hi > prev_hi) {
+                        // Current range extends further than previous, extend previous.
+                        ranges[prev].hi = curr_hi;
                     }
                     // Otherwise the next range is fully within the previous range, consume it by doing nothing.
                     continue;
                 }
-                // No overlap
+
+                // No overlap. Just copy the values.
                 prev ++;
+                ranges[prev] = ranges[i];
             }
 
             // Clip array.
@@ -146,13 +158,13 @@ public class MsgRange implements Comparable<MsgRange> {
             return null;
         }
 
-        MsgRange result = new MsgRange(ranges[0]);
+        MsgRange first = new MsgRange(ranges[0]);
         if (ranges.length > 1) {
             MsgRange last = ranges[ranges.length - 1];
-            result.hi = last.hi != null && last.hi != 0 ? last.hi : result.hi;
+            first.hi = (last.hi != null && last.hi != 0) ? last.hi : last.low;
         }
 
-        return result;
+        return first;
     }
 
     // Comparable which does not crash on null values. Nulls are treated as 0.

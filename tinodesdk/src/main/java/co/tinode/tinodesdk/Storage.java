@@ -167,7 +167,7 @@ public interface Storage {
     boolean msgDelete(Topic topic, int delId, int fromId, int toId);
     /** Delete messages */
     @SuppressWarnings("UnusedReturnValue")
-    boolean msgDelete(Topic topic, int delId, MsgRange[] ranges, int lowId, int hiId);
+    boolean msgDelete(Topic topic, int delId, MsgRange[] ranges);
     /** Set recv value for a given subscriber */
     @SuppressWarnings("UnusedReturnValue")
     boolean msgRecvByRemote(Subscription sub, int recv);

@@ -528,7 +528,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
 
-    public MsgRange getCachedMessageRange() {
+    public MsgRange getCachedMessagesRange() {
         return mStore == null ? null : mStore.getCachedMessagesRange(this);
     }
 
@@ -1252,11 +1252,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     int delId = result.ctrl.getIntParam("del", 0);
-                    MsgRange span = MsgRange.enclosing(ranges);
                     setClear(delId);
                     setMaxDel(delId);
                     if (mStore != null && delId > 0) {
-                        mStore.msgDelete(Topic.this, delId, ranges, span.low, span.hi);
+                        mStore.msgDelete(Topic.this, delId, ranges);
                     }
                     return null;
                 }
@@ -1637,9 +1636,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     protected void routeMetaDel(int clear, MsgRange[] delseq) {
         if (mStore != null) {
-            for (MsgRange range : delseq) {
-                mStore.msgDelete(this, clear, range.low, range.hi == null ? range.low : range.hi);
-            }
+            mStore.msgDelete(this, clear, delseq);
         }
         setMaxDel(clear);
 
@@ -1939,7 +1936,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * @param limit number of messages to fetch
          */
         public MetaGetBuilder withLaterData(Integer limit) {
-            MsgRange r = topic.getCachedMessageRange();
+            MsgRange r = topic.getCachedMessagesRange();
 
             if (r == null) {
                 return withData(null, null, limit);
@@ -1953,7 +1950,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * @param limit number of messages to fetch
          */
         public MetaGetBuilder withEarlierData(Integer limit) {
-            MsgRange r = topic.getCachedMessageRange();
+            MsgRange r = topic.getCachedMessagesRange();
             if (r == null) {
                 return withData(null, null, limit);
             }
