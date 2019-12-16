@@ -188,14 +188,24 @@ public class MessagesFragment extends Fragment
                                         new PromisedReply.SuccessListener<ServerMessage>() {
                                             @Override
                                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                                mRefresher.setRefreshing(false);
+                                                activity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        mRefresher.setRefreshing(false);
+                                                    }
+                                                });
                                                 return null;
                                             }
                                         },
                                         new PromisedReply.FailureListener<ServerMessage>() {
                                             @Override
                                             public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                                mRefresher.setRefreshing(false);
+                                                activity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        mRefresher.setRefreshing(false);
+                                                    }
+                                                });
                                                 return null;
                                             }
                                         }
