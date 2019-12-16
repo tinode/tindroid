@@ -248,15 +248,16 @@ public class MessageDb implements BaseColumns {
                 " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " UNION ALL " +
                 // The following query returns gaps.
-                " SELECT NULL, NULL, NULL, NULL, NULL, NULL, m1." + COLUMN_NAME_SEQ + "+1, NULL, NULL" +
+                " SELECT NULL, NULL, NULL, NULL, NULL, NULL, m1." + COLUMN_NAME_SEQ + "-1, NULL, NULL" +
                 " FROM " + TABLE_NAME + " AS m1" +
                 " WHERE NOT EXISTS" +
                     " (SELECT m2." + COLUMN_NAME_SEQ +
                         " FROM " + TABLE_NAME + " AS m2" +
-                        " WHERE m2." + COLUMN_NAME_SEQ + "=m1." + COLUMN_NAME_SEQ + "+1" +
-                        " AND " + COLUMN_NAME_TOPIC_ID + "=" + topicId + ")" +
+                        " WHERE m2." + COLUMN_NAME_SEQ + "=m1." + COLUMN_NAME_SEQ + "-1" +
+                        " AND m2." + COLUMN_NAME_TOPIC_ID + "=" + topicId + ")" +
                 // The following excludes the gap at the end of messages.
-                " AND " + COLUMN_NAME_SEQ + "<" + maxSeq +
+                " AND m1." + COLUMN_NAME_SEQ + ">1" +
+                " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId +
                     // " (SELECT MAX(m3." + COLUMN_NAME_SEQ +") FROM " + TABLE_NAME + " AS m3)" +
                 " ORDER BY "+ COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
