@@ -557,7 +557,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
-        if (mCursor != null && mCursor.moveToPosition(position)) {
+        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
             return StoredMessage.readMessage(mCursor);
         }
         return null;
@@ -566,10 +566,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @Override
     // Must match position-to-item of getMessage.
     public long getItemId(int position) {
-        if (mCursor != null && !mCursor.isClosed()) {
-            if (mCursor.moveToPosition(position)) {
-                return MessageDb.getLocalId(mCursor);
-            }
+        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
+            return MessageDb.getLocalId(mCursor);
         }
         return View.NO_ID;
     }
