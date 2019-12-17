@@ -374,12 +374,12 @@ public class SqlStore implements Storage {
             db.beginTransaction();
 
             if ((delId <= 0 || TopicDb.msgDeleted(db, topic, delId, fromId, toId)) &&
-                    DellogDb.insert(db, topic, delId, fromId, toId) > 0 &&
-                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, fromId, toId)) {
+                    DellogDb.insert(db, topic, delId, fromId, toId) > 0) {
+                MessageDb.delete(db, st.id, fromId, toId);
                 db.setTransactionSuccessful();
                 result = true;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             Log.w(TAG, "Exception while deleting message range", ex);
         } finally {
             db.endTransaction();
@@ -399,12 +399,12 @@ public class SqlStore implements Storage {
             db.beginTransaction();
 
             if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId, span.low, span.hi)) &&
-                    DellogDb.insert(db, topic, delId, ranges) > 0 &&
-                    MessageDb.delete(mDbh.getWritableDatabase(), st.id, ranges)) {
+                    DellogDb.insert(db, topic, delId, ranges) > 0) {
+                MessageDb.delete(db, st.id, ranges);
                 db.setTransactionSuccessful();
                 result = true;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             Log.w(TAG, "Exception while deleting message list", ex);
         } finally {
             db.endTransaction();
