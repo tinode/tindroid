@@ -357,7 +357,7 @@ public class MessageDb implements BaseColumns {
                     (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
 
             if (!doDelete) {
-                // Mark sent messages as deleted
+                // Mark sent messages as deleted.
                 ContentValues values = new ContentValues();
                 values.put(COLUMN_NAME_STATUS, markAsHard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT);
                 values.put(COLUMN_NAME_CONTENT, (String) null);
@@ -366,7 +366,7 @@ public class MessageDb implements BaseColumns {
                         " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_SYNCED, null);
             }
             db.setTransactionSuccessful();
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             Log.w(TAG, "Delete failed", ex);
         } finally {
             db.endTransaction();

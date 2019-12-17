@@ -1,6 +1,7 @@
 package co.tinode.tindroid.db;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
@@ -80,63 +81,25 @@ public class DellogDb implements BaseColumns {
     static final int COLUMN_IDX_HIGH = 4;
 
     /**
-     * Save deleted range record to DB
-     *
-     * @return ID of the newly added message
-     */
-    static long insert(SQLiteDatabase db, Topic topic, int del_id, int low, int high) {
-        long id = -1;
-        try {
-            long topic_id = StoredTopic.getId(topic);
-
-            if (topic_id <= 0) {
-                Log.w(TAG, "Failed to insert deletion log " + del_id);
-                return -1;
-            }
-
-            // Convert message to a map of values
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_TOPIC_ID, topic_id);
-            values.put(COLUMN_NAME_DEL_ID, del_id);
-            values.put(COLUMN_NAME_LOW, low);
-            values.put(COLUMN_NAME_HIGH, high);
-
-            id = db.insertOrThrow(TABLE_NAME, null, values);
-        } catch (Exception ex) {
-            Log.w(TAG, "Insert failed", ex);
-        }
-
-        return id;
-    }
-
-    /**
      * Save multiple deleted range records to DB.
      *
      * @return number of successfully inserted ranges.
      */
-    static int insert(SQLiteDatabase db, Topic topic, int del_id, MsgRange[] ranges) {
+    static int insert(SQLiteDatabase db, Topic topic, int delId, MsgRange[] ranges) {
         int count = 0;
         db.beginTransaction();
         try {
             long topic_id = StoredTopic.getId(topic);
 
             if (topic_id <= 0) {
-                Log.w(TAG, "Failed to insert deletion log " + del_id);
+                Log.w(TAG, "Failed to insert deletion log " + delId);
                 return -1;
             }
 
-            ContentValues values = new ContentValues();
-
             for (MsgRange r : ranges) {
-                // Convert message to a map of values
-                values.clear();
-                values.put(COLUMN_NAME_TOPIC_ID, topic_id);
-                values.put(COLUMN_NAME_DEL_ID, del_id);
-                values.put(COLUMN_NAME_LOW, r.low);
-                values.put(COLUMN_NAME_HIGH, r.hi != null && r.hi != 0 ? r.hi : r.low);
-
-                db.insertOrThrow(TABLE_NAME, null, values);
-                count ++;
+                if (insert(db, topic, delId, r.low, r.hi != null && r.hi != 0 ? r.hi : r.low) > 0) {
+                    count++;
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {
@@ -149,4 +112,69 @@ public class DellogDb implements BaseColumns {
         return count;
     }
 
+    /**
+     * Insert a new range possibly collapsing existing ranges.
+     *
+     * @param db writable database reference to use
+     * @param topic topic being modified
+     * @param delId ID of the delete record being inserted
+     * @param low low seq value in the range
+     * @param high high seq value in the range
+     * @return database id of the inserted record or -1
+     */
+    static long insert(SQLiteDatabase db, Topic topic, int delId, int low, int high) {
+        long id = -1;
+        long topic_id = StoredTopic.getId(topic);
+        if (topic_id <= 0) {
+            return id;
+        }
+
+        // Condition which selects earlier ranges fully or partially overlapped by the current range.
+        final String rangeSelector = COLUMN_NAME_TOPIC_ID + "=" + topic_id +
+                " AND " + COLUMN_NAME_DEL_ID + "<" + delId +
+                " AND " + COLUMN_NAME_LOW + "<=" + high +
+                " AND " + COLUMN_NAME_HIGH + ">=" + low;
+
+        db.beginTransaction();
+        try {
+            // Find bounds of existing ranges which overlap with the new range.
+            Cursor cursor = db.rawQuery("SELECT " +
+                            "MIN(" + COLUMN_NAME_LOW + "),MAX(" + COLUMN_NAME_HIGH + ")" +
+                    " FROM " + TABLE_NAME +
+                    " WHERE " + rangeSelector, null);
+            if (cursor != null) {
+                // Cursor coulnd be empty if nothing overlaps.
+                if (cursor.getCount() > 0 && cursor.moveToFirst()) {
+                    // Read the bounds.
+                    int min_low = cursor.getInt(0);
+                    int max_high = cursor.getInt(1);
+
+                    // Expand current range to overlap earlier ranges.
+                    low = min_low < low ? min_low : low;
+                    high = max_high > high ? max_high : high;
+
+                    // Delete ranges which are being replaced by the new range.
+                    db.delete(TABLE_NAME, rangeSelector, null);
+                }
+                cursor.close();
+            }
+
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_TOPIC_ID, topic_id);
+            values.put(COLUMN_NAME_DEL_ID, delId);
+            values.put(COLUMN_NAME_LOW, low);
+            values.put(COLUMN_NAME_HIGH, high);
+
+            id = db.insertOrThrow(TABLE_NAME, null, values);
+
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+            Log.w(TAG, "Failed to collapse range", ex);
+            id = -1;
+        } finally {
+            db.endTransaction();
+        }
+
+        return id;
+    }
 }

@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.util.Date;
 
@@ -364,6 +365,7 @@ public class TopicDb implements BaseColumns {
         if (values.size() > 0) {
             int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
             if (updated <= 0) {
+                Log.d(TAG, "Failed to update table records on delete");
                 return false;
             }
 
