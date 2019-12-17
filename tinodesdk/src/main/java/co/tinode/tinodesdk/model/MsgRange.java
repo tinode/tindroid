@@ -161,7 +161,9 @@ public class MsgRange implements Comparable<MsgRange> {
         MsgRange first = new MsgRange(ranges[0]);
         if (ranges.length > 1) {
             MsgRange last = ranges[ranges.length - 1];
-            first.hi = (last.hi != null && last.hi != 0) ? last.hi : last.low;
+            first.hi = (last.hi != null && last.hi != 0) ? last.hi : last.low + 1;
+        } else if (first.hi == null) {
+            first.hi = first.low + 1;
         }
 
         return first;
