@@ -86,7 +86,6 @@ public class DellogDb implements BaseColumns {
      */
     static long insert(SQLiteDatabase db, Topic topic, int del_id, int low, int high) {
         long id = -1;
-        db.beginTransaction();
         try {
             long topic_id = StoredTopic.getId(topic);
 
@@ -103,11 +102,8 @@ public class DellogDb implements BaseColumns {
             values.put(COLUMN_NAME_HIGH, high);
 
             id = db.insertOrThrow(TABLE_NAME, null, values);
-            db.setTransactionSuccessful();
         } catch (Exception ex) {
             Log.w(TAG, "Insert failed", ex);
-        } finally {
-            db.endTransaction();
         }
 
         return id;

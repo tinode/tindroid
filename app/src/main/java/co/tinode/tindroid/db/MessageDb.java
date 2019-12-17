@@ -239,7 +239,7 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the messages.
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int maxSeq, int pageCount, int pageSize) {
-        final String sql ="SELECT " +
+        final String sql = "SELECT " +
                     _ID + "," + COLUMN_NAME_TOPIC_ID + "," + COLUMN_NAME_USER_ID + "," + COLUMN_NAME_STATUS + "," +
                     COLUMN_NAME_SENDER + "," + COLUMN_NAME_TS + "," + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HEAD + "," +
                     COLUMN_NAME_CONTENT +
@@ -255,10 +255,9 @@ public class MessageDb implements BaseColumns {
                         " FROM " + TABLE_NAME + " AS m2" +
                         " WHERE m2." + COLUMN_NAME_SEQ + "=m1." + COLUMN_NAME_SEQ + "-1" +
                         " AND m2." + COLUMN_NAME_TOPIC_ID + "=" + topicId + ")" +
-                // The following excludes the gap at the end of messages.
+                // The following excludes the gap at the start of messages.
                 " AND m1." + COLUMN_NAME_SEQ + ">1" +
                 " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    // " (SELECT MAX(m3." + COLUMN_NAME_SEQ +") FROM " + TABLE_NAME + " AS m3)" +
                 " ORDER BY "+ COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
 
