@@ -230,12 +230,8 @@ public class MessageDb implements BaseColumns {
      */
     public static Cursor query(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
         final String sql = "SELECT * FROM " + TABLE_NAME +
-                " WHERE "
-                        + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    " AND "
-                        + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value +
-                " ORDER BY "
-                    + COLUMN_NAME_SEQ + " DESC" +
+                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " ORDER BY " + COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
 
         return db.rawQuery(sql, null);
@@ -247,12 +243,11 @@ public class MessageDb implements BaseColumns {
      *
      * @param db        database to select from;
      * @param topicId   Tinode topic ID (topics._id) to select from
-     * @param maxSeq    Maximum known seqId in the table.
      * @param pageCount number of pages to return
      * @param pageSize  number of messages per page
      * @return cursor with the messages.
      */
-    public static Cursor query(SQLiteDatabase db, long topicId, int maxSeq, int pageCount, int pageSize) {
+    public static Cursor query_deprecated(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
         final String sql = "SELECT " +
                     _ID + "," + COLUMN_NAME_TOPIC_ID + "," + COLUMN_NAME_USER_ID + "," + COLUMN_NAME_STATUS + "," +
                     COLUMN_NAME_SENDER + "," + COLUMN_NAME_TS + "," + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HEAD + "," +
@@ -582,7 +577,6 @@ public class MessageDb implements BaseColumns {
         SQLiteDatabase mDb;
 
         private long topicId;
-        private int maxId;
         private int pageCount;
         private int pageSize;
 
@@ -591,7 +585,6 @@ public class MessageDb implements BaseColumns {
 
             mDb = BaseDb.getInstance().getReadableDatabase();
             this.topicId = TopicDb.getId(mDb, topic);
-            this.maxId = TopicDb.getMaxSeq(mDb, this.topicId);
             this.pageCount = pageCount;
             this.pageSize = pageSize;
             if (topicId < 0) {
@@ -601,7 +594,7 @@ public class MessageDb implements BaseColumns {
 
         @Override
         public Cursor loadInBackground() {
-            return query(mDb, topicId, maxId, pageCount, pageSize);
+            return query(mDb, topicId, pageCount, pageSize);
         }
     }
 }

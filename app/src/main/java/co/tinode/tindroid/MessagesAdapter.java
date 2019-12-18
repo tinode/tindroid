@@ -267,7 +267,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 int pos = positions[i++];
                 StoredMessage msg = getMessage(pos);
                 if (msg != null) {
-                    if (msg.status == BaseDb.STATUS_SYNCED) {
+                    if (msg.status == BaseDb.Status.SYNCED) {
                         toDelete.add(msg.seq);
                     } else {
                         store.msgDiscard(topic, msg.getId());
@@ -426,7 +426,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         // Disable attachment clicker.
-        boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED || m.status == BaseDb.STATUS_DRAFT) &&
+        boolean disableEnt = (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.DRAFT) &&
                 (m.content != null && m.content.getEntReferences() != null);
 
         mSpanFormatterClicker.setPosition(position);
@@ -512,7 +512,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
-                if (m.status <= BaseDb.STATUS_SENDING) {
+                if (m.status.value <= BaseDb.Status.SENDING.value) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
                 } else {
                     if (topic.msgReadCount(m.seq) > 0) {
@@ -971,7 +971,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 // {"seq":6,"resp":{"yes":1}}
                                 if (!TextUtils.isEmpty(name)) {
                                     Map<String,Object> resp = new HashMap<>();
-                                    // noinspection ConstantConditions: false positive
+                                    // noinspection
                                     resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                                     json.put("resp", resp);
                                 }
