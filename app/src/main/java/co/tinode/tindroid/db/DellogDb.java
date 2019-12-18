@@ -97,7 +97,7 @@ public class DellogDb implements BaseColumns {
             }
 
             for (MsgRange r : ranges) {
-                if (insert(db, topic, delId, r.low, r.getHi() - 1) > 0) {
+                if (insert(db, topic, delId, r.low, r.getUpper() - 1) > 0) {
                     count++;
                 }
             }

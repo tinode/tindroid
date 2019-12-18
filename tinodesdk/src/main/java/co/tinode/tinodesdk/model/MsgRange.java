@@ -1,5 +1,6 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.ArrayList;
@@ -51,7 +52,13 @@ public class MsgRange implements Comparable<MsgRange> {
         return "{low: " + low + (hi != null ? (", hi: " + hi) : "") + "}";
     }
 
-    public int getHi() {
+    @JsonIgnore
+    public int getLower() {
+        return low;
+    }
+
+    @JsonIgnore
+    public int getUpper() {
         return hi != null && hi != 0 ? hi : low + 1;
     }
 
@@ -128,10 +135,10 @@ public class MsgRange implements Comparable<MsgRange> {
                 }
 
                 // Check for full or partial overlap
-                int prev_hi = ranges[prev].getHi();
+                int prev_hi = ranges[prev].getUpper();
                 if (prev_hi >= ranges[i].low) {
                     // Partial overlap: previous hi is above or equal to current low.
-                    int curr_hi = ranges[i].getHi();
+                    int curr_hi = ranges[i].getUpper();
                     if (curr_hi > prev_hi) {
                         // Current range extends further than previous, extend previous.
                         ranges[prev].hi = curr_hi;
@@ -165,7 +172,7 @@ public class MsgRange implements Comparable<MsgRange> {
         MsgRange first = new MsgRange(ranges[0]);
         if (ranges.length > 1) {
             MsgRange last = ranges[ranges.length - 1];
-            first.hi = last.getHi();
+            first.hi = last.getUpper();
         } else if (first.hi == null) {
             first.hi = first.low + 1;
         }

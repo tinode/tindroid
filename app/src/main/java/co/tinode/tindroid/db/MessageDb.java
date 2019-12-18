@@ -150,19 +150,19 @@ public class MessageDb implements BaseColumns {
                 return -1;
             }
 
-            int status;
+            BaseDb.Status status;
             if (msg.seq == 0) {
                 msg.seq = TopicDb.getNextUnsentSeq(db, topic);
-                status = msg.status == BaseDb.STATUS_UNDEFINED ? BaseDb.STATUS_QUEUED : msg.status;
+                status = msg.status == BaseDb.Status.UNDEFINED ? BaseDb.Status.QUEUED : msg.status;
             } else {
-                status = BaseDb.STATUS_SYNCED;
+                status = BaseDb.Status.SYNCED;
             }
 
             // Convert message to a map of values
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_TOPIC_ID, msg.topicId);
             values.put(COLUMN_NAME_USER_ID, msg.userId);
-            values.put(COLUMN_NAME_STATUS, status);
+            values.put(COLUMN_NAME_STATUS, status.value);
             values.put(COLUMN_NAME_SENDER, msg.from);
             values.put(COLUMN_NAME_TS, msg.ts != null ? msg.ts.getTime() : null);
             values.put(COLUMN_NAME_SEQ, msg.seq);
@@ -180,10 +180,10 @@ public class MessageDb implements BaseColumns {
         return msg.id;
     }
 
-    static boolean updateStatusAndContent(SQLiteDatabase db, long msgId, int status, Object content) {
+    static boolean updateStatusAndContent(SQLiteDatabase db, long msgId, BaseDb.Status status, Object content) {
         ContentValues values = new ContentValues();
-        if (status != BaseDb.STATUS_UNDEFINED) {
-            values.put(COLUMN_NAME_STATUS, status);
+        if (status != BaseDb.Status.UNDEFINED) {
+            values.put(COLUMN_NAME_STATUS, status.value);
         }
         if (content != null) {
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(content));
@@ -197,7 +197,7 @@ public class MessageDb implements BaseColumns {
 
     static boolean delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
+        values.put(COLUMN_NAME_STATUS, BaseDb.Status.SYNCED.value);
         values.put(COLUMN_NAME_TS, timestamp.getTime());
         values.put(COLUMN_NAME_SEQ, seq);
         int updated = db.update(TABLE_NAME, values, _ID + "=" + msgId, null);
@@ -219,7 +219,7 @@ public class MessageDb implements BaseColumns {
                 " WHERE "
                         + COLUMN_NAME_TOPIC_ID + "=" + topicId +
                     " AND "
-                        + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                        + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value +
                 " ORDER BY "
                     + COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
@@ -245,7 +245,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_CONTENT +
                 " FROM " + TABLE_NAME +
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
+                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value +
                 " UNION ALL " +
                 // The following query returns gaps.
                 " SELECT NULL, NULL, NULL, NULL, NULL, NULL, m1." + COLUMN_NAME_SEQ + "-1, NULL, NULL" +
@@ -287,7 +287,7 @@ public class MessageDb implements BaseColumns {
         final String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
                 COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_QUEUED +
+                " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.Status.QUEUED.value +
                 " ORDER BY " + COLUMN_NAME_TS;
 
         return db.rawQuery(sql, null);
@@ -302,11 +302,11 @@ public class MessageDb implements BaseColumns {
      * @return cursor with the message seqIDs
      */
     static Cursor queryDeleted(SQLiteDatabase db, long topicId, boolean hard) {
-        int status = hard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT;
+        BaseDb.Status status = hard ? BaseDb.Status.DELETED_HARD : BaseDb.Status.DELETED_SOFT;
 
         final String sql = "SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "=" + status +
+                " AND " + COLUMN_NAME_STATUS + "=" + status.value +
                 " ORDER BY " + COLUMN_NAME_TS;
 
         return db.rawQuery(sql, null);
@@ -332,7 +332,7 @@ public class MessageDb implements BaseColumns {
         ArrayList<String> parts = new ArrayList<>();
         if (ranges != null) {
             for (MsgRange r : ranges) {
-                parts.add(COLUMN_NAME_SEQ + " BETWEEN "+ r.low + " AND " + (r.getHi() - 1));
+                parts.add(COLUMN_NAME_SEQ + " BETWEEN "+ r.low + " AND " + (r.getUpper() - 1));
             }
             messageSelector = TextUtils.join(" OR ", parts);
         } else {
@@ -352,16 +352,16 @@ public class MessageDb implements BaseColumns {
             affected = db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
                     messageSelector +
                     // Either delete all messages or just unsent+draft messages.
-                    (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_QUEUED), null);
+                    (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.QUEUED.value), null);
 
             if (!doDelete) {
                 // Mark sent messages as deleted.
                 ContentValues values = new ContentValues();
-                values.put(COLUMN_NAME_STATUS, markAsHard ? BaseDb.STATUS_DELETED_HARD : BaseDb.STATUS_DELETED_SOFT);
+                values.put(COLUMN_NAME_STATUS, (markAsHard ? BaseDb.Status.DELETED_HARD : BaseDb.Status.DELETED_SOFT).value);
                 values.put(COLUMN_NAME_CONTENT, (String) null);
                 affected += db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
                         messageSelector +
-                        " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.STATUS_SYNCED, null);
+                        " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.Status.SYNCED.value, null);
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {

@@ -13,7 +13,6 @@ import co.tinode.tinodesdk.User;
 public class StoredUser implements LocalData.Payload {
     public long id;
 
-    @SuppressWarnings("unchecked")
     static <Pu> void deserialize(User<Pu> user, Cursor c) {
         StoredUser su = new StoredUser();
 

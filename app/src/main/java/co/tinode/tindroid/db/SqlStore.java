@@ -164,12 +164,12 @@ public class SqlStore implements Storage {
 
     @Override
     public long subAdd(Topic topic, Subscription sub) {
-        return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.STATUS_SYNCED, sub);
+        return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.Status.SYNCED, sub);
     }
 
     @Override
     public long subNew(Topic topic, Subscription sub) {
-        return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.STATUS_QUEUED, sub);
+        return SubscriberDb.insert(mDbh.getWritableDatabase(), StoredTopic.getId(topic), BaseDb.Status.QUEUED, sub);
     }
 
     @Override
@@ -269,7 +269,7 @@ public class SqlStore implements Storage {
         return msg.id;
     }
 
-    private long insertMessage(Topic topic, Drafty data, Map<String, Object> head, int initialStatus) {
+    private long insertMessage(Topic topic, Drafty data, Map<String, Object> head, BaseDb.Status initialStatus) {
         StoredMessage msg = new StoredMessage();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 
@@ -299,28 +299,28 @@ public class SqlStore implements Storage {
 
     @Override
     public long msgSend(Topic topic, Drafty data, Map<String, Object> head) {
-        return insertMessage(topic, data, head, BaseDb.STATUS_SENDING);
+        return insertMessage(topic, data, head, BaseDb.Status.SENDING);
     }
 
     @Override
     public long msgDraft(Topic topic, Drafty data, Map<String, Object> head) {
-        return insertMessage(topic, data, head, BaseDb.STATUS_DRAFT);
+        return insertMessage(topic, data, head, BaseDb.Status.DRAFT);
     }
 
     @Override
     public boolean msgDraftUpdate(Topic topic, long messageDbId, Drafty data) {
-        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId, BaseDb.STATUS_UNDEFINED, data);
+        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId, BaseDb.Status.UNDEFINED, data);
     }
 
     @Override
     public boolean msgReady(Topic topic, long messageDbId, Drafty data) {
-        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId, BaseDb.STATUS_QUEUED, data);
+        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId, BaseDb.Status.QUEUED, data);
     }
 
     @Override
     public boolean msgSyncing(Topic topic, long messageDbId, boolean sync) {
         return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId,
-                sync ? BaseDb.STATUS_SENDING : BaseDb.STATUS_QUEUED, null);
+                sync ? BaseDb.Status.SENDING : BaseDb.Status.QUEUED, null);
     }
 
     public boolean msgDiscard(Topic topic, long messageDbId) {
@@ -398,7 +398,7 @@ public class SqlStore implements Storage {
         try {
             db.beginTransaction();
 
-            if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId, span.low, span.hi)) &&
+            if ((delId <=0 || TopicDb.msgDeleted(db, topic, delId, span.getLower(), span.getUpper())) &&
                     DellogDb.insert(db, topic, delId, ranges) > 0) {
                 MessageDb.delete(db, st.id, ranges);
                 db.setTransactionSuccessful();
@@ -466,7 +466,6 @@ public class SqlStore implements Storage {
             Cursor c = MessageDb.queryDeleted(mDbh.getReadableDatabase(), st.id, hard);
             if (c != null && c.moveToFirst()) {
                 list = new ArrayList<>(c.getCount());
-                int i = 0;
                 do {
                     list.add(StoredMessage.readSeqId(c));
                 } while(c.moveToNext());

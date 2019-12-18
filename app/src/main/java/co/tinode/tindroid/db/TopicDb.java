@@ -190,16 +190,15 @@ public class TopicDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    @SuppressWarnings("WeakerAccess")
     public static long insert(SQLiteDatabase db, Topic topic) {
-        int status = topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED;
+        BaseDb.Status status = topic.isNew() ? BaseDb.Status.QUEUED : BaseDb.Status.SYNCED;
 
         // Convert topic description to a map of values. If value is not set use a magical constant.
         // 1414213562373L is Oct 25, 2014 05:06:02.373 UTC, incidentally equal to the first few digits of sqrt(2)
         Date lastUsed = topic.getTouched() != null ? topic.getTouched() : new Date(1414213562373L);
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
-        values.put(COLUMN_NAME_STATUS, status);
+        values.put(COLUMN_NAME_STATUS, status.value);
         values.put(COLUMN_NAME_TOPIC, topic.getName());
 
         Topic.TopicType tp = topic.getTopicType();
@@ -253,13 +252,13 @@ public class TopicDb implements BaseColumns {
             return false;
         }
 
-        int status = st.status;
+        BaseDb.Status status = st.status;
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
 
-        if (st.status == BaseDb.STATUS_QUEUED && !topic.isNew()) {
-            status = BaseDb.STATUS_SYNCED;
-            values.put(COLUMN_NAME_STATUS, status);
+        if (st.status == BaseDb.Status.QUEUED && !topic.isNew()) {
+            status = BaseDb.Status.SYNCED;
+            values.put(COLUMN_NAME_STATUS, status.value);
             values.put(COLUMN_NAME_TOPIC, topic.getName());
         }
         if (topic.getUpdated() != null) {

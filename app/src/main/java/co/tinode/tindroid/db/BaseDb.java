@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.util.Log;
+import android.util.SparseArray;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -40,22 +41,46 @@ public class BaseDb extends SQLiteOpenHelper {
      */
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + BaseDb.CONTENT_AUTHORITY);
 
-    // Status undefined/not set.
-    public static final int STATUS_UNDEFINED = 0;
-    // Object is not ready to be sent to the server.
-    public static final int STATUS_DRAFT = 1;
-    // Object is ready but not yet sent to the server.
-    public static final int STATUS_QUEUED = 2;
-    // Object is in the process of being sent to the server.
-    public static final int STATUS_SENDING = 3;
-    // Object is received by the server
-    public static final int STATUS_SYNCED = 4;
-    // Meta-status: object should be visible in the UI
-    public static final int STATUS_VISIBLE = 4;
-    // Object is hard-deleted
-    public static final int STATUS_DELETED_HARD = 5;
-    // Object is soft-deleted
-    public static final int STATUS_DELETED_SOFT = 6;
+    public enum Status {
+        // Status undefined/not set.
+        UNDEFINED(0),
+        // Object is not ready to be sent to the server.
+        DRAFT(1),
+        // Object is waiting in the queue to be sent to the server.
+        QUEUED(2),
+        // Object is in the process of being sent to the server.
+        SENDING(3),
+        // Object is received by the server.
+        SYNCED(4),
+        // Meta-status: object should be visible in the UI.
+        VISIBLE(4),
+        // Object is hard-deleted.
+        DELETED_HARD(5),
+        // Object is soft-deleted.
+        DELETED_SOFT(6),
+        // The object is a deletion range marker.
+        DELETED(7);
+
+        public int value;
+
+        Status(int v) {
+            value = v;
+        }
+
+        private static final SparseArray<Status> intToTypeMap = new SparseArray<>();
+        static {
+            for (Status type : Status.values()) {
+                intToTypeMap.put(type.value, type);
+            }
+        }
+
+        public static Status fromInt(int i) {
+            Status type = intToTypeMap.get(i);
+            if (type == null)
+                return Status.UNDEFINED;
+            return type;
+        }
+    }
 
     private static BaseDb sInstance = null;
 
