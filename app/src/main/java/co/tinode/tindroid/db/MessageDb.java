@@ -18,6 +18,9 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgRange;
 
 /**
+ * The table contains messages synchronized with the server and not yet synchronized.
+ * It also contains message deletion markers, synchronized and not yet synchronized.
+ *
  * Storage structure for messages:
  * public String id -> _id
  * public String topic -> as topic_id
@@ -65,7 +68,14 @@ public class MessageDb implements BaseColumns {
      * a deleted range, then <tt>seq</tt> is the lowest bound of the range.
      */
     private static final String COLUMN_NAME_SEQ = "seq";
-
+    /**
+     * If message represents a deleted range, this is the upper bound of the range.
+     */
+    private static final String COLUMN_NAME_HIGH = "high";
+    /**
+     * If message represents a deleted range, ID of the deletion record.
+     */
+    private static final String COLUMN_NAME_DEL_ID = "del_id";
     /**
      * Serialized header.
      */
@@ -90,6 +100,8 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SENDER + " TEXT," +
                     COLUMN_NAME_TS + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
+                    COLUMN_NAME_HIGH + " INT," +
+                    COLUMN_NAME_DEL_ID + " INT," +
                     COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
     /**
@@ -123,8 +135,10 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_SENDER = 4;
     static final int COLUMN_IDX_TS = 5;
     static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_HEAD = 7;
-    static final int COLUMN_IDX_CONTENT = 8;
+    static final int COLUMN_IDX_HIGH = 7;
+    static final int COLUMN_IDX_DEL_ID = 8;
+    static final int COLUMN_IDX_HEAD = 9;
+    static final int COLUMN_IDX_CONTENT = 10;
 
     /**
      * Save message to DB
@@ -299,12 +313,12 @@ public class MessageDb implements BaseColumns {
      * @param db      database to select from;
      * @param topicId Tinode topic ID (topics._id) to select from;
      * @param hard    if true to return hard-deleted messages, soft-deleted otherwise.
-     * @return cursor with the message seqIDs
+     * @return cursor with the ranges of deleted message seq IDs
      */
     static Cursor queryDeleted(SQLiteDatabase db, long topicId, boolean hard) {
         BaseDb.Status status = hard ? BaseDb.Status.DELETED_HARD : BaseDb.Status.DELETED_SOFT;
 
-        final String sql = "SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
+        final String sql = "SELECT " + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HIGH + " FROM " + TABLE_NAME +
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "=" + status.value +
                 " ORDER BY " + COLUMN_NAME_TS;
@@ -313,63 +327,155 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Mark sent messages as deleted without actually deleting them. Delete unsent messages.
+     * Delete messages replacing them with deletion markers.
      *
      * @param db            Database to use.
-     * @param doDelete      delete messages instead of marking them deleted.
      * @param topicId       Tinode topic ID to delete messages from.
+     * @param delId         Server-issued delete record ID. If delId <= 0, the operation is not
+     *                      yet synced with the server.
      * @param fromId        minimum seq value to delete, inclusive (closed).
      * @param toId          maximum seq value to delete, exclusive (open).
-     * @param ranges        ranges of message IDs to delete.
      * @param markAsHard    mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
-    private static boolean deleteOrMarkDeleted(SQLiteDatabase db, boolean doDelete, long topicId,
-                                               int fromId, int toId, MsgRange[] ranges, boolean markAsHard) {
-        int affected = 0;
-        db.beginTransaction();
-        String messageSelector;
+    private static boolean deleteOrMarkDeleted(SQLiteDatabase db, long topicId, int delId, int fromId, int toId,
+                                               boolean markAsHard) {
+        // 1. Delete all messages within the give range (sent and unsent).
+        // 2. Delete all unsynchronized (soft and hard) deletion ranges fully within this range
+        // (no point in synchronizing them, they are superseded).
+        // 3.1 If server record, consume older partially overlapping server records,
+        // 3.2 If client hard-record, consume partially overlapping client hard-records.
+        // 3.3 If client soft-record, consume partially overlapping client soft records.
+        // 4. Expand current record to consumed range.
+
+        boolean success = false;
+
+        // Message selector: all messages in a given topic with seq between fromId and toId [inclusive, exclusive).
+        String messageSelector = COLUMN_NAME_TOPIC_ID + "=" + topicId;
         ArrayList<String> parts = new ArrayList<>();
-        if (ranges != null) {
-            for (MsgRange r : ranges) {
-                parts.add(COLUMN_NAME_SEQ + " BETWEEN "+ r.low + " AND " + (r.getUpper() - 1));
-            }
-            messageSelector = TextUtils.join(" OR ", parts);
-        } else {
-            if (fromId > 0) {
+        if (fromId > 0) {
                 parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
+        }
+        parts.add(COLUMN_NAME_SEQ + "<" + toId);
+        if (parts.size() > 0) {
+            messageSelector +=  " AND " + TextUtils.join(" AND ", parts);
+        }
+        messageSelector += " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value;
+
+        // Selector of ranges which are fully within the new range.
+        parts.clear();
+        String rangeDeleteSelector = COLUMN_NAME_TOPIC_ID + "=" + topicId;
+        if (fromId > 0) {
+            parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
+        }
+        parts.add(COLUMN_NAME_HIGH + "<" + toId);
+        if (parts.size() > 0) {
+            rangeDeleteSelector +=  " AND " + TextUtils.join(" AND ", parts);
+        }
+        // All types: server, soft and hard.
+        rangeDeleteSelector += " AND " + COLUMN_NAME_STATUS + ">" + BaseDb.Status.VISIBLE.value;
+
+
+        // Selector of partially overlapping deletion ranges. Find bounds of existing deletion ranges of the same type
+        // which partially overlap with the new deletion range.
+        String rangeConsumeSelector = COLUMN_NAME_TOPIC_ID + "=" + topicId;
+        BaseDb.Status status;
+        if (delId > 0) {
+            rangeConsumeSelector += " AND " + COLUMN_NAME_DEL_ID + "<" + delId;
+            status = BaseDb.Status.DELETED_SYNCED;
+        } else {
+            status = markAsHard ? BaseDb.Status.DELETED_HARD : BaseDb.Status.DELETED_SOFT;
+        }
+        rangeConsumeSelector += " AND " + COLUMN_NAME_STATUS + "=" + status.value;
+
+        String rangeNarrow = "";
+        parts.clear();
+        if (fromId > 0) {
+            parts.add(COLUMN_NAME_HIGH + ">=" + fromId);
+        }
+        parts.add(COLUMN_NAME_SEQ + "<" + toId);
+        if (parts.size() > 0) {
+            rangeNarrow +=  " AND " + TextUtils.join(" AND ", parts);
+        }
+
+        db.beginTransaction();
+        try {
+            // 1. Delete all messages in the range.
+            db.delete(TABLE_NAME, messageSelector +
+                    " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value, null);
+
+            // 2. Delete all deletion records fully within the new range.
+            db.delete(TABLE_NAME, rangeDeleteSelector, null);
+
+            // Finds the maximum continuous range which overlaps with the current range.
+            Cursor cursor = db.rawQuery("SELECT " +
+                    "MIN(" + COLUMN_NAME_SEQ + "),MAX(" + COLUMN_NAME_HIGH + ")" +
+                    " FROM " + TABLE_NAME +
+                    " WHERE " + rangeConsumeSelector + rangeNarrow, null);
+            if (cursor != null) {
+                // Cursor could be empty if nothing overlaps.
+                if (cursor.getCount() > 0 && cursor.moveToFirst()) {
+                    // Read the bounds.
+                    int min_low = cursor.getInt(0);
+                    int max_high = cursor.getInt(1);
+
+                    // Expand current range to overlap earlier ranges.
+                    fromId = min_low < fromId ? min_low : fromId;
+                    toId = max_high > toId ? max_high : toId;
+                }
+                cursor.close();
+            }
+
+            // 3. Consume partially overlapped ranges. They will be replaced with the new expanded range.
+            String rangeWide = "";
+            parts.clear();
+            if (fromId > 0) {
+                parts.add(COLUMN_NAME_HIGH + ">=" + fromId);
+            } else {
+                fromId = 1;
             }
             parts.add(COLUMN_NAME_SEQ + "<" + toId);
-            messageSelector = TextUtils.join(" AND ", parts);
-        }
-
-        if (!TextUtils.isEmpty(messageSelector)) {
-            messageSelector = " AND " + messageSelector;
-        }
-
-        try {
-            // Unsent messages are always deleted, sent messages are deleted only when doDelete is set.
-            affected = db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                    messageSelector +
-                    // Either delete all messages or just unsent+draft messages.
-                    (doDelete ? "" : " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.QUEUED.value), null);
-
-            if (!doDelete) {
-                // Mark sent messages as deleted.
-                ContentValues values = new ContentValues();
-                values.put(COLUMN_NAME_STATUS, (markAsHard ? BaseDb.Status.DELETED_HARD : BaseDb.Status.DELETED_SOFT).value);
-                values.put(COLUMN_NAME_CONTENT, (String) null);
-                affected += db.update(TABLE_NAME, values, COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                        messageSelector +
-                        " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.Status.SYNCED.value, null);
+            if (parts.size() > 0) {
+                rangeWide +=  " AND " + TextUtils.join(" AND ", parts);
             }
+            db.delete(TABLE_NAME, rangeConsumeSelector + rangeWide, null);
+
+            // 4. Insert new range.
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_DEL_ID, delId);
+            values.put(COLUMN_NAME_SEQ, fromId);
+            values.put(COLUMN_NAME_HIGH, toId);
+            values.put(COLUMN_NAME_STATUS, status.value);
+            db.insertOrThrow(TABLE_NAME, null, values);
+
             db.setTransactionSuccessful();
+            success = true;
         } catch (Exception ex) {
             Log.w(TAG, "Delete failed", ex);
         } finally {
             db.endTransaction();
         }
-        return affected > 0;
+        return success;
+    }
+
+    private static boolean deleteOrMarkDeleted(SQLiteDatabase db, long topicId, int delId, MsgRange[] ranges,
+                                               boolean markAsHard) {
+        boolean success = false;
+        db.beginTransaction();
+        try {
+            for (MsgRange r : ranges) {
+                if (!deleteOrMarkDeleted(db, topicId, delId, r.getLower(), r.getUpper(), markAsHard)) {
+                    throw new SQLException("error while deleting range " + r);
+                }
+            }
+            db.setTransactionSuccessful();
+            success = true;
+        } catch (Exception ex) {
+            Log.w(TAG, "Delete failed", ex);
+        } finally {
+            db.endTransaction();
+        }
+        return success;
     }
 
     /**
@@ -382,7 +488,7 @@ public class MessageDb implements BaseColumns {
      * @return true if some messages were updated or deleted, false otherwise
      */
     static boolean markDeleted(SQLiteDatabase db, long topicId, MsgRange[] ranges, boolean markAsHard) {
-        return deleteOrMarkDeleted(db, false, topicId, Integer.MAX_VALUE, 0, ranges, markAsHard);
+        return deleteOrMarkDeleted(db, topicId, -1, ranges, markAsHard);
     }
 
     /**
@@ -396,7 +502,7 @@ public class MessageDb implements BaseColumns {
      * @return true if some messages were updated or deleted, false otherwise
      */
     static boolean markDeleted(SQLiteDatabase db, long topicId, int fromId, int toId, boolean markAsHard) {
-        return deleteOrMarkDeleted(db, false, topicId, fromId, toId, null, markAsHard);
+        return deleteOrMarkDeleted(db, topicId, -1, fromId, toId, markAsHard);
     }
 
     /**
@@ -408,8 +514,8 @@ public class MessageDb implements BaseColumns {
      * @param toId    maximum seq value to delete, exclusive (open)
      * @return true if any messages were deleted.
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int fromId, int toId) {
-        return deleteOrMarkDeleted(db, true, topicId, fromId, toId, null, false);
+    public static boolean delete(SQLiteDatabase db, long topicId, int delId, int fromId, int toId) {
+        return deleteOrMarkDeleted(db, topicId, delId, fromId, toId, false);
     }
 
     /**
@@ -420,12 +526,12 @@ public class MessageDb implements BaseColumns {
      * @param ranges  message ranges to delete.
      * @return true if any messages were deleted.
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, MsgRange[] ranges) {
-        return deleteOrMarkDeleted(db, true, topicId, -1, -1, ranges, false);
+    public static boolean delete(SQLiteDatabase db, long topicId, int delId, MsgRange[] ranges) {
+        return deleteOrMarkDeleted(db, topicId, delId, ranges, false);
     }
 
     /**
-     * Delete all messages in a given topic.
+     * Delete all messages in a given topic, no exceptions. Use only when deleting the topic.
      *
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
