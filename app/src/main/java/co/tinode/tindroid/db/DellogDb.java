@@ -97,7 +97,7 @@ public class DellogDb implements BaseColumns {
             }
 
             for (MsgRange r : ranges) {
-                if (insert(db, topic, delId, r.low, r.hi != null && r.hi != 0 ? r.hi : r.low) > 0) {
+                if (insert(db, topic, delId, r.low, r.getHi() - 1) > 0) {
                     count++;
                 }
             }
@@ -119,7 +119,7 @@ public class DellogDb implements BaseColumns {
      * @param topic topic being modified
      * @param delId ID of the delete record being inserted
      * @param low low seq value in the range
-     * @param high high seq value in the range
+     * @param high high seq value in the range (inclusive, non-zero)
      * @return database id of the inserted record or -1
      */
     static long insert(SQLiteDatabase db, Topic topic, int delId, int low, int high) {

@@ -51,6 +51,10 @@ public class MsgRange implements Comparable<MsgRange> {
         return "{low: " + low + (hi != null ? (", hi: " + hi) : "") + "}";
     }
 
+    public int getHi() {
+        return hi != null && hi != 0 ? hi : low + 1;
+    }
+
     protected boolean tryExtending(int h) {
         boolean done = false;
         if (h == low) {
@@ -124,10 +128,10 @@ public class MsgRange implements Comparable<MsgRange> {
                 }
 
                 // Check for full or partial overlap
-                int prev_hi = ranges[prev].hi != null ? ranges[prev].hi : ranges[prev].low + 1;
+                int prev_hi = ranges[prev].getHi();
                 if (prev_hi >= ranges[i].low) {
                     // Partial overlap: previous hi is above or equal to current low.
-                    int curr_hi = ranges[i].hi != null ? ranges[i].hi : ranges[i].low + 1;
+                    int curr_hi = ranges[i].getHi();
                     if (curr_hi > prev_hi) {
                         // Current range extends further than previous, extend previous.
                         ranges[prev].hi = curr_hi;
@@ -161,7 +165,7 @@ public class MsgRange implements Comparable<MsgRange> {
         MsgRange first = new MsgRange(ranges[0]);
         if (ranges.length > 1) {
             MsgRange last = ranges[ranges.length - 1];
-            first.hi = (last.hi != null && last.hi != 0) ? last.hi : last.low + 1;
+            first.hi = last.getHi();
         } else if (first.hi == null) {
             first.hi = first.low + 1;
         }

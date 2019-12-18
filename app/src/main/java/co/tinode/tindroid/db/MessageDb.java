@@ -332,9 +332,7 @@ public class MessageDb implements BaseColumns {
         ArrayList<String> parts = new ArrayList<>();
         if (ranges != null) {
             for (MsgRange r : ranges) {
-                int low = r.low;
-                int hi = r.hi != null ? r.hi - 1 : r.low;
-                parts.add(COLUMN_NAME_SEQ + " BETWEEN "+ low + " AND " + hi);
+                parts.add(COLUMN_NAME_SEQ + " BETWEEN "+ r.low + " AND " + (r.getHi() - 1));
             }
             messageSelector = TextUtils.join(" OR ", parts);
         } else {
