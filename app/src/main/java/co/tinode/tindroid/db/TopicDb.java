@@ -337,7 +337,7 @@ public class TopicDb implements BaseColumns {
     }
 
     /**
-     * Update cached ID of delete transaction.
+     * Update cached ID of a delete transaction.
      *
      * @return true on success
      */
@@ -352,13 +352,32 @@ public class TopicDb implements BaseColumns {
             values.put(COLUMN_NAME_MAX_DEL, delId);
         }
 
-        if (st.minLocalSeq == 0 || (lowId > 0 && lowId < st.minLocalSeq)) {
-            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, lowId);
+        // If lowId is 0, all earlier messages are being deleted, set it to lowest possible value: 1.
+        if (lowId <= 0) {
+            lowId = 1;
         }
 
-        hiId --;
-        if (hiId > st.maxLocalSeq) {
+        if (hiId > 1) {
+            // Upper bound is exclusive.
+            hiId --;
+        } else {
+            // If hiId is zero all later messages are bing deleted, set it to highest possible value.
+            hiId = topic.getSeq();
+        }
+
+        // Expand the available range only when there is an overlap.
+
+        // When minLocalSeq is 0 then there are no locally stored messages. Don't update minLocalSeq.
+        if (lowId < st.minLocalSeq && hiId >= st.minLocalSeq) {
+            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, lowId);
+        } else {
+            lowId = -1;
+        }
+
+        if (hiId > st.maxLocalSeq && lowId <= st.maxLocalSeq) {
             values.put(COLUMN_NAME_MAX_LOCAL_SEQ, hiId);
+        } else {
+            hiId = -1;
         }
 
         if (values.size() > 0) {
@@ -367,10 +386,12 @@ public class TopicDb implements BaseColumns {
                 Log.d(TAG, "Failed to update table records on delete");
                 return false;
             }
-
-            st.minLocalSeq = lowId > 0 && (st.minLocalSeq == 0 || lowId < st.minLocalSeq) ?
-                    lowId : st.minLocalSeq;
-            st.maxLocalSeq = hiId > st.maxLocalSeq ? hiId : st.maxLocalSeq;
+            if (lowId > 0) {
+                st.minLocalSeq = lowId;
+            }
+            if (hiId > 0) {
+                st.maxLocalSeq = hiId;
+            }
         }
 
         return true;

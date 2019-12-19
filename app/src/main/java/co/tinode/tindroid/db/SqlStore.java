@@ -350,9 +350,6 @@ public class SqlStore implements Storage {
     @Override
     public boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
-        if (toId <= 0) {
-            toId = st.maxLocalSeq + 1;
-        }
         return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, fromId, toId, markAsHard);
     }
 

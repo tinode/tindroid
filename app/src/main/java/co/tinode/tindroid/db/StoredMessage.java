@@ -48,8 +48,8 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         msg.from = c.getString(MessageDb.COLUMN_IDX_SENDER);
         msg.ts = new Date(c.getLong(MessageDb.COLUMN_IDX_TS));
         msg.seq = c.getInt(MessageDb.COLUMN_IDX_SEQ);
-        msg.high = c.getInt(MessageDb.COLUMN_IDX_HIGH);
-        msg.delId = c.getInt(MessageDb.COLUMN_IDX_DEL_ID);
+        msg.high = c.isNull(MessageDb.COLUMN_IDX_HIGH) ? 0 : c.getInt(MessageDb.COLUMN_IDX_HIGH);
+        msg.delId = c.isNull(MessageDb.COLUMN_IDX_DEL_ID) ? 0 : c.getInt(MessageDb.COLUMN_IDX_DEL_ID);
         msg.head = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_HEAD));
         msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
 
