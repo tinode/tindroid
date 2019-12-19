@@ -313,10 +313,14 @@ public class MessageDb implements BaseColumns {
     static Cursor queryDeleted(SQLiteDatabase db, long topicId, boolean hard) {
         BaseDb.Status status = hard ? BaseDb.Status.DELETED_HARD : BaseDb.Status.DELETED_SOFT;
 
-        final String sql = "SELECT " + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HIGH + " FROM " + TABLE_NAME +
+        final String sql = "SELECT " +
+                COLUMN_NAME_DEL_ID + "," +
+                COLUMN_NAME_SEQ + "," +
+                COLUMN_NAME_HIGH +
+                " FROM " + TABLE_NAME +
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " AND " + COLUMN_NAME_STATUS + "=" + status.value +
-                " ORDER BY " + COLUMN_NAME_TS;
+                " ORDER BY " + COLUMN_NAME_SEQ;
 
         return db.rawQuery(sql, null);
     }

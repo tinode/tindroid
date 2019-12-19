@@ -7,6 +7,7 @@ import java.util.Map;
 
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgServerData;
 
 /**
@@ -56,8 +57,9 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         return msg;
     }
 
-    static int readSeqId(Cursor c) {
-        return c.getInt(0);
+    static MsgRange readDelRange(Cursor c) {
+        // 0: delId, 1: seq, 2: high
+        return new MsgRange(c.getInt(1), c.getInt(2));
     }
 
     public boolean isMine() {

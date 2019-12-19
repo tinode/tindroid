@@ -454,20 +454,23 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public List<Integer> getQueuedMessageDeletes(Topic topic, boolean hard) {
+    public MsgRange[] getQueuedMessageDeletes(Topic topic, boolean hard) {
         StoredTopic st = (StoredTopic)topic.getLocal();
-        List<Integer> list = null;
+        MsgRange[] range = null;
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryDeleted(mDbh.getReadableDatabase(), st.id, hard);
-            if (c != null && c.moveToFirst()) {
-                list = new ArrayList<>(c.getCount());
-                do {
-                    list.add(StoredMessage.readSeqId(c));
-                } while(c.moveToNext());
+            if (c != null) {
+                if (c.moveToFirst()) {
+                    range = new MsgRange[c.getCount()];
+                    int i = 0;
+                    do {
+                        range[i++] = StoredMessage.readDelRange(c);
+                    } while (c.moveToNext());
+                }
                 c.close();
             }
         }
-        return list;
+        return range;
     }
 
     private static class MessageList implements Iterator<Message>, Closeable {

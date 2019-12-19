@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import co.tinode.tinodesdk.model.Drafty;
@@ -181,11 +180,11 @@ public interface Storage {
     /** Get a list of unsent messages */
     <T extends Iterator<Message> & Closeable> T getQueuedMessages(Topic topic);
     /**
-     * Get a list of pending delete message seq Ids.
+     * Get a list of pending delete message ranges.
      * @param topic topic where the messages were deleted.
      * @param hard set to <b>true</b> to fetch hard-deleted messages, soft-deleted otherwise.
      */
-    List<Integer> getQueuedMessageDeletes(Topic topic, boolean hard);
+    MsgRange[] getQueuedMessageDeletes(Topic topic, boolean hard);
 
     interface Message {
         Map<String, Object> getHead();

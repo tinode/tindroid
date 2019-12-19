@@ -938,15 +938,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         // Get soft-deleted message IDs.
-        final List<Integer> toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
+        final MsgRange[] toSoftDelete = mStore.getQueuedMessageDeletes(this, false);
         if (toSoftDelete != null) {
-            last = mTinode.delMessage(getName(), MsgRange.listToRanges(toSoftDelete), false);
+            last = mTinode.delMessage(getName(), toSoftDelete, false);
         }
 
         // Get hard-deleted message IDs.
-        final List<Integer> toHardDelete = mStore.getQueuedMessageDeletes(this, true);
+        final MsgRange[] toHardDelete = mStore.getQueuedMessageDeletes(this, true);
         if (toHardDelete != null) {
-            last = mTinode.delMessage(getName(), MsgRange.listToRanges(toHardDelete), true);
+            last = mTinode.delMessage(getName(), toHardDelete, true);
         }
 
         ML toSend = mStore.getQueuedMessages(this);
