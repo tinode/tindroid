@@ -1236,13 +1236,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     /**
      * Delete messages with id in the provided list.
      *
-     * @param list delete messages with ids in this list
+     * @param ranges delete messages with ids in these ranges.
      * @param hard hard-delete messages
      */
-    public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) {
-        // The result of listToRanges is sorted and non-overlapping.
-        final MsgRange[] ranges = MsgRange.listToRanges(list);
-
+    public PromisedReply<ServerMessage> delMessages(final MsgRange[] ranges, final boolean hard) {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, ranges, hard);
         }

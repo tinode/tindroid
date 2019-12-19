@@ -74,6 +74,7 @@ import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -277,18 +278,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             if (!toDelete.isEmpty()) {
-                topic.delMessages(toDelete, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        runLoader(false);
-                        mActivity.runOnUiThread(new Runnable() {
+                topic.delMessages(MsgRange.listToRanges(toDelete), true)
+                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
-                            public void run() {
-                                updateSelectionMode();
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                runLoader(false);
+                                mActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        updateSelectionMode();
+                                    }
+                                });
+                                return null;
                             }
-                        });
-                        return null;
-                    }
                 }, new UiUtils.ToastFailureListener(mActivity));
             } else if (discarded > 0) {
                 runLoader(false);
