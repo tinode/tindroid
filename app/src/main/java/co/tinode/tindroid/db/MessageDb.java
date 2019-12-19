@@ -254,7 +254,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_CONTENT +
                 " FROM " + TABLE_NAME +
                 " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value +
+                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.SYNCED.value +
                 " UNION ALL " +
                 // The following query returns gaps.
                 " SELECT NULL, NULL, NULL, NULL, NULL, NULL, m1." + COLUMN_NAME_SEQ + "-1, NULL, NULL" +
@@ -355,7 +355,7 @@ public class MessageDb implements BaseColumns {
         if (parts.size() > 0) {
             messageSelector +=  " AND " + TextUtils.join(" AND ", parts);
         }
-        messageSelector += " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value;
+        messageSelector += " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.SYNCED.value;
 
         // Selector of ranges which are fully within the new range.
         parts.clear();
@@ -368,7 +368,7 @@ public class MessageDb implements BaseColumns {
             rangeDeleteSelector +=  " AND " + TextUtils.join(" AND ", parts);
         }
         // All types: server, soft and hard.
-        rangeDeleteSelector += " AND " + COLUMN_NAME_STATUS + ">" + BaseDb.Status.VISIBLE.value;
+        rangeDeleteSelector += " AND " + COLUMN_NAME_STATUS + ">" + BaseDb.Status.SYNCED.value;
 
 
         // Selector of partially overlapping deletion ranges. Find bounds of existing deletion ranges of the same type
@@ -397,7 +397,7 @@ public class MessageDb implements BaseColumns {
         try {
             // 1. Delete all messages in the range.
             db.delete(TABLE_NAME, messageSelector +
-                    " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.VISIBLE.value, null);
+                    " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.SYNCED.value, null);
 
             // 2. Delete all deletion records fully within the new range.
             db.delete(TABLE_NAME, rangeDeleteSelector, null);

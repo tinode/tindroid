@@ -52,8 +52,6 @@ public class BaseDb extends SQLiteOpenHelper {
         SENDING(3),
         // Object is received by the server.
         SYNCED(4),
-        // Meta-status: object should be visible in the UI.
-        VISIBLE(4),
         // Object is hard-deleted.
         DELETED_HARD(5),
         // Object is soft-deleted.
