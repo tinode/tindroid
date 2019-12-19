@@ -408,15 +408,17 @@ public class MessageDb implements BaseColumns {
                     " FROM " + TABLE_NAME +
                     " WHERE " + rangeConsumeSelector + rangeNarrow, null);
             if (cursor != null) {
-                // Cursor could be empty if nothing overlaps.
                 if (cursor.getCount() > 0 && cursor.moveToFirst()) {
-                    // Read the bounds.
-                    int min_low = cursor.getInt(0);
-                    int max_high = cursor.getInt(1);
-
-                    // Expand current range to overlap earlier ranges.
-                    fromId = min_low < fromId ? min_low : fromId;
-                    toId = max_high > toId ? max_high : toId;
+                    // Read the bounds and use them to expand the current range to overlap earlier ranges.
+                    if (!cursor.isNull(0)) {
+                        int min_low = cursor.getInt(0);
+                        fromId = min_low < fromId ? min_low : fromId;
+                    }
+                    if (!cursor.isNull(1)) {
+                        int max_high = cursor.getInt(1);
+                        toId = max_high > toId ? max_high : toId;
+                    }
+                    Log.d(TAG, "Expanding current range to min=" + fromId + "; max=" + toId);
                 }
                 cursor.close();
             }
@@ -437,9 +439,10 @@ public class MessageDb implements BaseColumns {
 
             // 4. Insert new range.
             ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_TOPIC_ID, topicId);
             values.put(COLUMN_NAME_DEL_ID, delId);
             values.put(COLUMN_NAME_SEQ, fromId);
-            values.put(COLUMN_NAME_HIGH, toId);
+            values.put(COLUMN_NAME_HIGH, toId - 1);
             values.put(COLUMN_NAME_STATUS, status.value);
             db.insertOrThrow(TABLE_NAME, null, values);
 

@@ -307,7 +307,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return VIEWTYPE_INVALID;
         }
 
-        if (m.id <= 0) {
+        if (m.delId > 0) {
             return VIEWTYPE_CENTER;
         }
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
