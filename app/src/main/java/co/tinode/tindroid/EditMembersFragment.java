@@ -114,8 +114,8 @@ public class EditMembersFragment extends Fragment {
             cancelable = mTopic.isAdmin();
 
             Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
-            boolean manager = mTopic.isManager();
             if (subs != null) {
+                boolean manager = mTopic.isManager();
                 for (Subscription<VxCard, PrivateType> sub : subs) {
                     mContactsAdapter.toggleSelected(sub.user);
                     String name = null;
