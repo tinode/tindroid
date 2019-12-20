@@ -577,7 +577,8 @@ public class MessagesFragment extends Fragment
                             HashMap<String, Object> json = new HashMap<>();
                             json.put("action", "report");
                             json.put("tagret", mTopic.getName());
-                            Cache.getTinode().publish(Tinode.TOPIC_SYS, new Drafty().attachJSON(json));
+                            Drafty msg = new Drafty().attachJSON(json);
+                            Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
                             break;
 
                         default:
@@ -911,7 +912,9 @@ public class MessagesFragment extends Fragment
             } else if (mArgs.getLong("msgId") <= 0) {
                 // Create a new message which will be updated with upload progress.
                 Storage store = BaseDb.getInstance().getStore();
-                long msgId = store.msgDraft(Cache.getTinode().getTopic(mArgs.getString("topic")), new Drafty());
+                Drafty msg = new Drafty();
+                long msgId = store.msgDraft(Cache.getTinode().getTopic(mArgs.getString("topic")),
+                        msg, Tinode.draftyHeadersFor(msg));
                 mArgs.putLong("msgId", msgId);
                 UploadProgress p = sProgress.get();
                 if (p != null) {
