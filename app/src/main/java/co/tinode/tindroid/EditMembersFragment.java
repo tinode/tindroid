@@ -111,23 +111,26 @@ public class EditMembersFragment extends Fragment {
         final ArrayList<MembersAdapter.Member> members = new ArrayList<>();
         boolean cancelable = false;
         if (mTopic != null) {
+            cancelable = mTopic.isAdmin();
+
             Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
             boolean manager = mTopic.isManager();
-            for (Subscription<VxCard, PrivateType> sub : subs) {
-                mContactsAdapter.toggleSelected(sub.user);
-                String name = null;
-                Bitmap avatar = null;
-                if (sub.pub != null) {
-                    name = sub.pub.fn;
-                    avatar = sub.pub.avatar == null ? null : sub.pub.avatar.getBitmap();
+            if (subs != null) {
+                for (Subscription<VxCard, PrivateType> sub : subs) {
+                    mContactsAdapter.toggleSelected(sub.user);
+                    String name = null;
+                    Bitmap avatar = null;
+                    if (sub.pub != null) {
+                        name = sub.pub.fn;
+                        avatar = sub.pub.avatar == null ? null : sub.pub.avatar.getBitmap();
+                    }
+                    members.add(new MembersAdapter.Member(
+                            sub.user,
+                            name,
+                            UiUtils.avatarDrawable(activity, avatar, name, sub.user),
+                            !tinode.isMe(sub.user) && manager));
                 }
-                members.add(new MembersAdapter.Member(
-                        sub.user,
-                        name,
-                        UiUtils.avatarDrawable(activity, avatar, name, sub.user),
-                        !tinode.isMe(sub.user) && manager));
             }
-            cancelable = mTopic.isAdmin();
         }
 
         mSelectedAdapter = new MembersAdapter(members, new MembersAdapter.ClickListener() {
