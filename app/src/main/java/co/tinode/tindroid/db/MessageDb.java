@@ -318,7 +318,7 @@ public class MessageDb implements BaseColumns {
         String messageSelector = COLUMN_NAME_TOPIC_ID + "=" + topicId;
         ArrayList<String> parts = new ArrayList<>();
         if (fromId > 0) {
-                parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
+            parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
         }
         parts.add(COLUMN_NAME_SEQ + "<" + toId);
         messageSelector += " AND " + TextUtils.join(" AND ", parts) +
@@ -334,7 +334,6 @@ public class MessageDb implements BaseColumns {
         // All types: server, soft and hard.
         rangeDeleteSelector +=  " AND " + TextUtils.join(" AND ", parts) +
                 " AND " + COLUMN_NAME_STATUS + ">" + BaseDb.Status.SYNCED.value;
-
 
         // Selector of partially overlapping deletion ranges. Find bounds of existing deletion ranges of the same type
         // which partially overlap with the new deletion range.
