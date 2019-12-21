@@ -220,7 +220,7 @@ public class MessageDb implements BaseColumns {
 
 
     /**
-     * Query latest messages. DEPRECATED. To be removed.
+     * Query latest messages
      *
      * @param db        database to select from;
      * @param topicId   Tinode topic ID (topics._id) to select from
@@ -237,41 +237,6 @@ public class MessageDb implements BaseColumns {
         return db.rawQuery(sql, null);
     }
 
-    /**
-     * Query for the latest messages. The query returns NULL-filled rows whenever there is a gap in seq values.
-     * See explanation here: https://stackoverflow.com/questions/31589843/how-do-i-find-gap-in-sqlite-table
-     *
-     * @param db        database to select from;
-     * @param topicId   Tinode topic ID (topics._id) to select from
-     * @param pageCount number of pages to return
-     * @param pageSize  number of messages per page
-     * @return cursor with the messages.
-     */
-    public static Cursor query_deprecated(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
-        final String sql = "SELECT " +
-                    _ID + "," + COLUMN_NAME_TOPIC_ID + "," + COLUMN_NAME_USER_ID + "," + COLUMN_NAME_STATUS + "," +
-                    COLUMN_NAME_SENDER + "," + COLUMN_NAME_TS + "," + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HEAD + "," +
-                    COLUMN_NAME_CONTENT +
-                " FROM " + TABLE_NAME +
-                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.SYNCED.value +
-                " UNION ALL " +
-                // The following query returns gaps.
-                " SELECT NULL, NULL, NULL, NULL, NULL, NULL, m1." + COLUMN_NAME_SEQ + "-1, NULL, NULL" +
-                " FROM " + TABLE_NAME + " AS m1" +
-                " WHERE NOT EXISTS" +
-                    " (SELECT m2." + COLUMN_NAME_SEQ +
-                        " FROM " + TABLE_NAME + " AS m2" +
-                        " WHERE m2." + COLUMN_NAME_SEQ + "=m1." + COLUMN_NAME_SEQ + "-1" +
-                        " AND m2." + COLUMN_NAME_TOPIC_ID + "=" + topicId + ")" +
-                // The following excludes the gap at the start of messages.
-                " AND m1." + COLUMN_NAME_SEQ + ">1" +
-                " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId +
-                " ORDER BY "+ COLUMN_NAME_SEQ + " DESC" +
-                " LIMIT " + (pageCount * pageSize);
-
-        return db.rawQuery(sql, null);
-    }
     /**
      * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
      *
