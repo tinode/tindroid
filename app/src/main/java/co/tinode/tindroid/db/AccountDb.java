@@ -121,13 +121,15 @@ public class AccountDb implements BaseColumns {
                 COLUMN_NAME_UID + "=?",
                 new String[] { uid },
                 null, null, null);
-        if (c.moveToFirst()) {
-            acc = new StoredAccount();
-            acc.id = c.getLong(0);
-            acc.uid = uid;
-            acc.credMethods = BaseDb.deserializeArray(c.getString(1));
+        if (c != null) {
+            if (c.moveToFirst()) {
+                acc = new StoredAccount();
+                acc.id = c.getLong(0);
+                acc.uid = uid;
+                acc.credMethods = BaseDb.deserializeArray(c.getString(1));
+            }
+            c.close();
         }
-        c.close();
         return acc;
     }
 

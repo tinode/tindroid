@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -106,13 +107,13 @@ public class MessageDb implements BaseColumns {
     static final String DROP_INDEX =
             "DROP INDEX IF EXISTS " + INDEX_NAME;
     /**
-     * Add index on account_id-topic-seq, in descending order
+     * Add unique index on account_id-topic-seq, in descending order
      */
     static final String CREATE_INDEX =
-            "CREATE INDEX " + INDEX_NAME +
+            "CREATE UNIQUE INDEX " + INDEX_NAME +
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_TOPIC_ID + "," +
-                    COLUMN_NAME_TS + " DESC)";
+                    COLUMN_NAME_SEQ + " DESC)";
 
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_TOPIC_ID = 1;
@@ -169,6 +170,12 @@ public class MessageDb implements BaseColumns {
 
             msg.id = db.insertOrThrow(TABLE_NAME, null, values);
             db.setTransactionSuccessful();
+        } catch (SQLiteConstraintException ex) {
+            // Duplicate topics_id - seq value? Try finding the original.
+            msg.id = getId(db, msg.topicId, msg.seq);
+            if (msg.id <= 0) {
+                Log.w(TAG, "Insert failed", ex);
+            }
         } catch (Exception ex) {
             Log.w(TAG, "Insert failed", ex);
         } finally {
@@ -218,7 +225,6 @@ public class MessageDb implements BaseColumns {
                     " AND "
                         + COLUMN_NAME_STATUS + "<=" + BaseDb.STATUS_VISIBLE +
                 " ORDER BY "
-                    + COLUMN_NAME_TS + " DESC, "
                     + COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
 
@@ -418,6 +424,22 @@ public class MessageDb implements BaseColumns {
      */
     public static long getId(Cursor cursor) {
         return cursor.getLong(0);
+    }
+
+    private static long getId(SQLiteDatabase db, long topicId, int seq) {
+        long id = -1;
+        Cursor c = db.query(
+                TABLE_NAME, new String[]{ _ID },
+                COLUMN_NAME_TOPIC_ID + "=?" + " AND " + COLUMN_NAME_SEQ + "=?",
+                new String[] { Long.toString(topicId), Integer.toString(seq) },
+                null, null, null);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                id = c.getLong(0);
+            }
+            c.close();
+        }
+        return id;
     }
 
     public static class Loader extends CursorLoader {
