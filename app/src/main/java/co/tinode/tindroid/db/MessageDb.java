@@ -321,10 +321,8 @@ public class MessageDb implements BaseColumns {
                 parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
         }
         parts.add(COLUMN_NAME_SEQ + "<" + toId);
-        if (parts.size() > 0) {
-            messageSelector +=  " AND " + TextUtils.join(" AND ", parts);
-        }
-        messageSelector += " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.SYNCED.value;
+        messageSelector += " AND " + TextUtils.join(" AND ", parts) +
+                " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.SYNCED.value;
 
         // Selector of ranges which are fully within the new range.
         parts.clear();
@@ -333,11 +331,9 @@ public class MessageDb implements BaseColumns {
             parts.add(COLUMN_NAME_SEQ + ">=" + fromId);
         }
         parts.add(COLUMN_NAME_HIGH + "<" + toId);
-        if (parts.size() > 0) {
-            rangeDeleteSelector +=  " AND " + TextUtils.join(" AND ", parts);
-        }
         // All types: server, soft and hard.
-        rangeDeleteSelector += " AND " + COLUMN_NAME_STATUS + ">" + BaseDb.Status.SYNCED.value;
+        rangeDeleteSelector +=  " AND " + TextUtils.join(" AND ", parts) +
+                " AND " + COLUMN_NAME_STATUS + ">" + BaseDb.Status.SYNCED.value;
 
 
         // Selector of partially overlapping deletion ranges. Find bounds of existing deletion ranges of the same type
@@ -358,9 +354,7 @@ public class MessageDb implements BaseColumns {
             parts.add(COLUMN_NAME_HIGH + ">=" + fromId);
         }
         parts.add(COLUMN_NAME_SEQ + "<" + toId);
-        if (parts.size() > 0) {
-            rangeNarrow +=  " AND " + TextUtils.join(" AND ", parts);
-        }
+        rangeNarrow +=  " AND " + TextUtils.join(" AND ", parts);
 
         db.beginTransaction();
         try {
@@ -401,9 +395,7 @@ public class MessageDb implements BaseColumns {
                 fromId = 1;
             }
             parts.add(COLUMN_NAME_SEQ + "<" + toId);
-            if (parts.size() > 0) {
-                rangeWide +=  " AND " + TextUtils.join(" AND ", parts);
-            }
+            rangeWide +=  " AND " + TextUtils.join(" AND ", parts);
             db.delete(TABLE_NAME, rangeConsumeSelector + rangeWide, null);
 
             // 4. Insert new range.
