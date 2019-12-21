@@ -361,10 +361,14 @@ public class Utils {
 
                 tinode.loginToken(token).getResult();
 
-                // Fully asynchronous. We don't need to do anything with the result.
-                // The new data will be automatically saved.
-                topic.subscribe(null, builder.withLaterData(24).withDel().build(), true);
-                topic.leave();
+                // Check again if topic has attached while we tried to connect. It does not guarantee that there
+                // is no race condition to subscribe.
+                if (!topic.isAttached()) {
+                    // Fully asynchronous. We don't need to do anything with the result.
+                    // The new data will be automatically saved.
+                    topic.subscribe(null, builder.withLaterData(24).withLaterDel(24).build(), true);
+                    topic.leave();
+                }
             } catch (Exception ex) {
                 Log.w(TAG, "Failed to sync messages on push. Topic=" + topicName);
                 // TODO: hand sync over to Worker.
