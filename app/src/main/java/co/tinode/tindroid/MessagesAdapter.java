@@ -74,6 +74,7 @@ import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -98,7 +99,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int VIEWTYPE_SIMPLE_AVATAR = 3;
     private static final int VIEWTYPE_FULL_RIGHT = 4;
     private static final int VIEWTYPE_SIMPLE_RIGHT = 5;
-    private static final int VIEWTYPE_FULL_CENTER = 6;
+    private static final int VIEWTYPE_CENTER = 6;
     private static final int VIEWTYPE_INVALID = 100;
 
     // Storage Permissions
@@ -267,7 +268,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 int pos = positions[i++];
                 StoredMessage msg = getMessage(pos);
                 if (msg != null) {
-                    if (msg.status == BaseDb.STATUS_SYNCED) {
+                    if (msg.status == BaseDb.Status.SYNCED) {
                         toDelete.add(msg.seq);
                     } else {
                         store.msgDiscard(topic, msg.getId());
@@ -277,18 +278,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             if (!toDelete.isEmpty()) {
-                topic.delMessages(toDelete, true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        runLoader(false);
-                        mActivity.runOnUiThread(new Runnable() {
+                topic.delMessages(MsgRange.listToRanges(toDelete), true)
+                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
-                            public void run() {
-                                updateSelectionMode();
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                runLoader(false);
+                                mActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        updateSelectionMode();
+                                    }
+                                });
+                                return null;
                             }
-                        });
-                        return null;
-                    }
                 }, new UiUtils.ToastFailureListener(mActivity));
             } else if (discarded > 0) {
                 runLoader(false);
@@ -307,6 +309,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return VIEWTYPE_INVALID;
         }
 
+        if (m.delId > 0) {
+            return VIEWTYPE_CENTER;
+        }
         // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
         // Zero item position is on the bottom of the screen.
         long nextFrom = -2;
@@ -344,7 +349,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final int metaBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMeta, null);
         int bgColor = 0;
         switch (viewType) {
-            case VIEWTYPE_FULL_CENTER:
+            case VIEWTYPE_CENTER:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
                         parent, false);
                 bgColor = metaBgColor;
@@ -415,9 +420,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
+        if (holder.mIcon != null) {
+            // Meta bubble in the center of the screen
+            holder.mIcon.setVisibility(View.VISIBLE);
+            holder.mText.setText(R.string.content_deleted);
+            return;
+        }
+
         // Disable attachment clicker.
-        boolean disableEnt = (m.status == BaseDb.STATUS_QUEUED || m.status == BaseDb.STATUS_DRAFT) &&
-                (m.content.getEntReferences() != null);
+        boolean disableEnt = (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.DRAFT) &&
+                (m.content != null && m.content.getEntReferences() != null);
 
         mSpanFormatterClicker.setPosition(position);
         holder.mText.setText(SpanFormatter.toSpanned(holder.mText, m.content,
@@ -502,7 +514,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
-                if (m.status <= BaseDb.STATUS_SENDING) {
+                if (m.status.value <= BaseDb.Status.SENDING.value) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
                 } else {
                     if (topic.msgReadCount(m.seq) > 0) {
@@ -547,10 +559,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
-        if (mCursor != null) {
-            if (mCursor.moveToPosition(position)) {
-                return StoredMessage.readMessage(mCursor);
-            }
+        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
+            return StoredMessage.readMessage(mCursor);
         }
         return null;
     }
@@ -558,10 +568,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @Override
     // Must match position-to-item of getMessage.
     public long getItemId(int position) {
-        if (mCursor != null && !mCursor.isClosed()) {
-            if (mCursor.moveToPosition(position)) {
-                return MessageDb.getLocalId(mCursor);
-            }
+        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
+            return MessageDb.getLocalId(mCursor);
         }
         return View.NO_ID;
     }
@@ -708,6 +716,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         int mViewType;
+        ImageView mIcon;
         ImageView mAvatar;
         View mMessageBubble;
         AppCompatImageView mDeliveredIcon;
@@ -726,6 +735,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             super(itemView);
 
             mViewType = viewType;
+            mIcon = itemView.findViewById(R.id.icon);
             mAvatar = itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = itemView.findViewById(R.id.messageViewedIcon);
@@ -963,7 +973,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 // {"seq":6,"resp":{"yes":1}}
                                 if (!TextUtils.isEmpty(name)) {
                                     Map<String,Object> resp = new HashMap<>();
-                                    // noinspection ConstantConditions: false positive
+                                    // noinspection
                                     resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                                     json.put("resp", resp);
                                 }

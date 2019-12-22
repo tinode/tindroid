@@ -1,24 +1,42 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingLeft="6sp"
-    android:paddingRight="6sp">
+    android:paddingBottom="4dp">
 
-    <TextView
-        android:id="@+id/messageText"
-        android:background="@drawable/bubble"
+    <LinearLayout
+        android:id="@+id/messageBubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="6sp"
+        android:paddingRight="6sp"
         android:layout_gravity="center_horizontal"
-        android:maxWidth="200dp"
-        android:minWidth="100dp"
-        android:paddingStart="12dp"
-        android:textColor="@color/colorTextSecondary"
-        style="@style/textMetaBubble"
-        tools:text="Lorem ipsum"
-        tools:ignore="RtlSymmetry"/>
+        android:background="@drawable/bubble"
+        tools:ignore="UselessParent">
+
+        <ImageView
+            android:id="@+id/icon"
+            android:visibility="gone"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            app:srcCompat="@drawable/ic_block_gray"
+            tools:ignore="ContentDescription" />
+
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:maxWidth="200dp"
+            android:minWidth="100dp"
+            android:paddingStart="12dp"
+            android:textColor="@color/colorTextSecondary"
+            style="@style/textMetaBubble"
+            tools:text="Lorem ipsum"
+            tools:ignore="RtlSymmetry"/>
 
  </LinearLayout>
+</LinearLayout>

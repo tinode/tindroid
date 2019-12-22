@@ -22,55 +22,55 @@ public class SubscriberDb implements BaseColumns {
     /**
      * The name of the table.
      */
-    public static final String TABLE_NAME = "subscriptions";
+    static final String TABLE_NAME = "subscriptions";
     /**
      * The name of index: topic_id.
      */
-    public static final String INDEX_NAME = "subscription_topic_id";
+    static final String INDEX_NAME = "subscription_topic_id";
     /**
      * Topic _ID, references topics._id
      */
-    public static final String COLUMN_NAME_TOPIC_ID = "topic_id";
+    static final String COLUMN_NAME_TOPIC_ID = "topic_id";
     /**
      * UID of the subscriber
      */
-    public static final String COLUMN_NAME_USER_ID = "user_id";
+    static final String COLUMN_NAME_USER_ID = "user_id";
     /**
      * Status of subscription: unsent, delivered, deleted
      */
-    public static final String COLUMN_NAME_STATUS = "status";
+    static final String COLUMN_NAME_STATUS = "status";
     /**
      * User's access mode
      */
-    public static final String COLUMN_NAME_MODE = "mode";
+    static final String COLUMN_NAME_MODE = "mode";
     /**
      * Last update timestamp
      */
-    public static final String COLUMN_NAME_UPDATED = "updated";
+    static final String COLUMN_NAME_UPDATED = "updated";
     /**
      * Deletion timestamp or null
      */
-    public static final String COLUMN_NAME_DELETED = "deleted";
+    static final String COLUMN_NAME_DELETED = "deleted";
     /**
      * Sequence ID marked as read by this user, integer
      */
-    public static final String COLUMN_NAME_READ = "read";
+    static final String COLUMN_NAME_READ = "read";
     /**
      * Sequence ID marked as received by this user, integer
      */
-    public static final String COLUMN_NAME_RECV = "recv";
+    static final String COLUMN_NAME_RECV = "recv";
     /**
      * Max sequence ID marked as deleted, integer
      */
-    public static final String COLUMN_NAME_CLEAR = "clear";
+    static final String COLUMN_NAME_CLEAR = "clear";
     /**
      * Time stamp when the user was last seen in the topic
      */
-    public static final String COLUMN_NAME_LAST_SEEN = "last_seen";
+    static final String COLUMN_NAME_LAST_SEEN = "last_seen";
     /**
      * User agent string when last seen.
      */
-    public static final String COLUMN_NAME_USER_AGENT = "user_agent";
+    static final String COLUMN_NAME_USER_AGENT = "user_agent";
     /**
      * SQL statement to create Messages table
      */
@@ -131,7 +131,7 @@ public class SubscriberDb implements BaseColumns {
      * @param sub Subscription to save
      * @return database ID of the newly added subscription
      */
-    public static long insert(SQLiteDatabase db, long topicId, int status, Subscription sub) {
+    public static long insert(SQLiteDatabase db, long topicId, BaseDb.Status status, Subscription sub) {
         // Log.d(TAG, "Inserting sub for " + topicId + "/" + sub.user);
         long id = -1;
         try {
@@ -155,7 +155,7 @@ public class SubscriberDb implements BaseColumns {
             values.put(COLUMN_NAME_TOPIC_ID, ss.topicId);
             values.put(COLUMN_NAME_USER_ID, ss.userId);
             ss.status = status;
-            values.put(COLUMN_NAME_STATUS, ss.status);
+            values.put(COLUMN_NAME_STATUS, ss.status.value);
             values.put(COLUMN_NAME_MODE, BaseDb.serializeMode(sub.acs));
             values.put(COLUMN_NAME_UPDATED, (sub.updated != null ? sub.updated : new Date()).getTime());
             values.put(COLUMN_NAME_READ, sub.read);
@@ -200,7 +200,7 @@ public class SubscriberDb implements BaseColumns {
 
             db.beginTransaction();
 
-            int status = ss.status;
+            BaseDb.Status status = ss.status;
 
             // Update user
             UserDb.update(db, sub);
@@ -211,9 +211,9 @@ public class SubscriberDb implements BaseColumns {
             if (sub.updated != null) {
                 values.put(COLUMN_NAME_UPDATED, sub.updated.getTime());
             }
-            if (ss.status != BaseDb.STATUS_SYNCED) {
-                values.put(COLUMN_NAME_STATUS, BaseDb.STATUS_SYNCED);
-                status = BaseDb.STATUS_SYNCED;
+            if (ss.status != BaseDb.Status.SYNCED) {
+                values.put(COLUMN_NAME_STATUS, BaseDb.Status.SYNCED.value);
+                status = BaseDb.Status.SYNCED;
             }
             values.put(COLUMN_NAME_READ, sub.read);
             values.put(COLUMN_NAME_RECV, sub.recv);
@@ -236,8 +236,8 @@ public class SubscriberDb implements BaseColumns {
 
             ss.status = status;
 
-        } catch (SQLException ignored) {
-            Log.e(TAG, "Exception while updating subscription", ignored);
+        } catch (SQLException ex) {
+            Log.e(TAG, "Exception while updating subscription", ex);
         }
 
         db.endTransaction();
@@ -255,7 +255,7 @@ public class SubscriberDb implements BaseColumns {
     /**
      * Delete all subscription records for the given topic
      */
-    public static boolean deleteForTopic(SQLiteDatabase db, long topicId) {
+    static boolean deleteForTopic(SQLiteDatabase db, long topicId) {
         return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId, null) > 0;
     }
 
@@ -300,13 +300,13 @@ public class SubscriberDb implements BaseColumns {
 
     }
 
-    public static Subscription readOne(Cursor c) {
+    static Subscription readOne(Cursor c) {
         // StoredSub part
         StoredSubscription ss = new StoredSubscription();
         ss.id = c.getLong(COLUMN_IDX_ID);
         ss.topicId = c.getLong(COLUMN_IDX_TOPIC_ID);
         ss.userId = c.getLong(COLUMN_IDX_USER_ID);
-        ss.status = c.getInt(COLUMN_IDX_STATUS);
+        ss.status = BaseDb.Status.fromInt(c.getInt(COLUMN_IDX_STATUS));
 
         // Subscription part
         Subscription s = new Subscription();
@@ -334,7 +334,7 @@ public class SubscriberDb implements BaseColumns {
         return s;
     }
 
-    public static Collection<Subscription> readAll(Cursor c) {
+    static Collection<Subscription> readAll(Cursor c) {
         if (!c.moveToFirst()) {
             return null;
         }
@@ -350,11 +350,11 @@ public class SubscriberDb implements BaseColumns {
         return result;
     }
 
-    public static boolean updateRead(SQLiteDatabase db, long topicId, int read) {
+    static boolean updateRead(SQLiteDatabase db, long topicId, int read) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_READ, topicId, read);
     }
 
-    public static boolean updateRecv(SQLiteDatabase db, long topicId, int recv) {
+    static boolean updateRecv(SQLiteDatabase db, long topicId, int recv) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_RECV, topicId, recv);
     }
 }

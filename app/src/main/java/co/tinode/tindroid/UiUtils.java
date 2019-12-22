@@ -672,7 +672,7 @@ public class UiUtils {
         return (int) typedValue.getDimension(metrics);
     }
 
-    static AccessModeLabel[] accessModeLabels(final Acs acs, final int status) {
+    static AccessModeLabel[] accessModeLabels(final Acs acs, final BaseDb.Status status) {
         ArrayList<AccessModeLabel> result = new ArrayList<>(2);
         if (acs != null) {
             if (acs.isModeDefined()) {
@@ -699,7 +699,7 @@ public class UiUtils {
                 }
             }
         }
-        if (status == BaseDb.STATUS_QUEUED) {
+        if (status == BaseDb.Status.QUEUED) {
             result.add(new AccessModeLabel(R.string.modePending, COLOR_GRAY_BORDER));
         }
 

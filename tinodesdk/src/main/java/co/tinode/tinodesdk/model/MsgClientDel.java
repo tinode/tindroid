@@ -2,8 +2,6 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.List;
-
 import co.tinode.tinodesdk.Tinode;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -30,14 +28,14 @@ public class MsgClientDel {
     public String id;
     public String topic;
     public String what;
-    public MsgDelRange[] delseq;
+    public MsgRange[] delseq;
     public String user;
     public Credential cred;
     public Boolean hard;
 
     public MsgClientDel() {}
 
-    private MsgClientDel(String id, String topic, String what, MsgDelRange[] ranges, String user, Credential cred, boolean hard) {
+    private MsgClientDel(String id, String topic, String what, MsgRange[] ranges, String user, Credential cred, boolean hard) {
         this.id = id;
         this.topic = topic;
         this.what = what;
@@ -49,24 +47,25 @@ public class MsgClientDel {
     }
 
     /**
-     * Delete messages with ids in the list
+     * Delete all messages in multiple ranges
      */
-    public MsgClientDel(String id, String topic, List<Integer> list, boolean hard) {
-        this(id, topic, STR_MSG, MsgDelRange.listToRanges(list), null, null, hard);
+    public MsgClientDel(String id, String topic, MsgRange[] ranges, boolean hard) {
+        this(id, topic, STR_MSG, ranges, null, null, hard);
     }
 
+
     /**
-     * Delete all messages in the range
+     * Delete all messages in one range.
      */
     public MsgClientDel(String id, String topic, int fromId, int toId, boolean hard) {
-        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(fromId, toId)}, null, null, hard);
+        this(id, topic, new MsgRange[]{new MsgRange(fromId, toId)}, hard);
     }
 
     /**
      * Delete one message.
      */
     public MsgClientDel(String id, String topic, int seqId, boolean hard) {
-        this(id, topic, STR_MSG, new MsgDelRange[]{new MsgDelRange(seqId)}, null, null, hard);
+        this(id, topic, STR_MSG, new MsgRange[]{new MsgRange(seqId)}, null, null, hard);
     }
 
     /**

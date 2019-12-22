@@ -55,6 +55,7 @@ import co.tinode.tinodesdk.model.MsgClientNote;
 import co.tinode.tinodesdk.model.MsgClientPub;
 import co.tinode.tinodesdk.model.MsgClientSet;
 import co.tinode.tinodesdk.model.MsgClientSub;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerData;
@@ -1452,11 +1453,11 @@ public class Tinode {
      * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(List, boolean)} instead.
      *
      * @param topicName name of the topic to inform
-     * @param list      delete all messages with ids in this list
+     * @param ranges    delete all messages with ids these ranges
      * @return PromisedReply of the reply ctrl message
      */
-    public PromisedReply<ServerMessage> delMessage(final String topicName, final List<Integer> list, final boolean hard) {
-        return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, list, hard)));
+    public PromisedReply<ServerMessage> delMessage(final String topicName, final MsgRange[] ranges, final boolean hard) {
+        return sendDeleteMessage(new ClientMessage(new MsgClientDel(getNextId(), topicName, ranges, hard)));
     }
 
     /**

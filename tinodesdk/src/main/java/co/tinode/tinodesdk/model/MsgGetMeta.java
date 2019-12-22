@@ -95,6 +95,7 @@ public class MsgGetMeta {
      *
      * @param ims timestamp to receive public if it's newer than ims; could be null
      */
+    // Do not add @JsonIgnore here.
     public void setDesc(Date ims) {
         if (ims != null) {
             desc = new MetaGetDesc();
@@ -104,6 +105,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    // Do not add @JsonIgnore here.
     public void setSub(Date ims, Integer limit) {
         if (ims != null || limit != null) {
             sub = new MetaGetSub(ims, limit);
@@ -132,6 +134,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    // Do not add @JsonIgnore here.
     public void setData(Integer since, Integer before, Integer limit) {
         if (since != null || before != null || limit != null) {
             data = new MetaGetData(since, before, limit);
@@ -140,6 +143,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    // Do not add @JsonIgnore here.
     public void setDel(Integer since, Integer limit) {
         if (since != null || limit != null) {
             del = new MetaGetData(since, null, limit);
@@ -148,11 +152,13 @@ public class MsgGetMeta {
         buildWhat();
     }
 
+    // Do not add @JsonIgnore here.
     public void setTags() {
         mSet |= TAGS_SET;
         buildWhat();
     }
 
+    // Do not add @JsonIgnore here.
     public void setCred() {
         mSet |= CRED_SET;
         buildWhat();

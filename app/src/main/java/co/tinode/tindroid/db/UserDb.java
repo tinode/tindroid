@@ -11,7 +11,7 @@ import co.tinode.tinodesdk.User;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Local cash of known users
+ * Local cache of known users
  */
 
 @SuppressWarnings("WeakerAccess")

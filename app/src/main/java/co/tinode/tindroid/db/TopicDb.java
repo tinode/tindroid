@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.util.Date;
 
@@ -18,7 +19,7 @@ import co.tinode.tinodesdk.Topic;
 public class TopicDb implements BaseColumns {
     private static final String TAG = "TopicsDb";
 
-    private static final int UNSENT_ID_START = 2000000000;
+    private static final int UNSENT_ID_START = 2_000_000_000;
 
     /**
      * The name of the main table.
@@ -189,16 +190,15 @@ public class TopicDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    @SuppressWarnings("WeakerAccess")
     public static long insert(SQLiteDatabase db, Topic topic) {
-        int status = topic.isNew() ? BaseDb.STATUS_QUEUED : BaseDb.STATUS_SYNCED;
+        BaseDb.Status status = topic.isNew() ? BaseDb.Status.QUEUED : BaseDb.Status.SYNCED;
 
         // Convert topic description to a map of values. If value is not set use a magical constant.
         // 1414213562373L is Oct 25, 2014 05:06:02.373 UTC, incidentally equal to the first few digits of sqrt(2)
         Date lastUsed = topic.getTouched() != null ? topic.getTouched() : new Date(1414213562373L);
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
-        values.put(COLUMN_NAME_STATUS, status);
+        values.put(COLUMN_NAME_STATUS, status.value);
         values.put(COLUMN_NAME_TOPIC, topic.getName());
 
         Topic.TopicType tp = topic.getTopicType();
@@ -252,13 +252,13 @@ public class TopicDb implements BaseColumns {
             return false;
         }
 
-        int status = st.status;
+        BaseDb.Status status = st.status;
         // Convert topic description to a map of values
         ContentValues values = new ContentValues();
 
-        if (st.status == BaseDb.STATUS_QUEUED && !topic.isNew()) {
-            status = BaseDb.STATUS_SYNCED;
-            values.put(COLUMN_NAME_STATUS, status);
+        if (st.status == BaseDb.Status.QUEUED && !topic.isNew()) {
+            status = BaseDb.Status.SYNCED;
+            values.put(COLUMN_NAME_STATUS, status.value);
             values.put(COLUMN_NAME_TOPIC, topic.getName());
         }
         if (topic.getUpdated() != null) {
@@ -337,23 +337,63 @@ public class TopicDb implements BaseColumns {
     }
 
     /**
-     * Update cached ID of delete transaction.
+     * Update cached ID of a delete transaction.
      *
      * @return true on success
      */
-    public static boolean msgDeleted(SQLiteDatabase db, Topic topic, int delId) {
+    public static boolean msgDeleted(SQLiteDatabase db, Topic topic, int delId, int lowId, int hiId) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st == null) {
             return false;
         }
 
+        ContentValues values = new ContentValues();
         if (delId > topic.getMaxDel()) {
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME_MAX_DEL, topic.getMaxDel());
-
-            int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
-            return updated > 0;
+            values.put(COLUMN_NAME_MAX_DEL, delId);
         }
+
+        // If lowId is 0, all earlier messages are being deleted, set it to lowest possible value: 1.
+        if (lowId <= 0) {
+            lowId = 1;
+        }
+
+        if (hiId > 1) {
+            // Upper bound is exclusive.
+            hiId --;
+        } else {
+            // If hiId is zero all later messages are bing deleted, set it to highest possible value.
+            hiId = topic.getSeq();
+        }
+
+        // Expand the available range only when there is an overlap.
+
+        // When minLocalSeq is 0 then there are no locally stored messages. Don't update minLocalSeq.
+        if (lowId < st.minLocalSeq && hiId >= st.minLocalSeq) {
+            values.put(COLUMN_NAME_MIN_LOCAL_SEQ, lowId);
+        } else {
+            lowId = -1;
+        }
+
+        if (hiId > st.maxLocalSeq && lowId <= st.maxLocalSeq) {
+            values.put(COLUMN_NAME_MAX_LOCAL_SEQ, hiId);
+        } else {
+            hiId = -1;
+        }
+
+        if (values.size() > 0) {
+            int updated = db.update(TABLE_NAME, values, _ID + "=" + st.id, null);
+            if (updated <= 0) {
+                Log.d(TAG, "Failed to update table records on delete");
+                return false;
+            }
+            if (lowId > 0) {
+                st.minLocalSeq = lowId;
+            }
+            if (hiId > 0) {
+                st.maxLocalSeq = hiId;
+            }
+        }
+
         return true;
     }
     /**
@@ -438,7 +478,17 @@ public class TopicDb implements BaseColumns {
         }
     }
 
-    public static int getNextUnsentSeq(SQLiteDatabase db, Topic topic) {
+    static int getMaxSeq(SQLiteDatabase db, long topicId) {
+        try {
+            return (int) db.compileStatement("SELECT " + COLUMN_NAME_MAX_LOCAL_SEQ + " FROM " + TABLE_NAME +
+                    " WHERE " + _ID + "='" + topicId + "'").simpleQueryForLong();
+        } catch (SQLException ignored) {
+            // Something went wrong.
+            return -1;
+        }
+    }
+
+    public static synchronized int getNextUnsentSeq(SQLiteDatabase db, Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
             st.nextUnsentId ++;

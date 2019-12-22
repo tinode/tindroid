@@ -1,7 +1,6 @@
 package co.tinode.tindroid.db;
 
 import android.database.Cursor;
-import android.util.Log;
 
 import java.util.Date;
 
@@ -18,7 +17,7 @@ public class StoredTopic implements LocalData.Payload {
     public Date lastUsed;
     public int minLocalSeq;
     public int maxLocalSeq;
-    public int status;
+    public BaseDb.Status status;
     public int nextUnsentId;
 
     public StoredTopic() {
@@ -29,7 +28,7 @@ public class StoredTopic implements LocalData.Payload {
         StoredTopic st = new StoredTopic();
 
         st.id = c.getLong(TopicDb.COLUMN_IDX_ID);
-        st.status = c.getInt(TopicDb.COLUMN_IDX_STATUS);
+        st.status = BaseDb.Status.fromInt(c.getInt(TopicDb.COLUMN_IDX_STATUS));
         st.lastUsed = new Date(c.getLong(TopicDb.COLUMN_IDX_LASTUSED));
         st.minLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MIN_LOCAL_SEQ);
         st.maxLocalSeq = c.getInt(TopicDb.COLUMN_IDX_MAX_LOCAL_SEQ);
