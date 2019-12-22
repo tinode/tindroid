@@ -15,7 +15,9 @@ public class StoredTopic implements LocalData.Payload {
 
     public long id;
     public Date lastUsed;
+    // Seq value of the earliest cached message.
     public int minLocalSeq;
+    // Seq value of the latest cached message.
     public int maxLocalSeq;
     public BaseDb.Status status;
     public int nextUnsentId;

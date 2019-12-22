@@ -339,6 +339,11 @@ public class TopicDb implements BaseColumns {
     /**
      * Update cached ID of a delete transaction.
      *
+     * @param db database reference.
+     * @param topic topic to update.
+     * @param delId server-issued deletion ID.
+     * @param lowId lowest seq ID in the deleted range, inclusive (closed).
+     * @param hiId greatest seq ID in the deletion range, exclusive (open).
      * @return true on success
      */
     public static boolean msgDeleted(SQLiteDatabase db, Topic topic, int delId, int lowId, int hiId) {
@@ -358,16 +363,17 @@ public class TopicDb implements BaseColumns {
         }
 
         if (hiId > 1) {
-            // Upper bound is exclusive.
+            // Upper bound is exclusive. Convert to inclusive.
             hiId --;
         } else {
-            // If hiId is zero all later messages are bing deleted, set it to highest possible value.
+            // If hiId is zero all later messages are being deleted, set it to highest possible value.
             hiId = topic.getSeq();
         }
 
         // Expand the available range only when there is an overlap.
 
-        // When minLocalSeq is 0 then there are no locally stored messages. Don't update minLocalSeq.
+        // When minLocalSeq is 0 then there are no locally stored messages possibly because they have not been fetched yet.
+        // Don't update minLocalSeq otherwise the client may miss some messages.
         if (lowId < st.minLocalSeq && hiId >= st.minLocalSeq) {
             values.put(COLUMN_NAME_MIN_LOCAL_SEQ, lowId);
         } else {
@@ -474,16 +480,6 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_TOPIC + "='" + topic + "'").simpleQueryForLong();
         } catch (SQLException ignored) {
             // topic not found
-            return -1;
-        }
-    }
-
-    static int getMaxSeq(SQLiteDatabase db, long topicId) {
-        try {
-            return (int) db.compileStatement("SELECT " + COLUMN_NAME_MAX_LOCAL_SEQ + " FROM " + TABLE_NAME +
-                    " WHERE " + _ID + "='" + topicId + "'").simpleQueryForLong();
-        } catch (SQLException ignored) {
-            // Something went wrong.
             return -1;
         }
     }
