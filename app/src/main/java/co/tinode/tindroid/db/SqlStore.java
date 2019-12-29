@@ -370,7 +370,7 @@ public class SqlStore implements Storage {
         try {
             db.beginTransaction();
 
-            if ((delId >=0 || TopicDb.msgDeleted(db, topic, delId, fromId, toId)) &&
+            if (TopicDb.msgDeleted(db, topic, delId, fromId, toId) &&
                     MessageDb.delete(db, st.id, delId, fromId, toId)) {
                 db.setTransactionSuccessful();
                 result = true;
@@ -394,7 +394,7 @@ public class SqlStore implements Storage {
         try {
             db.beginTransaction();
 
-            if ((delId >=0 || TopicDb.msgDeleted(db, topic, delId, span.getLower(), span.getUpper())) &&
+            if (TopicDb.msgDeleted(db, topic, delId, span.getLower(), span.getUpper()) &&
                     MessageDb.delete(db, st.id, delId, ranges)) {
                 db.setTransactionSuccessful();
                 result = true;
