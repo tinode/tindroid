@@ -19,7 +19,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 public class MsgRange implements Comparable<MsgRange> {
     // The low value is required, thus it's a primitive type.
     public int low;
-    // THe high value is optional.
+    // The high value is optional.
     public Integer hi;
 
     public MsgRange() {
