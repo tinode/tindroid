@@ -17,7 +17,9 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 @JsonInclude(NON_DEFAULT)
 @SuppressWarnings("WeakerAccess")
 public class MsgRange implements Comparable<MsgRange> {
-    public Integer low;
+    // The low value is required, thus it's a primitive type.
+    public int low;
+    // THe high value is optional.
     public Integer hi;
 
     public MsgRange() {
@@ -40,13 +42,14 @@ public class MsgRange implements Comparable<MsgRange> {
 
     @Override
     public int compareTo(MsgRange other) {
-        int r = nullableCompare(low, other.low);
+        int r = low - other.low;
         if (r == 0) {
             r = nullableCompare(other.hi, hi);
         }
         return r;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public String toString() {
         return "{low: " + low + (hi != null ? (", hi: " + hi) : "") + "}";
@@ -126,7 +129,7 @@ public class MsgRange implements Comparable<MsgRange> {
         if (ranges.length > 1) {
             int prev = 0;
             for (int i = 1; i < ranges.length; i++) {
-                if (ranges[prev].low.equals(ranges[i].low)) {
+                if (ranges[prev].low == ranges[i].low) {
                     // Same starting point.
 
                     // Earlier range is guaranteed to be wider or equal to the later range,
