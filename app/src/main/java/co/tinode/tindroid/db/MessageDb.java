@@ -314,10 +314,10 @@ public class MessageDb implements BaseColumns {
                 " FROM " + TABLE_NAME + " AS m1" +
                 " LEFT JOIN " + TABLE_NAME + " AS m2" +
                 " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +
+                    " AND m2." + COLUMN_NAME_TOPIC_ID + "=?" +
                 " WHERE m2." + COLUMN_NAME_SEQ + " IS NULL" +
-                " AND m1." + COLUMN_NAME_SEQ + ">1" +
-                " AND m1." + COLUMN_NAME_TOPIC_ID + "=?" +
-                " AND m2." + COLUMN_NAME_TOPIC_ID + "=?";
+                    " AND m1." + COLUMN_NAME_SEQ + ">1" +
+                    " AND m1." + COLUMN_NAME_TOPIC_ID + "=?";
 
         Cursor c = db.rawQuery(sqlHigh, new String[]{ Long.toString(topicId), Long.toString(topicId) });
         if (c != null) {
