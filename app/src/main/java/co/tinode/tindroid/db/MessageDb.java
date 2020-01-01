@@ -302,6 +302,50 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Find the latest missing range of messages fro fetching from the server.
+     *
+     * @param db database to select from;
+     * @param topicId Tinode topic ID (topics._id) to select from;
+     * @return seq ID if found or <=0 if all messages are present.
+     */
+    static MsgRange getNextMissingRange(SQLiteDatabase db, long topicId) {
+        int high = 0;
+        final String sqlHigh = "SELECT MAX(m1." + COLUMN_NAME_SEQ + ") AS missing" +
+                " FROM " + TABLE_NAME + " AS m1" +
+                " LEFT JOIN " + TABLE_NAME + " AS m2" +
+                " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +
+                " WHERE m2." + COLUMN_NAME_SEQ + " IS NULL" +
+                " AND m1." + COLUMN_NAME_SEQ + " > 1";
+
+        Cursor c = db.rawQuery(sqlHigh, null);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                high = c.getInt(0);
+            }
+            c.close();
+        }
+
+        if (high <= 0) {
+            // No gap is found.
+            return null;
+        }
+
+        final String sqlLow = "SELECT MAX(IFNULL(" + COLUMN_NAME_HIGH + "-1," + COLUMN_NAME_SEQ + ")) AS present" +
+                " FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_SEQ + "<?";
+        int low = 1;
+        c = db.rawQuery(sqlLow, new String[]{ Integer.toString(high) });
+        if (c != null) {
+            if (c.moveToFirst()) {
+                low = c.getInt(0);
+            }
+            c.close();
+        }
+
+        return new MsgRange(low, high);
+    }
+
+    /**
      * Delete messages replacing them with deletion markers.
      *
      * @param db            Database to use.
