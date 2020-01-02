@@ -47,6 +47,11 @@ public interface Storage {
 
     /** Get seq IDs of the stored messages as a MsgRange, inclusive-exclusive [low, hi) */
     MsgRange getCachedMessagesRange(Topic topic);
+    /**
+     * Get the maximum seq ID range of the messages missing in cache, inclusive-exclusive [low, hi).
+     * Returns null if all messages are present or no messages are found.
+     */
+    MsgRange getNextMissingRange(Topic topic);
     /** Local user reported messages as read */
     @SuppressWarnings("UnusedReturnValue")
     boolean setRead(Topic topic, int read);
