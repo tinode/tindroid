@@ -549,10 +549,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return null;
         }
         // If topic has messages, fetch the next missing message range (could be null)
-        if (getSeq() > 0) {
-            return mStore.getNextMissingRange(this);
-        }
-        return mStore.getCachedMessagesRange(this);
+        return mStore.getNextMissingRange(this);
     }
 
     /* Access mode management */
