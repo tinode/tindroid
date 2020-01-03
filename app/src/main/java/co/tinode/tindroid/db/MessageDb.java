@@ -331,7 +331,7 @@ public class MessageDb implements BaseColumns {
             // No gap is found.
             return null;
         }
-
+        // Find the first present message with ID less than the 'high'.
         final String sqlLow = "SELECT MAX(IFNULL(" + COLUMN_NAME_HIGH + "-1," + COLUMN_NAME_SEQ + ")) AS present" +
                 " FROM " + TABLE_NAME +
                 " WHERE " + COLUMN_NAME_SEQ + "<?" +
@@ -340,7 +340,7 @@ public class MessageDb implements BaseColumns {
         c = db.rawQuery(sqlLow, new String[]{ Integer.toString(high), Long.toString(topicId) });
         if (c != null) {
             if (c.moveToFirst()) {
-                low = c.getInt(0);
+                low = c.getInt(0) + 1; // Low is inclusive thus +1.
             }
             c.close();
         }
