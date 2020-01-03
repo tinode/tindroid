@@ -306,7 +306,7 @@ public class MessageDb implements BaseColumns {
      *
      * @param db database to select from;
      * @param topicId Tinode topic ID (topics._id) to select from;
-     * @return range of missing IDs if found null if either all messages are present or no messages are found.
+     * @return range of missing IDs if found, null if either all messages are present or no messages are found.
      */
     static MsgRange getNextMissingRange(SQLiteDatabase db, long topicId) {
         int high = 0;
