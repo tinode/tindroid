@@ -143,6 +143,15 @@ public class SqlStore implements Storage {
     }
 
     @Override
+    public MsgRange getNextMissingRange(Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st != null && st.id > 0) {
+            return MessageDb.getNextMissingRange(mDbh.getReadableDatabase(), st.id);
+        }
+        return null;
+    }
+
+    @Override
     public boolean setRead(Topic topic, int read) {
         boolean result = false;
         StoredTopic st = (StoredTopic) topic.getLocal();

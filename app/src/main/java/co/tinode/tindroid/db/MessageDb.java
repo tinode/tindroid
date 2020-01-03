@@ -302,6 +302,53 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Find the latest missing range of messages for fetching from the server.
+     *
+     * @param db database to select from;
+     * @param topicId Tinode topic ID (topics._id) to select from;
+     * @return range of missing IDs if found, null if either all messages are present or no messages are found.
+     */
+    static MsgRange getNextMissingRange(SQLiteDatabase db, long topicId) {
+        int high = 0;
+        final String sqlHigh = "SELECT MAX(m1." + COLUMN_NAME_SEQ + ") AS missing" +
+                " FROM " + TABLE_NAME + " AS m1" +
+                " LEFT JOIN " + TABLE_NAME + " AS m2" +
+                " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +
+                    " AND m2." + COLUMN_NAME_TOPIC_ID + "=?" +
+                " WHERE m2." + COLUMN_NAME_SEQ + " IS NULL" +
+                    " AND m1." + COLUMN_NAME_SEQ + ">1" +
+                    " AND m1." + COLUMN_NAME_TOPIC_ID + "=?";
+
+        Cursor c = db.rawQuery(sqlHigh, new String[]{ Long.toString(topicId), Long.toString(topicId) });
+        if (c != null) {
+            if (c.moveToFirst()) {
+                high = c.getInt(0);
+            }
+            c.close();
+        }
+
+        if (high <= 0) {
+            // No gap is found.
+            return null;
+        }
+        // Find the first present message with ID less than the 'high'.
+        final String sqlLow = "SELECT MAX(IFNULL(" + COLUMN_NAME_HIGH + "-1," + COLUMN_NAME_SEQ + ")) AS present" +
+                " FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_SEQ + "<?" +
+                " AND " + COLUMN_NAME_TOPIC_ID + "=?";
+        int low = 1;
+        c = db.rawQuery(sqlLow, new String[]{ Integer.toString(high), Long.toString(topicId) });
+        if (c != null) {
+            if (c.moveToFirst()) {
+                low = c.getInt(0) + 1; // Low is inclusive thus +1.
+            }
+            c.close();
+        }
+
+        return new MsgRange(low, high);
+    }
+
+    /**
      * Delete messages replacing them with deletion markers.
      *
      * @param db            Database to use.

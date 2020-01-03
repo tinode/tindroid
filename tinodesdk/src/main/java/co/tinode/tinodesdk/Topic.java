@@ -370,6 +370,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Assign pointer to cache.
      * Called by Tinode from {@link Tinode#startTrackingTopic(Topic)}
      *
      * @param store storage object
@@ -418,15 +419,26 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return -mDesc.touched.compareTo(t.mDesc.touched);
     }
 
-
+    /**
+     * Get timestamp of the latest update to subscriptions.
+     * @return timestamp of the latest update to subscriptions
+     */
     public Date getSubsUpdated() {
         return mSubsUpdated;
     }
 
+    /**
+     * Get greatest known seq ID as reported by the server.
+     * @return greatest known seq ID.
+     */
     public int getSeq() {
         return mDesc.seq;
     }
 
+    /**
+     * Update greatest known seq ID.
+     * @param seq new seq ID.
+     */
     public void setSeq(int seq) {
         if (seq > mDesc.seq) {
             mDesc.seq = seq;
@@ -530,6 +542,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     public MsgRange getCachedMessagesRange() {
         return mStore == null ? null : mStore.getCachedMessagesRange(this);
+    }
+
+    public MsgRange getMissingMessageRange() {
+        if (mStore == null) {
+            return null;
+        }
+        // If topic has messages, fetch the next missing message range (could be null)
+        return mStore.getNextMissingRange(this);
     }
 
     /* Access mode management */
@@ -1935,10 +1955,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         public MetaGetBuilder withLaterData(Integer limit) {
             MsgRange r = topic.getCachedMessagesRange();
 
-            if (r == null) {
+            if (r == null || r.hi <= 1) {
                 return withData(null, null, limit);
             }
-            return withData(r.hi > 1 ? r.hi : null, null, limit);
+            return withData(r.hi, null, limit);
         }
 
         /**
@@ -1947,11 +1967,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * @param limit number of messages to fetch
          */
         public MetaGetBuilder withEarlierData(Integer limit) {
-            MsgRange r = topic.getCachedMessagesRange();
+            MsgRange r = topic.getMissingMessageRange();
             if (r == null) {
                 return withData(null, null, limit);
             }
-            return withData(null, r.low > 1 ? r.low : null, limit);
+            return withData(r.low, r.hi, limit);
         }
 
         /**
