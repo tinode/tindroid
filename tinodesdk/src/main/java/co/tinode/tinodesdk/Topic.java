@@ -1971,10 +1971,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          */
         public MetaGetBuilder withEarlierData(Integer limit) {
             MsgRange r = topic.getMissingMessageRange();
-            if (r == null || r.low <= 1) {
+            if (r == null) {
                 return withData(null, null, limit);
             }
-            return withData(null, r.low, limit);
+            return withData(r.low, r.hi, limit);
         }
 
         /**
