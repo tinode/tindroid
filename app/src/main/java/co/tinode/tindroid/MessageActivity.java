@@ -420,7 +420,7 @@ public class MessageActivity extends AppCompatActivity {
             @Override
             public void run() {
                 PromisedReply<ServerMessage> promise;
-                if (msgId >= 0) {
+                if (msgId > 0) {
                     promise = mTopic.syncOne(msgId);
                 } else {
                     promise = mTopic.syncAll();

@@ -951,7 +951,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to server
      */
     @SuppressWarnings("UnusedReturnValue")
-    public <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncAll() {
+    public synchronized <ML extends Iterator<Storage.Message> & Closeable> PromisedReply<ServerMessage> syncAll() {
         PromisedReply<ServerMessage> last = new PromisedReply<>((ServerMessage) null);
         if (mStore == null) {
             return last;
@@ -997,7 +997,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException  if there is no connection to server
      */
-    public PromisedReply<ServerMessage> syncOne(long msgDatabaseId) {
+    public synchronized PromisedReply<ServerMessage> syncOne(long msgDatabaseId) {
         PromisedReply<ServerMessage> result = new PromisedReply<>((ServerMessage) null);
         if (mStore == null) {
             return result;
