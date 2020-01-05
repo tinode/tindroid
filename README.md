@@ -3,6 +3,7 @@
 Android instant messenger using [Tinode](https://github.com/tinode/chat/) backend. Beta-quality software.
 Debug APKs are available in [releases](https://github.com/tinode/tindroid/releases).
 
+<a href="https://play.google.com/store/apps/details?id=co.tinode.tindroidx"><img src="docs/play-store.svg" height=36></a>
 
 ## Getting support
 
