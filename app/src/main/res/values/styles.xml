@@ -63,7 +63,7 @@
 
     <style name="textMetaBubble">
         <item name="android:textColor">@color/colorTextSecondary</item>
-        <item name="android:textSize">11sp</item>
+        <item name="android:textSize">14sp</item>
     </style>
 
     <style name="ProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">

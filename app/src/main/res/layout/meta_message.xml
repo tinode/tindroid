@@ -13,15 +13,15 @@
         android:orientation="horizontal"
         android:paddingLeft="6sp"
         android:paddingRight="6sp"
-        android:layout_gravity="center_horizontal"
+        android:layout_gravity="center"
         android:background="@drawable/bubble"
         tools:ignore="UselessParent">
 
         <ImageView
             android:id="@+id/icon"
             android:visibility="gone"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             app:srcCompat="@drawable/ic_block_gray"
             tools:ignore="ContentDescription" />
 
@@ -29,10 +29,12 @@
             android:id="@+id/messageText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:layout_gravity="center"
             android:maxWidth="200dp"
             android:minWidth="100dp"
-            android:paddingStart="12dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:textColor="@color/colorTextSecondary"
             style="@style/textMetaBubble"
             tools:text="Lorem ipsum"
