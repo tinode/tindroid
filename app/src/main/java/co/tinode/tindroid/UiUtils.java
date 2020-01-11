@@ -984,7 +984,7 @@ public class UiUtils {
     }
 
     // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
-    static String getPath(Context context, Uri uri) {
+    static String getContentPath(Context context, Uri uri) {
         // DocumentProvider
         if (DocumentsContract.isDocumentUri(context, uri)) {
             final String docId = DocumentsContract.getDocumentId(uri);
@@ -1009,14 +1009,30 @@ public class UiUtils {
                             return docId.substring(4);
                         }
 
+                        long id;
                         try {
-                            final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
-                                Long.valueOf(docId));
-                            return getDataColumn(context, contentUri, null, null);
+                            id = Long.valueOf(docId);
                         } catch (NumberFormatException e) {
                             Log.w(TAG, "Failed to parse document ID: " + docId);
                             return null;
                         }
+
+                        // Possible locations of downloads directory.
+                        String[] contentUriPrefixes = new String[]{
+                            "content://downloads/public_downloads",
+                            "content://downloads/my_downloads",
+                            "content://downloads/all_downloads"
+                        };
+
+                        for (String uriPrefix: contentUriPrefixes) {
+                            Uri contentUri = ContentUris.withAppendedId(Uri.parse(uriPrefix), id);
+                            String path = getResolverData(context, contentUri, null, null);
+                            if (path != null) {
+                                return path;
+                            }
+                        }
+                        return null;
+
                     }
                     case "com.android.providers.media.documents": {
                         // MediaProvider
@@ -1032,7 +1048,7 @@ public class UiUtils {
                         }
                         final String selection = "_id=?";
                         final String[] selectionArgs = new String[]{split[1]};
-                        return getDataColumn(context, contentUri, selection, selectionArgs);
+                        return getResolverData(context, contentUri, selection, selectionArgs);
                     }
                     default:
                         Log.d(TAG, "Unknown content authority " + uri.getAuthority());
@@ -1046,7 +1062,7 @@ public class UiUtils {
             if ("com.google.android.apps.photos.content".equals(uri.getAuthority())) {
                 return uri.getLastPathSegment();
             }
-            return getDataColumn(context, uri, null, null);
+            return getResolverData(context, uri, null, null);
         } else if ("file".equalsIgnoreCase(uri.getScheme())) {
             // File
             return uri.getPath();
@@ -1054,15 +1070,20 @@ public class UiUtils {
         return null;
     }
 
-    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
-        final String column = "_data";
+    private static String getResolverData(Context context, Uri uri, String selection, String[] selectionArgs) {
+        final String column = MediaStore.Files.FileColumns.DATA;
         final String[] projection = {column};
-        try (Cursor cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                final int index = cursor.getColumnIndex(column);
-                return index >= 0 ? cursor.getString(index) : null;
-            }
+        try {
+            try (Cursor cursor = context.getContentResolver().query(uri, projection,
+                    selection, selectionArgs, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    final int index = cursor.getColumnIndex(column);
+                    return index >= 0 ? cursor.getString(index) : null;
+                }
 
+            }
+        } catch (IllegalArgumentException ex) {
+            Log.w(TAG, "Failed to read resolver data", ex);
         }
         return null;
     }

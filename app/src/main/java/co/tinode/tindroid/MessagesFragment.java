@@ -993,7 +993,7 @@ public class MessagesFragment extends Fragment
 
         // Still no size? Try opening directly.
         if (fsize <= 0 || orientation < 0) {
-            String path = filePath != null ? filePath : UiUtils.getPath(context, uri);
+            String path = filePath != null ? filePath : UiUtils.getContentPath(context, uri);
             if (path != null) {
                 result.putString("path", path);
 
