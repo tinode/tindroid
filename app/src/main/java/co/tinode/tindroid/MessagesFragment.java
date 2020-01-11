@@ -334,10 +334,15 @@ public class MessagesFragment extends Fragment
     }
 
     private void updateFormValues() {
+        if (!isVisible()) {
+            return;
+        }
+
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
+
 
         if (mTopic == null) {
             // Default view when the topic is not available.
