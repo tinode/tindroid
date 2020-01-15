@@ -931,7 +931,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
 
                     if (args.getByteArray("image") != null) {
-                        mActivity.showFragment("view_image", args, true);
+                        mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
                     } else {
                         Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
                     }

@@ -512,6 +512,8 @@ public class UiUtils {
         avatar.setImageDrawable(new RoundImageDrawable(avatar.getResources(), scaleSquareBitmap(bmp)));
     }
 
+    // Construct avatar drawable: use bitmap if it is not null,
+    // otherwise use name & address to create a LetterTileDrawable.
     static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address) {
         if (bmp != null) {
             return new RoundImageDrawable(context.getResources(), bmp);
@@ -571,7 +573,12 @@ public class UiUtils {
         // Ensures the Fragment is still added to an activity. As this method is called in a
         // background thread, there's the possibility the Fragment is no longer attached and
         // added to an activity. If so, no need to spend resources loading the contact photo.
-        if (!fragment.isAdded() || fragment.getActivity() == null) {
+        if (!fragment.isAdded()) {
+            return null;
+        }
+
+        Activity activity = fragment.getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return null;
         }
 
@@ -581,7 +588,7 @@ public class UiUtils {
         // This "try" block catches an Exception if the file descriptor returned from the Contacts
         // Provider doesn't point to an existing file.
         Uri thumbUri = Uri.parse(photoData);
-        try (AssetFileDescriptor afd = fragment.getActivity().getContentResolver().openAssetFileDescriptor(thumbUri, "r")) {
+        try (AssetFileDescriptor afd = activity.getContentResolver().openAssetFileDescriptor(thumbUri, "r")) {
 
             // Retrieves a file descriptor from the Contacts Provider. To learn more about this
             // feature, read the reference documentation for
