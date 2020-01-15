@@ -750,8 +750,8 @@ public class MessagesFragment extends Fragment
             switch (requestCode) {
                 case ACTION_ATTACH_IMAGE:
                 case ACTION_ATTACH_FILE: {
-                    final FragmentActivity activity = getActivity();
-                    if (activity == null) {
+                    final MessageActivity activity = (MessageActivity) getActivity();
+                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                         return;
                     }
 
@@ -778,8 +778,13 @@ public class MessagesFragment extends Fragment
                     args.putInt("requestCode", requestCode);
                     args.putString("topic", mTopicName);
 
-                    // Must use unique ID for each upload. Otherwise trouble.
-                    LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+                    if (requestCode == ACTION_ATTACH_IMAGE) {
+                        // Show image preview
+                        activity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+                    } else {
+                        // Must use unique ID for each upload. Otherwise trouble.
+                        LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
+                    }
 
                     return;
                 }
@@ -1300,7 +1305,7 @@ public class MessagesFragment extends Fragment
             }
 
             Activity activity = getActivity();
-            if (activity == null) {
+            if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
                 return true;
             }
 

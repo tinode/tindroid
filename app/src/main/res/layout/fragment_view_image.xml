@@ -47,7 +47,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="@string/new_message_hint"
+                android:hint="@string/image_caption_hint"
                 android:imeOptions="actionSend"
                 android:textColor="@color/colorTextPrimary"
                 android:inputType="textMultiLine|textCapSentences"

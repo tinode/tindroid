@@ -2,17 +2,20 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -23,8 +26,11 @@ import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 /**
- * Fragment for expanded display of an inline image.
+ * Fragment for expanded display of an image: being attached or received.
  */
 public class ImageViewFragment extends Fragment {
     private static final String TAG = "ImageViewFragment";
@@ -132,17 +138,44 @@ public class ImageViewFragment extends Fragment {
 
         mMatrix.reset();
 
+        Bitmap bmp = null;
         byte[] bits = args.getByteArray("image");
         if (bits != null) {
-            Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+            bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+        } else {
+            Uri uri = args.getParcelable("uri");
+            if (uri != null) {
+                final ContentResolver resolver = activity.getContentResolver();
+                // Resize image to ensure it's under the maximum in-band size.
+                try {
+                    InputStream is = resolver.openInputStream(uri);
+                    if (is != null) {
+                        bmp = BitmapFactory.decodeStream(is, null, null);
+                        is.close();
+                    }
+                } catch (IOException ex) {
+                    Log.i(TAG, "Failed to read image from " + uri, ex);
+                }
+            }
+        }
+
+        if (bmp != null) {
             mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
             mWorkingRect = new RectF(mInitialRect);
             String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
+            if (bits == null) {
+                activity.findViewById(R.id.sendImagePanel).setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.annotation).setVisibility(View.GONE);
+            } else {
+                // This image is received.
+                activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
+                activity.findViewById(R.id.annotation).setVisibility(View.VISIBLE);
+                ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
+                ((TextView) activity.findViewById(R.id.file_name)).setText(args.getString("name"));
+                ((TextView) activity.findViewById(R.id.image_size)).setText(size + UiUtils.bytesToHumanSize(bits.length));
+            }
 
             mImageView.setImageDrawable(new BitmapDrawable(getResources(), bmp));
-            ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
-            ((TextView) activity.findViewById(R.id.file_name)).setText(args.getString("name"));
-            ((TextView) activity.findViewById(R.id.image_size)).setText(size + UiUtils.bytesToHumanSize(bits.length));
 
             // ImageView size is set later. Must add an observer to get the size.
             mImageView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -158,6 +191,12 @@ public class ImageViewFragment extends Fragment {
                     mImageView.setImageMatrix(mMatrix);
                 }
             });
-        } // TODO: show broken image here.
+
+        } else {
+            // Show broken image.
+            mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            mImageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_broken_image));
+            activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
+        }
     }
 }
