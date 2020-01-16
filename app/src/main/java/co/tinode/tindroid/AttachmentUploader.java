@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
@@ -10,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.ByteArrayInputStream;
@@ -20,10 +22,13 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.exifinterface.media.ExifInterface;
+import androidx.loader.content.AsyncTaskLoader;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
@@ -91,10 +96,10 @@ class AttachmentUploader {
         return result;
     }
 
-    static <T extends Progress> UploadResult doUpload(final int loaderId, final Context context, final Bundle args,
-                                         final WeakReference<T> callbackProgress) {
+    private static <T extends Progress> Result doUpload(final int loaderId, final Context context, final Bundle args,
+                                                final WeakReference<T> callbackProgress) {
 
-        final UploadResult result = new UploadResult();
+        final Result result = new Result();
 
         Storage store = BaseDb.getInstance().getStore();
 
@@ -242,7 +247,7 @@ class AttachmentUploader {
 
                     Progress start = callbackProgress.get();
                     if (start != null) {
-                        start.onStart(result.msgId);
+                        start.onStart(topicName, result.msgId);
                         // This assignment is needed to ensure that the loader does not keep
                         // a strong reference to activity while potentially slow upload process
                         // is running.
@@ -258,7 +263,7 @@ class AttachmentUploader {
                                 public void onProgress(long progress, long size) {
                                     Progress p = callbackProgress.get();
                                     if (p != null) {
-                                        if (!p.onProgress(loaderId, result.msgId, progress, size)) {
+                                        if (!p.onProgress(topicName, loaderId, result.msgId, progress, size)) {
                                             uploader.cancel();
                                         }
                                     }
@@ -292,12 +297,13 @@ class AttachmentUploader {
                             imageHeight = options.outHeight;
                         }
                         store.msgDraftUpdate(topic, result.msgId,
-                                draftyImage(mimeType, bits, imageWidth, imageHeight, fname));
+                                draftyImage(args.getString("caption"),
+                                        mimeType, bits, imageWidth, imageHeight, fname));
                     }
                     success = true;
                     Progress start = callbackProgress.get();
                     if (start != null) {
-                        start.onStart(result.msgId);
+                        start.onStart(topicName, result.msgId);
                     }
                 }
             }
@@ -336,9 +342,13 @@ class AttachmentUploader {
     // Wrap content into Drafty.
 
     // Send image in-band
-    private static Drafty draftyImage(String mimeType, byte[] bits, int width, int height, String fname) {
-        Drafty content = Drafty.parse(" ");
+    private static Drafty draftyImage(String caption, String mimeType, byte[] bits, int width, int height, String fname) {
+        Drafty content = Drafty.fromPlainText(" ");
         content.insertImage(0, mimeType, bits, width, height, fname);
+        if (!TextUtils.isEmpty(caption)) {
+            content.appendLineBreak()
+                    .append(Drafty.fromPlainText(caption));
+        }
         return content;
     }
 
@@ -356,12 +366,12 @@ class AttachmentUploader {
         return content;
     }
 
-    static class UploadResult {
+    static class Result {
         String error;
         long msgId = -1;
         boolean processed = false;
 
-        UploadResult() {
+        Result() {
         }
 
         @NonNull
@@ -370,9 +380,62 @@ class AttachmentUploader {
         }
     }
 
-    interface Progress {
-        void onStart(long msgId);
+    static class FileUploader extends AsyncTaskLoader<Result> {
+        private static WeakReference<Progress> sProgress;
+        private final Bundle mArgs;
+        private Result mResult = null;
 
-        boolean onProgress(final int loaderId, final long msgId, final long progress, final long total);
+        FileUploader(Activity activity, Bundle args) {
+            super(activity);
+            mArgs = args;
+        }
+
+        static void setProgressHandler(Progress progress) {
+            sProgress = new WeakReference<>(progress);
+        }
+
+        @Override
+        public void onStartLoading() {
+
+            if (mResult != null) {
+                // Loader has result already. Deliver it.
+                deliverResult(mResult);
+            } else if (mArgs.getLong("msgId") <= 0) {
+                // Create a new message which will be updated with upload progress.
+                Storage store = BaseDb.getInstance().getStore();
+                Drafty msg = new Drafty();
+                String topicName = mArgs.getString("topic");
+                long msgId = store.msgDraft(Cache.getTinode().getTopic(topicName),
+                        msg, Tinode.draftyHeadersFor(msg));
+                mArgs.putLong("msgId", msgId);
+                Progress p = sProgress.get();
+                if (p != null) {
+                    p.onStart(topicName, msgId);
+                }
+                forceLoad();
+            }
+        }
+
+        @Nullable
+        @Override
+        public Result loadInBackground() {
+            // Don't upload again if upload was completed already.
+            if (mResult == null) {
+                mResult = doUpload(getId(), getContext(), mArgs, sProgress);
+            }
+            return mResult;
+        }
+
+        @Override
+        public void onStopLoading() {
+            super.onStopLoading();
+            cancelLoad();
+        }
+    }
+
+    interface Progress {
+        void onStart(String topicName, long msgId);
+
+        boolean onProgress(String topicName, final int loaderId, final long msgId, final long progress, final long total);
     }
 }

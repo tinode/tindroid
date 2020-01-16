@@ -574,7 +574,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return View.NO_ID;
     }
 
-    int getItemPositionById(long itemId, int first, int last) {
+    int findItemPositionById(long itemId, int first, int last) {
         if (mCursor == null || mCursor.isClosed()) {
             return -1;
         }

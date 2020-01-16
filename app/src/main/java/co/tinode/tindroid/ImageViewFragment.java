@@ -14,7 +14,8 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import co.tinode.tinodesdk.model.Drafty;
+import androidx.fragment.app.FragmentManager;
+import androidx.loader.app.LoaderManager;
 
 import android.text.TextUtils;
 import android.util.Log;
@@ -237,13 +238,19 @@ public class ImageViewFragment extends Fragment {
         if (inputField != null) {
             caption = inputField.getText().toString().trim();
         }
-
-        Drafty msg = Drafty.fromPlainText(" ");
-        msg.insertImage(0, args.getString("mime"), bits, width, height, args.getString("name"));
         if (!TextUtils.isEmpty(caption)) {
-            msg.appendLineBreak()
-                    .append(Drafty.fromPlainText(caption));
+            args.putString("caption", caption);
         }
-        activity.sendMessage(msg);
+
+        // Must use unique ID for each upload. Otherwise trouble.
+        FragmentManager fm = activity.getSupportFragmentManager();
+        fm.popBackStack();
+
+        MessagesFragment messages = (MessagesFragment) fm.findFragmentByTag(MessageActivity.FRAGMENT_MESSAGES);
+        if (messages != null) {
+            LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, messages);
+        } else {
+            Log.w(TAG, "MessagesFragment not found");
+        }
     }
 }

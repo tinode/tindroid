@@ -17,11 +17,9 @@ import android.os.Parcelable;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
-import androidx.loader.content.AsyncTaskLoader;
 import androidx.loader.content.Loader;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AlertDialog;
@@ -46,7 +44,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -54,13 +51,11 @@ import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
@@ -78,7 +73,7 @@ import static android.app.Activity.RESULT_OK;
  * Fragment handling message display and message sending.
  */
 public class MessagesFragment extends Fragment
-        implements LoaderManager.LoaderCallbacks<AttachmentUploader.UploadResult> {
+        implements LoaderManager.LoaderCallbacks<AttachmentUploader.Result> {
     private static final String TAG = "MessageFragment";
 
     static final String MESSAGE_TO_SEND = "messageText";
@@ -153,7 +148,7 @@ public class MessagesFragment extends Fragment
         // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
         mUploadProgress = new UploadProgress();
         // This needs to be rebound on activity creation.
-        FileUploader.setProgressHandler(mUploadProgress);
+        AttachmentUploader.FileUploader.setProgressHandler(mUploadProgress);
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
@@ -820,17 +815,19 @@ public class MessagesFragment extends Fragment
             return -1;
         }
 
-        return mMessagesAdapter.getItemPositionById(id, first, last);
+        return mMessagesAdapter.findItemPositionById(id, first, last);
     }
+
+    // Loader interface
 
     @NonNull
     @Override
-    public Loader<AttachmentUploader.UploadResult> onCreateLoader(int id, Bundle args) {
-        return new FileUploader(getActivity(), args);
+    public Loader<AttachmentUploader.Result> onCreateLoader(int id, Bundle args) {
+        return new AttachmentUploader.FileUploader(getActivity(), args);
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<AttachmentUploader.UploadResult> loader, final AttachmentUploader.UploadResult data) {
+    public void onLoadFinished(@NonNull Loader<AttachmentUploader.Result> loader, final AttachmentUploader.Result data) {
         final MessageActivity activity = (MessageActivity) getActivity();
 
         if (activity != null) {
@@ -857,7 +854,7 @@ public class MessagesFragment extends Fragment
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<AttachmentUploader.UploadResult> loader) {
+    public void onLoaderReset(@NonNull Loader<AttachmentUploader.Result> loader) {
     }
 
     void setProgressIndicator(boolean active) {
@@ -867,70 +864,19 @@ public class MessagesFragment extends Fragment
         mRefresher.setRefreshing(active);
     }
 
-    private static class FileUploader extends AsyncTaskLoader<AttachmentUploader.UploadResult> {
-        private static WeakReference<UploadProgress> sProgress;
-        private final Bundle mArgs;
-        private AttachmentUploader.UploadResult mResult = null;
-
-        FileUploader(Activity activity, Bundle args) {
-            super(activity);
-            mArgs = args;
-        }
-
-        static void setProgressHandler(UploadProgress progress) {
-            sProgress = new WeakReference<>(progress);
-        }
-
-        @Override
-        public void onStartLoading() {
-
-            if (mResult != null) {
-                // Loader has result already. Deliver it.
-                deliverResult(mResult);
-            } else if (mArgs.getLong("msgId") <= 0) {
-                // Create a new message which will be updated with upload progress.
-                Storage store = BaseDb.getInstance().getStore();
-                Drafty msg = new Drafty();
-                long msgId = store.msgDraft(Cache.getTinode().getTopic(mArgs.getString("topic")),
-                        msg, Tinode.draftyHeadersFor(msg));
-                mArgs.putLong("msgId", msgId);
-                UploadProgress p = sProgress.get();
-                if (p != null) {
-                    p.onStart(msgId);
-                }
-                forceLoad();
-            }
-        }
-
-        @Nullable
-        @Override
-        public AttachmentUploader.UploadResult loadInBackground() {
-            // Don't upload again if upload was completed already.
-            if (mResult == null) {
-                mResult = AttachmentUploader.doUpload(getId(), getContext(), mArgs, sProgress);
-            }
-            return mResult;
-        }
-
-        @Override
-        public void onStopLoading() {
-            super.onStopLoading();
-            cancelLoad();
-        }
-    }
-
     private class UploadProgress implements AttachmentUploader.Progress {
 
         UploadProgress() {
         }
 
-        public void onStart(final long msgId) {
+        public void onStart(final String topicName, final long msgId) {
             // Reload the cursor.
             runMessagesLoader(mTopicName);
         }
 
         // Returns true to continue the upload, false to cancel.
-        public boolean onProgress(final int loaderId, final long msgId, final long progress, final long total) {
+        public boolean onProgress(final String topicName, final int loaderId, final long msgId,
+                                  final long progress, final long total) {
             // DEBUG -- slow down the upload progress.
             /*
             try {
@@ -948,6 +894,10 @@ public class MessagesFragment extends Fragment
             } else if (oldLoaderId != loaderId) {
                 // Loader id has changed, cancel.
                 return false;
+            }
+
+            if (!isAdded() || !isVisible() || mTopicName == null || !mTopicName.equals(topicName)) {
+                return true;
             }
 
             Activity activity = getActivity();
