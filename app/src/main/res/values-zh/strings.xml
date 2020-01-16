@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_version">Version</string>
+
+    <string name="login_hint">登录</string>
+    <string name="password_hint">密码</string>
+    <string name="new_message_hint">新消息</string>
+    <string name="send_message_button_hint">发送消息</string>
+    <string name="send_image_button_hint">发送图片</string>
+    <string name="send_file_button_hint">发送文件</string>
+
+    <string name="sign_in">登入</string>
+    <string name="action_signup">注册</string>
+    <string name="sign_up">注册</string>
+    <string name="login_new">登录</string>
+    <string name="password_new">密码</string>
+    <string name="full_name">全名, 例如张伟</string>
+    <string name="action_cancel">取消</string>
+    <string name="settings_host_name">服务器地址</string>
+    <string name="settings_use_tls">使用安全连接</string>
+    <string name="settings_wire_transport">Wire transport</string>
+    <string name="settings_tls_explained">加密与服务器的连接</string>
+    <string name="settings_host_name_explained">连接到 \'%1$s\'</string>
+    <string name="settings_wire_explained">使用 \'%1$s\'</string>
+
+    <!-- access mode definitions -->
+    <string name="modeReadOnly">只读</string>
+    <string name="modeAdmin">管理员</string>
+    <string name="modeOwner">所有者</string>
+    <string name="modeBlocked">阻塞</string>
+    <!-- mode-like access statuses -->
+    <string name="modeInvited">已邀请</string>
+    <string name="modeRequested">已请求</string>
+    <string name="modeUndefined">未定义</string>
+    <string name="modePending">等待</string>
+
+    <!-- Menu actions -->
+    <string name="action_settings">设置</string>
+    <string name="action_delete">删除</string>
+    <string name="action_mute">静默回话</string>
+    <string name="action_unmute">静默回话取消</string>
+    <string name="action_clear_messages">删除所有消息</string>
+    <string name="action_view_contact">查看通讯录</string>
+    <string name="action_new_chat">新建聊天</string>
+    <string name="action_about">关于</string>
+    <string name="action_search">搜索</string>
+    <string name="action_add_contact">添加联系人</string>
+    <string name="action_send_now">立即发送</string>
+    <string name="action_view_details">查看详情</string>
+    <string name="action_copy">复制</string>
+    <string name="action_offline">离线工作</string>
+    <string name="action_delete_group">删除会话…</string>
+    <string name="action_leave_topic">离开会话…</string>
+
+    <string name="avatar">头像</string>
+    <string name="select_image">选择图片</string>
+    <string name="select_file">选择文件</string>
+    <string name="image_is_unavailable">图片不存在</string>
+    <string name="error_login_failed">登录失败: </string>
+    <string name="error_connection_failed">连接失败: </string>
+    <string name="login_required">需要登录</string>
+    <string name="password_required">需要密码</string>
+    <string name="error_new_account_failed">账户注册失败:</string>
+    <string name="no_chats">当前无聊天\n\nˉ\\_(ツ)_/ˉ</string>
+
+    <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
+     alphabet using ListView fast scroll. -->
+    <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+
+    <string name="tinode_invite_subject">请使用Tinode Messenger</string>
+    <string name="tinode_invite_body">请使用Tinode Messenger. 下载地址 https://tinode.co</string>
+
+    <string name="profile_action">Tinode介绍</string>
+    <string name="view_profile">查看介绍</string>
+    <string name="tinode_message">发送Tinode消息</string>
+    <string name="topic_title">编组名称</string>
+    <string name="group_members">编组成员</string>
+    <string name="name_required">需要编组名称</string>
+    <string name="no_members">编组成员不存在</string>
+    <string name="add_one_member">至少添加一位编组成员</string>
+    <string name="add_members">添加成员</string>
+    <string name="leave_group">离开编组</string>
+    <string name="address">地址</string>
+    <string name="topic_muted">静音</string>
+    <string name="permissions">权限</string>
+    <string name="your_permissions">你的</string>
+
+    <string name="no_connection">你已离线</string>
+    <string name="action_failed">操作失败</string>
+
+    <string name="placeholder_contact_title">未命名或未知</string>
+    <string name="placeholder_topic_title">未命名</string>
+    <string name="placeholder_private">私有信息: 未设置</string>
+
+    <string name="options_menu">选项菜单</string>
+    <string name="current_user">你</string>
+    <string name="default_permissions">默认权限</string>
+    <string name="auth_permissions">已验证用户</string>
+    <string name="anon_permissions">匿名用户</string>
+    <string name="topic_private">额外信息 (私有)</string>
+    <string name="edit_topic">编辑编组</string>
+    <string name="edit_permissions">编辑权限</string>
+
+    <string name="permission_owner">完全控制 (所有者)</string>
+    <string name="permission_join">加入</string>
+    <string name="permission_read">读取</string>
+    <string name="permission_write">写入</string>
+    <string name="permission_approve">批准新成员</string>
+    <string name="permission_share">邀请新成员</string>
+    <string name="permission_notifications">接收通知</string>
+    <string name="permission_delete">删除消息</string>
+
+    <string name="send_message">发送消息</string>
+    <string name="change_permissions">修改权限</string>
+    <string name="make_owner">设为管理员</string>
+    <string name="remove_from_group">移除</string>
+    <string name="block">锁定</string>
+
+    <string name="confirm_member_removal">删除 %1$s from \"%2$s\"?</string>
+    <string name="confirm_member_ban"> 删除并禁止 %1$s from \"%2$s\"?</string>
+    <string name="confirm_leave_topic">真的要离开这个会话吗?</string>
+    <string name="confirm_delete_topic">真的要为所有人删除该会话吗?</string>
+    <string name="confirm_delete_multiple_topics">真的要删除这些编组吗?</string>
+    <string name="modeWriteOnly">只写</string>
+    <string name="owner_cannot_unsubscribe">管理者无法退群</string>
+    <string name="read_receipts_enabled">发送已读回执</string>
+    <string name="typing_notifications_enabled">显示输入提示</string>
+    <string name="logout">登出</string>
+    <string name="change_password">修改密码</string>
+    <string name="account_settings">账户设置</string>
+    <string name="enter_new_password">输入新密码</string>
+    <string name="confirm_logout">确定要登出?</string>
+    <string name="edit_account">编辑用户名</string>
+    <string name="invalid_login">登录无效</string>
+
+    <string name="download_attachment">保存</string>
+    <string name="broken_image">未知或无效的图片格式</string>
+    <string name="file_manager_not_found">未找到文件管理器</string>
+    <string name="attachment_too_large">文件大小 %1$s 超过 %2$s 限制.</string>
+
+    <string name="failed_to_download">下载文件失败</string>
+    <string name="failed_to_save_download">保存下载文件失败</string>
+    <string name="failed_to_open_file">没有应用程序可查看该类型文件</string>
+    <string name="failed_empty_password">未改变: 因为密码为空</string>
+    <string name="failed_credential_confirmation">验证码错误</string>
+    <string name="failed_to_create_topic">创建编组失败</string>
+
+    <string name="contacts_section_contacts">手机联系人</string>
+    <string name="contacts_section_directory">目录</string>
+
+    <string name="email">邮箱</string>
+    <string name="email_required">需要邮箱</string>
+    <string name="validate_cred">输入发送给你的验证码对应 %1$s:</string>
+    <string name="validate_cred_title">确认联系人</string>
+    <string name="confirm">确认</string>
+    <string name="validation_example">仅数字</string>
+    <string name="enter_confirmation_code">输入验证码</string>
+    <string name="hint_add_by_id">输入编组或用户ID</string>
+    <string name="hint_search_tags">通过标签检索</string>
+    <string name="topic_not_found_or_invalid">编组未找到或不存在</string>
+    <string name="sending_disabled">无效</string>
+    <string name="download_title">Tinode 下载</string>
+    <string name="some_permissions_missing">请接受所有请求权限.</string>
+    <string name="invalid_file">无法获取此文件</string>
+    <string name="cancelled">已取消</string>
+    <string name="login_rejected">登录被拒绝</string>
+    <string name="email_rejected">邮件被拒绝</string>
+    <string name="invalid_confirmation_code">无效验证码</string>
+    <string name="notification_channel_name">新消息</string>
+    <string name="notification_channel_description">收到新消息</string>
+    <string name="request_pass_reset_title">密码重置</string>
+    <string name="request_pass_reset">请求验证码对应 %1$s:</string>
+    <string name="validated_address_to_use">已验证 %1$s 将验证码发送至</string>
+    <string name="request">请求</string>
+    <string name="forgot_password">忘记密码</string>
+    <string name="enter_valid_address">输入有效 %1$s</string>
+    <string name="invalid_or_unknown_credential">无效或未知地址</string>
+    <string name="password_reset_message_sent">发送带有说明的消息</string>
+    <string name="user_not_found">未找到</string>
+    <string name="topic_tags">标签列表,以逗号分隔</string>
+    <string name="sender_unknown">未知</string>
+    <string name="action_archive">存档</string>
+    <string name="archived_chats">存档的聊天</string>
+    <string name="action_show_archive">存档的聊天</string>
+    <string name="request_new_chat_title">新聊天</string>
+    <string name="request_new_chat_message">邀请你开始新聊天,是否同意?</string>
+    <string name="new_chat_accept">接受</string>
+    <string name="new_chat_ignore">忽略</string>
+    <string name="new_chat_block">屏蔽</string>
+    <string name="messages_not_readable">无法访问新消息</string>
+    <string name="peers_messaging_disabled">对方消息已禁用</string>
+    <string name="action_enable">启用</string>
+    <string name="find">查找</string>
+    <string name="by_id">通过ID</string>
+    <string name="group">编组</string>
+    <string name="id_required">ID必填</string>
+    <string name="settings">设置</string>
+    <string name="no_results">无结果</string>
+    <string name="file_name_label">文件名称:</string>
+    <string name="content_type_label">内容类型:</string>
+    <string name="image_size_label">Size:</string>
+    <string name="must_subscribe_first">请先加入</string>
+    <string name="topic_blocked">已禁用</string>
+    <string name="topic_archived">已存档</string>
+    <string name="action_unarchive">取消存档</string>
+    <string name="action_invite">邀请</string>
+    <string name="tags_management">标签 (内容发现)</string>
+    <string name="contacts">联系人</string>
+    <string name="add_contact">添加另一个</string>
+    <string name="manage">管理删除</string>
+    <string name="delete">删除</string>
+    <string name="add_credential">输入邮箱或手机号</string>
+    <string name="unrecognized_credential">无效或无法识别验证</string>
+    <string name="add_credential_title">添加联系人</string>
+    <string name="delete_credential_title">删除联系人</string>
+    <string name="delete_credential_confirmation">确定要删除吗 %1$s:%2$s?</string>
+    <string name="leave_conversation">离开会话</string>
+    <string name="block_contact">屏蔽联系人</string>
+    <string name="report_contact">联系人上报</string>
+    <string name="report_group">群组上报</string>
+    <string name="clear_messages">清除消息</string>
+    <string name="manage_members">管理成员</string>
+    <string name="new_chat_report">屏蔽并举报</string>
+    <string name="confirm_contact_ban">屏蔽 %1$s?</string>
+    <string name="confirm_report">屏蔽并举报 %1$s?</string>
+    <string name="legal">法律</string>
+    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">使用条款</a>]]></string>
+    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">联系我们</a>]]></string>
+    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">隐私政策</a>]]></string>
+    <string name="button_hint_start_new_chat">开始新聊天</string>
+    <string name="app_server">服务器</string>
+    <string name="full_name_required">需要全名</string>
+
+    <string name="default_contact_name">Tinode用户 %1$s</string>
+</resources>
