@@ -232,4 +232,5 @@
     <string name="full_name_required">需要全名</string>
 
     <string name="default_contact_name">Tinode用户 %1$s</string>
+    <string name="image_caption_hint">图片标题</string>
 </resources>

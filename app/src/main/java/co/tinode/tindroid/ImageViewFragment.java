@@ -14,15 +14,19 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import co.tinode.tinodesdk.model.Drafty;
 
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -122,6 +126,23 @@ public class ImageViewFragment extends Fragment {
             }
         });
 
+        // Send message on button click.
+        view.findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendImage();
+            }
+        });
+        // Send message on Enter.
+        ((EditText) view.findViewById(R.id.editMessage)).setOnEditorActionListener(
+                new TextView.OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        sendImage();
+                        return true;
+                    }
+                });
+
         return view;
     }
 
@@ -198,5 +219,31 @@ public class ImageViewFragment extends Fragment {
             mImageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_broken_image));
             activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
         }
+    }
+
+    private void sendImage() {
+        MessageActivity  activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        Bundle args = getArguments();
+        if (args == null) {
+            return;
+        }
+
+        final EditText inputField = activity.findViewById(R.id.editMessage);
+        String caption = null;
+        if (inputField != null) {
+            caption = inputField.getText().toString().trim();
+        }
+
+        Drafty msg = Drafty.fromPlainText(" ");
+        msg.insertImage(0, args.getString("mime"), bits, width, height, args.getString("name"));
+        if (!TextUtils.isEmpty(caption)) {
+            msg.appendLineBreak()
+                    .append(Drafty.fromPlainText(caption));
+        }
+        activity.sendMessage(msg);
     }
 }

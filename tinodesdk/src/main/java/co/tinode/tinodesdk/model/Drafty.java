@@ -314,8 +314,12 @@ public class Drafty implements Serializable {
      * @return parsed Drafty object.
      */
     public static Drafty parse(String content) {
+        if (content == null) {
+            return Drafty.fromPlainText("");
+        }
+
         // Break input into individual lines. Format cannot span multiple lines.
-        String lines[] = content.split("\\r?\\n");
+        String[] lines = content.split("\\r?\\n");
         List<Block> blks = new ArrayList<>();
         List<Entity> refs = new ArrayList<>();
 
@@ -323,6 +327,9 @@ public class Drafty implements Serializable {
         Map<String, Integer> entityMap = new HashMap<>();
         List<ExtractedEnt> entities;
         for (String line : lines) {
+            // The 'may be null' warning is a false positive: toTree() and chunkify() may return null only
+            // if spans is empty or null. But they are not called if it's empty or null.
+            // noinspection ConstantConditions
             spans.clear();
             // Select styled spans.
             for (int i = 0;i < INLINE_STYLE_NAME.length; i++) {
@@ -449,13 +456,23 @@ public class Drafty implements Serializable {
         return txt != null ? txt : "";
     }
 
-    // Make sure Drafty is properly initialized for entity insertion.
-    private void prepareForEntity(int at, int len) {
+    // Ensure Drafty has enough space to add 'count' formatting styles.
+    // Returns old length.
+    private int prepareForStyle(int count) {
+        int len = 0;
         if (fmt == null) {
-            fmt = new Style[1];
+            fmt = new Style[count];
         } else {
-            fmt = Arrays.copyOf(fmt, fmt.length + 1);
+            len = fmt.length;
+            fmt = Arrays.copyOf(fmt, fmt.length + count);
         }
+        return len;
+    }
+
+    // Ensure Drafty is properly initialized for entity insertion.
+    private void prepareForEntity(int at, int len) {
+        prepareForStyle(1);
+
         if (ent == null) {
             ent = new Entity[1];
         } else {
@@ -597,7 +614,7 @@ public class Drafty implements Serializable {
      * Attach object as json. Intended to be used as a form response.
      *
      * @param json object to attach.
-     * @return 'this' Drafty object.
+     * @return 'this' Drafty document.
      */
     @SuppressWarnings("UnusedReturnValue")
     public Drafty attachJSON(Map<String,Object> json) {
@@ -612,6 +629,75 @@ public class Drafty implements Serializable {
         return this;
     }
 
+    /**
+     * Append one Drafty document to another Drafty document
+     *
+     * @param that Drafty document to append to the current document.
+     * @return 'this' Drafty document.
+     */
+    public Drafty append(Drafty that) {
+        if (that == null) {
+            return this;
+        }
+
+        int len = txt != null ? txt.length() : 0;
+        if (that.txt != null) {
+            if (txt != null) {
+                txt += that.txt;
+            } else {
+                txt = that.txt;
+            }
+        }
+
+        if (that.fmt != null && that.fmt.length > 0) {
+            // Insertion point for styles.
+            int fmt_idx;
+            // Insertion point for entities.
+            int ent_idx = 0;
+
+            // Allocate space for copying styles and entities.
+            fmt_idx = prepareForStyle(that.fmt.length);
+            if (that.ent != null && that.ent.length > 0) {
+                if (ent == null) {
+                    ent = new Entity[that.ent.length];
+                } else {
+                    ent_idx = ent.length;
+                    ent = Arrays.copyOf(ent, ent.length + that.ent.length);
+                }
+            }
+
+            for (int i=0; i<that.fmt.length; i++) {
+                Style style = new Style(null, that.fmt[i].at + len, that.fmt[i].len);
+                if (that.fmt[i].tp != null) {
+                    style.tp = that.fmt[i].tp;
+                } else if (that.ent != null) {
+                    style.key = ent_idx;
+                    ent[ent_idx ++] = that.ent[that.fmt[i].key];
+                }
+                fmt[fmt_idx ++] = style;
+            }
+        }
+
+        return this;
+    }
+
+    /**
+     * Append line break 'BR' to Drafty document.
+     *
+     * @return 'this' Drafty document.
+     */
+    public Drafty appendLineBreak() {
+        if (txt == null) {
+            txt = "";
+        }
+
+        prepareForStyle(1);
+        fmt[fmt.length - 1] = new Style("BR", txt.length(), 1);
+
+        txt += " ";
+
+        return this;
+    }
 
     /**
      * Insert button into Drafty document.

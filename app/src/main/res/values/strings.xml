@@ -237,7 +237,7 @@
     <string name="legal">Legal</string>
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Terms of Use</a>]]></string>
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contact Us</a>]]></string>
-    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Pricacy Policy</a>]]></string>
+    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Privacy Policy</a>]]></string>
     <string name="button_hint_start_new_chat">Start new chat</string>
     <string name="app_server">Server</string>
     <string name="full_name_required">Full name required</string>
