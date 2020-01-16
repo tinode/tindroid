@@ -75,7 +75,7 @@ If you want to use the app with your own server and want push notification to wo
 
 ## Translations
 
-Pull requests with translations are welcome. See [Russian translation](app/src/main/res/values-ru/strings.xml) as an example.
+The app is currently available in English (default), Chinese, Russian. Pull requests with more translations are welcome. See [Russian](app/src/main/res/values-ru/strings.xml) and [Chinese](app/src/main/res/values-zh/strings.xml) translations as examples.
 
 
 ## Screenshots
