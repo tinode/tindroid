@@ -43,6 +43,8 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
     private static final float FORM_LINE_SPACING = 1.5f;
     private static final float BUTTON_HEIGHT = FORM_LINE_SPACING + 0.4f;
+    // Additional horizontal padding otherwise images sometimes fail to render.
+    private static final int IMAGE_H_PADDING = 8;
 
     private final TextView mContainer;
     private final int mViewport;
@@ -106,13 +108,16 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 // base64-encoded.
                 byte[] bits = (val instanceof String) ?
                         Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+                // noinspection ConstantConditions (NullPointerException is explicitly caught).
                 bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                 // Scale bitmap for display density.
                 float width = bmp.getWidth() * metrics.density;
                 float height = bmp.getHeight() * metrics.density;
+                float maxWidth = mViewport - IMAGE_H_PADDING * metrics.density;
+
                 // Make sure the scaled bitmap is no bigger than the viewport size;
-                float scaleX = (width < mViewport ? width : mViewport) / width;
-                float scaleY = (height < mViewport * 0.75f ? height : mViewport * 0.75f) / height;
+                float scaleX = (width < maxWidth ? width : maxWidth) / width;
+                float scaleY = (height < maxWidth * 0.75f ? height : maxWidth * 0.75f) / height;
                 float scale = scaleX < scaleY ? scaleX : scaleY;
 
                 bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
@@ -130,6 +135,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 }
             } else {
                 span = new ImageSpan(ctx, bmp);
+                Log.i(TAG, "Image span created " + span);
             }
 
             if (mClicker != null && bmp != null) {
@@ -271,8 +277,9 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         }, content);
                     } catch (ClassCastException | NullPointerException ignored) {}
                     break;
-                case "MN": break;
-                case "HT": break;
+                case "MN":
+                case "HT":
+                    break;
                 case "HD":
                     // Hidden text
                     break;
@@ -386,13 +393,11 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             }
         }
 
-        @SuppressWarnings("unchecked")
         TreeNode(CharacterStyle style, Object content) {
             this.cStyle = style;
             assignContent(content);
         }
 
-        @SuppressWarnings("unchecked")
         TreeNode(ParagraphStyle style, Object content) {
             this.pStyle = style;
             assignContent(content);
