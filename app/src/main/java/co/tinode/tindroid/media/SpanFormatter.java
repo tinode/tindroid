@@ -174,7 +174,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             // result.addNode( "\n");
 
             // Insert document icon
-            Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_insert_drive_file);
+            Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file);
             icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
             ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
             final Rect bounds = span.getDrawable().getBounds();
@@ -199,7 +199,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 result.addNode("\n");
                 TreeNode saveLink = new TreeNode();
                 // Add 'download file' icon
-                icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file_download);
+                icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_download_link);
                 icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
                 saveLink.addNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " ");
                 // Add "save" text and make it clickable.

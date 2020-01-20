@@ -188,6 +188,7 @@
     <string name="new_chat_ignore">忽略</string>
     <string name="new_chat_block">屏蔽</string>
     <string name="messages_not_readable">无法访问新消息</string>
+    <string name="content_deleted">内容已删除</string>
     <string name="peers_messaging_disabled">对方消息已禁用</string>
     <string name="action_enable">启用</string>
     <string name="find">查找</string>
@@ -230,7 +231,9 @@
     <string name="button_hint_start_new_chat">开始新聊天</string>
     <string name="app_server">服务器</string>
     <string name="full_name_required">需要全名</string>
-
+    <string name="enter_search_query">输入搜索查询</string>
+    <string name="contacts_permission_missing">缺少所需的权限</string>
     <string name="default_contact_name">Tinode用户 %1$s</string>
     <string name="image_caption_hint">图片标题</string>
+    <string name="action_download">保存</string>
 </resources>

@@ -5,5 +5,5 @@
     android:layout_width="match_parent"
     android:layout_height="?attr/listPreferredItemHeight"
     android:gravity="center"
-    android:text="@string/enter_seqrch_query"
+    android:text="@string/enter_search_query"
     android:textAppearance="?android:attr/textAppearanceMedium" />

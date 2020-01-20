@@ -65,6 +65,7 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_INFO = "info";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
+    static final String FRAGMENT_FILE_PREVIEW = "file_preview";
 
     private static final int MESSAGES_TO_LOAD = 24;
 
@@ -471,6 +472,9 @@ public class MessageActivity extends AppCompatActivity {
                     break;
                 case FRAGMENT_VIEW_IMAGE:
                     fragment = new ImageViewFragment();
+                    break;
+                case FRAGMENT_FILE_PREVIEW:
+                    fragment = new FilePreviewFragment();
                     break;
                 case FRAGMENT_INVALID:
                     fragment = new InvalidTopicFragment();

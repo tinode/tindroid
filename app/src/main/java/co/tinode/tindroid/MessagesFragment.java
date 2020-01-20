@@ -753,13 +753,11 @@ public class MessagesFragment extends Fragment
                     args.putString("operation", requestCode == ACTION_ATTACH_IMAGE ? "image" : "file");
                     args.putString("topic", mTopicName);
 
-                    if (requestCode == ACTION_ATTACH_IMAGE) {
-                        // Show image preview
-                        activity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-                    } else {
-                        // Must use unique ID for each upload. Otherwise trouble.
-                        LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, this);
-                    }
+                    // Show attachment preview.
+                    activity.showFragment(requestCode == ACTION_ATTACH_IMAGE ?
+                            MessageActivity.FRAGMENT_VIEW_IMAGE :
+                            MessageActivity.FRAGMENT_FILE_PREVIEW,
+                            args, true);
 
                     return;
                 }

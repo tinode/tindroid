@@ -41,7 +41,7 @@ class AttachmentUploader {
     // Maximum size of file to upload. 8MB.
     private static final long MAX_ATTACHMENT_SIZE = 1 << 23;
 
-    private static Bundle getFileDetails(final Context context, Uri uri, String filePath) {
+    static Bundle getFileDetails(final Context context, Uri uri, String filePath) {
         final ContentResolver resolver = context.getContentResolver();
         String fname = null;
         long fsize = 0L;

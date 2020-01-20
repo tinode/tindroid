@@ -244,6 +244,8 @@
 
     <string name="default_contact_name">Tinode User %1$s</string>
     <string name="contacts_permission_missing">Required permission missing</string>
-    <string name="enter_seqrch_query">Enter search query</string>
+    <string name="enter_search_query">Enter search query</string>
     <string name="image_caption_hint">Image caption</string>
+    <string name="action_download">Download</string>
+    <string name="tinode_image" translatable="false">tinode_image</string>
 </resources>

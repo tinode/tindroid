@@ -17,11 +17,15 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.loader.app.LoaderManager;
 
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -182,18 +186,23 @@ public class ImageViewFragment extends Fragment {
         }
 
         if (bmp != null) {
+            String filename = args.getString("name");
+            if (TextUtils.isEmpty(filename)) {
+                filename = getResources().getString(R.string.tinode_image);
+            }
             mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
             mWorkingRect = new RectF(mInitialRect);
             String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
             if (bits == null) {
+                // The image is being previewed before sending.
                 activity.findViewById(R.id.sendImagePanel).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.annotation).setVisibility(View.GONE);
             } else {
-                // This image is received.
+                // The received image is viewed.
                 activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
                 activity.findViewById(R.id.annotation).setVisibility(View.VISIBLE);
                 ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
-                ((TextView) activity.findViewById(R.id.file_name)).setText(args.getString("name"));
+                ((TextView) activity.findViewById(R.id.file_name)).setText(filename);
                 ((TextView) activity.findViewById(R.id.image_size)).setText(size + UiUtils.bytesToHumanSize(bits.length));
             }
 
@@ -214,12 +223,47 @@ public class ImageViewFragment extends Fragment {
                 }
             });
 
+            setHasOptionsMenu(true);
         } else {
             // Show broken image.
             mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             mImageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_broken_image));
             activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
+
+            setHasOptionsMenu(false);
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.menu_image, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return false;
+        }
+
+        if (item.getItemId() == R.id.action_download) {
+            // Save image to Gallery.
+            Bundle args = getArguments();
+            String filename = null;
+            if (args != null) {
+                filename = args.getString("name");
+            }
+            if (TextUtils.isEmpty(filename)) {
+                filename = getResources().getString(R.string.tinode_image);
+            }
+            Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+            MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp, filename, null);
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
+
+        return true;
     }
 
     private void sendImage() {
