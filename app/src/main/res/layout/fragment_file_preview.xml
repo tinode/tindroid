@@ -35,7 +35,7 @@
             android:padding="6sp">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="2dp"
                 android:paddingStart="@dimen/label_h_padding"
@@ -50,16 +50,17 @@
 
                 <TextView
                     android:id="@+id/file_name"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="middle"
                     android:padding="2dp"
                     android:singleLine="true"
+                    android:textAlignment="textEnd"
                     tools:text="some_image.png" />
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="2dp">
 
@@ -72,15 +73,16 @@
 
                 <TextView
                     android:id="@+id/content_type"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:padding="2dp"
+                    android:textAlignment="textEnd"
                     tools:text="image/png" />
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="2dp"
                 android:paddingStart="@dimen/label_h_padding"
@@ -95,10 +97,11 @@
 
                 <TextView
                     android:id="@+id/image_size"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:padding="2dp"
+                    android:textAlignment="textEnd"
                     tools:text="256KB" />
             </LinearLayout>
         </LinearLayout>
