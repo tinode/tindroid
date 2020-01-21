@@ -945,6 +945,10 @@ public class Tinode {
      * @param token device token; to delete token pass NULL_VALUE
      */
     public PromisedReply<ServerMessage> setDeviceToken(final String token) {
+        // If token is not initialized, try to read one from storage.
+        if (mDeviceToken == null && mStore != null) {
+            mDeviceToken = mStore.getDeviceToken();
+        }
         // Check if token has changed
         if (mDeviceToken == null || !mDeviceToken.equals(token)) {
             // Cache token here assuming the call to server does not fail. If it fails clear the cached token.
