@@ -271,6 +271,7 @@ public class MessagesFragment extends Fragment
     @Override
     @SuppressWarnings("unchecked")
     public void onResume() {
+
         super.onResume();
 
         setHasOptionsMenu(true);
@@ -309,7 +310,7 @@ public class MessagesFragment extends Fragment
     }
 
     private void updateFormValues() {
-        if (!isVisible()) {
+        if (!isAdded()) {
             return;
         }
 
@@ -317,7 +318,6 @@ public class MessagesFragment extends Fragment
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-
 
         if (mTopic == null) {
             // Default view when the topic is not available.
