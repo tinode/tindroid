@@ -93,7 +93,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             // Check and maybe download new messages right away *before* showing the notification.
             String seqStr = data.get("seq");
             if (seqStr != null) {
-                Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr));
+                // If there was no data to fetch, the notification does not need to be shown.
+                if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr))) {
+                    return;
+                }
             }
 
             Storage store = BaseDb.getInstance().getStore();

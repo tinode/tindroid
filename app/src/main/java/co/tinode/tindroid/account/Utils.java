@@ -312,21 +312,23 @@ public class Utils {
      * @param context context to use for resources.
      * @param topicName name of the topic to sync.
      * @param seq sequence ID of the new message to fetch.
+     * @return true if new data was available or data status was unknown, false if no data was available.
      */
-    public static void backgroundDataFetch(Context context, String topicName, int seq) {
+    public static boolean backgroundDataFetch(Context context, String topicName, int seq) {
         Log.d(TAG, "Background fetch for " + topicName);
 
         String uid = BaseDb.getInstance().getUid();
         if (TextUtils.isEmpty(uid)) {
             Log.w(TAG, "Data fetch failed: not logged in");
-            return;
+            // Unknown if data is available, assuming it is.
+            return true;
         }
 
         final AccountManager am = AccountManager.get(context);
         final Account account = UiUtils.getSavedAccount(context, am, uid);
         if (account == null) {
             Log.w(TAG, "Data fetch failed: account not found");
-            return;
+            return true;
         }
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
@@ -348,9 +350,10 @@ public class Utils {
         if (topic.isAttached()) {
             Log.d(TAG, "Topic is already attached");
             // No need to fetch: topic is already subscribed and got data notification through normal channel.
-            return;
+            return false;
         }
 
+        boolean dataAvailable = false;
         if (topic.getSeq() < seq) {
             // Won't fetch if anything throws.
             try {
@@ -367,6 +370,7 @@ public class Utils {
                     // Fully asynchronous. We don't need to do anything with the result.
                     // The new data will be automatically saved.
                     topic.subscribe(null, builder.withLaterData(24).withLaterDel(24).build(), true);
+                    dataAvailable = true;
                     topic.leave();
                 }
             } catch (Exception ex) {
@@ -376,5 +380,6 @@ public class Utils {
         } else {
             Log.d(TAG, "All messages are already received: oldSeq=" + topic.getSeq() + "; newSeq="+seq);
         }
+        return dataAvailable;
     }
 }
