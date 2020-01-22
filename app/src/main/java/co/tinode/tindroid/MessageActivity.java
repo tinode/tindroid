@@ -11,12 +11,15 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.util.Map;
 import java.util.Timer;
@@ -69,6 +72,8 @@ public class MessageActivity extends AppCompatActivity {
 
     private static final int MESSAGES_TO_LOAD = 24;
 
+    private static final int READ_DELAY = 1000;
+
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
 
@@ -93,6 +98,9 @@ public class MessageActivity extends AppCompatActivity {
     private DownloadManager mDownloadMgr = null;
     private long mDownloadId = -1;
     private MessageEventListener mTinodeListener;
+
+    // Handler for sending {note what="read"} notifications after a READ_DELAY.
+    private Handler mNoteReadHandler = null;
 
     BroadcastReceiver onComplete = new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
@@ -157,6 +165,8 @@ public class MessageActivity extends AppCompatActivity {
 
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
+
+        mNoteReadHandler = new NoteHandler(this);
     }
 
     @Override
@@ -281,6 +291,9 @@ public class MessageActivity extends AppCompatActivity {
         Cache.getTinode().removeListener(mTinodeListener);
 
         topicDetach();
+
+        // Stop handling read messages
+        mNoteReadHandler.removeCallbacksAndMessages(null);
     }
 
     private void topicAttach(boolean interactive) {
@@ -606,6 +619,32 @@ public class MessageActivity extends AppCompatActivity {
         });
     }
 
+    // Handler which sends "read" notifications for received messages.
+    private static class NoteHandler extends Handler {
+        WeakReference<MessageActivity> ref;
+
+        NoteHandler(MessageActivity activity) {
+            ref = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            MessageActivity activity = ref.get();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+
+            // If messages fragment is not visible don't send the notification.
+            if (!activity.isFragmentVisible(FRAGMENT_MESSAGES)) {
+                return;
+            }
+            String topicName = (String) msg.obj;
+            if (topicName.equals(activity.mTopic.getName())) {
+                activity.mTopic.noteRead();
+            }
+        }
+    };
+
     /**
      * Utility class to send messages queued while offline.
      * The execution is paused while the activity is in background and unpaused
@@ -666,12 +705,21 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onData(MsgServerData data) {
+            // Configure a delayed {note what="read"} notification.
+            // Don't send a notification for own messages. They are read by default.
+            if (!Cache.getTinode().isMe(data.from)) {
+                Message msg = new Message();
+                msg.arg1 = data.seq;
+                msg.obj = mTopicName;
+                mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
+            }
+
             runMessagesLoader();
         }
 
         @Override
         public void onPres(MsgServerPres pres) {
-            //noinspection SwitchStatementWithTooFewBranches
+            // noinspection SwitchStatementWithTooFewBranches
             switch (pres.what) {
                 case "acs":
                     runOnUiThread(new Runnable() {

@@ -862,6 +862,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 } else {
                     setRecv(seq);
                 }
+                // FIXME: this causes READ notification not to be sent.
                 setRead(seq);
                 if (mStore != null) {
                     mStore.setRead(this, seq);
@@ -1316,8 +1317,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * Let server know the seq id of the most recent received/read message.
      *
      * @param what "read" or "recv" to indicate which action to report
+     * @param fromMe indicates if the message is from the current user; update cache but do not send a message.
+     * @param seq explicit ID to acknowledge; ignored if <= 0.
+     * @return ID of the acknowledged message or 0.
      */
-    protected int noteReadRecv(NoteType what, boolean fromMe) {
+    protected int noteReadRecv(NoteType what, boolean fromMe, int seq) {
         int result = 0;
 
         try {
@@ -1332,11 +1336,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     break;
 
                 case READ:
-                    if (mDesc.read < mDesc.seq) {
+                    if (mDesc.read < mDesc.seq || seq > 0) {
                         if (!fromMe) {
-                            mTinode.noteRead(getName(), mDesc.seq);
+                            mTinode.noteRead(getName(), seq > 0 ? seq : mDesc.seq);
                         }
-                        result = mDesc.read = mDesc.seq;
+
+                        if (seq <= 0) {
+                            result = mDesc.read = mDesc.seq;
+                        } else if (seq > mDesc.read) {
+                            result = mDesc.read = seq;
+                        }
                     }
                     break;
             }
@@ -1347,16 +1356,20 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Notify the server that the client read the message
+     * Notify the server that the client read the last message.
      */
     @SuppressWarnings("UnusedReturnValue")
     public int noteRead() {
-        return noteRead(false);
+        return noteRead(false, -1);
     }
 
-    public int noteRead(boolean fromMe) {
-        int result = noteReadRecv(NoteType.READ, fromMe);
-        if (mStore != null) {
+    public int noteRead(int seq) {
+        return noteRead(false, seq);
+    }
+
+    public int noteRead(boolean fromMe, int seq) {
+        int result = noteReadRecv(NoteType.READ, fromMe, seq);
+        if (mStore != null && result > 0) {
             mStore.setRead(this, result);
         }
         return result;
@@ -1371,8 +1384,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected int noteRecv(boolean fromMe) {
-        int result = noteReadRecv(NoteType.RECV, fromMe);
-        if (mStore != null) {
+        int result = noteReadRecv(NoteType.RECV, fromMe, -1);
+        if (mStore != null && result > 0) {
             mStore.setRecv(this, result);
         }
         return result;

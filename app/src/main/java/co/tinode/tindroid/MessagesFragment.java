@@ -48,8 +48,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
@@ -86,7 +84,6 @@ public class MessagesFragment extends Fragment
     private static final int READ_EXTERNAL_STORAGE_PERMISSION = 1;
     private static final int USE_CAMERA_PERMISSION = 2;
 
-    private static final int READ_DELAY = 1000;
     private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
@@ -99,7 +96,6 @@ public class MessagesFragment extends Fragment
     private UploadProgress mUploadProgress;
 
     private String mTopicName = null;
-    private Timer mNoteTimer = null;
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
 
@@ -291,15 +287,6 @@ public class MessagesFragment extends Fragment
             mTopic = null;
         }
 
-        // Check periodically if all messages were read;
-        mNoteTimer = new Timer();
-        mNoteTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                sendReadNotification();
-            }
-        }, READ_DELAY, READ_DELAY);
-
         mRefresher.setRefreshing(false);
 
         updateFormValues();
@@ -380,10 +367,6 @@ public class MessagesFragment extends Fragment
     @Override
     public void onPause() {
         super.onPause();
-
-        // Stop reporting read messages
-        mNoteTimer.cancel();
-        mNoteTimer = null;
 
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
@@ -793,12 +776,6 @@ public class MessagesFragment extends Fragment
                 // Message is successfully queued, clear text from the input field and redraw the list.
                 inputField.getText().clear();
             }
-        }
-    }
-
-    private void sendReadNotification() {
-        if (mTopic != null) {
-            mTopic.noteRead();
         }
     }
 
