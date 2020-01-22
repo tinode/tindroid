@@ -619,6 +619,14 @@ public class MessageActivity extends AppCompatActivity {
         });
     }
 
+    // Schedule a delayed {note what="read"} notification.
+    void sendNoteRead(int seq) {
+        Message msg = new Message();
+        msg.arg1 = seq;
+        msg.obj = mTopicName;
+        mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
+    }
+
     // Handler which sends "read" notifications for received messages.
     private static class NoteHandler extends Handler {
         WeakReference<MessageActivity> ref;
@@ -705,13 +713,9 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onData(MsgServerData data) {
-            // Configure a delayed {note what="read"} notification.
             // Don't send a notification for own messages. They are read by default.
             if (!Cache.getTinode().isMe(data.from)) {
-                Message msg = new Message();
-                msg.arg1 = data.seq;
-                msg.obj = mTopicName;
-                mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
+                sendNoteRead(data.seq);
             }
 
             runMessagesLoader();

@@ -289,7 +289,11 @@ public class MessagesFragment extends Fragment
 
         mRefresher.setRefreshing(false);
 
-        updateFormValues();
+        final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity != null) {
+            updateFormValues();
+            activity.sendNoteRead(0);
+        }
     }
 
     void runMessagesLoader(String topicName) {
