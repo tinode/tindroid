@@ -12,7 +12,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -24,7 +23,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.ContactsContract;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -72,7 +70,6 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
 import androidx.fragment.app.FragmentManager;
-import co.tinode.tindroid.account.ContactsObserver;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -270,10 +267,7 @@ public class UiUtils {
 
         Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), uid);
         if (acc != null) {
-            Bundle bundle = new Bundle();
-            bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-            bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-            ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+            requestImmediateContactsSync(acc);
             ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
             TindroidApp.startWatchingContacts(acc);
         }
@@ -287,6 +281,14 @@ public class UiUtils {
     static void doLogout() {
         TindroidApp.stopWatchingContacts();
         Cache.invalidate();
+    }
+
+    static synchronized void requestImmediateContactsSync(Account acc) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+        ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
     }
 
     static boolean isPermissionGranted(Context context, String permission) {

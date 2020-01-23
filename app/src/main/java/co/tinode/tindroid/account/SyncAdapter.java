@@ -21,7 +21,6 @@ import java.util.Date;
 
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.TindroidApp;
-import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -110,7 +109,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         for (int i=0; i<contactList.size(); i++) {
             Utils.ContactHolder ch = contactList.get(contactList.keyAt(i));
             String contact = ch.toString();
-            if (contact.length() > 0) {
+            if (!TextUtils.isEmpty(contact)) {
                 contactsBuilder.append(contact);
                 contactsBuilder.append(",");
             }
@@ -143,30 +142,31 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 // FND sends no presence notifications thus background flag is not needed.
                 tinode.subscribe(Tinode.TOPIC_FND, null, null, false).getResult();
 
-                tinode.setMeta(Tinode.TOPIC_FND,
-                        new MsgSetMeta(new MetaSetDesc(null, contacts))).getResult();
+                if (lastSyncMarker == null) {
+                    // Send contacts list to the server only if it has changed since last update, i.e. a full
+                    // update is performed.
+                    tinode.setMeta(Tinode.TOPIC_FND,
+                            new MsgSetMeta(new MetaSetDesc(null, contacts))).getResult();
+                }
 
-                // final MsgGetMeta meta = MsgGetMeta.sub();
                 final MsgGetMeta meta = new MsgGetMeta(new MetaGetSub(lastSyncMarker, null));
                 PromisedReply<ServerMessage> future = tinode.getMeta(Tinode.TOPIC_FND, meta);
+                Date newSyncMarker = null;
                 if (future.waitResult()) {
                     ServerMessage<?, ?, VxCard, PrivateType> pkt = future.getResult();
-                    if (pkt.meta == null || pkt.meta.sub == null) {
-                        // Server did not return any contacts.
-                        return;
-                    }
-
-                    // Fetch the list of updated contacts.
-                    Collection<Subscription<VxCard, ?>> updated = new ArrayList<>();
-                    for (Subscription<VxCard, ?> sub : pkt.meta.sub) {
-                        if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
-                            updated.add(sub);
+                    if (pkt.meta != null && pkt.meta.sub != null) {
+                        // Fetch the list of updated contacts.
+                        Collection<Subscription<VxCard, ?>> updated = new ArrayList<>();
+                        for (Subscription<VxCard, ?> sub : pkt.meta.sub) {
+                            if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
+                                updated.add(sub);
+                            }
                         }
+                        newSyncMarker = ContactsManager.updateContacts(mContext, account, updated,
+                                lastSyncMarker, true);
                     }
-                    Date upd = ContactsManager.updateContacts(mContext, account, updated,
-                            lastSyncMarker, true);
-                    setServerSyncMarker(account, upd);
                 }
+                setServerSyncMarker(account, newSyncMarker != null ? newSyncMarker : new Date());
                 success = true;
             } catch (IOException e) {
                 Log.e(TAG, "Network error while syncing contacts", e);

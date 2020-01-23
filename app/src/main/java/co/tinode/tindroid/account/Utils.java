@@ -86,7 +86,7 @@ public class Utils {
      *
      * @return contacts
      */
-    public static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver, int flags) {
+    static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver, int flags) {
         SparseArray<ContactHolder> map = new SparseArray<>();
 
         final String[] projection = {
@@ -163,31 +163,30 @@ public class Utils {
             switch (mimeType) {
                 case ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE:
                     // This is an email
-                    //Log.d(TAG, "Adding email '" + data + "' to contact=" + contact_id);
+                    // Log.d(TAG, "Adding email '" + data + "' to contact=" + contact_id);
                     holder.putEmail(data);
                     break;
                 case ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE:
                     int protocol = cursor.getInt(imProtocolIdx);
                     String protocolName = cursor.getString(imProtocolNameIdx);
-                    // Log.d(TAG, "Possibly adding IM '" + data + "' to contact=" + contact_id);
                     if (protocol == ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM &&
                             protocolName.equals(TINODE_IM_PROTOCOL)) {
                         holder.putIm(data);
-                        // Log.d(TAG, "Added IM '" + data + "' to contact=" + contact_id);
                     }
                     break;
                 case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
-                    // This is a phone number. Use mobile phones only.
-                    if (type == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
-                        try {
-                            // Normalize phone number format
-                            Phonenumber.PhoneNumber number = phoneUtil.parse(data, country);
-                            if (phoneUtil.isValidNumber(number)) {
-                                holder.putPhone(phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.E164));
-                            }
-                        } catch (NumberParseException e) {
-                            Log.i(TAG, "Failed to parse phone number '" + data + "' in country '" + country + "'");
+                    // This is a phone number. Syncing phones of all types. The 'mobile' marker is ignored
+                    // because users ignore it these days.
+                    try {
+                        // Normalize phone number format
+                        Phonenumber.PhoneNumber number = phoneUtil.parse(data, country);
+                        if (phoneUtil.isValidNumber(number)) {
+                            holder.putPhone(phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.E164));
+                        } else {
+                            Log.i(TAG, "'" + data + "' is not a valid phone number in country '" + country + "'");
                         }
+                    } catch (NumberParseException ex) {
+                        Log.i(TAG, "Failed to parse phone number '" + data + "' in country '" + country + "'");
                     }
                     break;
             }

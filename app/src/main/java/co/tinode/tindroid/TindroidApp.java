@@ -28,6 +28,8 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
@@ -270,7 +272,7 @@ public class TindroidApp extends Application {
                             String.valueOf(tinode.getAuthTokenExpiration().getTime()));
                     startWatchingContacts(account);
                     // Trigger sync to be sure contacts are up to date.
-                    ContentResolver.requestSync(account, Utils.SYNC_AUTHORITY, null);
+                    UiUtils.requestImmediateContactsSync(account);
                 } catch (IOException ex) {
                     Log.d(TAG, "Network failure during login", ex);
                     // Do not invalidate token on network failure.
@@ -295,8 +297,12 @@ public class TindroidApp extends Application {
     }
 
     static synchronized void startWatchingContacts(Account acc) {
-        if (sContactsObserver != null) {
-            sContactsObserver = new ContactsObserver(acc);
+        if (sContactsObserver == null) {
+            // Create and start a new thread set up as a looper.
+            HandlerThread thread = new HandlerThread("ContactsObserverHandlerThread");
+            thread.start();
+
+            sContactsObserver = new ContactsObserver(acc, new Handler(thread.getLooper()));
             // Observer which triggers sync when contacts change.
             sContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI,
                     true, sContactsObserver);

@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 
 // Observer is called when contacts are updated. It forces the contact sync with the server.
@@ -14,15 +15,13 @@ public class ContactsObserver extends ContentObserver {
 
     private Account mAcc;
 
-    public ContactsObserver(Account acc) {
-        super(null);
+    public ContactsObserver(Account acc, Handler handler) {
+        super(handler);
         mAcc = acc;
     }
 
     @Override
     public void onChange(boolean selfChange, Uri uri) {
-        super.onChange(selfChange, uri);
-        Log.d(TAG, "Contacts have changed, requesting sync.");
         if (mAcc != null) {
             Bundle bundle = new Bundle();
             bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
@@ -31,7 +30,6 @@ public class ContactsObserver extends ContentObserver {
         } else {
             Log.i(TAG, "Failed to start sync: missing account");
         }
-
     }
 
     @Override
