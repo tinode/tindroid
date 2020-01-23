@@ -15,6 +15,7 @@ import android.view.Menu;
 
 import java.util.List;
 
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
@@ -205,7 +206,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                 }
 
                 if (mAccount == null) {
-                    mAccount = UiUtils.getSavedAccount(ChatsActivity.this,
+                    mAccount = Utils.getSavedAccount(ChatsActivity.this,
                             AccountManager.get(ChatsActivity.this), Cache.getTinode().getMyId());
                 }
                 if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {

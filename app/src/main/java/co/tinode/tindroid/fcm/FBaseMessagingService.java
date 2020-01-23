@@ -95,6 +95,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             if (seqStr != null) {
                 // If there was no data to fetch, the notification does not need to be shown.
                 if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr))) {
+                    Log.d(TAG, "No new data. Skipping notification.");
                     return;
                 }
             }

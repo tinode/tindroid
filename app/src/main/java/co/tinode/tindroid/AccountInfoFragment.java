@@ -520,8 +520,7 @@ public class AccountInfoFragment extends Fragment {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        BaseDb.getInstance().logout();
-                        Cache.invalidate();
+                        UiUtils.doLogout();
                         startActivity(new Intent(activity, LoginActivity.class));
                         activity.finish();
                     }

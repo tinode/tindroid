@@ -714,7 +714,7 @@ public class MessageActivity extends AppCompatActivity {
         @Override
         public void onData(MsgServerData data) {
             // Don't send a notification for own messages. They are read by default.
-            if (!Cache.getTinode().isMe(data.from)) {
+            if (data != null && !Cache.getTinode().isMe(data.from)) {
                 sendNoteRead(data.seq);
             }
 

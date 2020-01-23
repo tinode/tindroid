@@ -12,9 +12,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
@@ -24,9 +24,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -45,10 +45,8 @@ import android.widget.Toast;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -74,6 +72,7 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
 import androidx.fragment.app.FragmentManager;
+import co.tinode.tindroid.account.ContactsObserver;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -81,18 +80,14 @@ import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 
-import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.ServerResponseException;
-import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
-import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -273,19 +268,25 @@ public class UiUtils {
             });
         }
 
-        Account acc = getSavedAccount(activity, AccountManager.get(activity), uid);
+        Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), uid);
         if (acc != null) {
             Bundle bundle = new Bundle();
             bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
             bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
             ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
             ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
+            TindroidApp.startWatchingContacts(acc);
         }
 
         Intent intent = new Intent(activity, ChatsActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         activity.startActivity(intent);
         activity.finish();
+    }
+
+    static void doLogout() {
+        TindroidApp.stopWatchingContacts();
+        Cache.invalidate();
     }
 
     static boolean isPermissionGranted(Context context, String permission) {
@@ -305,34 +306,6 @@ public class UiUtils {
         if (!TextUtils.isEmpty(token)) {
             am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
         }
-    }
-
-    public static Account getSavedAccount(final Context context, final AccountManager accountManager,
-                                   final @NonNull String uid) {
-        Account account = null;
-
-        // Run-time check for permission to GET_ACCOUNTS
-        if (!UiUtils.isPermissionGranted(context, android.Manifest.permission.GET_ACCOUNTS)) {
-            // Don't have permission. It's the first launch or the user denied access.
-            // Fail and go to full login. We should not ask for permission on the splash screen.
-            Log.d(TAG, "NO permission to get accounts");
-            return null;
-        }
-
-        // Have permission to access accounts. Let's find out if we already have a suitable account.
-        // If one is not found, go to full login. It will create an account with suitable name.
-        final Account[] availableAccounts = accountManager.getAccountsByType(Utils.ACCOUNT_TYPE);
-        if (availableAccounts.length > 0) {
-            // Found some accounts, let's find the one with the right name
-            for (Account acc : availableAccounts) {
-                if (uid.equals(acc.name)) {
-                    account = acc;
-                    break;
-                }
-            }
-        }
-
-        return account;
     }
 
     private static void setConnectedStatus(final Activity activity, final boolean online) {
@@ -937,7 +910,7 @@ public class UiUtils {
                             ServerResponseException sre = (ServerResponseException) err;
                             int errCode = sre.getCode();
                             if (errCode == 404) {
-                                Cache.getTinode().logout();
+                                UiUtils.doLogout();
                                 Intent intent = new Intent(activity, LoginActivity.class);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 activity.startActivity(intent);

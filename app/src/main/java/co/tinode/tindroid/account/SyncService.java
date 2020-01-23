@@ -6,14 +6,15 @@ import android.content.Intent;
 import android.os.IBinder;
 
 /**
- * Service to handle sync requests.
- * <p>
- * <p>This service is invoked in response to Intents with action android.content.SyncAdapter, and
- * returns a Binder connection to SyncAdapter.
- * <p>
- * <p>For performance, only one sync adapter will be initialized within this application's context.
- * <p>
- * <p>Note: The SyncService itself is not notified when a new sync occurs. It's role is to
+ * Service to handle account sync requests.
+ *
+ * The service is started as:
+ *  ContentResolver.requestSync(acc, Utils.SYNC_AUTHORITY, bundle);
+ *  ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
+ *
+ * For performance, only one sync adapter will be initialized within this application's context.
+ *
+ * Note: The SyncService itself is not notified when a new sync occurs. It's role is to
  * manage the lifecycle of our {@link SyncAdapter} and provide a handle to said SyncAdapter to the
  * OS on request.
  */

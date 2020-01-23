@@ -16,6 +16,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -27,6 +28,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -37,6 +39,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import androidx.preference.PreferenceManager;
+import co.tinode.tindroid.account.ContactsObserver;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
@@ -51,6 +54,8 @@ public class TindroidApp extends Application {
     private static final String TAG = "TindroidApp";
 
     private static TindroidApp sContext;
+
+    private static ContentObserver sContactsObserver = null;
 
     // The Tinode cache is linked from here so it's never garbage collected.
     @SuppressWarnings("unused, FieldCanBeLocal")
@@ -209,7 +214,7 @@ public class TindroidApp extends Application {
         @Override
         protected Void doInBackground(String... uidWrapper) {
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
-            final Account account = UiUtils.getSavedAccount(TindroidApp.this, accountManager, uidWrapper[0]);
+            final Account account = Utils.getSavedAccount(TindroidApp.this, accountManager, uidWrapper[0]);
             if (account != null) {
                 // Check if sync is enabled.
                 if (ContentResolver.getMasterSyncAutomatically()) {
@@ -223,7 +228,7 @@ public class TindroidApp extends Application {
                 Date expires = null;
                 try {
                     token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-                    String strExp =accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
+                    String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
                     // FIXME: remove this check when all clients are updated.
                     if (!TextUtils.isEmpty(strExp)) {
                         expires = new Date(Long.parseLong(strExp));
@@ -263,6 +268,9 @@ public class TindroidApp extends Application {
                     accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
                     accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
                             String.valueOf(tinode.getAuthTokenExpiration().getTime()));
+                    startWatchingContacts(account);
+                    // Trigger sync to be sure contacts are up to date.
+                    ContentResolver.requestSync(account, Utils.SYNC_AUTHORITY, null);
                 } catch (IOException ex) {
                     Log.d(TAG, "Network failure during login", ex);
                     // Do not invalidate token on network failure.
@@ -271,7 +279,7 @@ public class TindroidApp extends Application {
                     // Login failed due to invalid (expired) token or missing/disabled account.
                     accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
                     // Force new login.
-                    BaseDb.getInstance().logout();
+                    UiUtils.doLogout();
                     // 409 Already authenticated should not be possible here.
                 } catch (Exception ex) {
                     Log.e(TAG, "Other failure during login", ex);
@@ -280,9 +288,24 @@ public class TindroidApp extends Application {
             } else {
                 Log.i(TAG, "Account not found or no permission to access accounts");
                 // Force new login in case account existed before but was deleted.
-                BaseDb.getInstance().logout();
+                UiUtils.doLogout();
             }
             return null;
+        }
+    }
+
+    static synchronized void startWatchingContacts(Account acc) {
+        if (sContactsObserver != null) {
+            sContactsObserver = new ContactsObserver(acc);
+            // Observer which triggers sync when contacts change.
+            sContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI,
+                    true, sContactsObserver);
+        }
+    }
+
+    static synchronized void stopWatchingContacts() {
+        if (sContactsObserver != null) {
+            sContext.getContentResolver().unregisterContentObserver(sContactsObserver);
         }
     }
 }

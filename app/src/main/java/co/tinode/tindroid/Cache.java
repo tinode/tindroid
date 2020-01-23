@@ -66,12 +66,12 @@ public class Cache {
     static void invalidate() {
         if (sTinode != null) {
             sTinode.logout();
+            sTinode = null;
             try {
                 FirebaseInstanceId
                         .getInstance()
                         .deleteInstanceId();
             } catch (IOException ignored) { }
-            sTinode = null;
         }
     }
 

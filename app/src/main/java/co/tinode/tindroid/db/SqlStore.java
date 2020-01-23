@@ -72,8 +72,7 @@ public class SqlStore implements Storage {
     }
 
     public void logout() {
-        AccountDb.deactivateAll(mDbh.getWritableDatabase());
-        mDbh.setUid(null, null);
+        mDbh.logout();
     }
 
     @Override

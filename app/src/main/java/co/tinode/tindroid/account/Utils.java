@@ -223,6 +223,34 @@ public class Utils {
         return String.valueOf(s.hashCode());
     }
 
+    public static Account getSavedAccount(final Context context, final AccountManager accountManager,
+                                          final @NonNull String uid) {
+        Account account = null;
+
+        // Run-time check for permission to GET_ACCOUNTS
+        if (!isPermissionGranted(context, android.Manifest.permission.GET_ACCOUNTS)) {
+            // Don't have permission. It's the first launch or the user denied access.
+            // Fail and go to full login. We should not ask for permission on the splash screen.
+            Log.d(TAG, "NO permission to get accounts");
+            return null;
+        }
+
+        // Have permission to access accounts. Let's find out if we already have a suitable account.
+        // If one is not found, go to full login. It will create an account with suitable name.
+        final Account[] availableAccounts = accountManager.getAccountsByType(ACCOUNT_TYPE);
+        if (availableAccounts.length > 0) {
+            // Found some accounts, let's find the one with the right name
+            for (Account acc : availableAccounts) {
+                if (uid.equals(acc.name)) {
+                    account = acc;
+                    break;
+                }
+            }
+        }
+
+        return account;
+    }
+
     public static class ContactHolder {
         List<String> emails;
         List<String> phones;
@@ -325,7 +353,7 @@ public class Utils {
         }
 
         final AccountManager am = AccountManager.get(context);
-        final Account account = UiUtils.getSavedAccount(context, am, uid);
+        final Account account = getSavedAccount(context, am, uid);
         if (account == null) {
             Log.w(TAG, "Data fetch failed: account not found");
             return true;
@@ -349,12 +377,14 @@ public class Utils {
         }
         if (topic.isAttached()) {
             Log.d(TAG, "Topic is already attached");
-            // No need to fetch: topic is already subscribed and got data notification through normal channel.
-            return false;
+            // No need to fetch: topic is already subscribed and got data through normal channel.
+            // Assuming that data was available.
+            return true;
         }
 
         boolean dataAvailable = false;
         if (topic.getSeq() < seq) {
+            dataAvailable = true;
             // Won't fetch if anything throws.
             try {
                 // Will return immediately if it's already connected.
@@ -370,7 +400,6 @@ public class Utils {
                     // Fully asynchronous. We don't need to do anything with the result.
                     // The new data will be automatically saved.
                     topic.subscribe(null, builder.withLaterData(24).withLaterDel(24).build(), true);
-                    dataAvailable = true;
                     topic.leave();
                 }
             } catch (Exception ex) {
