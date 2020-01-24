@@ -293,7 +293,7 @@ public class MessageActivity extends AppCompatActivity {
         topicDetach();
 
         // Stop handling read messages
-        mNoteReadHandler.removeCallbacksAndMessages(null);
+        mNoteReadHandler.removeMessages(0);
     }
 
     private void topicAttach(boolean interactive) {
@@ -621,16 +621,13 @@ public class MessageActivity extends AppCompatActivity {
 
     // Schedule a delayed {note what="read"} notification.
     void sendNoteRead(int seq) {
-        Message msg = new Message();
-        msg.arg1 = seq;
-        msg.obj = mTopicName;
+        Message msg = mNoteReadHandler.obtainMessage(0, seq, 0, mTopicName);
         mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
     }
 
     // Handler which sends "read" notifications for received messages.
     private static class NoteHandler extends Handler {
         WeakReference<MessageActivity> ref;
-
         NoteHandler(MessageActivity activity) {
             ref = new WeakReference<>(activity);
         }
@@ -642,16 +639,29 @@ public class MessageActivity extends AppCompatActivity {
                 return;
             }
 
+            if (activity.mTopic == null) {
+                return;
+            }
+
             // If messages fragment is not visible don't send the notification.
             if (!activity.isFragmentVisible(FRAGMENT_MESSAGES)) {
                 return;
             }
+
+            // Don't send a notification if more notifications are pending. This avoids the case of acking
+            // every {data} message in a large batch.
+            // It may pose a problem if a later message is acked first (msg[1].seq > msg[2].seq), but that
+            // should not happen.
+            if (hasMessages(0)) {
+                return;
+            }
+
             String topicName = (String) msg.obj;
             if (topicName.equals(activity.mTopic.getName())) {
                 activity.mTopic.noteRead(msg.arg1);
             }
         }
-    };
+    }
 
     /**
      * Utility class to send messages queued while offline.
