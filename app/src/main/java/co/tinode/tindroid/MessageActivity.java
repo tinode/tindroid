@@ -648,7 +648,7 @@ public class MessageActivity extends AppCompatActivity {
             }
             String topicName = (String) msg.obj;
             if (topicName.equals(activity.mTopic.getName())) {
-                activity.mTopic.noteRead();
+                activity.mTopic.noteRead(msg.arg1);
             }
         }
     };
