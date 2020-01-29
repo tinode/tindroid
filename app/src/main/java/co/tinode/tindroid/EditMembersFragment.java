@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -173,8 +174,11 @@ public class EditMembersFragment extends Fragment {
             return;
         }
 
-        LoaderManager.getInstance(activity).restartLoader(LOADER_ID,
-                null, mContactsLoaderCallback);
+        if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+            LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
+        } else {
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, UiUtils.READ_CONTACTS_PERMISSION);
+        }
     }
 
     private void updateContacts(final Activity activity) {
