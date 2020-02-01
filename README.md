@@ -34,7 +34,7 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 ## Not done yet:
 
 * End-to-end encryption.
-* No support for multiple servers.
+* No support for switching between multiple backends.
 * Mentions, hashtags.
 * Replying or forwarding messages.
 * Previews not generated for videos, audio, links or docs.
