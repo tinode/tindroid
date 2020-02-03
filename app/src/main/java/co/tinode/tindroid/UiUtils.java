@@ -168,7 +168,7 @@ public class UiUtils {
             avatarDrawable = new LetterTileDrawable(activity)
                     .setLetterAndColor(name, uid)
                     .setContactTypeAndColor(Topic.getTopicTypeByName(uid) == Topic.TopicType.P2P ?
-                            LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP);
+                            LetterTileDrawable.ContactType.PERSON : LetterTileDrawable.ContactType.GROUP);
         }
         AnimationDrawable typing = (AnimationDrawable)
                 activity.getResources().getDrawable(R.drawable.typing_indicator);
@@ -504,7 +504,7 @@ public class UiUtils {
             LetterTileDrawable drawable = new LetterTileDrawable(context);
             drawable.setContactTypeAndColor(
                     Topic.getTopicTypeByName(address) == Topic.TopicType.P2P ?
-                            LetterTileDrawable.TYPE_PERSON : LetterTileDrawable.TYPE_GROUP)
+                            LetterTileDrawable.ContactType.PERSON : LetterTileDrawable.ContactType.GROUP)
                     .setLetterAndColor(name, address)
                     .setIsCircular(true);
             return drawable;

@@ -34,6 +34,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 
 import static androidx.core.content.ContextCompat.checkSelfPermission;
 
@@ -82,8 +83,7 @@ public class Utils {
      * The results are ordered by 'data1' field.
      *
      * @param resolver content resolver to use.
-     * @param flags bit flags indicating types f contacts to fetch.
-     *
+     * @param flags    bit flags indicating types f contacts to fetch.
      * @return contacts
      */
     static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver, int flags) {
@@ -117,7 +117,7 @@ public class Utils {
 
         StringBuilder sel = new StringBuilder(Data.MIMETYPE);
         sel.append(" IN (");
-        for (int i=0; i<args.size(); i++) {
+        for (int i = 0; i < args.size(); i++) {
             sel.append("?,");
         }
         // Strip final comma.
@@ -331,36 +331,55 @@ public class Utils {
                 checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
-    /**
-     * Fetch messages (and maybe topic description and subscriptions) in background.
-     *
-     * This method SHOULD NOT be called on UI thread.
-     *
-     * @param context context to use for resources.
-     * @param topicName name of the topic to sync.
-     * @param seq sequence ID of the new message to fetch.
-     * @return true if new data was available or data status was unknown, false if no data was available.
-     */
-    public static boolean backgroundDataFetch(Context context, String topicName, int seq) {
-        Log.d(TAG, "Background fetch for " + topicName);
-
+    private static boolean loginNow(Context context) {
         String uid = BaseDb.getInstance().getUid();
         if (TextUtils.isEmpty(uid)) {
             Log.w(TAG, "Data fetch failed: not logged in");
             // Unknown if data is available, assuming it is.
-            return true;
+            return false;
         }
 
         final AccountManager am = AccountManager.get(context);
         final Account account = getSavedAccount(context, am, uid);
         if (account == null) {
             Log.w(TAG, "Data fetch failed: account not found");
-            return true;
+            return false;
         }
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(context));
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
+
+        final Tinode tinode = Cache.getTinode();
+
+        try {
+            // Will return immediately if it's already connected.
+            tinode.connect(hostName, tls).getResult();
+
+            String token = AccountManager.get(context).blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
+
+            tinode.loginToken(token).getResult();
+        }  catch (Exception ex) {
+            Log.w(TAG, "Failed to connect to server", ex);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Fetch messages (and maybe topic description and subscriptions) in background.
+     *
+     * This method SHOULD NOT be called on UI thread.
+     *
+     * @param context   context to use for resources.
+     * @param topicName name of the topic to sync.
+     * @param seq       sequence ID of the new message to fetch.
+     * @return true if new data was available or data status was unknown, false if no data was available.
+     */
+    public static boolean backgroundDataFetch(Context context, String topicName, int seq) {
+        Log.d(TAG, "Fetching messages for " + topicName);
+
         final Tinode tinode = Cache.getTinode();
         // noinspection unchecked
         ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
@@ -384,15 +403,7 @@ public class Utils {
         boolean dataAvailable = false;
         if (topic.getSeq() < seq) {
             dataAvailable = true;
-            // Won't fetch if anything throws.
-            try {
-                // Will return immediately if it's already connected.
-                tinode.connect(hostName, tls).getResult();
-
-                String token = AccountManager.get(context).blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-
-                tinode.loginToken(token).getResult();
-
+            if (loginNow(context)) {
                 // Check again if topic has attached while we tried to connect. It does not guarantee that there
                 // is no race condition to subscribe.
                 if (!topic.isAttached()) {
@@ -401,13 +412,40 @@ public class Utils {
                     topic.subscribe(null, builder.withLaterData(24).withLaterDel(24).build(), true);
                     topic.leave();
                 }
-            } catch (Exception ex) {
-                Log.w(TAG, "Failed to sync messages on push. Topic=" + topicName);
-                // TODO: hand sync over to Worker.
             }
-        } else {
-            Log.d(TAG, "All messages are already received: oldSeq=" + topic.getSeq() + "; newSeq="+seq);
         }
         return dataAvailable;
+    }
+
+    /**
+     * Fetch description of a topic (or user) in background.
+     *
+     * This method SHOULD NOT be called on UI thread.
+     *
+     * @param context   context to use for resources.
+     * @param topicName name of the topic to sync.
+     * @return true if new data was available or data status was unknown, false if no data was available.
+     */
+    public static void backgroundDescFetch(Context context, String topicName) {
+        Log.d(TAG, "Fetching description for " + topicName);
+
+        final Tinode tinode = Cache.getTinode();
+        if (tinode.getTopic(topicName) != null) {
+            // Ignoring notification for a known topic.
+            return;
+        }
+
+        if (!loginNow(context)) {
+            // Failed to connect or to login.
+            return;
+        }
+
+        // Fetch description without subscribing.
+        try {
+            // Wait for result. Tinode will save new topic to DB.
+            tinode.getMeta(topicName, MsgGetMeta.desc()).getResult();
+        } catch (Exception ignored) { }
+
+        return;
     }
 }

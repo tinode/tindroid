@@ -22,6 +22,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
+import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
@@ -29,9 +30,11 @@ import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
 
@@ -42,15 +45,24 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "FBaseMessagingService";
 
-    // Width and height of the large icon (avatar)
+    // Width and height of the large icon (avatar).
     private static final int AVATAR_SIZE = 128;
 
-    private static Bitmap makeLargeIcon(Resources res, Bitmap bmp) {
+    private static Bitmap makeLargeIcon(Context context, Bitmap bmp, Topic.TopicType tp, String name, String id) {
+        Resources res = context.getResources();
+        Bitmap scaled;
         if (bmp != null) {
-            Bitmap scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
-            return new RoundImageDrawable(res, scaled).getRoundedBitmap();
+            scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
+
+        } else {
+            scaled = new LetterTileDrawable(context)
+                    .setContactTypeAndColor(tp == Topic.TopicType.GRP ?
+                            LetterTileDrawable.ContactType.GROUP :
+                            LetterTileDrawable.ContactType.PERSON)
+                    .setLetterAndColor(name, id)
+                    .getBitmap(AVATAR_SIZE, AVATAR_SIZE);
         }
-        return null;
+        return new RoundImageDrawable(res, scaled).getRoundedBitmap();
     }
 
     @Override
@@ -66,6 +78,26 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         Log.d(TAG, "From: " + remoteMessage.getFrom());
+
+        // New message notification (msg):
+        // - P2P
+        //   Title: <sender name> || 'Unknown'
+        //   Icon: <sender avatar> || (*)
+        //   Body: <message content> || 'New message'
+        // - GRP
+        //   Title: <topic name> || 'Unknown'
+        //   Icon: <sender avatar> || (*)
+        //   Body: <sender name>: <message content> || 'New message'
+        //
+        // New subscription notification (sub):
+        // - P2P
+        //   Title: 'New chat'
+        //   Icon: <sender avatar> || (*)
+        //   Body: <sender name> || 'Unknown'
+        // - GRP
+        //   Title: 'New chat' ('by ' <sender name> || None)
+        //   Icon: <group avatar> || (*)
+        //   Body: <group name> || 'Unknown'
 
         String title = null;
         String body = null;
@@ -90,48 +122,114 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 return;
             }
 
-            // Check and maybe download new messages right away *before* showing the notification.
-            String seqStr = data.get("seq");
-            if (seqStr != null) {
-                // If there was no data to fetch, the notification does not need to be shown.
-                if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr))) {
-                    Log.d(TAG, "No new data. Skipping notification.");
-                    return;
-                }
-            }
-
-            Storage store = BaseDb.getInstance().getStore();
-            // Fetch locally stored contacts
-            User<VxCard> sender = (User<VxCard>) store.userGet(data.get("xfrom"));
-            String senderName  = (sender == null || sender.pub == null) ?
-                    getResources().getString(R.string.sender_unknown) : sender.pub.fn;
-            Bitmap senderIcon = (sender == null || sender.pub == null) ?
-                    null : makeLargeIcon(getResources(), sender.pub.getBitmap());
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
-            if (tp == Topic.TopicType.P2P) {
-                // P2P message
-                title = senderName;
-                body = data.get("content");
-                avatar = senderIcon;
-
-            } else if (tp == Topic.TopicType.GRP) {
-                // Group message
-
-                ComTopic<VxCard> topic = (ComTopic<VxCard>) store.topicGet(null, topicName);
-                if (topic == null) {
-                    Log.w(TAG, "Unknown topic: " + topicName);
-                    return;
-                }
-
-                if (topic.getPub() != null) {
-                    title = topic.getPub().fn;
-                    body = senderName + ": " + data.get("content");
-                    avatar = senderIcon;
-                }
-            } else {
+            if (tp != Topic.TopicType.P2P && tp != Topic.TopicType.GRP) {
                 Log.w(TAG, "Unexpected topic type=" + tp);
                 return;
             }
+
+            // Try to resolve sender using locally stored contacts.
+            final Tinode tinode = Cache.getTinode();
+            String senderId = data.get("xfrom");
+            User<VxCard> sender = tinode.getUser(senderId);
+            if (sender == null) {
+                // If sender is not found, try to fetch description from the server.
+                Utils.backgroundDescFetch(this, senderId);
+                sender = tinode.getUser(senderId);
+            }
+
+            // Assign sender's name and avatar.
+            VxCard pub = sender == null ? null : sender.pub;
+            String senderName;
+            Bitmap senderIcon;
+            if (pub == null) {
+                senderName = getResources().getString(R.string.sender_unknown);
+                senderIcon = makeLargeIcon(this, null, Topic.TopicType.P2P, null, senderId);
+            } else {
+                senderName = pub.fn;
+                senderIcon = makeLargeIcon(this, pub.getBitmap(), Topic.TopicType.P2P, senderName, senderId);
+            }
+
+            // Check notification type: message, subscription.
+            String what = data.get("what");
+            if (TextUtils.isEmpty(what) || what.equals("msg")) {
+                // Message notification.
+
+                // Check and maybe download new messages right away *before* showing the notification.
+                String seqStr = data.get("seq");
+                if (seqStr != null) {
+                    // If there was no data to fetch, the notification does not need to be shown.
+                    if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr))) {
+                        Log.d(TAG, "No new data. Skipping notification.");
+                        return;
+                    }
+                }
+
+                avatar = senderIcon;
+                body = data.get("content");
+                if (TextUtils.isEmpty(body)) {
+                    body = getResources().getString(R.string.notification_channel_name);
+                }
+
+                if (tp == Topic.TopicType.P2P) {
+                    // P2P message
+                    title = senderName;
+                } else {
+                    // Group message
+                    ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
+                    if (topic == null) {
+                        // We already tried to attach to topic and get its description. If it's not available
+                        // just give up.
+                        Log.w(TAG, "Unknown topic: " + topicName);
+                        return;
+                    }
+
+                    if (topic.getPub() != null) {
+                        title = topic.getPub().fn;
+                        if (TextUtils.isEmpty(title)) {
+                            title = getResources().getString(R.string.placeholder_topic_title);
+                        }
+                        body = senderName + ": " + body;
+                    }
+                }
+
+            } else if (what.equals("sub")) {
+                // Subscription notification.
+
+                // Check if this is a known topic.
+                ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
+                if (topic != null) {
+                    Log.w(TAG, "Duplicate invitation: " + topicName);
+                    return;
+                }
+
+                // Legitimate subscription to a new topic.
+                Utils.backgroundDescFetch(getApplicationContext(), topicName);
+                title = getResources().getString(R.string.request_new_chat_title);
+                if (tp == Topic.TopicType.P2P) {
+                    // P2P message
+                    body = senderName;
+                    avatar = senderIcon;
+
+                } else {
+                    // Group message
+                    topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
+                    if (topic == null) {
+                        Log.w(TAG, "Failed to get topic description: " + topicName);
+                        return;
+                    }
+
+                    pub = topic.getPub();
+                    if (pub == null) {
+                        body = getResources().getString(R.string.sender_unknown);
+                        avatar = makeLargeIcon(this, null, tp, null, topicName);
+                    } else {
+                        body = pub.fn;
+                        avatar = makeLargeIcon(this, pub.getBitmap(), tp, body, topicName);
+                    }
+                }
+            }
+
         } else if (remoteMessage.getNotification() != null) {
             RemoteMessage.Notification data = remoteMessage.getNotification();
             Log.d(TAG, "RemoteMessage Body: " + data.getBody());

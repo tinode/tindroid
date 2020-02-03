@@ -73,7 +73,7 @@ public class MsgGetMeta {
         buildWhat();
     }
 
-    protected MsgGetMeta(String what) {
+    private MsgGetMeta(String what) {
         this.what = what;
     }
 

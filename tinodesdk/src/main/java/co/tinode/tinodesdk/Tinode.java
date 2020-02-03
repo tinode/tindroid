@@ -1411,7 +1411,7 @@ public class Tinode {
      * Low-level request to query topic for metadata. A {@link Topic#getMeta} should be normally
      * used instead.
      *
-     * @param topicName name of the topic to publish to
+     * @param topicName name of the topic to query.
      * @param query     metadata query
      * @return PromisedReply of the reply ctrl or meta message
      */
@@ -1775,7 +1775,7 @@ public class Tinode {
      * @return {@link User} object or null if no such user is found in local cache.
      */
     @SuppressWarnings("unchecked")
-    <SP> User<SP> getUser(String uid) {
+    public <SP> User<SP> getUser(String uid) {
         User<SP> user = mUsers.get(uid);
         if (user == null && mStore != null) {
             user = mStore.userGet(uid);

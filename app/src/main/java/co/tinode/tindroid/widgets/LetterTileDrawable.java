@@ -17,6 +17,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
 
 import co.tinode.tindroid.R;
+import co.tinode.tinodesdk.model.VCard;
 
 /**
  * A drawable that encapsulates all the functionality needed to display a letter tile to
@@ -29,9 +30,10 @@ public class LetterTileDrawable extends Drawable {
     /**
      * Contact type constants
      */
-    public static final int TYPE_PERSON = 1;
-    public static final int TYPE_GROUP = 2;
-    public static final int TYPE_DEFAULT = TYPE_PERSON;
+    public enum ContactType {
+        PERSON, GROUP;
+    }
+    private static final ContactType TYPE_DEFAULT = ContactType.PERSON;
 
     /**
      * Reusable components to avoid new allocations
@@ -54,7 +56,7 @@ public class LetterTileDrawable extends Drawable {
     private static Bitmap DEFAULT_GROUP_AVATAR;
 
     private final Paint mPaint;
-    private int mContactType = TYPE_DEFAULT;
+    private ContactType mContactType = TYPE_DEFAULT;
     private float mScale = 0.7f;
     private float mOffset = 0.0f;
     private boolean mIsCircle = true;
@@ -83,43 +85,6 @@ public class LetterTileDrawable extends Drawable {
         mColor = sDefaultColor;
     }
 
-    /**
-     * Attempt to create a drawable from the given vector drawable resource id, and the convert drawable
-     * to bitmap
-     * @param context context
-     * @param drawableId vector drawable resource id
-     * @return bitmap extracted from the drawable.
-     */
-    private static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
-        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
-        if (drawable == null) {
-            throw new IllegalStateException("getBitmapFromVectorDrawable failed: null drawable");
-        }
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            drawable = (DrawableCompat.wrap(drawable)).mutate();
-        }
-
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-
-        return bitmap;
-    }
-
-    private static Bitmap getBitmapForContactType(int contactType) {
-        switch (contactType) {
-            case TYPE_PERSON:
-                return DEFAULT_PERSON_AVATAR;
-            case TYPE_GROUP:
-                return DEFAULT_GROUP_AVATAR;
-            default:
-                return DEFAULT_PERSON_AVATAR;
-        }
-    }
-
     @Override
     public void draw(@NonNull final Canvas canvas) {
         final Rect bounds = getBounds();
@@ -128,86 +93,6 @@ public class LetterTileDrawable extends Drawable {
         }
         // Draw letter tile.
         drawLetterTile(canvas);
-    }
-
-    /**
-     * Draw the bitmap onto the canvas at the current bounds taking into account the current scale.
-     */
-    private void drawBitmap(final Bitmap bitmap, final int width, final int height,
-                            final Canvas canvas) {
-        // The bitmap should be drawn in the middle of the canvas without changing its width to
-        // height ratio.
-        final Rect destRect = copyBounds();
-        // Crop the destination bounds into a square, scaled and offset as appropriate
-        final int halfLength = (int) (mScale * Math.min(destRect.width(), destRect.height()) / 2);
-        destRect.set(destRect.centerX() - halfLength,
-                (int) (destRect.centerY() - halfLength + mOffset * destRect.height()),
-                destRect.centerX() + halfLength,
-                (int) (destRect.centerY() + halfLength + mOffset * destRect.height()));
-        // Source rectangle remains the entire bounds of the source bitmap.
-
-        sRect.set(0, 0, width, height);
-
-        canvas.drawBitmap(bitmap, sRect, destRect, mPaint);
-    }
-
-    private void drawLetterTile(final Canvas canvas) {
-        // Draw background color.
-        sPaint.setColor(mColor);
-        sPaint.setAlpha(mPaint.getAlpha());
-
-        final Rect bounds = getBounds();
-        final int minDimension = Math.min(bounds.width(), bounds.height());
-
-        if (mIsCircle) {
-            canvas.drawCircle(bounds.centerX(), bounds.centerY(), minDimension / 2.0f, sPaint);
-        } else {
-            canvas.drawRect(bounds, sPaint);
-        }
-
-        // Draw the first letter/digit
-        if (mLetter != null) {
-            // Draw letter or digit.
-            sFirstChar[0] = mLetter;
-            // Scale text by canvas bounds and user selected scaling factor
-            sPaint.setTextSize(mScale * sLetterToTileRatio * minDimension);
-            //sPaint.setTextSize(sTileLetterFontSize);
-            sPaint.getTextBounds(sFirstChar, 0, 1, sRect);
-            sPaint.setColor(mContactType == TYPE_PERSON ? sTileFontColorDark : sTileFontColorLight);
-            // Draw the letter in the canvas, vertically shifted up or down by the user-defined
-            // offset
-            canvas.drawText(sFirstChar, 0, 1, bounds.centerX(),
-                    bounds.centerY() + mOffset * bounds.height() - sRect.exactCenterY(),
-                    sPaint);
-        } else {
-            // Draw the default image if there is no letter/digit to be drawn
-            final Bitmap bitmap = getBitmapForContactType(mContactType);
-
-            drawBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(),
-                    canvas);
-        }
-    }
-
-    public int getColor() {
-        return mColor;
-    }
-
-    public LetterTileDrawable setColor(int color) {
-        mColor = color;
-        return this;
-    }
-
-    /**
-     * Returns a deterministic color based on the provided contact identifier string.
-     */
-    private int pickColor() {
-        if (mHashCode == 0) {
-            return sDefaultColor;
-        }
-
-        TypedArray colors = mContactType == TYPE_PERSON ? sColorsDark : sColorsLight;
-        final int color = mHashCode % colors.length();
-        return colors.getColor(color, sDefaultColor);
     }
 
     @Override
@@ -234,6 +119,60 @@ public class LetterTileDrawable extends Drawable {
     @Override
     public int getIntrinsicHeight() {
         return INTRINSIC_SIZE;
+    }
+
+    // Render LTD as a bitmap of the given size.
+    public Bitmap getBitmap(final int width, final int height) {
+        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+        setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        draw(canvas);
+        return bmp;
+    }
+
+    /**
+     * Attempt to create a drawable from the given vector drawable resource id, and the convert drawable
+     * to bitmap
+     * @param context context
+     * @param drawableId vector drawable resource id
+     * @return bitmap extracted from the drawable.
+     */
+    private static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (drawable == null) {
+            throw new IllegalStateException("getBitmapFromVectorDrawable failed: null drawable");
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            drawable = (DrawableCompat.wrap(drawable)).mutate();
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
+    }
+
+    private static Bitmap getBitmapForContactType(ContactType contactType) {
+        switch (contactType) {
+            case PERSON:
+            default:
+                return DEFAULT_PERSON_AVATAR;
+            case GROUP:
+                return DEFAULT_GROUP_AVATAR;
+        }
+    }
+
+    public int getColor() {
+        return mColor;
+    }
+
+    public LetterTileDrawable setColor(int color) {
+        mColor = color;
+        return this;
     }
 
     /**
@@ -281,14 +220,97 @@ public class LetterTileDrawable extends Drawable {
         return this;
     }
 
-    public LetterTileDrawable setContactTypeAndColor(int contactType) {
-        mContactType = contactType;
+    /**
+     * Change type of the tile: person or group.
+     * @param ct type of icon to use when the tile has no letter.
+     * @return this
+     */
+    public LetterTileDrawable setContactTypeAndColor(ContactType ct) {
+        mContactType = ct;
         mColor = pickColor();
         return this;
     }
 
+    /**
+     * Change shape of the tile: circular (default) or rectangular.
+     * @param isCircle true to make tile circular, false for rectangular.
+     * @return this
+     */
     public LetterTileDrawable setIsCircular(boolean isCircle) {
         mIsCircle = isCircle;
         return this;
+    }
+
+    // Private methods.
+
+    /**
+     * Draw the bitmap onto the canvas at the current bounds taking into account the current scale.
+     */
+    private void drawBitmap(final Bitmap bitmap, final int width, final int height,
+                            final Canvas canvas) {
+        // The bitmap should be drawn in the middle of the canvas without changing its width to
+        // height ratio.
+        final Rect destRect = copyBounds();
+        // Crop the destination bounds into a square, scaled and offset as appropriate
+        final int halfLength = (int) (mScale * Math.min(destRect.width(), destRect.height()) / 2);
+        destRect.set(destRect.centerX() - halfLength,
+                (int) (destRect.centerY() - halfLength + mOffset * destRect.height()),
+                destRect.centerX() + halfLength,
+                (int) (destRect.centerY() + halfLength + mOffset * destRect.height()));
+        // Source rectangle remains the entire bounds of the source bitmap.
+
+        sRect.set(0, 0, width, height);
+
+        canvas.drawBitmap(bitmap, sRect, destRect, mPaint);
+    }
+
+    private void drawLetterTile(final Canvas canvas) {
+        // Draw background color.
+        sPaint.setColor(mColor);
+        sPaint.setAlpha(mPaint.getAlpha());
+
+        final Rect bounds = getBounds();
+        final int minDimension = Math.min(bounds.width(), bounds.height());
+
+        if (mIsCircle) {
+            canvas.drawCircle(bounds.centerX(), bounds.centerY(), minDimension / 2.0f, sPaint);
+        } else {
+            canvas.drawRect(bounds, sPaint);
+        }
+
+        // Draw the first letter/digit
+        if (mLetter != null) {
+            // Draw letter or digit.
+            sFirstChar[0] = mLetter;
+            // Scale text by canvas bounds and user selected scaling factor
+            sPaint.setTextSize(mScale * sLetterToTileRatio * minDimension);
+            //sPaint.setTextSize(sTileLetterFontSize);
+            sPaint.getTextBounds(sFirstChar, 0, 1, sRect);
+            sPaint.setColor(mContactType == ContactType.PERSON ? sTileFontColorDark : sTileFontColorLight);
+            // Draw the letter in the canvas, vertically shifted up or down by the user-defined
+            // offset
+            canvas.drawText(sFirstChar, 0, 1, bounds.centerX(),
+                    bounds.centerY() + mOffset * bounds.height() - sRect.exactCenterY(),
+                    sPaint);
+        } else {
+            // Draw the default image if there is no letter/digit to be drawn
+            final Bitmap bitmap = getBitmapForContactType(mContactType);
+
+            drawBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(),
+                    canvas);
+        }
+    }
+
+    /**
+     * Returns a deterministic color based on the provided contact identifier string.
+     */
+    private int pickColor() {
+        if (mHashCode == 0) {
+            return sDefaultColor;
+        }
+
+        TypedArray colors = mContactType == ContactType.PERSON ? sColorsDark : sColorsLight;
+        final int color = mHashCode % colors.length();
+        return colors.getColor(color, sDefaultColor);
     }
 }
