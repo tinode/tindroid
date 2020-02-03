@@ -18,6 +18,8 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.google.firebase.messaging.RemoteMessage;
+
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.URI;
@@ -262,10 +264,23 @@ public class MessageActivity extends AppCompatActivity {
         return true;
     }
 
-    // Get topic name from Intent it was launched with (push notification, other app, other activity).
+    // Get topic name from Intent the Activity was launched with (push notification, other app, other activity).
     private String readTopicNameFromIntent(Intent intent) {
         // Check if the activity was launched by internally-generated intent.
         String name = intent.getStringExtra("topic");
+        if (!TextUtils.isEmpty(name)) {
+            return name;
+        }
+
+        // Check if activity was launched from a background push notification.
+        RemoteMessage msg = intent.getParcelableExtra("msg");
+        if (msg != null) {
+            RemoteMessage.Notification notification = msg.getNotification();
+            if (notification != null) {
+                return notification.getTag();
+            }
+        }
+
         if (TextUtils.isEmpty(name)) {
             // mTopicName is empty, so this is an external intent
             Uri contactUri = intent.getData();
@@ -274,7 +289,7 @@ public class MessageActivity extends AppCompatActivity {
                         new String[]{Utils.DATA_PID}, null, null, null);
                 if (cursor != null) {
                     if (cursor.moveToFirst()) {
-                        mTopicName = cursor.getString(cursor.getColumnIndex(Utils.DATA_PID));
+                        name = cursor.getString(cursor.getColumnIndex(Utils.DATA_PID));
                     }
                     cursor.close();
                 }

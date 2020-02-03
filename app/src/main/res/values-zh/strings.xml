@@ -168,6 +168,7 @@
     <string name="invalid_confirmation_code">无效验证码</string>
     <string name="notification_channel_name">新消息</string>
     <string name="notification_channel_description">收到新消息</string>
+    <string name="new_message">新消息</string>
     <string name="request_pass_reset_title">密码重置</string>
     <string name="request_pass_reset">请求验证码对应 %1$s:</string>
     <string name="validated_address_to_use">已验证 %1$s 将验证码发送至</string>
@@ -187,6 +188,7 @@
     <string name="new_chat_accept">接受</string>
     <string name="new_chat_ignore">忽略</string>
     <string name="new_chat_block">屏蔽</string>
+    <string name="new_chat">新聊天</string>
     <string name="messages_not_readable">无法访问新消息</string>
     <string name="content_deleted">内容已删除</string>
     <string name="peers_messaging_disabled">对方消息已禁用</string>

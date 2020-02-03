@@ -168,7 +168,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 avatar = senderIcon;
                 body = data.get("content");
                 if (TextUtils.isEmpty(body)) {
-                    body = getResources().getString(R.string.notification_channel_name);
+                    body = getResources().getString(R.string.new_message);
                 }
 
                 if (tp == Topic.TopicType.P2P) {
@@ -205,7 +205,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
                 // Legitimate subscription to a new topic.
                 Utils.backgroundDescFetch(getApplicationContext(), topicName);
-                title = getResources().getString(R.string.request_new_chat_title);
+                title = getResources().getString(R.string.new_chat);
                 if (tp == Topic.TopicType.P2P) {
                     // P2P message
                     body = senderName;

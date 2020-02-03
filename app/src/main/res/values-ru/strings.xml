@@ -50,6 +50,7 @@
     <string name="cancelled">отменено</string>
     <string name="invalid_file">Невозможно прикрепить этот файл</string>
     <string name="notification_channel_name">Новое сообщение</string>
+    <string name="new_message">Новое сообщение</string>
     <string name="notification_channel_description">Получено новое сообщение</string>
     <string name="request_pass_reset_title">Сменить пароль</string>
     <string name="request_pass_reset">Запросить код на %1$s</string>
@@ -163,6 +164,7 @@
     <string name="new_chat_accept">Принять</string>
     <string name="new_chat_ignore">Игнорировать</string>
     <string name="new_chat_block">Заблокировать</string>
+    <string name="new_chat">Новый чат</string>
     <string name="messages_not_readable">Нет доступа к новым сообщениям</string>
     <string name="peers_messaging_disabled">Чат заблокирован у корреспондента</string>
     <string name="action_enable">Разблокировать</string>

@@ -104,6 +104,12 @@
                     android:mimeType="vnd.android.cursor.item/vnd.co.tinode.im" />
             </intent-filter>
 
+            <intent-filter>
+                <!-- this is used when a AndroidNotification is provided in an FCM push message -->
+                <action android:name=".MessageActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
         </activity>
 
         <activity
