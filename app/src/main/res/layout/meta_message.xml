@@ -40,5 +40,5 @@
             tools:text="Lorem ipsum"
             tools:ignore="RtlSymmetry"/>
 
- </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

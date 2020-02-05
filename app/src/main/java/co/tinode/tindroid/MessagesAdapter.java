@@ -11,14 +11,17 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.loader.app.LoaderManager;
@@ -36,6 +39,8 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.IconMarginSpan;
 import android.text.style.StyleSpan;
 import android.util.Base64;
 import android.util.Log;
@@ -108,6 +113,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+
+    private static Spanned sInvalidContent = null;
 
     private MessageActivity mActivity;
     private RecyclerView mRecyclerView;
@@ -432,8 +439,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 (m.content != null && m.content.getEntReferences() != null);
 
         mSpanFormatterClicker.setPosition(position);
-        holder.mText.setText(SpanFormatter.toSpanned(holder.mText, m.content,
-                disableEnt ? null : mSpanFormatterClicker));
+        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, disableEnt ? null : mSpanFormatterClicker);
+        if (text.length() == 0) {
+            text = invalidContentSpanned(mActivity);
+        }
+
+        holder.mText.setText(text);
         if (SpanFormatter.hasClickableSpans(m.content)) {
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
             holder.mText.setLinksClickable(true);
@@ -487,7 +498,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         holder.mAvatar.setImageDrawable(
                                 new LetterTileDrawable(mActivity)
                                         .setLetterAndColor(sub.pub.fn, sub.user)
-                                        .setContactTypeAndColor(LetterTileDrawable.TYPE_PERSON));
+                                        .setContactTypeAndColor(LetterTileDrawable.ContactType.PERSON));
                     }
                 }
 
@@ -555,6 +566,22 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             }
         });
+    }
+
+    // Generates "( ! ) invalid content" message when Drafty fails to represent content.
+    private static Spanned invalidContentSpanned(Context ctx) {
+        if (sInvalidContent != null) {
+            return sInvalidContent;
+        }
+        SpannableString span = new SpannableString(ctx.getString(R.string.invalid_content));
+        span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
+                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_error_gray);
+        span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
+                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sInvalidContent = span;
+        return span;
     }
 
     // Must match position-to-item of getItemId.

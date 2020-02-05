@@ -218,4 +218,5 @@
     <string name="content_deleted">сообщения удалены</string>
     <string name="image_caption_hint">Название изображения</string>
     <string name="action_download">Сохранить</string>
+    <string name="invalid_content">сообщение не читается</string>
 </resources>

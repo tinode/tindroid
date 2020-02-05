@@ -250,4 +250,5 @@
     <string name="image_caption_hint">Image caption</string>
     <string name="action_download">Download</string>
     <string name="tinode_image" translatable="false">tinode_image</string>
+    <string name="invalid_content">invalid content</string>
 </resources>

@@ -238,4 +238,5 @@
     <string name="default_contact_name">Tinode用户 %1$s</string>
     <string name="image_caption_hint">图片标题</string>
     <string name="action_download">保存</string>
+    <string name="invalid_content">无效内容</string>
 </resources>

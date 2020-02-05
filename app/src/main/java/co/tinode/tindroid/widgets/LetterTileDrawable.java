@@ -131,8 +131,8 @@ public class LetterTileDrawable extends Drawable {
     }
 
     /**
-     * Attempt to create a drawable from the given vector drawable resource id, and the convert drawable
-     * to bitmap
+     * Load vector drawable from the given resource id, then convert drawable to bitmap.
+     *
      * @param context context
      * @param drawableId vector drawable resource id
      * @return bitmap extracted from the drawable.

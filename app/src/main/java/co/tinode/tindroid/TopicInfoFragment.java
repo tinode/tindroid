@@ -673,8 +673,9 @@ public class TopicInfoFragment extends Fragment {
                     new LetterTileDrawable(requireContext())
                             .setIsCircular(true)
                             .setContactTypeAndColor(
-                                    mTopic.getTopicType() == Topic.TopicType.P2P ? LetterTileDrawable.TYPE_PERSON :
-                                                LetterTileDrawable.TYPE_GROUP)
+                                    mTopic.getTopicType() == Topic.TopicType.P2P ?
+                                            LetterTileDrawable.ContactType.PERSON :
+                                            LetterTileDrawable.ContactType.GROUP)
                             .setLetterAndColor(pub != null ? pub.fn : null, mTopic.getName()));
         }
 

@@ -500,7 +500,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     }
                 }
             }
-            if (cStyle != null || pStyle != null) {
+            if (spanned.length() > 0 && (cStyle != null || pStyle != null)) {
                 spanned.setSpan(cStyle != null ? cStyle : pStyle,
                         0, spanned.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
