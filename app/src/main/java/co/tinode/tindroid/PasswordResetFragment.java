@@ -28,12 +28,6 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
     public PasswordResetFragment() {
     }
 
-    public void setMethod(String method) {
-        Bundle args = new Bundle();
-        args.putString(ARG_KEY, method);
-        setArguments(args);
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -383,7 +383,6 @@ public class MessagesFragment extends Fragment
         Bundle args = getArguments();
         if (args != null) {
             args.putString(MESSAGE_TO_SEND, draft);
-            setArguments(args);
         }
     }
 

@@ -370,7 +370,7 @@ public class UiUtils {
         }
 
         final Activity activity = fragment.getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
