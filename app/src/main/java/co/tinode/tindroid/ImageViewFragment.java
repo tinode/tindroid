@@ -45,9 +45,9 @@ public class ImageViewFragment extends Fragment {
     private static final String TAG = "ImageViewFragment";
 
     // The matrix actually used for scaling.
-    private Matrix mMatrix;
+    private Matrix mMatrix = null;
     // Working matrix for pre-testing image bounds.
-    private Matrix mWorkingMatrix;
+    private Matrix mWorkingMatrix = null;
     // Initial image bounds before any zooming and scaling.
     private RectF mInitialRect;
     // Screen bounds
@@ -74,6 +74,7 @@ public class ImageViewFragment extends Fragment {
         GestureDetector.OnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float dX, float dY) {
+
                 mWorkingMatrix.postTranslate(-dX, -dY);
                 // Ignore pan if the image is too small. It should be pinned to the center of the screen.
                 // If it's large, make sure it covers the entire screen.
@@ -125,6 +126,11 @@ public class ImageViewFragment extends Fragment {
 
         view.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
+                if (mWorkingMatrix == null) {
+                    // The image is invalid. Disable scrolling/panning.
+                    return false;
+                }
+
                 mGestureDetector.onTouchEvent(event);
                 mScaleGestureDetector.onTouchEvent(event);
                 return true;
