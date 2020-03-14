@@ -42,5 +42,5 @@ dependencies {
     api 'com.fasterxml.jackson.core:jackson-databind:2.10.3'
     api 'com.fasterxml.jackson.core:jackson-core:2.10.3'
     api 'com.fasterxml.jackson.core:jackson-annotations:2.10.3'
-    api 'org.java-websocket:Java-WebSocket:1.4.0'
+    api 'org.java-websocket:Java-WebSocket:1.4.1'
 }
