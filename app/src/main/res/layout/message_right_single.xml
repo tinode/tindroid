@@ -49,7 +49,7 @@
                         android:layout_height="wrap_content"
                         android:paddingLeft="4dp"
                         android:paddingRight="4dp"
-                        android:textColor="@color/colorTextSecondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="11sp"
                         tools:ignore="SmallSp"
                         tools:text="Jun 11 22:17"/>
@@ -61,7 +61,7 @@
                         android:layout_gravity="center_vertical"
                         android:paddingEnd="3dp"
                         android:paddingStart="5dp"
-                        android:tint="@color/colorTextSecondary"
+                        android:tint="?android:attr/textColorSecondary"
                         tools:ignore="SmallSp"
                         tools:src="@drawable/ic_visibility"/>
 

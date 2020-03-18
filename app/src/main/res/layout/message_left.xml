@@ -42,7 +42,7 @@
                 android:layout_gravity="end"
                 android:paddingLeft="4dp"
                 android:paddingRight="4dp"
-                android:textColor="@color/colorTextSecondary"
+                android:textColor="?android:attr/textColorSecondary"
                 android:textSize="11sp"
                 tools:ignore="SmallSp"
                 android:clickable="false"

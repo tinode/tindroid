@@ -36,7 +36,7 @@
             android:minWidth="100dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            android:textColor="@color/colorTextSecondary"
+            android:textColor="?android:attr/textColorSecondary"
             style="@style/textMetaBubble"
             tools:text="Lorem ipsum"
             tools:ignore="RtlSymmetry"/>

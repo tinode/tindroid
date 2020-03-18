@@ -51,7 +51,7 @@
     </style>
 
     <style name="textSecondary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
-        <item name="android:textColor">@color/colorTextSecondary</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
     <style name="sectionTitleStyle" parent="@android:style/TextAppearance.DeviceDefault.Medium">
@@ -62,7 +62,7 @@
     </style>
 
     <style name="textMetaBubble">
-        <item name="android:textColor">@color/colorTextSecondary</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
         <item name="android:textSize">14sp</item>
     </style>
 
