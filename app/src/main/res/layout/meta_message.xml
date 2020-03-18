@@ -22,6 +22,7 @@
             android:visibility="gone"
             android:layout_width="18dp"
             android:layout_height="18dp"
+            android:layout_gravity="center_vertical"
             app:srcCompat="@drawable/ic_block_gray"
             tools:ignore="ContentDescription" />
 
