@@ -188,7 +188,9 @@ public class UiUtils {
         layers.setId(2, LOGO_LAYER_TYPING);
         toolbar.setLogo(layers);
         Rect b = toolbar.getLogo().getBounds();
-        typing.setBounds(b.right - b.width() / 4, b.bottom - b.height() / 4, b.right, b.bottom);
+        if (!b.isEmpty()) {
+            typing.setBounds(b.right - b.width() / 4, b.bottom - b.height() / 4, b.right, b.bottom);
+        }
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -206,9 +208,13 @@ public class UiUtils {
             return null;
         }
 
+        Rect b = logo.getBounds();
+        if (b.isEmpty()) {
+            return null;
+        }
+
         final AnimationDrawable typing = (AnimationDrawable) ((LayerDrawable) logo)
                 .findDrawableByLayerId(LOGO_LAYER_TYPING);
-        Rect b = logo.getBounds();
         typing.setBounds(b.right - b.width() / 4, b.bottom - b.height() / 4, b.right, b.bottom);
         typing.setVisible(true, false);
         typing.setAlpha(255);
