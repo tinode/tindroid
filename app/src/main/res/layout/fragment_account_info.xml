@@ -169,7 +169,7 @@
                 android:contentDescription="@string/manage"
                 android:drawablePadding="4sp"
                 android:text="@string/manage"
-                android:textColor="@color/colorTextPrimary"
+                android:textColor="?android:attr/textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_edit_black"/>
 
             <com.google.android.flexbox.FlexboxLayout
@@ -209,7 +209,7 @@
                 android:contentDescription="@string/add_contact"
                 android:drawablePadding="4sp"
                 android:text="@string/add_contact"
-                android:textColor="@color/colorTextPrimary"
+                android:textColor="?android:attr/textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_add_black"/>
 
             <View
@@ -237,7 +237,7 @@
                     android:contentDescription="@string/change_password"
                     android:drawablePadding="4sp"
                     android:text="@string/change_password"
-                    android:textColor="@color/colorTextPrimary"
+                    android:textColor="?android:attr/textColorPrimary"
                     app:drawableStartCompat="@drawable/ic_lock_outline"/>
 
                 <Button

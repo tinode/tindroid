@@ -29,7 +29,7 @@
                 android:maxWidth="280dp"
                 android:minWidth="140dp"
                 android:paddingStart="8dp"
-                android:textColor="@color/colorTextPrimary"
+                android:textColor="?android:attr/textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
 

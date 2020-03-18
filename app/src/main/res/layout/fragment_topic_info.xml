@@ -276,7 +276,7 @@
                 android:contentDescription="@string/manage"
                 android:drawablePadding="4sp"
                 android:text="@string/manage"
-                android:textColor="@color/colorTextPrimary"
+                android:textColor="?android:attr/textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_edit_black"/>
 
             <com.google.android.flexbox.FlexboxLayout
@@ -308,7 +308,7 @@
                 android:layout_height="wrap_content"
                 android:drawablePadding="4sp"
                 android:text="@string/clear_messages"
-                android:textColor="@color/colorTextPrimary"
+                android:textColor="?android:attr/textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_delete"/>
 
             <Button
@@ -381,7 +381,7 @@
                 android:contentDescription="@string/manage_members"
                 android:drawablePadding="4sp"
                 android:text="@string/add_members"
-                android:textColor="@color/colorTextPrimary"
+                android:textColor="?android:attr/textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_person_add"/>
 
             <androidx.recyclerview.widget.RecyclerView

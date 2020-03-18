@@ -11,7 +11,7 @@
     android:layout_marginRight="@dimen/label_margin"
     android:layout_marginBottom="@dimen/label_margin"
     android:paddingBottom="1.3dp"
-    android:textColor="@color/colorTextPrimary"
+    android:textColor="?android:attr/textColorPrimary"
     android:textSize="14sp"
     android:typeface="monospace"
     tools:text="basic:alice"

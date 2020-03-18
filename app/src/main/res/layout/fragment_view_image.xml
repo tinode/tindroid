@@ -49,7 +49,7 @@
                 android:layout_weight="1"
                 android:hint="@string/image_caption_hint"
                 android:imeOptions="actionSend"
-                android:textColor="@color/colorTextPrimary"
+                android:textColor="?android:attr/textColorPrimary"
                 android:inputType="textMultiLine|textCapSentences"
                 android:maxLines="3"
                 android:importantForAutofill="no" />
