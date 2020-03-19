@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <bitmap
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:src="@drawable/ignasi_pattern_s"
+    android:src="@drawable/bg_messages"
     android:tileMode="repeat"
     android:dither="true" />

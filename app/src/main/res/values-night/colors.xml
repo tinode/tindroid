@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorMessageBubbleMine">#FF202020</color>
+    <color name="colorMessageBubbleOther">#FF002008</color>
+    <color name="colorMessageBubbleMeta">#FF000820</color>
+
+    <color name="colorOffline">#FF999900</color>
+</resources>
