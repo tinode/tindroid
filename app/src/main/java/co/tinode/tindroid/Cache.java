@@ -55,7 +55,9 @@ public class Cache {
                 .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
                     @Override
                     public void onSuccess(InstanceIdResult instanceIdResult) {
-                        sTinode.setDeviceToken(instanceIdResult.getToken());
+                        if (sTinode != null) {
+                            sTinode.setDeviceToken(instanceIdResult.getToken());
+                        }
                     }
                 });
         }
