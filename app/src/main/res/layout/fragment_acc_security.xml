@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/activity_default_margin"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/buttonChangePassword"
+        style="?attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/change_password"
+        android:drawablePadding="4sp"
+        android:text="@string/change_password"
+        android:textColor="@color/colorTextPrimary"
+        app:drawableStartCompat="@drawable/ic_lock_outline" />
+
+    <Button
+        android:id="@+id/buttonLogout"
+        style="?attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/logout"
+        android:drawablePadding="4sp"
+        android:text="@string/logout"
+        android:textColor="@color/colorDangerDark"
+        app:drawableStartCompat="@drawable/ic_exit_red" />
+
+    <Button
+        android:id="@+id/buttonLogout"
+        style="?attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/delete_account"
+        android:drawablePadding="4sp"
+        android:text="@string/delete_account"
+        android:textColor="@color/colorDangerDark"
+        android:drawableTint="@color/colorDangerDark"
+        app:drawableStartCompat="@drawable/ic_delete" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="@dimen/activity_padding"
+        android:layout_marginBottom="@dimen/activity_padding"
+        android:background="@color/grey" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp"/>
+
+    <TextView
+        style="@style/sectionTitleStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/default_permissions"/>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="@string/auth_permissions"/>
+
+        <TextView
+            android:id="@+id/authPermissions"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/dotted_line"
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:fontFamily="monospace"
+            android:textIsSelectable="false"
+            android:typeface="monospace"
+            tools:text="RWPD"/>
+
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="@string/anon_permissions"/>
+
+        <TextView
+            android:id="@+id/anonPermissions"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/dotted_line"
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:fontFamily="monospace"
+            android:textIsSelectable="false"
+            android:typeface="monospace"
+            tools:text="RWPD"/>
+
+    </LinearLayout>
+
+</LinearLayout>

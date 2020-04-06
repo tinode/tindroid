@@ -208,6 +208,9 @@
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Пользовательское соглашение</a>]]></string>
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Обратная связь</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Политика конфиденциальности</a>]]></string>
+    <string name="incognito_mode_enabled">Режим инкогнито</string>
+    <string name="about_the_app">О приложении</string>
+
     <string name="button_hint_start_new_chat">Начать новый чат</string>
     <string name="app_server">Сервер</string>
 
@@ -219,4 +222,7 @@
     <string name="image_caption_hint">Название изображения</string>
     <string name="action_download">Сохранить</string>
     <string name="invalid_content">сообщение не читается</string>
+
+    <string name="general">Общие</string>
+    <string name="delete_account">Удалить аккаунт</string>
 </resources>
