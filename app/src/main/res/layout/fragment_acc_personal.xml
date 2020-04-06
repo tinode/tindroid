@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/activity_default_margin">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/imageAvatar"
+        android:layout_width="@dimen/avatar_size_large"
+        android:layout_height="@dimen/avatar_size_large"
+        android:layout_margin="4sp"
+        android:layout_centerHorizontal="true"
+        android:clickable="true"
+        android:contentDescription="@string/avatar"
+        android:focusable="true"
+        app:srcCompat="@drawable/ic_person_grey" />
+
+    <Button
+        android:id="@+id/uploadAvatar"
+        android:layout_width="48sp"
+        android:layout_height="48sp"
+        android:layout_alignBottom="@id/imageAvatar"
+        android:layout_alignRight="@id/imageAvatar"
+        android:layout_margin="2sp"
+        android:background="@drawable/pill_counter"
+        android:gravity="center"
+        android:paddingTop="10dp"
+        app:drawableTopCompat="@drawable/ic_add_a_photo" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/imageAvatar"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:orientation="vertical">
+
+        <TextView
+            style="@style/sectionTitleStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <TextView
+            android:id="@+id/topicTitle"
+            style="?android:textAppearanceLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/dialog_padding_left"
+            android:maxLines="2"
+            android:textIsSelectable="true"
+            tools:text="User name" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <TextView
+            android:id="@+id/topicSubtitle"
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/dialog_padding_left"
+            android:layout_below="@id/topicTitle"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textIsSelectable="true"
+            tools:text="Not sure what this should be" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <LinearLayout
+            android:id="@+id/topicAddressWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/imageAvatar">
+
+            <TextView
+                style="?android:textAppearanceMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingStart="@dimen/dialog_padding_left"
+                android:text="@string/address" />
+
+            <TextView
+                android:id="@+id/topicAddress"
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textIsSelectable="true"
+                android:typeface="monospace"
+                tools:text="usrfv2qrUr6vAd" />
+
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:background="@color/grey"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <TextView
+            style="@style/sectionTitleStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/contacts"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <LinearLayout
+            android:id="@+id/credList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <Button
+            android:id="@+id/buttonAddContact"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/add_contact"
+            android:drawablePadding="4sp"
+            android:text="@string/add_contact"
+            android:textColor="@color/colorTextPrimary"
+            app:drawableStartCompat="@drawable/ic_add_black"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:background="@color/grey"/>
+    </LinearLayout>
+
+</RelativeLayout>

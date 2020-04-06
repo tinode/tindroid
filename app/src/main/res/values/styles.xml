@@ -1,5 +1,4 @@
 <resources>
-
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionModeOverlay">true</item>
@@ -34,27 +33,27 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="contactListTextPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+    <style name="contactListTextPrimary" parent="@android:style/TextAppearance.Medium">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
-    <style name="textPrimarySmall" parent="@android:style/TextAppearance.DeviceDefault.Small">
+    <style name="textPrimarySmall" parent="@android:style/TextAppearance.Small">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
-    <style name="textPrimary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+    <style name="textPrimary" parent="@android:style/TextAppearance.Medium">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
-    <style name="textPrimaryLarge" parent="@android:style/TextAppearance.DeviceDefault.Large">
+    <style name="textPrimaryLarge" parent="@android:style/TextAppearance.Large">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
-    <style name="textSecondary" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+    <style name="textSecondary" parent="@android:style/TextAppearance.Medium">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
-    <style name="sectionTitleStyle" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+    <style name="sectionTitleStyle" parent="@android:style/TextAppearance.Medium">
         <item name="android:textColor">@color/colorPrimaryDark</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:layout_marginBottom">@dimen/activity_vertical_margin</item>
