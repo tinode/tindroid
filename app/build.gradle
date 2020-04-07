@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId "co.tinode.tindroidx"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 29
         vectorDrawables.useSupportLibrary = true
 
