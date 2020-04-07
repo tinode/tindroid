@@ -2,12 +2,6 @@ package co.tinode.tindroid;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import com.google.android.material.textfield.TextInputLayout;
-import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.ActionBar;
-import androidx.preference.PreferenceManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +9,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.material.textfield.TextInputLayout;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -99,7 +99,7 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
                 .thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) throws Exception {
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             return tinode.requestResetSecret("basic", method, value);
                         }
                     })

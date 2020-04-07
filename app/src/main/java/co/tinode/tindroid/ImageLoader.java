@@ -8,20 +8,18 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.collection.LruCache;
 import android.widget.ImageView;
 
-import com.google.android.gms.common.util.IOUtils;
-
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
+import androidx.annotation.NonNull;
+import androidx.collection.LruCache;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 
 /**
@@ -134,7 +132,13 @@ public abstract class ImageLoader {
         options.inJustDecodeBounds = true;
 
         // Must copy into memory otherwise the stream cannot be reset.
-        InputStream bais = new ByteArrayInputStream(IOUtils.toByteArray(is));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[0xFFFF];
+        for (int len = is.read(buffer); len != -1; len = is.read(buffer)) {
+            baos.write(buffer, 0, len);
+        }
+        baos.close();
+        InputStream bais = new ByteArrayInputStream(baos.toByteArray());
 
         BitmapFactory.decodeStream(bais, null, options);
         // Calculate inSampleSize
@@ -174,7 +178,7 @@ public abstract class ImageLoader {
 
             // Choose the smallest ratio as inSampleSize value, this will guarantee a final image
             // with both dimensions larger than or equal to the requested height and width.
-            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+            inSampleSize = Math.min(heightRatio, widthRatio);
 
             // This offers some additional logic in case the image has a strange
             // aspect ratio. For example, a panorama may have a much larger
@@ -275,11 +279,6 @@ public abstract class ImageLoader {
      * be paused when a ListView or GridView is being scrolled using a
      * {@link android.widget.AbsListView.OnScrollListener} to keep
      * scrolling smooth.
-     * <p>
-     * If work is paused, be sure setPauseWork(false) is called again
-     * before your fragment or activity is destroyed (for example during
-     * {@link android.app.Activity#onPause()}), or there is a risk the
-     * background thread will never finish.
      */
     void setPauseWork(boolean pauseWork) {
         synchronized (mPauseWorkLock) {

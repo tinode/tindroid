@@ -36,22 +36,11 @@
             tools:text="User name" />
 
         <TextView
-            android:id="@+id/topicSubtitle"
-            style="?android:textAppearanceMedium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/topicTitle"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textIsSelectable="true"
-            tools:text="Not sure what this should be" />
-
-        <TextView
             android:id="@+id/topicAddress"
             style="?android:textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/topicSubtitle"
+            android:layout_below="@id/topicTitle"
             android:fontFamily="monospace"
             android:textIsSelectable="true"
             android:typeface="monospace"

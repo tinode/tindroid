@@ -40,6 +40,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
     static final String FRAGMENT_ACC_NOTIFICATIONS = "acc_notifications";
     static final String FRAGMENT_ACC_PERSONAL = "acc_personal";
     static final String FRAGMENT_ACC_SECURITY = "acc_security";
+    static final String FRAGMENT_ACC_ABOUT = "acc_about";
     static final String FRAGMENT_ARCHIVE = "archive";
 
     private ContactsEventListener mTinodeListener = null;
@@ -150,6 +151,9 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                     break;
                 case FRAGMENT_ACC_SECURITY:
                     fragment = new AccSecurityFragment();
+                    break;
+                case FRAGMENT_ACC_ABOUT:
+                    fragment = new AccAboutFragment();
                     break;
                 case FRAGMENT_ARCHIVE:
                     fragment = new ChatsFragment();

@@ -105,7 +105,7 @@ public class StartChatActivity extends AppCompatActivity {
         mReadContactsPermissionsAlreadyRequested = true;
     }
 
-    private class PagerAdapter extends FragmentStatePagerAdapter {
+    private static class PagerAdapter extends FragmentStatePagerAdapter {
         Fragment mSearch;
         Fragment mCreateGroup;
         Fragment mById;

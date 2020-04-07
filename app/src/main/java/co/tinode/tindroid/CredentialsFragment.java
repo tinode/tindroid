@@ -1,11 +1,7 @@
 package co.tinode.tindroid;
 
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.ActionBar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +9,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.fragment.app.Fragment;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -26,10 +25,6 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
     private static final String TAG = "CredentialsFragment";
 
     private String mMethod = null;
-
-    public CredentialsFragment() {
-    }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

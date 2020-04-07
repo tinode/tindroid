@@ -400,11 +400,11 @@ public class UiUtils {
             width = width * AVATAR_SIZE / height;
             height = AVATAR_SIZE;
             // Sanity check
-            width = width > MAX_BITMAP_SIZE ? MAX_BITMAP_SIZE : width;
+            width = Math.min(width, MAX_BITMAP_SIZE);
         } else {
             height = height * AVATAR_SIZE / width;
             width = AVATAR_SIZE;
-            height = height > MAX_BITMAP_SIZE ? MAX_BITMAP_SIZE : height;
+            height = Math.min(height, MAX_BITMAP_SIZE);
         }
         // Scale up or down.
         bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
@@ -1034,7 +1034,7 @@ public class UiUtils {
 
                         long id;
                         try {
-                            id = Long.valueOf(docId);
+                            id = Long.parseLong(docId);
                         } catch (NumberFormatException e) {
                             Log.w(TAG, "Failed to parse document ID: " + docId);
                             return null;

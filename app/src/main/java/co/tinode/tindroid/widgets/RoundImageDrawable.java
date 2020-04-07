@@ -20,12 +20,7 @@ public class RoundImageDrawable extends BitmapDrawable {
     private RectF mRectF;
     private int mBitmapWidth;
     private int mBitmapHeight;
-/*
-    public RoundImageDrawable(Bitmap bmp) {
-        super(bmp);
-        init(bmp);
-    }
-*/
+
     public RoundImageDrawable(Resources res, Bitmap bmp) {
         super(res, bmp);
         init(bmp);

@@ -6,8 +6,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import androidx.annotation.NonNull;
 import android.text.style.ReplacementSpan;
+
+import androidx.annotation.NonNull;
 
 public class BorderedSpan extends ReplacementSpan {
     private static final String TAG = "BorderedSpan";
@@ -53,14 +54,13 @@ public class BorderedSpan extends ReplacementSpan {
         // Add ~2 char padding left and right.
         mWidth = mWidthActual * (len+4) / len;
         // Ensure minimum width of the button.
-        mWidth = mWidth < mMinButtonWidth ? mMinButtonWidth : mWidth;
+        mWidth = Math.max(mWidth, mMinButtonWidth);
         return mWidth;
     }
 
     @Override
     public void draw(@NonNull Canvas canvas, CharSequence text,
                      int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
-        float textHeight = paint.descent() - paint.ascent();
         RectF outline = new RectF(x, top, x + mWidth, bottom);
         outline.inset(SHADOW_SIZE * mDipSize, SHADOW_SIZE * mDipSize);
         // Draw colored background

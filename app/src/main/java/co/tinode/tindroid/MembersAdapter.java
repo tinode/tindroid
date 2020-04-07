@@ -89,7 +89,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         return append(new Member(unique, name, icon, removable));
     }
 
-    boolean append(Member user) {
+    private boolean append(Member user) {
         // Ensure uniqueness.
         for (int i = 0; i < mCurrentMembers.size(); i++) {
             if (user.unique.equals(mCurrentMembers.get(i).unique)) {

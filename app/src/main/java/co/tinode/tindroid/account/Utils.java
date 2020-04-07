@@ -28,7 +28,6 @@ import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.TindroidApp;
-import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;

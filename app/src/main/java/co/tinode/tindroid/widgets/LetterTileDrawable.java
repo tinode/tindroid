@@ -11,13 +11,12 @@ import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
-import android.text.TextUtils;
-
 import co.tinode.tindroid.R;
-import co.tinode.tinodesdk.model.VCard;
 
 /**
  * A drawable that encapsulates all the functionality needed to display a letter tile to
@@ -31,7 +30,7 @@ public class LetterTileDrawable extends Drawable {
      * Contact type constants
      */
     public enum ContactType {
-        PERSON, GROUP;
+        PERSON, GROUP
     }
     private static final ContactType TYPE_DEFAULT = ContactType.PERSON;
 

@@ -40,7 +40,7 @@ import static android.app.Activity.RESULT_OK;
  */
 public class AccPersonalFragment extends Fragment  implements ChatsActivity.FormUpdatable {
 
-    private static final String TAG = "AccountInfoFragment";
+    private static final String TAG = "AccPersonalFragment";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -143,13 +143,8 @@ public class AccPersonalFragment extends Fragment  implements ChatsActivity.Form
             }
 
             LinearLayout credList = activity.findViewById(R.id.credList);
-            while (credList.getChildCount() > 2) {
-                View v = credList.getChildAt(1);
-                if (v instanceof LinearLayout) {
-                    credList.removeViewAt(1);
-                } else {
-                    break;
-                }
+            while (credList.getChildCount() > 0) {
+                credList.removeViewAt(0);
             }
 
             Credential[] creds = me.getCreds();
@@ -182,7 +177,7 @@ public class AccPersonalFragment extends Fragment  implements ChatsActivity.Form
                             showDeleteCredential(cred.meth, cred.val);
                         }
                     });
-                    credList.addView(container, 1);
+                    credList.addView(container, 0);
                 }
             }
 
@@ -239,6 +234,7 @@ public class AccPersonalFragment extends Fragment  implements ChatsActivity.Form
                                             @Override
                                             public void run() {
                                                 final MeTopic me = Cache.getTinode().getMeTopic();
+                                                // noinspection unchecked
                                                 updateFormValues(activity, me);
                                             }
                                         });

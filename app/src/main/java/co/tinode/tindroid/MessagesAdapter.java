@@ -892,19 +892,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         @Override
         public void onLoadFinished(@NonNull Loader<Cursor> loader,
                                    Cursor cursor) {
-            switch (loader.getId()) {
-                case MESSAGES_QUERY_ID:
-                    swapCursor(cursor, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
-                    break;
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                swapCursor(cursor, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
             }
         }
 
         @Override
         public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-            switch (loader.getId()) {
-                case MESSAGES_QUERY_ID:
-                    swapCursor(null, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
-                    break;
+            if (loader.getId() == MESSAGES_QUERY_ID) {
+                swapCursor(null, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
             }
         }
     }

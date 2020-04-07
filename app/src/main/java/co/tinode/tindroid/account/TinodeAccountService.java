@@ -39,11 +39,11 @@ public class TinodeAccountService extends Service {
         return mAuthenticator.getIBinder();
     }
 
-    public class Authenticator extends AbstractAccountAuthenticator {
+    public static class Authenticator extends AbstractAccountAuthenticator {
         private static final String TAG = "TinodeAuthenticator";
         private final Context mContext;
 
-        public Authenticator(Context context) {
+        Authenticator(Context context) {
             super(context);
             mContext = context;
         }

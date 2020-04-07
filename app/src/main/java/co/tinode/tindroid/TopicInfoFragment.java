@@ -392,7 +392,6 @@ public class TopicInfoFragment extends Fragment {
         if (mTopic.isOwner()) {
             if (!TextUtils.isEmpty(title)) {
                 titleEditor.setText(title);
-                // noinspection ConstantConditions: false positive.
                 titleEditor.setSelection(title.length());
             }
         } else {

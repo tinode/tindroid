@@ -440,11 +440,9 @@ public class ContactsManager {
             case MOBILE:
                 return Phone.TYPE_MOBILE;
             case HOME:
-                return Phone.TYPE_HOME;
-            case WORK:
-                return Phone.TYPE_WORK;
             case PERSONAL:
                 return Phone.TYPE_HOME;
+            case WORK:
             case BUSINESS:
                 return Phone.TYPE_WORK;
         }

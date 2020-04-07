@@ -6,8 +6,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.NonNull;
-import androidx.appcompat.content.res.AppCompatResources;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
@@ -33,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.R;
 import co.tinode.tinodesdk.model.Drafty;
 
@@ -116,9 +116,9 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 float maxWidth = mViewport - IMAGE_H_PADDING * metrics.density;
 
                 // Make sure the scaled bitmap is no bigger than the viewport size;
-                float scaleX = (width < maxWidth ? width : maxWidth) / width;
-                float scaleY = (height < maxWidth * 0.75f ? height : maxWidth * 0.75f) / height;
-                float scale = scaleX < scaleY ? scaleX : scaleY;
+                float scaleX = Math.min(width, maxWidth) / width;
+                float scaleY = Math.min(height, maxWidth * 0.75f) / height;
+                float scale = Math.min(scaleX, scaleY);
 
                 bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
 

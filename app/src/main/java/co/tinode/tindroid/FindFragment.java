@@ -17,21 +17,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
-
-import androidx.appcompat.widget.ShareActionProvider;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.ShareActionProvider;
 import androidx.core.view.MenuItemCompat;
-import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.FndTopic;
@@ -208,14 +205,17 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return;
         }
 
+        final SearchManager searchManager =
+                (SearchManager) activity.getSystemService(Activity.SEARCH_SERVICE);
+
+        if (searchManager == null) {
+            return;
+        }
+
         // Setting up SearchView
 
         // Locate the search item
         MenuItem searchItem = menu.findItem(R.id.action_search);
-
-        // Retrieves the system search manager service
-        final SearchManager searchManager =
-                (SearchManager) activity.getSystemService(Activity.SEARCH_SERVICE);
 
         // Retrieves the SearchView from the search menu item
         final SearchView searchView = (SearchView) searchItem.getActionView();

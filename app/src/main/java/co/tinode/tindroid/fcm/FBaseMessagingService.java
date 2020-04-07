@@ -9,11 +9,6 @@ import android.graphics.Bitmap;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-
-import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -22,6 +17,10 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.MessageActivity;

@@ -227,7 +227,7 @@ class AttachmentUploader {
                     imageHeight = bmp.getHeight();
 
                     is = UiUtils.bitmapToStream(bmp, mimeType);
-                    fsize = (long) is.available();
+                    fsize = is.available();
                 }
             }
 
