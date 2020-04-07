@@ -15,7 +15,8 @@
         android:contentDescription="@string/change_password"
         android:drawablePadding="4sp"
         android:text="@string/change_password"
-        android:textColor="@color/colorTextPrimary"
+        android:drawableTint="?android:textColorPrimary"
+        android:textColor="?android:textColorPrimary"
         app:drawableStartCompat="@drawable/ic_lock_outline" />
 
     <Button
@@ -26,7 +27,8 @@
         android:contentDescription="@string/logout"
         android:drawablePadding="4sp"
         android:text="@string/logout"
-        android:textColor="@color/colorDangerDark"
+        android:drawableTint="@color/colorDanger"
+        android:textColor="@color/colorDanger"
         app:drawableStartCompat="@drawable/ic_exit_red" />
 
     <Button
@@ -37,8 +39,8 @@
         android:contentDescription="@string/delete_account"
         android:drawablePadding="4sp"
         android:text="@string/delete_account"
-        android:textColor="@color/colorDangerDark"
-        android:drawableTint="@color/colorDangerDark"
+        android:textColor="@color/colorDanger"
+        android:drawableTint="@color/colorDanger"
         app:drawableStartCompat="@drawable/ic_delete" />
 
     <View
@@ -76,7 +78,7 @@
 
         <TextView
             android:id="@+id/authPermissions"
-            android:textAppearance="?android:textAppearanceMedium"
+            android:textAppearance="?android:textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/dotted_line"
@@ -108,7 +110,7 @@
 
         <TextView
             android:id="@+id/anonPermissions"
-            android:textAppearance="?android:textAppearanceMedium"
+            android:textAppearance="?android:textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/dotted_line"
@@ -119,7 +121,5 @@
             android:textIsSelectable="false"
             android:typeface="monospace"
             tools:text="RWPD"/>
-
     </LinearLayout>
-
 </LinearLayout>

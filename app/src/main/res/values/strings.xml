@@ -217,7 +217,7 @@
     <string name="topic_archived">Archived</string>
     <string name="action_unarchive">Unarchive</string>
     <string name="action_invite">Invite</string>
-    <string name="tags_management">Tags (content discovery)</string>
+    <string name="tags_management">Tags</string>
     <string name="contacts">Contacts</string>
     <string name="add_contact">Add another</string>
     <string name="manage">Manage</string>
@@ -255,4 +255,10 @@
     <string name="about_the_app">About the Application</string>
     <string name="general">General</string>
     <string name="delete_account">Delete account</string>
+    <string name="help">Help</string>
+    <string name="security">Security</string>
+    <string name="notifications">Notifications</string>
+    <string name="user_tags_description">Other people will be able to find you by these tags</string>
+    <string name="help_explained">Support, legal, about</string>
+    <string name="security_explained">Password, permission, deleting account</string>
 </resources>

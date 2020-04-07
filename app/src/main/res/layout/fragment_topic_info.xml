@@ -318,7 +318,7 @@
                 android:layout_height="wrap_content"
                 android:drawablePadding="4sp"
                 android:text="@string/leave_conversation"
-                android:textColor="@color/colorDangerDark"
+                android:textColor="@color/colorDanger"
                 app:drawableStartCompat="@drawable/ic_exit_red"/>
 
             <Button
@@ -328,7 +328,7 @@
                 android:layout_height="wrap_content"
                 android:drawablePadding="4sp"
                 android:text="@string/block_contact"
-                android:textColor="@color/colorDangerDark"
+                android:textColor="@color/colorDanger"
                 app:drawableStartCompat="@drawable/ic_block_red"/>
 
             <Button
@@ -338,7 +338,7 @@
                 android:layout_height="wrap_content"
                 android:drawablePadding="4sp"
                 android:text="@string/report_contact"
-                android:textColor="@color/colorDangerDark"
+                android:textColor="@color/colorDanger"
                 app:drawableStartCompat="@drawable/ic_report_red"/>
 
             <Button
@@ -348,7 +348,7 @@
                 android:layout_height="wrap_content"
                 android:drawablePadding="4sp"
                 android:text="@string/report_group"
-                android:textColor="@color/colorDangerDark"
+                android:textColor="@color/colorDanger"
                 app:drawableStartCompat="@drawable/ic_report_red"/>
 
             <View

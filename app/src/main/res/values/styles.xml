@@ -38,36 +38,36 @@
     </style>
 
     <style name="textPrimarySmall" parent="@android:style/TextAppearance.Small">
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
     </style>
 
     <style name="textPrimary" parent="@android:style/TextAppearance.Medium">
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
     </style>
 
     <style name="textPrimaryLarge" parent="@android:style/TextAppearance.Large">
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
     </style>
 
     <style name="textSecondary" parent="@android:style/TextAppearance.Medium">
-        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:textColor">?android:textColorSecondary</item>
     </style>
 
     <style name="sectionTitleStyle" parent="@android:style/TextAppearance.Medium">
-        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textColor">@color/colorAccent</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:layout_marginBottom">@dimen/activity_vertical_margin</item>
         <item name="android:layout_marginTop">@dimen/activity_vertical_margin</item>
     </style>
 
     <style name="textMetaBubble">
-        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:textColor">?android:textColorSecondary</item>
         <item name="android:textSize">14sp</item>
     </style>
 
     <style name="ProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
         <item name="android:minHeight">12dip</item>
-        <item name="background">@color/colorLightGray</item>
+        <item name="background">@color/colorChipBackground</item>
     </style>
 
 </resources>

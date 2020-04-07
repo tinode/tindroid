@@ -9,9 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:layout_marginTop="@dimen/activity_padding"
-        android:layout_marginBottom="@dimen/activity_padding">
+        android:gravity="center_vertical">
 
         <ImageView
             android:tint="@color/colorAccent"
@@ -21,7 +19,7 @@
 
         <TextView
             android:id="@+id/contactUs"
-            android:textAppearance="?android:textAppearanceMedium"
+            android:textAppearance="?android:textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -29,12 +27,15 @@
             tools:text="Contact Us" />
     </LinearLayout>
 
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:layout_marginTop="@dimen/activity_padding"
-        android:layout_marginBottom="@dimen/activity_padding">
+        android:gravity="center_vertical">
+
         <ImageView
             android:tint="@color/colorAccent"
             android:layout_width="wrap_content"
@@ -50,16 +51,18 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="@dimen/activity_padding"
             android:layout_marginBottom="@dimen/activity_padding"
-            android:textAppearance="?android:textAppearanceMedium"
+            android:textAppearance="?android:textAppearanceLarge"
             android:text="@string/terms_of_use" />
     </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:layout_marginTop="@dimen/activity_padding"
-        android:layout_marginBottom="@dimen/activity_padding">
+        android:gravity="center_vertical">
         <ImageView
             android:tint="@color/colorAccent"
             android:layout_width="wrap_content"
@@ -74,22 +77,25 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="@dimen/activity_padding"
             android:layout_marginBottom="@dimen/activity_padding"
-            android:textAppearance="?android:textAppearanceMedium"
+            android:textAppearance="?android:textAppearanceLarge"
             android:text="@string/privacy_policy" />
     </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:layout_marginTop="@dimen/activity_padding"
-        android:layout_marginBottom="@dimen/activity_padding">
+        android:gravity="center_vertical">
 
         <ImageView
             android:tint="@color/colorAccent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_logo_push" />
+
         <TextView
             android:id="@+id/aboutTheApp"
             android:layout_below="@id/privacyPolicy"
@@ -98,7 +104,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="@dimen/activity_padding"
             android:layout_marginBottom="@dimen/activity_padding"
-            android:textAppearance="?android:textAppearanceMedium"
+            android:textAppearance="?android:textAppearanceLarge"
             android:text="@string/about_the_app" />
     </LinearLayout>
 </LinearLayout>

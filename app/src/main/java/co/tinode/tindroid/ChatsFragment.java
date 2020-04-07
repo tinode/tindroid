@@ -217,7 +217,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 return true;
 
             case R.id.action_settings:
-                activity.showFragment(ChatsActivity.FRAGMENT_EDIT_ACCOUNT);
+                activity.showFragment(ChatsActivity.FRAGMENT_ACCOUNT_INFO);
                 return true;
 
             case R.id.action_about:

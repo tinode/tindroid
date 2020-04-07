@@ -1,385 +1,163 @@
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="@dimen/activity_default_margin"
     android:background="?android:attr/colorBackground"
+    android:orientation="vertical"
     tools:context=".AccountInfoFragment">
 
-    <LinearLayout
+
+    <RelativeLayout
+        android:id="@+id/personal"
+        android:clickable="true"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/imageAvatar"
+            android:layout_width="@dimen/avatar_size_large"
+            android:layout_height="@dimen/avatar_size_large"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="4sp"
+            android:contentDescription="@string/avatar"
+            app:srcCompat="@drawable/ic_person_grey" />
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/imageAvatar"
-                android:layout_width="@dimen/avatar_size_large"
-                android:layout_height="@dimen/avatar_size_large"
-                android:layout_alignParentEnd="true"
-                android:layout_margin="4sp"
-                android:clickable="true"
-                android:contentDescription="@string/avatar"
-                android:focusable="true"
-                app:srcCompat="@drawable/ic_person_grey"/>
-
-            <Button
-                android:id="@+id/uploadAvatar"
-                android:layout_width="48sp"
-                android:layout_height="48sp"
-                android:layout_alignBottom="@id/imageAvatar"
-                android:layout_alignParentEnd="true"
-                android:layout_margin="2sp"
-                android:background="@drawable/pill_counter"
-                android:gravity="center"
-                android:paddingTop="10dp"
-                app:drawableTopCompat="@drawable/ic_add_a_photo"/>
-
-            <TextView
-                android:id="@+id/topicTitle"
-                style="@style/textPrimaryLarge"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_toStartOf="@id/imageAvatar"
-                android:maxLines="2"
-                android:textIsSelectable="true"
-                tools:text="User name"/>
-
-            <TextView
-                android:id="@+id/topicSubtitle"
-                style="@style/textSecondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/topicTitle"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textIsSelectable="true"
-                tools:text="Not sure what this should be"/>
-
-            <LinearLayout
-                android:id="@+id/topicAddressWrapper"
-                android:layout_below="@id/imageAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/address"/>
-
-                <TextView
-                    android:id="@+id/topicAddress"
-                    style="@style/textPrimarySmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="true"
-                    android:typeface="monospace"
-                    tools:text="usrfv2qrUr6vAd"/>
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_below="@id/topicAddressWrapper"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-
-        </RelativeLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
-                    android:text="@string/read_receipts_enabled"/>
-
-                <Switch
-                    android:id="@+id/switchReadReceipts"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"/>
-            </LinearLayout>
-
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
-                    android:text="@string/typing_notifications_enabled"/>
-
-                <Switch
-                    android:id="@+id/switchTypingNotifications"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="4dp"/>
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-
-        </LinearLayout>
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/topicTitle"
+            style="?android:textAppearanceLarge"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_alignParentTop="true"
+            android:layout_toStartOf="@id/imageAvatar"
+            android:maxLines="2"
+            android:textIsSelectable="true"
+            tools:text="User name" />
 
-            <TextView
-                style="@style/sectionTitleStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/tags_management"/>
-
-            <Button
-                android:id="@+id/buttonManageTags"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/manage"
-                android:drawablePadding="4sp"
-                android:text="@string/manage"
-                android:textColor="?android:attr/textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_edit_black"/>
-
-            <com.google.android.flexbox.FlexboxLayout
-                android:id="@+id/tagList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:flexWrap="wrap"
-                app:alignItems="flex_start"
-                app:alignContent="flex_start" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/credList"
+        <TextView
+            android:id="@+id/topicSubtitle"
+            style="?android:textAppearanceMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_below="@id/topicTitle"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textIsSelectable="true"
+            tools:text="Not sure what this should be" />
 
-            <TextView
-                style="@style/sectionTitleStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/contacts"/>
-
-            <Button
-                android:id="@+id/buttonAddContact"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/add_contact"
-                android:drawablePadding="4sp"
-                android:text="@string/add_contact"
-                android:textColor="?android:attr/textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_add_black"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/topicAddress"
+            style="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_below="@id/topicSubtitle"
+            android:fontFamily="monospace"
+            android:textIsSelectable="true"
+            android:typeface="monospace"
+            tools:text="usrfv2qrUr6vAd" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <Button
-                    android:id="@+id/buttonChangePassword"
-                    style="?attr/buttonBarButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/change_password"
-                    android:drawablePadding="4sp"
-                    android:text="@string/change_password"
-                    android:textColor="?android:attr/textColorPrimary"
-                    app:drawableStartCompat="@drawable/ic_lock_outline"/>
-
-                <Button
-                    android:id="@+id/buttonLogout"
-                    style="?attr/buttonBarButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/logout"
-                    android:drawablePadding="4sp"
-                    android:text="@string/logout"
-                    android:textColor="@color/colorDangerDark"
-                    app:drawableStartCompat="@drawable/ic_exit_red"/>
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-
-        </LinearLayout>
-
-        <LinearLayout
+        <View
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="0.5dp"
+            android:layout_below="@id/imageAvatar"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:background="@color/grey" />
 
-            <TextView
-                style="@style/sectionTitleStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/default_permissions"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
-                    android:text="@string/auth_permissions"/>
-
-                <TextView
-                    android:id="@+id/authPermissions"
-                    style="@style/textPrimarySmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/dotted_line"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:focusableInTouchMode="false"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="false"
-                    android:typeface="monospace"
-                    tools:text="RWPD"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
-                    android:text="@string/anon_permissions"/>
-
-                <TextView
-                    android:id="@+id/anonPermissions"
-                    style="@style/textPrimarySmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/dotted_line"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:focusableInTouchMode="false"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="false"
-                    android:typeface="monospace"
-                    tools:text="RWPD"/>
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-
-        </LinearLayout>
+    </RelativeLayout>
 
     <LinearLayout
+        android:id="@+id/notifications"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="?attr/listPreferredItemHeight"
+        android:clickable="true"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="@dimen/settings_icon_size"
+            android:layout_height="@dimen/settings_icon_size"
+            android:src="@drawable/ic_notifications"
+            android:tint="@color/colorAccent" />
 
         <TextView
-            style="@style/sectionTitleStyle"
+            style="?android:textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/legal"/>
-
-        <TextView
-            android:id="@+id/contactUs"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/contact_us"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            tools:text="Contact Us" />
-
-        <TextView
-            android:id="@+id/termsOfUse"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/terms_of_use"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            tools:text="Terms of Use"/>
-
-        <TextView
-            android:id="@+id/privacyPolicy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@string/privacy_policy"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            tools:text="Privacy Policy" />
+            android:layout_marginStart="8dp"
+            android:text="@string/notifications" />
 
     </LinearLayout>
 
-    </LinearLayout>
-</ScrollView>
+    <RelativeLayout
+        android:id="@+id/security"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/listPreferredItemHeight"
+        android:clickable="true"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/icon_security"
+            android:layout_width="@dimen/settings_icon_size"
+            android:layout_height="@dimen/settings_icon_size"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_security"
+            android:tint="@color/colorAccent" />
+
+        <TextView
+            android:id="@+id/security_text"
+            style="?android:textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/icon_security"
+            android:text="@string/security" />
+
+        <TextView
+            style="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/icon_security"
+            android:layout_below="@id/security_text"
+            android:text="@string/security_explained" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/help"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/listPreferredItemHeight"
+        android:clickable="true"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/icon_help"
+            android:layout_width="@dimen/settings_icon_size"
+            android:layout_height="@dimen/settings_icon_size"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_contact_support"
+            android:tint="@color/colorAccent" />
+
+        <TextView
+            android:id="@+id/help_text"
+            style="?android:textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/icon_help"
+            android:text="@string/help" />
+
+        <TextView
+            style="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/icon_help"
+            android:layout_below="@id/help_text"
+            android:text="@string/help_explained" />
+
+    </RelativeLayout>
+
+</LinearLayout>

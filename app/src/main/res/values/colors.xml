@@ -5,13 +5,15 @@
     <color name="white_50">#80FFFFFF</color>
 
     <color name="colorAccentLight">#E0F2F1</color>
-    <color name="colorAccent">#008577</color>
+    <color name="colorAccent">#00897B</color>
 
     <color name="colorPrimaryDark">#005662</color>
 
-    <color name="colorDangerDark">#B71C1C</color>
+    <color name="colorDanger">#B71C1C</color>
 
-    <color name="colorLightGray">#eeeeee</color>
+    <color name="colorChipBackground">#eeeeee</color>
+    <color name="colorChipBorder">#999999</color>
+
     <color name="colorGray">#cccccc</color>
     <color name="colorDarkerGray">#999999</color>
 

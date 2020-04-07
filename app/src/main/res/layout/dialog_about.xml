@@ -1,116 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/spacer_text"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:paddingTop="@dimen/activity_vertical_margin"
-        android:text="@string/app_name_full"
-        android:textAppearance="?android:attr/textAppearanceLarge"/>
+    android:layout_centerVertical="true">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center">
+        android:layout_centerInParent="true"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/spacer_text" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/app_version"
-            android:paddingEnd="8dp"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:ignore="RtlSymmetry" />
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:text="@string/app_name_full"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingEnd="8dp"
+                android:text="@string/app_version"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:ignore="RtlSymmetry" />
+
+            <TextView
+                android:id="@+id/app_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingEnd="8dp"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:ignore="RtlSymmetry"
+                tools:text="0.15.5-rc5" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:text="(" />
+
+            <TextView
+                android:id="@+id/app_build"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:text="850" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:text=")" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingEnd="8dp"
+                android:text="@string/app_server"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:ignore="RtlSymmetry" />
+
+            <TextView
+                android:id="@+id/app_server"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingEnd="8dp"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                tools:ignore="RtlSymmetry"
+                tools:text="https://api.tinode.co" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="128sp"
+            android:layout_height="128sp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/logo_src" />
 
         <TextView
-            android:id="@+id/app_version"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:paddingEnd="8dp"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:text="0.15.5-rc5"
-            tools:ignore="RtlSymmetry"/>
+            android:text="@string/copyright"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:text="(" />
+            android:autoLink="web"
+            android:text="@string/tinode_url"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
-        <TextView
-            android:id="@+id/app_build"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:text="850" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:text=")" />
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="@string/app_server"
-            android:paddingEnd="8dp"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:ignore="RtlSymmetry" />
-
-        <TextView
-            android:id="@+id/app_server"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:paddingEnd="8dp"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            tools:text="https://api.tinode.co"
-            tools:ignore="RtlSymmetry"/>
-
-    </LinearLayout>
-
-    <ImageView
-        android:layout_width="128sp"
-        android:layout_height="128sp"
-        android:layout_gravity="center"
-        android:contentDescription="@string/app_name"
-        android:src="@drawable/logo_src"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/copyright"
-        android:textAppearance="?android:attr/textAppearanceMedium"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:autoLink="web"
-        android:text="@string/tinode_url"
-        android:textAppearance="?android:attr/textAppearanceMedium"/>
-
-</LinearLayout>
+</RelativeLayout>

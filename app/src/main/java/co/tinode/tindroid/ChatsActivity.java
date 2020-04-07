@@ -3,18 +3,18 @@ package co.tinode.tindroid;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.os.Bundle;
-
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 
 import java.util.List;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
@@ -27,8 +27,6 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.Subscription;
 
-import co.tinode.tindroid.account.ContactsManager;
-
 /**
  * This activity owns 'me' topic.
  */
@@ -37,7 +35,11 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
     private static final String TAG = "ContactsActivity";
 
     static final String FRAGMENT_CHATLIST = "contacts";
-    static final String FRAGMENT_EDIT_ACCOUNT = "edit_account";
+    static final String FRAGMENT_ACCOUNT_INFO = "account_info";
+    static final String FRAGMENT_ACC_HELP = "acc_help";
+    static final String FRAGMENT_ACC_NOTIFICATIONS = "acc_notifications";
+    static final String FRAGMENT_ACC_PERSONAL = "acc_personal";
+    static final String FRAGMENT_ACC_SECURITY = "acc_security";
     static final String FRAGMENT_ARCHIVE = "archive";
 
     private ContactsEventListener mTinodeListener = null;
@@ -134,8 +136,20 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         FragmentTransaction trx = fm.beginTransaction();
         if (fragment == null) {
             switch (tag) {
-                case FRAGMENT_EDIT_ACCOUNT:
+                case FRAGMENT_ACCOUNT_INFO:
                     fragment = new AccountInfoFragment();
+                    break;
+                case FRAGMENT_ACC_HELP:
+                    fragment = new AccHelpFragment();
+                    break;
+                case FRAGMENT_ACC_NOTIFICATIONS:
+                    fragment = new AccNotificationsFragment();
+                    break;
+                case FRAGMENT_ACC_PERSONAL:
+                    fragment = new AccPersonalFragment();
+                    break;
+                case FRAGMENT_ACC_SECURITY:
+                    fragment = new AccSecurityFragment();
                     break;
                 case FRAGMENT_ARCHIVE:
                     fragment = new ChatsFragment();
@@ -167,17 +181,21 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         }
     }
 
+    interface FormUpdatable {
+        void updateFormValues(final AppCompatActivity activity, final MeTopic<VxCard> me);
+    }
+
     // This is called on Websocket thread.
     private class MeListener extends UiUtils.MeEventListener {
-
         private void updateAccountInfoFragment() {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    AccountInfoFragment fragment = (AccountInfoFragment) getSupportFragmentManager().
-                            findFragmentByTag(FRAGMENT_EDIT_ACCOUNT);
-                    if (fragment != null && fragment.isVisible()) {
-                        fragment.updateFormValues(ChatsActivity.this, mMeTopic);
+                    List<Fragment> fragments = getSupportFragmentManager().getFragments();
+                    for(Fragment f : fragments) {
+                        if (f != null && f.isVisible() && f instanceof FormUpdatable) {
+                            ((FormUpdatable) f).updateFormValues(ChatsActivity.this, mMeTopic);
+                        }
                     }
                 }
             });
