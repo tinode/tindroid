@@ -33,11 +33,6 @@ public class StartChatActivity extends AppCompatActivity {
     // Limit the number of times permissions are requested per session.
     private boolean mReadContactsPermissionsAlreadyRequested = false;
 
-    static {
-        // Otherwise crash on pre-Lollipop (API < 21)
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

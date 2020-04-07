@@ -375,7 +375,7 @@ public class Tinode {
             hostName = hostName.toLowerCase();
             // Check if host address has changed.
             newHost = !hostName.equals(mServerHost) || tls != mUseTLS;
-            // Save updated host name & security.
+            // Save updated host name & TLS setting.
             mServerHost = hostName;
             mUseTLS = tls;
         }
@@ -1454,7 +1454,7 @@ public class Tinode {
     }
 
     /**
-     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(List, boolean)} instead.
+     * Low-level request to delete messages from a topic. Use {@link Topic#delMessages(MsgRange[], boolean)} instead.
      *
      * @param topicName name of the topic to inform
      * @param ranges    delete all messages with ids these ranges
@@ -1465,7 +1465,7 @@ public class Tinode {
     }
 
     /**
-     * Low-level request to delete one message from a topic. Use {@link Topic#delMessages(List, boolean)} instead.
+     * Low-level request to delete one message from a topic. Use {@link Topic#delMessages(MsgRange[], boolean)} instead.
      *
      * @param topicName name of the topic to inform
      * @param seqId     seqID of the message to delete.
@@ -2019,7 +2019,7 @@ public class Tinode {
     }
 
     // Helper class which calls given method of all added EventListener(s).
-    private class ListenerNotifier {
+    private static class ListenerNotifier {
         private Vector<EventListener> listeners;
 
         ListenerNotifier() {

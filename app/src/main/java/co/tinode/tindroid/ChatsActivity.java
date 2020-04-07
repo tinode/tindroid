@@ -49,11 +49,6 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
     private Account mAccount;
 
-    static {
-        // Otherwise crash on pre-Lollipop (per-API 21)
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

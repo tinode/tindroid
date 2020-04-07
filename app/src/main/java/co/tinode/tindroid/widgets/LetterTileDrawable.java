@@ -142,10 +142,6 @@ public class LetterTileDrawable extends Drawable {
             throw new IllegalStateException("getBitmapFromVectorDrawable failed: null drawable");
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            drawable = (DrawableCompat.wrap(drawable)).mutate();
-        }
-
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
                 drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);

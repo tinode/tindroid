@@ -73,11 +73,6 @@ public class LoginActivity extends AppCompatActivity {
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
     private Bundle mResultBundle = null;
 
-    static {
-        // Otherwise crash on pre-Lollipop (per-API 21)
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

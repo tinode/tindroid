@@ -58,7 +58,6 @@ import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-
 /**
  * View to display a single conversation
  */
@@ -78,11 +77,6 @@ public class MessageActivity extends AppCompatActivity {
 
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
-
-    static {
-        // Otherwise crash on pre-Lollipop (per-API 21)
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-    }
 
     BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
         public void onReceive(Context ctxt, Intent intent) {
