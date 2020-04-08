@@ -1,6 +1,7 @@
 package co.tinode.tinodesdk.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Class describing default access to topic
@@ -33,8 +34,7 @@ public class Defacs implements Serializable {
 
         Defacs rhs = (Defacs) o;
 
-        return (auth  == null ? rhs.auth == null : auth.equals(rhs.auth)) &&
-                (anon  == null ? rhs.anon == null : anon.equals(rhs.anon));
+        return (Objects.equals(auth, rhs.auth)) && (Objects.equals(anon, rhs.anon));
     }
 
     public String getAuth() {

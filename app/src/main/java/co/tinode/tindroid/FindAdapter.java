@@ -105,8 +105,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        final LayoutInflater inflater = (LayoutInflater) parent.getContext()
-                .getSystemService(AppCompatActivity.LAYOUT_INFLATER_SERVICE);
+        final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(viewType, parent, false);
         switch (viewType) {
             case R.layout.not_found:

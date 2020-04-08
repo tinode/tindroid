@@ -38,7 +38,7 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment for editing current user details.
  */
-public class AccPersonalFragment extends Fragment  implements ChatsActivity.FormUpdatable {
+public class AccPersonalFragment extends Fragment implements ChatsActivity.FormUpdatable {
 
     private static final String TAG = "AccPersonalFragment";
 

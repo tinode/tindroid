@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Comparator;
 
 import co.tinode.tinodesdk.Tinode;
 

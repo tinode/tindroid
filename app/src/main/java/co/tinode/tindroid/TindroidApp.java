@@ -20,14 +20,9 @@ import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.AsyncTask;
 import android.os.Build;
-
-import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.ContactsContract;
@@ -40,13 +35,14 @@ import com.crashlytics.android.core.CrashlyticsCore;
 import java.io.IOException;
 import java.util.Date;
 
+import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.ContactsObserver;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
-
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -60,11 +56,13 @@ public class TindroidApp extends Application {
     private static ContentObserver sContactsObserver = null;
 
     // The Tinode cache is linked from here so it's never garbage collected.
-    @SuppressWarnings("unused, FieldCanBeLocal")
     private static Tinode sTinodeCache;
 
     private static String sAppVersion = null;
     private static int sAppBuild = 0;
+
+    private static String sServerHost = null;
+    private static boolean sUseTLS = false;
 
     public TindroidApp() {
         sContext = this;
@@ -119,13 +117,17 @@ public class TindroidApp extends Application {
 
         // Check if preferences already exist. If not, create them.
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-        String hostName = pref.getString("pref_hostName", null);
-        if (TextUtils.isEmpty(hostName)) {
+        sServerHost = pref.getString("pref_hostName", null);
+        if (TextUtils.isEmpty(sServerHost)) {
             // No preferences found. Save default values.
             SharedPreferences.Editor editor = pref.edit();
-            editor.putString("pref_hostName", getDefaultHostName(this));
-            editor.putBoolean("pref_useTLS", !isEmulator());
+            sServerHost = getDefaultHostName(this);
+            sUseTLS = getDefaultTLS();
+            editor.putString("pref_hostName", sServerHost);
+            editor.putBoolean("pref_useTLS", sUseTLS);
             editor.apply();
+        } else {
+            sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
 
         // Check if the app has an account already. If so, initialize the shared connection with the server.
@@ -160,6 +162,7 @@ public class TindroidApp extends Application {
 
     public static void retainTinodeCache(Tinode tinode) {
         sTinodeCache = tinode;
+        sTinodeCache.setServer(sServerHost, sUseTLS);
     }
 
     private void createNotificationChannel() {
@@ -198,9 +201,11 @@ public class TindroidApp extends Application {
 
         @Override
         protected Void doInBackground(String... uidWrapper) {
+            Log.i(TAG, "doInBackground uid="+uidWrapper[0]);
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
             final Account account = Utils.getSavedAccount(TindroidApp.this, accountManager, uidWrapper[0]);
             if (account != null) {
+                Log.i(TAG, "doInBackground got account");
                 // Check if sync is enabled.
                 if (ContentResolver.getMasterSyncAutomatically()) {
                     if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
@@ -212,9 +217,10 @@ public class TindroidApp extends Application {
                 String token = null;
                 Date expires = null;
                 try {
+                    Log.i(TAG, "doInBackground getting token");
                     token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
                     String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
-                    // FIXME: remove this check when all clients are updated.
+                    // FIXME: remove this check when all clients are updated; Apr 8, 2020.
                     if (!TextUtils.isEmpty(strExp)) {
                         expires = new Date(Long.parseLong(strExp));
                     }
@@ -226,54 +232,52 @@ public class TindroidApp extends Application {
                     Log.e(TAG, "Failure to login with saved account", e);
                 }
 
-                // FIXME: when all clients are updated, treat expires == null as a reason to reject.
-                if (TextUtils.isEmpty(token) || (expires != null && expires.before(new Date()))) {
-                    return null;
-                }
-
-                // Get server address.
-                final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
-                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(TindroidApp.this));
-                boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
-                if (TextUtils.isEmpty(hostName)) {
-                    // Something is misconfigured, use defaults.
-                    hostName = TindroidApp.getDefaultHostName(TindroidApp.this);
-                    tls = TindroidApp.getDefaultTLS();
-                }
-
-                // Connecting with synchronous calls because this is not the UI thread.
+                // Must instantiate tinode cache even if token == null. Otherwise logout won't work.
                 final Tinode tinode = Cache.getTinode();
-                tinode.setAutoLoginToken(token);
-                // Connect and login.
-                try {
-                    // Sync call throws on error.
-                    tinode.connect(hostName, tls).getResult();
+                // FIXME: when all clients are updated, treat expires == null as a reason to reject; Apr 8, 2020.
+                if (!TextUtils.isEmpty(token) && (expires != null && expires.after(new Date()))) {
+                    // Connecting with synchronous calls because this is not the UI thread.
+                    tinode.setAutoLoginToken(token);
+                    // Connect and login.
+                    try {
+                        // Sync call throws on error.
+                        tinode.connect(sServerHost, sUseTLS).getResult();
 
-                    // Logged in successfully. Save refreshed token for future use.
-                    accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
-                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
-                            String.valueOf(tinode.getAuthTokenExpiration().getTime()));
-                    startWatchingContacts(account);
-                    // Trigger sync to be sure contacts are up to date.
-                    UiUtils.requestImmediateContactsSync(account);
-                } catch (IOException ex) {
-                    Log.d(TAG, "Network failure during login", ex);
-                    // Do not invalidate token on network failure.
-                } catch (ServerResponseException ex) {
-                    Log.w(TAG, "Server rejected login sequence", ex);
-                    // Login failed due to invalid (expired) token or missing/disabled account.
-                    accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                        // Logged in successfully. Save refreshed token for future use.
+                        accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
+                                String.valueOf(tinode.getAuthTokenExpiration().getTime()));
+                        startWatchingContacts(account);
+                        // Trigger sync to be sure contacts are up to date.
+                        UiUtils.requestImmediateContactsSync(account);
+                        Log.i(TAG, "doInBackground connected OK");
+                    } catch (IOException ex) {
+                        Log.d(TAG, "Network failure during login", ex);
+                        // Do not invalidate token on network failure.
+                    } catch (ServerResponseException ex) {
+                        Log.w(TAG, "Server rejected login sequence", ex);
+                        // Login failed due to invalid (expired) token or missing/disabled account.
+                        accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                        // Force new login.
+                        UiUtils.doLogout(TindroidApp.this);
+                        // 409 Already authenticated should not be possible here.
+                    } catch (Exception ex) {
+                        Log.e(TAG, "Other failure during login", ex);
+                    }
+                } else {
+                    Log.i(TAG, "No token or expired token. Forcing re-login");
+                    if (!TextUtils.isEmpty(token)) {
+                        accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                    }
+                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
                     // Force new login.
-                    UiUtils.doLogout();
-                    // 409 Already authenticated should not be possible here.
-                } catch (Exception ex) {
-                    Log.e(TAG, "Other failure during login", ex);
+                    UiUtils.doLogout(TindroidApp.this);
                 }
-
             } else {
                 Log.i(TAG, "Account not found or no permission to access accounts");
                 // Force new login in case account existed before but was deleted.
-                UiUtils.doLogout();
+                UiUtils.doLogout(TindroidApp.this);
             }
             return null;
         }

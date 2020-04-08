@@ -64,7 +64,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -287,9 +286,13 @@ public class UiUtils {
         activity.finish();
     }
 
-    static void doLogout() {
+    static void doLogout(Context context) {
         TindroidApp.stopWatchingContacts();
         Cache.invalidate();
+
+        Intent intent = new Intent(context, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        context.startActivity(intent);
     }
 
     static synchronized void requestImmediateContactsSync(Account acc) {
@@ -306,7 +309,8 @@ public class UiUtils {
     }
 
     // Creates or updates the Android account associated with the given UID.
-    static void updateAndroidAccount(final Context context, final String uid, final String secret, final String token) {
+    static void updateAndroidAccount(final Context context, final String uid, final String secret,
+                                     final String token, final Date tokenExpires) {
         final AccountManager am = AccountManager.get(context);
         final Account acc = Utils.createAccount(uid);
         // It's OK to call even if the account already exists.
@@ -316,6 +320,7 @@ public class UiUtils {
         }
         if (!TextUtils.isEmpty(token)) {
             am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
+            am.setUserData(acc, Utils.TOKEN_EXPIRATION_TIME, String.valueOf(tokenExpires.getTime()));
         }
     }
 
@@ -940,11 +945,8 @@ public class UiUtils {
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
                             int errCode = sre.getCode();
-                            if (errCode == 404) {
-                                UiUtils.doLogout();
-                                Intent intent = new Intent(activity, LoginActivity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                activity.startActivity(intent);
+                            if (errCode == 401 || errCode == 403 || errCode == 404) {
+                                doLogout(activity);
                                 activity.finish();
                             } else if (errCode == 502 && "cluster unreachable".equals(sre.getMessage())) {
                                 // Must reset connection.
@@ -1196,7 +1198,7 @@ public class UiUtils {
             if (code <= 0) {
                 Log.d(TAG, "Network error");
             } else {
-                Log.d(TAG, "Tinode error: " + code);
+                Log.d(TAG, "onDisconnect error: " + code);
             }
             setConnected(false);
         }

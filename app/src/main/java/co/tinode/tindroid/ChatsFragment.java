@@ -20,7 +20,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.selection.Selection;
 import androidx.recyclerview.selection.SelectionTracker;
@@ -218,11 +217,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
             case R.id.action_settings:
                 activity.showFragment(ChatsActivity.FRAGMENT_ACCOUNT_INFO);
-                return true;
-
-            case R.id.action_about:
-                DialogFragment about = new AboutDialogFragment();
-                about.show(getParentFragmentManager(), "about");
                 return true;
 
             case R.id.action_offline:

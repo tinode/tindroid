@@ -160,7 +160,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                             public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
                                 UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
                                         AuthScheme.basicInstance(login, password).toString(),
-                                        tinode.getAuthToken());
+                                        tinode.getAuthToken(), tinode.getAuthTokenExpiration());
 
                                 // Flip back to login screen on success;
                                 parent.runOnUiThread(new Runnable() {

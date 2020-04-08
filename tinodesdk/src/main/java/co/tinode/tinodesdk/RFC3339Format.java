@@ -32,5 +32,5 @@ public class RFC3339Format extends SimpleDateFormat {
         }
         return date;
     }
-};
+}
 

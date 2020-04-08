@@ -55,8 +55,8 @@ import co.tinode.tinodesdk.model.MsgClientNote;
 import co.tinode.tinodesdk.model.MsgClientPub;
 import co.tinode.tinodesdk.model.MsgClientSet;
 import co.tinode.tinodesdk.model.MsgClientSub;
-import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -358,6 +358,14 @@ public class Tinode {
 
     Date getTopicsUpdated() {
         return mTopicsUpdated;
+    }
+
+    /**
+     * Set server address and TLS status to be used in subsequent connections.
+     */
+    public void setServer(String host, boolean tls) {
+        mServerHost = host != null ? host.toLowerCase() : null;
+        mUseTLS = tls;
     }
 
     /**
@@ -945,6 +953,10 @@ public class Tinode {
      * @param token device token; to delete token pass NULL_VALUE
      */
     public PromisedReply<ServerMessage> setDeviceToken(final String token) {
+        if (!isAuthenticated()) {
+            // Don't send a message if the client is not logged in.
+            return new PromisedReply<>(new AuthenticationRequiredException());
+        }
         // If token is not initialized, try to read one from storage.
         if (mDeviceToken == null && mStore != null) {
             mDeviceToken = mStore.getDeviceToken();
@@ -1920,6 +1932,7 @@ public class Tinode {
      * Callback interface called by Connection when it receives events from the websocket.
      * Default no-op method implementations are provided for convenience.
      */
+    @SuppressWarnings("EmptyMethod")
     public static class EventListener {
         /**
          * Connection established successfully, handshakes exchanged. The connection is ready for

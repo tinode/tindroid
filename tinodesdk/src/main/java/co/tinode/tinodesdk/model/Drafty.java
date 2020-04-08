@@ -297,6 +297,7 @@ public class Drafty implements Serializable {
                 ExtractedEnt ee = new ExtractedEnt();
                 ee.at = matcher.start(0);
                 ee.value = matcher.group(0);
+                //noinspection ConstantConditions
                 ee.len = ee.value.length();
                 ee.tp = ENTITY_NAME[i];
                 ee.data = ENTITY_PROC[i].pack(matcher);
@@ -329,7 +330,6 @@ public class Drafty implements Serializable {
         for (String line : lines) {
             // The 'may be null' warning is a false positive: toTree() and chunkify() may return null only
             // if spans is empty or null. But they are not called if it's empty or null.
-            // noinspection ConstantConditions
             spans.clear();
             // Select styled spans.
             for (int i = 0;i < INLINE_STYLE_NAME.length; i++) {

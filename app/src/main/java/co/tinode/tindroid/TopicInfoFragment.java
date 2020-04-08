@@ -117,28 +117,42 @@ public class TopicInfoFragment extends Fragment {
         final Switch muted = view.findViewById(R.id.switchMuted);
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                try {
-                    mTopic.updateMuted(isChecked);
-                } catch (NotConnectedException ignored) {
-                    muted.setChecked(!isChecked);
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ex) {
-                    muted.setChecked(!isChecked);
-                }
+                mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                muted.setChecked(!isChecked);
+                            }
+                        });
+                        if (err instanceof NotConnectedException) {
+                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        }
+                        return null;
+                    }
+                });
             }
         });
 
         final Switch archived = view.findViewById(R.id.switchArchived);
         archived.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                try {
-                    mTopic.updateArchived(isChecked);
-                } catch (NotConnectedException ignored) {
-                    archived.setChecked(!isChecked);
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ex) {
-                    archived.setChecked(!isChecked);
-                }
+                mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                archived.setChecked(!isChecked);
+                            }
+                        });
+                        if (err instanceof NotConnectedException) {
+                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                        }
+                        return null;
+                    }
+                });
             }
         });
 
@@ -366,11 +380,6 @@ public class TopicInfoFragment extends Fragment {
 
         notifyContentChanged();
         notifyDataSetChanged();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
     }
 
     // Dialog for editing pub.fn and priv

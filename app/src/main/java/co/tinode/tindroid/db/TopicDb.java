@@ -331,7 +331,7 @@ public class TopicDb implements BaseColumns {
             st.lastUsed = timestamp.after(st.lastUsed) ? timestamp : st.lastUsed;
             st.minLocalSeq = seq > 0 && (st.minLocalSeq == 0 || seq < st.minLocalSeq) ?
                     seq : st.minLocalSeq;
-            st.maxLocalSeq = seq > st.maxLocalSeq ? seq : st.maxLocalSeq;
+            st.maxLocalSeq = Math.max(seq, st.maxLocalSeq);
         }
         return true;
     }

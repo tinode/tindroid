@@ -99,9 +99,5 @@ public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
     public static class FndListener<SP> extends Listener<String, String, SP, String[]> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<String, String, SP, String[]> meta) {}
-        /** {meta what="sub"} message received, and this is one of the subs */
-        public void onMetaSub(Subscription<SP,String[]> sub) {}
-        /** {meta what="desc"} message received */
-        public void onMetaDesc(Description<String, String> desc) {}
     }
 }

@@ -43,14 +43,6 @@ public class SyncService extends Service {
     }
 
     /**
-     * Logging-only destructor.
-     */
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    /**
      * Return Binder handle for IPC communication with {@link SyncAdapter}.
      * <p>
      * <p>New sync requests will be sent directly to the SyncAdapter using this channel.

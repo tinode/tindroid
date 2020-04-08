@@ -178,6 +178,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         } else {
             Log.d(TAG, "No contacts to sync");
             success = true;
+            if (lastSyncMarker == null) {
+                setServerSyncMarker(account, new Date());
+            }
+
         }
 
         Log.d(TAG, "Network synchronization " + (success ? "completed" : "failed"));

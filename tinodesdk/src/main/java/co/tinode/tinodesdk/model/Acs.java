@@ -12,12 +12,14 @@ public class Acs implements Serializable {
     public enum Side {
         MODE(0), WANT(1), GIVEN(2);
 
-        private int val;
+        private final int val;
         Side(int val) {
             this.val = val;
         }
 
-        public int val() {return val;}
+        public int val() {
+            return val;
+        }
     }
 
     AcsHelper given = null;

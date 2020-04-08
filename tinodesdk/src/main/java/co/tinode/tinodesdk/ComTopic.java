@@ -26,6 +26,7 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     public ComTopic(Tinode tinode, Listener l) {
+        //noinspection unchecked
         super(tinode, l);
     }
 
@@ -82,10 +83,6 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public static class ComListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
-        /** {meta what="sub"} message received, and this is one of the subs */
-        public void onMetaSub(Subscription<DP,PrivateType> sub) {}
-        /** {meta what="desc"} message received */
-        public void onMetaDesc(Description<DP,PrivateType> desc) {}
         /** Called by MeTopic when topic descriptor as contact is updated */
         public void onContUpdate(Subscription<DP,PrivateType> sub) {}
     }

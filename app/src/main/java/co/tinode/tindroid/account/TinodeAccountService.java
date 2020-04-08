@@ -53,7 +53,7 @@ public class TinodeAccountService extends Service {
          */
         @Override
         public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType,
-                                 String[] features, Bundle options) throws NetworkErrorException {
+                                 String[] features, Bundle options) {
             Log.d(TAG, "addAccount, accountType=" + accountType + "; tokenType=" + authTokenType);
 
             final Intent intent = new Intent(mContext, LoginActivity.class);
@@ -83,8 +83,7 @@ public class TinodeAccountService extends Service {
          */
         @Override
         public Bundle confirmCredentials(AccountAuthenticatorResponse accountAuthenticatorResponse,
-                                         Account account, Bundle bundle)
-                throws NetworkErrorException {
+                                         Account account, Bundle bundle) {
             return null;
         }
 
@@ -93,7 +92,7 @@ public class TinodeAccountService extends Service {
          */
         @Override
         public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType,
-                                   Bundle options) throws NetworkErrorException {
+                                   Bundle options) {
             Log.d(TAG, "getAuthToken: " + authTokenType + "/" + account.type);
 
             if (!authTokenType.equals(Utils.TOKEN_TYPE)) {
@@ -162,8 +161,7 @@ public class TinodeAccountService extends Service {
         }
 
         @Override
-        public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features)
-                throws NetworkErrorException {
+        public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features) {
             // This call is used to query whether the Authenticator supports
             // specific features. We don't expect to get called, so we always
             // return false (no) for any queries.

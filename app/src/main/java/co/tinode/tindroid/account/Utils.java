@@ -423,7 +423,6 @@ public class Utils {
      *
      * @param context   context to use for resources.
      * @param topicName name of the topic to sync.
-     * @return true if new data was available or data status was unknown, false if no data was available.
      */
     public static void backgroundDescFetch(Context context, String topicName) {
         Log.d(TAG, "Fetching description for " + topicName);
@@ -444,7 +443,5 @@ public class Utils {
             // Wait for result. Tinode will save new topic to DB.
             tinode.getMeta(topicName, MsgGetMeta.desc()).getResult();
         } catch (Exception ignored) { }
-
-        return;
     }
 }

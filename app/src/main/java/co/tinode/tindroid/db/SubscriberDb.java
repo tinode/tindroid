@@ -300,7 +300,7 @@ public class SubscriberDb implements BaseColumns {
 
     }
 
-    static Subscription readOne(Cursor c) {
+    private static Subscription readOne(Cursor c) {
         // StoredSub part
         StoredSubscription ss = new StoredSubscription();
         ss.id = c.getLong(COLUMN_IDX_ID);
@@ -341,10 +341,7 @@ public class SubscriberDb implements BaseColumns {
 
         Collection<Subscription> result = new LinkedList<>();
         do {
-            Subscription s = readOne(c);
-            if (s != null) {
-                result.add(s);
-            }
+            result.add(readOne(c));
         } while (c.moveToNext());
 
         return result;

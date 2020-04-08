@@ -225,4 +225,11 @@
 
     <string name="general">Общие</string>
     <string name="delete_account">Удалить аккаунт</string>
+
+    <string name="help">Помощь</string>
+    <string name="security">Безопасность</string>
+    <string name="notifications">Уведомления</string>
+    <string name="user_tags_description">Поисковые тэги, по которым вас смогут найти</string>
+    <string name="help_explained">Поддержка, про приложение</string>
+    <string name="security_explained">Пароль, настройки доступа, удаление аккаунта</string>
 </resources>

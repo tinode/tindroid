@@ -658,7 +658,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     public int getUnreadCount() {
         int unread = mDesc.seq - mDesc.read;
-        return unread > 0 ? unread : 0;
+        return Math.max(unread, 0);
     }
 
     public boolean getOnline() {
@@ -1086,12 +1086,19 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Update own access mode.
+     *
+     * @param update string which defines the update. It could be a full value or a change.
+     */
+    public PromisedReply<ServerMessage> updateMode(final String update) {
+        return updateMode(null, update);
+    }
+
+    /**
      * Update another user's access mode.
      *
-     * @param uid    UID of the user to update or null to update current user.
+     * @param uid    UID of the user to update.
      * @param update string which defines the update. It could be a full value or a change.
-     * @throws NotSubscribedException if the client is not subscribed to the topic
-     * @throws NotConnectedException  if there is no connection to the server
      */
     public PromisedReply<ServerMessage> updateMode(String uid, final String update) {
         final Subscription sub;
@@ -1123,8 +1130,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      *
      * @param uid  ID of the user to invite to topic
      * @param mode access mode granted to user
-     * @throws NotConnectedException    if there is no connection to the server
-     * @throws NotSynchronizedException if the topic has not yet been synchronized with the server
      */
     public PromisedReply<ServerMessage> invite(String uid, String mode) {
 
@@ -1858,6 +1863,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     protected enum NoteType {READ, RECV}
 
+    @SuppressWarnings("EmptyMethod")
     public static class Listener<DP, DR, SP, SR> {
 
         public void onSubscribe(int code, String text) {

@@ -432,11 +432,11 @@ public class MessageDb implements BaseColumns {
                     // Read the bounds and use them to expand the current range to overlap earlier ranges.
                     if (!cursor.isNull(0)) {
                         int min_low = cursor.getInt(0);
-                        fromId = min_low < fromId ? min_low : fromId;
+                        fromId = Math.min(min_low, fromId);
                     }
                     if (!cursor.isNull(1)) {
                         int max_high = cursor.getInt(1);
-                        toId = max_high > toId ? max_high : toId;
+                        toId = Math.max(max_high, toId);
                     }
                 }
                 cursor.close();

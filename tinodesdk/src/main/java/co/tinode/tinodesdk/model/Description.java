@@ -182,6 +182,7 @@ public class Description<DP, DR> implements Serializable {
         if (sub.pub != null) {
             // This may throw a ClassCastException.
             // This is intentional behavior to catch cases of wrong assignment.
+            //noinspection unchecked
             if (mergePub((DP) sub.pub) > 0) {
                 changed++;
             }

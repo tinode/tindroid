@@ -129,7 +129,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
                                 UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
                                         AuthScheme.basicInstance(login, password).toString(),
-                                        tinode.getAuthToken());
+                                        tinode.getAuthToken(), tinode.getAuthTokenExpiration());
 
                                 if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
                                     parent.runOnUiThread(new Runnable() {

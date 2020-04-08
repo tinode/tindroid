@@ -1,7 +1,5 @@
 package co.tinode.tinodesdk.model;
 
-import java.util.List;
-
 /**
  * Playload for setting meta params, a combination of MetaSetDesc, MetaSetSub, tags, credential.
  */

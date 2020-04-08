@@ -8,11 +8,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
@@ -120,6 +123,51 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
 
         return new PromisedReply<>(new NotConnectedException());
+    }
+
+    @Override
+    public PromisedReply<ServerMessage> updateMode(final String update) {
+        if (mDesc.acs == null) {
+            mDesc.acs = new Acs();
+        }
+
+        final AcsHelper mode = mDesc.acs.getWantHelper();
+        if (mode.update(update)) {
+            return setSubscription(new MetaSetSub(null, mode.toString()));
+        }
+        // The state is unchanged, return resolved promise.
+        return new PromisedReply<>((ServerMessage) null);
+    }
+
+    /**
+     * Topic sent an update to subscription, got a confirmation.
+     *
+     * @param params {ctrl} parameters returned by the server (could be null).
+     * @param sSub   updated topic parameters.
+     */
+    @Override
+    protected void update(Map<String, Object> params, MetaSetSub sSub) {
+        //noinspection unchecked
+        Map<String, String> acsMap = params != null ? (Map<String, String>) params.get("acs") : null;
+        Acs acs;
+        if (acsMap != null) {
+            acs = new Acs(acsMap);
+        } else {
+            acs = new Acs();
+            acs.setWant(sSub.mode);
+        }
+
+        boolean changed;
+        if (mDesc.acs == null) {
+            mDesc.acs = acs;
+            changed = true;
+        } else {
+            changed = mDesc.acs.merge(acs);
+        }
+
+        if (changed && mStore != null) {
+            mStore.topicUpdate(this);
+        }
     }
 
     @Override
@@ -404,12 +452,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public static class MeListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
-        /** {meta what="sub"} message received, and this is one of the subs */
-        public void onMetaSub(Subscription<DP,PrivateType> sub) {}
-        /** {meta what="desc"} message received */
-        public void onMetaDesc(Description<DP,PrivateType> desc) {}
-        /** Called by MeTopic when topic descriptor as contact is updated */
-        public void onContUpdated(String contact) {}
         /** Called by MeTopic when credentials are updated */
         public void onCredUpdated(Credential[] cred) {}
     }

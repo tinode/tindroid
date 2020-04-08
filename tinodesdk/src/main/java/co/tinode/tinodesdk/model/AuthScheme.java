@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.Base64Variants;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 
 /**
@@ -46,14 +47,11 @@ public class AuthScheme implements Serializable {
 
     public static String encodeBasicToken(String uname, String password) {
         // Encode string as base64
-        try {
-            if (uname.contains(":")) {
-                throw new IllegalArgumentException("illegal character ':' in user name '" + uname + "'");
-            }
-            password = password == null ? "" : password;
-            return Base64Variants.getDefaultVariant().encode((uname + ":" + password).getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException ignored) {}
-        return null;
+        if (uname.contains(":")) {
+            throw new IllegalArgumentException("illegal character ':' in user name '" + uname + "'");
+        }
+        password = password == null ? "" : password;
+        return Base64Variants.getDefaultVariant().encode((uname + ":" + password).getBytes(StandardCharsets.UTF_8));
     }
 
     public static String encodeResetSecret(String scheme, String method, String value) {
@@ -64,21 +62,14 @@ public class AuthScheme implements Serializable {
         if (scheme.contains(":") || method.contains(":") || value.contains(":")) {
             throw new IllegalArgumentException("illegal character ':' in parameter");
         }
-        try {
-            return Base64Variants.getDefaultVariant().encode((scheme + ":" + method + ":" + value)
-                    .getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException ignored) {}
-        return null;
+        return Base64Variants.getDefaultVariant().encode((scheme + ":" + method + ":" + value)
+                .getBytes(StandardCharsets.UTF_8));
     }
 
     public static String[] decodeBasicToken(String token) {
         String basicToken;
-        try {
-            // Decode base64 string
-            basicToken = new String(Base64Variants.getDefaultVariant().decode(token), "UTF-8");
-        } catch (UnsupportedEncodingException ignored) {
-            return null;
-        }
+        // Decode base64 string
+        basicToken = new String(Base64Variants.getDefaultVariant().decode(token), StandardCharsets.UTF_8);
 
         // Split "login:password" into parts.
         int splitAt = basicToken.indexOf(':');

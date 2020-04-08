@@ -22,7 +22,7 @@ import co.tinode.tinodesdk.model.MsgServerCtrl;
 public class LargeFileHelper {
     private static final int BUFFER_SIZE = 65536;
     private static final String TWO_HYPHENS = "--";
-    private static final String BOUNDARY = "*****" + Long.toString(System.currentTimeMillis()) + "*****";
+    private static final String BOUNDARY = "*****" + System.currentTimeMillis() + "*****";
     private static final String LINE_END = "\r\n";
 
     private URL mUrlUpload;

@@ -92,7 +92,6 @@ public class MessagesFragment extends Fragment
     private SwipeRefreshLayout mRefresher;
 
     // It cannot be local.
-    @SuppressWarnings("FieldCanBeLocal")
     private UploadProgress mUploadProgress;
 
     private String mTopicName = null;
