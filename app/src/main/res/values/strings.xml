@@ -260,5 +260,5 @@
     <string name="notifications">Notifications</string>
     <string name="user_tags_description">Other people can find you by these tags</string>
     <string name="help_explained">Support, legal, about</string>
-    <string name="security_explained">Password, permission, deleting account</string>
+    <string name="security_explained">Password, permissions, deleting account</string>
 </resources>
