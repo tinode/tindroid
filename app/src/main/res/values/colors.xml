@@ -37,6 +37,7 @@
 
     <color name="colorBorderGray">#9E9E9E</color>
 
+    <!-- Background of message bubbles-->
     <color name="colorMessageBubbleMine">#00000000</color>
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
     <color name="colorMessageBubbleMeta">#FFe3f2fd</color>
