@@ -6,4 +6,4 @@
     android:layout_height="?attr/listPreferredItemHeight"
     android:gravity="center"
     android:text="@string/contacts_permission_missing"
-    android:textAppearance="?android:attr/textAppearanceMedium" />
+    android:textAppearance="?android:textAppearanceMedium" />

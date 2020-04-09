@@ -201,11 +201,9 @@ public class TindroidApp extends Application {
 
         @Override
         protected Void doInBackground(String... uidWrapper) {
-            Log.i(TAG, "doInBackground uid="+uidWrapper[0]);
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
             final Account account = Utils.getSavedAccount(TindroidApp.this, accountManager, uidWrapper[0]);
             if (account != null) {
-                Log.i(TAG, "doInBackground got account");
                 // Check if sync is enabled.
                 if (ContentResolver.getMasterSyncAutomatically()) {
                     if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
@@ -217,7 +215,6 @@ public class TindroidApp extends Application {
                 String token = null;
                 Date expires = null;
                 try {
-                    Log.i(TAG, "doInBackground getting token");
                     token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
                     String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
                     // FIXME: remove this check when all clients are updated; Apr 8, 2020.
@@ -250,7 +247,6 @@ public class TindroidApp extends Application {
                         startWatchingContacts(account);
                         // Trigger sync to be sure contacts are up to date.
                         UiUtils.requestImmediateContactsSync(account);
-                        Log.i(TAG, "doInBackground connected OK");
                     } catch (IOException ex) {
                         Log.d(TAG, "Network failure during login", ex);
                         // Do not invalidate token on network failure.

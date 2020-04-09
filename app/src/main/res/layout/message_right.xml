@@ -28,7 +28,7 @@
                 android:maxWidth="280dp"
                 android:minWidth="140dp"
                 android:paddingStart="8dp"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
                 />
@@ -48,7 +48,7 @@
                     android:layout_height="wrap_content"
                     android:paddingLeft="4sp"
                     android:paddingRight="4sp"
-                    android:textColor="?android:attr/textColorSecondary"
+                    android:textColor="?android:textColorSecondary"
                     tools:text="Jun 11 22:17"
                     android:textSize="11sp" tools:ignore="SmallSp"/>
 
@@ -62,7 +62,7 @@
                     android:paddingRight="3sp"
                     android:paddingStart="5sp"
                     android:alpha="0.5"
-                    android:tint="?android:attr/textColorSecondary"
+                    android:tint="?android:textColorSecondary"
                     tools:src="@drawable/ic_visibility"
                     tools:ignore="SmallSp"/>
 
@@ -82,7 +82,7 @@
         android:id="@+id/overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?android:attr/selectableItemBackground"
+        android:background="?android:selectableItemBackground"
         android:clickable="false"
         android:focusable="false"
         />
