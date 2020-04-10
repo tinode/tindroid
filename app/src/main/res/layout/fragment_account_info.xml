@@ -59,7 +59,8 @@
     <LinearLayout
         android:id="@+id/notifications"
         android:layout_width="match_parent"
-        android:layout_height="?attr/listPreferredItemHeight"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
         android:gravity="center_vertical">
 
@@ -73,7 +74,7 @@
             style="?android:textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:text="@string/notifications" />
 
     </LinearLayout>
@@ -81,7 +82,8 @@
     <RelativeLayout
         android:id="@+id/security"
         android:layout_width="match_parent"
-        android:layout_height="?attr/listPreferredItemHeight"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
         android:gravity="center_vertical">
 
@@ -99,7 +101,7 @@
             style="?android:textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:layout_toEndOf="@id/icon_security"
             android:text="@string/security" />
 
@@ -107,7 +109,7 @@
             style="?android:textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:layout_toEndOf="@id/icon_security"
             android:layout_below="@id/security_text"
             android:text="@string/security_explained" />
@@ -116,7 +118,8 @@
     <RelativeLayout
         android:id="@+id/help"
         android:layout_width="match_parent"
-        android:layout_height="?attr/listPreferredItemHeight"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
         android:gravity="center_vertical">
 
@@ -134,7 +137,7 @@
             style="?android:textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:layout_toEndOf="@id/icon_help"
             android:text="@string/help" />
 
@@ -142,7 +145,7 @@
             style="?android:textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:layout_toEndOf="@id/icon_help"
             android:layout_below="@id/help_text"
             android:text="@string/help_explained" />
