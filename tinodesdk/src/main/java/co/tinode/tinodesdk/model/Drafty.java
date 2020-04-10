@@ -853,13 +853,21 @@ public class Drafty implements Serializable {
             }
         }
 
+        // Sanitize spans
         List<Span> spans = new ArrayList<>();
+        int maxIndex = txt.length();
         for (Style aFmt : fmt) {
             if (aFmt.len < 0) {
-                aFmt.len = 0;
+                // Invalid span length.
+                continue;
             }
             if (aFmt.at < -1) {
+                // Attachment
                 aFmt.at = -1;
+                aFmt.len = 1;
+            }  else if (aFmt.at + aFmt.len >= maxIndex) {
+                // Span is out of bounds.
+                continue;
             }
             if (aFmt.tp == null || "".equals(aFmt.tp)) {
                 spans.add(new Span(aFmt.at, aFmt.at + aFmt.len,
