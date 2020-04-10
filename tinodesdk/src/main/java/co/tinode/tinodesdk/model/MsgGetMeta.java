@@ -55,7 +55,7 @@ public class MsgGetMeta {
         this.data = data;
         this.del = del;
         if (tags != null && tags) {
-            this.mSet |= TAGS_SET;
+            this.mSet = TAGS_SET;
         }
         if (cred != null && cred) {
             this.mSet |= CRED_SET;

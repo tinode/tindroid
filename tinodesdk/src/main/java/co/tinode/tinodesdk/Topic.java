@@ -16,15 +16,14 @@ import java.util.Map;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
-import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Defacs;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.LastSeen;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MetaSetSub;
-import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -349,10 +348,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (mListener != null) {
                 mListener.onMetaTags(mTags);
             }
-        }
-
-        if (meta.cred != null && this instanceof MeTopic) {
-            this.routeMetaCred(meta.cred);
         }
     }
 
@@ -1589,9 +1584,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (meta.tags != null) {
             routeMetaTags(meta.tags);
         }
-        if (meta.cred != null) {
-            routeMetaCred(meta.cred);
-        }
+
         if (mListener != null) {
             mListener.onMeta(meta);
         }
@@ -1685,14 +1678,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mListener != null) {
             mListener.onMetaTags(tags);
         }
-    }
-
-    protected void routeMetaCred(Credential[] cred) {
-        // Do nothing. All processing is not in MeTopic in an overridden method.
-    }
-
-    protected void routeMetaCred(Credential cred) {
-        // Do nothing. All processing is not in MeTopic in an overridden method.
     }
 
     protected void routeData(MsgServerData data) {
@@ -1934,9 +1919,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         public void onOnline(boolean online) {
         }
 
-        /**
-         * Called when contact is updated.
-         */
+        /** Called when contact is updated. */
         public void onContUpdated(String contact) {
         }
     }

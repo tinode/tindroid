@@ -16,8 +16,10 @@ import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
+import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -28,6 +30,7 @@ import co.tinode.tinodesdk.model.Subscription;
 public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private static final String TAG = "MeTopic";
 
+    @SuppressWarnings("WeakerAccess")
     protected ArrayList<Credential> mCreds;
 
     public MeTopic(Tinode tinode, Listener<DP,PrivateType,DP,PrivateType> l) {
@@ -78,14 +81,17 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
     public void setPriv(PrivateType priv) { /* do nothing */ }
 
-
-    public Credential[] getCreds() {
-        return mCreds != null ? mCreds.toArray(new Credential[]{}) : null;
-    }
-
     @Override
     public Date getSubsUpdated() {
         return mTinode.getTopicsUpdated();
+    }
+
+
+    /**
+     * Get current user's credentials, such as emails and phone numbers.
+     */
+    public Credential[] getCreds() {
+        return mCreds != null ? mCreds.toArray(new Credential[]{}) : null;
     }
 
     /**
@@ -168,6 +174,31 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         if (changed && mStore != null) {
             mStore.topicUpdate(this);
         }
+    }
+
+    /**
+     * Topic sent an update to description or subscription, got a confirmation, now
+     * update local data with the new info.
+     *
+     * @param ctrl {ctrl} packet sent by the server
+     * @param meta original {meta} packet updated topic parameters
+     */
+    @Override
+    protected void update(MsgServerCtrl ctrl, MsgSetMeta<DP,PrivateType> meta) {
+        super.update(ctrl, meta);
+
+        if (meta.cred != null) {
+            routeMetaCred(meta.cred);
+        }
+    }
+
+    @Override
+    protected void routeMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
+        if (meta.cred != null) {
+            routeMetaCred(meta.cred);
+        }
+
+        super.routeMeta(meta);
     }
 
     @Override
@@ -264,21 +295,21 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     mCreds.add(cred);
                 } else {
                     // Found. Maybe change 'done' status.
-                    Credential el = this.mCreds.get(idx);
+                    Credential el = mCreds.get(idx);
                     el.done = cred.isDone();
                 }
             }
-        } else if (cred.resp != null) {
+        } else if (cred.resp != null && mCreds != null) {
             // Handle credential confirmation.
             int idx = findCredential(cred, true);
             if (idx >= 0) {
-                Credential el = this.mCreds.get(idx);
+                Credential el = mCreds.get(idx);
                 el.done = true;
             }
         }
     }
 
-    @Override
+    @SuppressWarnings("WeakerAccess")
     protected void routeMetaCred(Credential cred) {
         processOneCred(cred);
 
@@ -287,8 +318,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
     }
 
-
-    @Override
+    @SuppressWarnings("WeakerAccess")
     protected void routeMetaCred(Credential[] creds) {
         mCreds = new ArrayList<>();
         for (Credential cred : creds) {
