@@ -94,6 +94,19 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         return mCreds != null ? mCreds.toArray(new Credential[]{}) : null;
     }
 
+    public void setCreds(Credential[] creds) {
+        if (creds == null) {
+            mCreds = null;
+        } else {
+            mCreds = new ArrayList<>();
+            for (Credential cred : creds) {
+                if (cred.meth != null && cred.val != null) {
+                    mCreds.add(cred);
+                }
+            }
+        }
+    }
+
     /**
      * Delete credential.
      *

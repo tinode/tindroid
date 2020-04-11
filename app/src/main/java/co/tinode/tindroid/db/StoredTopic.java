@@ -5,7 +5,9 @@ import android.database.Cursor;
 import java.util.Date;
 
 import co.tinode.tinodesdk.LocalData;
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Credential;
 
 /**
  * Representation of a topic stored in a database;
@@ -45,7 +47,10 @@ public class StoredTopic implements LocalData.Payload {
         topic.setClear(c.getInt(TopicDb.COLUMN_IDX_CLEAR));
         topic.setMaxDel(c.getInt(TopicDb.COLUMN_IDX_MAX_DEL));
 
-        topic.setTags(BaseDb.deserializeArray(c.getString(TopicDb.COLUMN_IDX_TAGS)));
+        topic.setTags(BaseDb.deserializeStringArray(c.getString(TopicDb.COLUMN_IDX_TAGS)));
+        if (topic instanceof MeTopic) {
+            ((MeTopic) topic).setCreds((Credential[]) BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_CREDS)));
+        }
         topic.setPub(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PUBLIC)));
         topic.setPriv(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PRIVATE)));
 

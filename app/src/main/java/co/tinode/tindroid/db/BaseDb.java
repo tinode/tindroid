@@ -25,7 +25,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 10;
 
     /**
      * Filename for SQLite file.
@@ -193,7 +193,7 @@ public class BaseDb extends SQLiteOpenHelper {
         return result;
     }
 
-    static String serializeArray(String[] arr) {
+    static String serializeStringArray(String[] arr) {
         String result = null;
         if (arr != null && arr.length > 0) {
             StringBuilder sb = new StringBuilder();
@@ -208,7 +208,7 @@ public class BaseDb extends SQLiteOpenHelper {
         return result;
     }
 
-    static String[] deserializeArray(String str) {
+    static String[] deserializeStringArray(String str) {
         String[] result = null;
         if (str != null && str.length() > 0) {
             result = str.split(",");
