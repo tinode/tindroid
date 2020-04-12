@@ -76,8 +76,9 @@
                     android:text="@string/permissions"/>
 
                 <TextView
-                    android:id="@+id/permissions"
-                    style="@style/textPrimarySmall"
+                    android:id="@+id/permissionsSingle"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:textColor="?android:textColorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/dotted_line"
@@ -104,7 +105,7 @@
                     tools:text="Permissions"/>
 
                 <TextView
-                    style="@style/textPrimary"
+                    android:textAppearance="?android:textAppearanceMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/permissionTitle"
@@ -114,7 +115,8 @@
 
                 <TextView
                     android:id="@+id/userOne"
-                    style="@style/textPrimarySmall"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:textColor="?android:textColorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/permissionTitle"
@@ -131,7 +133,7 @@
 
                 <TextView
                     android:id="@+id/userTwoLabel"
-                    style="@style/textPrimary"
+                    android:textAppearance="?android:textAppearanceMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/userOne"
@@ -142,7 +144,8 @@
 
                 <TextView
                     android:id="@+id/userTwo"
-                    style="@style/textPrimarySmall"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:textColor="?android:textColorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/userOne"
@@ -177,15 +180,24 @@
                 style="@style/sectionTitleStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/default_permissions"
-                />
+                android:text="@string/default_permissions" />
+
+            <TextView
+                style="?android:textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/topic_default_permissions_explained" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="6dp"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <TextView
-                    style="@style/textPrimary"
+                    android:textAppearance="?android:textAppearanceMedium"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
@@ -194,7 +206,8 @@
 
                 <TextView
                     android:id="@+id/authPermissions"
-                    style="@style/textPrimarySmall"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:textColor="?android:textColorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/dotted_line"
@@ -208,12 +221,16 @@
 
             </LinearLayout>
 
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="6dp"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <TextView
-                    style="@style/textPrimary"
+                    android:textAppearance="?android:textAppearanceMedium"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
@@ -222,7 +239,8 @@
 
                 <TextView
                     android:id="@+id/anonPermissions"
-                    style="@style/textPrimarySmall"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:textColor="?android:textColorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/dotted_line"

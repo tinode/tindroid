@@ -66,6 +66,7 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_MESSAGES = "msg";
     static final String FRAGMENT_INVALID = "invalid";
     static final String FRAGMENT_INFO = "info";
+    static final String FRAGMENT_PERMISSIONS = "permissions";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
@@ -488,6 +489,9 @@ public class MessageActivity extends AppCompatActivity {
                 case FRAGMENT_INFO:
                     fragment = new TopicInfoFragment();
                     break;
+                case FRAGMENT_PERMISSIONS:
+                    fragment = new TopicPermissionsFragment();
+                    break;
                 case FRAGMENT_EDIT_MEMBERS:
                     fragment = new EditMembersFragment();
                     break;
@@ -751,6 +755,8 @@ public class MessageActivity extends AppCompatActivity {
                             if (fragment != null) {
                                 if (fragment instanceof TopicInfoFragment) {
                                     ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                                } else if (fragment instanceof TopicPermissionsFragment) {
+                                    ((TopicPermissionsFragment) fragment).notifyDataSetChanged();
                                 } else if (fragment instanceof MessagesFragment) {
                                     ((MessagesFragment) fragment).notifyDataSetChanged(true);
                                 }

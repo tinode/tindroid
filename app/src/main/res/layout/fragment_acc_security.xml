@@ -60,6 +60,12 @@
         android:layout_height="wrap_content"
         android:text="@string/default_permissions"/>
 
+    <TextView
+        style="?android:textAppearanceSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/user_default_permissions_explained" />
+
     <Space
         android:layout_width="match_parent"
         android:layout_height="6dp"/>
@@ -78,7 +84,8 @@
 
         <TextView
             android:id="@+id/authPermissions"
-            android:textAppearance="?android:textAppearanceLarge"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:textColor="?android:textColorPrimary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/dotted_line"
@@ -110,7 +117,8 @@
 
         <TextView
             android:id="@+id/anonPermissions"
-            android:textAppearance="?android:textAppearanceLarge"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:textColor="?android:textColorPrimary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/dotted_line"

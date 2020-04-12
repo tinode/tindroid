@@ -89,7 +89,7 @@
     <string name="add_one_member">Add at least one group member</string>
     <string name="add_members">Add members</string>
     <string name="leave_group">Leave group</string>
-    <string name="address">Address</string>
+    <string name="id">ID</string>
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
     <string name="your_permissions">Yours</string>
@@ -258,9 +258,13 @@
     <string name="help">Help</string>
     <string name="security">Security</string>
     <string name="notifications">Notifications</string>
-    <string name="user_tags_description">Other people can find you by these tags</string>
+    <string name="user_tags_description">Others can find you by these tags</string>
     <string name="help_explained">Support, legal, about</string>
     <string name="security_explained">Password, permissions, deleting account</string>
-    <string name="topic_tags_description">People can find topic by these tags</string>
-    <string name="permissions_explained">Individual permissions, tags</string>
+    <string name="topic_tags_description">Others can find topic by these tags</string>
+    <string name="permissions_explained">Access permissions, search tags</string>
+    <string name="delete_group">Delete group</string>
+
+    <string name="topic_default_permissions_explained">New members automatically receive these permissions</string>
+    <string name="user_default_permissions_explained">Others start conversations with you with these permissions</string>
 </resources>

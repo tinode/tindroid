@@ -1,11 +1,10 @@
-<androidx.core.widget.NestedScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:descendantFocusability="afterDescendants"
     android:layout_margin="@dimen/activity_default_margin"
+    android:descendantFocusability="afterDescendants"
     tools:context=".TopicInfoFragment">
 
     <LinearLayout
@@ -26,7 +25,7 @@
                 android:clickable="true"
                 android:contentDescription="@string/avatar"
                 android:focusable="true"
-                app:srcCompat="@drawable/ic_group_grey"/>
+                app:srcCompat="@drawable/ic_group_grey" />
 
             <Button
                 android:id="@+id/uploadAvatar"
@@ -38,7 +37,7 @@
                 android:background="@drawable/pill_counter"
                 android:gravity="center"
                 android:paddingTop="10dp"
-                app:drawableTopCompat="@drawable/ic_add_a_photo"/>
+                app:drawableTopCompat="@drawable/ic_add_a_photo" />
 
             <TextView
                 android:id="@+id/topicTitle"
@@ -48,11 +47,11 @@
                 android:layout_alignParentTop="true"
                 android:layout_toStartOf="@id/imageAvatar"
                 android:clickable="true"
+                android:ellipsize="end"
                 android:focusable="true"
                 android:maxLines="2"
                 android:textIsSelectable="false"
-                android:ellipsize="end"
-                tools:text="Topic title (public)"/>
+                tools:text="Topic title (public)" />
 
             <TextView
                 android:id="@+id/topicSubtitle"
@@ -65,31 +64,34 @@
                 android:focusable="true"
                 android:maxLines="1"
                 android:textIsSelectable="false"
-                tools:text="Topic subtitle (private)"/>
+                tools:text="Topic subtitle (private)" />
 
             <LinearLayout
                 android:id="@+id/topicAddressWrapper"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_below="@id/topicSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_alignParentStart="true"
+                android:layout_toRightOf="@id/imageAvatar">
 
                 <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
+                    style="@style/textSecondary"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/address"/>
+                    android:paddingEnd="@dimen/activity_default_margin"
+                    android:text="@string/id" />
 
                 <TextView
                     android:id="@+id/topicAddress"
-                    style="@style/textPrimarySmall"
+                    style="@style/textSecondarySmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
                     android:fontFamily="monospace"
+                    android:maxLines="1"
                     android:textIsSelectable="true"
                     android:typeface="monospace"
-                    android:ellipsize="end"
-                    tools:text="p2p__fv2qrUr6vAdVURkv6q3w"/>
+                    tools:text="p2p__fv2qrUr6vAdVURkv6q3w" />
             </LinearLayout>
 
         </RelativeLayout>
@@ -97,8 +99,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0.5dp"
-            android:layout_marginBottom="@dimen/activity_padding"
             android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
             android:background="@color/grey" />
 
         <LinearLayout
@@ -111,13 +113,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
-                android:text="@string/topic_muted"/>
+                android:text="@string/topic_muted" />
 
             <Switch
                 android:id="@+id/switchMuted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"/>
+                android:layout_margin="4dp" />
 
         </LinearLayout>
 
@@ -131,30 +133,30 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
-                android:text="@string/topic_archived"/>
+                android:text="@string/topic_archived" />
 
             <Switch
                 android:id="@+id/switchArchived"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"/>
+                android:layout_margin="4dp" />
 
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="0.5dp"
-            android:layout_marginBottom="@dimen/activity_padding"
             android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
             android:background="@color/grey" />
 
         <RelativeLayout
-            android:id="@+id/security"
+            android:id="@+id/permissions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="?attr/listPreferredItemHeight"
             android:clickable="true"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:minHeight="?attr/listPreferredItemHeight">
 
             <ImageView
                 android:id="@+id/icon_security"
@@ -178,95 +180,104 @@
                 style="?android:textAppearanceMedium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/security_text"
                 android:layout_marginStart="16dp"
                 android:layout_toEndOf="@id/icon_security"
-                android:layout_below="@id/security_text"
                 android:text="@string/permissions_explained" />
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="0.5dp"
-            android:layout_marginBottom="@dimen/activity_padding"
             android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
             android:background="@color/grey" />
 
+        <Button
+            android:id="@+id/buttonClearMessages"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:drawableTint="?android:textColorPrimary"
+            android:text="@string/clear_messages"
+            android:textColor="?android:textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_delete" />
+
+        <Button
+            android:id="@+id/buttonLeave"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:drawableTint="?android:textColorPrimary"
+            android:text="@string/leave_conversation"
+            android:textColor="?android:textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_exit" />
+
+        <Button
+            android:id="@+id/buttonDeleteGroup"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/colorDanger"
+            android:text="@string/delete_group"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_delete_red" />
+
+        <Button
+            android:id="@+id/buttonBlock"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/colorDanger"
+            android:text="@string/block_contact"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_block_red" />
+
+        <Button
+            android:id="@+id/buttonReportContact"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/colorDanger"
+            android:text="@string/report_contact"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_report_red" />
+
+        <Button
+            android:id="@+id/buttonReportGroup"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/colorDanger"
+            android:text="@string/report_group"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_report_red" />
+
         <LinearLayout
+            android:id="@+id/groupMembersWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
-            <Button
-                android:id="@+id/buttonClearMessages"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawablePadding="4dp"
-                android:text="@string/clear_messages"
-                android:drawableTint="?android:textColorPrimary"
-                android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_delete"/>
-
-            <Button
-                android:id="@+id/buttonLeave"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawablePadding="4dp"
-                android:text="@string/leave_conversation"
-                android:textColor="@color/colorDanger"
-                app:drawableStartCompat="@drawable/ic_exit_red"/>
-
-            <Button
-                android:id="@+id/buttonBlock"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawablePadding="4dp"
-                android:text="@string/block_contact"
-                android:textColor="@color/colorDanger"
-                app:drawableStartCompat="@drawable/ic_block_red"/>
-
-            <Button
-                android:id="@+id/buttonReportContact"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawablePadding="4dp"
-                android:text="@string/report_contact"
-                android:textColor="@color/colorDanger"
-                app:drawableStartCompat="@drawable/ic_report_red"/>
-
-            <Button
-                android:id="@+id/buttonReportGroup"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawablePadding="4dp"
-                android:text="@string/report_group"
-                android:textColor="@color/colorDanger"
-                app:drawableStartCompat="@drawable/ic_report_red"/>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0.5dp"
                 android:layout_marginTop="@dimen/activity_padding"
                 android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-        </LinearLayout>
-
-        <RelativeLayout
-            android:id="@+id/groupMembersWrapper"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                android:background="@color/grey" />
 
             <TextView
                 android:id="@+id/membersTitle"
                 style="@style/sectionTitleStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/group_members"
-                />
+                android:text="@string/group_members" />
 
             <Button
                 android:id="@+id/buttonAddMembers"
@@ -276,18 +287,18 @@
                 android:layout_below="@id/membersTitle"
                 android:contentDescription="@string/manage_members"
                 android:drawablePadding="4sp"
-                android:text="@string/add_members"
                 android:drawableTint="?android:textColorPrimary"
+                android:text="@string/add_members"
                 android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_person_add"/>
+                app:drawableStartCompat="@drawable/ic_person_add" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/groupMembers"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/buttonAddMembers"/>
+                android:layout_below="@id/buttonAddMembers" />
 
-        </RelativeLayout>
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

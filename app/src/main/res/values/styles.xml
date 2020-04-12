@@ -55,6 +55,10 @@
         <item name="android:textColor">?android:textColorSecondary</item>
     </style>
 
+    <style name="textSecondarySmall" parent="@android:style/TextAppearance.Small">
+        <item name="android:textColor">?android:textColorSecondary</item>
+    </style>
+
     <style name="sectionTitleStyle" parent="@android:style/TextAppearance.Medium">
         <item name="android:textColor">@color/colorAccent</item>
         <item name="android:textAllCaps">true</item>

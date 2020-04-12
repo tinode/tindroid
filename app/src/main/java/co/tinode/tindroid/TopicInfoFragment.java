@@ -66,6 +66,7 @@ public class TopicInfoFragment extends Fragment {
 
     private static final String TAG = "TopicInfoFragment";
 
+    private static final int ACTION_DELETE = 1;
     private static final int ACTION_LEAVE = 2;
     private static final int ACTION_REPORT = 3;
     private static final int ACTION_REMOVE = 4;
@@ -159,24 +160,21 @@ public class TopicInfoFragment extends Fragment {
         view.findViewById(R.id.permissions).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "O");
+                ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_PERMISSIONS, null, true);
             }
         });
 
         view.findViewById(R.id.buttonLeave).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mTopic.isOwner()) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                    builder.setMessage(R.string.owner_cannot_unsubscribe)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setCancelable(true)
-                            .setNegativeButton(android.R.string.ok, null)
-                            .show();
-                } else {
-                    showConfirmationDialog(null, null, null, R.string.confirm_leave_topic, ACTION_LEAVE);
-                }
+                showConfirmationDialog(null, null, null, R.string.confirm_leave_topic, ACTION_LEAVE);
+            }
+        });
+
+        view.findViewById(R.id.buttonDeleteGroup).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showConfirmationDialog(null, null, null, R.string.confirm_delete_topic, ACTION_DELETE);
             }
         });
 
@@ -212,41 +210,6 @@ public class TopicInfoFragment extends Fragment {
                         null, true);
             }
         });
-
-        view.findViewById(R.id.authPermissions).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_AUTH, "O");
-            }
-        });
-
-        view.findViewById(R.id.anonPermissions).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_ANON, "O");
-            }
-        });
-
-        view.findViewById(R.id.userOne).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.showEditPermissions(activity, mTopic,
-                        mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "ASDO");
-            }
-        });
-
-        view.findViewById(R.id.userTwo).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.showEditPermissions(activity, mTopic,
-                        mTopic.getSubscription(mTopic.getName()).acs.getGiven(),
-                        mTopic.getName(),
-                        UiUtils.ACTION_UPDATE_SUB, "ASDO");
-            }
-        });
     }
 
         @Override
@@ -273,11 +236,11 @@ public class TopicInfoFragment extends Fragment {
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
         final TextView address = activity.findViewById(R.id.topicAddress);
+        final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
 
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
-        final View defaultPermissions = activity.findViewById(R.id.defaultPermissionsWrapper);
-        final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
-        final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
+        final View deleteGroup = activity.findViewById(R.id.buttonDeleteGroup);
+        final View blockContact = activity.findViewById(R.id.buttonBlock);
         final View reportGroup = activity.findViewById(R.id.buttonReportGroup);
         final View reportContact = activity.findViewById(R.id.buttonReportContact);
 
@@ -297,54 +260,25 @@ public class TopicInfoFragment extends Fragment {
 
         if (mTopic.isGrpType()) {
             // Group topic
-
             uploadAvatarButton.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
             groupMembers.setVisibility(View.VISIBLE);
             reportContact.setVisibility(View.GONE);
 
-            activity.findViewById(R.id.singleUserPermissions).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.p2pPermissions).setVisibility(View.GONE);
-
-            Button button = activity.findViewById(R.id.buttonLeave);
+            View buttonLeave = activity.findViewById(R.id.buttonLeave);
             if (mTopic.isOwner()) {
-                button.setEnabled(false);
-                button.setAlpha(0.5f);
-
+                buttonLeave.setVisibility(View.GONE);
                 reportGroup.setVisibility(View.GONE);
-
-                tagManager.setVisibility(View.VISIBLE);
-                tagManager.findViewById(R.id.buttonManageTags)
-                        .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        showEditTags();
-                    }
-                });
-
-                LayoutInflater inflater = LayoutInflater.from(activity);
-                FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
-                tagsView.removeAllViews();
-
-                String[] tags = mTopic.getTags();
-                if (tags != null) {
-                    for (String tag : tags) {
-                        TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
-                        label.setText(tag);
-                        tagsView.addView(label);
-                    }
-                }
-
+                blockContact.setVisibility(View.GONE);
+                deleteGroup.setVisibility(View.VISIBLE);
             } else {
-                button.setEnabled(true);
-                button.setAlpha(1f);
-
+                buttonLeave.setVisibility(View.VISIBLE);
                 reportGroup.setVisibility(View.VISIBLE);
-
-                tagManager.setVisibility(View.GONE);
+                blockContact.setVisibility(View.VISIBLE);
+                deleteGroup.setVisibility(View.GONE);
             }
 
-            button = activity.findViewById(R.id.buttonAddMembers);
+            Button button = activity.findViewById(R.id.buttonAddMembers);
             if (!mTopic.isSharer() && !mTopic.isManager()) {
                 // FIXME: allow sharers to add members but not remove.
                 // Disable and gray out "invite members" button because only admins can
@@ -355,27 +289,15 @@ public class TopicInfoFragment extends Fragment {
                 button.setEnabled(true);
                 button.setAlpha(1f);
             }
-
-            defaultPermissions.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
-
         } else {
             // P2P topic
             uploadAvatarButton.setVisibility(View.GONE);
 
             groupMembers.setVisibility(View.GONE);
+            deleteGroup.setVisibility(View.GONE);
             reportGroup.setVisibility(View.GONE);
             reportContact.setVisibility(View.VISIBLE);
-
-            tagManager.setVisibility(View.GONE);
-
-            activity.findViewById(R.id.singleUserPermissions).setVisibility(View.GONE);
-            activity.findViewById(R.id.p2pPermissions).setVisibility(View.VISIBLE);
-
-            VxCard two = mTopic.getPub();
-            ((TextView) activity.findViewById(R.id.userTwoLabel)).setText(two != null && two.fn != null ?
-                    two.fn : mTopic.getName());
-
-            defaultPermissions.setVisibility(View.GONE);
+            blockContact.setVisibility(View.VISIBLE);
         }
 
         notifyContentChanged();
@@ -597,38 +519,6 @@ public class TopicInfoFragment extends Fragment {
         dialog.show();
     }
 
-    // Dialog for editing tags.
-    private void showEditTags() {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        String[] tagArray = mTopic.getTags();
-        String tags = tagArray != null ? TextUtils.join(", ", mTopic.getTags()) : "";
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        @SuppressLint("InflateParams")
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
-        builder.setView(editor).setTitle(R.string.tags_management);
-
-        final EditText tagsEditor = editor.findViewById(R.id.editTags);
-        tagsEditor.setText(tags);
-        tagsEditor.setSelection(tags.length());
-        builder
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String[] tags = UiUtils.parseTags(tagsEditor.getText().toString());
-                        // noinspection unchecked
-                        mTopic.setMeta(new MsgSetMeta(tags))
-                                .thenCatch(new UiUtils.ToastFailureListener(activity));
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
     void notifyDataSetChanged() {
         final Activity activity = getActivity();
         if (activity == null) {
@@ -637,16 +527,6 @@ public class TopicInfoFragment extends Fragment {
 
         if (mTopic.isGrpType()) {
             mAdapter.resetContent();
-        } else {
-            Acs acs = mTopic.getAccessMode();
-            if (acs != null) {
-                ((TextView) activity.findViewById(R.id.userOne)).setText(acs.getWant());
-            }
-            Subscription sub = mTopic.getSubscription(mTopic.getName());
-            if (sub != null && sub.acs != null) {
-                ((TextView) activity.findViewById(R.id.userTwo))
-                        .setText(sub.acs.getGiven());
-            }
         }
     }
 
@@ -700,12 +580,6 @@ public class TopicInfoFragment extends Fragment {
 
         ((Switch) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
         ((Switch) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
-
-        Acs acs = mTopic.getAccessMode();
-        ((TextView) activity.findViewById(R.id.permissions)).setText(acs == null ? "" : acs.getMode());
-
-        ((TextView) activity.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
-        ((TextView) activity.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
     }
 
     @Override

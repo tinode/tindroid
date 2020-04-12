@@ -65,7 +65,7 @@
     <string name="add_members">Добавить в чат</string>
     <string name="add_one_member">Нужно добавить хотя бы одного пользователя</string>
     <string name="anon_permissions">Анонимные пользователи</string>
-    <string name="address">Адрес</string>
+    <string name="id">ID</string>
     <string name="hint_add_by_id">Введите адрес группы или пользователя</string>
     <string name="attachment_too_large">Файл слишком большой: %1$s превышает %2$s лимит.</string>
     <string name="auth_permissions">Авторизованные пользователи</string>
@@ -232,4 +232,9 @@
     <string name="user_tags_description">Поисковые тэги, по которым вас смогут найти</string>
     <string name="help_explained">Поддержка, про приложение</string>
     <string name="security_explained">Пароль, настройки доступа, удаление аккаунта</string>
+    <string name="topic_tags_description">Поисковые тэги, по которым можно найти группу</string>
+    <string name="permissions_explained">Права доступа, поисковые тэги</string>
+    <string name="delete_group">Удалить группу</string>
+    <string name="topic_default_permissions_explained">Новые участники автоматически получают эти права доступа</string>
+    <string name="user_default_permissions_explained">Новые чаты получат эти права доступа</string>
 </resources>
