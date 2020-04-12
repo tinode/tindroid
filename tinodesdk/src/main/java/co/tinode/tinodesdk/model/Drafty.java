@@ -865,7 +865,7 @@ public class Drafty implements Serializable {
                 // Attachment
                 aFmt.at = -1;
                 aFmt.len = 1;
-            }  else if (aFmt.at + aFmt.len >= maxIndex) {
+            }  else if (aFmt.at + aFmt.len > maxIndex) {
                 // Span is out of bounds.
                 continue;
             }
