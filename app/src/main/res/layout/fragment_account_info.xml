@@ -8,7 +8,6 @@
     android:orientation="vertical"
     tools:context=".AccountInfoFragment">
 
-
     <RelativeLayout
         android:id="@+id/personal"
         android:clickable="true"
@@ -33,6 +32,7 @@
             android:layout_toStartOf="@id/imageAvatar"
             android:maxLines="2"
             android:textIsSelectable="true"
+            android:ellipsize="end"
             tools:text="User name" />
 
         <TextView
@@ -44,6 +44,7 @@
             android:fontFamily="monospace"
             android:textIsSelectable="true"
             android:typeface="monospace"
+            android:ellipsize="end"
             tools:text="usrfv2qrUr6vAd" />
 
         <View

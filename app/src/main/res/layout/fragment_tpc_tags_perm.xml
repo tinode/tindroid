@@ -1,0 +1,242 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/activity_default_margin"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/tagsManagerWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tags_management"/>
+
+            <TextView
+                style="?android:textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/topic_tags_description" />
+
+            <Button
+                android:id="@+id/buttonManageTags"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/manage"
+                android:drawablePadding="4sp"
+                android:text="@string/manage"
+                android:drawableTint="?android:textColorPrimary"
+                android:textColor="?android:textColorPrimary"
+                app:drawableStartCompat="@drawable/ic_edit_black"/>
+
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/tagList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:flexWrap="wrap"
+                app:alignItems="flex_start"
+                app:alignContent="flex_start" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@color/grey"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/singleUserPermissions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/permissions"/>
+
+                <TextView
+                    android:id="@+id/permissions"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/p2pPermissions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/sectionTitleStyle"
+                    android:id="@+id/permissionTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/permissions"
+                    tools:text="Permissions"/>
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/permissionTitle"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/your_permissions"/>
+
+                <TextView
+                    android:id="@+id/userOne"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/permissionTitle"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/dotted_line"
+                    android:layout_marginTop="4dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+
+                <TextView
+                    android:id="@+id/userTwoLabel"
+                    style="@style/textPrimary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/userOne"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="4dp"
+                    android:text=""
+                    tools:text="John Doe"/>
+
+                <TextView
+                    android:id="@+id/userTwo"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/userOne"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/dotted_line"
+                    android:layout_marginTop="4dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+            </RelativeLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:background="@color/grey" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/defaultPermissionsWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/default_permissions"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/auth_permissions"/>
+
+                <TextView
+                    android:id="@+id/authPermissions"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/textPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/anon_permissions"/>
+
+                <TextView
+                    android:id="@+id/anonPermissions"
+                    style="@style/textPrimarySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    tools:text="RWPD"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
