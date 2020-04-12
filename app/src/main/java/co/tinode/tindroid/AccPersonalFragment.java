@@ -298,9 +298,8 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
                         }
 
                         final MeTopic me = Cache.getTinode().getMeTopic();
-                        // noinspection unchecked
-                        me.setMeta(new MsgSetMeta(new Credential(meth, null, response, null)))
-                                .thenCatch(new UiUtils.ToastFailureListener(activity));
+                        //noinspection unchecked
+                        me.confirmCred(meth, response).thenCatch(new UiUtils.ToastFailureListener(activity));
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)

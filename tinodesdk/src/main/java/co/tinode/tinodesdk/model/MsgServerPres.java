@@ -1,9 +1,11 @@
 package co.tinode.tinodesdk.model;
 
+import java.io.Serializable;
+
 /**
  * Presence notification.
  */
-public class MsgServerPres {
+public class MsgServerPres implements Serializable {
     public enum What {ON, OFF, UPD, GONE, TERM, ACS, MSG, UA, RECV, READ, DEL, TAGS, UNKNOWN}
 
     public String topic;

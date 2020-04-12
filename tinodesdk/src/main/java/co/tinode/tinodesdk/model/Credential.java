@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -10,7 +11,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  * Account credential: email, phone, captcha
  */
 @JsonInclude(NON_DEFAULT)
-public class Credential {
+public class Credential implements Comparable<Credential>, Serializable {
     public static final String METH_EMAIL = "email";
     public static final String METH_PHONE = "tel";
 
@@ -58,5 +59,17 @@ public class Credential {
     @Override
     public String toString() {
         return meth + ":" + val;
+    }
+
+    @Override
+    public int compareTo(Credential other) {
+        int r = meth.compareTo(other.meth);
+        if (r ==0) {
+            r = val.compareTo(other.val);
+        }
+        if (r == 0) {
+            r = done.compareTo(other.done);
+        }
+        return r;
     }
 }

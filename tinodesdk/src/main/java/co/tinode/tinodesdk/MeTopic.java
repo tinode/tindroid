@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JavaType;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +105,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     mCreds.add(cred);
                 }
             }
+            Collections.sort(mCreds);
         }
     }
 
@@ -142,6 +144,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
 
         return new PromisedReply<>(new NotConnectedException());
+    }
+
+    public PromisedReply<ServerMessage> confirmCred(final String meth, final String resp) {
+        return setMeta(new MsgSetMeta<DP, PrivateType>(new Credential(meth, null, resp, null)));
     }
 
     @Override
@@ -320,6 +326,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 el.done = true;
             }
         }
+
+        if (mCreds != null) {
+            Collections.sort(mCreds);
+        }
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -339,6 +349,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 mCreds.add(cred);
             }
         }
+        Collections.sort(mCreds);
+
         if (mListener != null && mListener instanceof MeListener) {
             ((MeListener) mListener).onCredUpdated(creds);
         }

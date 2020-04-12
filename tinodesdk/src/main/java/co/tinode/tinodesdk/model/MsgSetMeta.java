@@ -1,9 +1,11 @@
 package co.tinode.tinodesdk.model;
 
+import java.io.Serializable;
+
 /**
  * Playload for setting meta params, a combination of MetaSetDesc, MetaSetSub, tags, credential.
  */
-public class MsgSetMeta<Pu,Pr> {
+public class MsgSetMeta<Pu,Pr> implements Serializable {
 
     public MetaSetDesc<Pu,Pr> desc;
     public MetaSetSub sub;

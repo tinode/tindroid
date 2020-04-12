@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +12,7 @@ import co.tinode.tinodesdk.Tinode;
  * Common type of the `private` field of {meta}: holds structured
  * data, such as comment and archival status.
  */
-public class PrivateType extends HashMap<String,Object> implements Mergeable {
+public class PrivateType extends HashMap<String,Object> implements Mergeable, Serializable {
     public PrivateType() {
         super();
     }
