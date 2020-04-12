@@ -79,10 +79,10 @@ public class TindroidApp extends Application {
             Log.w(TAG, "Failed to retrieve app version", e);
         }
 
-        if (isEmulator()) {
-            Log.i(TAG, "Running in emulator: disabling Crashlytics");
-            CrashlyticsCore disabled = new CrashlyticsCore.Builder().disabled(true).build();
-            Fabric.with(this, new Crashlytics.Builder().core(disabled).build());
+        if (BuildConfig.DEBUG) {
+            Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(true).build()).build());
+        } else {
+            Fabric.with(this, new Crashlytics());
         }
 
         BroadcastReceiver br = new BroadcastReceiver() {

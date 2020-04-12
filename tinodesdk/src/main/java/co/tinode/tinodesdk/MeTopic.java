@@ -125,7 +125,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                         return null;
                     }
 
-                    int idx = findCredential(cred, false);
+                    int idx = findCredIndex(cred, false);
                     if (idx >= 0) {
                         mCreds.remove(idx);
                     }
@@ -276,7 +276,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
     }
 
-    private int findCredential(Credential other, boolean anyUnconfirmed) {
+    private int findCredIndex(Credential other, boolean anyUnconfirmed) {
         int i = 0;
         for (Credential cred : mCreds) {
             if (cred.meth.equals(other.meth) && ((anyUnconfirmed && !cred.isDone()) || cred.val.equals(other.val))) {
@@ -300,12 +300,12 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 mCreds.add(cred);
             } else {
                 // Try finding this credential among confirmed or not.
-                int idx = findCredential(cred, false);
+                int idx = findCredIndex(cred, false);
                 if (idx < 0) {
                     // Not found.
                     if (!cred.isDone()) {
                         // Unconfirmed credential replaces previous unconfirmed credential of the same method.
-                        idx = findCredential(cred, true);
+                        idx = findCredIndex(cred, true);
                         if (idx >= 0) {
                             // Remove previous unconfirmed credential.
                             mCreds.remove(idx);
@@ -320,7 +320,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             }
         } else if (cred.resp != null && mCreds != null) {
             // Handle credential confirmation.
-            int idx = findCredential(cred, true);
+            int idx = findCredIndex(cred, true);
             if (idx >= 0) {
                 Credential el = mCreds.get(idx);
                 el.done = true;
