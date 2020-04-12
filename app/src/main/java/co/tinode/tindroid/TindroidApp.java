@@ -79,11 +79,15 @@ public class TindroidApp extends Application {
             Log.w(TAG, "Failed to retrieve app version", e);
         }
 
-        if (BuildConfig.DEBUG) {
-            Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(true).build()).build());
-        } else {
-            Fabric.with(this, new Crashlytics());
-        }
+        // Set up Crashlytics, disabled for debug builds
+        Crashlytics crashlyticsKit = new Crashlytics.Builder()
+                .core(new CrashlyticsCore.Builder()
+                        .disabled(BuildConfig.DEBUG)
+                        .build())
+                .build();
+
+        // Initialize Fabric with the debug-disabled Crashlytics.
+        Fabric.with(this, crashlyticsKit);
 
         BroadcastReceiver br = new BroadcastReceiver() {
             @Override

@@ -134,6 +134,7 @@
     <string name="confirm_logout">Вы действительно хотите выйти из приложения?</string>
     <string name="confirm_member_ban">Удалить %1$s из \"%2$s\" и заблокировать?</string>
     <string name="confirm_member_removal">Удалить %1$s из \"%2$s\"?</string>
+    <string name="confirm_delete_account">Вы действительно хотите удалить свой аккаунт? Его невозможно будет восстановить.</string>
     <string name="current_user">Вы</string>
     <string name="default_permissions">Права доступа по умолчанию</string>
     <string name="download_attachment">сохранить</string>

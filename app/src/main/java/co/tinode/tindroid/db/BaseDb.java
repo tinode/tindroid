@@ -230,8 +230,7 @@ public class BaseDb extends SQLiteOpenHelper {
         return mAcc != null ? mAcc.uid : null;
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public void setUid(String uid, String[] credMethods) {
+    void setUid(String uid, String[] credMethods) {
         if (uid == null) {
             mAcc = null;
             AccountDb.deactivateAll(sInstance.getWritableDatabase());
@@ -240,9 +239,19 @@ public class BaseDb extends SQLiteOpenHelper {
         }
     }
 
-    public void logout() {
-        AccountDb.deactivateAll(sInstance.getWritableDatabase());
-        setUid(null, null);
+    void deleteUid(String uid) {
+        StoredAccount acc;
+        SQLiteDatabase db = sInstance.getWritableDatabase();
+        if (mAcc != null && mAcc.uid.equals(uid)) {
+            acc = mAcc;
+            mAcc = null;
+        } else {
+            acc = AccountDb.getByUid(db, uid);
+        }
+
+        if (acc != null) {
+            AccountDb.delete(db, acc);
+        }
     }
 
     public boolean isReady() {

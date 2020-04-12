@@ -37,7 +37,6 @@ android {
     buildTypes {
         debug {
             resValue "string", "default_host_name", '"sandbox.tinode.co"'
-            ext.enableCrashlytics=false
         }
         release {
             resValue "string", "default_host_name", '"api.tinode.co"'

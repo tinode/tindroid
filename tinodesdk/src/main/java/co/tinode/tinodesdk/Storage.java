@@ -21,6 +21,9 @@ public interface Storage {
     // Server requested credential validation.
     void setMyUid(String uid, String[] credRequired);
 
+    // Delete given account.
+    void deleteAccount(String uid);
+
     String getDeviceToken();
     void saveDeviceToken(String token);
 

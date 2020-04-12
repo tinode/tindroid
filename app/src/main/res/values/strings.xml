@@ -228,6 +228,7 @@
     <string name="delete_credential_title">Delete contact</string>
     <string name="delete_credential_confirmation">Are you sure you want to remove %1$s:%2$s?</string>
     <string name="leave_conversation">Leave Conversation</string>
+    <string name="confirm_delete_account">Are you sure you want to permanently delete your account? This action is irreversible.</string>
     <string name="block_contact">Block Contact</string>
     <string name="report_contact">Report Contact</string>
     <string name="report_group">Report Group</string>

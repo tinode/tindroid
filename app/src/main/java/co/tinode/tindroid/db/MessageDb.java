@@ -37,7 +37,7 @@ public class MessageDb implements BaseColumns {
     /**
      * The name of the main table.
      */
-    private static final String TABLE_NAME = "messages";
+    static final String TABLE_NAME = "messages";
 
     /**
      * Content URI for retrieving messages (content://co.tinode.tindroid/messages)
@@ -47,7 +47,7 @@ public class MessageDb implements BaseColumns {
     /**
      * Topic ID, references topics._ID
      */
-    private static final String COLUMN_NAME_TOPIC_ID = "topic_id";
+    static final String COLUMN_NAME_TOPIC_ID = "topic_id";
     /**
      * Id of the originator of the message, references users._ID
      */

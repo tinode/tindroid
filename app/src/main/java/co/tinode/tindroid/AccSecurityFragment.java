@@ -112,6 +112,26 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
             }
         });
 
+        activity.findViewById(R.id.buttonDeleteAccount).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                builder.setNegativeButton(android.R.string.cancel, null)
+                        .setTitle(R.string.delete_account)
+                        .setMessage(R.string.confirm_delete_account)
+                        .setCancelable(true)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Cache.getTinode().delCurrentUser();
+                                activity.finish();
+                            }
+                        })
+                        .show();
+            }
+        });
+
         activity.findViewById(R.id.authPermissions)
                 .setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -173,6 +193,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setNegativeButton(android.R.string.cancel, null)
+                .setTitle(R.string.logout)
                 .setMessage(R.string.confirm_logout)
                 .setCancelable(true)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {

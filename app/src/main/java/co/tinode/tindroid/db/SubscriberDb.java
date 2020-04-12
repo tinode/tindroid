@@ -26,7 +26,7 @@ public class SubscriberDb implements BaseColumns {
     /**
      * The name of index: topic_id.
      */
-    static final String INDEX_NAME = "subscription_topic_id";
+    private static final String INDEX_NAME = "subscription_topic_id";
     /**
      * Topic _ID, references topics._id
      */
@@ -34,43 +34,43 @@ public class SubscriberDb implements BaseColumns {
     /**
      * UID of the subscriber
      */
-    static final String COLUMN_NAME_USER_ID = "user_id";
+    private static final String COLUMN_NAME_USER_ID = "user_id";
     /**
      * Status of subscription: unsent, delivered, deleted
      */
-    static final String COLUMN_NAME_STATUS = "status";
+    private static final String COLUMN_NAME_STATUS = "status";
     /**
      * User's access mode
      */
-    static final String COLUMN_NAME_MODE = "mode";
+    private static final String COLUMN_NAME_MODE = "mode";
     /**
      * Last update timestamp
      */
-    static final String COLUMN_NAME_UPDATED = "updated";
+    private static final String COLUMN_NAME_UPDATED = "updated";
     /**
      * Deletion timestamp or null
      */
-    static final String COLUMN_NAME_DELETED = "deleted";
+    private static final String COLUMN_NAME_DELETED = "deleted";
     /**
      * Sequence ID marked as read by this user, integer
      */
-    static final String COLUMN_NAME_READ = "read";
+    private static final String COLUMN_NAME_READ = "read";
     /**
      * Sequence ID marked as received by this user, integer
      */
-    static final String COLUMN_NAME_RECV = "recv";
+    private static final String COLUMN_NAME_RECV = "recv";
     /**
      * Max sequence ID marked as deleted, integer
      */
-    static final String COLUMN_NAME_CLEAR = "clear";
+    private static final String COLUMN_NAME_CLEAR = "clear";
     /**
      * Time stamp when the user was last seen in the topic
      */
-    static final String COLUMN_NAME_LAST_SEEN = "last_seen";
+    private static final String COLUMN_NAME_LAST_SEEN = "last_seen";
     /**
      * User agent string when last seen.
      */
-    static final String COLUMN_NAME_USER_AGENT = "user_agent";
+    private static final String COLUMN_NAME_USER_AGENT = "user_agent";
     /**
      * SQL statement to create Messages table
      */

@@ -51,6 +51,11 @@ public class SqlStore implements Storage {
     }
 
     @Override
+    public void deleteAccount(String uid) {
+        mDbh.deleteUid(uid);
+    }
+
+    @Override
     public String getDeviceToken() {
         return AccountDb.getDeviceToken(mDbh.getReadableDatabase());
     }
@@ -70,7 +75,7 @@ public class SqlStore implements Storage {
     }
 
     public void logout() {
-        mDbh.logout();
+        mDbh.setUid(null, null);
     }
 
     @Override

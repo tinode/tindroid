@@ -113,7 +113,18 @@ public class AccountDb implements BaseColumns {
         return acc;
     }
 
-    private static StoredAccount getByUid(SQLiteDatabase db, String uid) {
+    // Delete given account.
+    static void delete(SQLiteDatabase db, StoredAccount acc) {
+        TopicDb.deleteAll(db, acc.id);
+        UserDb.deleteAll(db, acc.id);
+        db.delete(TABLE_NAME, _ID + "=" + acc.id, null);
+    }
+
+    static StoredAccount getByUid(SQLiteDatabase db, String uid) {
+        if (uid == null) {
+            return null;
+        }
+
         StoredAccount acc = null;
         Cursor c = db.query(
                 TABLE_NAME,
@@ -137,6 +148,7 @@ public class AccountDb implements BaseColumns {
         db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_NAME_ACTIVE + "=0");
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     static boolean updateDeviceToken(SQLiteDatabase db, String token) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_DEVICE_ID, token);

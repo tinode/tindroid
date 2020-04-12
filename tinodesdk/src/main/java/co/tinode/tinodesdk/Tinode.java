@@ -1186,10 +1186,12 @@ public class Tinode {
 
         String newUid = ctrl.getStringParam("user", null);
         if (mMyUid != null && !mMyUid.equals(newUid)) {
+            // logout() clears mMyUid. Save it for the exception below;
+            String oldMyUid = mMyUid;
             logout();
             mNotifier.onLogin(400, "UID mismatch");
 
-            throw new IllegalStateException("UID mismatch: received '" + newUid + "', expected '" + mMyUid + "'");
+            throw new IllegalStateException("UID mismatch: received '" + newUid + "', expected '" + oldMyUid + "'");
         }
 
         mMyUid = newUid;
@@ -1522,6 +1524,27 @@ public class Tinode {
     public PromisedReply<ServerMessage> delCredential(final Credential cred) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), cred));
         return sendWithPromise(msg, msg.del.id);
+    }
+
+    /**
+     * Request to delete current account of the current user.
+     *
+     * @return PromisedReply of the reply ctrl message
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public PromisedReply<ServerMessage> delCurrentUser() {
+        ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId()));
+        return sendWithPromise(msg, msg.del.id).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                disconnect();
+                if (mStore != null) {
+                    mStore.deleteAccount(mMyUid);
+                    mMyUid = null;
+                }
+                return null;
+            }
+        });
     }
 
     /**

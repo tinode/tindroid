@@ -249,8 +249,6 @@ public class TopicDb implements BaseColumns {
         return id;
     }
 
-
-
     /**
      * Update topic description
      *
@@ -476,6 +474,25 @@ public class TopicDb implements BaseColumns {
      */
     public static boolean delete(SQLiteDatabase db, long id) {
         return db.delete(TABLE_NAME, _ID + "=" + id, null) > 0;
+    }
+
+    /**
+     * Delete all topics of the given account ID.
+     * Also deletes subscriptions and messages.
+     */
+    static void deleteAll(SQLiteDatabase db, long accId) {
+        // Delete messages.
+        String sql = "DELETE FROM " + MessageDb.TABLE_NAME +
+                " WHERE " + MessageDb.COLUMN_NAME_TOPIC_ID + " IN (" +
+                    "SELECT " + _ID + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_ACCOUNT_ID + "=" + accId +
+                ")";
+        db.execSQL(sql);
+        // Delete subscribers.
+        sql = "DELETE FROM " + SubscriberDb.TABLE_NAME +
+                " WHERE " + SubscriberDb.COLUMN_NAME_TOPIC_ID + " IN (" +
+                    "SELECT " + _ID + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_ACCOUNT_ID + "=" + accId +
+                ")";
+        db.execSQL(sql);
     }
 
     /**

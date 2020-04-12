@@ -168,6 +168,13 @@ public class UserDb implements BaseColumns {
     }
 
     /**
+     * Delete all users for the given account ID.
+     */
+    static void deleteAll(SQLiteDatabase db, long accId) {
+        db.delete(TABLE_NAME, COLUMN_NAME_ACCOUNT_ID + "=" + accId, null);
+    }
+
+    /**
      * Given UID, get it's database _id
      *
      * @param db database

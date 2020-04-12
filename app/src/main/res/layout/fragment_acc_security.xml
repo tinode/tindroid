@@ -32,7 +32,7 @@
         app:drawableStartCompat="@drawable/ic_exit_red" />
 
     <Button
-        android:id="@+id/buttonLogout"
+        android:id="@+id/buttonDeleteAccount"
         style="?attr/buttonBarButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
