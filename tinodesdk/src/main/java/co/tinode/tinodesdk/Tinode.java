@@ -1527,7 +1527,7 @@ public class Tinode {
     }
 
     /**
-     * Request to delete current account of the current user.
+     * Request to delete account of the current user.
      *
      * @return PromisedReply of the reply ctrl message
      */
@@ -1540,8 +1540,8 @@ public class Tinode {
                 disconnect();
                 if (mStore != null) {
                     mStore.deleteAccount(mMyUid);
-                    mMyUid = null;
                 }
+                mMyUid = null;
                 return null;
             }
         });
