@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeight"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:orientation="horizontal"
     android:paddingBottom="2dp"
     android:paddingTop="2dp"
     android:paddingLeft="4dp"
-    android:paddingRight="4dp">
+    android:paddingRight="4dp" >
 
     <ImageView
         android:id="@android:id/icon"
-        android:layout_width="48sp"
-        android:layout_height="48sp"
-        app:srcCompat="@drawable/ic_person_circle"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_alignParentStart="true"
-        android:layout_marginRight="5dp"
         android:contentDescription="@string/avatar"
-        android:layout_marginEnd="5dp" />
+        android:layout_marginEnd="5dp"
+        android:layout_centerVertical="true"
+        app:srcCompat="@drawable/ic_person_circle" />
 
     <ImageButton
         android:id="@+id/optionsMenu"
@@ -30,7 +30,7 @@
         app:srcCompat="@drawable/ic_more_vert"
         android:tint="?android:attr/textColorSecondary"
         android:focusable="false"
-        android:gravity="center"
+        android:layout_centerVertical="true"
         android:contentDescription="@string/options_menu"
         android:background="?attr/selectableItemBackgroundBorderless" />
 
@@ -39,9 +39,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@id/optionsMenu"
-        android:layout_marginTop="3.5dp"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal"
         android:focusable="false">
+
         <TextView
             tools:text="one"
             android:layout_width="wrap_content"
@@ -86,11 +87,13 @@
         android:layout_toStartOf="@id/statusContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="start"
         android:paddingEnd="16sp"
+        android:layout_marginTop="6dp"
         tools:ignore="RtlSymmetry"
         android:layout_alignParentTop="true"
         android:maxLines="1"
+        android:lines="1"
+        android:singleLine="true"
         tools:text="Test text"
         android:textAppearance="@style/contactListTextPrimary"/>
 
@@ -101,7 +104,8 @@
         android:layout_gravity="top"
         android:ellipsize="end"
         android:maxLines="1"
-        android:maxWidth="240sp"
+        android:lines="1"
+        android:singleLine="true"
         android:layout_below="@android:id/text1"
         android:layout_toStartOf="@id/optionsMenu"
         android:layout_toEndOf="@android:id/icon"

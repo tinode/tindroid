@@ -100,7 +100,7 @@
         app:drawableStartCompat="@drawable/ic_report_gray"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:text="@string/new_chat_report"
+        android:text="@string/block_and_report"
         android:paddingStart="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -25,7 +25,7 @@
             android:id="@+id/uploadAvatar"
             android:layout_width="48sp"
             android:layout_height="48sp"
-            android:layout_alignRight="@id/imageAvatar"
+            android:layout_alignEnd="@id/imageAvatar"
             android:layout_alignBottom="@id/imageAvatar"
             android:layout_margin="2sp"
             android:background="@drawable/pill_counter"
@@ -53,6 +53,11 @@
                 android:layout_height="wrap_content"
                 android:maxLines="2"
                 android:textIsSelectable="true"
+                android:ellipsize="end"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/dotted_line"
                 tools:text="User name" />
 
             <Space

@@ -8,9 +8,9 @@
     <color name="colorAccent">#00897B</color>
     <color name="colorAccentDark">#004D40</color>
 
-    <color name="colorPrimaryDark">#005662</color>
-
     <color name="colorDanger">#B71C1C</color>
+
+    <color name="colorTextPlaceholder">#80999999</color>
 
     <color name="colorChipBackground">#eeeeee</color>
     <color name="colorChipBorder">#999999</color>
@@ -32,8 +32,6 @@
     <color name="colorOffline">#FFFFFF66</color>
 
     <color name="colorMessageSelected">#2f3F51B5</color>
-
-    <color name="colorDivider">#66000000</color>
 
     <color name="colorBorderGray">#9E9E9E</color>
 

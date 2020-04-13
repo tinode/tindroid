@@ -63,6 +63,10 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="6dp"/>
+
             <LinearLayout
                 android:id="@+id/singleUserPermissions"
                 android:layout_width="match_parent"
@@ -160,6 +164,10 @@
                     android:typeface="monospace"
                     tools:text="RWPD"/>
             </RelativeLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="6dp"/>
 
             <View
                 android:layout_width="match_parent"

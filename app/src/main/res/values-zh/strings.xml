@@ -222,7 +222,7 @@
     <string name="report_group">群组上报</string>
     <string name="clear_messages">清除消息</string>
     <string name="manage_members">管理成员</string>
-    <string name="new_chat_report">屏蔽并举报</string>
+    <string name="block_and_report">屏蔽并举报</string>
     <string name="confirm_contact_ban">屏蔽 %1$s?</string>
     <string name="confirm_report">屏蔽并举报 %1$s?</string>
     <string name="confirm_delete_account">您确定要永久删除您的帐户吗？此动作是不可逆的。</string>
@@ -254,7 +254,11 @@
     <string name="topic_tags_description">搜索标签以查找组</string>
     <string name="permissions_explained">访问权限，搜索标签</string>
     <string name="delete_group">删除会话</string>
-    <string name="id">地址</string>
+    <string name="id">地址:</string>
     <string name="topic_default_permissions_explained">新成员会自动获得这些权限</string>
     <string name="user_default_permissions_explained">其他人则以这些权限开始与您对话</string>
+
+    <string name="confirm_delmsg_for_all">您确定要删除所有参与者的所有消息吗？</string>
+    <string name="confirm_delmsg_for_self">您确定要删除所有消息吗？它们只会为您删除。</string>
+
 </resources>

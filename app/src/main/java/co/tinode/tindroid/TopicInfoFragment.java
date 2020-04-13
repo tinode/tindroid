@@ -1,26 +1,20 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.AppCompatImageView;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,11 +29,16 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.flexbox.FlexboxLayout;
-
 import java.util.Collection;
 import java.util.HashMap;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.media.VxCard;
@@ -52,7 +51,6 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -72,6 +70,7 @@ public class TopicInfoFragment extends Fragment {
     private static final int ACTION_REMOVE = 4;
     private static final int ACTION_BAN_TOPIC = 5;
     private static final int ACTION_BAN_MEMBER = 6;
+    private static final int ACTION_DELMSG = 7;
 
     private ComTopic<VxCard> mTopic;
     private MembersAdapter mAdapter;
@@ -157,6 +156,14 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
+        view.findViewById(R.id.permissionsSingle).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
+                        UiUtils.ACTION_UPDATE_SELF_SUB, "O");
+            }
+        });
+
         view.findViewById(R.id.permissions).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -164,17 +171,28 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
+        view.findViewById(R.id.buttonClearMessages).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
+                showConfirmationDialog(null, null, null,
+                        R.string.clear_messages, confirm, ACTION_DELMSG);
+            }
+        });
+
         view.findViewById(R.id.buttonLeave).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showConfirmationDialog(null, null, null, R.string.confirm_leave_topic, ACTION_LEAVE);
+                showConfirmationDialog(null, null, null,
+                        R.string.leave_conversation, R.string.confirm_leave_topic, ACTION_LEAVE);
             }
         });
 
         view.findViewById(R.id.buttonDeleteGroup).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showConfirmationDialog(null, null, null, R.string.confirm_delete_topic, ACTION_DELETE);
+                showConfirmationDialog(null, null, null,
+                        R.string.delete_group, R.string.confirm_delete_topic, ACTION_DELETE);
             }
         });
 
@@ -185,7 +203,8 @@ public class TopicInfoFragment extends Fragment {
                 String topicTitle = pub != null ? pub.fn : null;
                 topicTitle = TextUtils.isEmpty(topicTitle) ?
                         activity.getString(R.string.placeholder_topic_title) : topicTitle;
-                showConfirmationDialog(topicTitle, null, null, R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
+                showConfirmationDialog(topicTitle, null, null,
+                        R.string.block_contact, R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
             }
         });
 
@@ -197,7 +216,8 @@ public class TopicInfoFragment extends Fragment {
                 topicTitle = TextUtils.isEmpty(topicTitle) ?
                         activity.getString(R.string.placeholder_topic_title) :
                         topicTitle;
-                showConfirmationDialog(topicTitle, null, null, R.string.confirm_report, ACTION_REPORT);
+                showConfirmationDialog(topicTitle, null, null,
+                        R.string.block_and_report, R.string.confirm_report, ACTION_REPORT);
             }
         };
         view.findViewById(R.id.buttonReportContact).setOnClickListener(reportListener);
@@ -238,7 +258,11 @@ public class TopicInfoFragment extends Fragment {
         final TextView address = activity.findViewById(R.id.topicAddress);
         final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
 
+        final View permissions = activity.findViewById(R.id.permissions);
+        final View permissionsSingle = activity.findViewById(R.id.singleUserPermissions);
+
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
+
         final View deleteGroup = activity.findViewById(R.id.buttonDeleteGroup);
         final View blockContact = activity.findViewById(R.id.buttonBlock);
         final View reportGroup = activity.findViewById(R.id.buttonReportGroup);
@@ -253,6 +277,9 @@ public class TopicInfoFragment extends Fragment {
         };
         if (mTopic.isOwner()) {
             title.setOnClickListener(l);
+            title.setBackgroundResource(R.drawable.dotted_line);
+        } else {
+            title.setBackgroundResource(0);
         }
         subtitle.setOnClickListener(l);
 
@@ -267,11 +294,17 @@ public class TopicInfoFragment extends Fragment {
 
             View buttonLeave = activity.findViewById(R.id.buttonLeave);
             if (mTopic.isOwner()) {
+                permissions.setVisibility(View.VISIBLE);
+                permissionsSingle.setVisibility(View.GONE);
+
                 buttonLeave.setVisibility(View.GONE);
                 reportGroup.setVisibility(View.GONE);
                 blockContact.setVisibility(View.GONE);
                 deleteGroup.setVisibility(View.VISIBLE);
             } else {
+                permissions.setVisibility(View.GONE);
+                permissionsSingle.setVisibility(View.VISIBLE);
+
                 buttonLeave.setVisibility(View.VISIBLE);
                 reportGroup.setVisibility(View.VISIBLE);
                 blockContact.setVisibility(View.VISIBLE);
@@ -294,6 +327,9 @@ public class TopicInfoFragment extends Fragment {
             uploadAvatarButton.setVisibility(View.GONE);
 
             groupMembers.setVisibility(View.GONE);
+            permissions.setVisibility(View.GONE);
+            permissionsSingle.setVisibility(View.VISIBLE);
+
             deleteGroup.setVisibility(View.GONE);
             reportGroup.setVisibility(View.GONE);
             reportContact.setVisibility(View.VISIBLE);
@@ -364,7 +400,9 @@ public class TopicInfoFragment extends Fragment {
     //  message_id - id of the string resource to use as an explanation.
     //  what - action to take on success, ACTION_*
     private void showConfirmationDialog(final String arg1, final String arg2,
-                                        final String uid, int message_id, final int what) {
+                                        final String uid,
+                                        int title_id, int message_id,
+                                        final int what) {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
@@ -372,6 +410,9 @@ public class TopicInfoFragment extends Fragment {
 
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
         confirmBuilder.setNegativeButton(android.R.string.no, null);
+        if (title_id != 0) {
+            confirmBuilder.setTitle(title_id);
+        }
         String message = activity.getString(message_id, arg1, arg2);
         confirmBuilder.setMessage(message);
 
@@ -400,6 +441,8 @@ public class TopicInfoFragment extends Fragment {
                     case ACTION_BAN_MEMBER:
                         response = mTopic.eject(uid, true);
                         break;
+                    case ACTION_DELMSG:
+                        response = mTopic.delMessages(true);
                 }
 
                 if (response != null) {
@@ -482,11 +525,13 @@ public class TopicInfoFragment extends Fragment {
                             break;
                         case R.id.buttonRemove: {
                             showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
+                                    R.string.remove_from_group,
                                     R.string.confirm_member_removal, ACTION_REMOVE);
                             break;
                         }
                         case R.id.buttonBlock: {
                             showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
+                                    R.string.block,
                                     R.string.confirm_member_ban, ACTION_BAN_MEMBER);
                             break;
                         }
@@ -571,15 +616,26 @@ public class TopicInfoFragment extends Fragment {
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
             subtitle.setText(priv.getComment());
             subtitle.setTypeface(null, Typeface.NORMAL);
+            TypedValue typedValue = new TypedValue();
+            Resources.Theme theme = getActivity().getTheme();
+            theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true);
+            TypedArray arr = activity.obtainStyledAttributes(typedValue.data,
+                    new int[]{android.R.attr.textColorSecondary});
+            subtitle.setTextColor(arr.getColor(0, -1));
+            arr.recycle();
             subtitle.setTextIsSelectable(true);
         } else {
             subtitle.setText(R.string.placeholder_private);
             subtitle.setTypeface(null, Typeface.ITALIC);
+            subtitle.setTextColor(getResources().getColor(R.color.colorTextPlaceholder));
             subtitle.setTextIsSelectable(false);
         }
 
         ((Switch) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
         ((Switch) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
+
+        Acs acs = mTopic.getAccessMode();
+        ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());
     }
 
     @Override

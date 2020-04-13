@@ -622,6 +622,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return mDesc.acs != null && mDesc.acs.isJoiner();
     }
 
+    public boolean isDeleter() {
+        return mDesc.acs != null && mDesc.acs.isDeleter();
+    }
+
     public Defacs getDefacs() {
         return mDesc.defacs;
     }

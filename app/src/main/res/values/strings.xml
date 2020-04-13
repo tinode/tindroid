@@ -89,7 +89,7 @@
     <string name="add_one_member">Add at least one group member</string>
     <string name="add_members">Add members</string>
     <string name="leave_group">Leave group</string>
-    <string name="id">ID</string>
+    <string name="id">ID:</string>
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
     <string name="your_permissions">Yours</string>
@@ -106,7 +106,7 @@
     <string name="default_permissions">Default permissions</string>
     <string name="auth_permissions">Authenticated users</string>
     <string name="anon_permissions">Anonymous users</string>
-    <string name="topic_private">Additional info (private)</string>
+    <string name="topic_private">Additional info (visible to you only)</string>
     <string name="edit_topic">Edit Topic</string>
     <string name="edit_permissions">Edit Permissions</string>
 
@@ -234,7 +234,7 @@
     <string name="report_group">Report Group</string>
     <string name="clear_messages">Clear Messages</string>
     <string name="manage_members">Manage Members</string>
-    <string name="new_chat_report">Block and report</string>
+    <string name="block_and_report">Block and report</string>
     <string name="confirm_contact_ban">Block %1$s?</string>
     <string name="confirm_report">Block and report %1$s?</string>
     <string name="legal">Legal</string>
@@ -268,4 +268,6 @@
 
     <string name="topic_default_permissions_explained">New members automatically receive these permissions</string>
     <string name="user_default_permissions_explained">Others start conversations with you with these permissions</string>
+    <string name="confirm_delmsg_for_all">Are you sure you want to delete all messages for all participants?</string>
+    <string name="confirm_delmsg_for_self">Are you sure you want to delete all messages? You delete them only for yourself.</string>
 </resources>

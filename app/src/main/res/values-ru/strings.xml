@@ -15,9 +15,9 @@
     <string name="full_name">Полное имя, напр. Иван Петров</string>
     <string name="action_cancel">Отмена</string>
     <string name="settings_host_name">Адрес сервера</string>
-    <string name="settings_use_tls">Защищенное соединение</string>
+    <string name="settings_use_tls">Защищённое соединение</string>
     <string name="settings_wire_transport">Тип соединения</string>
-    <string name="settings_tls_explained">Использовать защищенное (https) соединение</string>
+    <string name="settings_tls_explained">Использовать защищённое (https) соединение</string>
     <string name="settings_host_name_explained">Соединение с сервером \'%1$s\'</string>
     <string name="settings_wire_explained">Тип соединение \'%1$s\'</string>
 
@@ -46,7 +46,7 @@
     <string name="invalid_confirmation_code">Код неверен</string>
     <string name="email_rejected">Емейл неверен</string>
     <string name="login_rejected">Логин неверен</string>
-    <string name="your_permissions">Ваш</string>
+    <string name="your_permissions">Ваши</string>
     <string name="cancelled">отменено</string>
     <string name="invalid_file">Невозможно прикрепить этот файл</string>
     <string name="notification_channel_name">Новое сообщение</string>
@@ -65,7 +65,7 @@
     <string name="add_members">Добавить в чат</string>
     <string name="add_one_member">Нужно добавить хотя бы одного пользователя</string>
     <string name="anon_permissions">Анонимные пользователи</string>
-    <string name="id">ID</string>
+    <string name="id">ID:</string>
     <string name="hint_add_by_id">Введите адрес группы или пользователя</string>
     <string name="attachment_too_large">Файл слишком большой: %1$s превышает %2$s лимит.</string>
     <string name="auth_permissions">Авторизованные пользователи</string>
@@ -93,7 +93,7 @@
     <string name="permission_share">Пригласить в группу</string>
     <string name="permission_write">Запись</string>
     <string name="permission_read">Чтение</string>
-    <string name="permission_owner">Полный (владелец)</string>
+    <string name="permission_owner">Полные (владелец)</string>
     <string name="permission_notifications">Уведомления</string>
     <string name="permission_join">Подписка</string>
     <string name="permission_delete">Удалять сообщения</string>
@@ -202,7 +202,7 @@
     <string name="report_group">Сообщить о нарушении</string>
     <string name="clear_messages">Удалить сообщения</string>
     <string name="manage_members">Управлять участниками</string>
-    <string name="new_chat_report">Заблокировать и сообщить о нарушении</string>
+    <string name="block_and_report">Заблокировать и сообщить о нарушении</string>
     <string name="confirm_contact_ban">Заблокировать %1$s?</string>
     <string name="confirm_report">Заблокировать и сообщить о нарушении %1$s?</string>
     <string name="legal">Прочее</string>
@@ -238,4 +238,7 @@
     <string name="delete_group">Удалить группу</string>
     <string name="topic_default_permissions_explained">Новые участники автоматически получают эти права доступа</string>
     <string name="user_default_permissions_explained">Новые чаты получат эти права доступа</string>
+    <string name="confirm_delmsg_for_all">Вы действительно хотите удалить всю переписку для всех участников?</string>
+    <string name="confirm_delmsg_for_self">Вы действительно хотите удалить всю переписку? Вы удаляете её только для себя.</string>
+
 </resources>

@@ -46,24 +46,33 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_toStartOf="@id/imageAvatar"
-                android:clickable="true"
                 android:ellipsize="end"
+                android:clickable="true"
                 android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:maxLines="2"
                 android:textIsSelectable="false"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@drawable/dotted_line"
                 tools:text="Topic title (public)" />
 
             <TextView
                 android:id="@+id/topicSubtitle"
                 style="@style/textSecondary"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/topicTitle"
-                android:clickable="true"
                 android:ellipsize="end"
+                android:clickable="true"
                 android:focusable="true"
-                android:maxLines="1"
+                android:focusableInTouchMode="true"
+                android:lines="1"
+                android:singleLine="true"
                 android:textIsSelectable="false"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/imageAvatar"
+                android:background="@drawable/dotted_line"
                 tools:text="Topic subtitle (private)" />
 
             <LinearLayout
@@ -72,23 +81,25 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/topicSubtitle"
                 android:layout_alignParentStart="true"
-                android:layout_toRightOf="@id/imageAvatar">
+                android:layout_toStartOf="@id/imageAvatar">
 
                 <TextView
                     style="@style/textSecondary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingEnd="@dimen/activity_default_margin"
-                    android:text="@string/id" />
+                    android:paddingEnd="8dp"
+                    android:text="@string/id"
+                    tools:ignore="RtlSymmetry" />
 
                 <TextView
                     android:id="@+id/topicAddress"
-                    style="@style/textSecondarySmall"
+                    style="@style/textSecondary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:fontFamily="monospace"
-                    android:maxLines="1"
+                    android:lines="1"
+                    android:singleLine="true"
                     android:textIsSelectable="true"
                     android:typeface="monospace"
                     tools:text="p2p__fv2qrUr6vAdVURkv6q3w" />
@@ -156,7 +167,8 @@
             android:layout_height="wrap_content"
             android:clickable="true"
             android:gravity="center_vertical"
-            android:minHeight="?attr/listPreferredItemHeight">
+            android:minHeight="?attr/listPreferredItemHeight"
+            android:focusable="true">
 
             <ImageView
                 android:id="@+id/icon_security"
@@ -165,7 +177,8 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/ic_key"
-                android:tint="@color/colorAccent" />
+                android:tint="@color/colorAccent"
+                android:contentDescription="@string/permissions" />
 
             <TextView
                 android:id="@+id/security_text"
@@ -185,6 +198,37 @@
                 android:layout_toEndOf="@id/icon_security"
                 android:text="@string/permissions_explained" />
         </RelativeLayout>
+
+        <LinearLayout
+            android:id="@+id/singleUserPermissions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/textPrimary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/permissions"/>
+
+            <TextView
+                android:id="@+id/permissionsSingle"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="?android:textColorPrimary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dotted_line"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="RWPD"/>
+        </LinearLayout>
 
         <View
             android:layout_width="match_parent"
