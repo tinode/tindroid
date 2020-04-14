@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
@@ -10,6 +11,8 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -69,6 +72,14 @@ public class AccHelpFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT);
+            }
+        });
+
+        fragment.findViewById(R.id.ossLicenses).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activity.startActivity(new Intent(activity, OssLicensesMenuActivity.class));
+                OssLicensesMenuActivity.setActivityTitle(getString(R.string.licenses));
             }
         });
 

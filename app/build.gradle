@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.android.gms.oss-licenses-plugin'
 
 // See explanation here: https://stackoverflow.com/questions/20562189/sign-apk-without-putting-keystore-info-in-build-gradle
 def keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -85,6 +86,7 @@ dependencies {
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
     implementation 'com.google.android:flexbox:1.1.0'
+    implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.material:material:1.1.0'
     implementation 'com.google.firebase:firebase-core:17.3.0'
     implementation 'com.google.firebase:firebase-messaging:20.1.5'

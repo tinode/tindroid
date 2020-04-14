@@ -270,4 +270,5 @@
     <string name="user_default_permissions_explained">Others start conversations with you with these permissions</string>
     <string name="confirm_delmsg_for_all">Are you sure you want to delete all messages for all participants?</string>
     <string name="confirm_delmsg_for_self">Are you sure you want to delete all messages? You delete them only for yourself.</string>
+    <string name="licenses">Licenses</string>
 </resources>

@@ -30,6 +30,9 @@
         <item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
 
+    <style name="LicensesTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+    </style>
+
     <style name="searchTextHighlight">
         <item name="android:textColor">@color/colorAccent</item>
         <item name="android:textStyle">bold</item>

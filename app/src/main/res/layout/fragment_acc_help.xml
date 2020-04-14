@@ -44,7 +44,6 @@
 
         <TextView
             android:id="@+id/termsOfUse"
-            android:layout_below="@id/contactUs"
             tools:text="Terms of Use"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -70,7 +69,6 @@
             android:src="@drawable/ic_privacy" />
         <TextView
             android:id="@+id/privacyPolicy"
-            android:layout_below="@id/termsOfUse"
             tools:text="Privacy Policy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -94,11 +92,36 @@
             android:tint="@color/colorAccent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:src="@drawable/ic_license" />
+        <TextView
+            android:id="@+id/ossLicenses"
+            tools:text="Licences"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:textAppearance="?android:textAppearanceLarge"
+            android:text="@string/licenses" />
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:tint="@color/colorAccent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:src="@drawable/ic_logo_push" />
 
         <TextView
             android:id="@+id/aboutTheApp"
-            android:layout_below="@id/privacyPolicy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

@@ -119,6 +119,14 @@
             android:windowSoftInputMode="adjustResize">
         </activity>
 
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
+            android:theme="@style/LicensesTheme" />
+
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
+            android:theme="@style/LicensesTheme" />
+
         <service
             android:name=".account.TinodeAccountService"
             android:exported="false">
