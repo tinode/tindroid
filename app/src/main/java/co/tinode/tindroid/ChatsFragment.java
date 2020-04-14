@@ -376,7 +376,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                             @SuppressWarnings("unchecked")
                             ComTopic<VxCard> t = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
                             try {
-                                reply = t.delete().thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                                reply = t.delete(true).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                                     @Override
                                     public PromisedReply<ServerMessage> onFailure(final Exception err) {
                                         activity.runOnUiThread(new Runnable() {

@@ -422,7 +422,7 @@ public class TopicInfoFragment extends Fragment {
                 PromisedReply<ServerMessage> response = null;
                 switch (what) {
                     case ACTION_LEAVE:
-                        response = mTopic.delete();
+                        response = mTopic.delete(true);
                         break;
                     case ACTION_REPORT:
                         HashMap<String, Object> json =  new HashMap<>();

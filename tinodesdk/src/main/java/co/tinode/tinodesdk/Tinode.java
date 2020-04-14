@@ -1490,14 +1490,16 @@ public class Tinode {
     }
 
     /**
-     * Low-level request to delete topic. Use {@link Topic#delete()} instead.
+     * Low-level request to delete topic. Use {@link Topic#delete(boolean)} instead.
      *
      * @param topicName name of the topic to delete
+     * @param hard hard-delete topic.
      * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
-    public PromisedReply<ServerMessage> delTopic(final String topicName) {
+    public PromisedReply<ServerMessage> delTopic(final String topicName, boolean hard) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId(), topicName));
+        msg.del.hard = hard;
         return sendWithPromise(msg, msg.del.id);
     }
 
@@ -1529,11 +1531,13 @@ public class Tinode {
     /**
      * Request to delete account of the current user.
      *
+     * @param hard hard-delete
      * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("UnusedReturnValue")
-    public PromisedReply<ServerMessage> delCurrentUser() {
+    public PromisedReply<ServerMessage> delCurrentUser(boolean hard) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId()));
+        msg.del.hard = hard;
         return sendWithPromise(msg, msg.del.id).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {

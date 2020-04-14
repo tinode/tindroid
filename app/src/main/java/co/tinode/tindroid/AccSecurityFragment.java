@@ -124,7 +124,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Cache.getTinode().delCurrentUser();
+                                Cache.getTinode().delCurrentUser(true);
                                 activity.finish();
                             }
                         })

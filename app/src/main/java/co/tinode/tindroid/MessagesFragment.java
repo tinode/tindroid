@@ -474,7 +474,7 @@ public class MessagesFragment extends Fragment
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 try {
-                    mTopic.delete().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    mTopic.delete(true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             Intent intent = new Intent(activity, ChatsActivity.class);
@@ -540,7 +540,7 @@ public class MessagesFragment extends Fragment
                             break;
 
                         case R.id.buttonIgnore:
-                            response = mTopic.delete();
+                            response = mTopic.delete(true);
                             break;
 
                         case R.id.buttonBlock:

@@ -145,6 +145,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (name != null) {
             if (name.equals(Tinode.TOPIC_ME)) {
                 return TopicType.ME;
+            } else if (name.equals(Tinode.TOPIC_SYS)) {
+                return TopicType.SYS;
             } else if (name.equals(Tinode.TOPIC_FND)) {
                 return TopicType.FND;
             } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
@@ -1301,10 +1303,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     /**
      * Delete topic
+     *
+     * @param hard hard-delete topic.
      */
-    public PromisedReply<ServerMessage> delete() {
+    public PromisedReply<ServerMessage> delete(boolean hard) {
         // Delete works even if the topic is not attached.
-        return mTinode.delTopic(getName()).thenApply(
+        return mTinode.delTopic(getName(), hard).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -1831,8 +1835,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     public enum TopicType {
-        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08),
-        USER(0x04 | 0x08), SYSTEM(0x01 | 0x02), UNKNOWN(0x00),
+        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08), SYS(0x10),
+        USER(0x04 | 0x08), INTERNAL(0x01 | 0x02 | 0x10), UNKNOWN(0x00),
         ANY(0x01 | 0x02 | 0x04 | 0x08);
 
         private int val;
