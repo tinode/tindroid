@@ -35,11 +35,11 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Content provider authority.
      */
-    public static final String CONTENT_AUTHORITY = "co.tinode.tindroid.provider";
+    private static final String CONTENT_AUTHORITY = "co.tinode.tindroid.provider";
     /**
      * Base content URI. (content://co.tinode.tindroid)
      */
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + BaseDb.CONTENT_AUTHORITY);
+    static final Uri BASE_CONTENT_URI = Uri.parse("content://" + BaseDb.CONTENT_AUTHORITY);
 
     public enum Status {
         // Status undefined/not set.
@@ -125,15 +125,25 @@ public class BaseDb extends SQLiteOpenHelper {
     }
 
     /**
-     * Parses serialized class from "canonical_class_name;json_representation of content".
+     * Parses serialized object or an array of objects from
+     * "canonical_class_name;json content" or
+     * "canonical_class_name[];json of array of objects"
+     *
      * @param input string to parse
-     * @param <T> type of the prased object
+     * @param <T> type of the parsed object
      * @return parsed object or null
      */
     static <T> T deserialize(String input) {
         if (input != null) {
             try {
                 String[] parts = input.split(";", 2);
+                if (parts[0].endsWith("[]")) {
+                    // Deserializing an array.
+                    parts[0] = parts[0].substring(0, parts[0].length() - 2);
+                    //noinspection unchecked
+                    return (T) Tinode.jsonDeserializeArray(parts[1], parts[0]);
+                }
+                // Deserializing a single object.
                 return Tinode.jsonDeserialize(parts[1], parts[0]);
             } catch (ClassCastException ex) {
                 Log.w(TAG, "Failed to de-serialize", ex);

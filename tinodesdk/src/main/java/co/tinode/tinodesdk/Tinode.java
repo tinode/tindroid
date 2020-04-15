@@ -275,7 +275,23 @@ public class Tinode {
     public static <T> T jsonDeserialize(String input, String canonicalName) {
         try {
             return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
-        } catch (IOException e) {
+        } catch (IllegalArgumentException | IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Convert JSON to an array of objects. Exported for convenience.
+     *
+     * @param input         JSON string to parse
+     * @param canonicalName name of the base class to use as elements of array.
+     * @return converted array of objects.
+     */
+    public static <T> T[] jsonDeserializeArray(String input, String canonicalName) {
+        try {
+            return sJsonMapper.readValue(input, sTypeFactory.constructArrayType(
+                            sTypeFactory.constructFromCanonical(canonicalName)));
+        } catch (IllegalArgumentException | IOException e) {
             return null;
         }
     }
