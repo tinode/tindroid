@@ -123,13 +123,11 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     if (mCreds == null) {
-                        Log.i(TAG, "Credentials are empty to begin with");
                         return null;
                     }
 
                     int idx = findCredIndex(cred, false);
                     if (idx >= 0) {
-                        Log.i(TAG, "Credential "+ cred + " removed at " + idx);
                         mCreds.remove(idx);
 
                         if (mStore != null) {
@@ -138,7 +136,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
                         // Notify listeners
                         if (mListener != null && mListener instanceof MeListener) {
-                            Log.i(TAG, "MeListener notified.");
                             ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
                         }
                     }
@@ -322,13 +319,12 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                         }
                     }
                     mCreds.add(cred);
-                    changed = true;
                 } else {
                     // Found. Maybe change 'done' status.
                     Credential el = mCreds.get(idx);
                     el.done = cred.isDone();
-                    changed = true;
                 }
+                changed = true;
             }
         } else if (cred.resp != null && mCreds != null) {
             // Handle credential confirmation.
