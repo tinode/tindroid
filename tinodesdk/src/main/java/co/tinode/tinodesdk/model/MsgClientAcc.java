@@ -3,6 +3,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -11,7 +12,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  * Account creation packet
  */
 @JsonInclude(NON_DEFAULT)
-public class MsgClientAcc<Pu,Pr> {
+public class MsgClientAcc<Pu,Pr> implements Serializable {
     public String id;
     public String user;
     public String scheme;

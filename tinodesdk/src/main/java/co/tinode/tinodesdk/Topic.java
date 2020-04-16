@@ -797,7 +797,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                         if (isNew() && err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
-                            if (sre.getCode() >= 400 && sre.getCode() < 500) {
+                            if (sre.getCode() >= ServerMessage.STATUS_BAD_REQUEST &&
+                                    sre.getCode() < ServerMessage.STATUS_INTERNAL_SERVER_ERROR) {
                                 mTinode.stopTrackingTopic(topicName);
                                 persist(false);
                             }
@@ -1370,6 +1371,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return noteRead(false, -1);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public int noteRead(int seq) {
         return noteRead(false, seq);
     }
@@ -2037,11 +2039,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         public MetaGetBuilder withTags() {
             meta.setTags();
-            return this;
-        }
-
-        public MetaGetBuilder withCred() {
-            meta.setCred();
             return this;
         }
 

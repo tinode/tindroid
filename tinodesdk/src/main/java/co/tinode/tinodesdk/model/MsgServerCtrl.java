@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.Map;
 /**
  * Control packet
  */
-public class MsgServerCtrl {
+public class MsgServerCtrl implements Serializable {
     public String id;
     public String topic;
     public int code;

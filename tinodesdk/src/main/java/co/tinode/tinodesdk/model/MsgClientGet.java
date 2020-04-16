@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
+
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
@@ -14,7 +16,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  *  Data *MsgBrowseOpts `json:"data,omitempty"`
  */
 @JsonInclude(NON_DEFAULT)
-public class MsgClientGet {
+public class MsgClientGet implements Serializable {
     public String id;
     public String topic;
     public String what;

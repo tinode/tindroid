@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
+
 import co.tinode.tinodesdk.Tinode;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -19,7 +21,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  *  Hard bool `json:"hard,omitempty"`
  */
 @JsonInclude(NON_DEFAULT)
-public class MsgClientDel {
+public class MsgClientDel implements Serializable {
     private final static String STR_TOPIC = "topic";
     private final static String STR_MSG = "msg";
     private final static String STR_SUB = "sub";

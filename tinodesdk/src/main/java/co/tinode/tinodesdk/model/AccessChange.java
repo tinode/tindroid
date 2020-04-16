@@ -1,6 +1,8 @@
 package co.tinode.tinodesdk.model;
 
-public class AccessChange {
+import java.io.Serializable;
+
+public class AccessChange implements Serializable {
     public String want;
     public String given;
 

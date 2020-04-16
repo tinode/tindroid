@@ -3,6 +3,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,7 +17,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 @SuppressWarnings("WeakerAccess")
-public class MsgRange implements Comparable<MsgRange> {
+public class MsgRange implements Comparable<MsgRange>, Serializable {
     // The low value is required, thus it's a primitive type.
     public int low;
     // The high value is optional.

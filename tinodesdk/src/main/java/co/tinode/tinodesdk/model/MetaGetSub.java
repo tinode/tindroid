@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -10,7 +11,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  * Parameter of MsgGetMeta
  */
 @JsonInclude(NON_DEFAULT)
-public class MetaGetSub {
+public class MetaGetSub implements Serializable {
     public String user;
     public String topic;
     public Date ims;

@@ -666,7 +666,8 @@ public class Tinode {
             if (pkt.ctrl.id != null) {
                 FutureHolder fh = mFutures.remove(pkt.ctrl.id);
                 if (fh != null) {
-                    if (pkt.ctrl.code >= 200 && pkt.ctrl.code < 400) {
+                    if (pkt.ctrl.code >= ServerMessage.STATUS_OK &&
+                            pkt.ctrl.code < ServerMessage.STATUS_BAD_REQUEST) {
                         fh.future.resolve(pkt);
                     } else {
                         fh.future.reject(new ServerResponseException(pkt.ctrl.code, pkt.ctrl.text,
@@ -676,7 +677,8 @@ public class Tinode {
             }
             Topic topic = getTopic(pkt.ctrl.topic);
             if (topic != null) {
-                if (pkt.ctrl.code == 205 && "evicted".equals(pkt.ctrl.text)) {
+                if (pkt.ctrl.code == ServerMessage.STATUS_RESET_CONTENT
+                        && "evicted".equals(pkt.ctrl.text)) {
                     boolean unsub = pkt.ctrl.getBoolParam("unsub", false);
                     topic.topicLeft(unsub, pkt.ctrl.code, pkt.ctrl.text);
                 } else {
@@ -1205,7 +1207,7 @@ public class Tinode {
             // logout() clears mMyUid. Save it for the exception below;
             String oldMyUid = mMyUid;
             logout();
-            mNotifier.onLogin(400, "UID mismatch");
+            mNotifier.onLogin(ServerMessage.STATUS_BAD_REQUEST, "UID mismatch");
 
             throw new IllegalStateException("UID mismatch: received '" + newUid + "', expected '" + oldMyUid + "'");
         }
@@ -1227,7 +1229,7 @@ public class Tinode {
             mAuthTokenExpires = null;
         }
 
-        if (ctrl.code < 300) {
+        if (ctrl.code < ServerMessage.STATUS_MULTIPLE_CHOICES) {
             mConnAuth = true;
             setAutoLoginToken(mAuthToken);
             mNotifier.onLogin(ctrl.code, ctrl.text);
@@ -1296,7 +1298,7 @@ public class Tinode {
                         if (err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
                             final int code = sre.getCode();
-                            if (code == 401) {
+                            if (code == ServerMessage.STATUS_UNAUTHORIZED) {
                                 mLoginCredentials = null;
                                 mAuthToken = null;
                                 mAuthTokenExpires = null;
@@ -2001,7 +2003,7 @@ public class Tinode {
         /**
          * Result of successful or unsuccessful {@link #login} attempt.
          *
-         * @param code a numeric value between 200 and 2999 on success, 400 or higher on failure
+         * @param code a numeric value between 200 and 299 on success, 400 or higher on failure
          * @param text "OK" on success or error message
          */
         @SuppressWarnings("unused")

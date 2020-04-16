@@ -3,6 +3,7 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -11,7 +12,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  * Login packet.
  */
 @JsonInclude(NON_DEFAULT)
-public class MsgClientLogin {
+public class MsgClientLogin implements Serializable {
 
     public String id;
     public String scheme; // "basic" or "token"

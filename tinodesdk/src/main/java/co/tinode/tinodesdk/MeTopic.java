@@ -17,6 +17,7 @@ import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -122,17 +123,24 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     if (mCreds == null) {
+                        Log.i(TAG, "Credentials are empty to begin with");
                         return null;
                     }
 
                     int idx = findCredIndex(cred, false);
                     if (idx >= 0) {
+                        Log.i(TAG, "Credential "+ cred + " removed at " + idx);
                         mCreds.remove(idx);
-                    }
 
-                    // Notify listeners
-                    if (mListener != null && mListener instanceof MeListener) {
-                        ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
+                        if (mStore != null) {
+                            mStore.topicUpdate(MeTopic.this);
+                        }
+
+                        // Notify listeners
+                        if (mListener != null && mListener instanceof MeListener) {
+                            Log.i(TAG, "MeListener notified.");
+                            ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
+                        }
                     }
                     return null;
                 }
@@ -293,11 +301,13 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             return;
         }
 
+        boolean changed = false;
         if (cred.val != null) {
             if (mCreds == null) {
                 // Empty list. Create and add.
                 mCreds = new ArrayList<>();
                 mCreds.add(cred);
+                changed = true;
             } else {
                 // Try finding this credential among confirmed or not.
                 int idx = findCredIndex(cred, false);
@@ -312,10 +322,12 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                         }
                     }
                     mCreds.add(cred);
+                    changed = true;
                 } else {
                     // Found. Maybe change 'done' status.
                     Credential el = mCreds.get(idx);
                     el.done = cred.isDone();
+                    changed = true;
                 }
             }
         } else if (cred.resp != null && mCreds != null) {
@@ -324,11 +336,18 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             if (idx >= 0) {
                 Credential el = mCreds.get(idx);
                 el.done = true;
+                changed = true;
             }
         }
 
-        if (mCreds != null) {
-            Collections.sort(mCreds);
+        if (changed) {
+            if (mCreds != null) {
+                Collections.sort(mCreds);
+            }
+
+            if (mStore != null) {
+                mStore.topicUpdate(this);
+            }
         }
     }
 
@@ -350,6 +369,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             }
         }
         Collections.sort(mCreds);
+
+        if (mStore != null) {
+            mStore.topicUpdate(this);
+        }
 
         if (mListener != null && mListener instanceof MeListener) {
             ((MeListener) mListener).onCredUpdated(creds);
@@ -511,4 +534,19 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         public void onCredUpdated(Credential[] cred) {}
     }
 
+    @Override
+    public MetaGetBuilder getMetaGetBuilder() {
+        return new MetaGetBuilder(this);
+    }
+
+    public static class MetaGetBuilder extends Topic.MetaGetBuilder {
+        MetaGetBuilder(MeTopic parent) {
+            super(parent);
+        }
+
+        public MetaGetBuilder withCred() {
+            meta.setCred();
+            return this;
+        }
+    }
 }

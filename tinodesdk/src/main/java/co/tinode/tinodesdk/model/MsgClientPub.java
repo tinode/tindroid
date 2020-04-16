@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -10,7 +11,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  * Publish to topic packet.
  */
 @JsonInclude(NON_DEFAULT)
-public class MsgClientPub {
+public class MsgClientPub implements Serializable {
     public String id;
     public String topic;
     public Boolean noecho;

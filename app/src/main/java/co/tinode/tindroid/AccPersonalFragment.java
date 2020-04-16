@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -143,11 +144,14 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
             }
 
             LinearLayout credList = activity.findViewById(R.id.credList);
+            Log.i(TAG, "updateFormValues, cred count=" + credList.getChildCount());
+            // Remove all items from the list of credentials.
             while (credList.getChildCount() > 0) {
                 credList.removeViewAt(0);
             }
 
             Credential[] creds = me.getCreds();
+            Log.i(TAG, "Got new creds: " + creds);
             if (creds != null) {
                 for (Credential cred : creds) {
                     View container = inflater.inflate(R.layout.credential, credList, false);

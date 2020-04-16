@@ -185,7 +185,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
     // This is called on Websocket thread.
     private class MeListener extends UiUtils.MeEventListener {
-        private void updateAccountInfoFragment() {
+        private void updateVisibleInfoFragment() {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -239,7 +239,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                 desc.pub.constructBitmap();
             }
 
-            updateAccountInfoFragment();
+            updateVisibleInfoFragment();
         }
 
         @Override
@@ -267,12 +267,12 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         @Override
         public void onMetaTags(String[] tags) {
-            updateAccountInfoFragment();
+            updateVisibleInfoFragment();
         }
 
         @Override
         public  void onCredUpdated(Credential[] cred) {
-            updateAccountInfoFragment();
+            updateVisibleInfoFragment();
         }
     }
 

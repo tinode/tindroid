@@ -2,13 +2,14 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
 /**
  * Content packet
  */
-public class MsgServerData {
+public class MsgServerData implements Serializable {
 
     public String id;
     public String topic;
