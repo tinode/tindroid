@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.os.Bundle;
@@ -216,6 +217,11 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         @Override
         public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
+            if (!UiUtils.isPermissionGranted(ChatsActivity.this, Manifest.permission.WRITE_CONTACTS)) {
+                // We can't save contact if we don't have appropriate permission.
+                return;
+            }
+
             if (sub.deleted == null) {
                 if (sub.pub != null) {
                     sub.pub.constructBitmap();

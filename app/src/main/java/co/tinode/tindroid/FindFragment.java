@@ -430,17 +430,18 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             Bundle args = new Bundle();
             args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
-        } else if (activity.isReadContactsPermissionRequested()) {
+        } else if (!activity.isReadContactsPermissionRequested()) {
             mAdapter.setContactsPermission(false);
             activity.setReadContactsPermissionRequested();
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, UiUtils.READ_CONTACTS_PERMISSION);
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
+                    UiUtils.CONTACTS_PERMISSION_ID);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if (requestCode == UiUtils.READ_CONTACTS_PERMISSION) {
+        if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
                 restartLoader(mSearchTerm);

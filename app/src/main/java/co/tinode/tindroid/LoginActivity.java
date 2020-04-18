@@ -56,8 +56,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
 
-    private static final int PERMISSIONS_REQUEST_ID = 100;
-
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
 
@@ -106,7 +104,7 @@ public class LoginActivity extends AppCompatActivity {
                 null, false);
 
         // Check and possibly request runtime permissions.
-        requestPermissions();
+        // requestPermissions();
     }
 
     @Override
@@ -127,9 +125,6 @@ public class LoginActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ArrayList<String> permissions = new ArrayList<>();
 
-            if (!UiUtils.isPermissionGranted(this, Manifest.permission.GET_ACCOUNTS)) {
-                permissions.add(Manifest.permission.GET_ACCOUNTS);
-            }
             if (!UiUtils.isPermissionGranted(this, Manifest.permission.READ_CONTACTS)) {
                 permissions.add(Manifest.permission.READ_CONTACTS);
             }
@@ -142,7 +137,7 @@ public class LoginActivity extends AppCompatActivity {
                 return;
 
             ActivityCompat.requestPermissions(this,
-                    permissions.toArray(new String[]{}), PERMISSIONS_REQUEST_ID);
+                    permissions.toArray(new String[]{}), UiUtils.CONTACTS_PERMISSION_ID);
         }
     }
 
@@ -153,7 +148,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions,
                                            @NonNull final int[] grantResults) {
         //
-        if (requestCode == PERMISSIONS_REQUEST_ID) {
+        if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
                 Log.d(TAG, "Access granted");

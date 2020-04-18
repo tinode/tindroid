@@ -18,7 +18,7 @@
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
     <!-- Creating and storing tinode credentials in the AccountManager -->
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
-    <!-- Accessing Tinode-authenticated accounts -->
+    <!-- Accessing Tinode-authenticated accounts on Android pre-M (23). -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
     <uses-permission android:name="android.permission.USE_CREDENTIALS"/>

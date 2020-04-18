@@ -225,16 +225,19 @@ public class Utils {
                                           final @NonNull String uid) {
         Account account = null;
 
-        // Run-time check for permission to GET_ACCOUNTS
+        /*
+        // On API <= 22 we have static permission to access accounts. On API >= 23 we can access our own accounts
+        // without a dynamic permission check.
         if (!isPermissionGranted(context, android.Manifest.permission.GET_ACCOUNTS)) {
             // Don't have permission. It's the first launch or the user denied access.
             // Fail and go to full login. We should not ask for permission on the splash screen.
             Log.d(TAG, "NO permission to get accounts");
             return null;
         }
+        */
 
-        // Have permission to access accounts. Let's find out if we already have a suitable account.
-        // If one is not found, go to full login. It will create an account with suitable name.
+        // Let's find out if we already have a suitable account. If one is not found, go to full login. It will create
+        // an account with suitable name.
         final Account[] availableAccounts = accountManager.getAccountsByType(ACCOUNT_TYPE);
         if (availableAccounts.length > 0) {
             // Found some accounts, let's find the one with the right name

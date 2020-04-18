@@ -102,7 +102,7 @@ public class UiUtils {
     static final int ACTIVITY_RESULT_SELECT_PICTURE = 1;
 
     static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
-    static final int READ_CONTACTS_PERMISSION = 101;
+    static final int CONTACTS_PERMISSION_ID = 101;
 
     static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     static final String PREF_READ_RCPT = "pref_readReceipts";
@@ -277,7 +277,7 @@ public class UiUtils {
         if (acc != null) {
             requestImmediateContactsSync(acc);
             ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
-            TindroidApp.startWatchingContacts(acc);
+            TindroidApp.startWatchingContacts(activity, acc);
         }
 
         Intent intent = new Intent(activity, ChatsActivity.class);

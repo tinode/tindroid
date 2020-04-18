@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AuthenticatorException;
@@ -248,7 +249,7 @@ public class TindroidApp extends Application {
                         accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
                         accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
                                 String.valueOf(tinode.getAuthTokenExpiration().getTime()));
-                        startWatchingContacts(account);
+                        startWatchingContacts(TindroidApp.this, account);
                         // Trigger sync to be sure contacts are up to date.
                         UiUtils.requestImmediateContactsSync(account);
                     } catch (IOException ex) {
@@ -283,8 +284,14 @@ public class TindroidApp extends Application {
         }
     }
 
-    static synchronized void startWatchingContacts(Account acc) {
+    static synchronized void startWatchingContacts(Context context, Account acc) {
         if (sContactsObserver == null) {
+            // Check if we have already obtained contacts permissions.
+            if (!UiUtils.isPermissionGranted(context, Manifest.permission.READ_CONTACTS)) {
+                // No permissions, can't set up contacts sync.
+                return;
+            }
+
             // Create and start a new thread set up as a looper.
             HandlerThread thread = new HandlerThread("ContactsObserverHandlerThread");
             thread.start();

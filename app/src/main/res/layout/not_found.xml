@@ -6,5 +6,5 @@
     android:layout_height="?attr/listPreferredItemHeight"
     android:gravity="center"
     android:text="@string/no_results"
-    android:textAppearance="?android:textAppearanceLarge"
+    android:textAppearance="?android:textAppearanceMedium"
     android:textColor="?android:textColorSecondary"/>

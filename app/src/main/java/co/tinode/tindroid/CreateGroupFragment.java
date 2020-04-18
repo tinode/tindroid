@@ -263,14 +263,15 @@ public class CreateGroupFragment extends Fragment {
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
         } else if (!activity.isReadContactsPermissionRequested()) {
             activity.setReadContactsPermissionRequested();
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, UiUtils.READ_CONTACTS_PERMISSION);
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
+                    UiUtils.CONTACTS_PERMISSION_ID);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == UiUtils.READ_CONTACTS_PERMISSION) {
+        if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
                 restartLoader();
