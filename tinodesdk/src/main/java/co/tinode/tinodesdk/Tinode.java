@@ -1741,7 +1741,7 @@ public class Tinode {
      * @return a {@link List} of topics
      */
     @SuppressWarnings("unchecked")
-    public List<Topic> getTopics() {
+    public Collection<Topic> getTopics() {
         List<Topic> result = new ArrayList<>(mTopics.values());
         Collections.sort(result);
         return result;
@@ -1755,9 +1755,9 @@ public class Tinode {
      * @return a {@link List} of topics
      */
     @SuppressWarnings("unchecked")
-    public <T extends Topic> List<T> getFilteredTopics(TopicFilter filter) {
+    public <T extends Topic> Collection<T> getFilteredTopics(TopicFilter filter) {
         if (filter == null) {
-            return (List<T>) getTopics();
+            return (Collection<T>) getTopics();
         }
         ArrayList<T> result = new ArrayList<>();
         for (T t : (Collection<T>) mTopics.values()) {

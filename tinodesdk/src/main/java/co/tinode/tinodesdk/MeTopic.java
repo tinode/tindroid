@@ -515,7 +515,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     protected void topicLeft(boolean unsub, int code, String reason) {
         super.topicLeft(unsub, code, reason);
 
-        List<Topic> topics = mTinode.getTopics();
+        Collection<Topic> topics = mTinode.getTopics();
         if (topics != null) {
             for (Topic t : topics) {
                 t.setOnline(false);

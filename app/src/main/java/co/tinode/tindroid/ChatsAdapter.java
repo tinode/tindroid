@@ -4,12 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageView;
-
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,9 +11,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.selection.ItemDetailsLookup;
 import androidx.recyclerview.selection.ItemKeyProvider;
@@ -66,7 +65,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             return;
         }
 
-        final List<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
+        final Collection<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
             @Override
             public boolean isIncluded(Topic t) {
                 return t.getTopicType().match(Topic.TopicType.USER) &&
@@ -82,7 +81,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mTopics = newTopics;
+                    mTopics = new ArrayList<>(newTopics);
                     mTopicIndex = newTopicIndex;
 
                     notifyDataSetChanged();

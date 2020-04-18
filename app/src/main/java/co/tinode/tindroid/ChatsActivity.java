@@ -217,14 +217,14 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         @Override
         public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
-            if (!UiUtils.isPermissionGranted(ChatsActivity.this, Manifest.permission.WRITE_CONTACTS)) {
-                // We can't save contact if we don't have appropriate permission.
-                return;
-            }
-
             if (sub.deleted == null) {
                 if (sub.pub != null) {
                     sub.pub.constructBitmap();
+                }
+
+                if (!UiUtils.isPermissionGranted(ChatsActivity.this, Manifest.permission.WRITE_CONTACTS)) {
+                    // We can't save contact if we don't have appropriate permission.
+                    return;
                 }
 
                 if (mAccount == null) {
@@ -234,7 +234,8 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                 if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
                     ContactsManager.processContact(ChatsActivity.this,
                             ChatsActivity.this.getContentResolver(),
-                            mAccount, sub, null, false);
+                            mAccount, sub.pub, null, sub.getUnique(), sub.deleted != null,
+                            null, false);
                 }
             }
         }
