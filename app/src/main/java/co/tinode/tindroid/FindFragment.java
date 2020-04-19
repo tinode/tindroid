@@ -1,8 +1,6 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
@@ -21,8 +19,6 @@ import android.view.ViewGroup;
 import android.widget.SearchView;
 import android.widget.Toast;
 
-import java.util.Collection;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,17 +29,13 @@ import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import co.tinode.tindroid.account.ContactsManager;
-import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
-import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -449,6 +441,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Sync p2p topics to Contacts.
@@ -456,18 +449,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                 if (activity == null) {
                     return;
                 }
-                Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), Cache.getTinode().getMyId());
-                if (acc == null) {
-                    return;
-                }
-                Collection<ComTopic<VxCard>> topics = Cache.getTinode().getFilteredTopics(new Tinode.TopicFilter() {
-                    @Override
-                    public boolean isIncluded(Topic topic) {
-                        return topic.isP2PType();
-                    }
-                });
-                ContactsManager.updateContacts(activity, acc, topics);
-
+                // Sync contacts.
+                UiUtils.onContactsPermissionsGranted(activity);
                 // Permission is granted
                 restartLoader(mSearchTerm);
             }

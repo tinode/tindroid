@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -197,6 +198,24 @@ public class EditMembersFragment extends Fragment {
         } catch (Exception ex) {
             Log.w(TAG, "Failed to change member's status", ex);
             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Sync p2p topics to Contacts.
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                UiUtils.onContactsPermissionsGranted(activity);
+                // Permission is granted
+                restartLoader();
+            }
         }
     }
 }

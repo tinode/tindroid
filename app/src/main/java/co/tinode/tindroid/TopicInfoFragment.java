@@ -507,6 +507,8 @@ public class TopicInfoFragment extends Fragment {
                                 }
                             } else {
                                 Log.i(TAG, "Missing READ_CONTACTS permissions");
+                                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
+                                        UiUtils.CONTACTS_PERMISSION_ID);
                                 Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
                             }
                             break;

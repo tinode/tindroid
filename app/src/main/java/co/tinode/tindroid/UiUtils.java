@@ -42,6 +42,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,6 +55,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -67,18 +71,15 @@ import androidx.core.app.ActivityCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-
 import androidx.fragment.app.FragmentManager;
+import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
-
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -306,6 +307,25 @@ public class UiUtils {
     static boolean isPermissionGranted(Context context, String permission) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    static void onContactsPermissionsGranted(Activity activity) {
+        Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), Cache.getTinode().getMyId());
+        Log.d(TAG, "Account=" + (acc != null ? acc.name : "null"));
+        if (acc == null) {
+            return;
+        }
+
+        Collection<ComTopic<VxCard>> topics = Cache.getTinode().getFilteredTopics(new Tinode.TopicFilter() {
+            @Override
+            public boolean isIncluded(Topic topic) {
+                return topic.isP2PType();
+            }
+        });
+        Log.d(TAG, "Topics isEmpty=" + topics.isEmpty());
+        ContactsManager.updateContacts(activity, acc, topics);
+
+        TindroidApp.startWatchingContacts(activity, acc);
     }
 
     // Creates or updates the Android account associated with the given UID.
