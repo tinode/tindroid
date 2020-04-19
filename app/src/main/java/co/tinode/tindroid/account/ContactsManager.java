@@ -14,7 +14,6 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.Settings;
-import android.util.Log;
 
 import java.util.Collection;
 import java.util.Date;
@@ -91,7 +90,6 @@ public class ContactsManager {
         final BatchOperation batchOperation = new BatchOperation(resolver);
 
         for (ComTopic<VxCard> topic : topics) {
-            Log.d(TAG, "Sync to DB: " + topic.getName());
             // Save topic as contact to database.
             processContact(context, resolver, account,
                     topic.getPub(), null, topic.getName(), false,

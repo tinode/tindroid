@@ -311,7 +311,6 @@ public class UiUtils {
 
     static void onContactsPermissionsGranted(Activity activity) {
         Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), Cache.getTinode().getMyId());
-        Log.d(TAG, "Account=" + (acc != null ? acc.name : "null"));
         if (acc == null) {
             return;
         }
@@ -322,7 +321,6 @@ public class UiUtils {
                 return topic.isP2PType();
             }
         });
-        Log.d(TAG, "Topics isEmpty=" + topics.isEmpty());
         ContactsManager.updateContacts(activity, acc, topics);
 
         TindroidApp.startWatchingContacts(activity, acc);
