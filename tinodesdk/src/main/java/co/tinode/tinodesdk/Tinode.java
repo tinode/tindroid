@@ -372,7 +372,12 @@ public class Tinode {
         }
     }
 
-    Date getTopicsUpdated() {
+    /**
+     * Get the most recent timestamp of update to any topic.
+     *
+     * @return timestamp of the last update to any topic.
+     */
+    public Date getTopicsUpdated() {
         return mTopicsUpdated;
     }
 

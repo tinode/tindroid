@@ -383,6 +383,7 @@ public class Utils {
         Log.d(TAG, "Fetching messages for " + topicName);
 
         final Tinode tinode = Cache.getTinode();
+
         // noinspection unchecked
         ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
         Topic.MetaGetBuilder builder;
@@ -395,6 +396,7 @@ public class Utils {
             // Existing topic.
             builder = topic.getMetaGetBuilder();
         }
+
         if (topic.isAttached()) {
             Log.d(TAG, "Topic is already attached");
             // No need to fetch: topic is already subscribed and got data through normal channel.
@@ -406,6 +408,13 @@ public class Utils {
         if (topic.getSeq() < seq) {
             dataAvailable = true;
             if (loginNow(context)) {
+                // Check if contacts have been synced already.
+                if (tinode.getTopicsUpdated() == null) {
+                    // Background sync of contacts.
+                    Cache.attachMeTopic(null, true);
+                    tinode.getMeTopic().leave();
+                }
+
                 // Check again if topic has attached while we tried to connect. It does not guarantee that there
                 // is no race condition to subscribe.
                 if (!topic.isAttached()) {
@@ -428,12 +437,13 @@ public class Utils {
      * @param context   context to use for resources.
      * @param topicName name of the topic to sync.
      */
-    public static void backgroundDescFetch(Context context, String topicName) {
+    public static void backgroundMetaFetch(Context context, String topicName) {
         Log.d(TAG, "Fetching description for " + topicName);
 
         Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
 
         final Tinode tinode = Cache.getTinode();
+
         if (tinode.getTopic(topicName) != null) {
             // Ignoring notification for a known topic.
             return;
@@ -446,14 +456,17 @@ public class Utils {
 
         // Fetch description without subscribing.
         try {
-            // Get description.
-            MsgGetMeta mgm = MsgGetMeta.desc();
-            if (tp == Topic.TopicType.GRP) {
-                // Get subscriptions for GRP topics.
-                mgm.setSub(null, null);
+            // Check if contacts have been synced already.
+            if (tinode.getTopicsUpdated() == null) {
+                // Background sync of all contacts.
+                Cache.attachMeTopic(null, true).getResult();
+                tinode.getMeTopic().leave();
             }
-            // Wait for result. Tinode will save new topic to DB.
-            tinode.getMeta(topicName, mgm).getResult();
-        } catch (Exception ignored) { }
+
+            // Request description, wait for result. Tinode will save new topic to DB.
+            tinode.getMeta(topicName, MsgGetMeta.desc()).getResult();
+        } catch (Exception ex) {
+            Log.i(TAG, "Background Meta fetch failed", ex);
+        }
     }
 }

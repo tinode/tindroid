@@ -101,6 +101,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         String topicName = null;
         Bitmap avatar = null;
 
+        final Tinode tinode = Cache.getTinode();
+
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
             Map<String, String> data = remoteMessage.getData();
@@ -126,12 +128,11 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
 
             // Try to resolve sender using locally stored contacts.
-            final Tinode tinode = Cache.getTinode();
             String senderId = data.get("xfrom");
             User<VxCard> sender = tinode.getUser(senderId);
             if (sender == null) {
                 // If sender is not found, try to fetch description from the server.
-                Utils.backgroundDescFetch(this, senderId);
+                Utils.backgroundMetaFetch(this, senderId);
                 sender = tinode.getUser(senderId);
             }
 
@@ -201,7 +202,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 }
 
                 // Legitimate subscription to a new topic.
-                Utils.backgroundDescFetch(getApplicationContext(), topicName);
+                Utils.backgroundMetaFetch(getApplicationContext(), topicName);
                 title = getResources().getString(R.string.new_chat);
                 if (tp == Topic.TopicType.P2P) {
                     // P2P message
