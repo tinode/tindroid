@@ -420,7 +420,8 @@ public class Utils {
     }
 
     /**
-     * Fetch description of a topic (or user) in background.
+     * Fetch description of a previously unknown topic or user in background.
+     * Fetch subscriptions for GRP topics.
      *
      * This method SHOULD NOT be called on UI thread.
      *
@@ -429,6 +430,8 @@ public class Utils {
      */
     public static void backgroundDescFetch(Context context, String topicName) {
         Log.d(TAG, "Fetching description for " + topicName);
+
+        Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
 
         final Tinode tinode = Cache.getTinode();
         if (tinode.getTopic(topicName) != null) {
@@ -443,8 +446,14 @@ public class Utils {
 
         // Fetch description without subscribing.
         try {
+            // Get description.
+            MsgGetMeta mgm = MsgGetMeta.desc();
+            if (tp == Topic.TopicType.GRP) {
+                // Get subscriptions for GRP topics.
+                mgm.setSub(null, null);
+            }
             // Wait for result. Tinode will save new topic to DB.
-            tinode.getMeta(topicName, MsgGetMeta.desc()).getResult();
+            tinode.getMeta(topicName, mgm).getResult();
         } catch (Exception ignored) { }
     }
 }
