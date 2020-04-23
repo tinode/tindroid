@@ -274,7 +274,7 @@ public class UiUtils {
             });
         }
 
-        Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), uid);
+        Account acc = Utils.getSavedAccount(AccountManager.get(activity), uid);
         if (acc != null) {
             requestImmediateContactsSync(acc);
             ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
@@ -310,7 +310,7 @@ public class UiUtils {
     }
 
     static void onContactsPermissionsGranted(Activity activity) {
-        Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), Cache.getTinode().getMyId());
+        Account acc = Utils.getSavedAccount(AccountManager.get(activity), Cache.getTinode().getMyId());
         if (acc == null) {
             return;
         }

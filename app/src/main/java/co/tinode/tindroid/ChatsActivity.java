@@ -228,8 +228,8 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                 }
 
                 if (mAccount == null) {
-                    mAccount = Utils.getSavedAccount(ChatsActivity.this,
-                            AccountManager.get(ChatsActivity.this), Cache.getTinode().getMyId());
+                    mAccount = Utils.getSavedAccount(AccountManager.get(ChatsActivity.this),
+                            Cache.getTinode().getMyId());
                 }
                 if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
                     ContactsManager.processContact(ChatsActivity.this,

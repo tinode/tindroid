@@ -1,4 +1,4 @@
-package co.tinode.tindroid.fcm;
+package co.tinode.tindroid.services;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
