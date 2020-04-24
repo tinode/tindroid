@@ -63,8 +63,8 @@
                         android:paddingStart="5dp"
                         android:tint="?android:textColorSecondary"
                         android:alpha="0.5"
-                        tools:ignore="SmallSp"
-                        tools:src="@drawable/ic_visibility"/>
+                        tools:ignore="ContentDescription,SmallSp"
+                        tools:src="@drawable/ic_visibility" />
 
                 </LinearLayout>
 

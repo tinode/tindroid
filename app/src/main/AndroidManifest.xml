@@ -28,8 +28,6 @@
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
     <!-- Enable sync if it's disabled -->
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
-    <!-- To be able to uload files in background. See UploadService. -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".TindroidApp"
@@ -167,10 +165,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
-        <service android:name=".services.UploadService"
-            android:label="Attachment upload service"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -69,7 +69,7 @@ import static android.app.Activity.RESULT_OK;
  * Fragment handling message display and message sending.
  */
 public class MessagesFragment extends Fragment
-        implements LoaderManager.LoaderCallbacks<AttachmentUploader.Result> {
+        /* implements LoaderManager.LoaderCallbacks<AttachmentUploader.Result> */ {
     private static final String TAG = "MessageFragment";
 
     static final String MESSAGE_TO_SEND = "messageText";
@@ -137,11 +137,6 @@ public class MessagesFragment extends Fragment
 
         mRecyclerView = view.findViewById(R.id.messages_container);
         mRecyclerView.setLayoutManager(mMessageViewLayoutManager);
-
-        // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
-        mUploadProgress = new UploadProgress();
-        // This needs to be rebound on activity creation.
-        AttachmentUploader.FileUploader.setProgressHandler(mUploadProgress);
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
@@ -792,13 +787,7 @@ public class MessagesFragment extends Fragment
     }
 
     // Loader interface
-
-    @NonNull
-    @Override
-    public Loader<AttachmentUploader.Result> onCreateLoader(int id, Bundle args) {
-        return new AttachmentUploader.FileUploader(getActivity(), args);
-    }
-
+/*
     @Override
     public void onLoadFinished(@NonNull Loader<AttachmentUploader.Result> loader, final AttachmentUploader.Result data) {
         final MessageActivity activity = (MessageActivity) getActivity();
@@ -825,11 +814,7 @@ public class MessagesFragment extends Fragment
             Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();
         }
     }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<AttachmentUploader.Result> loader) {
-    }
-
+*/
     void setProgressIndicator(boolean active) {
         if (!isAdded()) {
             return;
@@ -844,7 +829,9 @@ public class MessagesFragment extends Fragment
 
         public void onStart(final String topicName, final long msgId) {
             // Reload the cursor.
-            runMessagesLoader(mTopicName);
+            if (topicName.equals(mTopicName)) {
+                runMessagesLoader(mTopicName);
+            }
         }
 
         // Returns true to continue the upload, false to cancel.

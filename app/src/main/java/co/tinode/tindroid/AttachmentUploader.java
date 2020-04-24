@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
@@ -19,12 +18,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.WeakReference;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.exifinterface.media.ExifInterface;
-import androidx.loader.content.AsyncTaskLoader;
+import androidx.work.Constraints;
+import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.ListenableWorker;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.Storage;
@@ -33,7 +39,7 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
-class AttachmentUploader {
+class AttachmentUploader extends Worker {
     private static final String TAG = "AttachmentUploader";
 
     // Maximum size of file to send in-band. 256KB.
@@ -41,80 +47,58 @@ class AttachmentUploader {
     // Maximum size of file to upload. 8MB.
     private static final long MAX_ATTACHMENT_SIZE = 1 << 23;
 
-    static Bundle getFileDetails(final Context context, Uri uri, String filePath) {
-        final ContentResolver resolver = context.getContentResolver();
-        String fname = null;
-        long fsize = 0L;
-        int orientation = -1;
+    final static String ARG_OPERATION = "operation";
+    final static String ARG_TOPIC_NAME = "topic";
+    final static String ARG_SRC_URI = "uri";
+    final static String ARG_FILE_PATH = "filePath";
+    final static String ARG_MSG_ID = "msgId";
+    final static String ARG_IMAGE_CAPTION = "caption";
+    final static String ARG_PROGRESS = "progress";
+    final static String ARG_FILE_SIZE = "fileSize";
 
-        Bundle result = new Bundle();
+    private LargeFileHelper mUploader = null;
 
-        String mimeType = resolver.getType(uri);
-        if (mimeType == null) {
-            mimeType = UiUtils.getMimeType(uri);
-        }
-        result.putString("mime", mimeType);
-
-        String[] projection;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};
-        } else {
-            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
-        }
-        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    int idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
-                    if (idx >= 0) {
-                        orientation = cursor.getInt(idx);
-                    }
-                }
-            }
-        }
-        // In degrees.
-        result.putInt("orientation", orientation);
-
-        // Still no size? Try opening directly.
-        if (fsize <= 0 || orientation < 0) {
-            String path = filePath != null ? filePath : UiUtils.getContentPath(context, uri);
-            if (path != null) {
-                result.putString("path", path);
-
-                File file = new File(path);
-                if (fname == null) {
-                    fname = file.getName();
-                }
-                fsize = file.length();
-            }
-        }
-
-        result.putString("name", fname);
-        result.putLong("size", fsize);
-
-        return result;
+    public AttachmentUploader(@NonNull Context context, @NonNull WorkerParameters params) {
+        super(context, params);
     }
 
-    private static <T extends Progress> Result doUpload(final int loaderId, final Context context, final Bundle args,
-                                                final WeakReference<T> callbackProgress) {
+    @NonNull
+    @Override
+    public ListenableWorker.Result doWork() {
+        return doUpload(getApplicationContext(), getInputData());
+    }
 
-        final Result result = new Result();
+    @Override
+    public void onStopped() {
+        super.onStopped();
+        if (mUploader != null) {
+            mUploader.cancel();
+        }
+    }
+
+    private ListenableWorker.Result doUpload(final Context context, final Data args) {
 
         Storage store = BaseDb.getInstance().getStore();
 
-        final String operation = args.getString("operation");
-        final String topicName = args.getString("topic");
-        // URI must exist, file is optional.
-        final Uri uri = args.getParcelable("uri");
-        final String file = args.getString("file");
+        // File upload "file" or "image".
+        final String operation = args.getString(ARG_OPERATION);
+        final String topicName = args.getString(ARG_TOPIC_NAME);
+        // URI must exist.
+        final Uri uri = Uri.parse(args.getString(ARG_SRC_URI));
+        // filePath is optional
+        final String filePath = args.getString(ARG_FILE_PATH);
+        final long msgId = args.getLong(ARG_MSG_ID, 0);
 
-        result.msgId = args.getLong("msgId");
+        final Data.Builder result = new Data.Builder().putString(ARG_TOPIC_NAME, topicName).putLong(ARG_MSG_ID, msgId);
+
+        if (msgId <= 0) {
+            Log.w(TAG, "Invalid message ID: " + msgId);
+            return ListenableWorker.Result.failure(result.putString("error", "Invalid messageID").build());
+        }
 
         if (uri == null) {
             Log.w(TAG, "Received null URI");
-            result.error = "Null input data";
-            return result;
+            return ListenableWorker.Result.failure(result.putString("error", "Null input data").build());
         }
 
         final Topic topic = Cache.getTinode().getTopic(topicName);
@@ -126,15 +110,14 @@ class AttachmentUploader {
         try {
             int imageWidth = 0, imageHeight = 0;
 
-            Bundle fileDetails = getFileDetails(context, uri, file);
-            String fname = fileDetails.getString("name");
-            long fsize = fileDetails.getLong("size");
-            String mimeType = fileDetails.getString("mime");
+            FileDetails fileDetails = getFileDetails(context, uri, filePath);
+            String fname = fileDetails.fileName;
+            long fsize = fileDetails.fileSize;
 
             if (fsize == 0) {
-                Log.w(TAG, "File size is zero; uri=" + uri + "; file="+file);
-                result.error = context.getString(R.string.invalid_file);
-                return result;
+                Log.w(TAG, "File size is zero; uri=" + uri + "; file="+filePath);
+                return ListenableWorker.Result.failure(
+                        result.putString("error", context.getString(R.string.unable_to_attach_file)).build());
             }
 
             if (fname == null) {
@@ -163,17 +146,15 @@ class AttachmentUploader {
                 int orientation = ExifInterface.ORIENTATION_UNDEFINED;
                 try {
                     // Opening original image, not a scaled copy.
-                    int degrees = fileDetails.getInt("orientation");
-                    if (degrees == -1) {
+                    if (fileDetails.imageOrientation == -1) {
                         ExifInterface exif = null;
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)  {
                             is = resolver.openInputStream(uri);
                             //noinspection ConstantConditions
                             exif = new ExifInterface(is);
                         } else {
-                            String path = fileDetails.getString("path");
-                            if (path != null) {
-                                exif = new ExifInterface(path);
+                            if (fileDetails.filePath != null) {
+                                exif = new ExifInterface(fileDetails.filePath);
                             }
                         }
                         if (exif != null) {
@@ -184,7 +165,7 @@ class AttachmentUploader {
                             is.close();
                         }
                     } else {
-                        switch (degrees) {
+                        switch (fileDetails.imageOrientation) {
                             case 0:
                                 orientation = ExifInterface.ORIENTATION_NORMAL;
                                 break;
@@ -226,15 +207,20 @@ class AttachmentUploader {
                     imageWidth = bmp.getWidth();
                     imageHeight = bmp.getHeight();
 
-                    is = UiUtils.bitmapToStream(bmp, mimeType);
+                    is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
                     fsize = is.available();
                 }
             }
 
             if (fsize > MAX_ATTACHMENT_SIZE) {
                 Log.w(TAG, "Unable to process attachment: too big, size=" + fsize);
-                result.error = context.getString(R.string.attachment_too_large,
-                        UiUtils.bytesToHumanSize(fsize), UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE));
+                return ListenableWorker.Result.failure(
+                        result.putString("error",
+                                context.getString(
+                                        R.string.attachment_too_large,
+                                        UiUtils.bytesToHumanSize(fsize),
+                                        UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE)))
+                                .build());
             } else {
                 if (is == null) {
                     is = resolver.openInputStream(uri);
@@ -243,35 +229,29 @@ class AttachmentUploader {
                 if ("file".equals(operation) && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
 
                     // Update draft with file data.
-                    store.msgDraftUpdate(topic, result.msgId, draftyAttachment(mimeType, fname, uri.toString(), -1));
+                    store.msgDraftUpdate(topic, msgId, draftyAttachment(fileDetails.mimeType, fname, uri.toString(), -1));
 
-                    Progress start = callbackProgress.get();
-                    if (start != null) {
-                        start.onStart(topicName, result.msgId);
-                        // This assignment is needed to ensure that the loader does not keep
-                        // a strong reference to activity while potentially slow upload process
-                        // is running.
-                        //noinspection UnusedAssignment
-                        start = null;
-                    }
+                    setProgressAsync(new Data.Builder()
+                            .putAll(result.build())
+                            .putLong(ARG_PROGRESS, 0)
+                            .putLong(ARG_FILE_SIZE, fsize).build());
 
                     // Upload then send message with a link. This is a long-running blocking call.
-                    final LargeFileHelper uploader = Cache.getTinode().getFileUploader();
-                    MsgServerCtrl ctrl = uploader.upload(is, fname, mimeType, fsize,
+                    mUploader = Cache.getTinode().getFileUploader();
+                    MsgServerCtrl ctrl = mUploader.upload(is, fname, fileDetails.mimeType, fsize,
                             new LargeFileHelper.FileHelperProgress() {
                                 @Override
                                 public void onProgress(long progress, long size) {
-                                    Progress p = callbackProgress.get();
-                                    if (p != null) {
-                                        if (!p.onProgress(topicName, loaderId, result.msgId, progress, size)) {
-                                            uploader.cancel();
-                                        }
-                                    }
+                                    setProgressAsync(new Data.Builder()
+                                            .putAll(result.build())
+                                            .putLong(ARG_PROGRESS, progress)
+                                            .putLong(ARG_FILE_SIZE, size)
+                                            .build());
                                 }
                             });
                     success = (ctrl != null && ctrl.code == 200);
                     if (success) {
-                        content = draftyAttachment(mimeType, fname, ctrl.getStringParam("url", null), fsize);
+                        content = draftyAttachment(fileDetails.mimeType, fname, ctrl.getStringParam("url", null), fsize);
                     }
                 } else {
                     baos = new ByteArrayOutputStream();
@@ -284,7 +264,7 @@ class AttachmentUploader {
 
                     byte[] bits = baos.toByteArray();
                     if ("file".equals(operation)) {
-                        store.msgDraftUpdate(topic, result.msgId, draftyFile(mimeType, bits, fname));
+                        store.msgDraftUpdate(topic, msgId, draftyFile(fileDetails.mimeType, bits, fname));
                     } else {
                         if (imageWidth == 0) {
                             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -296,20 +276,21 @@ class AttachmentUploader {
                             imageWidth = options.outWidth;
                             imageHeight = options.outHeight;
                         }
-                        store.msgDraftUpdate(topic, result.msgId,
-                                draftyImage(args.getString("caption"),
-                                        mimeType, bits, imageWidth, imageHeight, fname));
+                        store.msgDraftUpdate(topic, msgId,
+                                draftyImage(args.getString(ARG_IMAGE_CAPTION),
+                                        fileDetails.mimeType, bits, imageWidth, imageHeight, fname));
                     }
                     success = true;
-                    Progress start = callbackProgress.get();
-                    if (start != null) {
-                        start.onStart(topicName, result.msgId);
-                    }
+                    setProgressAsync(new Data.Builder()
+                            .putAll(result.build())
+                            .putLong(ARG_PROGRESS, 0)
+                            .putLong(ARG_FILE_SIZE, fsize)
+                            .build());
                 }
             }
         } catch (IOException | NullPointerException ex) {
-            result.error = ex.getMessage();
-            if (!"cancelled".equals(result.error)) {
+            result.putString("error", ex.getMessage());
+            if (!"cancelled".equals(ex.getMessage())) {
                 Log.w(TAG, "Failed to attach file", ex);
             }
         } finally {
@@ -325,18 +306,111 @@ class AttachmentUploader {
             }
         }
 
-        if (result.msgId > 0) {
-            if (success) {
-                // Success: mark message as ready for delivery. If content==null it won't be saved.
-                store.msgReady(topic, result.msgId, content);
-            } else {
-                // Failure: discard draft.
-                store.msgDiscard(topic, result.msgId);
-                result.msgId = -1;
+        if (success) {
+            // Success: mark message as ready for delivery. If content==null it won't be saved.
+            store.msgReady(topic, msgId, content);
+            return ListenableWorker.Result.success(result.build());
+        } else {
+            // Failure: discard draft.
+            store.msgDiscard(topic, msgId);
+            return ListenableWorker.Result.failure(result.build());
+        }
+    }
+
+    static class FileDetails {
+        String mimeType;
+        int imageOrientation;
+        String filePath;
+        String fileName;
+        long fileSize;
+    }
+
+    static FileDetails getFileDetails(@NonNull final Context context, @NonNull Uri uri, @Nullable String filePath) {
+        final ContentResolver resolver = context.getContentResolver();
+        String fname = null;
+        long fsize = 0L;
+        int orientation = -1;
+
+        FileDetails result = new FileDetails();
+
+        String mimeType = resolver.getType(uri);
+        if (mimeType == null) {
+            mimeType = UiUtils.getMimeType(uri);
+        }
+        result.mimeType = mimeType;
+
+        String[] projection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};
+        } else {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
+        }
+        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    int idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
+                    if (idx >= 0) {
+                        orientation = cursor.getInt(idx);
+                    }
+                }
+            }
+        }
+        // In degrees.
+        result.imageOrientation = orientation;
+
+        // Still no size? Try opening directly.
+        if (fsize <= 0 || orientation < 0) {
+            String path = filePath != null ? filePath : UiUtils.getContentPath(context, uri);
+            if (path != null) {
+                result.filePath = path;
+
+                File file = new File(path);
+                if (fname == null) {
+                    fname = file.getName();
+                }
+                fsize = file.length();
             }
         }
 
+        result.fileName = fname;
+        result.fileSize = fsize;
+
         return result;
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    static Long enqueueWorkRequest(Context context, String operation, Bundle args) {
+        String topicName = args.getString(AttachmentUploader.ARG_TOPIC_NAME);
+        // Create a new message which will be updated with upload progress.
+        Drafty msg = new Drafty();
+        long msgId = BaseDb.getInstance().getStore()
+                .msgDraft(Cache.getTinode().getTopic(topicName), msg, Tinode.draftyHeadersFor(msg));
+        if (msgId > 0) {
+            Uri uri = args.getParcelable(AttachmentUploader.ARG_SRC_URI);
+            assert uri != null;
+
+            Data.Builder data = new Data.Builder()
+                    .putString(ARG_OPERATION, operation)
+                    .putString(ARG_SRC_URI, uri.toString())
+                    .putLong(ARG_MSG_ID, msgId)
+                    .putString(ARG_TOPIC_NAME, topicName)
+                    .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
+                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
+            Constraints constraints = new Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build();
+            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentUploader.class)
+                    .setInputData(data.build())
+                    .setConstraints(constraints)
+                    .build();
+            WorkManager.getInstance(context).enqueueUniqueWork(Long.toString(msgId), ExistingWorkPolicy.KEEP, upload);
+            return msgId;
+        } else {
+            Log.w(TAG, "Failed to insert new message to DB");
+        }
+        return -1L;
     }
 
     // Wrap content into Drafty.
@@ -364,78 +438,5 @@ class AttachmentUploader {
         Drafty content = new Drafty();
         content.attachFile(mimeType, fname, refUrl, size);
         return content;
-    }
-
-    static class Result {
-        String error;
-        long msgId = -1;
-        boolean processed = false;
-
-        Result() {
-        }
-
-        @NonNull
-        public String toString() {
-            return "msgId=" + msgId + ", error='" + error + "'";
-        }
-    }
-
-    static class FileUploader extends AsyncTaskLoader<Result> {
-        private static WeakReference<Progress> sProgress;
-        private final Bundle mArgs;
-        private Result mResult = null;
-
-        FileUploader(Activity activity, Bundle args) {
-            super(activity);
-            mArgs = args;
-        }
-
-        static void setProgressHandler(Progress progress) {
-            sProgress = new WeakReference<>(progress);
-        }
-
-        @Override
-        public void onStartLoading() {
-
-            if (mResult != null) {
-                // Loader has result already. Deliver it.
-                deliverResult(mResult);
-            } else if (mArgs.getLong("msgId") <= 0) {
-                // Create a new message which will be updated with upload progress.
-                Storage store = BaseDb.getInstance().getStore();
-                Drafty msg = new Drafty();
-                String topicName = mArgs.getString("topic");
-                long msgId = store.msgDraft(Cache.getTinode().getTopic(topicName),
-                        msg, Tinode.draftyHeadersFor(msg));
-                mArgs.putLong("msgId", msgId);
-                Progress p = sProgress.get();
-                if (p != null) {
-                    p.onStart(topicName, msgId);
-                }
-                forceLoad();
-            }
-        }
-
-        @Nullable
-        @Override
-        public Result loadInBackground() {
-            // Don't upload again if upload was completed already.
-            if (mResult == null) {
-                mResult = doUpload(getId(), getContext(), mArgs, sProgress);
-            }
-            return mResult;
-        }
-
-        @Override
-        public void onStopLoading() {
-            super.onStopLoading();
-            cancelLoad();
-        }
-    }
-
-    interface Progress {
-        void onStart(String topicName, long msgId);
-
-        boolean onProgress(String topicName, final int loaderId, final long msgId, final long progress, final long total);
     }
 }

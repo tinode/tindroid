@@ -56,6 +56,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -65,7 +67,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import androidx.work.ListenableWorker;
+import androidx.work.Operation;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
@@ -131,10 +138,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     private MessageLoaderCallbacks mMessageLoaderCallback;
 
-    // This is a map of message IDs to their corresponding loader IDs.
-    // This is needed for upload cancellations.
-    private LongSparseArray<Integer> mLoaders;
-
     private SpanClicker mSpanFormatterClicker;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
@@ -145,8 +148,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         mRefresher = refresher;
         mPagesToLoad = 1;
-
-        mLoaders = new LongSparseArray<>();
 
         mMessageLoaderCallback = new MessageLoaderCallbacks();
 
@@ -457,10 +458,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setClickable(false);
             holder.mText.setAutoLinkMask(0);
         }
+
         if (holder.mProgressInclude != null) {
             if (disableEnt) {
                 final long msgId = m.getId();
+                // Hide the word 'cancelled'.
                 holder.mProgressResult.setVisibility(View.GONE);
+                // Show progress bar.
                 holder.mProgress.setVisibility(View.VISIBLE);
                 holder.mProgressInclude.setVisibility(View.VISIBLE);
                 holder.mCancelProgress.setOnClickListener(new View.OnClickListener() {
@@ -473,6 +477,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                 });
             } else {
+                // Hide the entire progress bar component.
                 holder.mProgressInclude.setVisibility(View.GONE);
                 holder.mCancelProgress.setOnClickListener(null);
             }
@@ -779,23 +784,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    void addLoaderMapping(Long msgId, int loaderId) {
-        mLoaders.put(msgId, loaderId);
-    }
-
-    Integer getLoaderMapping(Long msgId) {
-        return mLoaders.get(msgId);
-    }
-
     private boolean cancelUpload(long msgId) {
-        Integer loaderId = mLoaders.get(msgId);
-        if (loaderId != null) {
-            LoaderManager.getInstance(mActivity).destroyLoader(loaderId);
-            // Change mapping to force background loading process to return early.
-            addLoaderMapping(msgId, -1);
+        final String uniqueID = Long.toString(msgId);
+
+        WorkManager wm = WorkManager.getInstance(mActivity);
+        WorkInfo.State state = null;
+        try {
+            List<WorkInfo> lwi = wm.getWorkInfosForUniqueWork(uniqueID).get();
+            if (!lwi.isEmpty()) {
+                WorkInfo wi = lwi.get(0);
+                state = wi.getState();
+            }
+        } catch (ExecutionException | InterruptedException ignored) {
+        }
+
+        if (state == null || !state.isFinished()) {
+            wm.cancelUniqueWork(Long.toString(msgId));
             return true;
         }
-        return false;
+        return state == WorkInfo.State.CANCELLED;
     }
 
     private void downloadAttachment(Map<String,Object> data, String fname, String mimeType) {

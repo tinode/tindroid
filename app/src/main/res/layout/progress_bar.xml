@@ -32,6 +32,8 @@
             android:layout_weight="0.1"
             android:contentDescription="@string/action_cancel"
             android:background="@android:color/transparent"
+            android:tint="?android:colorControlNormal"
+            android:foregroundTint="?android:colorControlNormal"
             android:paddingStart="4sp"
             android:paddingEnd="8sp"/>
 
