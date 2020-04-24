@@ -306,7 +306,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void topicAttach(boolean interactive) {
-        setProgressIndicator(true);
+        setRefreshing(true);
 
         Tinode tinode = Cache.getTinode();
         if (!tinode.isAuthenticated()) {
@@ -365,7 +365,7 @@ public class MessageActivity extends AppCompatActivity {
                 }).thenFinally(new PromisedReply.FinalListener() {
                     @Override
                     public void onFinally() {
-                        setProgressIndicator(false);
+                        setRefreshing(false);
                     }
                 });
     }
@@ -430,6 +430,11 @@ public class MessageActivity extends AppCompatActivity {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     // Try to send all pending messages.
@@ -615,7 +620,7 @@ public class MessageActivity extends AppCompatActivity {
      *
      * @param active should be true to show progress indicator
      */
-    public void setProgressIndicator(final boolean active) {
+    public void setRefreshing(final boolean active) {
         if (isFinishing() || isDestroyed()) {
             return;
         }
@@ -625,7 +630,7 @@ public class MessageActivity extends AppCompatActivity {
                 MessagesFragment fragMsg = (MessagesFragment) getSupportFragmentManager()
                         .findFragmentByTag(FRAGMENT_MESSAGES);
                 if (fragMsg != null) {
-                    fragMsg.setProgressIndicator(active);
+                    fragMsg.setRefreshing(active);
                 }
             }
         });

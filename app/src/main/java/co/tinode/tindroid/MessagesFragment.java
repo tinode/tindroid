@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,18 +36,22 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.work.Data;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
@@ -68,8 +73,7 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment handling message display and message sending.
  */
-public class MessagesFragment extends Fragment
-        /* implements LoaderManager.LoaderCallbacks<AttachmentUploader.Result> */ {
+public class MessagesFragment extends Fragment {
     private static final String TAG = "MessageFragment";
 
     static final String MESSAGE_TO_SEND = "messageText";
@@ -79,8 +83,8 @@ public class MessagesFragment extends Fragment
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
 
-    private static final int READ_EXTERNAL_STORAGE_PERMISSION = 1;
-    private static final int USE_CAMERA_PERMISSION = 2;
+    private static final int ATTACH_FILE_PERMISSIONS = 1;
+    private static final int ATTACH_IMAGE_PERMISSIONS = 2;
 
     private ComTopic<VxCard> mTopic;
 
@@ -88,9 +92,6 @@ public class MessagesFragment extends Fragment
     private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
-
-    // It cannot be local.
-    private UploadProgress mUploadProgress;
 
     private String mTopicName = null;
     private String mMessageToSend = null;
@@ -254,13 +255,72 @@ public class MessagesFragment extends Fragment
                 }
             }
         });
+
+        // Monitor status of attachment uploads and update messages accordingly.
+        WorkManager.getInstance(activity).getWorkInfosByTagLiveData(AttachmentUploader.TAG_UPLOAD_WORK)
+                .observe(activity, new Observer<List<WorkInfo>>() {
+                    @Override
+                    public void onChanged(List<WorkInfo> workInfos) {
+                        for (WorkInfo wi : workInfos) {
+                            WorkInfo.State state = wi.getState();
+                            switch (state) {
+                                case RUNNING: {
+                                    Data data = wi.getProgress();
+                                    String topicName = data.getString(AttachmentUploader.ARG_TOPIC_NAME);
+                                    if (!mTopicName.equals(topicName)) {
+                                        break;
+                                    }
+                                    long progress = data.getLong(AttachmentUploader.ARG_PROGRESS, -1);
+                                    if (progress == 0) {
+                                        // New message. Update.
+                                        runMessagesLoader(mTopicName);
+                                        break;
+                                    }
+                                    if (progress < 0) {
+                                        Log.w(TAG, "Progress not set in running worker");
+                                        break;
+                                    }
+                                    long msgId = data.getLong(AttachmentUploader.ARG_MSG_ID, -1L);
+                                    final int position = findItemPositionById(msgId);
+                                    if (position >= 0) {
+                                        long total = data.getLong(AttachmentUploader.ARG_FILE_SIZE, 1L);
+                                        mMessagesAdapter.notifyItemChanged(position, (float) progress / total);
+                                    }
+                                    break;
+                                }
+                                case SUCCEEDED: {
+                                    Data success = wi.getOutputData();
+                                    long msgId = success.getLong(AttachmentUploader.ARG_MSG_ID, -1L);
+                                    if (msgId > 0) {
+                                        activity.syncMessages(msgId, true);
+                                    }
+                                    break;
+                                }
+                                case FAILED: {
+                                    Data failure = wi.getOutputData();
+                                    String topicName = failure.getString(AttachmentUploader.ARG_TOPIC_NAME);
+                                    if (mTopicName.equals(topicName)) {
+                                        String error = failure.getString(AttachmentUploader.ARG_ERROR);
+                                        runMessagesLoader(mTopicName);
+                                        Toast.makeText(activity, error, Toast.LENGTH_LONG).show();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void onResume() {
-
         super.onResume();
+
+        final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
 
         setHasOptionsMenu(true);
 
@@ -281,11 +341,8 @@ public class MessagesFragment extends Fragment
 
         mRefresher.setRefreshing(false);
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity != null) {
-            updateFormValues();
-            activity.sendNoteRead(0);
-        }
+        updateFormValues();
+        activity.sendNoteRead(0);
     }
 
     void runMessagesLoader(String topicName) {
@@ -382,7 +439,6 @@ public class MessagesFragment extends Fragment
     public void onDestroy() {
         super.onDestroy();
 
-        mUploadProgress = null;
         // Close cursor.
         mMessagesAdapter.resetContent(null);
     }
@@ -454,6 +510,30 @@ public class MessagesFragment extends Fragment
 
 
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == ATTACH_FILE_PERMISSIONS) {
+            // Request to attach file.
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openFileSelector(getActivity());
+            }
+        } else if (requestCode == ATTACH_IMAGE_PERMISSIONS) {
+            // Request to attach image
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openImageSelector(getActivity());
+            }
+        }
+    }
+
+    void setRefreshing(boolean active) {
+        if (!isAdded()) {
+            return;
+        }
+        mRefresher.setRefreshing(active);
     }
 
     // Confirmation dialog "Do you really want to do X?"
@@ -602,8 +682,15 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private void openFileSelector(Activity activity) {
-        if (activity.isFinishing() || activity.isDestroyed()) {
+    private void openFileSelector(@Nullable Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    ATTACH_FILE_PERMISSIONS);
             return;
         }
 
@@ -618,16 +705,15 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private void openImageSelector(Activity activity) {
-        if (activity.isFinishing() || activity.isDestroyed()) {
+    private void openImageSelector(@Nullable Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
         if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
-            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA},
-                    USE_CAMERA_PERMISSION);
-            Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
-
+            ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
+                    ATTACH_IMAGE_PERMISSIONS);
             return;
         }
 
@@ -708,9 +794,10 @@ public class MessagesFragment extends Fragment
                         return;
                     }
 
-                    if (!UiUtils.isPermissionGranted(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                        ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
-                            READ_EXTERNAL_STORAGE_PERMISSION);
+                    if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        ActivityCompat.requestPermissions(activity,
+                                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA},
+                                requestCode == ACTION_ATTACH_IMAGE ? ATTACH_IMAGE_PERMISSIONS : ATTACH_FILE_PERMISSIONS);
                         return;
                     }
 
@@ -784,100 +871,5 @@ public class MessagesFragment extends Fragment
         }
 
         return mMessagesAdapter.findItemPositionById(id, first, last);
-    }
-
-    // Loader interface
-/*
-    @Override
-    public void onLoadFinished(@NonNull Loader<AttachmentUploader.Result> loader, final AttachmentUploader.Result data) {
-        final MessageActivity activity = (MessageActivity) getActivity();
-
-        if (activity != null) {
-            // Kill the loader otherwise it will keep uploading the same file whenever the activity
-            // is created.
-            LoaderManager.getInstance(activity).destroyLoader(loader.getId());
-        } else {
-            return;
-        }
-
-        // Avoid processing the same result twice;
-        if (data.processed) {
-            return;
-        } else {
-            data.processed = true;
-        }
-
-        if (data.msgId > 0) {
-            activity.syncMessages(data.msgId, true);
-        } else if (data.error != null) {
-            runMessagesLoader(mTopicName);
-            Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();
-        }
-    }
-*/
-    void setProgressIndicator(boolean active) {
-        if (!isAdded()) {
-            return;
-        }
-        mRefresher.setRefreshing(active);
-    }
-
-    private class UploadProgress implements AttachmentUploader.Progress {
-
-        UploadProgress() {
-        }
-
-        public void onStart(final String topicName, final long msgId) {
-            // Reload the cursor.
-            if (topicName.equals(mTopicName)) {
-                runMessagesLoader(mTopicName);
-            }
-        }
-
-        // Returns true to continue the upload, false to cancel.
-        public boolean onProgress(final String topicName, final int loaderId, final long msgId,
-                                  final long progress, final long total) {
-            // DEBUG -- slow down the upload progress.
-            /*
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            */
-            // debug
-
-            // Check for cancellation.
-            Integer oldLoaderId = mMessagesAdapter.getLoaderMapping(msgId);
-            if (oldLoaderId == null) {
-                mMessagesAdapter.addLoaderMapping(msgId, loaderId);
-            } else if (oldLoaderId != loaderId) {
-                // Loader id has changed, cancel.
-                return false;
-            }
-
-            if (!isAdded() || !isVisible() || mTopicName == null || !mTopicName.equals(topicName)) {
-                return true;
-            }
-
-            Activity activity = getActivity();
-            if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
-                return true;
-            }
-
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    final int position = findItemPositionById(msgId);
-                    if (position < 0) {
-                        return;
-                    }
-                    mMessagesAdapter.notifyItemChanged(position,
-                            total > 0 ? (float) progress / total : (float) progress);
-                }
-            });
-
-            return true;
-        }
     }
 }

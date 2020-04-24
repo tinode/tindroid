@@ -18,22 +18,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.loader.app.LoaderManager;
-import androidx.core.content.FileProvider;
-import androidx.loader.content.Loader;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.view.ActionMode;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.appcompat.widget.AppCompatImageView;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -44,7 +28,6 @@ import android.text.style.IconMarginSpan;
 import android.text.style.StyleSpan;
 import android.util.Base64;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -55,8 +38,6 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -69,8 +50,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import androidx.work.ListenableWorker;
-import androidx.work.Operation;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
@@ -435,12 +428,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
+        final long msgId = m.getId();
+
         // Disable attachment clicker.
-        boolean disableEnt = (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.DRAFT) &&
+        boolean uploadingAttachment = (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.DRAFT) &&
                 (m.content != null && m.content.getEntReferences() != null);
 
         mSpanFormatterClicker.setPosition(position);
-        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, disableEnt ? null : mSpanFormatterClicker);
+        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, uploadingAttachment ? null : mSpanFormatterClicker);
         if (text.length() == 0) {
             text = invalidContentSpanned(mActivity);
         }
@@ -460,8 +455,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (holder.mProgressInclude != null) {
-            if (disableEnt) {
-                final long msgId = m.getId();
+            if (uploadingAttachment) {
                 // Hide the word 'cancelled'.
                 holder.mProgressResult.setVisibility(View.GONE);
                 // Show progress bar.

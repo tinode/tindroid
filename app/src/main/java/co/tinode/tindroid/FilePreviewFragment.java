@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,17 +16,9 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.work.Constraints;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
-import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.model.Drafty;
 
 public class FilePreviewFragment extends Fragment {
+    @SuppressWarnings("unused")
     private static final String TAG = "FilePreviewFragment";
 
     // Icon ID for mime type. Add more mime type to icon mappings here.

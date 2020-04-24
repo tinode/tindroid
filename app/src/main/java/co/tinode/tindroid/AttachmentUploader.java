@@ -21,10 +21,10 @@ import java.io.InputStream;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.work.Constraints;
 import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
 import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
@@ -39,7 +39,7 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
-class AttachmentUploader extends Worker {
+public class AttachmentUploader extends Worker {
     private static final String TAG = "AttachmentUploader";
 
     // Maximum size of file to send in-band. 256KB.
@@ -47,7 +47,7 @@ class AttachmentUploader extends Worker {
     // Maximum size of file to upload. 8MB.
     private static final long MAX_ATTACHMENT_SIZE = 1 << 23;
 
-    final static String ARG_OPERATION = "operation";
+    private final static String ARG_OPERATION = "operation";
     final static String ARG_TOPIC_NAME = "topic";
     final static String ARG_SRC_URI = "uri";
     final static String ARG_FILE_PATH = "filePath";
@@ -55,8 +55,11 @@ class AttachmentUploader extends Worker {
     final static String ARG_IMAGE_CAPTION = "caption";
     final static String ARG_PROGRESS = "progress";
     final static String ARG_FILE_SIZE = "fileSize";
+    final static String ARG_ERROR = "error";
 
     private LargeFileHelper mUploader = null;
+
+    final static String TAG_UPLOAD_WORK = "AttachmentUploader";
 
     public AttachmentUploader(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -77,7 +80,6 @@ class AttachmentUploader extends Worker {
     }
 
     private ListenableWorker.Result doUpload(final Context context, final Data args) {
-
         Storage store = BaseDb.getInstance().getStore();
 
         // File upload "file" or "image".
@@ -89,16 +91,18 @@ class AttachmentUploader extends Worker {
         final String filePath = args.getString(ARG_FILE_PATH);
         final long msgId = args.getLong(ARG_MSG_ID, 0);
 
-        final Data.Builder result = new Data.Builder().putString(ARG_TOPIC_NAME, topicName).putLong(ARG_MSG_ID, msgId);
+        final Data.Builder result = new Data.Builder()
+                .putString(ARG_TOPIC_NAME, topicName)
+                .putLong(ARG_MSG_ID, msgId);
 
         if (msgId <= 0) {
             Log.w(TAG, "Invalid message ID: " + msgId);
-            return ListenableWorker.Result.failure(result.putString("error", "Invalid messageID").build());
+            return ListenableWorker.Result.failure(result.putString(ARG_ERROR, "Invalid messageID").build());
         }
 
         if (uri == null) {
             Log.w(TAG, "Received null URI");
-            return ListenableWorker.Result.failure(result.putString("error", "Null input data").build());
+            return ListenableWorker.Result.failure(result.putString(ARG_ERROR, "Null input data").build());
         }
 
         final Topic topic = Cache.getTinode().getTopic(topicName);
@@ -112,12 +116,11 @@ class AttachmentUploader extends Worker {
 
             FileDetails fileDetails = getFileDetails(context, uri, filePath);
             String fname = fileDetails.fileName;
-            long fsize = fileDetails.fileSize;
 
-            if (fsize == 0) {
+            if (fileDetails.fileSize == 0) {
                 Log.w(TAG, "File size is zero; uri=" + uri + "; file="+filePath);
                 return ListenableWorker.Result.failure(
-                        result.putString("error", context.getString(R.string.unable_to_attach_file)).build());
+                        result.putString(ARG_ERROR, context.getString(R.string.unable_to_attach_file)).build());
             }
 
             if (fname == null) {
@@ -131,7 +134,7 @@ class AttachmentUploader extends Worker {
                 Bitmap bmp = null;
 
                 // Make sure the image is not too large.
-                if (fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                if (fileDetails.fileSize > MAX_INBAND_ATTACHMENT_SIZE) {
                     // Resize image to ensure it's under the maximum in-band size.
                     is = resolver.openInputStream(uri);
                     bmp = BitmapFactory.decodeStream(is, null, null);
@@ -208,17 +211,17 @@ class AttachmentUploader extends Worker {
                     imageHeight = bmp.getHeight();
 
                     is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
-                    fsize = is.available();
+                    fileDetails.fileSize = is.available();
                 }
             }
 
-            if (fsize > MAX_ATTACHMENT_SIZE) {
-                Log.w(TAG, "Unable to process attachment: too big, size=" + fsize);
+            if (fileDetails.fileSize > MAX_ATTACHMENT_SIZE) {
+                Log.w(TAG, "Unable to process attachment: too big, size=" + fileDetails.fileSize);
                 return ListenableWorker.Result.failure(
-                        result.putString("error",
+                        result.putString(ARG_ERROR,
                                 context.getString(
                                         R.string.attachment_too_large,
-                                        UiUtils.bytesToHumanSize(fsize),
+                                        UiUtils.bytesToHumanSize(fileDetails.fileSize),
                                         UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE)))
                                 .build());
             } else {
@@ -226,7 +229,7 @@ class AttachmentUploader extends Worker {
                     is = resolver.openInputStream(uri);
                 }
 
-                if ("file".equals(operation) && fsize > MAX_INBAND_ATTACHMENT_SIZE) {
+                if ("file".equals(operation) && fileDetails.fileSize > MAX_INBAND_ATTACHMENT_SIZE) {
 
                     // Update draft with file data.
                     store.msgDraftUpdate(topic, msgId, draftyAttachment(fileDetails.mimeType, fname, uri.toString(), -1));
@@ -234,11 +237,11 @@ class AttachmentUploader extends Worker {
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
                             .putLong(ARG_PROGRESS, 0)
-                            .putLong(ARG_FILE_SIZE, fsize).build());
+                            .putLong(ARG_FILE_SIZE, fileDetails.fileSize).build());
 
                     // Upload then send message with a link. This is a long-running blocking call.
                     mUploader = Cache.getTinode().getFileUploader();
-                    MsgServerCtrl ctrl = mUploader.upload(is, fname, fileDetails.mimeType, fsize,
+                    MsgServerCtrl ctrl = mUploader.upload(is, fname, fileDetails.mimeType, fileDetails.fileSize,
                             new LargeFileHelper.FileHelperProgress() {
                                 @Override
                                 public void onProgress(long progress, long size) {
@@ -251,7 +254,8 @@ class AttachmentUploader extends Worker {
                             });
                     success = (ctrl != null && ctrl.code == 200);
                     if (success) {
-                        content = draftyAttachment(fileDetails.mimeType, fname, ctrl.getStringParam("url", null), fsize);
+                        content = draftyAttachment(fileDetails.mimeType, fname,
+                                ctrl.getStringParam("url", null), fileDetails.fileSize);
                     }
                 } else {
                     baos = new ByteArrayOutputStream();
@@ -284,12 +288,12 @@ class AttachmentUploader extends Worker {
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
                             .putLong(ARG_PROGRESS, 0)
-                            .putLong(ARG_FILE_SIZE, fsize)
+                            .putLong(ARG_FILE_SIZE, fileDetails.fileSize)
                             .build());
                 }
             }
         } catch (IOException | NullPointerException ex) {
-            result.putString("error", ex.getMessage());
+            result.putString(ARG_ERROR, ex.getMessage());
             if (!"cancelled".equals(ex.getMessage())) {
                 Log.w(TAG, "Failed to attach file", ex);
             }
@@ -381,7 +385,7 @@ class AttachmentUploader extends Worker {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    static Long enqueueWorkRequest(Context context, String operation, Bundle args) {
+    static void enqueueWorkRequest(AppCompatActivity activity, String operation, Bundle args) {
         String topicName = args.getString(AttachmentUploader.ARG_TOPIC_NAME);
         // Create a new message which will be updated with upload progress.
         Drafty msg = new Drafty();
@@ -404,13 +408,13 @@ class AttachmentUploader extends Worker {
             OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentUploader.class)
                     .setInputData(data.build())
                     .setConstraints(constraints)
+                    .addTag(TAG_UPLOAD_WORK)
                     .build();
-            WorkManager.getInstance(context).enqueueUniqueWork(Long.toString(msgId), ExistingWorkPolicy.KEEP, upload);
-            return msgId;
+
+            WorkManager.getInstance(activity).enqueue(upload);
         } else {
             Log.w(TAG, "Failed to insert new message to DB");
         }
-        return -1L;
     }
 
     // Wrap content into Drafty.

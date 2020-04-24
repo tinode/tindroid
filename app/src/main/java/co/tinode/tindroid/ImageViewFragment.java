@@ -11,21 +11,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.loader.app.LoaderManager;
-import androidx.work.Constraints;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
-import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.model.Drafty;
-
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -46,6 +31,9 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 
 /**
  * Fragment for expanded display of an image: being attached or received.
@@ -134,6 +122,7 @@ public class ImageViewFragment extends Fragment {
         mScaleGestureDetector = new ScaleGestureDetector(activity, scaleListener);
 
         view.setOnTouchListener(new View.OnTouchListener() {
+            @SuppressLint("ClickableViewAccessibility")
             public boolean onTouch(View v, MotionEvent event) {
                 if (mWorkingMatrix == null) {
                     // The image is invalid. Disable scrolling/panning.
