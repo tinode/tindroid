@@ -5,13 +5,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="wrap_content"
     android:layout_width="wrap_content"
-    android:layout_marginStart="26dp">
+    android:layout_marginStart="32dp">
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/progressPanel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="start">
+        android:layout_gravity="start"
+        android:visibility="visible">
 
         <ProgressBar
             android:id="@+id/attachmentProgressBar"
@@ -34,8 +35,10 @@
             android:background="@android:color/transparent"
             android:tint="?android:colorControlNormal"
             android:foregroundTint="?android:colorControlNormal"
-            android:paddingStart="4sp"
-            android:paddingEnd="8sp"/>
+            android:paddingStart="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:paddingEnd="8dp" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

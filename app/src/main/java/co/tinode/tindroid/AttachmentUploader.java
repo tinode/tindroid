@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
@@ -95,16 +96,6 @@ public class AttachmentUploader extends Worker {
                 .putString(ARG_TOPIC_NAME, topicName)
                 .putLong(ARG_MSG_ID, msgId);
 
-        if (msgId <= 0) {
-            Log.w(TAG, "Invalid message ID: " + msgId);
-            return ListenableWorker.Result.failure(result.putString(ARG_ERROR, "Invalid messageID").build());
-        }
-
-        if (uri == null) {
-            Log.w(TAG, "Received null URI");
-            return ListenableWorker.Result.failure(result.putString(ARG_ERROR, "Null input data").build());
-        }
-
         final Topic topic = Cache.getTinode().getTopic(topicName);
 
         Drafty content = null;
@@ -119,6 +110,7 @@ public class AttachmentUploader extends Worker {
 
             if (fileDetails.fileSize == 0) {
                 Log.w(TAG, "File size is zero; uri=" + uri + "; file="+filePath);
+                store.msgDiscard(topic, msgId);
                 return ListenableWorker.Result.failure(
                         result.putString(ARG_ERROR, context.getString(R.string.unable_to_attach_file)).build());
             }
@@ -129,7 +121,7 @@ public class AttachmentUploader extends Worker {
 
             final ContentResolver resolver = context.getContentResolver();
 
-            // Image is being attached.
+            // Image is being attached. Ensure the image has correct orientation and size.
             if ("image".equals(operation)) {
                 Bitmap bmp = null;
 
@@ -316,7 +308,7 @@ public class AttachmentUploader extends Worker {
             return ListenableWorker.Result.success(result.build());
         } else {
             // Failure: discard draft.
-            store.msgDiscard(topic, msgId);
+            store.msgFailed(topic, msgId);
             return ListenableWorker.Result.failure(result.build());
         }
     }
@@ -411,7 +403,8 @@ public class AttachmentUploader extends Worker {
                     .addTag(TAG_UPLOAD_WORK)
                     .build();
 
-            WorkManager.getInstance(activity).enqueue(upload);
+            // If send or upload is retried,
+            WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msgId), ExistingWorkPolicy.REPLACE, upload);
         } else {
             Log.w(TAG, "Failed to insert new message to DB");
         }

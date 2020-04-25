@@ -267,17 +267,20 @@ public class MessagesFragment extends Fragment {
                                 case RUNNING: {
                                     Data data = wi.getProgress();
                                     String topicName = data.getString(AttachmentUploader.ARG_TOPIC_NAME);
+                                    if (topicName == null) {
+                                        // Not a progress report, just a status change.
+                                        break;
+                                    }
                                     if (!mTopicName.equals(topicName)) {
                                         break;
                                     }
                                     long progress = data.getLong(AttachmentUploader.ARG_PROGRESS, -1);
+                                    if (progress < 0) {
+                                        break;
+                                    }
                                     if (progress == 0) {
                                         // New message. Update.
                                         runMessagesLoader(mTopicName);
-                                        break;
-                                    }
-                                    if (progress < 0) {
-                                        Log.w(TAG, "Progress not set in running worker");
                                         break;
                                     }
                                     long msgId = data.getLong(AttachmentUploader.ARG_MSG_ID, -1L);

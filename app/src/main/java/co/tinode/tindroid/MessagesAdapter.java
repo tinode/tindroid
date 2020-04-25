@@ -8,6 +8,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -430,12 +431,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         final long msgId = m.getId();
 
-        // Disable attachment clicker.
-        boolean uploadingAttachment = (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.DRAFT) &&
-                (m.content != null && m.content.getEntReferences() != null);
+        boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
+        boolean uploadingAttachment = hasAttachment &&
+                (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING);
+        boolean canDownload = hasAttachment &&
+                (m.status == BaseDb.Status.SYNCED);
+        boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
         mSpanFormatterClicker.setPosition(position);
-        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, uploadingAttachment ? null : mSpanFormatterClicker);
+        // If download is not available, disable attachment clicker.
+        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, canDownload ? mSpanFormatterClicker : null);
         if (text.length() == 0) {
             text = invalidContentSpanned(mActivity);
         }
@@ -454,7 +459,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setAutoLinkMask(0);
         }
 
-        if (holder.mProgressInclude != null) {
+        if (hasAttachment && holder.mProgressInclude != null) {
             if (uploadingAttachment) {
                 // Hide the word 'cancelled'.
                 holder.mProgressResult.setVisibility(View.GONE);
@@ -470,6 +475,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         }
                     }
                 });
+            } else if (uploadFailed) {
+                // Show the word 'cancelled'.
+                holder.mProgressResult.setVisibility(View.VISIBLE);
+                // Hide progress bar.
+                holder.mProgress.setVisibility(View.GONE);
+                holder.mProgressInclude.setVisibility(View.VISIBLE);
+                holder.mCancelProgress.setOnClickListener(null);
             } else {
                 // Hide the entire progress bar component.
                 holder.mProgressInclude.setVisibility(View.GONE);
@@ -524,8 +536,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
+                holder.mDeliveredIcon.setImageTintList(null);
                 if (m.status.value <= BaseDb.Status.SENDING.value) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
+                } else if (m.status.value == BaseDb.Status.FAILED.value) {
+                    holder.mDeliveredIcon.setImageTintList(ColorStateList.valueOf(0xFFFFA000));
+                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_warning);
                 } else {
                     if (topic.msgReadCount(m.seq) > 0) {
                         holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
