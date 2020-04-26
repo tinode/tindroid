@@ -540,7 +540,7 @@ public class MessageDb implements BaseColumns {
      * @param toId    maximum seq value to delete, exclusive (open)
      * @return true if any messages were deleted.
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int delId, int fromId, int toId) {
+    static boolean delete(SQLiteDatabase db, long topicId, int delId, int fromId, int toId) {
         return deleteOrMarkDeleted(db, topicId, delId, fromId, toId, false);
     }
 
@@ -552,7 +552,7 @@ public class MessageDb implements BaseColumns {
      * @param ranges  message ranges to delete.
      * @return true if any messages were deleted.
      */
-    public static boolean delete(SQLiteDatabase db, long topicId, int delId, MsgRange[] ranges) {
+    static boolean delete(SQLiteDatabase db, long topicId, int delId, MsgRange[] ranges) {
         return deleteOrMarkDeleted(db, topicId, delId, ranges, false);
     }
 

@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="6sp"
-            android:visibility="gone"
+            android:visibility="visible"
             tools:ignore="RtlSymmetry">
 
             <EditText
@@ -63,6 +63,7 @@
                 android:contentDescription="@string/send_message_button_hint"
                 android:paddingLeft="4sp"
                 android:paddingRight="8sp"
+                android:layout_gravity="center_vertical"
                 android:tint="?attr/colorAccent"
                 app:srcCompat="@drawable/ic_send"/>
         </LinearLayout>
@@ -73,7 +74,8 @@
             android:background="@color/white_50"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:baselineAligned="false">
+            android:baselineAligned="false"
+            android:visibility="gone" >
 
             <LinearLayout
                 android:layout_weight="1"

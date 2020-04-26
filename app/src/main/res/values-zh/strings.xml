@@ -160,7 +160,7 @@
     <string name="sending_disabled">无效</string>
     <string name="download_title">Tinode 下载</string>
     <string name="some_permissions_missing">请接受所有请求权限.</string>
-    <string name="invalid_file">无法获取此文件</string>
+    <string name="unable_to_attach_file">无法获取此文件</string>
     <string name="cancelled">已取消</string>
     <string name="login_rejected">登录被拒绝</string>
     <string name="email_rejected">邮件被拒绝</string>
@@ -260,5 +260,6 @@
 
     <string name="confirm_delmsg_for_all">您确定要删除所有参与者的所有消息吗？</string>
     <string name="confirm_delmsg_for_self">您确定要删除所有消息吗？它们只会为您删除。</string>
+    <string name="licenses">执照</string>
 
 </resources>

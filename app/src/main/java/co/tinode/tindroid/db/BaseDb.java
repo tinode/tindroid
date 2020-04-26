@@ -57,7 +57,9 @@ public class BaseDb extends SQLiteOpenHelper {
         // Object is soft-deleted.
         DELETED_SOFT(6),
         // The object is a deletion range marker synchronized with the server.
-        DELETED_SYNCED(7);
+        DELETED_SYNCED(7),
+        // Send failed.
+        FAILED(8);
 
         public int value;
 

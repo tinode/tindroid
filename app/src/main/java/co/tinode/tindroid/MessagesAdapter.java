@@ -8,6 +8,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -18,22 +19,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.loader.app.LoaderManager;
-import androidx.core.content.FileProvider;
-import androidx.loader.content.Loader;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.view.ActionMode;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.appcompat.widget.AppCompatImageView;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -44,7 +29,6 @@ import android.text.style.IconMarginSpan;
 import android.text.style.StyleSpan;
 import android.util.Base64;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -65,7 +49,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
@@ -131,10 +132,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     private MessageLoaderCallbacks mMessageLoaderCallback;
 
-    // This is a map of message IDs to their corresponding loader IDs.
-    // This is needed for upload cancellations.
-    private LongSparseArray<Integer> mLoaders;
-
     private SpanClicker mSpanFormatterClicker;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
@@ -145,8 +142,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         mRefresher = refresher;
         mPagesToLoad = 1;
-
-        mLoaders = new LongSparseArray<>();
 
         mMessageLoaderCallback = new MessageLoaderCallbacks();
 
@@ -434,12 +429,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
-        // Disable attachment clicker.
-        boolean disableEnt = (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.DRAFT) &&
-                (m.content != null && m.content.getEntReferences() != null);
+        final long msgId = m.getId();
+
+        boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
+        boolean uploadingAttachment = hasAttachment &&
+                (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING);
+        boolean canDownload = hasAttachment &&
+                (m.status == BaseDb.Status.SYNCED);
+        boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
         mSpanFormatterClicker.setPosition(position);
-        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, disableEnt ? null : mSpanFormatterClicker);
+        // If download is not available, disable attachment clicker.
+        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, canDownload ? mSpanFormatterClicker : null);
         if (text.length() == 0) {
             text = invalidContentSpanned(mActivity);
         }
@@ -457,10 +458,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setClickable(false);
             holder.mText.setAutoLinkMask(0);
         }
-        if (holder.mProgressInclude != null) {
-            if (disableEnt) {
-                final long msgId = m.getId();
+
+        if (hasAttachment && holder.mProgressInclude != null) {
+            if (uploadingAttachment) {
+                // Hide the word 'cancelled'.
                 holder.mProgressResult.setVisibility(View.GONE);
+                // Show progress bar.
                 holder.mProgress.setVisibility(View.VISIBLE);
                 holder.mProgressInclude.setVisibility(View.VISIBLE);
                 holder.mCancelProgress.setOnClickListener(new View.OnClickListener() {
@@ -472,7 +475,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         }
                     }
                 });
+            } else if (uploadFailed) {
+                // Show the word 'cancelled'.
+                holder.mProgressResult.setVisibility(View.VISIBLE);
+                // Hide progress bar.
+                holder.mProgress.setVisibility(View.GONE);
+                holder.mProgressInclude.setVisibility(View.VISIBLE);
+                holder.mCancelProgress.setOnClickListener(null);
             } else {
+                // Hide the entire progress bar component.
                 holder.mProgressInclude.setVisibility(View.GONE);
                 holder.mCancelProgress.setOnClickListener(null);
             }
@@ -525,8 +536,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
+                holder.mDeliveredIcon.setImageTintList(null);
                 if (m.status.value <= BaseDb.Status.SENDING.value) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
+                } else if (m.status.value == BaseDb.Status.FAILED.value) {
+                    holder.mDeliveredIcon.setImageTintList(ColorStateList.valueOf(0xFFFFA000));
+                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_warning);
                 } else {
                     if (topic.msgReadCount(m.seq) > 0) {
                         holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
@@ -779,23 +794,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    void addLoaderMapping(Long msgId, int loaderId) {
-        mLoaders.put(msgId, loaderId);
-    }
-
-    Integer getLoaderMapping(Long msgId) {
-        return mLoaders.get(msgId);
-    }
-
     private boolean cancelUpload(long msgId) {
-        Integer loaderId = mLoaders.get(msgId);
-        if (loaderId != null) {
-            LoaderManager.getInstance(mActivity).destroyLoader(loaderId);
-            // Change mapping to force background loading process to return early.
-            addLoaderMapping(msgId, -1);
+        final String uniqueID = Long.toString(msgId);
+
+        WorkManager wm = WorkManager.getInstance(mActivity);
+        WorkInfo.State state = null;
+        try {
+            List<WorkInfo> lwi = wm.getWorkInfosForUniqueWork(uniqueID).get();
+            if (!lwi.isEmpty()) {
+                WorkInfo wi = lwi.get(0);
+                state = wi.getState();
+            }
+        } catch (ExecutionException | InterruptedException ignored) {
+        }
+
+        if (state == null || !state.isFinished()) {
+            wm.cancelUniqueWork(Long.toString(msgId));
             return true;
         }
-        return false;
+        return state == WorkInfo.State.CANCELLED;
     }
 
     private void downloadAttachment(Map<String,Object> data, String fname, String mimeType) {

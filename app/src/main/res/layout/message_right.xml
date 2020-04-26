@@ -1,5 +1,4 @@
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
@@ -17,8 +16,8 @@
             android:id="@+id/messageBubble"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bubble_r_z"
             android:layout_gravity="end"
+            android:background="@drawable/bubble_r_z"
             android:orientation="vertical">
 
             <TextView
@@ -30,12 +29,12 @@
                 android:paddingStart="8dp"
                 android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
-                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-                />
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
 
-            <include layout="@layout/progress_bar"
-                     android:id="@+id/progressInclide"
-                        android:visibility="gone"/>
+            <include
+                android:id="@+id/progressInclide"
+                layout="@layout/progress_bar"
+                android:visibility="gone" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -49,22 +48,21 @@
                     android:paddingLeft="4sp"
                     android:paddingRight="4sp"
                     android:textColor="?android:textColorSecondary"
-                    tools:text="Jun 11 22:17"
-                    android:textSize="11sp" tools:ignore="SmallSp"/>
+                    android:textSize="11sp"
+                    tools:ignore="SmallSp"
+                    tools:text="Jun 11 22:17" />
 
                 <ImageView
                     android:id="@+id/messageViewedIcon"
                     android:layout_width="18sp"
                     android:layout_height="11sp"
                     android:layout_gravity="center_vertical"
-                    android:paddingEnd="3sp"
-                    android:paddingLeft="5sp"
-                    android:paddingRight="3sp"
-                    android:paddingStart="5sp"
                     android:alpha="0.5"
+                    android:paddingStart="5sp"
+                    android:paddingEnd="3sp"
                     android:tint="?android:textColorSecondary"
-                    tools:src="@drawable/ic_visibility"
-                    tools:ignore="SmallSp"/>
+                    tools:ignore="SmallSp"
+                    tools:src="@drawable/ic_visibility" />
 
             </LinearLayout>
         </LinearLayout>
@@ -75,8 +73,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorMessageSelected"
-        android:visibility="gone"
-        />
+        android:visibility="gone" />
 
     <View
         android:id="@+id/overlay"
@@ -84,7 +81,6 @@
         android:layout_height="match_parent"
         android:background="?android:selectableItemBackground"
         android:clickable="false"
-        android:focusable="false"
-        />
+        android:focusable="false" />
 
 </FrameLayout>

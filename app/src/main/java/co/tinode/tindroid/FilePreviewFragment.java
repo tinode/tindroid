@@ -4,10 +4,10 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,15 +16,16 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.loader.app.LoaderManager;
 
 public class FilePreviewFragment extends Fragment {
+    @SuppressWarnings("unused")
     private static final String TAG = "FilePreviewFragment";
 
     // Icon ID for mime type. Add more mime type to icon mappings here.
     private static Map<String,Integer> sMime2Icon;
     private static final int DEFAULT_ICON_ID = R.drawable.ic_file;
+    private static final int INVALID_ICON_ID = R.drawable.ic_file_alert;
+
     static {
         sMime2Icon = new HashMap<>();
         sMime2Icon.put("image", R.drawable.ic_image);
@@ -54,6 +55,7 @@ public class FilePreviewFragment extends Fragment {
     }
 
     private ImageView mImageView;
+    private ImageButton mSendButton;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -62,7 +64,8 @@ public class FilePreviewFragment extends Fragment {
         mImageView = view.findViewById(R.id.image);
 
         // Send message on button click.
-        view.findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
+        mSendButton = view.findViewById(R.id.chatSendButton);
+        mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendFile();
@@ -81,44 +84,44 @@ public class FilePreviewFragment extends Fragment {
             return;
         }
 
-        Bundle fileDetails = AttachmentUploader.getFileDetails(activity,
-                (Uri) args.getParcelable("uri"), args.getString("file"));
-        String mimeType = fileDetails.getString("mime");
-        String filename = fileDetails.getString("name");
-        if (TextUtils.isEmpty(filename)) {
-            filename = getResources().getString(R.string.tinode_image);
+        Uri uri = args.getParcelable(AttachmentUploader.ARG_SRC_URI);
+        if (uri != null) {
+            AttachmentUploader.FileDetails fileDetails = AttachmentUploader.getFileDetails(activity,
+                    uri, args.getString(AttachmentUploader.ARG_FILE_PATH));
+            String fileName = fileDetails.fileName;
+            if (TextUtils.isEmpty(fileName)) {
+                fileName = getString(R.string.tinode_image);
+            }
+
+            // Show icon for mime type.
+            mImageView.setImageDrawable(getResources().getDrawable(getIconIdForMimeType(fileDetails.mimeType)));
+            ((TextView) activity.findViewById(R.id.content_type)).setText(fileDetails.mimeType);
+            ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
+            ((TextView) activity.findViewById(R.id.image_size)).setText(UiUtils.bytesToHumanSize(fileDetails.fileSize));
+            mSendButton.setEnabled(true);
+        } else {
+            mImageView.setImageDrawable(getResources().getDrawable(INVALID_ICON_ID));
+            ((TextView) activity.findViewById(R.id.content_type)).setText(getString(R.string.invalid_file));
+            ((TextView) activity.findViewById(R.id.file_name)).setText(getString(R.string.invalid_file));
+            ((TextView) activity.findViewById(R.id.image_size)).setText(UiUtils.bytesToHumanSize(0));
+            mSendButton.setEnabled(false);
         }
-
-        // Show icon for mime type.
-        mImageView.setImageDrawable(getResources().getDrawable(getIconIdForMimeType(mimeType)));
-        ((TextView) activity.findViewById(R.id.content_type)).setText(mimeType);
-        ((TextView) activity.findViewById(R.id.file_name)).setText(filename);
-        ((TextView) activity.findViewById(R.id.image_size)).setText(UiUtils.bytesToHumanSize(fileDetails.getLong("size")));
-
         setHasOptionsMenu(false);
     }
 
     private void sendFile() {
-        MessageActivity  activity = (MessageActivity) getActivity();
+        final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
             return;
         }
 
-        Bundle args = getArguments();
+        final Bundle args = getArguments();
         if (args == null) {
             return;
         }
 
-        FragmentManager fm = activity.getSupportFragmentManager();
-        fm.popBackStack();
+        AttachmentUploader.enqueueWorkRequest(activity, "file", args);
 
-        MessagesFragment messages = (MessagesFragment) fm.findFragmentByTag(MessageActivity.FRAGMENT_MESSAGES);
-        if (messages != null) {
-            // Must use unique ID for each upload. Otherwise trouble.
-            LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, messages);
-        } else {
-            Log.w(TAG, "MessagesFragment not found");
-        }
+        activity.getSupportFragmentManager().popBackStack();
     }
-
 }

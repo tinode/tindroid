@@ -128,7 +128,7 @@
             android:theme="@style/LicensesTheme" />
 
         <service
-            android:name=".account.TinodeAccountService"
+            android:name=".services.TinodeAccountService"
             android:exported="false">
 
             <!-- Required filter used by the system to launch the account service. -->
@@ -142,7 +142,7 @@
         </service>
 
         <service
-            android:name=".account.SyncService"
+            android:name=".services.ContactsSyncService"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter"/>
@@ -159,7 +159,7 @@
         <!-- FirebaseMessagingService performs security checks at runtime,
              no need for explicit permissions despite exported="true".
              Using tools:ignore="ExportedService" to disable the warning -->
-        <service android:name=".fcm.FBaseMessagingService"
+        <service android:name=".services.FBaseMessagingService"
                  tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

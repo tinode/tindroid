@@ -207,7 +207,7 @@ public class TindroidApp extends Application {
         @Override
         protected Void doInBackground(String... uidWrapper) {
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
-            final Account account = Utils.getSavedAccount(TindroidApp.this, accountManager, uidWrapper[0]);
+            final Account account = Utils.getSavedAccount(accountManager, uidWrapper[0]);
             if (account != null) {
                 // Check if sync is enabled.
                 if (ContentResolver.getMasterSyncAutomatically()) {

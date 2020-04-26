@@ -11,12 +11,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.loader.app.LoaderManager;
-
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -37,6 +31,9 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 
 /**
  * Fragment for expanded display of an image: being attached or received.
@@ -125,6 +122,7 @@ public class ImageViewFragment extends Fragment {
         mScaleGestureDetector = new ScaleGestureDetector(activity, scaleListener);
 
         view.setOnTouchListener(new View.OnTouchListener() {
+            @SuppressLint("ClickableViewAccessibility")
             public boolean onTouch(View v, MotionEvent event) {
                 if (mWorkingMatrix == null) {
                     // The image is invalid. Disable scrolling/panning.
@@ -196,6 +194,9 @@ public class ImageViewFragment extends Fragment {
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_image);
             }
+
+            activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+
             mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
             mWorkingRect = new RectF(mInitialRect);
             String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
@@ -228,7 +229,6 @@ public class ImageViewFragment extends Fragment {
                     mImageView.setImageMatrix(mMatrix);
                 }
             });
-
             setHasOptionsMenu(true);
         } else {
             // Show broken image.
@@ -273,7 +273,7 @@ public class ImageViewFragment extends Fragment {
     }
 
     private void sendImage() {
-        MessageActivity  activity = (MessageActivity) getActivity();
+        final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -284,23 +284,15 @@ public class ImageViewFragment extends Fragment {
         }
 
         final EditText inputField = activity.findViewById(R.id.editMessage);
-        String caption = null;
         if (inputField != null) {
-            caption = inputField.getText().toString().trim();
-        }
-        if (!TextUtils.isEmpty(caption)) {
-            args.putString("caption", caption);
+            String caption = inputField.getText().toString().trim();
+            if (!TextUtils.isEmpty(caption)) {
+                args.putString(AttachmentUploader.ARG_IMAGE_CAPTION, caption);
+            }
         }
 
-        // Must use unique ID for each upload. Otherwise trouble.
-        FragmentManager fm = activity.getSupportFragmentManager();
-        fm.popBackStack();
+        AttachmentUploader.enqueueWorkRequest(activity, "image", args);
 
-        MessagesFragment messages = (MessagesFragment) fm.findFragmentByTag(MessageActivity.FRAGMENT_MESSAGES);
-        if (messages != null) {
-            LoaderManager.getInstance(activity).initLoader(Cache.getUniqueCounter(), args, messages);
-        } else {
-            Log.w(TAG, "MessagesFragment not found");
-        }
+        activity.getSupportFragmentManager().popBackStack();
     }
 }
