@@ -9,6 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:gravity="center_vertical">
 
         <ImageView
@@ -27,13 +28,10 @@
             tools:text="Contact Us" />
     </LinearLayout>
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="6dp"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:gravity="center_vertical">
 
         <ImageView
@@ -54,13 +52,10 @@
             android:text="@string/terms_of_use" />
     </LinearLayout>
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="6dp"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:gravity="center_vertical">
         <ImageView
             android:tint="@color/colorAccent"
@@ -79,13 +74,10 @@
             android:text="@string/privacy_policy" />
     </LinearLayout>
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="6dp"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:gravity="center_vertical">
 
         <ImageView
@@ -105,13 +97,10 @@
             android:text="@string/licenses" />
     </LinearLayout>
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="6dp"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="?attr/listPreferredItemHeight"
         android:gravity="center_vertical">
 
         <ImageView
