@@ -43,10 +43,11 @@ import co.tinode.tinodesdk.model.MsgServerCtrl;
 public class AttachmentUploader extends Worker {
     private static final String TAG = "AttachmentUploader";
 
-    // Maximum size of file to send in-band. 256KB.
-    private static final long MAX_INBAND_ATTACHMENT_SIZE = 1 << 17;
+    // Maximum size of file to send in-band. 256KB reduced by base64 expansion
+    // factor 3/4 and minus overhead = 195584.
+    private static final long MAX_INBAND_ATTACHMENT_SIZE = (1L << 18) * 3 / 4 - 1024;
     // Maximum size of file to upload. 8MB.
-    private static final long MAX_ATTACHMENT_SIZE = 1 << 23;
+    private static final long MAX_ATTACHMENT_SIZE = 1L << 23;
 
     private final static String ARG_OPERATION = "operation";
     final static String ARG_TOPIC_NAME = "topic";
@@ -123,18 +124,34 @@ public class AttachmentUploader extends Worker {
 
             // Image is being attached. Ensure the image has correct orientation and size.
             if ("image".equals(operation)) {
-                Bitmap bmp = null;
+                // Make sure the image is not too large in byte-size and in linear dimensions.
+                is = resolver.openInputStream(uri);
+                if (is == null) {
+                    throw new IOException("Failed to open " + uri.toString());
+                }
+                Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
+                is.close();
+                if (bmp == null) {
+                    throw new IOException("Failed to decode bitmap");
+                }
 
-                // Make sure the image is not too large.
-                if (fileDetails.fileSize > MAX_INBAND_ATTACHMENT_SIZE) {
-                    // Resize image to ensure it's under the maximum in-band size.
-                    is = resolver.openInputStream(uri);
-                    bmp = BitmapFactory.decodeStream(is, null, null);
-                    //noinspection ConstantConditions
+                // Make sure the image dimensions are not too large.
+                if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
+                    bmp = UiUtils.scaleBitmap(bmp, 1.0f);
+
+                    is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
+                    fileDetails.fileSize = is.available();
                     is.close();
+                }
 
-                    // noinspection ConstantConditions: NullPointerException is handled explicitly.
-                    bmp = UiUtils.scaleBitmap(bmp);
+                // Ensure bitmap byte size is under MAX_INBAND_ATTACHMENT_SIZE.
+                while (fileDetails.fileSize > MAX_INBAND_ATTACHMENT_SIZE) {
+                    bmp = UiUtils.scaleBitmap(bmp,
+                            (float) Math.max(1.2,
+                                    Math.sqrt((float) fileDetails.fileSize / (float) MAX_INBAND_ATTACHMENT_SIZE)));
+                    is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
+                    fileDetails.fileSize = is.available();
+                    is.close();
                 }
 
                 // Also ensure the image has correct orientation.
@@ -142,23 +159,12 @@ public class AttachmentUploader extends Worker {
                 try {
                     // Opening original image, not a scaled copy.
                     if (fileDetails.imageOrientation == -1) {
-                        ExifInterface exif = null;
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)  {
-                            is = resolver.openInputStream(uri);
-                            //noinspection ConstantConditions
-                            exif = new ExifInterface(is);
-                        } else {
-                            if (fileDetails.filePath != null) {
-                                exif = new ExifInterface(fileDetails.filePath);
-                            }
-                        }
-                        if (exif != null) {
-                            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                                    ExifInterface.ORIENTATION_UNDEFINED);
-                        }
-                        if (is != null) {
-                            is.close();
-                        }
+                        is = resolver.openInputStream(uri);
+                        //noinspection ConstantConditions
+                        ExifInterface exif = new ExifInterface(is);
+                        orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                                ExifInterface.ORIENTATION_UNDEFINED);
+                        is.close();
                     } else {
                         switch (fileDetails.imageOrientation) {
                             case 0:
@@ -180,13 +186,6 @@ public class AttachmentUploader extends Worker {
                     switch (orientation) {
                         default:
                             // Rotate image to ensure correct orientation.
-                            if (bmp == null) {
-                                is = resolver.openInputStream(uri);
-                                bmp = BitmapFactory.decodeStream(is, null, null);
-                                //noinspection ConstantConditions
-                                is.close();
-                            }
-
                             bmp = UiUtils.rotateBitmap(bmp, orientation);
                             break;
                         case ExifInterface.ORIENTATION_NORMAL:
@@ -198,13 +197,11 @@ public class AttachmentUploader extends Worker {
                     Log.w(TAG, "Failed to obtain image orientation", ex);
                 }
 
-                if (bmp != null) {
-                    imageWidth = bmp.getWidth();
-                    imageHeight = bmp.getHeight();
+                imageWidth = bmp.getWidth();
+                imageHeight = bmp.getHeight();
 
-                    is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
-                    fileDetails.fileSize = is.available();
-                }
+                is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
+                fileDetails.fileSize = is.available();
             }
 
             if (fileDetails.fileSize > MAX_ATTACHMENT_SIZE) {

@@ -272,4 +272,5 @@
     <string name="confirm_delmsg_for_self">Are you sure you want to delete all messages? You delete them only for yourself.</string>
     <string name="licenses">Licenses</string>
     <string name="invalid_file" translatable="false">invalid</string>
+    <string name="processing">processing ...</string>
 </resources>

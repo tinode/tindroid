@@ -135,7 +135,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 }
             } else {
                 span = new ImageSpan(ctx, bmp);
-                Log.i(TAG, "Image span created " + span);
             }
 
             if (mClicker != null && bmp != null) {

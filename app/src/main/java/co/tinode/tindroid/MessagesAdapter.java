@@ -433,16 +433,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
         boolean uploadingAttachment = hasAttachment &&
-                (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING);
-        boolean canDownload = hasAttachment &&
-                (m.status == BaseDb.Status.SYNCED);
+                (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING);
         boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
         mSpanFormatterClicker.setPosition(position);
-        // If download is not available, disable attachment clicker.
-        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, canDownload ? mSpanFormatterClicker : null);
+        // Disable clicker while message is processed.
+        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, uploadingAttachment ? null : mSpanFormatterClicker);
         if (text.length() == 0) {
-            text = invalidContentSpanned(mActivity);
+            if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
+                text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
+            } else {
+                text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.invalid_content);
+            }
         }
 
         holder.mText.setText(text);
@@ -583,16 +585,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         });
     }
 
-    // Generates "( ! ) invalid content" message when Drafty fails to represent content.
-    private static Spanned invalidContentSpanned(Context ctx) {
+    // Generates "( ! ) invalid content" and "( <) processing ..." message when Drafty
+    // fails to represent content.
+    private static Spanned serviceContentSpanned(Context ctx, int iconId, int messageId) {
         if (sInvalidContent != null) {
             return sInvalidContent;
         }
-        SpannableString span = new SpannableString(ctx.getString(R.string.invalid_content));
+        SpannableString span = new SpannableString(ctx.getString(messageId));
         span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
                 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_error_gray);
+        Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
         span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
                 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         sInvalidContent = span;

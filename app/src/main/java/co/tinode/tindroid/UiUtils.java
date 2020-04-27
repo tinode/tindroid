@@ -113,7 +113,7 @@ public class UiUtils {
 
     private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
-    private static final int MAX_BITMAP_SIZE = 1024;
+    public static final int MAX_BITMAP_SIZE = 1024;
     private static final int MIN_TAG_LENGTH = 4;
 
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
@@ -416,7 +416,8 @@ public class UiUtils {
         }
     }
 
-    private static Bitmap scaleSquareBitmap(Bitmap bmp) {
+    @NonNull
+    private static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
@@ -436,27 +437,40 @@ public class UiUtils {
                 AVATAR_SIZE, AVATAR_SIZE);
     }
 
-    static Bitmap scaleBitmap(Bitmap bmp) {
+    /**
+     * Scale bitmap down to be under certain liner dimensions but no less than by the given amount.
+     *
+     * @param bmp bitmap to scale.
+     * @param atLeast shrink bitmap by at least this amount (>1). Values <=1 are ignored.
+     * @return scaled bitmap or original, it it does not need ot be scaled.
+     */
+    @NonNull
+    static Bitmap scaleBitmap(@NonNull Bitmap bmp, float atLeast) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        boolean changed = false;
+        float factor = 1.0f;
+        // Calculate scaling factor due to large linear dimensions.
         if (width >= height) {
             if (width > MAX_BITMAP_SIZE) {
-                changed = true;
-                height = height * MAX_BITMAP_SIZE / width;
-                width = MAX_BITMAP_SIZE;
+                factor = (float) width / MAX_BITMAP_SIZE;
             }
         } else {
             if (height > MAX_BITMAP_SIZE) {
-                changed = true;
-                width = width * MAX_BITMAP_SIZE / height;
-                height = MAX_BITMAP_SIZE;
+                factor = (float) height / MAX_BITMAP_SIZE;
             }
         }
-        return changed ? Bitmap.createScaledBitmap(bmp, width, height, true) : bmp;
+        // Additional scaling.
+        factor = Math.max(atLeast, factor);
+        if (factor > 1.0) {
+            height /= factor;
+            width /= factor;
+            return Bitmap.createScaledBitmap(bmp, width, height, true);
+        }
+        return bmp;
     }
 
-    static Bitmap rotateBitmap(Bitmap bmp, int orientation) {
+    @NonNull
+    static Bitmap rotateBitmap(@NonNull Bitmap bmp, int orientation) {
         Matrix matrix = new Matrix();
         switch (orientation) {
             case ExifInterface.ORIENTATION_NORMAL:
@@ -634,7 +648,8 @@ public class UiUtils {
         return null;
     }
 
-    static ByteArrayInputStream bitmapToStream(Bitmap bmp, String mimeType) {
+    @NonNull
+    static ByteArrayInputStream bitmapToStream(@NonNull Bitmap bmp, String mimeType) {
         Bitmap.CompressFormat fmt;
         if ("image/jpeg".equals(mimeType)) {
             fmt = Bitmap.CompressFormat.JPEG;
