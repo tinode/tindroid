@@ -39,8 +39,8 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -545,7 +545,8 @@ public class MessageActivity extends AppCompatActivity {
     boolean sendMessage(Drafty content) {
         if (mTopic != null) {
             PromisedReply<ServerMessage> reply = mTopic.publish(content);
-            runMessagesLoader(); // Shows pending message
+            BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
+            runMessagesLoader(); // Refreshes the messages: hides removed, shows pending.
             reply
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override

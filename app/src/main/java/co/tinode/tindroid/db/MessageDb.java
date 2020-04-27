@@ -574,6 +574,24 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Delete failed messages in a given topic.
+     *
+     * @param db      Database to use.
+     * @param topicId Tinode topic ID to delete messages from.
+     * @return  true if any messages were deleted.
+     */
+    static boolean deleteFailed(SQLiteDatabase db, long topicId) {
+        int affected = 0;
+        try {
+            affected = db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                    " AND " + COLUMN_NAME_STATUS + "=" + BaseDb.Status.FAILED.value, null);
+        } catch (SQLException ex) {
+            Log.w(TAG, "Delete failed", ex);
+        }
+        return affected > 0;
+    }
+
+    /**
      * Delete single message by database ID.
      *
      * @param db      Database to use.

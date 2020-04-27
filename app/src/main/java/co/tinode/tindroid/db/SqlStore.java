@@ -346,6 +346,12 @@ public class SqlStore implements Storage {
     }
 
     @Override
+    public boolean msgPruneFailed(Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return MessageDb.deleteFailed(mDbh.getWritableDatabase(), st.id);
+    }
+
+    @Override
     public boolean msgDelivered(Topic topic, long messageDbId, Date timestamp, int seq) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         boolean result = false;

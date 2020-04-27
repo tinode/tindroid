@@ -157,6 +157,14 @@ public interface Storage {
     boolean msgFailed(Topic topic, long dbMessageId);
 
     /**
+     * Delete all failed messages in the given topis.
+     *
+     * @param topic topic which sent the message
+     * @return true on success, false otherwise
+     */
+    boolean msgPruneFailed(Topic topic);
+
+    /**
      * Delete message by database id.
      */
     @SuppressWarnings("UnusedReturnValue")
