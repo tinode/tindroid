@@ -36,7 +36,10 @@
         android:theme="@style/AppTheme"
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
-        tools:targetApi="n">
+        android:allowBackup="false"
+        tools:targetApi="n"
+        tools:ignore="AllowBackup">
+
         <meta-data
             android:name="asset_statements"
             android:resource="@string/asset_statements"/>
