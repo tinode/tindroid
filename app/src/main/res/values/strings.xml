@@ -273,4 +273,5 @@
     <string name="licenses">Licenses</string>
     <string name="invalid_file" translatable="false">invalid</string>
     <string name="processing">processing ...</string>
+    <string name="blocked_contacts">Blocked contacts</string>
 </resources>

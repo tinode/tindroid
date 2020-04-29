@@ -60,7 +60,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 R.color.online, context.getTheme());
     }
 
-    void resetContent(Activity activity, final boolean archive) {
+    void resetContent(Activity activity, final boolean archive, final boolean banned) {
         if (activity == null) {
             return;
         }
@@ -69,7 +69,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             @Override
             public boolean isIncluded(Topic t) {
                 return t.getTopicType().match(Topic.TopicType.USER) &&
-                        (t.isArchived() == archive) && t.isJoiner();
+                        (t.isArchived() == archive) && (t.isJoiner() != banned);
             }
         });
 

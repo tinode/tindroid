@@ -40,6 +40,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
     private static final String TAG = "ChatsFragment";
 
     private Boolean mIsArchive;
+    private Boolean mIsBanned;
     private boolean mSelectionMuted;
 
     // "Loading..." indicator.
@@ -54,9 +55,11 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                              @Nullable Bundle savedInstanceState) {
         Bundle args = getArguments();
         if (args != null) {
-            mIsArchive = args.getBoolean("archive", false);
+            mIsArchive = args.getBoolean(ChatsActivity.FRAGMENT_ARCHIVE, false);
+            mIsBanned = args.getBoolean(ChatsActivity.FRAGMENT_BANNED, false);
         } else {
             mIsArchive = false;
+            mIsBanned = false;
         }
 
         setHasOptionsMenu(true);
@@ -73,10 +76,10 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         }
 
         final ActionBar bar = activity.getSupportActionBar();
-        if (mIsArchive) {
+        if (mIsArchive || mIsBanned) {
             if (bar != null) {
                 bar.setDisplayHomeAsUpEnabled(true);
-                bar.setTitle(R.string.archived_chats);
+                bar.setTitle(mIsArchive ? R.string.archived_chats : R.string.blocked_contacts);
                 ((Toolbar) activity.findViewById(R.id.toolbar)).setNavigationOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -171,9 +174,11 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            mIsArchive = bundle.getBoolean("archive", false);
+            mIsArchive = bundle.getBoolean(ChatsActivity.FRAGMENT_ARCHIVE, false);
+            mIsBanned = bundle.getBoolean(ChatsActivity.FRAGMENT_BANNED, false);
         } else {
             mIsArchive = false;
+            mIsBanned = false;
         }
 
         final Activity activity = getActivity();
@@ -181,7 +186,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             return;
         }
 
-        mAdapter.resetContent(activity, mIsArchive);
+        mAdapter.resetContent(activity, mIsArchive, mIsBanned);
     }
 
     @Override
@@ -324,7 +329,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                             .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    mAdapter.resetContent(activity, mIsArchive);
+                                    mAdapter.resetContent(activity, mIsArchive, mIsBanned);
                                     return null;
                                 }
                             })
@@ -413,7 +418,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
     void datasetChanged() {
         toggleProgressIndicator(false);
-        mAdapter.resetContent(getActivity(), mIsArchive);
+        mAdapter.resetContent(getActivity(), mIsArchive, mIsBanned);
     }
 
     // TODO: Add onBackPressed handing to parent Activity.

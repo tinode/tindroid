@@ -130,4 +130,36 @@
             android:typeface="monospace"
             tools:text="RWPD"/>
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bannedUsersPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:background="@color/grey" />
+
+        <Button
+            android:id="@+id/buttonBlockedUsers"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/blocked_contacts"
+            android:drawablePadding="4sp"
+            android:text="@string/blocked_contacts"
+            android:drawableTint="?android:textColorPrimary"
+            android:textColor="?android:textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_block" />
+
+    </LinearLayout>
+
 </LinearLayout>

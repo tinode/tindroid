@@ -261,5 +261,6 @@
     <string name="confirm_delmsg_for_all">您确定要删除所有参与者的所有消息吗？</string>
     <string name="confirm_delmsg_for_self">您确定要删除所有消息吗？它们只会为您删除。</string>
     <string name="licenses">执照</string>
+    <string name="blocked_contacts">被阻止的联系人列表</string>
 
 </resources>

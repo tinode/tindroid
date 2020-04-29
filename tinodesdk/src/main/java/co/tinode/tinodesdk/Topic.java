@@ -1512,7 +1512,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * Tells how many topic subscribers have reported the message as read.
      *
      * @param seq sequence id of the message to test.
-     * @return count of recepients who claim to have read the message.
+     * @return count of recipients who claim to have read the message.
      */
     public int msgReadCount(int seq) {
         int count = 0;
@@ -1530,22 +1530,62 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return count;
     }
 
+    /**
+     * Get type of the topic.
+     *
+     * @return topic type.
+     */
     public TopicType getTopicType() {
         return getTopicTypeByName(mName);
     }
 
+    /**
+     * Check if topic is 'me' type.
+     *
+     * @return true if topic is 'me' type, false otherwise.
+     */
     public boolean isMeType() {
         return getTopicType() == TopicType.ME;
     }
 
+    /**
+     * Check if topic is 'p2p' type.
+     *
+     * @return true if topic is 'p2p' type, false otherwise.
+     */
     public boolean isP2PType() {
         return getTopicType() == TopicType.P2P;
     }
 
+    /**
+     * Check if topic is a communication topic, i.e. a 'p2p' or 'grp' type.
+     *
+     * @return true if topic is 'p2p' or 'grp', false otherwise.
+     */
+    public boolean isUserType() {
+        switch (getTopicType()) {
+            case P2P:
+            case GRP:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if topic is 'fnd' type.
+     *
+     * @return true if topic is 'fnd' type, false otherwise.
+     */
     public boolean isFndType() {
         return getTopicType() == TopicType.FND;
     }
 
+    /**
+     * Check if topic is 'grp' type.
+     *
+     * @return true if topic is 'grp' type, false otherwise.
+     */
     public boolean isGrpType() {
         return getTopicType() == TopicType.GRP;
     }

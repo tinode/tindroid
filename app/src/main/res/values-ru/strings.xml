@@ -229,6 +229,7 @@
 
     <string name="help">Помощь</string>
     <string name="security">Безопасность</string>
+    <string name="blocked_contacts">Заблокированные контакты</string>
     <string name="notifications">Уведомления</string>
     <string name="user_tags_description">Поисковые тэги, по которым вас смогут найти</string>
     <string name="help_explained">Поддержка, про приложение</string>

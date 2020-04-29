@@ -1156,7 +1156,8 @@ public class UiUtils {
         return fmt.format(count) + " " + sizes[bucket];
     }
 
-    static Fragment getVisibleFragment(FragmentManager fm) {
+    @Nullable
+    static Fragment getVisibleFragment(@NonNull FragmentManager fm) {
         List<Fragment> fragments = fm.getFragments();
         for (Fragment f : fragments) {
             if (f.isVisible()) {
