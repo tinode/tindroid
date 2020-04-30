@@ -43,12 +43,6 @@ import co.tinode.tinodesdk.model.MsgServerCtrl;
 public class AttachmentUploader extends Worker {
     private static final String TAG = "AttachmentUploader";
 
-    // Maximum size of file to send in-band. 256KB reduced by base64 expansion
-    // factor 3/4 and minus overhead = 195584.
-    private static final long MAX_INBAND_ATTACHMENT_SIZE = (1L << 18) * 3 / 4 - 1024;
-    // Maximum size of file to upload. 8MB.
-    private static final long MAX_ATTACHMENT_SIZE = 1L << 23;
-
     private final static String ARG_OPERATION = "operation";
     final static String ARG_TOPIC_NAME = "topic";
     final static String ARG_SRC_URI = "uri";
@@ -99,6 +93,13 @@ public class AttachmentUploader extends Worker {
 
         final Topic topic = Cache.getTinode().getTopic(topicName);
 
+        // Maximum size of file to send in-band. The default is 256KB reduced by base64 expansion
+        // factor 3/4 and minus overhead = 195584.
+        final long maxInbandAttachmentSize = Cache.getTinode().getServerLimit(Tinode.MAX_MESSAGE_SIZE,
+                (1L << 18)) * 3 / 4 - 1024;
+        // Maximum size of file to upload. Default: 8MB.
+        final long maxFileUploadSize = Cache.getTinode().getServerLimit(Tinode.MAX_FILE_UPLOAD_SIZE, 1L << 23);
+
         Drafty content = null;
         boolean success = false;
         InputStream is = null;
@@ -144,11 +145,11 @@ public class AttachmentUploader extends Worker {
                     is.close();
                 }
 
-                // Ensure bitmap byte size is under MAX_INBAND_ATTACHMENT_SIZE.
-                while (fileDetails.fileSize > MAX_INBAND_ATTACHMENT_SIZE) {
+                // Ensure bitmap byte size is under maxInbandAttachmentSize.
+                while (fileDetails.fileSize > maxInbandAttachmentSize) {
                     bmp = UiUtils.scaleBitmap(bmp,
                             (float) Math.max(1.2,
-                                    Math.sqrt((float) fileDetails.fileSize / (float) MAX_INBAND_ATTACHMENT_SIZE)));
+                                    Math.sqrt((float) fileDetails.fileSize / (float) maxInbandAttachmentSize)));
                     is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
                     fileDetails.fileSize = is.available();
                     is.close();
@@ -204,21 +205,21 @@ public class AttachmentUploader extends Worker {
                 fileDetails.fileSize = is.available();
             }
 
-            if (fileDetails.fileSize > MAX_ATTACHMENT_SIZE) {
+            if (fileDetails.fileSize > maxFileUploadSize) {
                 Log.w(TAG, "Unable to process attachment: too big, size=" + fileDetails.fileSize);
                 return ListenableWorker.Result.failure(
                         result.putString(ARG_ERROR,
                                 context.getString(
                                         R.string.attachment_too_large,
                                         UiUtils.bytesToHumanSize(fileDetails.fileSize),
-                                        UiUtils.bytesToHumanSize(MAX_ATTACHMENT_SIZE)))
+                                        UiUtils.bytesToHumanSize(maxFileUploadSize)))
                                 .build());
             } else {
                 if (is == null) {
                     is = resolver.openInputStream(uri);
                 }
 
-                if ("file".equals(operation) && fileDetails.fileSize > MAX_INBAND_ATTACHMENT_SIZE) {
+                if ("file".equals(operation) && fileDetails.fileSize > maxInbandAttachmentSize) {
 
                     // Update draft with file data.
                     store.msgDraftUpdate(topic, msgId, draftyAttachment(fileDetails.mimeType, fname, uri.toString(), -1));

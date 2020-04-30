@@ -257,6 +257,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 menu.findItem(R.id.action_unarchive).setVisible(mIsArchive);
             }
         } else {
+            menu.setGroupVisible(R.id.single_selection, false);
             menu.findItem(R.id.action_unblock).setVisible(single);
         }
         return true;

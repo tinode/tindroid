@@ -1001,9 +1001,10 @@ public class UiUtils {
 
         ArrayList<String> tags = new ArrayList<>();
         int start = 0;
+        final long maxTagCount = Cache.getTinode().getServerLimit(Tinode.MAX_TAG_COUNT, 16);
         final int length = tagList.length();
         boolean quoted = false;
-        for (int idx = 0; idx < length; idx++) {
+        for (int idx = 0; idx < length && tags.size() < maxTagCount; idx++) {
             if (tagList.charAt(idx) == '\"') {
                 // Toggle 'inside of quotes' state.
                 quoted = !quoted;

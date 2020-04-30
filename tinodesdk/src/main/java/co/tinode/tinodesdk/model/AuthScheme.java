@@ -46,6 +46,7 @@ public class AuthScheme implements Serializable {
     }
 
     public static String encodeBasicToken(String uname, String password) {
+        uname = uname == null ? "" : uname;
         // Encode string as base64
         if (uname.contains(":")) {
             throw new IllegalArgumentException("illegal character ':' in user name '" + uname + "'");
