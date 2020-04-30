@@ -242,5 +242,6 @@
     <string name="confirm_delmsg_for_all">Вы действительно хотите удалить всю переписку для всех участников?</string>
     <string name="confirm_delmsg_for_self">Вы действительно хотите удалить всю переписку? Вы удаляете её только для себя.</string>
     <string name="licenses">Лицензии</string>
-
+    <string name="processing">обрабатывается…</string>
+    <string name="action_restore">Разблокировать</string>
 </resources>

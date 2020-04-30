@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
     <string name="tinode_url" translatable="false">https://tinode.co</string>
     <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
@@ -129,7 +129,7 @@
     <string name="confirm_member_ban">Remove and ban %1$s from \"%2$s\"?</string>
     <string name="confirm_leave_topic">Do you really want to leave this conversation?</string>
     <string name="confirm_delete_topic">Do you really want to delete this conversation for everyone?</string>
-    <string name="confirm_delete_multiple_topics">Do you really want to delete these topics?</string>
+    <string name="confirm_delete_multiple_topics">Do you really want to delete these chats?</string>
     <string name="modeWriteOnly">write-only</string>
     <string name="owner_cannot_unsubscribe">Owner cannot unsubscribe</string>
     <string name="read_receipts_enabled">Send read receipts</string>
@@ -272,6 +272,7 @@
     <string name="confirm_delmsg_for_self">Are you sure you want to delete all messages? You delete them only for yourself.</string>
     <string name="licenses">Licenses</string>
     <string name="invalid_file" translatable="false">invalid</string>
-    <string name="processing">processing ...</string>
+    <string name="processing">processing …</string>
     <string name="blocked_contacts">Blocked contacts</string>
+    <string name="action_restore">Unblock</string>
 </resources>

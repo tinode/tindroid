@@ -291,7 +291,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        clickListener.onCLick(topicName);
+                        clickListener.onClick(topicName);
                     }
                 });
 
@@ -304,6 +304,6 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     interface ClickListener {
-        void onCLick(String topicName);
+        void onClick(String topicName);
     }
 }

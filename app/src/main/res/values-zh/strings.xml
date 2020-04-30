@@ -119,7 +119,7 @@
     <string name="confirm_member_ban"> 删除并禁止 %1$s from \"%2$s\"?</string>
     <string name="confirm_leave_topic">真的要离开这个会话吗?</string>
     <string name="confirm_delete_topic">真的要为所有人删除该会话吗?</string>
-    <string name="confirm_delete_multiple_topics">真的要删除这些编组吗?</string>
+    <string name="confirm_delete_multiple_topics">您真的要删除这些聊天吗?</string>
     <string name="modeWriteOnly">只写</string>
     <string name="owner_cannot_unsubscribe">管理者无法退群</string>
     <string name="read_receipts_enabled">发送已读回执</string>
@@ -261,6 +261,8 @@
     <string name="confirm_delmsg_for_all">您确定要删除所有参与者的所有消息吗？</string>
     <string name="confirm_delmsg_for_self">您确定要删除所有消息吗？它们只会为您删除。</string>
     <string name="licenses">执照</string>
+    <string name="processing">处理中…</string>
     <string name="blocked_contacts">被阻止的联系人列表</string>
+    <string name="action_restore">解除封锁</string>
 
 </resources>

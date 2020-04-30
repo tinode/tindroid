@@ -31,7 +31,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.NotSubscribedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -62,7 +61,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             mIsBanned = false;
         }
 
-        setHasOptionsMenu(true);
+        setHasOptionsMenu(!mIsBanned);
 
         return inflater.inflate(mIsArchive ? R.layout.fragment_archive : R.layout.fragment_chats,
                 container, false);
@@ -108,8 +107,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
         mAdapter = new ChatsAdapter(activity, new ChatsAdapter.ClickListener() {
             @Override
-            public void onCLick(final String topicName) {
-                if (mActionMode != null) {
+            public void onClick(final String topicName) {
+                if (mActionMode != null || mIsBanned) {
                     return;
                 }
                 Intent intent = new Intent(activity, MessageActivity.class);
@@ -201,6 +200,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         // Inflate the menu; this adds items to the action bar if it is present.
         // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
+
         inflater.inflate(R.menu.menu_chats, menu);
         menu.setGroupVisible(R.id.not_archive, !mIsArchive);
     }
@@ -225,7 +225,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 return true;
 
             case R.id.action_offline:
-                Cache.getTinode().reconnectNow(true,false);
+                Cache.getTinode().reconnectNow(true, false);
                 break;
         }
         return false;
@@ -245,16 +245,20 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
         boolean single = mSelectionTracker.getSelection().size() <= 1;
-        menu.setGroupVisible(R.id.single_selection, single);
 
-        if (single) {
-            menu.findItem(R.id.action_mute).setVisible(!mSelectionMuted);
-            menu.findItem(R.id.action_unmute).setVisible(mSelectionMuted);
+        if (!mIsBanned) {
+            menu.setGroupVisible(R.id.single_selection, single);
 
-            menu.findItem(R.id.action_archive).setVisible(!mIsArchive);
-            menu.findItem(R.id.action_unarchive).setVisible(mIsArchive);
+            if (single) {
+                menu.findItem(R.id.action_mute).setVisible(!mSelectionMuted);
+                menu.findItem(R.id.action_unmute).setVisible(mSelectionMuted);
+
+                menu.findItem(R.id.action_archive).setVisible(!mIsArchive);
+                menu.findItem(R.id.action_unarchive).setVisible(mIsArchive);
+            }
+        } else {
+            menu.findItem(R.id.action_unblock).setVisible(single);
         }
-
         return true;
     }
 
@@ -283,79 +287,90 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 return true;
 
             case R.id.action_mute:
-            case R.id.action_unmute:
+            case R.id.action_unmute: {
                 // Muting is possible regardless of subscription status.
-                try {
-                    final ComTopic<VxCard> topic =
-                            (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
-                    topic.updateMuted(!topic.isMuted())
-                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    datasetChanged();
-                                    return null;
-                                }
-                            })
-                            .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                    activity.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                            Log.w(TAG, "Muting failed", err);
-                                        }
-                                    });
-                                    return null;
-                                }
-                            });
-                } catch (NotConnectedException ex) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                    Log.w(TAG, "Muting failed", ex);
-                } catch (NotSubscribedException ex) {
-                    Toast.makeText(activity, R.string.must_subscribe_first, Toast.LENGTH_SHORT).show();
-                    Log.w(TAG, "Muting failed", ex);
-                }
+                final ComTopic<VxCard> topic =
+                        (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+                topic.updateMuted(!topic.isMuted())
+                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                datasetChanged();
+                                return null;
+                            }
+                        })
+                        .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                        Log.w(TAG, "Muting failed", err);
+                                    }
+                                });
+                                return null;
+                            }
+                        });
                 mode.finish();
                 return true;
-
+            }
             case R.id.action_archive:
-            case R.id.action_unarchive:
+            case R.id.action_unarchive: {
                 // Archiving is possible regardless of subscription status.
-                try {
-                    final ComTopic<VxCard> topic =
-                            (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
-                    topic.updateArchived(!topic.isArchived())
-                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                    mAdapter.resetContent(activity, mIsArchive, mIsBanned);
-                                    return null;
-                                }
-                            })
-                            .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                    activity.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                            Log.w(TAG, "Archiving failed", err);
-                                        }
-                                    });
-                                    return null;
-                                }
-                            });
-                } catch (NotConnectedException ex) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                    Log.w(TAG, "Archiving failed", ex);
-                } catch (NotSubscribedException ex) {
-                    Toast.makeText(activity, R.string.must_subscribe_first, Toast.LENGTH_SHORT).show();
-                    Log.w(TAG, "Archiving failed", ex);
-                }
+                final ComTopic<VxCard> topic =
+                        (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+                topic.updateArchived(!topic.isArchived())
+                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                mAdapter.resetContent(activity, mIsArchive, mIsBanned);
+                                return null;
+                            }
+                        })
+                        .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                        Log.w(TAG, "Archiving failed", err);
+                                    }
+                                });
+                                return null;
+                            }
+                        });
+
                 mode.finish();
                 return true;
-
+            }
+            case R.id.action_unblock: {
+                final ComTopic<VxCard> topic =
+                        (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+                topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        mAdapter.resetContent(activity, mIsArchive, mIsBanned);
+                        return null;
+                    }
+                }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                Log.w(TAG, "Failed to unban", err);
+                            }
+                        });
+                        return null;
+                    }
+                });
+                topic.leave();
+                mode.finish();
+                return true;
+            }
             default:
                 Log.e(TAG, "Unknown menu action");
                 return false;
