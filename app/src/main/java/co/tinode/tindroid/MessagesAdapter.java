@@ -9,11 +9,9 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -59,7 +57,6 @@ import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -345,54 +342,37 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Create a new message bubble view.
         View v;
 
-        final Resources res = mActivity.getResources();
-        final int leftBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleOther, null);
-        final int rightBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMine, null);
-        final int metaBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMeta, null);
-        int bgColor = 0;
         switch (viewType) {
             case VIEWTYPE_CENTER:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
                         parent, false);
-                bgColor = metaBgColor;
                 break;
             case VIEWTYPE_FULL_LEFT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_AVATAR:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_RIGHT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single,
                         parent, false);
-                bgColor = rightBgColor;
                 break;
             case VIEWTYPE_SIMPLE_LEFT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_AVATAR:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_RIGHT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right,
                         parent, false);
-                bgColor = rightBgColor;
                 break;
             default:
                 v = null;
-        }
-
-        if (bgColor != 0) {
-            v.findViewById(R.id.messageBubble).getBackground().mutate()
-                    .setColorFilter(bgColor, PorterDuff.Mode.MULTIPLY);
         }
 
         return new ViewHolder(v, viewType);

@@ -210,19 +210,17 @@ public class MessageActivity extends AppCompatActivity {
             return false;
         }
 
+        // Cancel all pending notifications addressed to the current topic.
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(mTopicName, 0);
+        }
+
         mTopicName = topicName;
         mTopic = topic;
 
-        if (mTopic != null) {
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
-            // Check of another fragment is already visible. If so, don't change it.
-            if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
-                // No fragment is visible. Show default and clear back stack.
-                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                showFragment(FRAGMENT_MESSAGES, null, false);
-            }
-        } else {
-            Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
+        if (mTopic == null) {
+            Log.i(TAG, "Attempt to instantiate new or unknown topic: " + mTopicName);
             UiUtils.setupToolbar(this, null, mTopicName, false);
             try {
                 //noinspection unchecked
@@ -231,16 +229,17 @@ public class MessageActivity extends AppCompatActivity {
                 Log.w(TAG, "The unknown topic is a non-comm topic: " + mTopicName);
                 return false;
             }
-
             showFragment(FRAGMENT_INVALID, null, false);
-        }
 
-        // Cancel all pending notifications addressed to the current topic.
-        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) {
-            nm.cancel(mTopicName, 0);
+        } else {
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
+            // Check if another fragment is already visible. If so, don't change it.
+            if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+                // No fragment is visible. Show default and clear back stack.
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                showFragment(FRAGMENT_MESSAGES, null, false);
+            }
         }
-
 
         mTopic.setListener(new TListener());
 
@@ -335,10 +334,17 @@ public class MessageActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
-                                        .findFragmentByTag(FRAGMENT_MESSAGES);
-                                if (fragmsg != null && fragmsg.isVisible()) {
-                                    fragmsg.topicSubscribed();
+                                FragmentManager fm = getSupportFragmentManager();
+                                Fragment visible = UiUtils.getVisibleFragment(fm);
+                                if (visible instanceof InvalidTopicFragment) {
+                                    // Replace InvalidTopicFragment with default FRAGMENT_MESSAGES.
+                                    fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                    showFragment(FRAGMENT_MESSAGES, null, false);
+                                } else {
+                                    MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
+                                    if (fragmsg != null) {
+                                        fragmsg.topicSubscribed();
+                                    }
                                 }
                             }
                         });

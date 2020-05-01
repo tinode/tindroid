@@ -216,7 +216,6 @@ public class TopicDb implements BaseColumns {
             // Updated is null at the topic creation time
             values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
         }
-        // values.put(COLUMN_NAME_DELETED, NULL);
         values.put(COLUMN_NAME_READ, topic.getRead());
         values.put(COLUMN_NAME_RECV, topic.getRecv());
         values.put(COLUMN_NAME_SEQ, topic.getSeq());

@@ -6,8 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
@@ -96,12 +96,12 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         //   Icon: <group avatar> || (*)
         //   Body: <group name> || 'Unknown'
 
-        String title = null;
-        String body = null;
-        String topicName = null;
-        Bitmap avatar = null;
+        String topicName;
 
         final Tinode tinode = Cache.getTinode();
+        boolean silent = false;
+
+        NotificationCompat.Builder builder;
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
@@ -127,6 +127,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 return;
             }
 
+            silent = Boolean.parseBoolean(data.get("silent"));
+
             // Try to resolve sender using locally stored contacts.
             String senderId = data.get("xfrom");
             User<VxCard> sender = tinode.getUser(senderId);
@@ -150,6 +152,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
             // Check notification type: message, subscription.
             String what = data.get("what");
+            String title = null;
+            String body = null;
+            Bitmap avatar = null;
             if (TextUtils.isEmpty(what) || what.equals("msg")) {
                 // Message notification.
 
@@ -228,19 +233,52 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 }
             }
 
-        } else if (remoteMessage.getNotification() != null) {
-            RemoteMessage.Notification data = remoteMessage.getNotification();
-            Log.d(TAG, "RemoteMessage Body: " + data.getBody());
+            builder = composeNotification(title, body, avatar);
 
-            topicName = data.getTag();
-            title = data.getTitle();
-            body = data.getBody();
+        } else if (remoteMessage.getNotification() != null) {
+            RemoteMessage.Notification remote = remoteMessage.getNotification();
+            Log.d(TAG, "RemoteMessage Body: " + remote.getBody());
+
+            topicName = remote.getTag();
+            builder = composeNotification(remote);
+        } else {
+            // Everything is null.
+            return;
+        }
+
+        if (!silent) {
+            showNotification(builder, topicName);
+        }
+    }
+
+    private void showNotification(NotificationCompat.Builder builder, String topicName) {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) {
+            Log.e(TAG, "NotificationManager is not available");
+            return;
         }
 
         // Workaround for an FCM bug or poor documentation.
-        int requestCode = topicName != null ? topicName.hashCode() : 0;
+        int requestCode = 0;
 
-        showNotification(title, body, avatar, topicName, requestCode);
+        Intent intent;
+        if (TextUtils.isEmpty(topicName)) {
+            // Communication on an unknown topic
+            intent = new Intent(this, ChatsActivity.class);
+        } else {
+            requestCode = topicName.hashCode();
+            // Communication on a known topic
+            intent = new Intent(this, MessageActivity.class);
+            intent.putExtra("topic", topicName);
+        }
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, requestCode, intent,
+                PendingIntent.FLAG_ONE_SHOT);
+
+        // MessageActivity will cancel all notifications by tag, which is just topic name.
+        // All notifications receive the same id 0 because id is not used.
+        nm.notify(topicName, 0, builder.setContentIntent(pendingIntent).build());
     }
 
     /**
@@ -248,54 +286,85 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      *
      * @param title message title.
      * @param body  message body.
-     * @param topic topic handle for action
+     * @param avatar sender's avatar.
      */
-    private void showNotification(String title, String body, Bitmap avatar, String topic, int code) {
+    private NotificationCompat.Builder composeNotification(String title, String body, Bitmap avatar) {
         // Log.d(TAG, "Notification title=" + title + ", body=" + body + ", topic=" + topic);
-
-        Intent intent;
-        if (TextUtils.isEmpty(topic)) {
-            // Communication on an unknown topic
-            intent = new Intent(this, ChatsActivity.class);
-        } else {
-            // Communication on a known topic
-            intent = new Intent(this, MessageActivity.class);
-            intent.putExtra("topic", topic);
-        }
-
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, code, intent,
-                PendingIntent.FLAG_ONE_SHOT);
-
-        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-
-        int background = ContextCompat.getColor(this, R.color.colorNotificationBackground);
-
         @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
                         new NotificationCompat.Builder(this, "new_message") :
                         new NotificationCompat.Builder(this);
 
-        notificationBuilder
+        return notificationBuilder
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .setSmallIcon(R.drawable.ic_logo_push)
                 .setLargeIcon(avatar)
-                .setColor(background)
+                .setColor(ContextCompat.getColor(this, R.color.colorNotificationBackground))
                 .setContentTitle(title)
                 .setContentText(body)
                 .setAutoCancel(true)
-                .setSound(defaultSoundUri)
-                .setContentIntent(pendingIntent);
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+    }
 
-        // MessageActivity will cancel all notifications by tag, which is just topic name.
-        // All notifications receive the same id 0 because id is not used.
-        NotificationManager nm =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) {
-            nm.notify(topic, 0, notificationBuilder.build());
+    private NotificationCompat.Builder composeNotification(@NonNull RemoteMessage.Notification remote) {
+        @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
+                        new NotificationCompat.Builder(this, "new_message") :
+                        new NotificationCompat.Builder(this);
+
+        final Resources res = getResources();
+        final String packageName = getPackageName();
+
+        return notificationBuilder
+                .setPriority(unwrapInteger(remote.getNotificationPriority(), NotificationCompat.PRIORITY_HIGH))
+                .setVisibility(unwrapInteger(remote.getVisibility(), NotificationCompat.VISIBILITY_PRIVATE))
+                .setSmallIcon(resourceId(res, remote.getIcon(), R.drawable.ic_logo_push, "drawable", packageName))
+                .setColor(unwrapColor(remote.getColor(), ContextCompat.getColor(this, R.color.colorNotificationBackground)))
+                .setContentTitle(locText(res, remote.getTitleLocalizationKey(), remote.getBodyLocalizationArgs(),
+                        remote.getTitle(), packageName))
+                .setContentText(locText(res, remote.getBodyLocalizationKey(), remote.getBodyLocalizationArgs(),
+                        remote.getBody(), packageName))
+                .setAutoCancel(true)
+                // TODO: use remote.getSound() instead of default.
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+    }
+
+    private static int unwrapInteger(Integer value, int defaultValue) {
+        return value != null ? value : defaultValue;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static int resourceId(Resources res, String name, int defaultId, String resourceType, String packageName) {
+        int id = res.getIdentifier(name, resourceType, packageName);
+        return id != 0 ? id : defaultId;
+    }
+
+    private static int unwrapColor(String strColor, int defaultColor) {
+        int color = defaultColor;
+        if (strColor != null) {
+            try {
+                color = Color.parseColor(strColor);
+            } catch (IllegalAccessError ignored) {}
         }
+        return color;
+    }
+    // Localized text from resource name.
+    private static String locText(Resources res, String locKey, String[] locArgs, String defaultText, String packageName) {
+        String result = defaultText;
+        if (locKey != null) {
+            int id = res.getIdentifier(locKey, "string", packageName);
+            if (id != 0) {
+                if (locArgs != null) {
+                    //noinspection RedundantCast (it's not redundant)
+                    result = res.getString(id, (Object[]) locArgs);
+                } else {
+                    result = res.getString(id);
+                }
+            }
+        }
+        return result;
     }
 
     @Override
