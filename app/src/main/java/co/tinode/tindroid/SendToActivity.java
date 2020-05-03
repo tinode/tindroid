@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -30,11 +31,14 @@ public class SendToActivity extends AppCompatActivity implements FindFragment.Re
             finish();
         }
 
+        setContentView(R.layout.activity_send_to);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(R.string.send_to);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -45,8 +49,6 @@ public class SendToActivity extends AppCompatActivity implements FindFragment.Re
                 }
             });
         }
-
-        setContentView(R.layout.activity_send_to);
 
         getSupportFragmentManager()
                 .beginTransaction()
@@ -67,10 +69,12 @@ public class SendToActivity extends AppCompatActivity implements FindFragment.Re
         public void onClick(String topicName) {
             Intent initial = getIntent();
             String type = initial.getType();
-
+            Uri uri = initial.getParcelableExtra(Intent.EXTRA_STREAM);
+            assert uri != null;
+            AttachmentHandler.getFileDetails(SendToActivity.this, uri, null);
             Intent preview = new Intent(SendToActivity.this, MessageActivity.class);
             preview.setType(type);
-            preview.putExtra(AttachmentHandler.ARG_SRC_URI, initial.getParcelableExtra(Intent.EXTRA_STREAM));
+            preview.putExtra(AttachmentHandler.ARG_SRC_URI, uri);
             // See discussion here: https://github.com/tinode/tindroid/issues/39
             preview.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             preview.putExtra("topic", topicName);

@@ -1,9 +1,12 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 public class FilePreviewFragment extends Fragment {
@@ -25,6 +29,8 @@ public class FilePreviewFragment extends Fragment {
     private static Map<String,Integer> sMime2Icon;
     private static final int DEFAULT_ICON_ID = R.drawable.ic_file;
     private static final int INVALID_ICON_ID = R.drawable.ic_file_alert;
+
+    private static final int READ_STORAGE_PERMISSION = 1;
 
     static {
         sMime2Icon = new HashMap<>();
@@ -84,29 +90,80 @@ public class FilePreviewFragment extends Fragment {
             return;
         }
 
+        boolean accessGranted;
+
+        if (!UiUtils.isPermissionGranted(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            accessGranted = false;
+            ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    READ_STORAGE_PERMISSION);
+        } else {
+            Log.i(TAG, "Can read external storage");
+            accessGranted = true;
+        }
+
         Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
         if (uri != null) {
-            AttachmentHandler.FileDetails fileDetails = AttachmentHandler.getFileDetails(activity,
-                    uri, args.getString(AttachmentHandler.ARG_FILE_PATH));
-            String fileName = fileDetails.fileName;
-            if (TextUtils.isEmpty(fileName)) {
-                fileName = getString(R.string.tinode_image);
-            }
-
-            // Show icon for mime type.
-            mImageView.setImageDrawable(getResources().getDrawable(getIconIdForMimeType(fileDetails.mimeType)));
-            ((TextView) activity.findViewById(R.id.content_type)).setText(fileDetails.mimeType);
-            ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
-            ((TextView) activity.findViewById(R.id.image_size)).setText(UiUtils.bytesToHumanSize(fileDetails.fileSize));
-            mSendButton.setEnabled(true);
+            updateFormValues(activity, args, uri, accessGranted);
         } else {
             mImageView.setImageDrawable(getResources().getDrawable(INVALID_ICON_ID));
             ((TextView) activity.findViewById(R.id.content_type)).setText(getString(R.string.invalid_file));
             ((TextView) activity.findViewById(R.id.file_name)).setText(getString(R.string.invalid_file));
-            ((TextView) activity.findViewById(R.id.image_size)).setText(UiUtils.bytesToHumanSize(0));
+            ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(0));
             mSendButton.setEnabled(false);
         }
         setHasOptionsMenu(false);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == READ_STORAGE_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                updateFormValues(getActivity(), getArguments(), null, true);
+            }
+        }
+    }
+
+    private void updateFormValues(Activity activity, Bundle args, Uri uri, boolean accessGranted) {
+        if (activity == null || args == null) {
+            return;
+        }
+
+        if (uri == null) {
+            uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
+        }
+
+        if (uri == null) {
+            return;
+        }
+
+        String mimeType = args.getString(AttachmentHandler.ARG_MIME_TYPE);
+        String fileName = args.getString(AttachmentHandler.ARG_FILE_NAME);
+        long fileSize = args.getLong(AttachmentHandler.ARG_FILE_SIZE);
+        if ((mimeType == null || fileName == null || fileSize == 0) && accessGranted) {
+            AttachmentHandler.FileDetails fileDetails = AttachmentHandler.getFileDetails(activity,
+                    uri, args.getString(AttachmentHandler.ARG_FILE_PATH));
+            fileName = fileName == null ? fileDetails.fileName : fileName;
+            mimeType = mimeType == null ? fileDetails.mimeType : mimeType;
+            fileSize = fileSize == 0 ? fileDetails.fileSize : fileSize;
+        }
+        if (TextUtils.isEmpty(fileName)) {
+            fileName = getString(R.string.default_attachment_name);
+        }
+        if (TextUtils.isEmpty(mimeType)) {
+            mimeType = "N/A";
+        }
+
+        // Show icon for mime type.
+        mImageView.setImageDrawable(getResources().getDrawable(getIconIdForMimeType(mimeType)));
+        ((TextView) activity.findViewById(R.id.content_type)).setText(mimeType);
+        ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
+        ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(fileSize));
+
+        activity.findViewById(R.id.missingPermission).setVisibility(accessGranted ? View.GONE : View.VISIBLE);
+        mSendButton.setEnabled(accessGranted);
     }
 
     private void sendFile() {

@@ -35,9 +35,7 @@ import com.crashlytics.android.core.CrashlyticsCore;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
@@ -59,9 +57,6 @@ import io.fabric.sdk.android.Fabric;
 public class TindroidApp extends Application implements LifecycleObserver {
     private static final String TAG = "TindroidApp";
 
-    // Number of seconds to stay connected after going into background.
-    private static final int DISCONNECT_DELAY = 2;
-
     private static TindroidApp sContext;
 
     private static ContentObserver sContactsObserver = null;
@@ -78,8 +73,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
     public TindroidApp() {
         sContext = this;
     }
-
-    private ScheduledFuture mDisconnectTimer = null;
 
     @Override
     public void onCreate() {
@@ -150,15 +143,9 @@ public class TindroidApp extends Application implements LifecycleObserver {
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    void onResume() {
-        Log.i(TAG, "Lifecycle.Event.ON_RESUME");
-
-        if (mDisconnectTimer != null && !mDisconnectTimer.isDone()) {
-            mDisconnectTimer.cancel(true);
-            mDisconnectTimer = null;
-        }
-
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    void onStart() {
+        Log.i(TAG, "Lifecycle.Event.ON_START");
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
@@ -167,16 +154,13 @@ public class TindroidApp extends Application implements LifecycleObserver {
         }
     }
 
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    void onPause() {
-        Log.i(TAG, "Lifecycle.Event.ON_PAUSE");
-        mDisconnectTimer = Executors.newSingleThreadScheduledExecutor()
-                .schedule(new Runnable() {
-                    public void run() {
-                        Log.i(TAG, "Disconnect now");
-                    }
-                }, DISCONNECT_DELAY, TimeUnit.SECONDS);
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    void onStop() {
+        // Disconnect now, so the connection does not wait for the timeout.
+        Log.i(TAG, "Lifecycle.Event.ON_STOP: disconnect now");
+        if (sTinodeCache != null) {
+            sTinodeCache.disconnect();
+        }
     }
 
     public static Context getAppContext() {
@@ -239,7 +223,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
     // Suppressed lint warning because TindroidApp won't leak: it must exist for the entire lifetime of the app.
     @SuppressLint("StaticFieldLeak")
     private class LoginWithSavedAccount extends AsyncTask<String, Void, Void> {
-
         @Override
         protected Void doInBackground(String... uidWrapper) {
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);

@@ -63,7 +63,7 @@
                         android:paddingEnd="3dp"
                         android:paddingStart="5dp"
                         android:tint="?android:textColorSecondary"
-                        android:alpha="0.5"
+                        android:alpha="0.8"
                         tools:ignore="ContentDescription,SmallSp"
                         tools:src="@drawable/ic_visibility" />
 

@@ -246,12 +246,14 @@
     <string name="full_name_required">Full name required</string>
 
     <string name="default_contact_name">Tinode User %1$s</string>
-    <string name="contacts_permission_missing">Required permission missing</string>
+    <string name="permission_missing">Required permission missing</string>
     <string name="enter_search_query">Enter search query</string>
     <string name="image_caption_hint">Image caption</string>
     <string name="action_download">Download</string>
     <string name="tinode_image" translatable="false">tinode_image</string>
     <string name="invalid_content">invalid content</string>
+    <string name="failed">failed</string>
+    <string name="processing">processing …</string>
     <string name="incognito_mode_enabled">Incognito mode</string>
     <string name="about_the_app">About the Application</string>
     <string name="general">General</string>
@@ -272,7 +274,6 @@
     <string name="confirm_delmsg_for_self">Are you sure you want to delete all messages? You delete them only for yourself.</string>
     <string name="licenses">Licenses</string>
     <string name="invalid_file" translatable="false">invalid</string>
-    <string name="processing">processing …</string>
     <string name="blocked_contacts">Blocked contacts</string>
     <string name="action_restore">Unblock</string>
     <string name="send_to">Send to…</string>

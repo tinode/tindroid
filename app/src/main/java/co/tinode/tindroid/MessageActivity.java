@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
@@ -9,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -188,17 +190,23 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
-        Uri attachment = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        Uri attachment = intent.getParcelableExtra(AttachmentHandler.ARG_SRC_URI);
         String type = intent.getType();
         if (attachment != null && type != null) {
+            Log.i(TAG, "Resumed with an attachment " + attachment + " of type " + type);
+
+            // Need to retain access right to the given Uri.
             Bundle args  = new Bundle();
             args.putParcelable(AttachmentHandler.ARG_SRC_URI, attachment);
+            args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
             if (type.startsWith("image/")) {
                 args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
                 showFragment(FRAGMENT_VIEW_IMAGE, args, true);
             } else {
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
+        } else {
+            Log.i(TAG, "Resumed NORMAL with an attachment " + attachment + " of type " + type);
         }
     }
 

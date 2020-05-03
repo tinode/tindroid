@@ -14,5 +14,6 @@
     <dimen name="dialog_padding_left">12dip</dimen>
     <dimen name="dialog_padding_right">7dip</dimen>
     <dimen name="cardview_elevation">2dip</dimen>
+    <dimen name="cardview_corner_radius">4dip</dimen>
     <dimen name="settings_icon_size">24dp</dimen>
 </resources>

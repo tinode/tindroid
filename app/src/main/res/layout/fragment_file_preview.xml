@@ -6,108 +6,138 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="4dp"
+    android:background="@drawable/message_view_bkg"
     android:orientation="vertical">
 
-    <LinearLayout
+    <androidx.cardview.widget.CardView
+        android:id="@+id/fileDetails"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:background="@color/white_50"
-        android:orientation="vertical">
-
-        <ImageView
-            android:id="@+id/image"
-            android:layout_width="96dp"
-            android:layout_height="96dp"
-            android:layout_gravity="center_horizontal"
-            android:contentDescription=""
-            android:scaleType="fitCenter"
-            tools:ignore="ContentDescription"
-            tools:src="@drawable/ic_file" />
+        android:background="?android:colorBackground"
+        card_view:cardElevation="@dimen/cardview_elevation"
+        card_view:cardCornerRadius="@dimen/cardview_corner_radius"
+        card_view:cardUseCompatPadding="true">
 
         <LinearLayout
-            android:id="@+id/annotation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:orientation="vertical"
-            android:padding="6sp">
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/image"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_gravity="center_horizontal"
+                android:alpha="0.8"
+                android:contentDescription=""
+                android:scaleType="fitCenter"
+                android:tint="?android:textColorSecondary"
+                tools:ignore="ContentDescription"
+                tools:src="@drawable/ic_file" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:id="@+id/annotation"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="2dp"
-                android:paddingStart="@dimen/label_h_padding"
-                android:paddingEnd="@dimen/label_h_padding">
+                android:baselineAligned="false"
+                android:orientation="vertical"
+                android:padding="6sp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="2dp"
-                    android:text="@string/file_name_label"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/file_name"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:ellipsize="middle"
                     android:padding="2dp"
-                    android:singleLine="true"
-                    android:textAlignment="textEnd"
-                    tools:text="some_image.png" />
-            </LinearLayout>
+                    android:paddingStart="@dimen/label_h_padding"
+                    android:paddingEnd="@dimen/label_h_padding">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="2dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="2dp"
+                        android:text="@string/file_name_label"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="2dp"
-                    android:text="@string/content_type_label"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/file_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="middle"
+                        android:padding="2dp"
+                        android:singleLine="true"
+                        android:textAlignment="textEnd"
+                        tools:text="some_image.png" />
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/content_type"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:padding="2dp"
-                    android:textAlignment="textEnd"
-                    tools:text="image/png" />
-            </LinearLayout>
+                    android:padding="2dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="2dp"
-                android:paddingStart="@dimen/label_h_padding"
-                android:paddingEnd="@dimen/label_h_padding">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="2dp"
+                        android:text="@string/content_type_label"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="2dp"
-                    android:text="@string/image_size_label"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/content_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:padding="2dp"
+                        android:textAlignment="textEnd"
+                        tools:text="image/png" />
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/image_size"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:ellipsize="end"
                     android:padding="2dp"
-                    android:textAlignment="textEnd"
-                    tools:text="256KB" />
+                    android:paddingStart="@dimen/label_h_padding"
+                    android:paddingEnd="@dimen/label_h_padding">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="2dp"
+                        android:text="@string/image_size_label"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/file_size"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:padding="2dp"
+                        android:textAlignment="textEnd"
+                        tools:text="256KB" />
+                </LinearLayout>
             </LinearLayout>
+
         </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
-    </LinearLayout>
+    <androidx.cardview.widget.CardView
+        android:id="@+id/missingPermission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_default_margin"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/fileDetails"
+        card_view:cardElevation="@dimen/cardview_elevation"
+        card_view:cardCornerRadius="@dimen/cardview_corner_radius"
+        card_view:cardUseCompatPadding="true">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/permission_missing"
+            android:padding="6dp"
+            android:textAppearance="?android:textAppearanceMedium" />
+    </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/metaPanel"
@@ -117,7 +147,7 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:layout_marginTop="4dp"
-        card_view:cardBackgroundColor="@android:color/background_light"
+        card_view:cardBackgroundColor="?android:colorBackground"
         card_view:cardElevation="@dimen/cardview_elevation"
         card_view:cardUseCompatPadding="true">
 

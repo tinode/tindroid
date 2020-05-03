@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="4dp"
+    android:background="@drawable/message_view_bkg"
     android:orientation="vertical">
 
     <ImageView
@@ -29,7 +30,7 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="4dp"
-        card_view:cardBackgroundColor="@android:color/background_light"
+        card_view:cardBackgroundColor="?android:colorBackground"
         card_view:cardUseCompatPadding="true"
         card_view:cardElevation="@dimen/cardview_elevation">
 

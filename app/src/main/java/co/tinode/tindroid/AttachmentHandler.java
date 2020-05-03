@@ -299,7 +299,7 @@ public class AttachmentHandler extends Worker {
                             .build());
                 }
             }
-        } catch (IOException | NullPointerException ex) {
+        } catch (IOException | NullPointerException | SecurityException ex) {
             result.putString(ARG_ERROR, ex.getMessage());
             if (!"cancelled".equals(ex.getMessage())) {
                 Log.w(TAG, "Failed to attach file", ex);
@@ -336,6 +336,7 @@ public class AttachmentHandler extends Worker {
         long fileSize;
     }
 
+    @NonNull
     static FileDetails getFileDetails(@NonNull final Context context, @NonNull Uri uri, @Nullable String filePath) {
         final ContentResolver resolver = context.getContentResolver();
         String fname = null;

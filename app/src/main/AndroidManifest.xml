@@ -37,8 +37,9 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:allowBackup="false"
-        tools:targetApi="n"
-        tools:ignore="AllowBackup">
+        tools:ignore="AllowBackup"
+        android:requestLegacyExternalStorage="true"
+        tools:targetApi="q">
 
         <meta-data
             android:name="asset_statements"
@@ -128,13 +129,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/*" />
+                <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
 

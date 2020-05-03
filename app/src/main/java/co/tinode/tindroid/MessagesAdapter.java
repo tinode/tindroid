@@ -104,8 +104,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private static Spanned sInvalidContent = null;
-
     private MessageActivity mActivity;
     private RecyclerView mRecyclerView;
 
@@ -189,12 +187,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         verifyStoragePermissions();
     }
 
-    // Generates "( ! ) invalid content" and "( <) processing ..." message when Drafty
-    // fails to represent content.
+    // Generates formatted content:
+    //  - "( ! ) invalid content"
+    //  - "( <) processing ..."
+    //  - "( ! ) failed"
     private static Spanned serviceContentSpanned(Context ctx, int iconId, int messageId) {
-        if (sInvalidContent != null) {
-            return sInvalidContent;
-        }
         SpannableString span = new SpannableString(ctx.getString(messageId));
         span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
@@ -202,7 +199,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
         span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
                 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sInvalidContent = span;
         return span;
     }
 
@@ -431,6 +427,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (text.length() == 0) {
             if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
+            } else if (m.status == BaseDb.Status.FAILED) {
+                text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.failed);
             } else {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.invalid_content);
             }
@@ -527,7 +525,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
-                holder.mDeliveredIcon.setImageTintList(null);
                 if (m.status.value <= BaseDb.Status.SENDING.value) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
                 } else if (m.status.value == BaseDb.Status.FAILED.value) {
@@ -697,9 +694,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Check if we have write permission
         if (!UiUtils.isPermissionGranted(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             // We don't have permission so prompt the user
+            Log.i(TAG, "No permission to write to storage");
             ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
             return false;
         }
+        Log.i(TAG, "YES, have permission to write to storage");
         return true;
     }
 
