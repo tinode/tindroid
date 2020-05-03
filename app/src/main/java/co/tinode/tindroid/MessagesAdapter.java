@@ -2,8 +2,6 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.DownloadManager;
-import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -16,7 +14,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -38,9 +35,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -56,7 +50,6 @@ import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.FileProvider;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -72,7 +65,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
@@ -197,6 +189,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         verifyStoragePermissions();
     }
 
+    // Generates "( ! ) invalid content" and "( <) processing ..." message when Drafty
+    // fails to represent content.
+    private static Spanned serviceContentSpanned(Context ctx, int iconId, int messageId) {
+        if (sInvalidContent != null) {
+            return sInvalidContent;
+        }
+        SpannableString span = new SpannableString(ctx.getString(messageId));
+        span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
+                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
+        span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
+                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sInvalidContent = span;
+        return span;
+    }
+
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
@@ -271,7 +280,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         toDelete.add(msg.seq);
                     } else {
                         store.msgDiscard(topic, msg.getId());
-                        discarded ++;
+                        discarded++;
                     }
                 }
             }
@@ -290,7 +299,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 });
                                 return null;
                             }
-                }, new UiUtils.ToastFailureListener(mActivity));
+                        }, new UiUtils.ToastFailureListener(mActivity));
             } else if (discarded > 0) {
                 runLoader(false);
                 updateSelectionMode();
@@ -480,7 +489,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (holder.mAvatar != null || holder.mUserName != null) {
-            Subscription<VxCard,?> sub = topic.getSubscription(m.from);
+            Subscription<VxCard, ?> sub = topic.getSubscription(m.from);
             if (sub != null && sub.pub != null) {
                 Bitmap avatar = sub.pub.getBitmap();
                 if (holder.mAvatar != null) {
@@ -563,23 +572,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             }
         });
-    }
-
-    // Generates "( ! ) invalid content" and "( <) processing ..." message when Drafty
-    // fails to represent content.
-    private static Spanned serviceContentSpanned(Context ctx, int iconId, int messageId) {
-        if (sInvalidContent != null) {
-            return sInvalidContent;
-        }
-        SpannableString span = new SpannableString(ctx.getString(messageId));
-        span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
-                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
-        span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
-                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sInvalidContent = span;
-        return span;
     }
 
     // Must match position-to-item of getItemId.
@@ -698,7 +690,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     /**
      * Checks if the app has permission to write to device storage
-     *
+     * <p>
      * If the app does not has permission then the user will be prompted to grant permission.
      */
     private boolean verifyStoragePermissions() {
@@ -739,6 +731,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return false;
     }
 
+    private boolean cancelUpload(long msgId) {
+        final String uniqueID = Long.toString(msgId);
+
+        WorkManager wm = WorkManager.getInstance(mActivity);
+        WorkInfo.State state = null;
+        try {
+            List<WorkInfo> lwi = wm.getWorkInfosForUniqueWork(uniqueID).get();
+            if (!lwi.isEmpty()) {
+                WorkInfo wi = lwi.get(0);
+                state = wi.getState();
+            }
+        } catch (ExecutionException | InterruptedException ignored) {
+        }
+
+        if (state == null || !state.isFinished()) {
+            wm.cancelUniqueWork(Long.toString(msgId));
+            return true;
+        }
+        return state == WorkInfo.State.CANCELLED;
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         int mViewType;
         ImageView mIcon;
@@ -774,102 +787,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mProgressBar = itemView.findViewById(R.id.attachmentProgressBar);
             mCancelProgress = itemView.findViewById(R.id.attachmentProgressCancel);
             mProgressResult = itemView.findViewById(R.id.progressResult);
-        }
-    }
-
-    private boolean cancelUpload(long msgId) {
-        final String uniqueID = Long.toString(msgId);
-
-        WorkManager wm = WorkManager.getInstance(mActivity);
-        WorkInfo.State state = null;
-        try {
-            List<WorkInfo> lwi = wm.getWorkInfosForUniqueWork(uniqueID).get();
-            if (!lwi.isEmpty()) {
-                WorkInfo wi = lwi.get(0);
-                state = wi.getState();
-            }
-        } catch (ExecutionException | InterruptedException ignored) {
-        }
-
-        if (state == null || !state.isFinished()) {
-            wm.cancelUniqueWork(Long.toString(msgId));
-            return true;
-        }
-        return state == WorkInfo.State.CANCELLED;
-    }
-
-    private void downloadAttachment(Map<String,Object> data, String fname, String mimeType) {
-
-        // Create file in a downloads directory by default.
-        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File file = new File(path, fname);
-        Uri fileUri = Uri.fromFile(file);
-
-        if (TextUtils.isEmpty(mimeType)) {
-            mimeType = UiUtils.getMimeType(fileUri);
-            if (mimeType == null) {
-                mimeType = "*/*";
-            }
-        }
-
-        FileOutputStream fos = null;
-        try {
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                Log.w(TAG, "External storage not mounted: " + path);
-
-            } else if (!(path.mkdirs() || path.isDirectory())) {
-                Log.w(TAG, "Path is not a directory - " + path);
-            }
-
-            Object val = data.get("val");
-            if (val != null) {
-                fos = new FileOutputStream(file);
-                fos.write(val instanceof String ?
-                        Base64.decode((String) val, Base64.DEFAULT) :
-                        (byte[]) val);
-
-                Intent intent = new Intent();
-                intent.setAction(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(FileProvider.getUriForFile(mActivity,
-                        "co.tinode.tindroid.provider", file), mimeType);
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                try {
-                    mActivity.startActivity(intent);
-                } catch (ActivityNotFoundException ignored) {
-                    mActivity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                }
-
-            } else {
-                Object ref = data.get("ref");
-                if (ref instanceof String) {
-                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
-                    String scheme = url.getProtocol();
-                    // Make sure the file is downloaded over http or https protocols.
-                    if (scheme.equals("http") || scheme.equals("https")) {
-                        LargeFileHelper lfh = Cache.getTinode().getFileUploader();
-                        mActivity.startDownload(Uri.parse(url.toString()), fname, mimeType, lfh.headers());
-                    } else {
-                        Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
-                        Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Log.w(TAG, "Invalid or missing attachment");
-                    Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                }
-            }
-
-        } catch (NullPointerException | ClassCastException | IOException ex) {
-            Log.w(TAG, "Failed to save attachment to storage", ex);
-            Toast.makeText(mActivity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
-        } catch (ActivityNotFoundException ex) {
-            Log.w(TAG, "No application can handle downloaded file");
-            Toast.makeText(mActivity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Exception ignored) {}
-            }
         }
     }
 
@@ -944,16 +861,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     if (data != null) {
                         try {
                             Object val = data.get("val");
-                            args.putByteArray("image", val instanceof String ?
+                            args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, val instanceof String ?
                                     Base64.decode((String) val, Base64.DEFAULT) :
                                     (byte[]) val);
-                            args.putString("mime", (String) data.get("mime"));
-                            args.putString("name", (String) data.get("name"));
+                            args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
+                            args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
                         } catch (ClassCastException ignored) {
                         }
                     }
 
-                    if (args.getByteArray("image") != null) {
+                    if (args.getByteArray(AttachmentHandler.ARG_SRC_BYTES) != null) {
                         mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
                     } else {
                         Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
@@ -972,11 +889,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         } catch (ClassCastException ignored) {
                         }
 
+                        // Try to extract file name from reference.
+                        if (TextUtils.isEmpty(fname)) {
+                            Object ref = data.get("ref");
+                            if (ref instanceof String) {
+                                try {
+                                    URL url = new URL((String) ref);
+                                    fname = url.getFile();
+                                } catch (MalformedURLException ignored) {
+                                }
+                            }
+                        }
+
                         if (TextUtils.isEmpty(fname)) {
                             fname = mActivity.getString(R.string.default_attachment_name);
                         }
 
-                        downloadAttachment(data, fname, mimeType);
+                        AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
                     } else {
                         Toast.makeText(mActivity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
                     }
@@ -992,10 +921,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             StoredMessage msg = getMessage(mPosition);
                             if ("pub".equals(actionType)) {
                                 Drafty newMsg = new Drafty((String) data.get("title"));
-                                Map<String,Object> json = new HashMap<>();
+                                Map<String, Object> json = new HashMap<>();
                                 // {"seq":6,"resp":{"yes":1}}
                                 if (!TextUtils.isEmpty(name)) {
-                                    Map<String,Object> resp = new HashMap<>();
+                                    Map<String, Object> resp = new HashMap<>();
                                     // noinspection
                                     resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                                     json.put("resp", resp);
@@ -1015,7 +944,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     // As a security measure refuse to follow URLs with non-http(s) protocols.
                                     break;
                                 }
-                                Uri uri =  Uri.parse(url.toString());
+                                Uri uri = Uri.parse(url.toString());
                                 Uri.Builder builder = uri.buildUpon();
                                 if (!TextUtils.isEmpty(name)) {
                                     builder = builder.appendQueryParameter(name,
@@ -1027,7 +956,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 builder = builder.appendQueryParameter("uid", Cache.getTinode().getMyId());
                                 mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
                             }
-                        } catch(ClassCastException | MalformedURLException | NullPointerException ignored){ }
+                        } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+                        }
                     }
                     break;
             }

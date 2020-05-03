@@ -1,27 +1,37 @@
 package co.tinode.tindroid;
 
+import android.app.DownloadManager;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -40,24 +50,31 @@ import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
-public class AttachmentUploader extends Worker {
+public class AttachmentHandler extends Worker {
     private static final String TAG = "AttachmentUploader";
 
-    private final static String ARG_OPERATION = "operation";
+    final static String ARG_OPERATION = "operation";
+    final static String ARG_OPERATION_IMAGE = "image";
+    final static String ARG_OPERATION_FILE = "file";
+
+    // Bundle argument names.
     final static String ARG_TOPIC_NAME = "topic";
     final static String ARG_SRC_URI = "uri";
+    final static String ARG_SRC_BYTES = "bytes";
     final static String ARG_FILE_PATH = "filePath";
+    final static String ARG_FILE_NAME = "fileName";
     final static String ARG_MSG_ID = "msgId";
     final static String ARG_IMAGE_CAPTION = "caption";
     final static String ARG_PROGRESS = "progress";
     final static String ARG_FILE_SIZE = "fileSize";
     final static String ARG_ERROR = "error";
+    final static String ARG_MIME_TYPE = "mime";
 
     private LargeFileHelper mUploader = null;
 
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
 
-    public AttachmentUploader(@NonNull Context context, @NonNull WorkerParameters params) {
+    public AttachmentHandler(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
 
@@ -375,14 +392,14 @@ public class AttachmentUploader extends Worker {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    static void enqueueWorkRequest(AppCompatActivity activity, String operation, Bundle args) {
-        String topicName = args.getString(AttachmentUploader.ARG_TOPIC_NAME);
+    static void enqueueUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
+        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
         // Create a new message which will be updated with upload progress.
         Drafty msg = new Drafty();
         long msgId = BaseDb.getInstance().getStore()
                 .msgDraft(Cache.getTinode().getTopic(topicName), msg, Tinode.draftyHeadersFor(msg));
         if (msgId > 0) {
-            Uri uri = args.getParcelable(AttachmentUploader.ARG_SRC_URI);
+            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
             assert uri != null;
 
             Data.Builder data = new Data.Builder()
@@ -395,7 +412,7 @@ public class AttachmentUploader extends Worker {
             Constraints constraints = new Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build();
-            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentUploader.class)
+            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentHandler.class)
                     .setInputData(data.build())
                     .setConstraints(constraints)
                     .addTag(TAG_UPLOAD_WORK)
@@ -406,6 +423,119 @@ public class AttachmentUploader extends Worker {
         } else {
             Log.w(TAG, "Failed to insert new message to DB");
         }
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    static long enqueueDownloadAttachment(AppCompatActivity activity, Map<String,Object> data,
+                                          String fname, String mimeType) {
+        long downloadId = -1;
+        // Create file in a downloads directory by default.
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File file = new File(path, fname);
+        Uri fileUri = Uri.fromFile(file);
+
+        if (TextUtils.isEmpty(mimeType)) {
+            mimeType = UiUtils.getMimeType(fileUri);
+            if (mimeType == null) {
+                mimeType = "*/*";
+            }
+        }
+
+        FileOutputStream fos = null;
+        try {
+            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                Log.w(TAG, "External storage not mounted: " + path);
+
+            } else if (!(path.mkdirs() || path.isDirectory())) {
+                Log.w(TAG, "Path is not a directory - " + path);
+            }
+
+            Object val = data.get("val");
+            if (val != null) {
+                fos = new FileOutputStream(file);
+                fos.write(val instanceof String ?
+                        Base64.decode((String) val, Base64.DEFAULT) :
+                        (byte[]) val);
+
+                Intent intent = new Intent();
+                intent.setAction(android.content.Intent.ACTION_VIEW);
+                intent.setDataAndType(FileProvider.getUriForFile(activity,
+                        "co.tinode.tindroid.provider", file), mimeType);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                try {
+                    activity.startActivity(intent);
+                } catch (ActivityNotFoundException ignored) {
+                    activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                }
+
+            } else {
+                Object ref = data.get("ref");
+                if (ref instanceof String) {
+                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
+                    String scheme = url.getProtocol();
+                    // Make sure the file is downloaded over http or https protocols.
+                    if (scheme.equals("http") || scheme.equals("https")) {
+                        LargeFileHelper lfh = Cache.getTinode().getFileUploader();
+                        downloadId = startDownload(activity, Uri.parse(url.toString()), fname, mimeType, lfh.headers());
+                    } else {
+                        Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
+                        Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Log.w(TAG, "Invalid or missing attachment");
+                    Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        } catch (NullPointerException | ClassCastException | IOException ex) {
+            Log.w(TAG, "Failed to save attachment to storage", ex);
+            Toast.makeText(activity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
+        } catch (ActivityNotFoundException ex) {
+            Log.w(TAG, "No application can handle downloaded file");
+            Toast.makeText(activity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Exception ignored) {}
+            }
+        }
+        return downloadId;
+    }
+
+    private static long startDownload(AppCompatActivity activity, final Uri uri, final String fname, final String mime,
+                              final Map<String, String> headers) {
+
+        DownloadManager dm = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm == null) {
+            return -1;
+        }
+
+        // Ensure directory exists.
+        Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                .mkdirs();
+
+        DownloadManager.Request req = new DownloadManager.Request(uri);
+        // Always add Origin header to satisfy CORS. If server does not need CORS it won't hurt anyway.
+        req.addRequestHeader("Origin", Cache.getTinode().getHttpOrigin());
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                req.addRequestHeader(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return dm.enqueue(
+                req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
+                        DownloadManager.Request.NETWORK_MOBILE)
+                        .setMimeType(mime)
+                        .setAllowedOverRoaming(false)
+                        .setTitle(fname)
+                        .setDescription(activity.getString(R.string.download_title))
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setVisibleInDownloadsUi(true)
+                        .setDestinationUri(Uri.fromFile(new File(Environment
+                                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname))));
     }
 
     // Wrap content into Drafty.

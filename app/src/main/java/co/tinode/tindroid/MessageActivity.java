@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
@@ -23,7 +22,6 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.URI;
-import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -91,42 +89,43 @@ public class MessageActivity extends AppCompatActivity {
     private String mTopicName = null;
     private ComTopic<VxCard> mTopic = null;
 
-    private DownloadManager mDownloadMgr = null;
-    private long mDownloadId = -1;
     private MessageEventListener mTinodeListener;
 
     // Handler for sending {note what="read"} notifications after a READ_DELAY.
     private Handler mNoteReadHandler = null;
 
-    BroadcastReceiver onComplete = new BroadcastReceiver() {
+    BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
-            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction()) &&
-                    intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0) == mDownloadId) {
-                DownloadManager.Query query = new DownloadManager.Query();
-                query.setFilterById(mDownloadId);
-                Cursor c = mDownloadMgr.query(query);
-                if (c.moveToFirst()) {
-                    int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                    if (DownloadManager.STATUS_SUCCESSFUL == status) {
-                        URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
-                        String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
-                        intent = new Intent();
-                        intent.setAction(android.content.Intent.ACTION_VIEW);
-                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
-                                "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        try {
-                            startActivity(intent);
-                        } catch (ActivityNotFoundException ignored) {
-                            startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                        }
-                    } else if (DownloadManager.STATUS_FAILED == status) {
-                        int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
-                        Log.w(TAG, "Download failed. Reason: " + reason);
-                    }
-                }
-                c.close();
+            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+            if (dm == null || downloadId == -1) {
+                return;
             }
+
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(downloadId);
+            Cursor c = dm.query(query);
+            if (c.moveToFirst()) {
+                int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                if (DownloadManager.STATUS_SUCCESSFUL == status) {
+                    URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+                    String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
+                    intent = new Intent();
+                    intent.setAction(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                            "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        startActivity(intent);
+                    } catch (ActivityNotFoundException ignored) {
+                        startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                    }
+                } else if (DownloadManager.STATUS_FAILED == status) {
+                    int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
+                    Log.w(TAG, "Download failed. Reason: " + reason);
+                }
+            }
+            c.close();
         }
     };
 
@@ -155,8 +154,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-        mDownloadMgr = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-        registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         registerReceiver(onNotificationClick, new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED));
 
         mMessageSender = new PausableSingleThreadExecutor();
@@ -190,6 +188,18 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
+        Uri attachment = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        String type = intent.getType();
+        if (attachment != null && type != null) {
+            Bundle args  = new Bundle();
+            args.putParcelable(AttachmentHandler.ARG_SRC_URI, attachment);
+            if (type.startsWith("image/")) {
+                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
+                showFragment(FRAGMENT_VIEW_IMAGE, args, true);
+            } else {
+                showFragment(FRAGMENT_FILE_PREVIEW, args, true);
+            }
+        }
     }
 
     // Topic has changed. Update all the views with the new data.
@@ -399,7 +409,7 @@ public class MessageActivity extends AppCompatActivity {
         super.onDestroy();
 
         mMessageSender.shutdownNow();
-        unregisterReceiver(onComplete);
+        unregisterReceiver(onDownloadComplete);
         unregisterReceiver(onNotificationClick);
     }
 
@@ -592,34 +602,6 @@ public class MessageActivity extends AppCompatActivity {
 
     public void submitForExecution(Runnable runnable) {
         mMessageSender.submit(runnable);
-    }
-
-    public void startDownload(final Uri uri, final String fname, final String mime, final Map<String, String> headers) {
-        // Ensure directory exists.
-        Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                .mkdirs();
-
-        DownloadManager.Request req = new DownloadManager.Request(uri);
-        // Always add Origin header to satisfy CORS. If server does not need CORS it won't hurt anyway.
-        req.addRequestHeader("Origin", Cache.getTinode().getHttpOrigin());
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                req.addRequestHeader(entry.getKey(), entry.getValue());
-            }
-        }
-
-        mDownloadId = mDownloadMgr.enqueue(
-                req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
-                        DownloadManager.Request.NETWORK_MOBILE)
-                        .setMimeType(mime)
-                        .setAllowedOverRoaming(false)
-                        .setTitle(fname)
-                        .setDescription(getString(R.string.download_title))
-                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        .setVisibleInDownloadsUi(true)
-                        .setDestinationUri(Uri.fromFile(new File(Environment
-                                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname))));
     }
 
     /**

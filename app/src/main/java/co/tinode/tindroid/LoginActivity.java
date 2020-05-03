@@ -95,9 +95,6 @@ public class LoginActivity extends AppCompatActivity {
         // Check if we need full authentication or just credentials.
         showFragment(db.isCredValidationRequired() ? FRAGMENT_CREDENTIALS : FRAGMENT_LOGIN,
                 null, false);
-
-        // Check and possibly request runtime permissions.
-        // requestPermissions();
     }
 
     @Override

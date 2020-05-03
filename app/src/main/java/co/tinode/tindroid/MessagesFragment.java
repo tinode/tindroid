@@ -257,7 +257,7 @@ public class MessagesFragment extends Fragment {
         });
 
         // Monitor status of attachment uploads and update messages accordingly.
-        WorkManager.getInstance(activity).getWorkInfosByTagLiveData(AttachmentUploader.TAG_UPLOAD_WORK)
+        WorkManager.getInstance(activity).getWorkInfosByTagLiveData(AttachmentHandler.TAG_UPLOAD_WORK)
                 .observe(activity, new Observer<List<WorkInfo>>() {
                     @Override
                     public void onChanged(List<WorkInfo> workInfos) {
@@ -266,7 +266,7 @@ public class MessagesFragment extends Fragment {
                             switch (state) {
                                 case RUNNING: {
                                     Data data = wi.getProgress();
-                                    String topicName = data.getString(AttachmentUploader.ARG_TOPIC_NAME);
+                                    String topicName = data.getString(AttachmentHandler.ARG_TOPIC_NAME);
                                     if (topicName == null) {
                                         // Not a progress report, just a status change.
                                         break;
@@ -274,7 +274,7 @@ public class MessagesFragment extends Fragment {
                                     if (!mTopicName.equals(topicName)) {
                                         break;
                                     }
-                                    long progress = data.getLong(AttachmentUploader.ARG_PROGRESS, -1);
+                                    long progress = data.getLong(AttachmentHandler.ARG_PROGRESS, -1);
                                     if (progress < 0) {
                                         break;
                                     }
@@ -283,17 +283,17 @@ public class MessagesFragment extends Fragment {
                                         runMessagesLoader(mTopicName);
                                         break;
                                     }
-                                    long msgId = data.getLong(AttachmentUploader.ARG_MSG_ID, -1L);
+                                    long msgId = data.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
                                     final int position = findItemPositionById(msgId);
                                     if (position >= 0) {
-                                        long total = data.getLong(AttachmentUploader.ARG_FILE_SIZE, 1L);
+                                        long total = data.getLong(AttachmentHandler.ARG_FILE_SIZE, 1L);
                                         mMessagesAdapter.notifyItemChanged(position, (float) progress / total);
                                     }
                                     break;
                                 }
                                 case SUCCEEDED: {
                                     Data success = wi.getOutputData();
-                                    long msgId = success.getLong(AttachmentUploader.ARG_MSG_ID, -1L);
+                                    long msgId = success.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
                                     if (msgId > 0) {
                                         activity.syncMessages(msgId, true);
                                     }
@@ -301,9 +301,9 @@ public class MessagesFragment extends Fragment {
                                 }
                                 case FAILED: {
                                     Data failure = wi.getOutputData();
-                                    String topicName = failure.getString(AttachmentUploader.ARG_TOPIC_NAME);
+                                    String topicName = failure.getString(AttachmentHandler.ARG_TOPIC_NAME);
                                     if (mTopicName.equals(topicName)) {
-                                        String error = failure.getString(AttachmentUploader.ARG_ERROR);
+                                        String error = failure.getString(AttachmentHandler.ARG_ERROR);
                                         runMessagesLoader(mTopicName);
                                         Toast.makeText(activity, error, Toast.LENGTH_LONG).show();
                                     }
@@ -807,17 +807,20 @@ public class MessagesFragment extends Fragment {
                     final Bundle args = new Bundle();
                     if (data == null || data.getData() == null) {
                         // Camera
-                        args.putString("file", mCurrentPhotoFile);
-                        args.putParcelable("uri", mCurrentPhotoUri);
+                        args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
+                        args.putParcelable(AttachmentHandler.ARG_SRC_URI, mCurrentPhotoUri);
                         mCurrentPhotoFile = null;
                         mCurrentPhotoUri = null;
                     } else {
                         // Gallery
-                        args.putParcelable("uri", data.getData());
+                        args.putParcelable(AttachmentHandler.ARG_SRC_URI, data.getData());
                     }
 
-                    args.putString("operation", requestCode == ACTION_ATTACH_IMAGE ? "image" : "file");
-                    args.putString("topic", mTopicName);
+                    args.putString(AttachmentHandler.ARG_OPERATION,
+                            requestCode == ACTION_ATTACH_IMAGE ?
+                                    AttachmentHandler.ARG_OPERATION_IMAGE :
+                                    AttachmentHandler.ARG_OPERATION_FILE);
+                    args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
 
                     // Show attachment preview.
                     activity.showFragment(requestCode == ACTION_ATTACH_IMAGE ?

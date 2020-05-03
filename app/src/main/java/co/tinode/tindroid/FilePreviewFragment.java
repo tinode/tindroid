@@ -84,10 +84,10 @@ public class FilePreviewFragment extends Fragment {
             return;
         }
 
-        Uri uri = args.getParcelable(AttachmentUploader.ARG_SRC_URI);
+        Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
         if (uri != null) {
-            AttachmentUploader.FileDetails fileDetails = AttachmentUploader.getFileDetails(activity,
-                    uri, args.getString(AttachmentUploader.ARG_FILE_PATH));
+            AttachmentHandler.FileDetails fileDetails = AttachmentHandler.getFileDetails(activity,
+                    uri, args.getString(AttachmentHandler.ARG_FILE_PATH));
             String fileName = fileDetails.fileName;
             if (TextUtils.isEmpty(fileName)) {
                 fileName = getString(R.string.tinode_image);
@@ -120,7 +120,7 @@ public class FilePreviewFragment extends Fragment {
             return;
         }
 
-        AttachmentUploader.enqueueWorkRequest(activity, "file", args);
+        AttachmentHandler.enqueueUploadRequest(activity, AttachmentHandler.ARG_OPERATION_FILE, args);
 
         activity.getSupportFragmentManager().popBackStack();
     }

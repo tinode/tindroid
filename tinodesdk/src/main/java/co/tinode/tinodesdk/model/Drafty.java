@@ -72,10 +72,11 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class Drafty implements Serializable {
-    public static final String MIME_TYPE = "text/x-drafty";
-    public static final String JSON_MIME_TYPE = "application/json";
-
     private static final String TAG = "Drafty";
+
+    public static final String MIME_TYPE = "text/x-drafty";
+
+    private static final String JSON_MIME_TYPE = "application/json";
 
     private static final int MAX_FORM_ELEMENTS = 8;
 

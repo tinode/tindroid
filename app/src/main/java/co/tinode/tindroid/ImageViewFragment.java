@@ -169,11 +169,11 @@ public class ImageViewFragment extends Fragment {
         mMatrix.reset();
 
         Bitmap bmp = null;
-        byte[] bits = args.getByteArray("image");
+        byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
         if (bits != null) {
             bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
         } else {
-            Uri uri = args.getParcelable("uri");
+            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
             if (uri != null) {
                 final ContentResolver resolver = activity.getContentResolver();
                 // Resize image to ensure it's under the maximum in-band size.
@@ -190,7 +190,7 @@ public class ImageViewFragment extends Fragment {
         }
 
         if (bmp != null) {
-            String filename = args.getString("name");
+            String filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_image);
             }
@@ -258,7 +258,7 @@ public class ImageViewFragment extends Fragment {
             Bundle args = getArguments();
             String filename = null;
             if (args != null) {
-                filename = args.getString("name");
+                filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
             }
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_image);
@@ -287,11 +287,11 @@ public class ImageViewFragment extends Fragment {
         if (inputField != null) {
             String caption = inputField.getText().toString().trim();
             if (!TextUtils.isEmpty(caption)) {
-                args.putString(AttachmentUploader.ARG_IMAGE_CAPTION, caption);
+                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, caption);
             }
         }
 
-        AttachmentUploader.enqueueWorkRequest(activity, "image", args);
+        AttachmentHandler.enqueueUploadRequest(activity, AttachmentHandler.ARG_OPERATION_IMAGE, args);
 
         activity.getSupportFragmentManager().popBackStack();
     }
