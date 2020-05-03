@@ -244,4 +244,5 @@
     <string name="licenses">Лицензии</string>
     <string name="processing">обрабатывается…</string>
     <string name="action_restore">Разблокировать</string>
+    <string name="send_to">Оправить…</string>
 </resources>

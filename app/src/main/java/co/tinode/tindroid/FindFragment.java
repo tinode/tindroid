@@ -69,6 +69,12 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     private CircleProgressView mProgress = null;
 
+    private FindAdapter.ClickListener mOnClickListener;
+
+    FindFragment(FindAdapter.ClickListener onClick) {
+        mOnClickListener = onClick;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,18 +108,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-        mAdapter = new FindAdapter(activity, mImageLoader, new FindAdapter.ClickListener() {
-            @Override
-            public void onCLick(final String topicName) {
-                Intent intent = new Intent(activity, MessageActivity.class);
-                // See discussion here: https://github.com/tinode/tindroid/issues/39
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("topic", topicName);
-                activity.startActivity(intent);
-                // Remove StartChatActivity from stack.
-                activity.finish();
-            }
-        });
+        mAdapter = new FindAdapter(activity, mImageLoader, mOnClickListener);
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);
 
@@ -420,7 +415,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
     private void restartLoader(String searchTerm) {
-        final StartChatActivity activity = (StartChatActivity) getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -430,9 +425,9 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             Bundle args = new Bundle();
             args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
-        } else if (!activity.isReadContactsPermissionRequested()) {
+        } else if (!((ReadContactsPermissionChecker) activity).isReadContactsPermissionRequested()) {
             mAdapter.setContactsPermission(false);
-            activity.setReadContactsPermissionRequested();
+            ((ReadContactsPermissionChecker) activity).setReadContactsPermissionRequested();
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                     UiUtils.CONTACTS_PERMISSION_ID);
         }
@@ -455,5 +450,10 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                 restartLoader(mSearchTerm);
             }
         }
+    }
+
+    interface ReadContactsPermissionChecker {
+        boolean isReadContactsPermissionRequested();
+        void setReadContactsPermissionRequested();
     }
 }

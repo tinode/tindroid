@@ -264,5 +264,5 @@
     <string name="processing">处理中…</string>
     <string name="blocked_contacts">被阻止的联系人列表</string>
     <string name="action_restore">解除封锁</string>
-
+    <string name="send_to">发送至…</string>
 </resources>

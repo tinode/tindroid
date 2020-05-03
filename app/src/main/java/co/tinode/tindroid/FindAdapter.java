@@ -44,7 +44,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     // TRUE is user granted access to contacts, FALSE otherwise.
     private boolean mPermissionGranted = false;
 
-    FindAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
+    FindAdapter(Context context, ImageLoader imageLoader, @NonNull ClickListener clickListener) {
         super();
 
         mImageLoader = imageLoader;
@@ -371,7 +371,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    clickListener.onCLick(unique);
+                    clickListener.onClick(unique);
                 }
             });
         }
@@ -403,7 +403,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    clickListener.onCLick(unique);
+                    clickListener.onClick(unique);
                 }
             });
         }
@@ -420,6 +420,6 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
 
     interface ClickListener {
-        void onCLick(String topicName);
+        void onClick(String topicName);
     }
 }
