@@ -35,8 +35,15 @@ import com.crashlytics.android.core.CrashlyticsCore;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.ContactsObserver;
@@ -49,8 +56,11 @@ import io.fabric.sdk.android.Fabric;
 /**
  * A class for providing global context for database access
  */
-public class TindroidApp extends Application {
+public class TindroidApp extends Application implements LifecycleObserver {
     private static final String TAG = "TindroidApp";
+
+    // Number of seconds to stay connected after going into background.
+    private static final int DISCONNECT_DELAY = 2;
 
     private static TindroidApp sContext;
 
@@ -68,6 +78,8 @@ public class TindroidApp extends Application {
     public TindroidApp() {
         sContext = this;
     }
+
+    private ScheduledFuture mDisconnectTimer = null;
 
     @Override
     public void onCreate() {
@@ -103,6 +115,8 @@ public class TindroidApp extends Application {
 
         createNotificationChannel();
 
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+
         // Listen to connectivity changes.
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         if (cm == null) {
@@ -134,6 +148,16 @@ public class TindroidApp extends Application {
         } else {
             sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    void onResume() {
+        Log.i(TAG, "Lifecycle.Event.ON_RESUME");
+
+        if (mDisconnectTimer != null && !mDisconnectTimer.isDone()) {
+            mDisconnectTimer.cancel(true);
+            mDisconnectTimer = null;
+        }
 
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
@@ -141,6 +165,18 @@ public class TindroidApp extends Application {
         if (!TextUtils.isEmpty(uid)) {
             new LoginWithSavedAccount().execute(uid);
         }
+    }
+
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    void onPause() {
+        Log.i(TAG, "Lifecycle.Event.ON_PAUSE");
+        mDisconnectTimer = Executors.newSingleThreadScheduledExecutor()
+                .schedule(new Runnable() {
+                    public void run() {
+                        Log.i(TAG, "Disconnect now");
+                    }
+                }, DISCONNECT_DELAY, TimeUnit.SECONDS);
     }
 
     public static Context getAppContext() {

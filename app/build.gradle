@@ -93,4 +93,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:20.1.6'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.2'
 
+    annotationProcessor 'android.arch.lifecycle:compiler:1.1.1'
 }
