@@ -56,8 +56,8 @@ public class SendToActivity extends AppCompatActivity implements FindFragment.Re
                 .commitAllowingStateLoss();
     }
 
-    public boolean isReadContactsPermissionRequested() {
-        return mReadContactsPermissionsAlreadyRequested;
+    public boolean shouldRequestReadContactsPermission() {
+        return !mReadContactsPermissionsAlreadyRequested;
     }
 
     public void setReadContactsPermissionRequested() {
@@ -70,11 +70,9 @@ public class SendToActivity extends AppCompatActivity implements FindFragment.Re
             Intent initial = getIntent();
             String type = initial.getType();
             Uri uri = initial.getParcelableExtra(Intent.EXTRA_STREAM);
-            assert uri != null;
-            AttachmentHandler.getFileDetails(SendToActivity.this, uri, null);
             Intent preview = new Intent(SendToActivity.this, MessageActivity.class);
-            preview.setType(type);
-            preview.putExtra(AttachmentHandler.ARG_SRC_URI, uri);
+            preview.setDataAndType(uri, type);
+            preview.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             // See discussion here: https://github.com/tinode/tindroid/issues/39
             preview.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             preview.putExtra("topic", topicName);

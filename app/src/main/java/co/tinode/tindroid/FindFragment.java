@@ -17,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,8 +31,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.FndTopic;
-import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.MetaSetDesc;
@@ -140,32 +137,25 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return;
         }
 
-        try {
-            Cache.attachFndTopic(mFndListener)
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            return null;
+        Cache.attachFndTopic(mFndListener)
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+                        if (activity != null) {
+                            mAdapter.resetFound(activity, mSearchTerm);
+                            // Refresh cursor.
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    restartLoader(mSearchTerm);
+                                }
+                            });
                         }
-                    }, new PromisedReply.FailureListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onFailure(Exception err) {
-                            Log.w(TAG, "Error subscribing to 'fnd' topic", err);
-                            return null;
-                        }
-                    });
-        } catch (NotSynchronizedException ignored) {
-        } catch (NotConnectedException ignored) {
-            /* offline - ignored */
-            Toast.makeText(fragment.getContext(), R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception err) {
-            Log.i(TAG, "Subscription failed", err);
-            Toast.makeText(fragment.getContext(), R.string.action_failed, Toast.LENGTH_LONG).show();
-        }
-
-        mAdapter.resetFound(getActivity(), mSearchTerm);
-        // Refresh cursor.
-        restartLoader(mSearchTerm);
+                        return null;
+                    }
+                })
+                .thenCatch(new UiUtils.ToastFailureListener(getActivity()));
     }
 
     @Override
@@ -195,7 +185,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         menu.clear();
         inflater.inflate(R.menu.menu_contacts, menu);
 
-        final Activity activity = getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -294,7 +284,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final Activity activity = getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return true;
         }
@@ -376,7 +366,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         if (mProgress == null) {
             return;
         }
-        Activity activity = getActivity();
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -425,7 +415,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             Bundle args = new Bundle();
             args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
-        } else if (!((ReadContactsPermissionChecker) activity).isReadContactsPermissionRequested()) {
+        } else if (((ReadContactsPermissionChecker) activity).shouldRequestReadContactsPermission()) {
             mAdapter.setContactsPermission(false);
             ((ReadContactsPermissionChecker) activity).setReadContactsPermissionRequested();
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
@@ -440,7 +430,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Sync p2p topics to Contacts.
-                Activity activity = getActivity();
+                AppCompatActivity activity = (AppCompatActivity) getActivity();
                 if (activity == null) {
                     return;
                 }
@@ -453,7 +443,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     }
 
     interface ReadContactsPermissionChecker {
-        boolean isReadContactsPermissionRequested();
+        boolean shouldRequestReadContactsPermission();
         void setReadContactsPermissionRequested();
     }
 }

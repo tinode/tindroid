@@ -113,7 +113,7 @@ public class UiUtils {
 
     private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
-    public static final int MAX_BITMAP_SIZE = 1024;
+    static final int MAX_BITMAP_SIZE = 1024;
     private static final int MIN_TAG_LENGTH = 4;
 
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
@@ -821,59 +821,54 @@ public class UiUtils {
                 if (newAcsStr.length() == 0) {
                     newAcsStr.append('N');
                 }
-                try {
-                    PromisedReply<ServerMessage> reply = null;
-                    switch (what) {
-                        case ACTION_UPDATE_SELF_SUB:
-                            //noinspection unchecked
-                            reply = topic.updateMode(null, newAcsStr.toString());
-                            break;
-                        case ACTION_UPDATE_SUB:
-                            //noinspection unchecked
-                            reply = topic.updateMode(uid, newAcsStr.toString());
-                            break;
-                        case ACTION_UPDATE_AUTH:
-                            //noinspection unchecked
-                            reply = topic.updateDefAcs(newAcsStr.toString(), null);
-                            break;
-                        case ACTION_UPDATE_ANON:
-                            //noinspection unchecked
-                            reply = topic.updateDefAcs(null, newAcsStr.toString());
-                            break;
-                        default:
-                            Log.w(TAG, "Unknown action " + what);
-                    }
 
-                    if (reply != null) {
-                        reply.thenApply(
-                                new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                PromisedReply<ServerMessage> reply = null;
+                switch (what) {
+                    case ACTION_UPDATE_SELF_SUB:
+                        //noinspection unchecked
+                        reply = topic.updateMode(null, newAcsStr.toString());
+                        break;
+                    case ACTION_UPDATE_SUB:
+                        //noinspection unchecked
+                        reply = topic.updateMode(uid, newAcsStr.toString());
+                        break;
+                    case ACTION_UPDATE_AUTH:
+                        //noinspection unchecked
+                        reply = topic.updateDefAcs(newAcsStr.toString(), null);
+                        break;
+                    case ACTION_UPDATE_ANON:
+                        //noinspection unchecked
+                        reply = topic.updateDefAcs(null, newAcsStr.toString());
+                        break;
+                    default:
+                        Log.w(TAG, "Unknown action " + what);
+                }
+
+                if (reply != null) {
+                    reply.thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    return null;
+                                }
+                            },
+                            new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                    if (activity.isFinishing() || activity.isDestroyed()) {
                                         return null;
                                     }
-                                },
-                                new PromisedReply.FailureListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                        if (activity.isFinishing() || activity.isDestroyed()) {
-                                            return null;
+
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Log.w(TAG, "Failed", err);
+                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                                         }
-
-                                        activity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Log.w(TAG, "Failed", err);
-                                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                                        return null;
-                                    }
-                                });
-                    }
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                    });
+                                    return null;
+                                }
+                            });
                 }
             }
         });
@@ -886,6 +881,7 @@ public class UiUtils {
         Bitmap bmp = UiUtils.extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
+            Log.i(TAG, "Failed to extract bitmap from intent");
             return;
         }
         VxCard pub = topic.getPub();
@@ -896,14 +892,7 @@ public class UiUtils {
         }
 
         pub.setBitmap(scaleSquareBitmap(bmp));
-        try {
-            topic.setDescription(pub, null)
-                    .thenCatch(new ToastFailureListener(activity));
-        } catch (NotConnectedException ignored) {
-            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception ignored) {
-            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-        }
+        topic.setDescription(pub, null).thenCatch(new ToastFailureListener(activity));
     }
 
     // Provides callback for when title/subtitle get successfully updated.
@@ -938,25 +927,20 @@ public class UiUtils {
         }
 
         if (pub != null || comment != null) {
-            try {
-                PrivateType priv = null;
-                if (comment != null) {
-                    priv = new PrivateType();
-                    priv.setComment(comment);
-                }
-                topic.setDescription(pub, priv).thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                done.onTitleUpdated();
-                                return null;
-                            }
-                        }, new ToastFailureListener(activity));
-            } catch (NotConnectedException ignored) {
-                Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-            } catch (Exception ignored) {
-                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            PrivateType priv = null;
+            if (comment != null) {
+                priv = new PrivateType();
+                priv.setComment(comment);
             }
+            topic.setDescription(pub, priv).thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            done.onTitleUpdated();
+                            return null;
+                        }
+                    },
+                    new ToastFailureListener(activity));
         }
     }
 
@@ -1271,7 +1255,7 @@ public class UiUtils {
             if (mActivity == null || mActivity.isFinishing() || mActivity.isDestroyed()) {
                 return null;
             }
-
+            Log.d(TAG, mActivity.getLocalClassName() + ": promise rejected", err);
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

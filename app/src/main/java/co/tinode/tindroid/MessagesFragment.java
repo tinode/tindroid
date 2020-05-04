@@ -52,10 +52,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.Data;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.AccessChange;
@@ -244,15 +244,8 @@ public class MessagesFragment extends Fragment {
                 // Enable peer.
                 Acs am = new Acs(mTopic.getAccessMode());
                 am.update(new AccessChange(null, "+RW"));
-                try {
                     mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), am.getGiven())))
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception err) {
-                    Log.w(TAG,"Failed to enable peer", err);
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                }
             }
         });
 
@@ -303,9 +296,13 @@ public class MessagesFragment extends Fragment {
                                     Data failure = wi.getOutputData();
                                     String topicName = failure.getString(AttachmentHandler.ARG_TOPIC_NAME);
                                     if (mTopicName.equals(topicName)) {
-                                        String error = failure.getString(AttachmentHandler.ARG_ERROR);
-                                        runMessagesLoader(mTopicName);
-                                        Toast.makeText(activity, error, Toast.LENGTH_LONG).show();
+                                        long msgId = failure.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
+                                        if (BaseDb.getInstance().getStore().getMessageById(mTopic, msgId) != null) {
+                                            String error = failure.getString(AttachmentHandler.ARG_ERROR);
+                                            runMessagesLoader(mTopicName);
+                                            Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
+                                            Log.i(TAG, "Upload failed: " + error);
+                                        }
                                     }
                                     break;
                                 }
@@ -475,42 +472,34 @@ public class MessagesFragment extends Fragment {
         }
 
         int id = item.getItemId();
-        try {
-            switch (id) {
-                case R.id.action_clear:
-                    mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            runMessagesLoader(mTopicName);
-                            return null;
-                        }
-                    }, mFailureListener);
-                    return true;
+        switch (id) {
+            case R.id.action_clear:
+                mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        runMessagesLoader(mTopicName);
+                        return null;
+                    }
+                }, mFailureListener);
+                return true;
 
-                case R.id.action_unmute:
-                case R.id.action_mute:
-                    mTopic.updateMuted(!mTopic.isMuted());
-                    activity.invalidateOptionsMenu();
-                    return true;
+            case R.id.action_unmute:
+            case R.id.action_mute:
+                mTopic.updateMuted(!mTopic.isMuted());
+                activity.invalidateOptionsMenu();
+                return true;
 
-                case R.id.action_leave:
-                case R.id.action_delete:
-                    showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
-                    return true;
+            case R.id.action_leave:
+            case R.id.action_delete:
+                showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
+                return true;
 
-                case R.id.action_offline:
-                    Cache.getTinode().reconnectNow(true,false);
-                    break;
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
-        } catch (NotConnectedException ignored) {
-            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception ex) {
-            Log.w(TAG, "Muting failed", ex);
-            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            case R.id.action_offline:
+                Cache.getTinode().reconnectNow(true,false);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-
 
         return true;
     }
@@ -549,23 +538,16 @@ public class MessagesFragment extends Fragment {
         confirmBuilder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                try {
-                    mTopic.delete(true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            Intent intent = new Intent(activity, ChatsActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            startActivity(intent);
-                            activity.finish();
-                            return null;
-                        }
-                    }, mFailureListener);
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception err) {
-                    Log.w(TAG,"Failed to delete topic", err);
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                }
+                mTopic.delete(true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        Intent intent = new Intent(activity, ChatsActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        startActivity(intent);
+                        activity.finish();
+                        return null;
+                    }
+                }, mFailureListener);
             }
         });
         confirmBuilder.show();
@@ -597,49 +579,42 @@ public class MessagesFragment extends Fragment {
             @Override
             public void onClick(final View view) {
                 PromisedReply<ServerMessage> response = null;
-                try {
-                    switch (view.getId()) {
-                        case R.id.buttonAccept:
-                            final String mode = mTopic.getAccessMode().getGiven();
-                            response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
-                            if (mTopic.isP2PType()) {
-                                // For P2P topics change 'given' permission of the peer too.
-                                // In p2p topics the other user has the same name as the topic.
-                                response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                        return mTopic.setMeta(
-                                                new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), mode)));
-                                    }
-                                });
-                            }
-                            break;
+                switch (view.getId()) {
+                    case R.id.buttonAccept:
+                        final String mode = mTopic.getAccessMode().getGiven();
+                        response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
+                        if (mTopic.isP2PType()) {
+                            // For P2P topics change 'given' permission of the peer too.
+                            // In p2p topics the other user has the same name as the topic.
+                            response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    return mTopic.setMeta(
+                                            new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), mode)));
+                                }
+                            });
+                        }
+                        break;
 
-                        case R.id.buttonIgnore:
-                            response = mTopic.delete(true);
-                            break;
+                    case R.id.buttonIgnore:
+                        response = mTopic.delete(true);
+                        break;
 
-                        case R.id.buttonBlock:
-                            mTopic.updateMode(null, "-JP");
-                            break;
+                    case R.id.buttonBlock:
+                        mTopic.updateMode(null, "-JP");
+                        break;
 
-                        case R.id.buttonReport:
-                            mTopic.updateMode(null, "-JP");
-                            HashMap<String, Object> json = new HashMap<>();
-                            json.put("action", "report");
-                            json.put("tagret", mTopic.getName());
-                            Drafty msg = new Drafty().attachJSON(json);
-                            Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
-                            break;
+                    case R.id.buttonReport:
+                        mTopic.updateMode(null, "-JP");
+                        HashMap<String, Object> json = new HashMap<>();
+                        json.put("action", "report");
+                        json.put("tagret", mTopic.getName());
+                        Drafty msg = new Drafty().attachJSON(json);
+                        Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
+                        break;
 
-                        default:
-                            throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
-                    }
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception err) {
-                    Log.w(TAG,"Failed to handle chat invitation", err);
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    default:
+                        throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
                 }
 
                 invitation.dismiss();
@@ -705,6 +680,7 @@ public class MessagesFragment extends Fragment {
                     Intent.createChooser(intent, getString(R.string.select_file)), ACTION_ATTACH_FILE);
         } catch (ActivityNotFoundException ex) {
             Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
+            Log.i(TAG, "Unable to open file chooser", ex);
         }
     }
 

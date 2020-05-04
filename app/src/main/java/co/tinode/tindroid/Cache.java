@@ -22,13 +22,12 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Shared resources.
  */
 public class Cache {
+    @SuppressWarnings("unused")
     private static final String TAG = "Cache";
 
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
 
     private static Tinode sTinode;
-
-    private static int sUniqueCounter = 100;
 
     public static Tinode getTinode() {
         if (sTinode == null) {
@@ -77,15 +76,13 @@ public class Cache {
         }
     }
 
-    synchronized static int getUniqueCounter() {
-        return ++sUniqueCounter;
-    }
-
     // Connect to 'me' topic.
     @SuppressWarnings("unchecked")
-    public static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l, boolean inBackgrund) {
+    public static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l, boolean inBackground) {
         final MeTopic<VxCard> me = getTinode().getOrCreateMeTopic();
-        me.setListener(l);
+        if (l != null) {
+            me.setListener(l);
+        }
 
         if (!me.isAttached()) {
             return me.subscribe(null, me
@@ -94,7 +91,7 @@ public class Cache {
                     .withDesc()
                     .withSub()
                     .withTags()
-                    .build(), inBackgrund);
+                    .build(), inBackground);
         } else {
             return new PromisedReply<>((ServerMessage) null);
         }
@@ -106,7 +103,9 @@ public class Cache {
 
     static PromisedReply<ServerMessage> attachFndTopic(FndTopic.FndListener<VxCard> l) {
         final FndTopic<VxCard> fnd = getTinode().getOrCreateFndTopic();
-        fnd.setListener(l);
+        if (l != null) {
+            fnd.setListener(l);
+        }
 
         if (!fnd.isAttached()) {
             // Don't request anything here.

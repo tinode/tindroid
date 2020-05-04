@@ -35,7 +35,6 @@ import com.crashlytics.android.core.CrashlyticsCore;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.ScheduledFuture;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
@@ -263,7 +262,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
                     try {
                         // Sync call throws on error.
                         tinode.connect(sServerHost, sUseTLS).getResult();
-
+                        Cache.attachMeTopic(null);
                         // Logged in successfully. Save refreshed token for future use.
                         accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
                         accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,

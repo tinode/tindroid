@@ -92,8 +92,8 @@ public class StartChatActivity extends AppCompatActivity implements FindFragment
         }
     }
 
-    public boolean isReadContactsPermissionRequested() {
-        return mReadContactsPermissionsAlreadyRequested;
+    public boolean shouldRequestReadContactsPermission() {
+        return !mReadContactsPermissionsAlreadyRequested;
     }
 
     public void setReadContactsPermissionRequested() {
