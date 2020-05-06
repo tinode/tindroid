@@ -698,7 +698,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
             return false;
         }
-        Log.i(TAG, "YES, have permission to write to storage");
         return true;
     }
 
