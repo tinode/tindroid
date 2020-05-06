@@ -94,6 +94,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (sub.online != null) {
             mOnline = sub.online;
         }
+        mLastSeen = sub.seen;
     }
 
     protected Topic(Tinode tinode, String name, Description<DP, DR> desc) {
@@ -662,6 +663,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return Math.max(unread, 0);
     }
 
+    /**
+     * Get topic's online status.
+     * @return true if topic is online, false otherwise.
+     */
     public boolean getOnline() {
         return mOnline;
     }
@@ -685,6 +690,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return getLocal() != null;
     }
 
+    /**
+     * Store topic to DB or delete it.
+     * @param on true to start persisting the topic, false to stop (delete).
+     */
     protected void persist(boolean on) {
         if (mStore != null) {
             if (on) {
@@ -697,16 +706,36 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected void setLastSeen(Date when, String ua) {
+    /**
+     * Update timestamp and user agent of when the topic was last online.
+     */
+    public void setLastSeen(Date when, String ua) {
         mLastSeen = new LastSeen(when, ua);
     }
 
+    /**
+     * Update timestamp of when the topic was last online.
+     */
     protected void setLastSeen(Date when) {
         if (mLastSeen != null) {
             mLastSeen.when = when;
         } else {
             mLastSeen = new LastSeen(when);
         }
+    }
+
+    /**
+     * Get timestamp when the topic was last online, if available.
+     */
+    public Date getLastSeen() {
+        return mLastSeen != null ? mLastSeen.when : null;
+    }
+
+    /**
+     * Get user agent string associated with the time when the topic was last online.
+     */
+    public String getLastSeenUA() {
+        return mLastSeen != null ? mLastSeen.ua : null;
     }
 
     /**

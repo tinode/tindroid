@@ -277,4 +277,6 @@
     <string name="blocked_contacts">Blocked contacts</string>
     <string name="action_restore">Unblock</string>
     <string name="send_to">Send to…</string>
+    <string name="never">never</string>
+    <string name="just_now">just now</string>
 </resources>

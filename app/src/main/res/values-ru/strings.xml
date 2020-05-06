@@ -246,4 +246,6 @@
     <string name="licenses">Лицензии</string>
     <string name="action_restore">Разблокировать</string>
     <string name="send_to">Оправить…</string>
+    <string name="never">не был онлайн</string>
+    <string name="just_now">только что</string>
 </resources>

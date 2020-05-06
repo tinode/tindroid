@@ -266,4 +266,6 @@
     <string name="blocked_contacts">被阻止的联系人列表</string>
     <string name="action_restore">解除封锁</string>
     <string name="send_to">发送至…</string>
+    <string name="never">决不</string>
+    <string name="just_now">现在</string>
 </resources>

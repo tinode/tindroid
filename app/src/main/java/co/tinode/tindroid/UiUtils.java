@@ -28,6 +28,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Patterns;
@@ -129,7 +130,7 @@ public class UiUtils {
     private static String sVisibleTopic = null;
 
     static void setupToolbar(final Activity activity, final VxCard pub,
-                             final String topicName, final boolean online) {
+                             final String topicName, final boolean online, final Date lastSeen) {
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
@@ -146,14 +147,38 @@ public class UiUtils {
                     final String title = pub != null && pub.fn != null ?
                             pub.fn : activity.getString(R.string.placeholder_contact_title);
                     toolbar.setTitle(title);
+                    if (lastSeen != null && !online) {
+                        toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
+                    } else {
+                        toolbar.setSubtitle(null);
+                    }
                     constructToolbarLogo(activity, pub != null ? pub.getBitmap() : null,
                             pub != null ? pub.fn  : null, topicName, online);
                 } else {
                     toolbar.setTitle(R.string.app_name);
+                    toolbar.setSubtitle(null);
                     toolbar.setLogo(null);
                 }
             }
         });
+    }
+
+    // Date format relative to present.
+    @NonNull
+    private static CharSequence relativeDateFormat(Context context, Date then) {
+        if (then == null) {
+            return context.getString(R.string.never);
+        }
+        long thenMillis = then.getTime();
+        long nowMillis = System.currentTimeMillis();
+        if (nowMillis - thenMillis < DateUtils.MINUTE_IN_MILLIS) {
+            return context.getString(R.string.just_now);
+        }
+
+        return DateUtils.getRelativeTimeSpanString(then.getTime(),
+                System.currentTimeMillis(),
+                DateUtils.MINUTE_IN_MILLIS,
+                DateUtils.FORMAT_ABBREV_ALL);
     }
 
     // 0. [Avatar or LetterTileDrawable] 1. [Online indicator] 2. [Typing indicator]
@@ -240,7 +265,7 @@ public class UiUtils {
         return timer;
     }
 
-    static void toolbarSetOnline(final Activity activity, boolean online) {
+    static void toolbarSetOnline(final Activity activity, boolean online, Date lastSeen) {
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
@@ -252,6 +277,11 @@ public class UiUtils {
         }
 
         ((OnlineDrawable) ((LayerDrawable) logo).findDrawableByLayerId(LOGO_LAYER_ONLINE)).setOnline(online);
+        if (online) {
+            toolbar.setSubtitle(null);
+        } else if (lastSeen != null) {
+            toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
+        }
     }
 
     public static String getVisibleTopic() {

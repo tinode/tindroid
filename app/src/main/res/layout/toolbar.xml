@@ -11,6 +11,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:contentInsetStartWithNavigation="4dp"
+        app:subtitleTextAppearance="@style/ToolbarSubtitleAppearance"
         app:popupTheme="@style/AppTheme.PopupOverlay" />
 
     <View
@@ -19,6 +20,5 @@
         android:background="@color/colorOffline"
         android:visibility="invisible"
         android:id="@+id/offline_indicator" />
-
 
 </com.google.android.material.appbar.AppBarLayout>

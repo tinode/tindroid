@@ -237,7 +237,7 @@ public class MessageActivity extends AppCompatActivity {
 
         if (mTopic == null) {
             Log.i(TAG, "Attempt to instantiate new or unknown topic: " + mTopicName);
-            UiUtils.setupToolbar(this, null, mTopicName, false);
+            UiUtils.setupToolbar(this, null, mTopicName, false, null);
             try {
                 //noinspection unchecked
                 mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
@@ -248,7 +248,7 @@ public class MessageActivity extends AppCompatActivity {
             showFragment(FRAGMENT_INVALID, null, false);
 
         } else {
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
             // Check if another fragment is already visible. If so, don't change it.
             if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
                 // No fragment is visible. Show default and clear back stack.
@@ -346,7 +346,7 @@ public class MessageActivity extends AppCompatActivity {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                                mTopicName, mTopic.getOnline());
+                                mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -824,7 +824,7 @@ public class MessageActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
-                            mTopic.getOnline());
+                            mTopic.getOnline(), mTopic.getLastSeen());
                     Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                     if (fragment != null) {
                         if (fragment instanceof TopicInfoFragment) {
@@ -860,7 +860,8 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    UiUtils.toolbarSetOnline(MessageActivity.this, mTopic.getOnline());
+                    UiUtils.toolbarSetOnline(MessageActivity.this,
+                            mTopic.getOnline(), mTopic.getLastSeen());
                 }
             });
 

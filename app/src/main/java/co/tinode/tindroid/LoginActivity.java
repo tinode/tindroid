@@ -100,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        UiUtils.setupToolbar(this, null, null, false);
+        UiUtils.setupToolbar(this, null, null, false, null);
     }
 
     @Override
