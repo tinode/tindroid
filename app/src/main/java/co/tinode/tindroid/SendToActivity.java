@@ -10,7 +10,8 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-public class SendToActivity extends AppCompatActivity implements FindFragment.ReadContactsPermissionChecker {
+public class SendToActivity extends AppCompatActivity
+        implements FindFragment.ReadContactsPermissionChecker {
     private static final String TAG = "SendToActivity";
 
     // Limit the number of times permissions are requested per session.
@@ -52,7 +53,7 @@ public class SendToActivity extends AppCompatActivity implements FindFragment.Re
 
         getSupportFragmentManager()
                 .beginTransaction()
-                .add(R.id.contentFragment, new FindFragment(new ContactSelectedListener()), "contacts")
+                .add(R.id.contentFragment, new FindFragment(), "contacts")
                 .commitAllowingStateLoss();
     }
 
@@ -62,22 +63,5 @@ public class SendToActivity extends AppCompatActivity implements FindFragment.Re
 
     public void setReadContactsPermissionRequested() {
         mReadContactsPermissionsAlreadyRequested = true;
-    }
-
-    private class ContactSelectedListener implements FindAdapter.ClickListener {
-        @Override
-        public void onClick(String topicName) {
-            Intent initial = getIntent();
-            String type = initial.getType();
-            Uri uri = initial.getParcelableExtra(Intent.EXTRA_STREAM);
-            Intent preview = new Intent(SendToActivity.this, MessageActivity.class);
-            preview.setDataAndType(uri, type);
-            preview.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            // See discussion here: https://github.com/tinode/tindroid/issues/39
-            preview.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            preview.putExtra("topic", topicName);
-            startActivity(preview);
-            finish();
-        }
     }
 }

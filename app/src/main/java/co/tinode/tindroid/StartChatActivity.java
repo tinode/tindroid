@@ -19,7 +19,8 @@ import androidx.viewpager.widget.ViewPager;
 /**
  * View to display a single conversation
  */
-public class StartChatActivity extends AppCompatActivity implements FindFragment.ReadContactsPermissionChecker {
+public class StartChatActivity extends AppCompatActivity
+        implements FindFragment.ReadContactsPermissionChecker {
 
     @SuppressWarnings("unused")
     private static final String TAG = "StartChatActivity";
@@ -100,20 +101,7 @@ public class StartChatActivity extends AppCompatActivity implements FindFragment
         mReadContactsPermissionsAlreadyRequested = true;
     }
 
-    private class ContactSelectedListener implements FindAdapter.ClickListener {
-        @Override
-        public void onClick(final String topicName) {
-            Intent intent = new Intent(StartChatActivity.this, MessageActivity.class);
-            // See discussion here: https://github.com/tinode/tindroid/issues/39
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("topic", topicName);
-            StartChatActivity.this.startActivity(intent);
-            // Remove StartChatActivity from stack.
-            StartChatActivity.this.finish();
-        }
-    }
-
-    private class PagerAdapter extends FragmentStatePagerAdapter {
+    private static class PagerAdapter extends FragmentStatePagerAdapter {
         Fragment mSearch;
         Fragment mCreateGroup;
         Fragment mById;
@@ -128,7 +116,7 @@ public class StartChatActivity extends AppCompatActivity implements FindFragment
             switch (position) {
                 case TAB_SEARCH:
                     if (mSearch == null) {
-                        mSearch = new FindFragment(new ContactSelectedListener());
+                        mSearch = new FindFragment();
                     }
                     return mSearch;
                 case TAB_NEW_GROUP:

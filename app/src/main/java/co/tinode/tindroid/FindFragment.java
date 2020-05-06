@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -66,12 +67,6 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     private CircleProgressView mProgress = null;
 
-    private FindAdapter.ClickListener mOnClickListener;
-
-    FindFragment(FindAdapter.ClickListener onClick) {
-        mOnClickListener = onClick;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,7 +100,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-        mAdapter = new FindAdapter(activity, mImageLoader, mOnClickListener);
+        mAdapter = new FindAdapter(activity, mImageLoader, new ContactClickListener());
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);
 
@@ -439,6 +434,28 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                 // Permission is granted
                 restartLoader(mSearchTerm);
             }
+        }
+    }
+
+    private class ContactClickListener implements FindAdapter.ClickListener {
+        @Override
+        public void onClick(String topicName) {
+            AppCompatActivity activity = (AppCompatActivity) getActivity();
+            if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+            Intent initial = activity.getIntent();
+            Intent launcher = new Intent(activity, MessageActivity.class);
+            Uri uri = initial != null ? initial.<Uri>getParcelableExtra(Intent.EXTRA_STREAM) : null;
+            if (uri != null) {
+                launcher.setDataAndType(uri, initial.getType());
+                launcher.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+            // See discussion here: https://github.com/tinode/tindroid/issues/39
+            launcher.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            launcher.putExtra("topic", topicName);
+            startActivity(launcher);
+            activity.finish();
         }
     }
 
