@@ -7,27 +7,50 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.text.style.LineHeightSpan;
 import android.text.style.ReplacementSpan;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 // Span used to represent clickable buttons in Drafty forms.
-public class BorderedSpan extends ReplacementSpan {
+public class BorderedSpan extends ReplacementSpan implements LineHeightSpan {
     private static final String TAG = "BorderedSpan";
 
+    // Size in DIPs.
     private static final float RADIUS_CORNER = 2.5f;
     private static final float SHADOW_SIZE = 2.5f;
 
     // Minimum button width in '0' characters.
-    private static final int MIN_BUTTON_WIDTH = 10;
+    private static final int MIN_BUTTON_WIDTH = 8;
+    // Scale of the button compare to font size.
+    private static final float BUTTON_HEIGHT_SCALE = 2.0f;
+
+    // Horizontal button padding in '0' characters.
+    private static final int H_PADDING = 2;
     private final Paint mPaintBackground;
+    // Width of the button with padding added and minimum applied in DIPs.
     private int mWidth;
+    // Actual width of the text in DIPs.
     private int mWidthActual;
     private int mTextColor;
+    // Minimum button width in DIPs.
     private int mMinButtonWidth;
+    // Button height in DIP
+    private int mButtonHeight;
+    // Size of DIP in pixels.
     private float mDipSize;
 
-    BorderedSpan(final Context context, final float charWidth, float dipSize) {
+    /**
+     * Create formatter for text which appears as clickable buttons.
+     *
+     * @param context Context (activity) which uses this formatter.
+     * @param fontSize font size in device (unscaled) pixels as returned by view.getTextSize().
+     * @param dipSize size of the DIP unit in unscaled pixels.
+     */
+    BorderedSpan(final Context context, final float fontSize, float dipSize) {
+        mDipSize = dipSize;
+
         int[] attrs = {android.R.attr.textColorPrimary, android.R.attr.colorButtonNormal};
         TypedArray colors = context.obtainStyledAttributes(attrs);
         mTextColor = colors.getColor(0, 0x7bc9c2);
@@ -44,28 +67,36 @@ public class BorderedSpan extends ReplacementSpan {
                 SHADOW_SIZE * 0.5f * dipSize,
                 Color.argb(0x80, 0, 0, 0));
 
-        mMinButtonWidth = (int) (MIN_BUTTON_WIDTH * charWidth / dipSize);
-        mDipSize = dipSize;
+        // Char width is ~60% of the height. In DIPs.
+        mMinButtonWidth = (int) (MIN_BUTTON_WIDTH * 0.6f * fontSize / dipSize);
+        // Button height in DIPs.
+        mButtonHeight = (int) (BUTTON_HEIGHT_SCALE * fontSize / dipSize);
     }
 
     @Override
     public int getSize(@NonNull Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fm) {
-        // Actual text width;
-        mWidthActual = (int) paint.measureText(text, start, end);
+        // Actual text width in DIPs.
+        mWidthActual = (int) (paint.measureText(text, start, end) / mDipSize);
+        // Ensure minimum width of the button: actual width + 2 characters on each side.
+        mWidth = Math.max(mWidthActual + (mMinButtonWidth / MIN_BUTTON_WIDTH) * H_PADDING * 2, mMinButtonWidth);
+        // The result must be in pixels.
+        return (int) (mWidth * mDipSize);
+    }
 
-        // Width of the button.
-        int len = text.length();
-        // Add ~2 char padding left and right.
-        mWidth = mWidthActual * (len+4) / len;
-        // Ensure minimum width of the button.
-        mWidth = Math.max(mWidth, mMinButtonWidth);
-        return mWidth;
+    @Override
+    public void chooseHeight(CharSequence text, int start, int end, int spanstartv, int lineHeight,
+                             Paint.FontMetricsInt fm) {
+        float diff = mButtonHeight * mDipSize - (fm.bottom - fm.top);
+
+        // Adjust height.
+        fm.descent += diff;
+        fm.bottom += diff;
     }
 
     @Override
     public void draw(@NonNull Canvas canvas, CharSequence text,
                      int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
-        RectF outline = new RectF(x, top, x + mWidth, bottom);
+        RectF outline = new RectF(x, top, x + mWidth * mDipSize, top + mButtonHeight * mDipSize);
         outline.inset(SHADOW_SIZE * mDipSize, SHADOW_SIZE * mDipSize);
         // Draw colored background
         canvas.drawRoundRect(outline, RADIUS_CORNER * mDipSize, RADIUS_CORNER * mDipSize, mPaintBackground);
@@ -74,8 +105,8 @@ public class BorderedSpan extends ReplacementSpan {
         paint.setUnderlineText(false);
         paint.setColor(mTextColor);
         canvas.drawText(text, start, end,
-                x + (mWidth - mWidthActual) * 0.5f,
-                (top + bottom - paint.ascent()) * 0.5f - 5, // I don't know why -5 is needed but it works.
+                x + (mWidth - mWidthActual) * mDipSize * 0.5f,
+                top + (mButtonHeight * mDipSize - paint.ascent() - paint.descent()) * 0.5f,
                 paint);
     }
 }

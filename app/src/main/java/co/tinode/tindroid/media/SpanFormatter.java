@@ -41,8 +41,7 @@ import co.tinode.tinodesdk.model.Drafty;
  */
 public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
-    private static final float FORM_LINE_SPACING = 1.5f;
-    private static final float BUTTON_HEIGHT = FORM_LINE_SPACING + 0.4f;
+    private static final float FORM_LINE_SPACING = 1.2f;
     // Additional horizontal padding otherwise images sometimes fail to render.
     private static final int IMAGE_H_PADDING = 8;
 
@@ -228,7 +227,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
         // Create BorderSpan.
         final TreeNode span = new TreeNode(
-                new BorderedSpan(mContainer.getContext(), mFontSize * BUTTON_HEIGHT, dipSize),
+                (CharacterStyle) new BorderedSpan(mContainer.getContext(), mFontSize, dipSize),
                 (CharSequence) null);
 
         // Wrap URLSpan into BorderSpan.
