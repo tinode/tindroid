@@ -170,13 +170,15 @@ public class UiUtils {
             return context.getString(R.string.never);
         }
         long thenMillis = then.getTime();
+        if (thenMillis == 0) {
+            return context.getString(R.string.never);
+        }
         long nowMillis = System.currentTimeMillis();
         if (nowMillis - thenMillis < DateUtils.MINUTE_IN_MILLIS) {
             return context.getString(R.string.just_now);
         }
 
-        return DateUtils.getRelativeTimeSpanString(then.getTime(),
-                System.currentTimeMillis(),
+        return DateUtils.getRelativeTimeSpanString(thenMillis, nowMillis,
                 DateUtils.MINUTE_IN_MILLIS,
                 DateUtils.FORMAT_ABBREV_ALL);
     }
