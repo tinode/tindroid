@@ -609,22 +609,44 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return updateMode(null, muted ? "-P" : "+P");
     }
 
+    /**
+     * Check if user is the Owner (O) of the topic.
+     */
     public boolean isOwner() {
         return mDesc.acs != null && mDesc.acs.isOwner();
     }
 
+    /**
+     * Check if user has Read (R) permission.
+     */
     public boolean isReader() {
         return mDesc.acs != null && mDesc.acs.isReader();
     }
 
+    /**
+     * Check if user has Write (W) permission.
+     */
     public boolean isWriter() {
         return mDesc.acs != null && mDesc.acs.isWriter();
     }
 
+    /**
+     * Check if user has Join (J) permission on both sides: 'want' and 'given'.
+     */
     public boolean isJoiner() {
         return mDesc.acs != null && mDesc.acs.isJoiner();
     }
 
+    /**
+     * Check if current user is blocked in the topic.
+     */
+    public boolean isBlocked() {
+        return mDesc.acs != null && mDesc.acs.isJoiner(Acs.Side.GIVEN);
+    }
+
+    /**
+     * Check if user has permission to hard-delete messages (D).
+     */
     public boolean isDeleter() {
         return mDesc.acs != null && mDesc.acs.isDeleter();
     }
@@ -1807,24 +1829,25 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 break;
 
             case ACS:
-                sub = getSubscription(pres.src);
+                String userId = pres.src != null ? pres.src : mTinode.getMyId();
+                sub = getSubscription(userId);
                 if (sub == null) {
                     Acs acs = new Acs();
                     acs.update(pres.dacs);
                     if (acs.isModeDefined()) {
                         sub = new Subscription<>();
                         sub.topic = getName();
-                        sub.user = pres.src;
+                        sub.user = userId;
                         sub.acs = acs;
                         sub.updated = new Date();
-                        User<SP> user = mTinode.getUser(pres.src);
+                        User<SP> user = mTinode.getUser(userId);
                         if (user == null) {
-                            getMeta(getMetaGetBuilder().withSub(pres.src).build());
+                            getMeta(getMetaGetBuilder().withSub(userId).build());
                         } else {
                             sub.pub = user.pub;
                         }
                     } else {
-                        Log.w(TAG, "Invalid access mode update '" + pres.dacs + "'");
+                        Log.w(TAG, "Invalid access mode update '" + pres.dacs.toString() + "'");
                     }
                 } else {
                     // Update to an existing subscription.

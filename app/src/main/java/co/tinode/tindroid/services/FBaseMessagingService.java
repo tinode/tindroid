@@ -202,7 +202,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 // Check if this is a known topic.
                 ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
                 if (topic != null) {
-                    Log.w(TAG, "Duplicate invitation: " + topicName);
+                    Log.d(TAG, "Duplicate invitation ignored: " + topicName);
                     return;
                 }
 

@@ -382,7 +382,7 @@ public class MessagesFragment extends Fragment {
                     acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
         }
 
-        if (mTopic.isWriter()) {
+        if (mTopic.isWriter() && mTopic.isBlocked()) {
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
