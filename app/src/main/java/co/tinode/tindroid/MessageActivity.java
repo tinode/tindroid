@@ -191,8 +191,6 @@ public class MessageActivity extends AppCompatActivity {
         Uri attachment = intent.getData();
         String type = intent.getType();
         if (attachment != null && type != null) {
-            Log.i(TAG, "Resumed with an attachment " + attachment + " of type " + type);
-
             // Need to retain access right to the given Uri.
             Bundle args  = new Bundle();
             args.putParcelable(AttachmentHandler.ARG_SRC_URI, attachment);
@@ -203,8 +201,6 @@ public class MessageActivity extends AppCompatActivity {
             } else {
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
-        } else {
-            Log.i(TAG, "Resumed NORMAL with an attachment " + attachment + " of type " + type);
         }
     }
 

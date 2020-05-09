@@ -562,7 +562,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mDesc.acs == null) {
             mDesc.acs = new Acs();
         }
-        return mDesc.acs.update(ac);
+
+        boolean updated = mDesc.acs.update(ac);
+        if (updated && mListener != null) {
+            mListener.onMetaDesc(mDesc);
+        }
+
+        return updated;
     }
 
     /**
@@ -638,10 +644,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Check if current user is blocked in the topic.
+     * Check if current user is blocked in the topic (does not have J permission on the Given side).
      */
     public boolean isBlocked() {
-        return mDesc.acs != null && mDesc.acs.isJoiner(Acs.Side.GIVEN);
+        return mDesc.acs == null || !mDesc.acs.isJoiner(Acs.Side.GIVEN);
     }
 
     /**
