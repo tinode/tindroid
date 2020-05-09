@@ -15,6 +15,7 @@ public class AccessChange implements Serializable {
     }
 
     @SuppressWarnings("NullableProblems")
+    @Override
     public String toString() {
         return "{\"given\":" + (given != null ? " \"" + given + "\"" : " null") +
                 ", \"want\":" + (want != null ? " \"" + want + "\"" : " null}");
