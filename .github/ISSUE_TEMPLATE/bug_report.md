@@ -2,58 +2,40 @@
 name: Bug report
 about: Create a report to help us improve Tinode
 title: ''
-labels: bug
+labels: 'bug'
 assignees: ''
 
 ---
 
-If you are not reporting a bug, please post to https://groups.google.com/d/forum/tinode instead.
+**If you are not reporting a bug, please post to https://groups.google.com/d/forum/tinode instead.**
 ---
 
-### Subject of the issue
-Describe your issue here.
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-### Your environment
-#### Server-side
-- [ ] web.tinode.co, api.tinode.co
-- [ ] sandbox.tinode.co
-- [ ] Your own setup:
-  * platform (Windows, Mac, Linux etc)
-  * version of Tinode server, e.g. `0.15.2-rc3`
-  * database backend
-  * cluster or standalone
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
-#### Client-side
-- [ ] TinodeWeb/tinodejs: javascript client
-  * Browser make and version.
-- [ ] Tindroid: Android app
-  * Android API level (e.g. 25).
-  * Emulator or hardware, if hardware describe it.
-- [ ] Tinodios: iOS app
-  * iOS version
-  * Simulator or hardware, if hardware describe it.
-- [ ] tn-cli
-  * Python version
-- [ ] Chatbot
-  * Python version
-- Version of the client, e.g. `0.15.1`
-- [ ] Your own client. Describe it:
-  * Transport (gRPC, websocket, long polling)
-  * Programming language.
-  * gRPC version, if applicable.
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-### Steps to reproduce
-Tell us how to reproduce this issue.
+**Tindroid (please complete the following information):**
+ - Version [e.g. 0.16.0-rc2]
+ - Device [e.g. Stock Emulator or Pixel 2]
+ - Android API Version [e.g. 28]
 
-### Expected behaviour
-Tell us what should happen.
+**Server**
+- Type [e.g. api.tinode.co or your own setup]
+- Server type [unmodified or customized]
+- Server version [e.g. 0.16.0]
 
-### Actual behaviour
-Tell us what happens instead.
-
-### Server-side log
-Copy server-side log here. You may also attach it to the issue as a file.
-
-### Client-side log
-Copy client-side log here (Android logcat, Javascript console, etc). You may also attach it to the issue as a file.
+**Additional context**
+Add any other context about the problem here.
+Attach server-side and client-side logs (logcat).
