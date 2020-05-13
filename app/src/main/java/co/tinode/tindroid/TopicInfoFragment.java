@@ -160,7 +160,7 @@ public class TopicInfoFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "O");
+                        UiUtils.ACTION_UPDATE_SELF_SUB, mTopic.isP2PType() ? "OASD" : "O");
             }
         });
 

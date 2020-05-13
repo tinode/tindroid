@@ -69,6 +69,8 @@ import co.tinode.tinodesdk.model.Subscription;
 
 @SuppressWarnings("unused, WeakerAccess")
 public class Tinode {
+    private static final String TAG = "Tinode";
+
     public static final String USER_NEW = "new";
     public static final String TOPIC_NEW = "new";
     public static final String TOPIC_ME = "me";
@@ -77,11 +79,21 @@ public class Tinode {
 
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_USR_PREFIX = "usr";
+
+    // Names of server-provided limits.
+    public static final String MAX_MESSAGE_SIZE = "maxMessageSize";
+    public static final String MAX_SUBSCRIBER_COUNT = "maxSubscriberCount";
+    public static final String MAX_TAG_COUNT = "maxTagCount";
+    public static final String MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
+
+    // Value interpreted as 'content deleted'.
     public static final String NULL_VALUE = "\u2421";
+
+    // Notifications {note}.
     protected static final String NOTE_KP = "kp";
     protected static final String NOTE_READ = "read";
     protected static final String NOTE_RECV = "recv";
-    private static final String TAG = "Tinode";
+
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
@@ -165,6 +177,8 @@ public class Tinode {
     private long mTimeAdjustment = 0;
     // Indicator that login is in progress
     private Boolean mLoginInProgress = false;
+
+    private Map<String, Long> mServerLimits = null;
 
     /**
      * Initialize Tinode package
@@ -370,23 +384,6 @@ public class Tinode {
         if (mTopicsUpdated == null || mTopicsUpdated.before(date)) {
             mTopicsUpdated = date;
         }
-    }
-
-    /**
-     * Get the most recent timestamp of update to any topic.
-     *
-     * @return timestamp of the last update to any topic.
-     */
-    public Date getTopicsUpdated() {
-        return mTopicsUpdated;
-    }
-
-    /**
-     * Set server address and TLS status to be used in subsequent connections.
-     */
-    public void setServer(String host, boolean tls) {
-        mServerHost = host != null ? host.toLowerCase() : null;
-        mUseTLS = tls;
     }
 
     /**
@@ -853,6 +850,29 @@ public class Tinode {
     }
 
     /**
+     * Set server address and TLS status to be used in subsequent connections.
+     */
+    public void setServer(String host, boolean tls) {
+        mServerHost = host != null ? host.toLowerCase() : null;
+        mUseTLS = tls;
+    }
+
+    /**
+     * Get server-provided limit.
+     *
+     * @param key name of the limit.
+     * @param defaultValue default value if limit is missing.
+     * @return limit or default value.
+     */
+    public long getServerLimit(String key, long defaultValue) {
+        Long val = mServerLimits != null ? mServerLimits.get(key) : null;
+        if (val != null) {
+            return val;
+        }
+        return defaultValue;
+    }
+
+    /**
      * Check if connection is in a connected state.
      * Does not check if the network is actually alive.
      *
@@ -905,16 +925,31 @@ public class Tinode {
                         typeOfDescPrivate, typeOfSubPublic, typeOfSubPrivate));
     }
 
+    /**
+     * Assign type of generic Public parameter to 'me' topic. Needed for packet deserialization.
+     *
+     * @param typeOfDescPublic - type of public values
+     */
     public void setMeTypeOfMetaPacket(JavaType typeOfDescPublic) {
         JavaType priv = sTypeFactory.constructType(PrivateType.class);
         mTypeOfMetaPacket.put(Topic.TopicType.ME, sTypeFactory
                 .constructParametricType(MsgServerMeta.class, typeOfDescPublic, priv, typeOfDescPublic, priv));
     }
 
+    /**
+     * Assign type of generic Public parameter to 'me' topic. Needed for packet deserialization.
+     *
+     * @param typeOfDescPublic - type of public values
+     */
     public void setMeTypeOfMetaPacket(Class<?> typeOfDescPublic) {
         setMeTypeOfMetaPacket(sTypeFactory.constructType(typeOfDescPublic));
     }
 
+    /**
+     * Assign type of generic Public parameter of 'fnd' topic results. Needed for packet deserialization.
+     *
+     * @param typeOfSubPublic - type of subscription (search result) public values
+     */
     public void setFndTypeOfMetaPacket(JavaType typeOfSubPublic) {
         mTypeOfMetaPacket.put(Topic.TopicType.FND, sTypeFactory
                 .constructParametricType(MsgServerMeta.class,
@@ -923,16 +958,31 @@ public class Tinode {
                         sTypeFactory.constructType(String[].class)));
     }
 
+    /**
+     * Assign type of generic Public parameter of 'fnd' topic results. Needed for packet deserialization.
+     *
+     * @param typeOfSubPublic - type of subscription (search result) public values
+     */
     public void setFndTypeOfMetaPacket(Class<?> typeOfSubPublic) {
         setFndTypeOfMetaPacket(sTypeFactory.constructType(typeOfSubPublic));
     }
 
+    /**
+     * Obtain previously assigned type of Meta packet.
+     *
+     * @return type of Meta packet.
+     */
     @SuppressWarnings("WeakerAccess")
     protected JavaType getTypeOfMetaPacket(String topicName) {
         JavaType result = mTypeOfMetaPacket.get(Topic.getTopicTypeByName(topicName));
         return result != null ? result : getDefaultTypeOfMetaPacket();
     }
 
+    /**
+     * Get Jackson's JavaType for mime string.
+     *
+     * @return JavaType for mime string. Cannot be null.
+     */
     protected JavaType resolveMimeType(String mimeType) {
         JavaType type = null;
         if (mMimeResolver != null) {
@@ -950,6 +1000,11 @@ public class Tinode {
         return type;
     }
 
+    /**
+     * Compose User Agent string to be sent to the server.
+     *
+     * @return composed User Agent string.
+     */
     @SuppressWarnings("WeakerAccess")
     protected String makeUserAgent() {
         return mAppName + " (Android " + mOsVersion + "; "
@@ -1041,6 +1096,20 @@ public class Tinode {
                         if (pkt.ctrl.params != null) {
                             mServerVersion = (String) pkt.ctrl.params.get("ver");
                             mServerBuild = (String) pkt.ctrl.params.get("build");
+                            mServerLimits = new HashMap<>();
+                            for (String key : new String[]{MAX_MESSAGE_SIZE, MAX_SUBSCRIBER_COUNT,
+                                    MAX_TAG_COUNT, MAX_FILE_UPLOAD_SIZE}) {
+                                try {
+                                    Number val = ((Number) pkt.ctrl.params.get(key));
+                                    if (val != null) {
+                                        mServerLimits.put(key, val.longValue());
+                                    } else {
+                                        Log.w(TAG, "Server limit '" + key + "' is missing");
+                                    }
+                                } catch (ClassCastException ex) {
+                                    Log.e(TAG, "Failed to obtain server limit '" + key + "'", ex);
+                                }
+                            }
                         }
                         return null;
                     }
@@ -1148,6 +1217,14 @@ public class Tinode {
         return account(uid, scheme, secret, false, null, null, null);
     }
 
+    /**
+     * Change user name and password for accounts using Basic auth scheme.
+     *
+     * @param uid user ID being updated
+     * @param uname new login or null to keep the old login.
+     * @param password new password.
+     * @return PromisedReply of the reply ctrl message.
+     */
     public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password) {
         return updateAccountSecret(uid, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
     }
@@ -1187,6 +1264,14 @@ public class Tinode {
         return loginToken(token, null);
     }
 
+    /**
+     * Reset authentication secret, such as password.
+     *
+     * @param scheme authentication scheme being reset.
+     * @param method validation method to use, such as 'email' or 'tel'.
+     * @param value address to send validation request to using the method above, e.g. 'jdoe@example.com'.
+     * @return PromisedReply of the reply ctrl message
+     */
     public PromisedReply<ServerMessage> requestResetSecret(String scheme, String method, String value) {
         return login(AuthScheme.LOGIN_RESET, AuthScheme.encodeResetSecret(scheme, method, value), null);
     }
@@ -1361,6 +1446,9 @@ public class Tinode {
         }
     }
 
+    /**
+     * Disconnect from the server.
+     */
     public void disconnect() {
         setAutoLogin(null, null);
         if (mConnection != null) {
@@ -1368,6 +1456,9 @@ public class Tinode {
         }
     }
 
+    /**
+     * Log out current user.
+     */
     public void logout() {
         // Best effort to clear device token on logout.
         // The app logs out even if the token request has failed.
@@ -1376,6 +1467,7 @@ public class Tinode {
             public void onFinally() {
                 disconnect();
                 mMyUid = null;
+                mServerLimits = null;
 
                 if (mStore != null) {
                     mStore.logout();
@@ -1649,6 +1741,13 @@ public class Tinode {
         send(Tinode.getJsonMapper().writeValueAsString(message));
     }
 
+    /**
+     * Takes {@link ClientMessage}, converts it to string writes to websocket.
+     *
+     * @param message string to write to websocket.
+     * @param id string used to identify message response so the promise can be resolved.
+     * @return PromisedReply of the reply ctrl message
+     */
     protected PromisedReply<ServerMessage> sendWithPromise(ClientMessage message, String id) {
         PromisedReply<ServerMessage> future = new PromisedReply<>();
         try {
@@ -1675,6 +1774,12 @@ public class Tinode {
         return Tinode.newTopic(this, name, l);
     }
 
+    /**
+     * Instantiate topic from subscription.
+     *
+     * @param sub subscription to use for instantiation.
+     * @return new topic instance.
+     */
     @SuppressWarnings("unchecked")
     Topic newTopic(Subscription sub) {
         if (TOPIC_ME.equals(sub.topic)) {
@@ -1685,6 +1790,12 @@ public class Tinode {
         return new ComTopic(this, sub);
     }
 
+    /**
+     * Get 'me' topic from cache. If missing, instantiate it.
+     *
+     * @param <DP> type of Public value.
+     * @return 'me' topic.
+     */
     public <DP> MeTopic<DP> getOrCreateMeTopic() {
         MeTopic<DP> me = getMeTopic();
         if (me == null) {
@@ -1693,6 +1804,12 @@ public class Tinode {
         return me;
     }
 
+    /**
+     * Get 'fnd' topic from cache. If missing, instantiate it.
+     *
+     * @param <DP> type of Public value.
+     * @return 'fnd' topic.
+     */
     public <DP> FndTopic<DP> getOrCreateFndTopic() {
         FndTopic<DP> fnd = getFndTopic();
         if (fnd == null) {
@@ -1701,6 +1818,11 @@ public class Tinode {
         return fnd;
     }
 
+    /**
+     * Instantiate topic from {meta} packet using meta.desc.
+     *
+     * @return new topic or null if meta.desc is null.
+     */
     @SuppressWarnings("unchecked, UnusedReturnValue")
     protected Topic maybeCreateTopic(MsgServerMeta meta) {
         if (meta.desc == null) {
@@ -1750,6 +1872,15 @@ public class Tinode {
         List<Topic> result = new ArrayList<>(mTopics.values());
         Collections.sort(result);
         return result;
+    }
+
+    /**
+     * Get the most recent timestamp of update to any topic.
+     *
+     * @return timestamp of the last update to any topic.
+     */
+    public Date getTopicsUpdated() {
+        return mTopicsUpdated;
     }
 
     /**
@@ -1966,6 +2097,9 @@ public class Tinode {
         return mTimeAdjustment;
     }
 
+    /**
+     * Interface for converting mime type string to Jackson's JavaType.
+     */
     public interface MimeTypeResolver {
         JavaType resolve(String mimeType);
     }
@@ -2233,6 +2367,7 @@ public class Tinode {
         }
     }
 
+    // Container for storing unresolved futures.
     private static class FutureHolder {
         PromisedReply<ServerMessage> future;
         Date timestamp;

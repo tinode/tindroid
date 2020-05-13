@@ -192,6 +192,11 @@ public class Acs implements Serializable {
         return change > 0;
     }
 
+    /**
+     * Compare this Acs with another.
+     * @param am Acs instance to compare to.
+     * @return true if am represents the same access rights, false otherwise.
+     */
     public boolean equals(Acs am) {
         return (am != null) &&
                 ((mode == null && am.mode == null) || (mode != null && mode.equals(am.mode))) &&

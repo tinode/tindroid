@@ -25,7 +25,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 10;
+    private static final int DATABASE_VERSION = 11;
 
     /**
      * Filename for SQLite file.
@@ -57,7 +57,9 @@ public class BaseDb extends SQLiteOpenHelper {
         // Object is soft-deleted.
         DELETED_SOFT(6),
         // The object is a deletion range marker synchronized with the server.
-        DELETED_SYNCED(7);
+        DELETED_SYNCED(7),
+        // Send failed.
+        FAILED(8);
 
         public int value;
 

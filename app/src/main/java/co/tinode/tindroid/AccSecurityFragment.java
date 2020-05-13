@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -13,6 +14,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +26,8 @@ import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 
 /**
  * Fragment for editing current user details.
@@ -71,6 +76,34 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
         if (me == null || activity == null) {
             return;
+        }
+
+        // Show or hide [Banned Contacts] button.
+
+        final AtomicInteger countBanned = new AtomicInteger(0);
+        Cache.getTinode().getFilteredTopics(new Tinode.TopicFilter() {
+            @Override
+            public boolean isIncluded(Topic t) {
+                if (t.isUserType() && !t.isJoiner()) {
+                    countBanned.addAndGet(1);
+                }
+                return false;
+            }
+        });
+
+        if (countBanned.get() > 0) {
+            activity.findViewById(R.id.bannedUsersPanel).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.buttonBlockedUsers).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Start ChatsActivity + Chats Fragment with Bundle "banned" = true.
+                    Intent intent = new Intent(activity, ChatsActivity.class);
+                    intent.putExtra(ChatsActivity.TAG_FRAGMENT_NAME, ChatsActivity.FRAGMENT_BANNED);
+                    activity.startActivity(intent);
+                }
+            });
+        } else {
+            activity.findViewById(R.id.bannedUsersPanel).setVisibility(View.GONE);
         }
 
         // Attach listeners to editable form fields.

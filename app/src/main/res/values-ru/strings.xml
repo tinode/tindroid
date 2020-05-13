@@ -48,7 +48,7 @@
     <string name="login_rejected">Логин неверен</string>
     <string name="your_permissions">Ваши</string>
     <string name="cancelled">отменено</string>
-    <string name="invalid_file">Невозможно прикрепить этот файл</string>
+    <string name="unable_to_attach_file">Невозможно прикрепить этот файл</string>
     <string name="notification_channel_name">Новое сообщение</string>
     <string name="new_message">Новое сообщение</string>
     <string name="notification_channel_description">Получено новое сообщение</string>
@@ -216,19 +216,22 @@
     <string name="app_server">Сервер</string>
 
     <string name="default_contact_name">Tinode Пользователь %1$s</string>
-    <string name="contacts_permission_missing">Нет прав доступа</string>
+    <string name="permission_missing">Нет прав доступа</string>
     <string name="enter_search_query">Введите происковый запрос</string>
 
     <string name="content_deleted">сообщения удалены</string>
     <string name="image_caption_hint">Название изображения</string>
     <string name="action_download">Сохранить</string>
-    <string name="invalid_content">сообщение не читается</string>
+    <string name="invalid_content">не читается</string>
+    <string name="failed">ошибка</string>
+    <string name="processing">обрабатывается…</string>
 
     <string name="general">Общие</string>
     <string name="delete_account">Удалить аккаунт</string>
 
     <string name="help">Помощь</string>
     <string name="security">Безопасность</string>
+    <string name="blocked_contacts">Заблокированные контакты</string>
     <string name="notifications">Уведомления</string>
     <string name="user_tags_description">Поисковые тэги, по которым вас смогут найти</string>
     <string name="help_explained">Поддержка, про приложение</string>
@@ -240,5 +243,9 @@
     <string name="user_default_permissions_explained">Новые чаты получат эти права доступа</string>
     <string name="confirm_delmsg_for_all">Вы действительно хотите удалить всю переписку для всех участников?</string>
     <string name="confirm_delmsg_for_self">Вы действительно хотите удалить всю переписку? Вы удаляете её только для себя.</string>
-
+    <string name="licenses">Лицензии</string>
+    <string name="action_restore">Разблокировать</string>
+    <string name="send_to">Оправить…</string>
+    <string name="never">не был онлайн</string>
+    <string name="just_now">только что</string>
 </resources>

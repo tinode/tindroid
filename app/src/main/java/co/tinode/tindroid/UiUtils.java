@@ -28,6 +28,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Patterns;
@@ -113,7 +114,7 @@ public class UiUtils {
 
     private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
-    private static final int MAX_BITMAP_SIZE = 1024;
+    static final int MAX_BITMAP_SIZE = 1024;
     private static final int MIN_TAG_LENGTH = 4;
 
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
@@ -129,7 +130,7 @@ public class UiUtils {
     private static String sVisibleTopic = null;
 
     static void setupToolbar(final Activity activity, final VxCard pub,
-                             final String topicName, final boolean online) {
+                             final String topicName, final boolean online, final Date lastSeen) {
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
@@ -146,14 +147,40 @@ public class UiUtils {
                     final String title = pub != null && pub.fn != null ?
                             pub.fn : activity.getString(R.string.placeholder_contact_title);
                     toolbar.setTitle(title);
+                    if (lastSeen != null && !online) {
+                        toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
+                    } else {
+                        toolbar.setSubtitle(null);
+                    }
                     constructToolbarLogo(activity, pub != null ? pub.getBitmap() : null,
                             pub != null ? pub.fn  : null, topicName, online);
                 } else {
                     toolbar.setTitle(R.string.app_name);
+                    toolbar.setSubtitle(null);
                     toolbar.setLogo(null);
                 }
             }
         });
+    }
+
+    // Date format relative to present.
+    @NonNull
+    private static CharSequence relativeDateFormat(Context context, Date then) {
+        if (then == null) {
+            return context.getString(R.string.never);
+        }
+        long thenMillis = then.getTime();
+        if (thenMillis == 0) {
+            return context.getString(R.string.never);
+        }
+        long nowMillis = System.currentTimeMillis();
+        if (nowMillis - thenMillis < DateUtils.MINUTE_IN_MILLIS) {
+            return context.getString(R.string.just_now);
+        }
+
+        return DateUtils.getRelativeTimeSpanString(thenMillis, nowMillis,
+                DateUtils.MINUTE_IN_MILLIS,
+                DateUtils.FORMAT_ABBREV_ALL);
     }
 
     // 0. [Avatar or LetterTileDrawable] 1. [Online indicator] 2. [Typing indicator]
@@ -240,7 +267,7 @@ public class UiUtils {
         return timer;
     }
 
-    static void toolbarSetOnline(final Activity activity, boolean online) {
+    static void toolbarSetOnline(final Activity activity, boolean online, Date lastSeen) {
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
@@ -252,6 +279,11 @@ public class UiUtils {
         }
 
         ((OnlineDrawable) ((LayerDrawable) logo).findDrawableByLayerId(LOGO_LAYER_ONLINE)).setOnline(online);
+        if (online) {
+            toolbar.setSubtitle(null);
+        } else if (lastSeen != null) {
+            toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
+        }
     }
 
     public static String getVisibleTopic() {
@@ -274,7 +306,7 @@ public class UiUtils {
             });
         }
 
-        Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), uid);
+        Account acc = Utils.getSavedAccount(AccountManager.get(activity), uid);
         if (acc != null) {
             requestImmediateContactsSync(acc);
             ContentResolver.setSyncAutomatically(acc, Utils.SYNC_AUTHORITY, true);
@@ -310,7 +342,7 @@ public class UiUtils {
     }
 
     static void onContactsPermissionsGranted(Activity activity) {
-        Account acc = Utils.getSavedAccount(activity, AccountManager.get(activity), Cache.getTinode().getMyId());
+        Account acc = Utils.getSavedAccount(AccountManager.get(activity), Cache.getTinode().getMyId());
         if (acc == null) {
             return;
         }
@@ -416,7 +448,8 @@ public class UiUtils {
         }
     }
 
-    private static Bitmap scaleSquareBitmap(Bitmap bmp) {
+    @NonNull
+    private static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
@@ -436,27 +469,40 @@ public class UiUtils {
                 AVATAR_SIZE, AVATAR_SIZE);
     }
 
-    static Bitmap scaleBitmap(Bitmap bmp) {
+    /**
+     * Scale bitmap down to be under certain liner dimensions but no less than by the given amount.
+     *
+     * @param bmp bitmap to scale.
+     * @param atLeast shrink bitmap by at least this amount (>1). Values <=1 are ignored.
+     * @return scaled bitmap or original, it it does not need ot be scaled.
+     */
+    @NonNull
+    static Bitmap scaleBitmap(@NonNull Bitmap bmp, float atLeast) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        boolean changed = false;
+        float factor = 1.0f;
+        // Calculate scaling factor due to large linear dimensions.
         if (width >= height) {
             if (width > MAX_BITMAP_SIZE) {
-                changed = true;
-                height = height * MAX_BITMAP_SIZE / width;
-                width = MAX_BITMAP_SIZE;
+                factor = (float) width / MAX_BITMAP_SIZE;
             }
         } else {
             if (height > MAX_BITMAP_SIZE) {
-                changed = true;
-                width = width * MAX_BITMAP_SIZE / height;
-                height = MAX_BITMAP_SIZE;
+                factor = (float) height / MAX_BITMAP_SIZE;
             }
         }
-        return changed ? Bitmap.createScaledBitmap(bmp, width, height, true) : bmp;
+        // Additional scaling.
+        factor = Math.max(atLeast, factor);
+        if (factor > 1.0) {
+            height /= factor;
+            width /= factor;
+            return Bitmap.createScaledBitmap(bmp, width, height, true);
+        }
+        return bmp;
     }
 
-    static Bitmap rotateBitmap(Bitmap bmp, int orientation) {
+    @NonNull
+    static Bitmap rotateBitmap(@NonNull Bitmap bmp, int orientation) {
         Matrix matrix = new Matrix();
         switch (orientation) {
             case ExifInterface.ORIENTATION_NORMAL:
@@ -634,7 +680,8 @@ public class UiUtils {
         return null;
     }
 
-    static ByteArrayInputStream bitmapToStream(Bitmap bmp, String mimeType) {
+    @NonNull
+    static ByteArrayInputStream bitmapToStream(@NonNull Bitmap bmp, String mimeType) {
         Bitmap.CompressFormat fmt;
         if ("image/jpeg".equals(mimeType)) {
             fmt = Bitmap.CompressFormat.JPEG;
@@ -806,59 +853,54 @@ public class UiUtils {
                 if (newAcsStr.length() == 0) {
                     newAcsStr.append('N');
                 }
-                try {
-                    PromisedReply<ServerMessage> reply = null;
-                    switch (what) {
-                        case ACTION_UPDATE_SELF_SUB:
-                            //noinspection unchecked
-                            reply = topic.updateMode(null, newAcsStr.toString());
-                            break;
-                        case ACTION_UPDATE_SUB:
-                            //noinspection unchecked
-                            reply = topic.updateMode(uid, newAcsStr.toString());
-                            break;
-                        case ACTION_UPDATE_AUTH:
-                            //noinspection unchecked
-                            reply = topic.updateDefAcs(newAcsStr.toString(), null);
-                            break;
-                        case ACTION_UPDATE_ANON:
-                            //noinspection unchecked
-                            reply = topic.updateDefAcs(null, newAcsStr.toString());
-                            break;
-                        default:
-                            Log.w(TAG, "Unknown action " + what);
-                    }
 
-                    if (reply != null) {
-                        reply.thenApply(
-                                new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                PromisedReply<ServerMessage> reply = null;
+                switch (what) {
+                    case ACTION_UPDATE_SELF_SUB:
+                        //noinspection unchecked
+                        reply = topic.updateMode(null, newAcsStr.toString());
+                        break;
+                    case ACTION_UPDATE_SUB:
+                        //noinspection unchecked
+                        reply = topic.updateMode(uid, newAcsStr.toString());
+                        break;
+                    case ACTION_UPDATE_AUTH:
+                        //noinspection unchecked
+                        reply = topic.updateDefAcs(newAcsStr.toString(), null);
+                        break;
+                    case ACTION_UPDATE_ANON:
+                        //noinspection unchecked
+                        reply = topic.updateDefAcs(null, newAcsStr.toString());
+                        break;
+                    default:
+                        Log.w(TAG, "Unknown action " + what);
+                }
+
+                if (reply != null) {
+                    reply.thenApply(
+                            new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    return null;
+                                }
+                            },
+                            new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                    if (activity.isFinishing() || activity.isDestroyed()) {
                                         return null;
                                     }
-                                },
-                                new PromisedReply.FailureListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                        if (activity.isFinishing() || activity.isDestroyed()) {
-                                            return null;
+
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Log.w(TAG, "Failed", err);
+                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                                         }
-
-                                        activity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Log.w(TAG, "Failed", err);
-                                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                                        return null;
-                                    }
-                                });
-                    }
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                    });
+                                    return null;
+                                }
+                            });
                 }
             }
         });
@@ -871,6 +913,7 @@ public class UiUtils {
         Bitmap bmp = UiUtils.extractBitmap(activity, data);
         if (bmp == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
+            Log.i(TAG, "Failed to extract bitmap from intent");
             return;
         }
         VxCard pub = topic.getPub();
@@ -881,14 +924,7 @@ public class UiUtils {
         }
 
         pub.setBitmap(scaleSquareBitmap(bmp));
-        try {
-            topic.setDescription(pub, null)
-                    .thenCatch(new ToastFailureListener(activity));
-        } catch (NotConnectedException ignored) {
-            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception ignored) {
-            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-        }
+        topic.setDescription(pub, null).thenCatch(new ToastFailureListener(activity));
     }
 
     // Provides callback for when title/subtitle get successfully updated.
@@ -923,25 +959,20 @@ public class UiUtils {
         }
 
         if (pub != null || comment != null) {
-            try {
-                PrivateType priv = null;
-                if (comment != null) {
-                    priv = new PrivateType();
-                    priv.setComment(comment);
-                }
-                topic.setDescription(pub, priv).thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                done.onTitleUpdated();
-                                return null;
-                            }
-                        }, new ToastFailureListener(activity));
-            } catch (NotConnectedException ignored) {
-                Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-            } catch (Exception ignored) {
-                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            PrivateType priv = null;
+            if (comment != null) {
+                priv = new PrivateType();
+                priv.setComment(comment);
             }
+            topic.setDescription(pub, priv).thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            done.onTitleUpdated();
+                            return null;
+                        }
+                    },
+                    new ToastFailureListener(activity));
         }
     }
 
@@ -986,9 +1017,10 @@ public class UiUtils {
 
         ArrayList<String> tags = new ArrayList<>();
         int start = 0;
+        final long maxTagCount = Cache.getTinode().getServerLimit(Tinode.MAX_TAG_COUNT, 16);
         final int length = tagList.length();
         boolean quoted = false;
-        for (int idx = 0; idx < length; idx++) {
+        for (int idx = 0; idx < length && tags.size() < maxTagCount; idx++) {
             if (tagList.charAt(idx) == '\"') {
                 // Toggle 'inside of quotes' state.
                 quoted = !quoted;
@@ -1141,7 +1173,8 @@ public class UiUtils {
         return fmt.format(count) + " " + sizes[bucket];
     }
 
-    static Fragment getVisibleFragment(FragmentManager fm) {
+    @Nullable
+    static Fragment getVisibleFragment(@NonNull FragmentManager fm) {
         List<Fragment> fragments = fm.getFragments();
         for (Fragment f : fragments) {
             if (f.isVisible()) {
@@ -1254,7 +1287,7 @@ public class UiUtils {
             if (mActivity == null || mActivity.isFinishing() || mActivity.isDestroyed()) {
                 return null;
             }
-
+            Log.d(TAG, mActivity.getLocalClassName() + ": promise rejected", err);
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

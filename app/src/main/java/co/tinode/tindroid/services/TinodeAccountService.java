@@ -1,4 +1,4 @@
-package co.tinode.tindroid.account;
+package co.tinode.tindroid.services;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import co.tinode.tindroid.LoginActivity;
+import co.tinode.tindroid.account.Utils;
 
 /**
  * Authenticator service: make Tinode login work nicely with the Android authentication system.

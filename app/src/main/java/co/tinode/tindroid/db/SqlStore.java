@@ -334,8 +334,21 @@ public class SqlStore implements Storage {
                 sync ? BaseDb.Status.SENDING : BaseDb.Status.QUEUED, null);
     }
 
+    @Override
     public boolean msgDiscard(Topic topic, long messageDbId) {
         return MessageDb.delete(mDbh.getWritableDatabase(), messageDbId);
+    }
+
+    @Override
+    public boolean msgFailed(Topic topic, long messageDbId) {
+        return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId,
+                BaseDb.Status.FAILED, null);
+    }
+
+    @Override
+    public boolean msgPruneFailed(Topic topic) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        return MessageDb.deleteFailed(mDbh.getWritableDatabase(), st.id);
     }
 
     @Override

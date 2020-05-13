@@ -14,6 +14,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:background="@drawable/bubble"
+        android:backgroundTint="?android:colorBackground"
         android:padding="12dp"
         android:gravity="center"
         android:text="@string/topic_not_found_or_invalid" />

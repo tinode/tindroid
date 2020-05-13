@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
@@ -63,6 +64,11 @@ public class LoginActivity extends AppCompatActivity {
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
     private Bundle mResultBundle = null;
 
+    static {
+        // Otherwise crash on API 21.
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,15 +101,12 @@ public class LoginActivity extends AppCompatActivity {
         // Check if we need full authentication or just credentials.
         showFragment(db.isCredValidationRequired() ? FRAGMENT_CREDENTIALS : FRAGMENT_LOGIN,
                 null, false);
-
-        // Check and possibly request runtime permissions.
-        // requestPermissions();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        UiUtils.setupToolbar(this, null, null, false);
+        UiUtils.setupToolbar(this, null, null, false, null);
     }
 
     @Override

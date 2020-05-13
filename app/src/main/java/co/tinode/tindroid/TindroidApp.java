@@ -37,6 +37,10 @@ import java.io.IOException;
 import java.util.Date;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.ContactsObserver;
@@ -49,7 +53,7 @@ import io.fabric.sdk.android.Fabric;
 /**
  * A class for providing global context for database access
  */
-public class TindroidApp extends Application {
+public class TindroidApp extends Application implements LifecycleObserver {
     private static final String TAG = "TindroidApp";
 
     private static TindroidApp sContext;
@@ -103,6 +107,8 @@ public class TindroidApp extends Application {
 
         createNotificationChannel();
 
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+
         // Listen to connectivity changes.
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         if (cm == null) {
@@ -134,12 +140,25 @@ public class TindroidApp extends Application {
         } else {
             sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
+    }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    void onStart() {
+        Log.i(TAG, "Lifecycle.Event.ON_START");
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
         if (!TextUtils.isEmpty(uid)) {
             new LoginWithSavedAccount().execute(uid);
+        }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    void onStop() {
+        // Disconnect now, so the connection does not wait for the timeout.
+        Log.i(TAG, "Lifecycle.Event.ON_STOP: disconnect now");
+        if (sTinodeCache != null) {
+            sTinodeCache.disconnect();
         }
     }
 
@@ -203,11 +222,10 @@ public class TindroidApp extends Application {
     // Suppressed lint warning because TindroidApp won't leak: it must exist for the entire lifetime of the app.
     @SuppressLint("StaticFieldLeak")
     private class LoginWithSavedAccount extends AsyncTask<String, Void, Void> {
-
         @Override
         protected Void doInBackground(String... uidWrapper) {
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
-            final Account account = Utils.getSavedAccount(TindroidApp.this, accountManager, uidWrapper[0]);
+            final Account account = Utils.getSavedAccount(accountManager, uidWrapper[0]);
             if (account != null) {
                 // Check if sync is enabled.
                 if (ContentResolver.getMasterSyncAutomatically()) {
@@ -244,7 +262,7 @@ public class TindroidApp extends Application {
                     try {
                         // Sync call throws on error.
                         tinode.connect(sServerHost, sUseTLS).getResult();
-
+                        Cache.attachMeTopic(null);
                         // Logged in successfully. Save refreshed token for future use.
                         accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
                         accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,

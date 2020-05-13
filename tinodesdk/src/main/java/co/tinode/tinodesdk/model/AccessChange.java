@@ -14,10 +14,10 @@ public class AccessChange implements Serializable {
         this.given = given;
     }
 
-    public static AccessChange asWant(String want) {
-        return new AccessChange(want, null);
-    }
-    public static AccessChange asGiven(String given) {
-        return new AccessChange(null, given);
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public String toString() {
+        return "{\"given\":" + (given != null ? " \"" + given + "\"" : " null") +
+                ", \"want\":" + (want != null ? " \"" + want + "\"" : " null}");
     }
 }

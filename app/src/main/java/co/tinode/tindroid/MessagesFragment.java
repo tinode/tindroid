@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,22 +36,26 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.work.Data;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.AccessChange;
@@ -68,8 +73,7 @@ import static android.app.Activity.RESULT_OK;
 /**
  * Fragment handling message display and message sending.
  */
-public class MessagesFragment extends Fragment
-        implements LoaderManager.LoaderCallbacks<AttachmentUploader.Result> {
+public class MessagesFragment extends Fragment {
     private static final String TAG = "MessageFragment";
 
     static final String MESSAGE_TO_SEND = "messageText";
@@ -79,8 +83,8 @@ public class MessagesFragment extends Fragment
     private static final int ACTION_ATTACH_FILE = 100;
     private static final int ACTION_ATTACH_IMAGE = 101;
 
-    private static final int READ_EXTERNAL_STORAGE_PERMISSION = 1;
-    private static final int USE_CAMERA_PERMISSION = 2;
+    private static final int ATTACH_FILE_PERMISSIONS = 1;
+    private static final int ATTACH_IMAGE_PERMISSIONS = 2;
 
     private ComTopic<VxCard> mTopic;
 
@@ -88,9 +92,6 @@ public class MessagesFragment extends Fragment
     private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
-
-    // It cannot be local.
-    private UploadProgress mUploadProgress;
 
     private String mTopicName = null;
     private String mMessageToSend = null;
@@ -137,11 +138,6 @@ public class MessagesFragment extends Fragment
 
         mRecyclerView = view.findViewById(R.id.messages_container);
         mRecyclerView.setLayoutManager(mMessageViewLayoutManager);
-
-        // Creating a strong reference from this Fragment, otherwise it will be immediately garbage collected.
-        mUploadProgress = new UploadProgress();
-        // This needs to be rebound on activity creation.
-        AttachmentUploader.FileUploader.setProgressHandler(mUploadProgress);
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
@@ -248,24 +244,83 @@ public class MessagesFragment extends Fragment
                 // Enable peer.
                 Acs am = new Acs(mTopic.getAccessMode());
                 am.update(new AccessChange(null, "+RW"));
-                try {
                     mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), am.getGiven())))
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception err) {
-                    Log.w(TAG,"Failed to enable peer", err);
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                }
             }
         });
+
+        // Monitor status of attachment uploads and update messages accordingly.
+        WorkManager.getInstance(activity).getWorkInfosByTagLiveData(AttachmentHandler.TAG_UPLOAD_WORK)
+                .observe(activity, new Observer<List<WorkInfo>>() {
+                    @Override
+                    public void onChanged(List<WorkInfo> workInfos) {
+                        for (WorkInfo wi : workInfos) {
+                            WorkInfo.State state = wi.getState();
+                            switch (state) {
+                                case RUNNING: {
+                                    Data data = wi.getProgress();
+                                    String topicName = data.getString(AttachmentHandler.ARG_TOPIC_NAME);
+                                    if (topicName == null) {
+                                        // Not a progress report, just a status change.
+                                        break;
+                                    }
+                                    if (!mTopicName.equals(topicName)) {
+                                        break;
+                                    }
+                                    long progress = data.getLong(AttachmentHandler.ARG_PROGRESS, -1);
+                                    if (progress < 0) {
+                                        break;
+                                    }
+                                    if (progress == 0) {
+                                        // New message. Update.
+                                        runMessagesLoader(mTopicName);
+                                        break;
+                                    }
+                                    long msgId = data.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
+                                    final int position = findItemPositionById(msgId);
+                                    if (position >= 0) {
+                                        long total = data.getLong(AttachmentHandler.ARG_FILE_SIZE, 1L);
+                                        mMessagesAdapter.notifyItemChanged(position, (float) progress / total);
+                                    }
+                                    break;
+                                }
+                                case SUCCEEDED: {
+                                    Data success = wi.getOutputData();
+                                    long msgId = success.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
+                                    if (msgId > 0) {
+                                        activity.syncMessages(msgId, true);
+                                    }
+                                    break;
+                                }
+                                case FAILED: {
+                                    Data failure = wi.getOutputData();
+                                    String topicName = failure.getString(AttachmentHandler.ARG_TOPIC_NAME);
+                                    if (mTopicName.equals(topicName)) {
+                                        long msgId = failure.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
+                                        if (BaseDb.getInstance().getStore().getMessageById(mTopic, msgId) != null) {
+                                            String error = failure.getString(AttachmentHandler.ARG_ERROR);
+                                            runMessagesLoader(mTopicName);
+                                            Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
+                                            Log.i(TAG, "Upload failed: " + error);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void onResume() {
-
         super.onResume();
+
+        final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
 
         setHasOptionsMenu(true);
 
@@ -286,11 +341,8 @@ public class MessagesFragment extends Fragment
 
         mRefresher.setRefreshing(false);
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity != null) {
-            updateFormValues();
-            activity.sendNoteRead(0);
-        }
+        updateFormValues();
+        activity.sendNoteRead(0);
     }
 
     void runMessagesLoader(String topicName) {
@@ -330,7 +382,7 @@ public class MessagesFragment extends Fragment
                     acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
         }
 
-        if (mTopic.isWriter()) {
+        if (mTopic.isWriter() && !mTopic.isBlocked()) {
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
@@ -387,7 +439,6 @@ public class MessagesFragment extends Fragment
     public void onDestroy() {
         super.onDestroy();
 
-        mUploadProgress = null;
         // Close cursor.
         mMessagesAdapter.resetContent(null);
     }
@@ -421,44 +472,60 @@ public class MessagesFragment extends Fragment
         }
 
         int id = item.getItemId();
-        try {
-            switch (id) {
-                case R.id.action_clear:
-                    mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            runMessagesLoader(mTopicName);
-                            return null;
-                        }
-                    }, mFailureListener);
-                    return true;
+        switch (id) {
+            case R.id.action_clear:
+                mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        runMessagesLoader(mTopicName);
+                        return null;
+                    }
+                }, mFailureListener);
+                return true;
 
-                case R.id.action_unmute:
-                case R.id.action_mute:
-                    mTopic.updateMuted(!mTopic.isMuted());
-                    activity.invalidateOptionsMenu();
-                    return true;
+            case R.id.action_unmute:
+            case R.id.action_mute:
+                mTopic.updateMuted(!mTopic.isMuted());
+                activity.invalidateOptionsMenu();
+                return true;
 
-                case R.id.action_leave:
-                case R.id.action_delete:
-                    showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
-                    return true;
+            case R.id.action_leave:
+            case R.id.action_delete:
+                showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
+                return true;
 
-                case R.id.action_offline:
-                    Cache.getTinode().reconnectNow(true,false);
-                    break;
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
-        } catch (NotConnectedException ignored) {
-            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception ex) {
-            Log.w(TAG, "Muting failed", ex);
-            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            case R.id.action_offline:
+                Cache.getTinode().reconnectNow(true,false);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
         }
 
-
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == ATTACH_FILE_PERMISSIONS) {
+            // Request to attach file.
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openFileSelector(getActivity());
+            }
+        } else if (requestCode == ATTACH_IMAGE_PERMISSIONS) {
+            // Request to attach image
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openImageSelector(getActivity());
+            }
+        }
+    }
+
+    void setRefreshing(boolean active) {
+        if (!isAdded()) {
+            return;
+        }
+        mRefresher.setRefreshing(active);
     }
 
     // Confirmation dialog "Do you really want to do X?"
@@ -471,23 +538,16 @@ public class MessagesFragment extends Fragment
         confirmBuilder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                try {
-                    mTopic.delete(true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            Intent intent = new Intent(activity, ChatsActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            startActivity(intent);
-                            activity.finish();
-                            return null;
-                        }
-                    }, mFailureListener);
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception err) {
-                    Log.w(TAG,"Failed to delete topic", err);
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                }
+                mTopic.delete(true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        Intent intent = new Intent(activity, ChatsActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        startActivity(intent);
+                        activity.finish();
+                        return null;
+                    }
+                }, mFailureListener);
             }
         });
         confirmBuilder.show();
@@ -519,49 +579,42 @@ public class MessagesFragment extends Fragment
             @Override
             public void onClick(final View view) {
                 PromisedReply<ServerMessage> response = null;
-                try {
-                    switch (view.getId()) {
-                        case R.id.buttonAccept:
-                            final String mode = mTopic.getAccessMode().getGiven();
-                            response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
-                            if (mTopic.isP2PType()) {
-                                // For P2P topics change 'given' permission of the peer too.
-                                // In p2p topics the other user has the same name as the topic.
-                                response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                        return mTopic.setMeta(
-                                                new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), mode)));
-                                    }
-                                });
-                            }
-                            break;
+                switch (view.getId()) {
+                    case R.id.buttonAccept:
+                        final String mode = mTopic.getAccessMode().getGiven();
+                        response = mTopic.setMeta(new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mode)));
+                        if (mTopic.isP2PType()) {
+                            // For P2P topics change 'given' permission of the peer too.
+                            // In p2p topics the other user has the same name as the topic.
+                            response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    return mTopic.setMeta(
+                                            new MsgSetMeta<VxCard, PrivateType>(new MetaSetSub(mTopic.getName(), mode)));
+                                }
+                            });
+                        }
+                        break;
 
-                        case R.id.buttonIgnore:
-                            response = mTopic.delete(true);
-                            break;
+                    case R.id.buttonIgnore:
+                        response = mTopic.delete(true);
+                        break;
 
-                        case R.id.buttonBlock:
-                            mTopic.updateMode(null, "-JP");
-                            break;
+                    case R.id.buttonBlock:
+                        mTopic.updateMode(null, "-JP");
+                        break;
 
-                        case R.id.buttonReport:
-                            mTopic.updateMode(null, "-JP");
-                            HashMap<String, Object> json = new HashMap<>();
-                            json.put("action", "report");
-                            json.put("tagret", mTopic.getName());
-                            Drafty msg = new Drafty().attachJSON(json);
-                            Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
-                            break;
+                    case R.id.buttonReport:
+                        mTopic.updateMode(null, "-JP");
+                        HashMap<String, Object> json = new HashMap<>();
+                        json.put("action", "report");
+                        json.put("tagret", mTopic.getName());
+                        Drafty msg = new Drafty().attachJSON(json);
+                        Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
+                        break;
 
-                        default:
-                            throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
-                    }
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception err) {
-                    Log.w(TAG,"Failed to handle chat invitation", err);
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    default:
+                        throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
                 }
 
                 invitation.dismiss();
@@ -607,8 +660,15 @@ public class MessagesFragment extends Fragment
         }
     }
 
-    private void openFileSelector(Activity activity) {
-        if (activity.isFinishing() || activity.isDestroyed()) {
+    private void openFileSelector(@Nullable Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    ATTACH_FILE_PERMISSIONS);
             return;
         }
 
@@ -620,19 +680,19 @@ public class MessagesFragment extends Fragment
                     Intent.createChooser(intent, getString(R.string.select_file)), ACTION_ATTACH_FILE);
         } catch (ActivityNotFoundException ex) {
             Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
+            Log.i(TAG, "Unable to open file chooser", ex);
         }
     }
 
-    private void openImageSelector(Activity activity) {
-        if (activity.isFinishing() || activity.isDestroyed()) {
+    private void openImageSelector(@Nullable Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
         if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
-            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA},
-                    USE_CAMERA_PERMISSION);
-            Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
-
+            ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
+                    ATTACH_IMAGE_PERMISSIONS);
             return;
         }
 
@@ -713,26 +773,30 @@ public class MessagesFragment extends Fragment
                         return;
                     }
 
-                    if (!UiUtils.isPermissionGranted(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                        ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
-                            READ_EXTERNAL_STORAGE_PERMISSION);
+                    if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        ActivityCompat.requestPermissions(activity,
+                                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA},
+                                requestCode == ACTION_ATTACH_IMAGE ? ATTACH_IMAGE_PERMISSIONS : ATTACH_FILE_PERMISSIONS);
                         return;
                     }
 
                     final Bundle args = new Bundle();
                     if (data == null || data.getData() == null) {
                         // Camera
-                        args.putString("file", mCurrentPhotoFile);
-                        args.putParcelable("uri", mCurrentPhotoUri);
+                        args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
+                        args.putParcelable(AttachmentHandler.ARG_SRC_URI, mCurrentPhotoUri);
                         mCurrentPhotoFile = null;
                         mCurrentPhotoUri = null;
                     } else {
                         // Gallery
-                        args.putParcelable("uri", data.getData());
+                        args.putParcelable(AttachmentHandler.ARG_SRC_URI, data.getData());
                     }
 
-                    args.putString("operation", requestCode == ACTION_ATTACH_IMAGE ? "image" : "file");
-                    args.putString("topic", mTopicName);
+                    args.putString(AttachmentHandler.ARG_OPERATION,
+                            requestCode == ACTION_ATTACH_IMAGE ?
+                                    AttachmentHandler.ARG_OPERATION_IMAGE :
+                                    AttachmentHandler.ARG_OPERATION_FILE);
+                    args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
 
                     // Show attachment preview.
                     activity.showFragment(requestCode == ACTION_ATTACH_IMAGE ?
@@ -789,108 +853,5 @@ public class MessagesFragment extends Fragment
         }
 
         return mMessagesAdapter.findItemPositionById(id, first, last);
-    }
-
-    // Loader interface
-
-    @NonNull
-    @Override
-    public Loader<AttachmentUploader.Result> onCreateLoader(int id, Bundle args) {
-        return new AttachmentUploader.FileUploader(getActivity(), args);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<AttachmentUploader.Result> loader, final AttachmentUploader.Result data) {
-        final MessageActivity activity = (MessageActivity) getActivity();
-
-        if (activity != null) {
-            // Kill the loader otherwise it will keep uploading the same file whenever the activity
-            // is created.
-            LoaderManager.getInstance(activity).destroyLoader(loader.getId());
-        } else {
-            return;
-        }
-
-        // Avoid processing the same result twice;
-        if (data.processed) {
-            return;
-        } else {
-            data.processed = true;
-        }
-
-        if (data.msgId > 0) {
-            activity.syncMessages(data.msgId, true);
-        } else if (data.error != null) {
-            runMessagesLoader(mTopicName);
-            Toast.makeText(activity, data.error, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<AttachmentUploader.Result> loader) {
-    }
-
-    void setProgressIndicator(boolean active) {
-        if (!isAdded()) {
-            return;
-        }
-        mRefresher.setRefreshing(active);
-    }
-
-    private class UploadProgress implements AttachmentUploader.Progress {
-
-        UploadProgress() {
-        }
-
-        public void onStart(final String topicName, final long msgId) {
-            // Reload the cursor.
-            runMessagesLoader(mTopicName);
-        }
-
-        // Returns true to continue the upload, false to cancel.
-        public boolean onProgress(final String topicName, final int loaderId, final long msgId,
-                                  final long progress, final long total) {
-            // DEBUG -- slow down the upload progress.
-            /*
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            */
-            // debug
-
-            // Check for cancellation.
-            Integer oldLoaderId = mMessagesAdapter.getLoaderMapping(msgId);
-            if (oldLoaderId == null) {
-                mMessagesAdapter.addLoaderMapping(msgId, loaderId);
-            } else if (oldLoaderId != loaderId) {
-                // Loader id has changed, cancel.
-                return false;
-            }
-
-            if (!isAdded() || !isVisible() || mTopicName == null || !mTopicName.equals(topicName)) {
-                return true;
-            }
-
-            Activity activity = getActivity();
-            if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
-                return true;
-            }
-
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    final int position = findItemPositionById(msgId);
-                    if (position < 0) {
-                        return;
-                    }
-                    mMessagesAdapter.notifyItemChanged(position,
-                            total > 0 ? (float) progress / total : (float) progress);
-                }
-            });
-
-            return true;
-        }
     }
 }

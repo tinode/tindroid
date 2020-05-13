@@ -14,6 +14,7 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.Settings;
+import android.text.TextUtils;
 
 import java.util.Collection;
 import java.util.Date;
@@ -44,7 +45,7 @@ public class ContactsManager {
      * @return the server syncState that should be used in our next
      * sync request.
      */
-    static synchronized Date updateContacts(Context context, Account account,
+    public static synchronized Date updateContacts(Context context, Account account,
                                             Collection<Subscription<VxCard,?>> subscriptions,
                                             Date lastSyncMarker,
                                             // It's a false positive.
@@ -349,7 +350,7 @@ public class ContactsManager {
      * @param context the Authenticator Activity context
      * @param account the Account who's visibility we're changing
      */
-    static void makeAccountContactsVisibile(Context context, Account account) {
+    public static void makeAccountContactsVisibile(Context context, Account account) {
         ContentValues values = new ContentValues();
         values.put(RawContacts.ACCOUNT_NAME, account.name);
         values.put(RawContacts.ACCOUNT_TYPE, Utils.ACCOUNT_TYPE);
@@ -444,22 +445,26 @@ public class ContactsManager {
     // Process Private field, add emails and phones to Public.
     private static void dedupe(VxCard pub, Object priv) {
         if (priv instanceof String[]) {
-            Utils.ContactHolder ch = new Utils.ContactHolder((String[]) priv);
-            if (ch.emails != null || ch.phones != null) {
-                if (pub == null) {
-                    pub = new VxCard();
+            for (String match : (String[]) priv) {
+                // 'email:value' or 'tel:value'
+                String[] parts = TextUtils.split(match, ":");
+                if (parts.length < 2) {
+                    continue;
                 }
-
-                if (ch.emails != null) {
-                    for (String email : ch.emails) {
-                        pub.addEmail(email, VCard.TYPE_OTHER);
-                    }
+                String value = parts[1].trim();
+                if (value.length() == 0) {
+                    continue;
                 }
-
-                if (ch.phones != null) {
-                    for (String phone : ch.phones) {
-                        pub.addPhone(phone, VCard.TYPE_OTHER);
+                if ("email".equals(parts[0])) {
+                    if (pub == null) {
+                        pub = new VxCard();
                     }
+                    pub.addEmail(value, VCard.TYPE_OTHER);
+                } else if ("tel".equals(parts[0])) {
+                    if (pub == null) {
+                        pub = new VxCard();
+                    }
+                    pub.addPhone(value, VCard.TYPE_OTHER);
                 }
             }
         }

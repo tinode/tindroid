@@ -261,7 +261,7 @@ public class CreateGroupFragment extends Fragment {
 
         if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
-        } else if (!activity.isReadContactsPermissionRequested()) {
+        } else if (activity.shouldRequestReadContactsPermission()) {
             activity.setReadContactsPermissionRequested();
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                     UiUtils.CONTACTS_PERMISSION_ID);

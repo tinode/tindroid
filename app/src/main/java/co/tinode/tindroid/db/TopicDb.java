@@ -43,14 +43,6 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_TOPIC = "name";
     /**
-     * Topic type
-     */
-    public static final String COLUMN_NAME_TYPE = "type";
-    /**
-     * Should the topic be visible to user, i.e. is it a p2p or grp topic?
-     */
-    public static final String COLUMN_NAME_VISIBLE = "visible";
-    /**
      * When the topic was created
      */
     public static final String COLUMN_NAME_CREATED = "created";
@@ -107,6 +99,14 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_TAGS = "tags";
     /**
+     * Timestamp when the topic was last online.
+     */
+    public static final String COLUMN_NAME_LAST_SEEN = "last_seen";
+    /**
+     * User agent of the last client when the topic was last online.
+     */
+    public static final String COLUMN_NAME_LAST_SEEN_UA = "last_seen_ua";
+    /**
      * MeTopic credentials, serialized as TEXT.
      */
     public static final String COLUMN_NAME_CREDS = "creds";
@@ -124,22 +124,22 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_STATUS = 2;
     static final int COLUMN_IDX_TOPIC = 3;
-    static final int COLUMN_IDX_TYPE = 4;
-    static final int COLUMN_IDX_VISIBLE = 5;
-    static final int COLUMN_IDX_CREATED = 6;
-    static final int COLUMN_IDX_UPDATED = 7;
-    static final int COLUMN_IDX_READ = 8;
-    static final int COLUMN_IDX_RECV = 9;
-    static final int COLUMN_IDX_SEQ = 10;
-    static final int COLUMN_IDX_CLEAR = 11;
-    static final int COLUMN_IDX_MAX_DEL = 12;
-    static final int COLUMN_IDX_ACCESSMODE = 13;
-    static final int COLUMN_IDX_DEFACS = 14;
-    static final int COLUMN_IDX_LASTUSED = 15;
-    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 16;
-    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 17;
-    static final int COLUMN_IDX_NEXT_UNSENT_SEQ =18;
-    static final int COLUMN_IDX_TAGS = 19;
+    static final int COLUMN_IDX_CREATED = 4;
+    static final int COLUMN_IDX_UPDATED = 5;
+    static final int COLUMN_IDX_READ = 6;
+    static final int COLUMN_IDX_RECV = 7;
+    static final int COLUMN_IDX_SEQ = 8;
+    static final int COLUMN_IDX_CLEAR = 9;
+    static final int COLUMN_IDX_MAX_DEL = 10;
+    static final int COLUMN_IDX_ACCESSMODE = 11;
+    static final int COLUMN_IDX_DEFACS = 12;
+    static final int COLUMN_IDX_LASTUSED = 13;
+    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 14;
+    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 15;
+    static final int COLUMN_IDX_NEXT_UNSENT_SEQ =16;
+    static final int COLUMN_IDX_TAGS = 17;
+    static final int COLUMN_IDX_LAST_SEEN = 18;
+    static final int COLUMN_IDX_LAST_SEEN_UA = 19;
     static final int COLUMN_IDX_CREDS = 20;
     static final int COLUMN_IDX_PUBLIC = 21;
     static final int COLUMN_IDX_PRIVATE = 22;
@@ -154,8 +154,6 @@ public class TopicDb implements BaseColumns {
                     + " REFERENCES " + AccountDb.TABLE_NAME + "(" + AccountDb._ID + ")," +
                     COLUMN_NAME_STATUS + " INT," +
                     COLUMN_NAME_TOPIC + " TEXT," +
-                    COLUMN_NAME_TYPE + " INT," +
-                    COLUMN_NAME_VISIBLE + " INT," +
                     COLUMN_NAME_CREATED + " INT," +
                     COLUMN_NAME_UPDATED + " INT," +
                     COLUMN_NAME_READ + " INT," +
@@ -170,6 +168,8 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_MAX_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_NEXT_UNSENT_SEQ + " INT," +
                     COLUMN_NAME_TAGS + " TEXT," +
+                    COLUMN_NAME_LAST_SEEN + " INT," +
+                    COLUMN_NAME_LAST_SEEN_UA + " TEXT," +
                     COLUMN_NAME_CREDS + " TEXT," +
                     COLUMN_NAME_PUBLIC + " TEXT," +
                     COLUMN_NAME_PRIVATE + " TEXT)";
@@ -208,15 +208,11 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_STATUS, status.value);
         values.put(COLUMN_NAME_TOPIC, topic.getName());
 
-        Topic.TopicType tp = topic.getTopicType();
-        values.put(COLUMN_NAME_TYPE, tp.val());
-        values.put(COLUMN_NAME_VISIBLE, tp == Topic.TopicType.GRP || tp == Topic.TopicType.P2P ? 1 : 0);
         values.put(COLUMN_NAME_CREATED, lastUsed.getTime());
         if (topic.getUpdated() != null) {
             // Updated is null at the topic creation time
             values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
         }
-        // values.put(COLUMN_NAME_DELETED, NULL);
         values.put(COLUMN_NAME_READ, topic.getRead());
         values.put(COLUMN_NAME_RECV, topic.getRecv());
         values.put(COLUMN_NAME_SEQ, topic.getSeq());
@@ -225,6 +221,12 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
         values.put(COLUMN_NAME_TAGS, BaseDb.serializeStringArray(topic.getTags()));
+        if (topic.getLastSeen() != null) {
+            values.put(COLUMN_NAME_LAST_SEEN, topic.getLastSeen().getTime());
+        }
+        if (topic.getLastSeenUA() != null) {
+            values.put(COLUMN_NAME_LAST_SEEN_UA, topic.getLastSeenUA());
+        }
         if (topic instanceof MeTopic) {
             values.put(COLUMN_NAME_CREDS, BaseDb.serialize(((MeTopic) topic).getCreds()));
         }
@@ -279,6 +281,12 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
         values.put(COLUMN_NAME_TAGS, BaseDb.serializeStringArray(topic.getTags()));
+        if (topic.getLastSeen() != null) {
+            values.put(COLUMN_NAME_LAST_SEEN, topic.getLastSeen().getTime());
+        }
+        if (topic.getLastSeenUA() != null) {
+            values.put(COLUMN_NAME_LAST_SEEN_UA, topic.getLastSeenUA());
+        }
         if (topic instanceof MeTopic) {
             values.put(COLUMN_NAME_CREDS, BaseDb.serialize(((MeTopic) topic).getCreds()));
         }

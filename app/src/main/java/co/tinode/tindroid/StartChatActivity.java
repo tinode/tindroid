@@ -19,7 +19,8 @@ import androidx.viewpager.widget.ViewPager;
 /**
  * View to display a single conversation
  */
-public class StartChatActivity extends AppCompatActivity {
+public class StartChatActivity extends AppCompatActivity
+        implements FindFragment.ReadContactsPermissionChecker {
 
     @SuppressWarnings("unused")
     private static final String TAG = "StartChatActivity";
@@ -92,12 +93,11 @@ public class StartChatActivity extends AppCompatActivity {
         }
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    boolean isReadContactsPermissionRequested() {
-        return mReadContactsPermissionsAlreadyRequested;
+    public boolean shouldRequestReadContactsPermission() {
+        return !mReadContactsPermissionsAlreadyRequested;
     }
 
-    void setReadContactsPermissionRequested() {
+    public void setReadContactsPermissionRequested() {
         mReadContactsPermissionsAlreadyRequested = true;
     }
 

@@ -1,16 +1,9 @@
 package co.tinode.tindroid;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,45 +11,19 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.flexbox.FlexboxLayout;
 
-import java.util.Collection;
-import java.util.HashMap;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import co.tinode.tindroid.account.ContactsManager;
-import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.widgets.LetterTileDrawable;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
-import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgSetMeta;
-import co.tinode.tinodesdk.model.PrivateType;
-import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
-
-import static android.app.Activity.RESULT_OK;
 
 /**
  * Topic permissions fragment: p2p or a group topic.

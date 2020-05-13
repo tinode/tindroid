@@ -94,6 +94,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (sub.online != null) {
             mOnline = sub.online;
         }
+        mLastSeen = sub.seen;
     }
 
     protected Topic(Tinode tinode, String name, Description<DP, DR> desc) {
@@ -561,7 +562,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mDesc.acs == null) {
             mDesc.acs = new Acs();
         }
-        return mDesc.acs.update(ac);
+
+        boolean updated = mDesc.acs.update(ac);
+        if (updated && mListener != null) {
+            mListener.onMetaDesc(mDesc);
+        }
+
+        return updated;
     }
 
     /**
@@ -608,22 +615,44 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return updateMode(null, muted ? "-P" : "+P");
     }
 
+    /**
+     * Check if user is the Owner (O) of the topic.
+     */
     public boolean isOwner() {
         return mDesc.acs != null && mDesc.acs.isOwner();
     }
 
+    /**
+     * Check if user has Read (R) permission.
+     */
     public boolean isReader() {
         return mDesc.acs != null && mDesc.acs.isReader();
     }
 
+    /**
+     * Check if user has Write (W) permission.
+     */
     public boolean isWriter() {
         return mDesc.acs != null && mDesc.acs.isWriter();
     }
 
+    /**
+     * Check if user has Join (J) permission on both sides: 'want' and 'given'.
+     */
     public boolean isJoiner() {
         return mDesc.acs != null && mDesc.acs.isJoiner();
     }
 
+    /**
+     * Check if current user is blocked in the topic (does not have J permission on the Given side).
+     */
+    public boolean isBlocked() {
+        return mDesc.acs == null || !mDesc.acs.isJoiner(Acs.Side.GIVEN);
+    }
+
+    /**
+     * Check if user has permission to hard-delete messages (D).
+     */
     public boolean isDeleter() {
         return mDesc.acs != null && mDesc.acs.isDeleter();
     }
@@ -662,6 +691,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return Math.max(unread, 0);
     }
 
+    /**
+     * Get topic's online status.
+     * @return true if topic is online, false otherwise.
+     */
     public boolean getOnline() {
         return mOnline;
     }
@@ -685,6 +718,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return getLocal() != null;
     }
 
+    /**
+     * Store topic to DB or delete it.
+     * @param on true to start persisting the topic, false to stop (delete).
+     */
     protected void persist(boolean on) {
         if (mStore != null) {
             if (on) {
@@ -697,16 +734,36 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    protected void setLastSeen(Date when, String ua) {
+    /**
+     * Update timestamp and user agent of when the topic was last online.
+     */
+    public void setLastSeen(Date when, String ua) {
         mLastSeen = new LastSeen(when, ua);
     }
 
+    /**
+     * Update timestamp of when the topic was last online.
+     */
     protected void setLastSeen(Date when) {
         if (mLastSeen != null) {
             mLastSeen.when = when;
         } else {
             mLastSeen = new LastSeen(when);
         }
+    }
+
+    /**
+     * Get timestamp when the topic was last online, if available.
+     */
+    public Date getLastSeen() {
+        return mLastSeen != null ? mLastSeen.when : null;
+    }
+
+    /**
+     * Get user agent string associated with the time when the topic was last online.
+     */
+    public String getLastSeenUA() {
+        return mLastSeen != null ? mLastSeen.ua : null;
     }
 
     /**
@@ -1512,7 +1569,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * Tells how many topic subscribers have reported the message as read.
      *
      * @param seq sequence id of the message to test.
-     * @return count of recepients who claim to have read the message.
+     * @return count of recipients who claim to have read the message.
      */
     public int msgReadCount(int seq) {
         int count = 0;
@@ -1530,22 +1587,62 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return count;
     }
 
+    /**
+     * Get type of the topic.
+     *
+     * @return topic type.
+     */
     public TopicType getTopicType() {
         return getTopicTypeByName(mName);
     }
 
+    /**
+     * Check if topic is 'me' type.
+     *
+     * @return true if topic is 'me' type, false otherwise.
+     */
     public boolean isMeType() {
         return getTopicType() == TopicType.ME;
     }
 
+    /**
+     * Check if topic is 'p2p' type.
+     *
+     * @return true if topic is 'p2p' type, false otherwise.
+     */
     public boolean isP2PType() {
         return getTopicType() == TopicType.P2P;
     }
 
+    /**
+     * Check if topic is a communication topic, i.e. a 'p2p' or 'grp' type.
+     *
+     * @return true if topic is 'p2p' or 'grp', false otherwise.
+     */
+    public boolean isUserType() {
+        switch (getTopicType()) {
+            case P2P:
+            case GRP:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if topic is 'fnd' type.
+     *
+     * @return true if topic is 'fnd' type, false otherwise.
+     */
     public boolean isFndType() {
         return getTopicType() == TopicType.FND;
     }
 
+    /**
+     * Check if topic is 'grp' type.
+     *
+     * @return true if topic is 'grp' type, false otherwise.
+     */
     public boolean isGrpType() {
         return getTopicType() == TopicType.GRP;
     }
@@ -1738,24 +1835,25 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 break;
 
             case ACS:
-                sub = getSubscription(pres.src);
+                String userId = pres.src != null ? pres.src : mTinode.getMyId();
+                sub = getSubscription(userId);
                 if (sub == null) {
                     Acs acs = new Acs();
                     acs.update(pres.dacs);
                     if (acs.isModeDefined()) {
                         sub = new Subscription<>();
                         sub.topic = getName();
-                        sub.user = pres.src;
+                        sub.user = userId;
                         sub.acs = acs;
                         sub.updated = new Date();
-                        User<SP> user = mTinode.getUser(pres.src);
+                        User<SP> user = mTinode.getUser(userId);
                         if (user == null) {
-                            getMeta(getMetaGetBuilder().withSub(pres.src).build());
+                            getMeta(getMetaGetBuilder().withSub(userId).build());
                         } else {
                             sub.pub = user.pub;
                         }
                     } else {
-                        Log.w(TAG, "Invalid access mode update '" + pres.dacs + "'");
+                        Log.w(TAG, "Invalid access mode update '" + pres.dacs.toString() + "'");
                     }
                 } else {
                     // Update to an existing subscription.

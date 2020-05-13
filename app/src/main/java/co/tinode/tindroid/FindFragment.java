@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -17,7 +18,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,8 +32,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tinodesdk.FndTopic;
-import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.NotSynchronizedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.MetaSetDesc;
@@ -102,18 +100,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-        mAdapter = new FindAdapter(activity, mImageLoader, new FindAdapter.ClickListener() {
-            @Override
-            public void onCLick(final String topicName) {
-                Intent intent = new Intent(activity, MessageActivity.class);
-                // See discussion here: https://github.com/tinode/tindroid/issues/39
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("topic", topicName);
-                activity.startActivity(intent);
-                // Remove StartChatActivity from stack.
-                activity.finish();
-            }
-        });
+        mAdapter = new FindAdapter(activity, mImageLoader, new ContactClickListener());
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);
 
@@ -145,32 +132,25 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return;
         }
 
-        try {
-            Cache.attachFndTopic(mFndListener)
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            return null;
+        Cache.attachFndTopic(mFndListener)
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+                        if (activity != null) {
+                            mAdapter.resetFound(activity, mSearchTerm);
+                            // Refresh cursor.
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    restartLoader(mSearchTerm);
+                                }
+                            });
                         }
-                    }, new PromisedReply.FailureListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onFailure(Exception err) {
-                            Log.w(TAG, "Error subscribing to 'fnd' topic", err);
-                            return null;
-                        }
-                    });
-        } catch (NotSynchronizedException ignored) {
-        } catch (NotConnectedException ignored) {
-            /* offline - ignored */
-            Toast.makeText(fragment.getContext(), R.string.no_connection, Toast.LENGTH_SHORT).show();
-        } catch (Exception err) {
-            Log.i(TAG, "Subscription failed", err);
-            Toast.makeText(fragment.getContext(), R.string.action_failed, Toast.LENGTH_LONG).show();
-        }
-
-        mAdapter.resetFound(getActivity(), mSearchTerm);
-        // Refresh cursor.
-        restartLoader(mSearchTerm);
+                        return null;
+                    }
+                })
+                .thenCatch(new UiUtils.ToastFailureListener(getActivity()));
     }
 
     @Override
@@ -200,7 +180,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         menu.clear();
         inflater.inflate(R.menu.menu_contacts, menu);
 
-        final Activity activity = getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -299,7 +279,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final Activity activity = getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return true;
         }
@@ -381,7 +361,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         if (mProgress == null) {
             return;
         }
-        Activity activity = getActivity();
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -420,7 +400,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
     private void restartLoader(String searchTerm) {
-        final StartChatActivity activity = (StartChatActivity) getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
             return;
         }
@@ -430,9 +410,9 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             Bundle args = new Bundle();
             args.putString(ContactsLoaderCallback.ARG_SEARCH_TERM, searchTerm);
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, args, mContactsLoaderCallback);
-        } else if (!activity.isReadContactsPermissionRequested()) {
+        } else if (((ReadContactsPermissionChecker) activity).shouldRequestReadContactsPermission()) {
             mAdapter.setContactsPermission(false);
-            activity.setReadContactsPermissionRequested();
+            ((ReadContactsPermissionChecker) activity).setReadContactsPermissionRequested();
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
                     UiUtils.CONTACTS_PERMISSION_ID);
         }
@@ -445,7 +425,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Sync p2p topics to Contacts.
-                Activity activity = getActivity();
+                AppCompatActivity activity = (AppCompatActivity) getActivity();
                 if (activity == null) {
                     return;
                 }
@@ -455,5 +435,32 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                 restartLoader(mSearchTerm);
             }
         }
+    }
+
+    private class ContactClickListener implements FindAdapter.ClickListener {
+        @Override
+        public void onClick(String topicName) {
+            AppCompatActivity activity = (AppCompatActivity) getActivity();
+            if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+            Intent initial = activity.getIntent();
+            Intent launcher = new Intent(activity, MessageActivity.class);
+            Uri uri = initial != null ? initial.<Uri>getParcelableExtra(Intent.EXTRA_STREAM) : null;
+            if (uri != null) {
+                launcher.setDataAndType(uri, initial.getType());
+                launcher.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+            // See discussion here: https://github.com/tinode/tindroid/issues/39
+            launcher.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            launcher.putExtra("topic", topicName);
+            startActivity(launcher);
+            activity.finish();
+        }
+    }
+
+    interface ReadContactsPermissionChecker {
+        boolean shouldRequestReadContactsPermission();
+        void setReadContactsPermissionRequested();
     }
 }

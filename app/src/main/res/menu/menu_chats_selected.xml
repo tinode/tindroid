@@ -14,10 +14,11 @@
     </group>
 
     <item
-        android:id="@+id/action_delete"
+        android:id="@+id/action_unblock"
         android:orderInCategory="100"
-        android:title="@string/action_delete"
-        android:icon="@drawable/ic_delete"
+        android:title="@string/action_restore"
+        android:icon="@drawable/ic_restore"
+        android:visible="false"
         app:showAsAction="ifRoom" />
 
     <group
@@ -25,14 +26,14 @@
         android:visible="true">
         <item
             android:id="@+id/action_mute"
-            android:orderInCategory="101"
+            android:orderInCategory="200"
             android:title="@string/action_mute"
             android:icon="@drawable/ic_notifications_off"
             app:showAsAction="ifRoom" />
 
         <item
             android:id="@+id/action_unmute"
-            android:orderInCategory="101"
+            android:orderInCategory="201"
             android:title="@string/action_unmute"
             android:icon="@drawable/ic_notifications"
             android:visible="false"
@@ -40,17 +41,25 @@
 
         <item
             android:id="@+id/action_archive"
-            android:orderInCategory="102"
+            android:orderInCategory="202"
             android:title="@string/action_archive"
             android:icon="@drawable/ic_archive"
             app:showAsAction="ifRoom" />
 
         <item
             android:id="@+id/action_unarchive"
-            android:orderInCategory="103"
+            android:orderInCategory="203"
             android:title="@string/action_unarchive"
             android:icon="@drawable/ic_unarchive"
             android:visible="false"
             app:showAsAction="ifRoom" />
     </group>
+
+    <item
+        android:id="@+id/action_delete"
+        android:orderInCategory="300"
+        android:title="@string/action_delete"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="ifRoom" />
+
 </menu>

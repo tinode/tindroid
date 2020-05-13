@@ -19,6 +19,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bubble_r"
+                android:backgroundTint="@color/colorMessageBubbleMine"
                 android:layout_gravity="right"
                 android:orientation="vertical"
                 tools:ignore="RtlHardcoded,UselessParent">
@@ -62,9 +63,9 @@
                         android:paddingEnd="3dp"
                         android:paddingStart="5dp"
                         android:tint="?android:textColorSecondary"
-                        android:alpha="0.5"
-                        tools:ignore="SmallSp"
-                        tools:src="@drawable/ic_visibility"/>
+                        android:alpha="0.8"
+                        tools:ignore="ContentDescription,SmallSp"
+                        tools:src="@drawable/ic_visibility" />
 
                 </LinearLayout>
 

@@ -6,7 +6,7 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="4dp"
+    android:background="@drawable/message_view_bkg"
     android:orientation="vertical">
 
     <ImageView
@@ -29,7 +29,7 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="4dp"
-        card_view:cardBackgroundColor="@android:color/background_light"
+        card_view:cardBackgroundColor="?android:colorBackground"
         card_view:cardUseCompatPadding="true"
         card_view:cardElevation="@dimen/cardview_elevation">
 
@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="6sp"
-            android:visibility="gone"
+            android:visibility="visible"
             tools:ignore="RtlSymmetry">
 
             <EditText
@@ -63,6 +63,7 @@
                 android:contentDescription="@string/send_message_button_hint"
                 android:paddingLeft="4sp"
                 android:paddingRight="8sp"
+                android:layout_gravity="center_vertical"
                 android:tint="?attr/colorAccent"
                 app:srcCompat="@drawable/ic_send"/>
         </LinearLayout>
@@ -73,7 +74,8 @@
             android:background="@color/white_50"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:baselineAligned="false">
+            android:baselineAligned="false"
+            android:visibility="gone" >
 
             <LinearLayout
                 android:layout_weight="1"

@@ -3,7 +3,9 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 
@@ -34,6 +36,8 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
     private static final String TAG = "ContactsActivity";
 
+    static final String TAG_FRAGMENT_NAME = "fragment";
+
     static final String FRAGMENT_CHATLIST = "contacts";
     static final String FRAGMENT_ACCOUNT_INFO = "account_info";
     static final String FRAGMENT_ACC_HELP = "acc_help";
@@ -42,6 +46,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
     static final String FRAGMENT_ACC_SECURITY = "acc_security";
     static final String FRAGMENT_ACC_ABOUT = "acc_about";
     static final String FRAGMENT_ARCHIVE = "archive";
+    static final String FRAGMENT_BANNED = "banned";
 
     private ContactsEventListener mTinodeListener = null;
     private MeListener mMeTopicListener = null;
@@ -78,7 +83,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         mTinodeListener = new ContactsEventListener(tinode.isConnected());
         tinode.addListener(mTinodeListener);
 
-        UiUtils.setupToolbar(this, null, null, false);
+        UiUtils.setupToolbar(this, null, null, false, null);
 
         if (!mMeTopic.isAttached()) {
             toggleProgressIndicator(true);
@@ -88,15 +93,17 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         if (!UiUtils.attachMeTopic(this, mMeTopicListener)) {
             toggleProgressIndicator(false);
         }
+
+        final Intent intent = getIntent();
+        String tag = intent.getStringExtra(TAG_FRAGMENT_NAME);
+        if (!TextUtils.isEmpty(tag)) {
+            showFragment(tag);
+        }
     }
 
     private void datasetChanged() {
-        final FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentByTag(FRAGMENT_CHATLIST);
-        if (fragment == null || !fragment.isVisible()) {
-            fragment = fm.findFragmentByTag(FRAGMENT_ARCHIVE);
-        }
-        if (fragment != null && fragment.isVisible()) {
+        Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+        if (fragment instanceof ChatsFragment) {
             ((ChatsFragment) fragment).datasetChanged();
         }
     }
@@ -151,9 +158,10 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                     fragment = new AccAboutFragment();
                     break;
                 case FRAGMENT_ARCHIVE:
+                case FRAGMENT_BANNED:
                     fragment = new ChatsFragment();
                     Bundle args = new Bundle();
-                    args.putBoolean("archive", Boolean.TRUE);
+                    args.putBoolean(tag, Boolean.TRUE);
                     fragment.setArguments(args);
                     break;
                 case FRAGMENT_CHATLIST:
@@ -228,8 +236,8 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                 }
 
                 if (mAccount == null) {
-                    mAccount = Utils.getSavedAccount(ChatsActivity.this,
-                            AccountManager.get(ChatsActivity.this), Cache.getTinode().getMyId());
+                    mAccount = Utils.getSavedAccount(AccountManager.get(ChatsActivity.this),
+                            Cache.getTinode().getMyId());
                 }
                 if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
                     ContactsManager.processContact(ChatsActivity.this,

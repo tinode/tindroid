@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
@@ -23,7 +22,6 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.URI;
-import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -39,8 +37,8 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -91,42 +89,43 @@ public class MessageActivity extends AppCompatActivity {
     private String mTopicName = null;
     private ComTopic<VxCard> mTopic = null;
 
-    private DownloadManager mDownloadMgr = null;
-    private long mDownloadId = -1;
     private MessageEventListener mTinodeListener;
 
     // Handler for sending {note what="read"} notifications after a READ_DELAY.
     private Handler mNoteReadHandler = null;
 
-    BroadcastReceiver onComplete = new BroadcastReceiver() {
+    BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
-            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction()) &&
-                    intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0) == mDownloadId) {
-                DownloadManager.Query query = new DownloadManager.Query();
-                query.setFilterById(mDownloadId);
-                Cursor c = mDownloadMgr.query(query);
-                if (c.moveToFirst()) {
-                    int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                    if (DownloadManager.STATUS_SUCCESSFUL == status) {
-                        URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
-                        String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
-                        intent = new Intent();
-                        intent.setAction(android.content.Intent.ACTION_VIEW);
-                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
-                                "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        try {
-                            startActivity(intent);
-                        } catch (ActivityNotFoundException ignored) {
-                            startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                        }
-                    } else if (DownloadManager.STATUS_FAILED == status) {
-                        int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
-                        Log.w(TAG, "Download failed. Reason: " + reason);
-                    }
-                }
-                c.close();
+            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+            if (dm == null || downloadId == -1) {
+                return;
             }
+
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(downloadId);
+            Cursor c = dm.query(query);
+            if (c.moveToFirst()) {
+                int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                if (DownloadManager.STATUS_SUCCESSFUL == status) {
+                    URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+                    String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
+                    intent = new Intent();
+                    intent.setAction(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                            "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        startActivity(intent);
+                    } catch (ActivityNotFoundException ignored) {
+                        startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                    }
+                } else if (DownloadManager.STATUS_FAILED == status) {
+                    int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
+                    Log.w(TAG, "Download failed. Reason: " + reason);
+                }
+            }
+            c.close();
         }
     };
 
@@ -155,8 +154,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-        mDownloadMgr = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-        registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         registerReceiver(onNotificationClick, new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED));
 
         mMessageSender = new PausableSingleThreadExecutor();
@@ -190,6 +188,20 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
+        Uri attachment = intent.getData();
+        String type = intent.getType();
+        if (attachment != null && type != null) {
+            // Need to retain access right to the given Uri.
+            Bundle args  = new Bundle();
+            args.putParcelable(AttachmentHandler.ARG_SRC_URI, attachment);
+            args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
+            if (type.startsWith("image/")) {
+                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
+                showFragment(FRAGMENT_VIEW_IMAGE, args, true);
+            } else {
+                showFragment(FRAGMENT_FILE_PREVIEW, args, true);
+            }
+        }
     }
 
     // Topic has changed. Update all the views with the new data.
@@ -210,20 +222,18 @@ public class MessageActivity extends AppCompatActivity {
             return false;
         }
 
+        // Cancel all pending notifications addressed to the current topic.
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(mTopicName, 0);
+        }
+
         mTopicName = topicName;
         mTopic = topic;
 
-        if (mTopic != null) {
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline());
-            // Check of another fragment is already visible. If so, don't change it.
-            if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
-                // No fragment is visible. Show default and clear back stack.
-                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                showFragment(FRAGMENT_MESSAGES, null, false);
-            }
-        } else {
-            Log.w(TAG, "Attempt to instantiate an unknown topic: " + mTopicName);
-            UiUtils.setupToolbar(this, null, mTopicName, false);
+        if (mTopic == null) {
+            Log.i(TAG, "Attempt to instantiate new or unknown topic: " + mTopicName);
+            UiUtils.setupToolbar(this, null, mTopicName, false, null);
             try {
                 //noinspection unchecked
                 mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
@@ -231,16 +241,17 @@ public class MessageActivity extends AppCompatActivity {
                 Log.w(TAG, "The unknown topic is a non-comm topic: " + mTopicName);
                 return false;
             }
-
             showFragment(FRAGMENT_INVALID, null, false);
-        }
 
-        // Cancel all pending notifications addressed to the current topic.
-        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) {
-            nm.cancel(mTopicName, 0);
+        } else {
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
+            // Check if another fragment is already visible. If so, don't change it.
+            if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+                // No fragment is visible. Show default and clear back stack.
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                showFragment(FRAGMENT_MESSAGES, null, false);
+            }
         }
-
 
         mTopic.setListener(new TListener());
 
@@ -306,7 +317,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void topicAttach(boolean interactive) {
-        setProgressIndicator(true);
+        setRefreshing(true);
 
         Tinode tinode = Cache.getTinode();
         if (!tinode.isAuthenticated()) {
@@ -331,14 +342,21 @@ public class MessageActivity extends AppCompatActivity {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                                mTopicName, mTopic.getOnline());
+                                mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
-                                        .findFragmentByTag(FRAGMENT_MESSAGES);
-                                if (fragmsg != null && fragmsg.isVisible()) {
-                                    fragmsg.topicSubscribed();
+                                FragmentManager fm = getSupportFragmentManager();
+                                Fragment visible = UiUtils.getVisibleFragment(fm);
+                                if (visible instanceof InvalidTopicFragment) {
+                                    // Replace InvalidTopicFragment with default FRAGMENT_MESSAGES.
+                                    fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                    showFragment(FRAGMENT_MESSAGES, null, false);
+                                } else {
+                                    MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
+                                    if (fragmsg != null) {
+                                        fragmsg.topicSubscribed();
+                                    }
                                 }
                             }
                         });
@@ -365,7 +383,7 @@ public class MessageActivity extends AppCompatActivity {
                 }).thenFinally(new PromisedReply.FinalListener() {
                     @Override
                     public void onFinally() {
-                        setProgressIndicator(false);
+                        setRefreshing(false);
                     }
                 });
     }
@@ -393,7 +411,7 @@ public class MessageActivity extends AppCompatActivity {
         super.onDestroy();
 
         mMessageSender.shutdownNow();
-        unregisterReceiver(onComplete);
+        unregisterReceiver(onDownloadComplete);
         unregisterReceiver(onNotificationClick);
     }
 
@@ -430,6 +448,11 @@ public class MessageActivity extends AppCompatActivity {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     // Try to send all pending messages.
@@ -540,7 +563,8 @@ public class MessageActivity extends AppCompatActivity {
     boolean sendMessage(Drafty content) {
         if (mTopic != null) {
             PromisedReply<ServerMessage> reply = mTopic.publish(content);
-            runMessagesLoader(); // Shows pending message
+            BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
+            runMessagesLoader(); // Refreshes the messages: hides removed, shows pending.
             reply
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
@@ -582,40 +606,12 @@ public class MessageActivity extends AppCompatActivity {
         mMessageSender.submit(runnable);
     }
 
-    public void startDownload(final Uri uri, final String fname, final String mime, final Map<String, String> headers) {
-        // Ensure directory exists.
-        Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                .mkdirs();
-
-        DownloadManager.Request req = new DownloadManager.Request(uri);
-        // Always add Origin header to satisfy CORS. If server does not need CORS it won't hurt anyway.
-        req.addRequestHeader("Origin", Cache.getTinode().getHttpOrigin());
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                req.addRequestHeader(entry.getKey(), entry.getValue());
-            }
-        }
-
-        mDownloadId = mDownloadMgr.enqueue(
-                req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
-                        DownloadManager.Request.NETWORK_MOBILE)
-                        .setMimeType(mime)
-                        .setAllowedOverRoaming(false)
-                        .setTitle(fname)
-                        .setDescription(getString(R.string.download_title))
-                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        .setVisibleInDownloadsUi(true)
-                        .setDestinationUri(Uri.fromFile(new File(Environment
-                                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname))));
-    }
-
     /**
      * Show progress indicator based on current status
      *
      * @param active should be true to show progress indicator
      */
-    public void setProgressIndicator(final boolean active) {
+    public void setRefreshing(final boolean active) {
         if (isFinishing() || isDestroyed()) {
             return;
         }
@@ -625,7 +621,7 @@ public class MessageActivity extends AppCompatActivity {
                 MessagesFragment fragMsg = (MessagesFragment) getSupportFragmentManager()
                         .findFragmentByTag(FRAGMENT_MESSAGES);
                 if (fragMsg != null) {
-                    fragMsg.setProgressIndicator(active);
+                    fragMsg.setRefreshing(active);
                 }
             }
         });
@@ -824,7 +820,7 @@ public class MessageActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
-                            mTopic.getOnline());
+                            mTopic.getOnline(), mTopic.getLastSeen());
                     Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                     if (fragment != null) {
                         if (fragment instanceof TopicInfoFragment) {
@@ -860,7 +856,8 @@ public class MessageActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    UiUtils.toolbarSetOnline(MessageActivity.this, mTopic.getOnline());
+                    UiUtils.toolbarSetOnline(MessageActivity.this,
+                            mTopic.getOnline(), mTopic.getLastSeen());
                 }
             });
 

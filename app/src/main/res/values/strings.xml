@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
     <string name="tinode_url" translatable="false">https://tinode.co</string>
     <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
@@ -129,7 +129,7 @@
     <string name="confirm_member_ban">Remove and ban %1$s from \"%2$s\"?</string>
     <string name="confirm_leave_topic">Do you really want to leave this conversation?</string>
     <string name="confirm_delete_topic">Do you really want to delete this conversation for everyone?</string>
-    <string name="confirm_delete_multiple_topics">Do you really want to delete these topics?</string>
+    <string name="confirm_delete_multiple_topics">Do you really want to delete these chats?</string>
     <string name="modeWriteOnly">write-only</string>
     <string name="owner_cannot_unsubscribe">Owner cannot unsubscribe</string>
     <string name="read_receipts_enabled">Send read receipts</string>
@@ -171,7 +171,7 @@
     <string name="sending_disabled">Not available</string>
     <string name="download_title">Tinode download</string>
     <string name="some_permissions_missing">Please grant all requested permissions.</string>
-    <string name="invalid_file">Unable to attach this file</string>
+    <string name="unable_to_attach_file">Unable to attach this file</string>
     <string name="cancelled">cancelled</string>
     <string name="login_rejected">Login rejected</string>
     <string name="email_rejected">Email rejected</string>
@@ -246,12 +246,14 @@
     <string name="full_name_required">Full name required</string>
 
     <string name="default_contact_name">Tinode User %1$s</string>
-    <string name="contacts_permission_missing">Required permission missing</string>
+    <string name="permission_missing">Required permission missing</string>
     <string name="enter_search_query">Enter search query</string>
     <string name="image_caption_hint">Image caption</string>
     <string name="action_download">Download</string>
     <string name="tinode_image" translatable="false">tinode_image</string>
     <string name="invalid_content">invalid content</string>
+    <string name="failed">failed</string>
+    <string name="processing">processing …</string>
     <string name="incognito_mode_enabled">Incognito mode</string>
     <string name="about_the_app">About the Application</string>
     <string name="general">General</string>
@@ -271,4 +273,10 @@
     <string name="confirm_delmsg_for_all">Are you sure you want to delete all messages for all participants?</string>
     <string name="confirm_delmsg_for_self">Are you sure you want to delete all messages? You delete them only for yourself.</string>
     <string name="licenses">Licenses</string>
+    <string name="invalid_file" translatable="false">invalid</string>
+    <string name="blocked_contacts">Blocked contacts</string>
+    <string name="action_restore">Unblock</string>
+    <string name="send_to">Send to…</string>
+    <string name="never">never</string>
+    <string name="just_now">just now</string>
 </resources>

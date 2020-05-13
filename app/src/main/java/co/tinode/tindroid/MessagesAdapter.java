@@ -2,38 +2,18 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.DownloadManager;
-import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.loader.app.LoaderManager;
-import androidx.core.content.FileProvider;
-import androidx.loader.content.Loader;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.view.ActionMode;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.appcompat.widget.AppCompatImageView;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -44,7 +24,6 @@ import android.text.style.IconMarginSpan;
 import android.text.style.StyleSpan;
 import android.util.Base64;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -56,16 +35,28 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.app.ActivityCompat;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
@@ -74,7 +65,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
@@ -114,8 +104,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private static Spanned sInvalidContent = null;
-
     private MessageActivity mActivity;
     private RecyclerView mRecyclerView;
 
@@ -131,10 +119,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     private MessageLoaderCallbacks mMessageLoaderCallback;
 
-    // This is a map of message IDs to their corresponding loader IDs.
-    // This is needed for upload cancellations.
-    private LongSparseArray<Integer> mLoaders;
-
     private SpanClicker mSpanFormatterClicker;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
@@ -145,8 +129,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         mRefresher = refresher;
         mPagesToLoad = 1;
-
-        mLoaders = new LongSparseArray<>();
 
         mMessageLoaderCallback = new MessageLoaderCallbacks();
 
@@ -203,6 +185,21 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mSpanFormatterClicker = new SpanClicker();
 
         verifyStoragePermissions();
+    }
+
+    // Generates formatted content:
+    //  - "( ! ) invalid content"
+    //  - "( <) processing ..."
+    //  - "( ! ) failed"
+    private static Spanned serviceContentSpanned(Context ctx, int iconId, int messageId) {
+        SpannableString span = new SpannableString(ctx.getString(messageId));
+        span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
+                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
+        span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
+                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return span;
     }
 
     @Override
@@ -279,7 +276,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         toDelete.add(msg.seq);
                     } else {
                         store.msgDiscard(topic, msg.getId());
-                        discarded ++;
+                        discarded++;
                     }
                 }
             }
@@ -298,7 +295,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 });
                                 return null;
                             }
-                }, new UiUtils.ToastFailureListener(mActivity));
+                        }, new UiUtils.ToastFailureListener(mActivity));
             } else if (discarded > 0) {
                 runLoader(false);
                 updateSelectionMode();
@@ -350,54 +347,37 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Create a new message bubble view.
         View v;
 
-        final Resources res = mActivity.getResources();
-        final int leftBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleOther, null);
-        final int rightBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMine, null);
-        final int metaBgColor = ResourcesCompat.getColor(res, R.color.colorMessageBubbleMeta, null);
-        int bgColor = 0;
         switch (viewType) {
             case VIEWTYPE_CENTER:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
                         parent, false);
-                bgColor = metaBgColor;
                 break;
             case VIEWTYPE_FULL_LEFT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_AVATAR:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_FULL_RIGHT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single,
                         parent, false);
-                bgColor = rightBgColor;
                 break;
             case VIEWTYPE_SIMPLE_LEFT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_AVATAR:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar,
                         parent, false);
-                bgColor = leftBgColor;
                 break;
             case VIEWTYPE_SIMPLE_RIGHT:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right,
                         parent, false);
-                bgColor = rightBgColor;
                 break;
             default:
                 v = null;
-        }
-
-        if (bgColor != 0) {
-            v.findViewById(R.id.messageBubble).getBackground().mutate()
-                    .setColorFilter(bgColor, PorterDuff.Mode.MULTIPLY);
         }
 
         return new ViewHolder(v, viewType);
@@ -434,14 +414,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
-        // Disable attachment clicker.
-        boolean disableEnt = (m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.DRAFT) &&
-                (m.content != null && m.content.getEntReferences() != null);
+        final long msgId = m.getId();
+
+        boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
+        boolean uploadingAttachment = hasAttachment &&
+                (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING);
+        boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
         mSpanFormatterClicker.setPosition(position);
-        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, disableEnt ? null : mSpanFormatterClicker);
+        // Disable clicker while message is processed.
+        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, uploadingAttachment ? null : mSpanFormatterClicker);
         if (text.length() == 0) {
-            text = invalidContentSpanned(mActivity);
+            if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
+                text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
+            } else if (m.status == BaseDb.Status.FAILED) {
+                text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.failed);
+            } else {
+                text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.invalid_content);
+            }
         }
 
         holder.mText.setText(text);
@@ -457,10 +447,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setClickable(false);
             holder.mText.setAutoLinkMask(0);
         }
-        if (holder.mProgressInclude != null) {
-            if (disableEnt) {
-                final long msgId = m.getId();
+
+        if (hasAttachment && holder.mProgressInclude != null) {
+            if (uploadingAttachment) {
+                // Hide the word 'cancelled'.
                 holder.mProgressResult.setVisibility(View.GONE);
+                // Show progress bar.
                 holder.mProgress.setVisibility(View.VISIBLE);
                 holder.mProgressInclude.setVisibility(View.VISIBLE);
                 holder.mCancelProgress.setOnClickListener(new View.OnClickListener() {
@@ -472,7 +464,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         }
                     }
                 });
+            } else if (uploadFailed) {
+                // Show the word 'cancelled'.
+                holder.mProgressResult.setVisibility(View.VISIBLE);
+                // Hide progress bar.
+                holder.mProgress.setVisibility(View.GONE);
+                holder.mProgressInclude.setVisibility(View.VISIBLE);
+                holder.mCancelProgress.setOnClickListener(null);
             } else {
+                // Hide the entire progress bar component.
                 holder.mProgressInclude.setVisibility(View.GONE);
                 holder.mCancelProgress.setOnClickListener(null);
             }
@@ -487,7 +487,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (holder.mAvatar != null || holder.mUserName != null) {
-            Subscription<VxCard,?> sub = topic.getSubscription(m.from);
+            Subscription<VxCard, ?> sub = topic.getSubscription(m.from);
             if (sub != null && sub.pub != null) {
                 Bitmap avatar = sub.pub.getBitmap();
                 if (holder.mAvatar != null) {
@@ -527,6 +527,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
                 if (m.status.value <= BaseDb.Status.SENDING.value) {
                     holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
+                } else if (m.status.value == BaseDb.Status.FAILED.value) {
+                    holder.mDeliveredIcon.setImageTintList(ColorStateList.valueOf(0xFFFFA000));
+                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_warning);
                 } else {
                     if (topic.msgReadCount(m.seq) > 0) {
                         holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
@@ -566,22 +569,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             }
         });
-    }
-
-    // Generates "( ! ) invalid content" message when Drafty fails to represent content.
-    private static Spanned invalidContentSpanned(Context ctx) {
-        if (sInvalidContent != null) {
-            return sInvalidContent;
-        }
-        SpannableString span = new SpannableString(ctx.getString(R.string.invalid_content));
-        span.setSpan(new StyleSpan(Typeface.ITALIC), 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
-                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_error_gray);
-        span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
-                0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sInvalidContent = span;
-        return span;
     }
 
     // Must match position-to-item of getItemId.
@@ -700,13 +687,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     /**
      * Checks if the app has permission to write to device storage
-     *
+     * <p>
      * If the app does not has permission then the user will be prompted to grant permission.
      */
     private boolean verifyStoragePermissions() {
         // Check if we have write permission
         if (!UiUtils.isPermissionGranted(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             // We don't have permission so prompt the user
+            Log.i(TAG, "No permission to write to storage");
             ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
             return false;
         }
@@ -739,6 +727,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         return false;
+    }
+
+    private boolean cancelUpload(long msgId) {
+        final String uniqueID = Long.toString(msgId);
+
+        WorkManager wm = WorkManager.getInstance(mActivity);
+        WorkInfo.State state = null;
+        try {
+            List<WorkInfo> lwi = wm.getWorkInfosForUniqueWork(uniqueID).get();
+            if (!lwi.isEmpty()) {
+                WorkInfo wi = lwi.get(0);
+                state = wi.getState();
+            }
+        } catch (ExecutionException | InterruptedException ignored) {
+        }
+
+        if (state == null || !state.isFinished()) {
+            wm.cancelUniqueWork(Long.toString(msgId));
+            return true;
+        }
+        return state == WorkInfo.State.CANCELLED;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -776,100 +785,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mProgressBar = itemView.findViewById(R.id.attachmentProgressBar);
             mCancelProgress = itemView.findViewById(R.id.attachmentProgressCancel);
             mProgressResult = itemView.findViewById(R.id.progressResult);
-        }
-    }
-
-    void addLoaderMapping(Long msgId, int loaderId) {
-        mLoaders.put(msgId, loaderId);
-    }
-
-    Integer getLoaderMapping(Long msgId) {
-        return mLoaders.get(msgId);
-    }
-
-    private boolean cancelUpload(long msgId) {
-        Integer loaderId = mLoaders.get(msgId);
-        if (loaderId != null) {
-            LoaderManager.getInstance(mActivity).destroyLoader(loaderId);
-            // Change mapping to force background loading process to return early.
-            addLoaderMapping(msgId, -1);
-            return true;
-        }
-        return false;
-    }
-
-    private void downloadAttachment(Map<String,Object> data, String fname, String mimeType) {
-
-        // Create file in a downloads directory by default.
-        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File file = new File(path, fname);
-        Uri fileUri = Uri.fromFile(file);
-
-        if (TextUtils.isEmpty(mimeType)) {
-            mimeType = UiUtils.getMimeType(fileUri);
-            if (mimeType == null) {
-                mimeType = "*/*";
-            }
-        }
-
-        FileOutputStream fos = null;
-        try {
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                Log.w(TAG, "External storage not mounted: " + path);
-
-            } else if (!(path.mkdirs() || path.isDirectory())) {
-                Log.w(TAG, "Path is not a directory - " + path);
-            }
-
-            Object val = data.get("val");
-            if (val != null) {
-                fos = new FileOutputStream(file);
-                fos.write(val instanceof String ?
-                        Base64.decode((String) val, Base64.DEFAULT) :
-                        (byte[]) val);
-
-                Intent intent = new Intent();
-                intent.setAction(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(FileProvider.getUriForFile(mActivity,
-                        "co.tinode.tindroid.provider", file), mimeType);
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                try {
-                    mActivity.startActivity(intent);
-                } catch (ActivityNotFoundException ignored) {
-                    mActivity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                }
-
-            } else {
-                Object ref = data.get("ref");
-                if (ref instanceof String) {
-                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
-                    String scheme = url.getProtocol();
-                    // Make sure the file is downloaded over http or https protocols.
-                    if (scheme.equals("http") || scheme.equals("https")) {
-                        LargeFileHelper lfh = Cache.getTinode().getFileUploader();
-                        mActivity.startDownload(Uri.parse(url.toString()), fname, mimeType, lfh.headers());
-                    } else {
-                        Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
-                        Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Log.w(TAG, "Invalid or missing attachment");
-                    Toast.makeText(mActivity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                }
-            }
-
-        } catch (NullPointerException | ClassCastException | IOException ex) {
-            Log.w(TAG, "Failed to save attachment to storage", ex);
-            Toast.makeText(mActivity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
-        } catch (ActivityNotFoundException ex) {
-            Log.w(TAG, "No application can handle downloaded file");
-            Toast.makeText(mActivity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Exception ignored) {}
-            }
         }
     }
 
@@ -944,16 +859,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     if (data != null) {
                         try {
                             Object val = data.get("val");
-                            args.putByteArray("image", val instanceof String ?
+                            args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, val instanceof String ?
                                     Base64.decode((String) val, Base64.DEFAULT) :
                                     (byte[]) val);
-                            args.putString("mime", (String) data.get("mime"));
-                            args.putString("name", (String) data.get("name"));
+                            args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
+                            args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
                         } catch (ClassCastException ignored) {
                         }
                     }
 
-                    if (args.getByteArray("image") != null) {
+                    if (args.getByteArray(AttachmentHandler.ARG_SRC_BYTES) != null) {
                         mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
                     } else {
                         Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
@@ -972,11 +887,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         } catch (ClassCastException ignored) {
                         }
 
+                        // Try to extract file name from reference.
+                        if (TextUtils.isEmpty(fname)) {
+                            Object ref = data.get("ref");
+                            if (ref instanceof String) {
+                                try {
+                                    URL url = new URL((String) ref);
+                                    fname = url.getFile();
+                                } catch (MalformedURLException ignored) {
+                                }
+                            }
+                        }
+
                         if (TextUtils.isEmpty(fname)) {
                             fname = mActivity.getString(R.string.default_attachment_name);
                         }
 
-                        downloadAttachment(data, fname, mimeType);
+                        AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
                     } else {
                         Toast.makeText(mActivity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
                     }
@@ -992,10 +919,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             StoredMessage msg = getMessage(mPosition);
                             if ("pub".equals(actionType)) {
                                 Drafty newMsg = new Drafty((String) data.get("title"));
-                                Map<String,Object> json = new HashMap<>();
+                                Map<String, Object> json = new HashMap<>();
                                 // {"seq":6,"resp":{"yes":1}}
                                 if (!TextUtils.isEmpty(name)) {
-                                    Map<String,Object> resp = new HashMap<>();
+                                    Map<String, Object> resp = new HashMap<>();
                                     // noinspection
                                     resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                                     json.put("resp", resp);
@@ -1015,7 +942,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     // As a security measure refuse to follow URLs with non-http(s) protocols.
                                     break;
                                 }
-                                Uri uri =  Uri.parse(url.toString());
+                                Uri uri = Uri.parse(url.toString());
                                 Uri.Builder builder = uri.buildUpon();
                                 if (!TextUtils.isEmpty(name)) {
                                     builder = builder.appendQueryParameter(name,
@@ -1027,7 +954,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 builder = builder.appendQueryParameter("uid", Cache.getTinode().getMyId());
                                 mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
                             }
-                        } catch(ClassCastException | MalformedURLException | NullPointerException ignored){ }
+                        } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+                        }
                     }
                     break;
             }

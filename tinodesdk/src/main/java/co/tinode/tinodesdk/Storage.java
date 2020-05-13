@@ -148,6 +148,23 @@ public interface Storage {
     boolean msgSyncing(Topic topic, long dbMessageId, boolean sync);
 
     /**
+     * Failed to form or send message.
+     *
+     * @param topic topic which sent the message
+     * @param dbMessageId database ID of the message.
+     * @return true on success, false otherwise
+     */
+    boolean msgFailed(Topic topic, long dbMessageId);
+
+    /**
+     * Delete all failed messages in the given topis.
+     *
+     * @param topic topic which sent the message
+     * @return true on success, false otherwise
+     */
+    boolean msgPruneFailed(Topic topic);
+
+    /**
      * Delete message by database id.
      */
     @SuppressWarnings("UnusedReturnValue")

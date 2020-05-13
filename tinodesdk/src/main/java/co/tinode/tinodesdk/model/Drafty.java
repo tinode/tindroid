@@ -72,10 +72,11 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class Drafty implements Serializable {
-    public static final String MIME_TYPE = "text/x-drafty";
-    public static final String JSON_MIME_TYPE = "application/json";
-
     private static final String TAG = "Drafty";
+
+    public static final String MIME_TYPE = "text/x-drafty";
+
+    private static final String JSON_MIME_TYPE = "application/json";
 
     private static final int MAX_FORM_ELEMENTS = 8;
 
@@ -92,8 +93,8 @@ public class Drafty implements Serializable {
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {
             new EntityProc("LN",
-                    Pattern.compile("(?<=^|\\W)(https?://)?(?:www\\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}" +
-                            "\\.[a-z]{2,4}\\b(?:[-a-zA-Z0-9@:%_+.~#?&/=]*)")) {
+                    Pattern.compile("\\b(https?://)?(?:www\\.)?(?:[a-zA-Z0-9][-a-zA-Z0-9]*[a-zA-Z0-9]\\.){1,5}" +
+                            "\\.[a-zA-Z]{2,6}(?:[/?#:][-a-zA-Z0-9@:%_+.~#?&/=]*)?")) {
 
                 @Override
                 Map<String, Object> pack(Matcher m) {
@@ -102,7 +103,7 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc("MN", Pattern.compile("\\B@(\\w\\w+)")) {
+            new EntityProc("MN", Pattern.compile("\\b@(\\w\\w+)")) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();

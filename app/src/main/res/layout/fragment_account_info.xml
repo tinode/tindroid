@@ -63,7 +63,8 @@
         android:layout_height="wrap_content"
         android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:focusable="true">
 
         <ImageView
             android:layout_width="@dimen/settings_icon_size"

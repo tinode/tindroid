@@ -119,7 +119,7 @@
     <string name="confirm_member_ban"> 删除并禁止 %1$s from \"%2$s\"?</string>
     <string name="confirm_leave_topic">真的要离开这个会话吗?</string>
     <string name="confirm_delete_topic">真的要为所有人删除该会话吗?</string>
-    <string name="confirm_delete_multiple_topics">真的要删除这些编组吗?</string>
+    <string name="confirm_delete_multiple_topics">您真的要删除这些聊天吗?</string>
     <string name="modeWriteOnly">只写</string>
     <string name="owner_cannot_unsubscribe">管理者无法退群</string>
     <string name="read_receipts_enabled">发送已读回执</string>
@@ -160,7 +160,7 @@
     <string name="sending_disabled">无效</string>
     <string name="download_title">Tinode 下载</string>
     <string name="some_permissions_missing">请接受所有请求权限.</string>
-    <string name="invalid_file">无法获取此文件</string>
+    <string name="unable_to_attach_file">无法获取此文件</string>
     <string name="cancelled">已取消</string>
     <string name="login_rejected">登录被拒绝</string>
     <string name="email_rejected">邮件被拒绝</string>
@@ -234,11 +234,13 @@
     <string name="app_server">服务器</string>
     <string name="full_name_required">需要全名</string>
     <string name="enter_search_query">输入搜索查询</string>
-    <string name="contacts_permission_missing">缺少所需的权限</string>
+    <string name="permission_missing">缺少所需的权限</string>
     <string name="default_contact_name">Tinode用户 %1$s</string>
     <string name="image_caption_hint">图片标题</string>
     <string name="action_download">保存</string>
     <string name="invalid_content">无效内容</string>
+    <string name="failed">失败</string>
+    <string name="processing">处理中…</string>
     <string name="incognito_mode_enabled">无痕模式</string>
     <string name="about_the_app">关于申请</string>
     <string name="general">通用设置</string>
@@ -260,5 +262,10 @@
 
     <string name="confirm_delmsg_for_all">您确定要删除所有参与者的所有消息吗？</string>
     <string name="confirm_delmsg_for_self">您确定要删除所有消息吗？它们只会为您删除。</string>
-
+    <string name="licenses">执照</string>
+    <string name="blocked_contacts">被阻止的联系人列表</string>
+    <string name="action_restore">解除封锁</string>
+    <string name="send_to">发送至…</string>
+    <string name="never">决不</string>
+    <string name="just_now">现在</string>
 </resources>
