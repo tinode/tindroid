@@ -32,6 +32,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -383,6 +384,12 @@ public class AttachmentHandler extends Worker {
                     fname = file.getName();
                 }
                 fsize = file.length();
+            } else {
+                DocumentFile df = DocumentFile.fromSingleUri(context, uri);
+                if (df != null) {
+                    fname = df.getName();
+                    fsize = df.length();
+                }
             }
         }
 

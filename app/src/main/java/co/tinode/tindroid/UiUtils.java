@@ -1151,9 +1151,8 @@ public class UiUtils {
                     final int index = cursor.getColumnIndex(column);
                     return index >= 0 ? cursor.getString(index) : null;
                 }
-
             }
-        } catch (IllegalArgumentException ex) {
+        } catch (SecurityException | IllegalArgumentException ex) {
             Log.w(TAG, "Failed to read resolver data", ex);
         }
         return null;
