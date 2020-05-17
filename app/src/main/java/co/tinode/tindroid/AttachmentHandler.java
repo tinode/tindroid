@@ -385,11 +385,13 @@ public class AttachmentHandler extends Worker {
                 }
                 fsize = file.length();
             } else {
-                DocumentFile df = DocumentFile.fromSingleUri(context, uri);
-                if (df != null) {
-                    fname = df.getName();
-                    fsize = df.length();
-                }
+                try {
+                    DocumentFile df = DocumentFile.fromSingleUri(context, uri);
+                    if (df != null) {
+                        fname = df.getName();
+                        fsize = df.length();
+                    }
+                } catch (SecurityException ignored) {}
             }
         }
 
