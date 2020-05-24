@@ -454,8 +454,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (!isAttached()) {
                 try {
                     // Fully asynchronous fire and forget.
-                    subscribe(null, getMetaGetBuilder().withLaterData(limit).build(), true);
-                    leave();
+                    subscribe(null, getMetaGetBuilder().withLaterData(limit).build(), true).thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                leave();
+                                return null;
+                            }
+                        }
+                    );
                 } catch (Exception ex) {
                     Log.w(TAG, "Failed to sync data", ex);
                 }
