@@ -453,7 +453,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             // Fetch only if not attached. If it's attached it will be fetched elsewhere.
             if (!isAttached()) {
                 try {
-                    // Fully asynchronous fire and forget.
                     subscribe(null, getMetaGetBuilder().withLaterData(limit).build(), true).thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
