@@ -1,0 +1,283 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
+
+    <string name="tinode_url" translatable="false">https://tinode.co</string>
+    <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
+
+    <string name="app_name" translatable="false">Tinode</string>
+    <string name="app_name_full" translatable="false">Tinode 채팅</string>
+    <string name="app_version">버전</string>
+    <string name="copyright" translatable="false">© 2014 – 2020 Tinode</string>
+    <string name="tinode" translatable="false">Tinode</string>
+
+    <string name="login_hint">로그인</string>
+    <string name="password_hint">비밀번호</string>
+    <string name="new_message_hint">새로운 메세지</string>
+    <string name="send_message_button_hint">메시지 전송</string>
+    <string name="send_image_button_hint">이미지 전송</string>
+    <string name="send_file_button_hint">파일 전송</string>
+
+    <string name="sign_in">로그인</string>
+    <string name="app_description" translatable="false">Tinode 메신저</string>
+    <string name="action_signup">회원가입</string>
+    <string name="sign_up">회원가입</string>
+    <string name="login_new">로그인</string>
+    <string name="password_new">비밀번호</string>
+    <string name="full_name">성명, 예. Gildong Hong</string>
+    <string name="tinode_logo" translatable="false">Tinode 로고</string>
+    <string name="action_cancel">취소</string>
+    <string name="settings_host_name">서버 주소</string>
+    <string name="settings_use_tls">안전 연결 사용 </string>
+    <string name="settings_wire_transport">유선 전송 </string>
+    <string name="settings_tls_explained">서버연결 암호화</string>
+    <string name="settings_host_name_explained">\'%1$s\'에 연결</string>
+    <string name="settings_wire_explained">\'%1$s\ 사용'</string>
+
+    <!-- access mode definitions -->
+    <string name="modeReadOnly">읽기전용</string>
+    <string name="modeAdmin">관리자</string>
+    <string name="modeOwner">소유자</string>
+    <string name="modeBlocked">차단</string>
+    <!-- mode-like access statuses -->
+    <string name="modeInvited">초대</string>
+    <string name="modeRequested">요청</string>
+    <string name="modeUndefined">불확실</string>
+    <string name="modePending">보류</string>
+
+    <!-- Menu actions -->
+    <string name="action_settings">설정</string>
+    <string name="action_delete">삭제</string>
+    <string name="action_mute">대화 음소거</string>
+    <string name="action_unmute">대화 음소거 해제</string>
+    <string name="action_clear_messages">대화내용 전체삭제</string>
+    <string name="action_view_contact">연락처 보기</string>
+    <string name="action_new_chat">새로운 대화</string>
+    <string name="action_about">정보</string>
+    <string name="action_search">검색</string>
+    <string name="action_add_contact">연락처 추가</string>
+    <string name="action_send_now">전송</string>
+    <string name="action_view_details">세부사항</string>
+    <string name="action_copy">복사</string>
+    <string name="action_offline">오프라인 작업</string>
+    <string name="action_delete_group">대화 삭제…</string>
+    <string name="action_leave_topic">대화 나가기…</string>
+
+    <string name="avatar">아바타 사진</string>
+    <string name="select_image">사진 선택</string>
+    <string name="select_file">파일 선택</string>
+    <string name="image_is_unavailable">이미지 사용 불가능</string>
+    <string name="error_login_failed">로그인 실패: </string>
+    <string name="error_connection_failed">연결 실패: </string>
+    <string name="login_required">로그인 필수</string>
+    <string name="password_required">비밀번호 필수</string>
+    <string name="error_new_account_failed">계정 등록 실패:</string>
+    <string name="no_chats">대화내역이 없습니다.\n\n¯\\_(ツ)_/¯</string>
+
+    <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
+     alphabet using ListView fast scroll. -->
+    <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+
+    <string name="tinode_invite_subject">Tinode Messenger를 확인하세요.</string>
+    <string name="tinode_invite_body">Tinode Messenger를 확인하세요. https://tinode.co에서 다운로드하세요.</string>
+
+    <string name="profile_action">Tinode 프로필</string>
+    <string name="view_profile">프로필 보기string>
+    <string name="tinode_message"> Tinode 메시지 보내기</string>
+    <string name="topic_title">그룹 이름</string>
+    <string name="group_members">그룹 멤버</string>
+    <string name="name_required">그룹 이름이 필요합니다.</string>
+    <string name="no_members">그룹 멤버가 없습니다.</string>
+    <string name="add_one_member">한명 이상의 그룹 회원 추가</string>
+    <string name="add_members">멤버 추가</string>
+    <string name="leave_group">그룹 나가기</string>
+    <string name="id">아이디:</string>
+    <string name="topic_muted">음소거</string>
+    <string name="permissions">권한</string>
+    <string name="your_permissions">당신의 것</string>
+
+    <string name="no_connection">오프라인 상태입니다.</string>
+    <string name="action_failed">작업 실패</string>
+
+    <string name="placeholder_contact_title">알 수 없음</string>
+    <string name="placeholder_topic_title">이름 없음</string>
+    <string name="placeholder_private">개인정보 : 설정 안됨</string>
+
+    <string name="options_menu">옵션 메뉴</string>
+    <string name="current_user">당신</string>
+    <string name="default_permissions">기본 권한</string>
+    <string name="auth_permissions">인증된 사용자</string>
+    <string name="anon_permissions">익명의 사용자</string>
+    <string name="topic_private">추가 정보(나만 보기)</string>
+    <string name="edit_topic">주제 수정</string>
+    <string name="edit_permissions">권한 수정</string>
+
+    <string name="permission_owner">모든 권한(관리자)</string>
+    <string name="permission_join">참여</string>
+    <string name="permission_read">읽기</string>
+    <string name="permission_write">쓰기</string>
+    <string name="permission_approve">신규 멤버 승인</string>
+    <string name="permission_share">새 멤버 초대</string>
+    <string name="permission_notifications">알림 받기</string>
+    <string name="permission_delete">메시지 삭제</string>
+
+    <string name="send_message">메시지 전송</string>
+    <string name="change_permissions">권한 변경string>
+    <string name="make_owner">관리자로 설정</string>
+    <string name="remove_from_group">삭제</string>
+    <string name="block">차단</string>
+
+    <string name="confirm_member_removal">%1$에서 \"%2$s\"까지 삭제?</string>
+    <string name="confirm_member_ban">%1$s에서 \"%2$s\"까지 삭제 및 차단?</string>
+    <string name="confirm_leave_topic">정말 이 대화를 끝내시겠습니까? </string>
+    <string name="confirm_delete_topic">이 대화를 모두 삭제하시겠습니까?</string>
+    <string name="confirm_delete_multiple_topics">이 대화를 정말로 삭제하시겠습니까? </string>
+    <string name="modeWriteOnly">쓰기전용</string>
+    <string name="owner_cannot_unsubscribe">관리자가 탈퇴할 수 없습니다. </string>
+    <string name="read_receipts_enabled">읽은 내역 보내기</string>
+    <string name="typing_notifications_enabled">입력 중 표시</string>
+    <string name="logout">로그아웃</string>
+    <string name="change_password">비밀번호 변경</string>
+    <string name="account_settings">계정 설정</string>
+    <string name="enter_new_password">새로운 비밀번호 입력</string>
+    <string name="confirm_logout">로그아웃 하시겠습니까?</string>
+    <string name="edit_account">계정 이름 수정</string>
+    <string name="invalid_login">유효하지 않은 로그인</string>
+
+    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
+    <string name="download_attachment">저장</string>
+    <string name="broken_image">올바르지 않은 이미지 형식</string>
+    <string name="file_manager_not_found">파일 매니저를 찾을 수 없습니다.</string>
+    <string name="attachment_too_large">파일크기 %1$s가 %2$s를 초과합니다.</string>
+
+    <string name="failed_to_download">파일을 다운로드 하는데 실패했습니다</string>
+    <string name="failed_to_save_download">다운로드된 파일을 저장하는데 실패했습니다.</string>
+    <string name="failed_to_open_file">이 형식의 파일을 볼 수 있는 애플리케이션이 없습니다.</string>
+    <string name="failed_empty_password">변경되지 않음 : 비밀번호 입력안됨</string>
+    <string name="failed_credential_confirmation">잘못된 확인코드 </string>
+    <string name="failed_to_create_topic">그룹 생성에 실패했습니다.</string>
+
+    <string name="contacts_section_contacts">핸드폰 연락처</string>
+    <string name="contacts_section_directory">목차</string>
+
+    <string name="email">이메일</string>
+    <string name="email_required">이메일 필요</string>
+    <string name="validate_cred">전송된 확인코드 입력 %1$s:</string>
+    <string name="validate_cred_title">연락처 확인</string>
+    <string name="confirm">확인</string>
+    <string name="validation_example">숫자만 입력하세요</string>
+    <string name="enter_confirmation_code">확인 코드를 입력하세요</string>
+    <string name="hint_add_by_id">그룹이나 사용자 아이디를 입력하세요</string>
+    <string name="hint_search_tags">태그 검색</string>
+    <string name="topic_not_found_or_invalid">그룹을 찾을 수 없거나 존재하지 않습니다.</string>
+    <string name="sending_disabled">이용 불가능</string>
+    <string name="download_title">Tinode 다운로드</string>
+    <string name="some_permissions_missing">요청된 모든 권한을 부여하세요</string>
+    <string name="unable_to_attach_file">해당 파일을 첨부할 수 없습니다.</string>
+    <string name="cancelled">취소됨</string>
+    <string name="login_rejected">로그인 거부됨</string>
+    <string name="email_rejected">이메일 거부됨</string>
+    <string name="invalid_confirmation_code">올바르지 않은 코드</string>
+    <string name="notification_channel_name">새 메세지</string>
+    <string name="new_message">새 메세지</string>
+    <string name="notification_channel_description">새로운 메시지가 도착했습니다.</string>
+    <string name="request_pass_reset_title">비밀번호 초기화</string>
+    <string name="request_pass_reset">%1$s: 코드 요청</string>
+    <string name="validated_address_to_use">적합한 %1$s에 코드를 보냈습니다.</string>
+    <string name="request">요청</string>
+    <string name="forgot_password">비밀번호를 잊어버렸다</string>
+    <string name="enter_valid_address타당한 %1$s를 입력하세요.</string>
+    <string name="invalid_or_unknown_credential">유효하지 않거나 알려지지 않은 주소 </string>
+    <string name="password_reset_message_sent">지시사항이 포함된 메세지</string>
+    <string name="user_not_found">찾을 수 없습니다.</string>
+    <string name="topic_tags">태그, 쉼표로 구분</string>
+    <string name="sender_unknown">알려지지 않은</string>
+    <string name="action_archive">보관소</string>
+    <string name="archived_chats">보관된 대화</string>
+    <string name="action_show_archive">보관된 대화</string>
+    <string name="request_new_chat_title">새로운 대화</string>
+    <string name="request_new_chat_message">새로운 대화에 초대되었습니다. 무엇을 하고 싶으신가요?</string>
+    <string name="new_chat_accept">승인</string>
+    <string name="new_chat_ignore">무시</string>
+    <string name="new_chat_block">차단</string>
+    <string name="new_chat">새로운 대화</string>
+    <string name="messages_not_readable">새 메시지에 접근할 수 없습니다.</string>
+    <string name="content_deleted">삭제된 내용</string>
+    <string name="peers_messaging_disabled">상대방의 메시지가 비활성화되었습니다.</string>
+    <string name="action_enable">사용가능</string>
+    <string name="find">찾기</string>
+    <string name="by_id">아이디로</string>
+    <string name="group">그룹</string>
+    <string name="id_required">아이디 필요</string>
+    <string name="settings">설정</string>
+    <string name="no_results">결과 없음</string>
+    <string name="file_name_label">파일 이름:</string>
+    <string name="content_type_label">컨텐츠 타입:</string>
+    <string name="image_size_label">크기:</string>
+    <string name="must_subscribe_first">가입 먼저하세요.</string>
+    <string name="topic_blocked">차단됨</string>
+    <string name="topic_archived">보관됨</string>
+    <string name="action_unarchive">보관되지 않음</string>
+    <string name="action_invite">초대</string>
+    <string name="tags_management">태그</string>
+    <string name="contacts">연락처</string>
+    <string name="add_contact">친구 추가</string>
+    <string name="manage">관리</string>
+    <string name="delete">삭제</string>
+    <string name="add_credential">이메일이나 핸드폰 번호를 추가하세요</string>
+    <string name="unrecognized_credential">유효하지 않거나 인식할 수 없는 검증 방법 </string>
+    <string name="add_credential_title">연락처 추가</string>
+    <string name="delete_credential_title">연락처 삭제</string>
+    <string name="delete_credential_confirmation">%1$s:%2$s를 삭제하시겠습니까?</string>
+    <string name="leave_conversation">대화 나가기</string>
+    <string name="confirm_delete_account">계정을 완전히 삭제하시겠습니까? 다시 되돌릴 수 없습니다.</string>
+    <string name="block_contact">연락처 차단</string>
+    <string name="report_contact">연락처 신고 </string>
+    <string name="report_group">그룹 신고</string>
+    <string name="clear_messages">메시지 정리</string>
+    <string name="manage_members">멤버 관리string>
+    <string name="block_and_report">차단 후 신고 </string>
+    <string name="confirm_contact_ban">%1$s를 차단하시겠습니까?</string>
+    <string name="confirm_report">%1$s를 차단 후 신고하시겠습니까?</string>
+    <string name="legal">법률</string>
+    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">이용 약관 </a>]]></string>
+    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">문의하기</a>]]></string>
+    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">개인 정보 정책 </a>]]></string>
+    <string name="button_hint_start_new_chat">새로운 대화 시작</string>
+    <string name="app_server">서버</string>
+    <string name="full_name_required">이름 필요</string>
+
+    <string name="default_contact_name">Tinode 사용자 %1$s</string>
+    <string name="permission_missing">필요한 권한이 없습니다. </string>
+    <string name="enter_search_query">검색어 입력 </string>
+    <string name="image_caption_hint">이미지 캡션 string>
+    <string name="action_download">다운로드</string>
+    <string name="tinode_image" translatable="false">tinode_image</string>
+    <string name="invalid_content">잘못된 컨텐츠</string>
+    <string name="failed">실패</string>
+    <string name="processing">진행중 …</string>
+    <string name="incognito_mode_enabled">비밀 모드 </string>
+    <string name="about_the_app">어플리케이션 정보 </string>
+    <string name="general">일반 </string>
+    <string name="delete_account">계정 삭제</string>
+    <string name="help">도움</string>
+    <string name="security">보안</string>
+    <string name="notifications">알림</string>
+    <string name="user_tags_description">다른사람들이 이 태그로 당신을 찾을 수 있습니다.</string>
+    <string name="help_explained">지원, 법률, 정보</string>
+    <string name="security_explained">비밀번호, 권한, 계정삭제</string>
+    <string name="topic_tags_description">다른 사람들이 이 태그로 그룹을 찾을 수 있습니다. </string>
+    <string name="permissions_explained">권한 접근, 태그 검색</string>
+    <string name="delete_group">그룹 삭제</string>
+
+    <string name="topic_default_permissions_explained">신규 회원에게는 자동으로 이러한 권한들이 부여됩니다. </string>
+    <string name="user_default_permissions_explained">다른사람들은 당신과 이러한 권한으로 대화를 시작합니다. </string>
+    <string name="confirm_delmsg_for_all">모든 참가자의 모든 메시지를 삭제하시겠습니까? </string>
+    <string name="confirm_delmsg_for_self">모든 메시지를 삭제하시겠습니까? 이것은 오로지 당신만을 위해 삭제합니다. </string>
+    <string name="licenses">라이선스</string>
+    <string name="invalid_file" translatable="false">유효하지 않은</string>
+    <string name="blocked_contacts">차단된 연락처</string>
+    <string name="action_restore">차단 해제</string>
+    <string name="send_to">보내기… </string>
+    <string name="never">절대</string>
+    <string name="just_now">당장</string>
+</resources>
