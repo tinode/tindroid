@@ -1,14 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
-
-    <string name="tinode_url" translatable="false">https://tinode.co</string>
-    <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
-
-    <string name="app_name" translatable="false">Tinode</string>
-    <string name="app_name_full" translatable="false">Tinode 채팅</string>
     <string name="app_version">버전</string>
-    <string name="copyright" translatable="false">© 2014 – 2020 Tinode</string>
-    <string name="tinode" translatable="false">Tinode</string>
 
     <string name="login_hint">로그인</string>
     <string name="password_hint">비밀번호</string>
@@ -185,7 +176,7 @@
     <string name="validated_address_to_use">적합한 %1$s에 코드를 보냈습니다.</string>
     <string name="request">요청</string>
     <string name="forgot_password">비밀번호를 잊어버렸다</string>
-    <string name="enter_valid_address타당한 %1$s를 입력하세요.</string>
+    <string name="enter_valid_address">타당한 %1$s를 입력하세요.</string>
     <string name="invalid_or_unknown_credential">유효하지 않거나 알려지지 않은 주소 </string>
     <string name="password_reset_message_sent">지시사항이 포함된 메세지</string>
     <string name="user_not_found">찾을 수 없습니다.</string>
