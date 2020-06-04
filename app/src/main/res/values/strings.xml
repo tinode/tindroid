@@ -1,4 +1,5 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
     <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
     <string name="tinode_url" translatable="false">https://tinode.co</string>
     <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
