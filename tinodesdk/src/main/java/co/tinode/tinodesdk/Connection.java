@@ -55,6 +55,10 @@ public class Connection extends WebSocketClient {
     // If connection should try to reconnect automatically.
     private boolean mAutoreconnect;
 
+    // This connection is a background connection.
+    // The value is reset when the connection is successful.
+    private boolean mBackground;
+
     // Exponential backoff/reconnecting
     final private ExpBackoff backoff = new ExpBackoff();
 
@@ -66,6 +70,7 @@ public class Connection extends WebSocketClient {
         mListener = listener;
         mStatus = State.NEW;
         mAutoreconnect = false;
+        mBackground = false;
 
         // Horrible hack to support SNI on API<21
         if ("wss".equals(getURI().getScheme())) {
@@ -147,8 +152,9 @@ public class Connection extends WebSocketClient {
      * @param autoReconnect if connection is dropped, reconnect automatically
      */
     @SuppressWarnings("WeakerAccess")
-    synchronized public void connect(boolean autoReconnect) {
+    synchronized public void connect(boolean autoReconnect, boolean background) {
         mAutoreconnect = autoReconnect;
+        mBackground = background;
 
         switch (mStatus) {
             case CONNECTED:
@@ -226,7 +232,9 @@ public class Connection extends WebSocketClient {
         }
 
         if (mListener != null) {
-            mListener.onConnect(this);
+            boolean bkg = mBackground;
+            mBackground = false;
+            mListener.onConnect(this, bkg);
         } else {
             backoff.reset();
         }
@@ -295,7 +303,7 @@ public class Connection extends WebSocketClient {
     static class WsListener {
         WsListener() {}
 
-        protected void onConnect(Connection conn) {
+        protected void onConnect(Connection conn, boolean background) {
         }
 
         protected void onMessage(Connection conn, String message) {

@@ -78,7 +78,7 @@ public class Cache {
 
     // Connect to 'me' topic.
     @SuppressWarnings("unchecked")
-    public static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l, boolean inBackground) {
+    public static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l) {
         final MeTopic<VxCard> me = getTinode().getOrCreateMeTopic();
         if (l != null) {
             me.setListener(l);
@@ -91,14 +91,10 @@ public class Cache {
                     .withDesc()
                     .withSub()
                     .withTags()
-                    .build(), inBackground);
+                    .build());
         } else {
             return new PromisedReply<>((ServerMessage) null);
         }
-    }
-
-    static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l) {
-        return attachMeTopic(l, false);
     }
 
     static PromisedReply<ServerMessage> attachFndTopic(FndTopic.FndListener<VxCard> l) {

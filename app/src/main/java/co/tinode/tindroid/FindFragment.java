@@ -303,7 +303,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                 return true;
 
             case R.id.action_offline:
-                Cache.getTinode().reconnectNow(true, false);
+                Cache.getTinode().reconnectNow(true, false, false);
                 return true;
         }
 

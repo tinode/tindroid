@@ -394,7 +394,7 @@ public class Tinode {
      *
      * @return PromisedReply to be resolved or rejected when the connection is completed.
      */
-    synchronized public PromisedReply<ServerMessage> connect(String hostName, boolean tls) {
+    synchronized public PromisedReply<ServerMessage> connect(String hostName, boolean tls, boolean background) {
         boolean newHost = false;
         if (hostName != null) {
             // Convert to lowercase to ensure correct comparison.
@@ -439,7 +439,7 @@ public class Tinode {
         if (mConnection == null) {
             mConnection = new Connection(connectTo, mApiKey, mConnectionListener);
         }
-        mConnection.connect(true);
+        mConnection.connect(true, background);
 
         return completion;
     }
@@ -457,9 +457,9 @@ public class Tinode {
         }
 
         @Override
-        protected void onConnect(final Connection conn) {
+        protected void onConnect(final Connection conn, boolean background) {
             // Connection established, send handshake, inform listener on success
-            hello().thenApply(
+            hello(background).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
@@ -560,10 +560,10 @@ public class Tinode {
      * @param interactive set to true if user directly requested a reconnect.
      * @param reset if true drop connection and reconnect; happens when cluster is reconfigured.
      */
-    synchronized public void reconnectNow(boolean interactive, boolean reset) {
+    synchronized public void reconnectNow(boolean interactive, boolean reset, boolean background) {
         if (mConnection == null) {
             // New connection using saved parameters.
-            connect(null, false);
+            connect(null, false, background);
         }
 
         if (mConnection.isConnected()) {
@@ -579,7 +579,7 @@ public class Tinode {
         // Connection exists but not connected. Try to connect immediately only if requested or if
         // autoreconnect is not enabled.
         if (interactive || !mConnection.isWaitingToReconnect()) {
-            mConnection.connect(true);
+            mConnection.connect(true, background);
         }
     }
 
@@ -1049,7 +1049,7 @@ public class Tinode {
             }
 
             ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
-                    token, null));
+                    token, null, null));
             return sendWithPromise(msg, msg.hi.id).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
@@ -1081,11 +1081,15 @@ public class Tinode {
      * Send a handshake packet to the server. A connection must be established prior to calling
      * this method.
      *
+     * @param background indicator that this session should be treated as a service request,
+     *                   i.e. presence notifications will be delayed.
+     *
      * @return PromisedReply of the reply ctrl message.
      */
     @SuppressWarnings("WeakerAccess")
-    public PromisedReply<ServerMessage> hello() {
-        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent(), mDeviceToken, mLanguage));
+    public PromisedReply<ServerMessage> hello(Boolean background) {
+        ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent(),
+                mDeviceToken, mLanguage, background));
         return sendWithPromise(msg, msg.hi.id).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
@@ -1483,14 +1487,10 @@ public class Tinode {
      * @param topicName name of the topic to subscribe to
      * @param set values to be assign to topic on success.
      * @param get query for topic values.
-     * @param background indicator that this request should be treated as a service request,
-     *                   i.e. presence notifications will be delayed.
      * @return PromisedReply of the reply ctrl message
      */
-    public <Pu, Pr, T> PromisedReply<ServerMessage> subscribe(String topicName,
-                                                              MsgSetMeta<Pu, Pr> set,
-                                                              MsgGetMeta get, boolean background) {
-        ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get, background));
+    public <Pu, Pr, T> PromisedReply<ServerMessage> subscribe(String topicName, MsgSetMeta<Pu, Pr> set, MsgGetMeta get) {
+        ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
         return sendWithPromise(msg, msg.sub.id);
     }
 

@@ -323,7 +323,7 @@ public class MessageActivity extends AppCompatActivity {
         if (!tinode.isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
             // from the onLogin callback;
-            Cache.getTinode().reconnectNow(interactive, false);
+            Cache.getTinode().reconnectNow(interactive, false, false);
             return;
         }
 

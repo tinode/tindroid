@@ -981,7 +981,7 @@ public class UiUtils {
         if (!tinode.isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
             // from the onLogin callback;
-            Cache.getTinode().reconnectNow(true, false);
+            Cache.getTinode().reconnectNow(true, false, false);
             return false;
         }
 
@@ -999,7 +999,7 @@ public class UiUtils {
                                 activity.finish();
                             } else if (errCode == 502 && "cluster unreachable".equals(sre.getMessage())) {
                                 // Must reset connection.
-                                Cache.getTinode().reconnectNow(false,true);
+                                Cache.getTinode().reconnectNow(false,true, false);
                             }
                         }
                         return null;
