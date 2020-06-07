@@ -95,7 +95,7 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
         final Tinode tinode = Cache.getTinode();
-        Cache.getTinode().connect(hostName, tls)
+        Cache.getTinode().connect(hostName, tls, false)
                 .thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override

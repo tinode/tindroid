@@ -453,7 +453,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             // Fetch only if not attached. If it's attached it will be fetched elsewhere.
             if (!isAttached()) {
                 try {
-                    subscribe(null, getMetaGetBuilder().withLaterData(limit).build(), true).thenApply(
+                    subscribe(null, getMetaGetBuilder().withLaterData(limit).build()).thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
@@ -794,26 +794,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Service subscription to topic with explicit parameters.
-     *
-     * @param set values to be assigned to topic on successful subscription.
-     * @param get query topic for data.
-     *
-     * @throws NotConnectedException      if there is no live connection to the server
-     * @throws AlreadySubscribedException if the client is already subscribed to the given topic
-     */
-    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
-        return subscribe(set, get, false);
-    }
-
-    /**
      * Subscribe to topic with parameters, optionally in background.
      *
      * @throws NotConnectedException      if there is no live connection to the server
      * @throws AlreadySubscribedException if the client is already subscribed to the given topic
      */
     @SuppressWarnings("unchecked")
-    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get, boolean background) {
+    public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
         if (mAttached) {
             if (set == null && get == null) {
                 // If the topic is already attached and the user does not attempt to set or
@@ -828,7 +815,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             persist(true);
         }
 
-        return mTinode.subscribe(topicName, set, get, background).thenApply(
+        return mTinode.subscribe(topicName, set, get).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {

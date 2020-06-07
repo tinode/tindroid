@@ -165,14 +165,14 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                 boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
                 String token = AccountManager.get(mContext)
                         .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-                tinode.connect(hostName, tls).getResult();
+                tinode.connect(hostName, tls, true).getResult();
 
                 // It will throw if something is wrong so we will try again later.
                 tinode.loginToken(token).getResult();
 
                 // It throws if rejected and we just fail to sync.
                 // FND sends no presence notifications thus background flag is not needed.
-                tinode.subscribe(Tinode.TOPIC_FND, null, null, false).getResult();
+                tinode.subscribe(Tinode.TOPIC_FND, null, null).getResult();
 
                 if (lastSyncMarker == null) {
                     // Send contacts list to the server only if it has changed since last update, i.e. a full

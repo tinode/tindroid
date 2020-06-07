@@ -162,6 +162,7 @@
     <string name="sending_disabled">No disponible</string>
     <string name="download_title">Descargar</string>
     <string name="some_permissions_missing">Por favor, otorga todos los permisos solicitados.</string>
+    <string name="unable_to_attach_file">No se puede adjuntar este archivo</string>
     <string name="invalid_file">No se puede adjuntar este archivo</string>
     <string name="cancelled">cancelado</string>
     <string name="login_rejected">El nombre de usuario ha sido rechazado</string>
@@ -237,12 +238,13 @@
     <string name="full_name_required">Debes introducir tu nombre completo</string>
 
     <string name="default_contact_name">Usuario de Tinode %1$s</string>
-    <string name="contacts_permission_missing">Falta el permiso requerido</string>
+    <string name="permission_missing">Falta el permiso requerido</string>
     <string name="enter_search_query">Introduzca los criterios de búsqueda</string>
     <string name="image_caption_hint">Añade un comentario</string>
     <string name="action_download">Descargar</string>
-    <string name="tinode_image" translatable="false">tinode_image</string>
     <string name="invalid_content">contenido inválido</string>
+    <string name="failed">fallado</string>
+    <string name="processing">procesando…</string>
     <string name="incognito_mode_enabled">Modo incógnito</string>
     <string name="about_the_app">Acerca de esta app</string>
     <string name="general">General</string>
@@ -261,5 +263,11 @@
     <string name="user_default_permissions_explained">Los usuarios comienzan conversaciones contigo con estos permisos</string>
     <string name="confirm_delmsg_for_all">¿Estás seguro de que quieres eliminar todos los mensajes para todos los participantes?</string>
     <string name="confirm_delmsg_for_self">¿Estás seguro de que deseas eliminar todos los mensajes? Los eliminas sólo para tí.</string>
-    <string name="licenses">Licencias</string>    
+    <string name="licenses">Licencias</string>
+
+    <string name="blocked_contacts">Contactos bloqueados</string>
+    <string name="action_restore">Desatascar</string>
+    <string name="send_to">Enviar a…</string>
+    <string name="never">nunca</string>
+    <string name="just_now">ahora mismo</string>
 </resources>

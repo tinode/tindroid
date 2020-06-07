@@ -121,7 +121,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
                 public void onAvailable(@NonNull Network network) {
                     super.onAvailable(network);
                     if (sTinodeCache != null) {
-                        sTinodeCache.reconnectNow(true, false);
+                        sTinodeCache.reconnectNow(true, false, false);
                     }
                 }
             });
@@ -261,7 +261,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
                     // Connect and login.
                     try {
                         // Sync call throws on error.
-                        tinode.connect(sServerHost, sUseTLS).getResult();
+                        tinode.connect(sServerHost, sUseTLS, false).getResult();
                         Cache.attachMeTopic(null);
                         // Logged in successfully. Save refreshed token for future use.
                         accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());

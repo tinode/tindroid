@@ -111,7 +111,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
         final Tinode tinode = Cache.getTinode();
             // This is called on the websocket thread.
-        tinode.connect(hostName, tls)
+        tinode.connect(hostName, tls, false)
                 .thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override

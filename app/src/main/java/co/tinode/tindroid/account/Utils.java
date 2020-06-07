@@ -94,7 +94,7 @@ public class Utils {
 
         try {
             // Will return immediately if it's already connected.
-            tinode.connect(hostName, tls).getResult();
+            tinode.connect(hostName, tls, true).getResult();
 
             String token = AccountManager.get(context).blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
 
@@ -149,7 +149,7 @@ public class Utils {
                 // Check if contacts have been synced already.
                 if (tinode.getTopicsUpdated() == null) {
                     // Background sync of contacts.
-                    Cache.attachMeTopic(null, true);
+                    Cache.attachMeTopic(null);
                     tinode.getMeTopic().leave();
                 }
 
@@ -158,7 +158,7 @@ public class Utils {
                 if (!topic.isAttached()) {
                     // Fully asynchronous. We don't need to do anything with the result.
                     // The new data will be automatically saved.
-                    topic.subscribe(null, builder.withLaterData(24).withLaterDel(24).build(), true);
+                    topic.subscribe(null, builder.withLaterData(24).withLaterDel(24).build());
                     topic.leave();
                 }
             }
@@ -195,7 +195,7 @@ public class Utils {
             // Check if contacts have been synced already.
             if (tinode.getTopicsUpdated() == null) {
                 // Background sync of all contacts.
-                Cache.attachMeTopic(null, true).getResult();
+                Cache.attachMeTopic(null).getResult();
                 tinode.getMeTopic().leave();
             }
 
