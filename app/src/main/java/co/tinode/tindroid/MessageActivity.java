@@ -213,10 +213,7 @@ public class MessageActivity extends AppCompatActivity {
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 
         mSendReadReceipts = pref.getBoolean(UiUtils.PREF_READ_RCPT, true);
-        Log.i(TAG, "Topic '" + topicName + "': sendReadReceipts = " + mSendReadReceipts);
         mSendTypingNotifications = pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true);
-        Log.w(TAG, "Topic '" + topicName + "': sendTypingNotifications = " +
-                mSendTypingNotifications);
     }
 
     // Topic has changed. Update all the views with the new data.
