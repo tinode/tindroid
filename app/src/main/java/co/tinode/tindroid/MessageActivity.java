@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,6 +38,8 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.preference.PreferenceManager;
+
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -93,6 +96,10 @@ public class MessageActivity extends AppCompatActivity {
 
     // Handler for sending {note what="read"} notifications after a READ_DELAY.
     private Handler mNoteReadHandler = null;
+
+    // Notification settings.
+    private boolean mSendTypingNotifications = false;
+    private boolean mSendReadReceipts = false;
 
     BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
@@ -202,6 +209,11 @@ public class MessageActivity extends AppCompatActivity {
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
         }
+
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+
+        mSendReadReceipts = pref.getBoolean(UiUtils.PREF_READ_RCPT, true);
+        mSendTypingNotifications = pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true);
     }
 
     // Topic has changed. Update all the views with the new data.
@@ -589,7 +601,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     public void sendKeyPress() {
-        if (mTopic != null) {
+        if (mTopic != null && mSendTypingNotifications) {
             mTopic.noteKeyPress();
         }
     }
@@ -629,8 +641,10 @@ public class MessageActivity extends AppCompatActivity {
 
     // Schedule a delayed {note what="read"} notification.
     void sendNoteRead(int seq) {
-        Message msg = mNoteReadHandler.obtainMessage(0, seq, 0, mTopicName);
-        mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
+        if (mSendReadReceipts) {
+            Message msg = mNoteReadHandler.obtainMessage(0, seq, 0, mTopicName);
+            mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
+        }
     }
 
     // Handler which sends "read" notifications for received messages.
