@@ -30,8 +30,7 @@ import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.core.CrashlyticsCore;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.util.Date;
@@ -48,7 +47,6 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
-import io.fabric.sdk.android.Fabric;
 
 /**
  * A class for providing global context for database access
@@ -84,15 +82,8 @@ public class TindroidApp extends Application implements LifecycleObserver {
             Log.w(TAG, "Failed to retrieve app version", e);
         }
 
-        // Set up Crashlytics, disabled for debug builds
-        Crashlytics crashlyticsKit = new Crashlytics.Builder()
-                .core(new CrashlyticsCore.Builder()
-                        .disabled(BuildConfig.DEBUG)
-                        .build())
-                .build();
-
-        // Initialize Fabric with the debug-disabled Crashlytics.
-        Fabric.with(this, crashlyticsKit);
+        // Disable Crashlytics for debug builds.
+        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG);
 
         BroadcastReceiver br = new BroadcastReceiver() {
             @Override
