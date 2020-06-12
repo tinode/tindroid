@@ -314,12 +314,12 @@ public class MessageDb implements BaseColumns {
                 " FROM " + TABLE_NAME + " AS m1" +
                 " LEFT JOIN " + TABLE_NAME + " AS m2" +
                 " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +
-                    " AND m2." + COLUMN_NAME_TOPIC_ID + "=?" +
+                    " AND m1." + COLUMN_NAME_TOPIC_ID + "= m2." + COLUMN_NAME_TOPIC_ID +
                 " WHERE m2." + COLUMN_NAME_SEQ + " IS NULL" +
                     " AND m1." + COLUMN_NAME_SEQ + ">1" +
-                    " AND m1." + COLUMN_NAME_TOPIC_ID + "=?";
+                    " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId;
 
-        Cursor c = db.rawQuery(sqlHigh, new String[]{ Long.toString(topicId), Long.toString(topicId) });
+        Cursor c = db.rawQuery(sqlHigh, null);
         if (c != null) {
             if (c.moveToFirst()) {
                 high = c.getInt(0);
@@ -334,10 +334,10 @@ public class MessageDb implements BaseColumns {
         // Find the first present message with ID less than the 'high'.
         final String sqlLow = "SELECT MAX(IFNULL(" + COLUMN_NAME_HIGH + "-1," + COLUMN_NAME_SEQ + ")) AS present" +
                 " FROM " + TABLE_NAME +
-                " WHERE " + COLUMN_NAME_SEQ + "<?" +
-                " AND " + COLUMN_NAME_TOPIC_ID + "=?";
+                " WHERE " + COLUMN_NAME_SEQ + "<" + high +
+                " AND " + COLUMN_NAME_TOPIC_ID + "=" + topicId;
         int low = 1;
-        c = db.rawQuery(sqlLow, new String[]{ Integer.toString(high), Long.toString(topicId) });
+        c = db.rawQuery(sqlLow, null);
         if (c != null) {
             if (c.moveToFirst()) {
                 low = c.getInt(0) + 1; // Low is inclusive thus +1.
