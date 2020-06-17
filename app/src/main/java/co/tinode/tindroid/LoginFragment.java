@@ -131,7 +131,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                         AuthScheme.basicInstance(login, password).toString(),
                                         tinode.getAuthToken(), tinode.getAuthTokenExpiration());
 
-                                if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
+                                // msg could be null if earlier login has succeeded.
+                                if (msg != null && msg.ctrl.code >= 300 &&
+                                        msg.ctrl.text.contains("validate credentials")) {
                                     parent.runOnUiThread(new Runnable() {
                                         public void run() {
                                             signIn.setEnabled(true);

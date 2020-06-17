@@ -245,14 +245,17 @@ public class TindroidApp extends Application implements LifecycleObserver {
 
                 // Must instantiate tinode cache even if token == null. Otherwise logout won't work.
                 final Tinode tinode = Cache.getTinode();
-                // FIXME: when all clients are updated, treat expires == null as a reason to reject; Apr 8, 2020.
-                if (!TextUtils.isEmpty(token) && (expires != null && expires.after(new Date()))) {
+                if (!TextUtils.isEmpty(token) && expires != null && expires.after(new Date())) {
                     // Connecting with synchronous calls because this is not the UI thread.
                     tinode.setAutoLoginToken(token);
                     // Connect and login.
                     try {
                         // Sync call throws on error.
                         tinode.connect(sServerHost, sUseTLS, false).getResult();
+                        if (!tinode.isAuthenticated()) {
+                            // The connection may already exist but not yet authenticated.
+                            tinode.loginToken(token).getResult();
+                        }
                         Cache.attachMeTopic(null);
                         // Logged in successfully. Save refreshed token for future use.
                         accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());

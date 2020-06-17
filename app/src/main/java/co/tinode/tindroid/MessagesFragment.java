@@ -370,7 +370,7 @@ public class MessagesFragment extends Fragment {
         }
 
         Acs acs = mTopic.getAccessMode();
-        if (acs == null) {
+        if (acs == null || !acs.isModeDefined()) {
             return;
         }
 
