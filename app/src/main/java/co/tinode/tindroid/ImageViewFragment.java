@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -34,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import androidx.annotation.NonNull;
+import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 
 /**
@@ -50,7 +50,7 @@ public class ImageViewFragment extends Fragment {
     private RectF mInitialRect;
     // Screen bounds
     private RectF mScreenRect;
-    // Working rectangle for testing image bounds after pannig and zooming.
+    // Working rectangle for testing image bounds after panning and zooming.
     private RectF mWorkingRect;
     // Center of the screen.
     private PointF mScreenCenter;
@@ -72,24 +72,27 @@ public class ImageViewFragment extends Fragment {
         GestureDetector.OnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float dX, float dY) {
-
                 mWorkingMatrix.postTranslate(-dX, -dY);
-                // Ignore pan if the image is too small. It should be pinned to the center of the screen.
-                // If it's large, make sure it covers the entire screen.
                 mWorkingMatrix.mapRect(mWorkingRect, mInitialRect);
-                if (mWorkingRect.width() > mScreenRect.width()) {
-                    // Matrix.set* operations are retarded: they *reset* the entire matrix instead of adjusting either translation or scale.
-                    // Thus using postTranslate instead of setTranslate.
-                    float left = Math.max(Math.min(0f, mWorkingRect.left), mScreenRect.width() - mWorkingRect.width());
-                    float top = Math.max(Math.min(0f, mWorkingRect.top), mScreenRect.height() - mWorkingRect.height());
-                    mWorkingMatrix.postTranslate(left - mWorkingRect.left, top - mWorkingRect.top);
 
-                    mMatrix.set(mWorkingMatrix);
-                    mImageView.setImageMatrix(mMatrix);
-                } else {
-                    // Skip change because the image is too small and fits the screen.
-                    mWorkingMatrix.set(mMatrix);
+                // Make sure the image cannot be pushed off the screen.
+                float left = mWorkingRect.left;
+                if (mWorkingRect.width() > mScreenRect.width()) {
+                    // Image wider than the screen.
+                    left = Math.max(Math.min(0f, mWorkingRect.left), mScreenRect.width() - mWorkingRect.width());
                 }
+                float top =  mWorkingRect.top;
+                if (mWorkingRect.height() > mScreenRect.height()) {
+                    // Image taller than the screen.
+                    top = Math.max(Math.min(0f, mWorkingRect.top), mScreenRect.height() - mWorkingRect.height());
+                }
+
+                // Matrix.set* operations are retarded: they *reset* the entire matrix instead of adjusting either
+                // translation or scale. Thus using postTranslate instead of setTranslate.
+                mWorkingMatrix.postTranslate(left - mWorkingRect.left, top - mWorkingRect.top);
+
+                mMatrix.set(mWorkingMatrix);
+                mImageView.setImageMatrix(mMatrix);
                 return true;
             }
         };
@@ -99,24 +102,22 @@ public class ImageViewFragment extends Fragment {
             @Override
             public boolean onScale(ScaleGestureDetector scaleDetector) {
                 float factor = scaleDetector.getScaleFactor();
-                mWorkingMatrix.postScale(factor, factor, mScreenCenter.x, mScreenCenter.y);
-                //Make sure it's not too large or too small: not larger than 10x the screen size,
-                // and not smaller of either the screen size or actual image size.
+                mWorkingMatrix.postScale(factor, factor, scaleDetector.getFocusX(), scaleDetector.getFocusY());
+
+                // Make sure it's not too large or too small: not larger than 10x the screen size,
+                // and not smaller of either the screen size or the actual image size.
                 mWorkingMatrix.mapRect(mWorkingRect, mInitialRect);
                 if (mWorkingRect.width() < mScreenRect.width() * 10f &&
-                        (mWorkingRect.width() >= mInitialRect.width() || mWorkingRect.width() > mScreenRect.width())) {
-
-                    float left = mScreenCenter.x - mWorkingRect.width() * 0.5f;
-                    float top = mScreenCenter.y - mWorkingRect.height() * 0.5f;
-                    mWorkingMatrix.postTranslate(left - mWorkingRect.left, top - mWorkingRect.top);
+                        (mWorkingRect.width() >= mInitialRect.width()
+                                || mWorkingRect.width() > mScreenRect.width()
+                                || mWorkingRect.height() > mScreenRect.height())) {
 
                     mMatrix.set(mWorkingMatrix);
                     mImageView.setImageMatrix(mMatrix);
                 } else {
-                    // Skip change: the image is too large or too small already.
+                    // Skip the change: the image is too large or too small already.
                     mWorkingMatrix.set(mMatrix);
                 }
-
                 return true;
             }
         };
@@ -184,6 +185,17 @@ public class ImageViewFragment extends Fragment {
                         bmp = BitmapFactory.decodeStream(is, null, null);
                         is.close();
                     }
+                    // Make sure the bitmap is properly oriented in preview.
+                    is = resolver.openInputStream(uri);
+                    if (is != null) {
+                        ExifInterface exif = new ExifInterface(is);
+                        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                                ExifInterface.ORIENTATION_UNDEFINED);
+                        if (bmp != null) {
+                            bmp = UiUtils.rotateBitmap(bmp, orientation);
+                        }
+                        is.close();
+                    }
                 } catch (IOException ex) {
                     Log.i(TAG, "Failed to read image from " + uri, ex);
                 }
@@ -200,18 +212,20 @@ public class ImageViewFragment extends Fragment {
 
             mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
             mWorkingRect = new RectF(mInitialRect);
-            String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
             if (bits == null) {
                 // The image is being previewed before sending.
                 activity.findViewById(R.id.sendImagePanel).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.annotation).setVisibility(View.GONE);
+                setHasOptionsMenu(false);
             } else {
                 // The received image is viewed.
+                String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
                 activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
                 activity.findViewById(R.id.annotation).setVisibility(View.VISIBLE);
                 ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
                 ((TextView) activity.findViewById(R.id.file_name)).setText(filename);
                 ((TextView) activity.findViewById(R.id.image_size)).setText(size + UiUtils.bytesToHumanSize(bits.length));
+                setHasOptionsMenu(true);
             }
 
             mImageView.setImageDrawable(new BitmapDrawable(getResources(), bmp));
@@ -230,7 +244,6 @@ public class ImageViewFragment extends Fragment {
                     mImageView.setImageMatrix(mMatrix);
                 }
             });
-            setHasOptionsMenu(true);
         } else {
             // Show broken image.
             mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
