@@ -172,8 +172,8 @@
                 android:layout_weight="0.1"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/send_message_button_hint"
-                android:paddingLeft="4sp"
-                android:paddingRight="8sp"
+                android:paddingStart="4sp"
+                android:paddingEnd="8sp"
                 android:tint="?attr/colorAccent"
                 app:srcCompat="@drawable/ic_send" />
         </LinearLayout>
