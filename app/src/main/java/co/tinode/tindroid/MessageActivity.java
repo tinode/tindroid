@@ -567,6 +567,10 @@ public class MessageActivity extends AppCompatActivity {
             addToBackstack = false;
         }
 
+        if (FRAGMENT_MESSAGES.equals(tag)) {
+            trx.setPrimaryNavigationFragment(fragment);
+        }
+
         if (addToBackstack) {
             trx.addToBackStack(tag);
         }

@@ -62,7 +62,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
-        ChatsFragment fragment = new ChatsFragment();
+        Fragment fragment = new ChatsFragment();
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.contentFragment, fragment, FRAGMENT_CHATLIST)
                 .setPrimaryNavigationFragment(fragment)
