@@ -73,7 +73,7 @@ public class TopicInfoFragment extends Fragment {
     private static final int ACTION_DELMSG = 7;
 
     private ComTopic<VxCard> mTopic;
-    private MembersAdapter mAdapter;
+    private MembersAdapter mMembersAdapter;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -96,13 +96,13 @@ public class TopicInfoFragment extends Fragment {
             return;
         }
 
-        mAdapter = new MembersAdapter();
+        mMembersAdapter = new MembersAdapter();
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
         RecyclerView rv = view.findViewById(R.id.groupMembers);
         rv.setLayoutManager(new LinearLayoutManager(activity, RecyclerView.VERTICAL, false));
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-        rv.setAdapter(mAdapter);
+        rv.setAdapter(mMembersAdapter);
         rv.setNestedScrollingEnabled(false);
 
         // Set up listeners
@@ -572,8 +572,10 @@ public class TopicInfoFragment extends Fragment {
             return;
         }
 
+        notifyContentChanged();
+
         if (mTopic.isGrpType()) {
-            mAdapter.resetContent();
+            mMembersAdapter.resetContent();
         }
     }
 
