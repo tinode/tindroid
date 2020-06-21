@@ -6,7 +6,6 @@ import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -52,8 +51,6 @@ public class ImageViewFragment extends Fragment {
     private RectF mScreenRect;
     // Working rectangle for testing image bounds after panning and zooming.
     private RectF mWorkingRect;
-    // Center of the screen.
-    private PointF mScreenCenter;
 
     private GestureDetector mGestureDetector;
     private ScaleGestureDetector mScaleGestureDetector;
@@ -236,7 +233,6 @@ public class ImageViewFragment extends Fragment {
                 public void onGlobalLayout() {
                     // Ensure we call it only once.
                     mImageView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    mScreenCenter = new PointF(mImageView.getWidth() * 0.5f, mImageView.getHeight() * 0.5f);
                     mScreenRect = new RectF(0, 0, mImageView.getWidth(), mImageView.getHeight());
                     mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
                     mWorkingMatrix = new Matrix(mMatrix);

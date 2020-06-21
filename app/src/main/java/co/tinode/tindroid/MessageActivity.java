@@ -79,12 +79,13 @@ public class MessageActivity extends AppCompatActivity {
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
 
-    BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
+    private BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
         public void onReceive(Context ctxt, Intent intent) {
             // FIXME: handle notification click.
             Log.d(TAG, "onNotificationClick" + intent.getExtras());
         }
     };
+
     private Timer mTypingAnimationTimer;
     private String mMessageText = null;
     private PausableSingleThreadExecutor mMessageSender = null;
@@ -540,6 +541,9 @@ public class MessageActivity extends AppCompatActivity {
                     fragment = new InvalidTopicFragment();
                     break;
             }
+        } else if (args == null) {
+            // Retain old arguments.
+            args = fragment.getArguments();
         }
         if (fragment == null) {
             throw new NullPointerException();
