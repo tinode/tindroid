@@ -436,7 +436,7 @@ public class UiUtils {
         }
 
         if (!isPermissionGranted(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
+            fragment.requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
                     READ_EXTERNAL_STORAGE_PERMISSION);
         } else {
             Intent intent = new Intent();

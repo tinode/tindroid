@@ -94,8 +94,7 @@ public class FilePreviewFragment extends Fragment {
 
         if (!UiUtils.isPermissionGranted(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
             accessGranted = false;
-            ActivityCompat.requestPermissions(activity,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     READ_STORAGE_PERMISSION);
         } else {
             Log.i(TAG, "Can read external storage");

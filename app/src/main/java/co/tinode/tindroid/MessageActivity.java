@@ -245,7 +245,6 @@ public class MessageActivity extends AppCompatActivity {
         mTopic = topic;
 
         if (mTopic == null) {
-            Log.i(TAG, "Attempt to instantiate new or unknown topic: " + mTopicName);
             UiUtils.setupToolbar(this, null, mTopicName, false, null);
             try {
                 //noinspection unchecked

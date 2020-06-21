@@ -666,8 +666,7 @@ public class MessagesFragment extends Fragment {
         }
 
         if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            ActivityCompat.requestPermissions(activity,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     ATTACH_FILE_PERMISSIONS);
             return;
         }
@@ -690,8 +689,7 @@ public class MessagesFragment extends Fragment {
         }
 
         if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
-            ActivityCompat.requestPermissions(activity,
-                    new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
+            requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
                     ATTACH_IMAGE_PERMISSIONS);
             return;
         }
@@ -774,9 +772,10 @@ public class MessagesFragment extends Fragment {
                     }
 
                     if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                        ActivityCompat.requestPermissions(activity,
-                                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA},
-                                requestCode == ACTION_ATTACH_IMAGE ? ATTACH_IMAGE_PERMISSIONS : ATTACH_FILE_PERMISSIONS);
+                        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
+                                        Manifest.permission.CAMERA},
+                                requestCode == ACTION_ATTACH_IMAGE ?
+                                        ATTACH_IMAGE_PERMISSIONS : ATTACH_FILE_PERMISSIONS);
                         return;
                     }
 
