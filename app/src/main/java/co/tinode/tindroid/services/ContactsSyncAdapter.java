@@ -20,11 +20,8 @@ import androidx.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.util.SparseArray;
-
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.Phonenumber;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -34,7 +31,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.TindroidApp;
@@ -68,16 +64,6 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private static final String ACCKEY_SYNC_MARKER = "co.tinode.tindroid.sync_marker_contacts";
     private static final String ACCKEY_QUERY_HASH = "co.tinode.tindroid.sync_query_hash_contacts";
-
-    // Prefixes for various contacts
-    private static final String TAG_LABEL_PHONE = "tel:";
-    private static final String TAG_LABEL_EMAIL = "email:";
-    private static final String TAG_LABEL_TINODE = "tinode:";
-
-    // Flags used to select what to fetch.
-    private static final int FETCH_EMAIL = 0x1;
-    private static final int FETCH_PHONE = 0x2;
-    private static final int FETCH_IM = 0x4;
 
     // Context for loading preferences
     private final Context mContext;
@@ -135,8 +121,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
         }
 
         // Load contacts and send them to server as fnd.Private.
-        SparseArray<ContactHolder> contactList = fetchContacts(getContext().getContentResolver(),
-                FETCH_EMAIL | FETCH_PHONE);
+        SparseArray<ContactHolder> contactList = fetchContacts(getContext().getContentResolver());
         StringBuilder contactsBuilder = new StringBuilder();
         for (int i=0; i<contactList.size(); i++) {
             ContactHolder ch = contactList.get(contactList.keyAt(i));
@@ -250,37 +235,24 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
      * The results are ordered by 'data1' field.
      *
      * @param resolver content resolver to use.
-     * @param flags    bit flags indicating types f contacts to fetch.
      * @return contacts
      */
-    private static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver, int flags) {
+    private static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver) {
         SparseArray<ContactHolder> map = new SparseArray<>();
 
         final String[] projection = {
                 ContactsContract.Data.CONTACT_ID,
                 ContactsContract.Data.MIMETYPE,
                 ContactsContract.CommonDataKinds.Email.DATA,
-                ContactsContract.CommonDataKinds.Email.TYPE,
-                ContactsContract.CommonDataKinds.Im.PROTOCOL,
-                ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL,
+                ContactsContract.CommonDataKinds.Email.TYPE
         };
 
         // Need to make the list order consistent so the hash does not change too often.
         final String orderBy = ContactsContract.CommonDataKinds.Email.DATA;
 
         LinkedList<String> args = new LinkedList<>();
-        if ((flags & FETCH_EMAIL) != 0) {
-            args.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-        }
-        if ((flags & FETCH_PHONE) != 0) {
-            args.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-        }
-        if ((flags & FETCH_IM) != 0) {
-            args.add(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE);
-        }
-        if (args.size() == 0) {
-            throw new IllegalArgumentException();
-        }
+        args.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+        args.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
 
         StringBuilder sel = new StringBuilder(ContactsContract.Data.MIMETYPE);
         sel.append(" IN (");
@@ -306,12 +278,6 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
         final int contactIdIdx = cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID);
         final int mimeTypeIdx = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE);
         final int dataIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
-        final int typeIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.TYPE);
-        final int imProtocolIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Im.PROTOCOL);
-        final int imProtocolNameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL);
-
-        final PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-        final String country = Locale.getDefault().getCountry();
 
         while (cursor.moveToNext()) {
             int contact_id = cursor.getInt(contactIdIdx);
@@ -327,30 +293,19 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
             switch (mimeType) {
                 case ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE:
                     // This is an email
-                    // Log.d(TAG, "Adding email '" + data + "' to contact=" + contact_id);
-                    holder.putEmail(data);
-                    break;
-                case ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE:
-                    int protocol = cursor.getInt(imProtocolIdx);
-                    String protocolName = cursor.getString(imProtocolNameIdx);
-                    if (protocol == ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM &&
-                            protocolName.equals(Utils.TINODE_IM_PROTOCOL)) {
-                        holder.putIm(data);
+                    if (!TextUtils.isEmpty(data) && Patterns.EMAIL_ADDRESS.matcher(data).matches()) {
+                        holder.putEmail(data);
+                    } else {
+                        Log.i(TAG, "'" + data + "' is not an email");
                     }
                     break;
                 case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
                     // This is a phone number. Syncing phones of all types. The 'mobile' marker is ignored
                     // because users ignore it these days.
-                    try {
-                        // Normalize phone number format
-                        Phonenumber.PhoneNumber number = phoneUtil.parse(data, country);
-                        if (phoneUtil.isValidNumber(number)) {
-                            holder.putPhone(phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.E164));
-                        } else {
-                            Log.i(TAG, "'" + data + "' is not a valid phone number in country '" + country + "'");
-                        }
-                    } catch (NumberParseException ex) {
-                        Log.i(TAG, "Failed to parse phone number '" + data + "' in country '" + country + "'");
+                    if (!TextUtils.isEmpty(data) && Patterns.PHONE.matcher(data).matches()) {
+                        holder.putPhone(data);
+                    } else {
+                        Log.i(TAG, "'" + data + "' is not a valid phone number");
                     }
                     break;
             }
@@ -389,22 +344,19 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
     private static class ContactHolder {
         List<String> emails;
         List<String> phones;
-        List<String> ims;
 
         ContactHolder() {
             emails = null;
             phones = null;
-            ims = null;
         }
 
-        private static void Stringify(List<String> vals, String label, StringBuilder str) {
+        private static void Stringify(List<String> vals, StringBuilder str) {
             if (vals != null && vals.size() > 0) {
                 if (str.length() > 0) {
                     str.append(",");
                 }
 
                 for (String entry : vals) {
-                    str.append(label);
                     str.append(entry);
                     str.append(",");
                 }
@@ -427,20 +379,12 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
             phones.add(phone);
         }
 
-        void putIm(String im) {
-            if (ims == null) {
-                ims = new LinkedList<>();
-            }
-            ims.add(im);
-        }
-
         @Override
         @NonNull
         public String toString() {
             StringBuilder str = new StringBuilder();
-            Stringify(emails, TAG_LABEL_EMAIL, str);
-            Stringify(phones, TAG_LABEL_PHONE, str);
-            Stringify(ims, TAG_LABEL_TINODE, str);
+            Stringify(emails, str);
+            Stringify(phones, str);
             return str.toString();
         }
     }
