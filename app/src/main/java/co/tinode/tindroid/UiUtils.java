@@ -43,9 +43,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1197,18 +1194,9 @@ public class UiUtils {
     }
 
     static Credential parseCredential(String cred) {
-        final PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-        final String country = Locale.getDefault().getCountry();
         if (Patterns.PHONE.matcher(cred).matches()) {
             // Looks like a phone number.
-            try {
-                // Normalize phone number format
-                cred = phoneUtil.format(phoneUtil.parse(cred, country), PhoneNumberUtil.PhoneNumberFormat.E164);
-                // Exception not thrown, we have a phone number.
-                return new Credential(Credential.METH_PHONE, cred);
-            } catch (NumberParseException ignored) {
-                return null;
-            }
+            return new Credential(Credential.METH_PHONE, cred);
         }
 
         // Not a phone number. Try parsing as email.
