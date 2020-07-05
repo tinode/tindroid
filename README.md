@@ -49,8 +49,6 @@ websocket support.
 
 ### Application
 
-* [libphonenumber](https://github.com/googlei18n/libphonenumber) for user discovery
-to ensure all phone numbers use the same [E.164 format](https://en.wikipedia.org/wiki/E.164)
 * [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
 
 ## Other
@@ -78,6 +76,7 @@ If you want to use the app with your own server and want push notification to wo
 The app is currently available in the following languages:
 * English
 * Chinese (simplified)
+* German
 * Korean
 * Russian
 * Spanish
