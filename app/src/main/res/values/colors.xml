@@ -44,7 +44,8 @@
     <color name="online">#FF40C040</color>
     <color name="offline">#FFC0C0C0</color>
 
-    <!-- colors for striped background -->
+    <!-- Background color in avatar uploads -->
+    <color name="colorImagePreviewBg">#CCCCCC</color>
 
     <!-- Background colors for LetterTileDrawables. -->
     -->

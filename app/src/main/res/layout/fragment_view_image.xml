@@ -9,7 +9,7 @@
     android:background="@drawable/message_view_bkg"
     android:orientation="vertical">
 
-    <ImageView
+    <co.tinode.tindroid.widgets.CircularWindowOverlay
         android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

@@ -183,6 +183,9 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                         new PromisedReply.FailureListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                if (parent.isFinishing() || parent.isDestroyed()) {
+                                    return null;
+                                }
                                 final String cause = ((ServerResponseException)err).getReason();
                                 if (cause != null) {
                                     parent.runOnUiThread(new Runnable() {

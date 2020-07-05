@@ -12,4 +12,6 @@
     <color name="colorDanger">#d32f2f</color>
 
     <color name="colorOffline">#999900</color>
+
+    <color name="colorImagePreviewBg">#333333</color>
 </resources>
