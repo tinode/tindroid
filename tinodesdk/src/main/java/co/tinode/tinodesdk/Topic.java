@@ -397,7 +397,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     public void setTouched(Date touched) {
-        mDesc.touched = maxDate(mDesc.updated, touched);
+        mDesc.touched = maxDate(mDesc.touched, touched);
     }
 
     @Override
