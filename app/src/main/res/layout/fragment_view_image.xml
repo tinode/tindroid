@@ -154,6 +154,7 @@
         android:focusable="true"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
+        android:visibility="gone"
         app:elevation="@dimen/fab_elevation"
         app:borderWidth="0dp"
         app:srcCompat="@drawable/ic_check" />
