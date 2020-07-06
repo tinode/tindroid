@@ -383,10 +383,10 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
             return;
         }
 
-        final MeTopic me = Cache.getTinode().getMeTopic();
         if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
-            // noinspection unchecked
-            UiUtils.updateAvatar(activity, me, data);
+            Bundle args = new Bundle();
+            args.putParcelable(AttachmentHandler.ARG_SRC_URI, data.getData());
+            ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_AVATAR_PREVIEW, args);
         }
     }
 

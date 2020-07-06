@@ -40,6 +40,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
     static final String FRAGMENT_CHATLIST = "contacts";
     static final String FRAGMENT_ACCOUNT_INFO = "account_info";
+    static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String FRAGMENT_ACC_HELP = "acc_help";
     static final String FRAGMENT_ACC_NOTIFICATIONS = "acc_notifications";
     static final String FRAGMENT_ACC_PERSONAL = "acc_personal";
@@ -97,7 +98,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         final Intent intent = getIntent();
         String tag = intent.getStringExtra(TAG_FRAGMENT_NAME);
         if (!TextUtils.isEmpty(tag)) {
-            showFragment(tag);
+            showFragment(tag, null);
         }
     }
 
@@ -129,14 +130,13 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         return true;
     }
 
-    void showFragment(String tag) {
+    void showFragment(String tag, Bundle args) {
         if (isFinishing() || isDestroyed()) {
             return;
         }
 
         final FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
-        FragmentTransaction trx = fm.beginTransaction();
         if (fragment == null) {
             switch (tag) {
                 case FRAGMENT_ACCOUNT_INFO:
@@ -151,6 +151,14 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                 case FRAGMENT_ACC_PERSONAL:
                     fragment = new AccPersonalFragment();
                     break;
+                case FRAGMENT_AVATAR_PREVIEW:
+                    fragment = new ImageViewFragment();
+                    if (args == null) {
+                        args = new Bundle();
+                    }
+                    args.putBoolean(AttachmentHandler.ARG_AVATAR, true);
+                    fragment.setArguments(args);
+                    break;
                 case FRAGMENT_ACC_SECURITY:
                     fragment = new AccSecurityFragment();
                     break;
@@ -160,8 +168,10 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                 case FRAGMENT_ARCHIVE:
                 case FRAGMENT_BANNED:
                     fragment = new ChatsFragment();
-                    Bundle args = new Bundle();
-                    args.putBoolean(tag, Boolean.TRUE);
+                    if (args == null) {
+                        args = new Bundle();
+                    }
+                    args.putBoolean(tag, true);
                     fragment.setArguments(args);
                     break;
                 case FRAGMENT_CHATLIST:
@@ -172,6 +182,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
             }
         }
 
+        FragmentTransaction trx = fm.beginTransaction();
         trx.replace(R.id.contentFragment, fragment, tag)
                 .addToBackStack(tag)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)

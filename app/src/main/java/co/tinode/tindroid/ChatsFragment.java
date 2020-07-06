@@ -217,11 +217,11 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
         switch (item.getItemId()) {
             case R.id.action_show_archive:
-                activity.showFragment(ChatsActivity.FRAGMENT_ARCHIVE);
+                activity.showFragment(ChatsActivity.FRAGMENT_ARCHIVE, null);
                 return true;
 
             case R.id.action_settings:
-                activity.showFragment(ChatsActivity.FRAGMENT_ACCOUNT_INFO);
+                activity.showFragment(ChatsActivity.FRAGMENT_ACCOUNT_INFO, null);
                 return true;
 
             case R.id.action_offline:

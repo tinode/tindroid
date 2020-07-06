@@ -13,12 +13,12 @@ import co.tinode.tindroid.R;
 /**
  * ImageView with a circular cutout for previewing avatars.
  */
-public class CircularWindowOverlay extends AppCompatImageView {
+public class OverlaidImageView extends AppCompatImageView {
     private Paint mBackgroundPaint;
-    private boolean mShowOverlay = true;
+    private boolean mShowOverlay = false;
     private Path mClipPath;
 
-    public CircularWindowOverlay(Context context, AttributeSet attrs) {
+    public OverlaidImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -29,20 +29,27 @@ public class CircularWindowOverlay extends AppCompatImageView {
         mClipPath = new Path();
     }
 
+    /**
+     * Show or hide circular image overlay.
+     * @param on true to show, false to hide
+     */
+    public void enableOverlay(boolean on) {
+        mShowOverlay = on;
+    }
+
     @Override
     public void onDraw(Canvas canvas) {
         // Draw image.
         super.onDraw(canvas);
 
+        // Draw background with circular cutout.
         if (mShowOverlay) {
-            // Draw background with circular cutout.
-
             final int width = getWidth();
             final int height = getHeight();
             final int minDimension = Math.min(width, height);
 
             mClipPath.reset();
-            mClipPath.addCircle(width * 0.5f, height * 0.5f, minDimension / 2.05f, Path.Direction.CW);
+            mClipPath.addCircle(width * 0.5f, height * 0.5f, minDimension * 0.5f, Path.Direction.CW);
             canvas.clipPath(mClipPath, Region.Op.DIFFERENCE);
             canvas.drawPaint(mBackgroundPaint);
         }

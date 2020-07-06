@@ -913,6 +913,11 @@ public class UiUtils {
             Log.i(TAG, "Failed to extract bitmap from intent");
             return;
         }
+        updateAvatar(activity, topic, bmp);
+    }
+
+    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateAvatar(final Activity activity,
+                                                                          final T topic, final Bitmap bmp) {
         VxCard pub = topic.getPub();
         if (pub != null) {
             pub = pub.copy();

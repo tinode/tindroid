@@ -71,7 +71,7 @@ public class AccHelpFragment extends Fragment {
         fragment.findViewById(R.id.aboutTheApp).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT);
+                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT, null);
             }
         });
 

@@ -32,8 +32,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
+import co.tinode.tindroid.widgets.OverlaidImageView;
+import co.tinode.tinodesdk.MeTopic;
 
 /**
  * Fragment for expanded display of an image: being attached or received.
@@ -49,12 +52,19 @@ public class ImageViewFragment extends Fragment {
     private RectF mInitialRect;
     // Screen bounds
     private RectF mScreenRect;
+    // Bounds of the square cut out in the middle of the screen.
+    private RectF mCutOutRect;
+
     // Working rectangle for testing image bounds after panning and zooming.
     private RectF mWorkingRect;
+    // Minimum scaling factor
+    // private float mMinScalingFactor = 1f;
 
     private GestureDetector mGestureDetector;
     private ScaleGestureDetector mScaleGestureDetector;
-    private ImageView mImageView;
+    private OverlaidImageView mImageView;
+    // This is an avatar preview before upload.
+    private boolean mAvatarUpload;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -72,21 +82,11 @@ public class ImageViewFragment extends Fragment {
                 mWorkingMatrix.postTranslate(-dX, -dY);
                 mWorkingMatrix.mapRect(mWorkingRect, mInitialRect);
 
-                // Make sure the image cannot be pushed off the screen.
-                float left = mWorkingRect.left;
-                if (mWorkingRect.width() > mScreenRect.width()) {
-                    // Image wider than the screen.
-                    left = Math.max(Math.min(0f, mWorkingRect.left), mScreenRect.width() - mWorkingRect.width());
-                }
-                float top =  mWorkingRect.top;
-                if (mWorkingRect.height() > mScreenRect.height()) {
-                    // Image taller than the screen.
-                    top = Math.max(Math.min(0f, mWorkingRect.top), mScreenRect.height() - mWorkingRect.height());
-                }
-
+                // Make sure the image cannot be pushed off the viewport.
+                RectF bounds = mAvatarUpload ? mCutOutRect : mScreenRect;
                 // Matrix.set* operations are retarded: they *reset* the entire matrix instead of adjusting either
                 // translation or scale. Thus using postTranslate instead of setTranslate.
-                mWorkingMatrix.postTranslate(left - mWorkingRect.left, top - mWorkingRect.top);
+                mWorkingMatrix.postTranslate(translateToBoundsX(bounds), translateToBoundsY(bounds));
 
                 mMatrix.set(mWorkingMatrix);
                 mImageView.setImageMatrix(mMatrix);
@@ -104,10 +104,14 @@ public class ImageViewFragment extends Fragment {
                 // Make sure it's not too large or too small: not larger than 10x the screen size,
                 // and not smaller of either the screen size or the actual image size.
                 mWorkingMatrix.mapRect(mWorkingRect, mInitialRect);
-                if (mWorkingRect.width() < mScreenRect.width() * 10f &&
-                        (mWorkingRect.width() >= mInitialRect.width()
-                                || mWorkingRect.width() > mScreenRect.width()
-                                || mWorkingRect.height() > mScreenRect.height())) {
+                if ((/* max size */ mWorkingRect.width() < mScreenRect.width() * 10f) &&
+                        (/* covers cut out area */(mAvatarUpload
+                                && mWorkingRect.width() >= mCutOutRect.width()
+                                && mWorkingRect.height() >= mCutOutRect.height())
+                                || (/* not too small */!mAvatarUpload
+                                && (mWorkingRect.width() >= mInitialRect.width()
+                                        || mWorkingRect.width() >= mScreenRect.width()
+                                        || mWorkingRect.height() >= mScreenRect.height())))) {
 
                     mMatrix.set(mWorkingMatrix);
                     mImageView.setImageMatrix(mMatrix);
@@ -141,6 +145,13 @@ public class ImageViewFragment extends Fragment {
                 sendImage();
             }
         });
+        // Upload avatar.
+        view.findViewById(R.id.acceptAvatar).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                acceptAvatar();
+            }
+        });
         // Send message on Enter.
         ((EditText) view.findViewById(R.id.editMessage)).setOnEditorActionListener(
                 new TextView.OnEditorActionListener() {
@@ -165,13 +176,17 @@ public class ImageViewFragment extends Fragment {
             return;
         }
 
+        mAvatarUpload = args.getBoolean(AttachmentHandler.ARG_AVATAR);
+
         mMatrix.reset();
 
         Bitmap bmp = null;
         byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
         if (bits != null) {
+            // View received image.
             bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
         } else {
+            // Preview before sending.
             Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
             if (uri != null) {
                 final ContentResolver resolver = activity.getContentResolver();
@@ -205,13 +220,21 @@ public class ImageViewFragment extends Fragment {
                 filename = getResources().getString(R.string.tinode_image);
             }
 
+            mImageView.enableOverlay(mAvatarUpload);
+
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
 
             mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
             mWorkingRect = new RectF(mInitialRect);
             if (bits == null) {
-                // The image is being previewed before sending.
-                activity.findViewById(R.id.sendImagePanel).setVisibility(View.VISIBLE);
+                // The image is being previewed before sending or uploading.
+                if (mAvatarUpload) {
+                    activity.findViewById(R.id.acceptAvatar).setVisibility(View.VISIBLE);
+                    activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
+                } else {
+                    activity.findViewById(R.id.acceptAvatar).setVisibility(View.GONE);
+                    activity.findViewById(R.id.sendImagePanel).setVisibility(View.VISIBLE);
+                }
                 activity.findViewById(R.id.annotation).setVisibility(View.GONE);
                 setHasOptionsMenu(false);
             } else {
@@ -234,7 +257,37 @@ public class ImageViewFragment extends Fragment {
                     // Ensure we call it only once.
                     mImageView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     mScreenRect = new RectF(0, 0, mImageView.getWidth(), mImageView.getHeight());
-                    mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
+                    mCutOutRect = new RectF();
+                    if (mScreenRect.width() > mScreenRect.height()) {
+                        mCutOutRect.left = (mScreenRect.width() - mScreenRect.height()) * 0.5f;
+                        mCutOutRect.right = mCutOutRect.left + mScreenRect.height();
+                        mCutOutRect.top = 0f;
+                        mCutOutRect.bottom = mScreenRect.height();
+                    } else {
+                        mCutOutRect.top = (mScreenRect.height() - mScreenRect.width()) * 0.5f;
+                        mCutOutRect.bottom = mCutOutRect.top + mScreenRect.width();
+                        mCutOutRect.left = 0f;
+                        mCutOutRect.right = mScreenRect.width();
+                    }
+                    if (mAvatarUpload) {
+                        // Scale to fill mCutOutRect.
+                        float scaling = 1f;
+                        if (mInitialRect.width() < mCutOutRect.width()) {
+                            scaling = mCutOutRect.width() / mInitialRect.width();
+                        }
+                        if (mInitialRect.height() < mCutOutRect.height()) {
+                            scaling = Math.max(scaling, mCutOutRect.height() / mInitialRect.height());
+                        }
+                        if (scaling > 1f) {
+                            mMatrix.postScale(scaling, scaling, mCutOutRect.centerX(), mCutOutRect.centerY());
+                        }
+
+                        // Position the image within mCutOutRect.
+                        mMatrix.mapRect(mWorkingRect, mInitialRect);
+                        mMatrix.postTranslate(translateToBoundsX(mCutOutRect), translateToBoundsY(mCutOutRect));
+                    } else {
+                        mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
+                    }
                     mWorkingMatrix = new Matrix(mMatrix);
 
                     mImageView.setImageMatrix(mMatrix);
@@ -304,5 +357,61 @@ public class ImageViewFragment extends Fragment {
         AttachmentHandler.enqueueUploadRequest(activity, AttachmentHandler.ARG_OPERATION_IMAGE, args);
 
         activity.getSupportFragmentManager().popBackStack();
+    }
+
+    private void acceptAvatar() {
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        Bundle args = getArguments();
+        if (args == null) {
+            return;
+        }
+
+        // Get dimensions and position of the scaled image.
+        RectF finalRect = new RectF();
+        mMatrix.mapRect(finalRect, mInitialRect);
+
+        RectF cutOut = new RectF(mCutOutRect);
+        // Convert cut out from screen to image coordinates.
+        cutOut.offset(-finalRect.left, -finalRect.top);
+
+        Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+        if (bmp != null) {
+            Log.i(TAG, "cutOut=" + cutOut.toShortString() + "; bmp~"+bmp.getWidth() + " x " + bmp.getHeight());
+            bmp = Bitmap.createBitmap(bmp, (int)cutOut.left, (int)cutOut.top,
+                    (int)cutOut.width(), (int)cutOut.height());
+        }
+        // TODO: upload avatar
+
+        final MeTopic me = Cache.getTinode().getMeTopic();
+        // noinspection unchecked
+        UiUtils.updateAvatar(activity, me, bmp);
+
+        activity.getSupportFragmentManager().popBackStack();
+    }
+
+    private float translateToBoundsX(RectF bounds) {
+        float left = mWorkingRect.left;
+        if (mWorkingRect.width() >= bounds.width()) {
+            // Image wider than the viewport.
+            left = Math.max(Math.min(bounds.left, left), bounds.left + bounds.width() - mWorkingRect.width());
+        } else {
+            left = Math.min(Math.max(bounds.left, left), bounds.left + bounds.width() - mWorkingRect.width());
+        }
+        return left - mWorkingRect.left;
+    }
+
+    private float translateToBoundsY(RectF bounds) {
+        float top =  mWorkingRect.top;
+        if (mWorkingRect.height() >= bounds.height()) {
+            // Image taller than the viewport.
+            top = Math.max(Math.min(bounds.top, top), bounds.top + bounds.height() - mWorkingRect.height());
+        } else {
+            top = Math.min(Math.max(bounds.top, top), bounds.top + bounds.height() - mWorkingRect.height());
+        }
+        return top - mWorkingRect.top;
     }
 }

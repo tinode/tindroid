@@ -60,26 +60,26 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         fragment.findViewById(R.id.personal).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_PERSONAL);
+                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_PERSONAL, null);
             }
         });
 
         fragment.findViewById(R.id.notifications).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_NOTIFICATIONS);
+                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_NOTIFICATIONS, null);
             }
         });
         fragment.findViewById(R.id.security).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_SECURITY);
+                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_SECURITY, null);
             }
         });
         fragment.findViewById(R.id.help).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_HELP);
+                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_HELP, null);
             }
         });
 
