@@ -279,12 +279,13 @@ public class ImageViewFragment extends Fragment {
                             scaling = Math.max(scaling, mCutOutRect.height() / mInitialRect.height());
                         }
                         if (scaling > 1f) {
-                            mMatrix.postScale(scaling, scaling, mCutOutRect.centerX(), mCutOutRect.centerY());
+                            mMatrix.postScale(scaling, scaling,0, 0);
                         }
 
-                        // Position the image within mCutOutRect.
+                        // Center scaled image within the mCutOutRect.
                         mMatrix.mapRect(mWorkingRect, mInitialRect);
-                        mMatrix.postTranslate(translateToBoundsX(mCutOutRect), translateToBoundsY(mCutOutRect));
+                        mMatrix.postTranslate(mCutOutRect.left + (mCutOutRect.width() - mWorkingRect.width()) * 0.5f,
+                                mCutOutRect.top + (mCutOutRect.height() - mWorkingRect.height()) * 0.5f);
                     } else {
                         mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
                     }
@@ -370,17 +371,16 @@ public class ImageViewFragment extends Fragment {
             return;
         }
 
-        // Get dimensions and position of the scaled image.
-        RectF finalRect = new RectF();
-        mMatrix.mapRect(finalRect, mInitialRect);
+        // Get dimensions and position of the scaled image:
+        // convert cutOut from screen coordinates to bitmap coordinates.
 
+        Matrix inverse = new Matrix();
+        mMatrix.invert(inverse);
         RectF cutOut = new RectF(mCutOutRect);
-        // Convert cut out from screen to image coordinates.
-        cutOut.offset(-finalRect.left, -finalRect.top);
+        inverse.mapRect(cutOut);
 
         Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
         if (bmp != null) {
-            Log.i(TAG, "cutOut=" + cutOut.toShortString() + "; bmp~"+bmp.getWidth() + " x " + bmp.getHeight());
             bmp = Bitmap.createBitmap(bmp, (int)cutOut.left, (int)cutOut.top,
                     (int)cutOut.width(), (int)cutOut.height());
         }
