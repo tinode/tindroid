@@ -501,6 +501,7 @@ public class TopicDb implements BaseColumns {
                     "SELECT " + _ID + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_ACCOUNT_ID + "=" + accId +
                 ")";
         db.execSQL(sql);
+        db.delete(TABLE_NAME, COLUMN_NAME_ACCOUNT_ID + "=" + accId, null);
     }
 
     /**
