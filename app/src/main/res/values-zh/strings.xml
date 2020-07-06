@@ -268,4 +268,5 @@
     <string name="send_to">发送至…</string>
     <string name="never">决不</string>
     <string name="just_now">现在</string>
+    <string name="image_too_small">图片太小</string>
 </resources>

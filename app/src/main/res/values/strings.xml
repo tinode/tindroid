@@ -280,4 +280,6 @@
     <string name="send_to">Send to…</string>
     <string name="never">never</string>
     <string name="just_now">just now</string>
+
+    <string name="image_too_small">Image is too small</string>
 </resources>

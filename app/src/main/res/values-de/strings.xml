@@ -133,7 +133,6 @@
     <string name="edit_account">Kontoname bearbeiten</string>
     <string name="invalid_login">Benutzername ist nicht gültig</string>
 
-    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
     <string name="download_attachment">herunterladen</string>
     <string name="broken_image">Unbekanntes oder ungültiges Bildformat</string>
     <string name="file_manager_not_found">Dateimanager nicht gefunden</string>
@@ -163,7 +162,6 @@
     <string name="download_title">Herunterladen</string>
     <string name="some_permissions_missing">Bitte erteilen Sie alle beantragten Genehmigungen.</string>
     <string name="unable_to_attach_file">Diese Datei kann nicht angehängt werden</string>
-    <string name="invalid_file">Diese Datei kann nicht angehängt werden</string>
     <string name="cancelled">Abbrechen</string>
     <string name="login_rejected">Benutzername wurde abgelehnt</string>
     <string name="email_rejected">Die E-Mail-Adresse wurde abgelehnt</string>
@@ -270,4 +268,6 @@
     <string name="send_to">senden an…</string>
     <string name="never">nie</string>
     <string name="just_now">nur jetzt</string>
+
+    <string name="image_too_small">Bild ist zu klein</string>
 </resources>

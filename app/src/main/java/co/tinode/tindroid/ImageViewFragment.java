@@ -27,6 +27,7 @@ import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +44,8 @@ import co.tinode.tinodesdk.MeTopic;
  */
 public class ImageViewFragment extends Fragment {
     private static final String TAG = "ImageViewFragment";
+    // Minimum size of the avatar image after cropping.
+    private static final int MIN_AVATAR_SIZE = 8;
 
     // The matrix actually used for scaling.
     private Matrix mMatrix = null;
@@ -378,6 +381,12 @@ public class ImageViewFragment extends Fragment {
         mMatrix.invert(inverse);
         RectF cutOut = new RectF(mCutOutRect);
         inverse.mapRect(cutOut);
+
+        if (cutOut.width() < MIN_AVATAR_SIZE || cutOut.height() < MIN_AVATAR_SIZE) {
+            // Avatar is too small.
+            Toast.makeText(activity, R.string.image_too_small, Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
         if (bmp != null) {

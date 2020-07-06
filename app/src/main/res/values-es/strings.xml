@@ -133,7 +133,6 @@
     <string name="edit_account">Editar nombre de la cuenta</string>
     <string name="invalid_login">El nombre de usuario no es válido</string>
 
-    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
     <string name="download_attachment">descargar</string>
     <string name="broken_image">Formato de imagen desconocido o inválido</string>
     <string name="file_manager_not_found">Administrador de archivos no encontrado</string>
@@ -163,7 +162,6 @@
     <string name="download_title">Descargar</string>
     <string name="some_permissions_missing">Por favor, otorga todos los permisos solicitados.</string>
     <string name="unable_to_attach_file">No se puede adjuntar este archivo</string>
-    <string name="invalid_file">No se puede adjuntar este archivo</string>
     <string name="cancelled">cancelado</string>
     <string name="login_rejected">El nombre de usuario ha sido rechazado</string>
     <string name="email_rejected">La dirección de correo electrónico ha sido rechazado</string>
@@ -270,4 +268,5 @@
     <string name="send_to">Enviar a…</string>
     <string name="never">nunca</string>
     <string name="just_now">ahora mismo</string>
+    <string name="image_too_small">La imagen es muy pequeña.</string>
 </resources>

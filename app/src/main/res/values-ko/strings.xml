@@ -267,4 +267,5 @@
     <string name="send_to">보내기…</string>
     <string name="never">절대</string>
     <string name="just_now">당장</string>
+    <string name="image_too_small">이미지가 너무 작습니다</string>
 </resources>
