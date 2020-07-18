@@ -87,9 +87,9 @@ dependencies {
     implementation 'com.google.android:flexbox:1.1.0'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.material:material:1.1.0'
-    implementation 'com.google.firebase:firebase-core:17.4.3'
-    implementation 'com.google.firebase:firebase-crashlytics:17.1.0'
-    implementation 'com.google.firebase:firebase-messaging:20.2.1'
+    implementation 'com.google.firebase:firebase-core:17.4.4'
+    implementation 'com.google.firebase:firebase-crashlytics:17.1.1'
+    implementation 'com.google.firebase:firebase-messaging:20.2.3'
 
     annotationProcessor 'android.arch.lifecycle:compiler:1.1.1'
 }
