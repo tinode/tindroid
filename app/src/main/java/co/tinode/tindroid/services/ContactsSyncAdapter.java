@@ -303,7 +303,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                     // This is a phone number. Syncing phones of all types. The 'mobile' marker is ignored
                     // because users ignore it these days.
                     if (!TextUtils.isEmpty(data) && Patterns.PHONE.matcher(data).matches()) {
-                        holder.putPhone(data);
+                        // Remove all characters other than 0-9 and +, save the result.
+                        holder.putPhone(data.replaceAll("[^0-9+]",""));
                     } else {
                         Log.i(TAG, "'" + data + "' is not a valid phone number");
                     }
