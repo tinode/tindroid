@@ -290,29 +290,31 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             case R.id.action_mute:
             case R.id.action_unmute: {
                 // Muting is possible regardless of subscription status.
-                final ComTopic<VxCard> topic =
-                        (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
-                topic.updateMuted(!topic.isMuted())
-                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                datasetChanged();
-                                return null;
-                            }
-                        })
-                        .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                activity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                        Log.w(TAG, "Muting failed", err);
-                                    }
-                                });
-                                return null;
-                            }
-                        });
+                if (!selection.isEmpty()) {
+                    final ComTopic<VxCard> topic =
+                            (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+                    topic.updateMuted(!topic.isMuted())
+                            .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                    datasetChanged();
+                                    return null;
+                                }
+                            })
+                            .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                            Log.w(TAG, "Muting failed", err);
+                                        }
+                                    });
+                                    return null;
+                                }
+                            });
+                }
                 mode.finish();
                 return true;
             }
