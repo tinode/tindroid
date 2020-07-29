@@ -348,6 +348,9 @@ public class SqlStore implements Storage {
     @Override
     public boolean msgPruneFailed(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
         return MessageDb.deleteFailed(mDbh.getWritableDatabase(), st.id);
     }
 
@@ -374,12 +377,18 @@ public class SqlStore implements Storage {
     @Override
     public boolean msgMarkToDelete(Topic topic, int fromId, int toId, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
         return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, fromId, toId, markAsHard);
     }
 
     @Override
     public boolean msgMarkToDelete(Topic topic, MsgRange[] ranges, boolean markAsHard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
         return MessageDb.markDeleted(mDbh.getWritableDatabase(), st.id, ranges, markAsHard);
     }
 
@@ -387,6 +396,9 @@ public class SqlStore implements Storage {
     public boolean msgDelete(Topic topic, int delId, int fromId, int toId) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
         if (toId <= 0) {
             toId = st.maxLocalSeq + 1;
         }
@@ -412,6 +424,9 @@ public class SqlStore implements Storage {
     public boolean msgDelete(Topic topic, int delId, MsgRange[] ranges) {
         SQLiteDatabase db = mDbh.getWritableDatabase();
         StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
         ranges = MsgRange.collapse(ranges);
         MsgRange span = MsgRange.enclosing(ranges);
         boolean result = false;
