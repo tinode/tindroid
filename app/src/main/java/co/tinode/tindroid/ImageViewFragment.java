@@ -390,6 +390,9 @@ public class ImageViewFragment extends Fragment {
 
         Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
         if (bmp != null) {
+            // Make sure cut out rectangle is fully inside the bitmap.
+            cutOut.intersect(0, 0, bmp.getWidth(), bmp.getHeight());
+            // Actually make the cut.
             bmp = Bitmap.createBitmap(bmp, (int)cutOut.left, (int)cutOut.top,
                     (int)cutOut.width(), (int)cutOut.height());
         }
