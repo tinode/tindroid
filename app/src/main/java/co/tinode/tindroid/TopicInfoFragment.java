@@ -25,7 +25,6 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +34,7 @@ import java.util.HashMap;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -114,7 +114,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        final Switch muted = view.findViewById(R.id.switchMuted);
+        final SwitchCompat muted = view.findViewById(R.id.switchMuted);
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
@@ -135,7 +135,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        final Switch archived = view.findViewById(R.id.switchArchived);
+        final SwitchCompat archived = view.findViewById(R.id.switchArchived);
         archived.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
@@ -635,8 +635,8 @@ public class TopicInfoFragment extends Fragment {
             subtitle.setTextIsSelectable(false);
         }
 
-        ((Switch) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
-        ((Switch) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
+        ((SwitchCompat) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
+        ((SwitchCompat) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
 
         Acs acs = mTopic.getAccessMode();
         ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());

@@ -282,4 +282,5 @@
     <string name="just_now">just now</string>
 
     <string name="image_too_small">Image is too small</string>
+    <string name="this_is_channel">This is a channel</string>
 </resources>

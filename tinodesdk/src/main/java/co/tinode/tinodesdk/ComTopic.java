@@ -25,12 +25,12 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         super(tinode, name, l);
     }
 
-    public ComTopic(Tinode tinode, Listener l) {
+    public ComTopic(Tinode tinode, Listener l, boolean isChannel) {
         //noinspection unchecked
-        super(tinode, l);
+        super(tinode, l, isChannel);
     }
 
-    public void setPriv(String comment) {
+    public void setComment(String comment) {
         PrivateType p = super.getPriv();
         if (p == null) {
             p = new PrivateType();
@@ -39,6 +39,10 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         super.setPriv(p);
     }
 
+    /**
+     * Read comment from the Private field.
+     * @return comment or null if comment or Private is not set.
+     */
     public String getComment() {
         PrivateType p = super.getPriv();
         return p != null ? p.getComment() : null;
@@ -53,6 +57,14 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         PrivateType p = super.getPriv();
         Boolean arch = (p != null ? p.isArchived() : Boolean.FALSE);
         return arch != null ? arch : false;
+    }
+
+    /**
+     * Checks if the topic is archived. Not all topics support archiving.
+     * @return true if the topic is archived, false otherwise.
+     */
+    public boolean isChannel() {
+        return mName != null && mName.startsWith(Tinode.TOPIC_CHN_PREFIX);
     }
 
     /**

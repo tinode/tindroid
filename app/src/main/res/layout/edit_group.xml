@@ -30,6 +30,7 @@
         app:drawableTopCompat="@drawable/ic_add_a_photo"/>
 
     <LinearLayout
+        android:id="@+id/topSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@id/imageAvatar"
@@ -67,12 +68,32 @@
                 android:inputType="text"
                 tools:text="Private topic info"/>
         </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/this_is_channel"
+                android:textAppearance="?android:textAppearanceLarge" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/isChannel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/uploadAvatar"
+        android:layout_below="@id/topSettings"
         android:layout_marginTop="6dp">
 
         <com.google.android.material.textfield.TextInputEditText

@@ -67,8 +67,7 @@
             <LinearLayout
                 android:id="@+id/topicAddressWrapper"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/imageAvatar">
+                android:layout_height="wrap_content">
 
                 <TextView
                     style="?android:textAppearanceMedium"

@@ -9,12 +9,14 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -179,7 +181,9 @@ public class CreateGroupFragment extends Fragment {
                     // Ignore it.
                 }
 
-                createTopic(activity, topicTitle, bmp, subtitle, UiUtils.parseTags(tags), members);
+                createTopic(activity, topicTitle, bmp, subtitle,
+                        ((SwitchCompat) activity.findViewById(R.id.isChannel)).isChecked(),
+                        UiUtils.parseTags(tags), members);
             }
         });
     }
@@ -218,11 +222,11 @@ public class CreateGroupFragment extends Fragment {
         }
     }
 
-    private void createTopic(final Activity activity, final String title,
-                             final Bitmap avatar, final String subtitle, final String[] tags, final String[] members) {
-        final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), (Topic.Listener) null);
+    private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle,
+                             final boolean isChannel, final String[] tags, final String[] members) {
+        final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), null, isChannel);
         topic.setPub(new VxCard(title, avatar));
-        topic.setPriv(subtitle);
+        topic.setComment(subtitle);
         topic.setTags(tags);
         try {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {

@@ -75,9 +75,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     Topic(Tinode tinode, String name) {
         mTinode = tinode;
-        if (name == null) {
-            name = Tinode.TOPIC_NEW + tinode.nextUniqueString();
-        }
         setName(name);
         mDesc = new Description<>();
 
@@ -86,6 +83,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mTinode != null) {
             mTinode.startTrackingTopic(this);
         }
+    }
+
+    // Create new group topic.
+    Topic(Tinode tinode, boolean isChannel) {
+        this(tinode, (isChannel ? Tinode.CHANNEL_NEW : Tinode.TOPIC_NEW) + tinode.nextUniqueString());
     }
 
     protected Topic(Tinode tinode, Subscription<SP, SR> sub) {
@@ -127,8 +129,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param tinode tinode instance
      * @param l      event listener, optional
      */
-    protected Topic(Tinode tinode, Listener<DP, DR, SP, SR> l) {
-        this(tinode, null, l);
+    protected Topic(Tinode tinode, Listener<DP, DR, SP, SR> l, boolean isChannel) {
+        this(tinode, isChannel);
+        setListener(l);
     }
 
     // Returns greater of two dates.
@@ -150,7 +153,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 return TopicType.SYS;
             } else if (name.equals(Tinode.TOPIC_FND)) {
                 return TopicType.FND;
-            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
+            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW) ||
+                    name.startsWith(Tinode.TOPIC_CHN_PREFIX) || name.startsWith(Tinode.CHANNEL_NEW)) {
                 return TopicType.GRP;
             } else if (name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
                 return TopicType.P2P;
@@ -160,8 +164,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     public static boolean getIsNewByName(String name) {
-        return name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
-        // synced with the server
+        // "newRANDOM" or "nchRANDOM" when the topic was locally initialized but not yet synced with the server.
+        return name.startsWith(Tinode.TOPIC_NEW) || name.startsWith(Tinode.CHANNEL_NEW);
     }
 
     /**

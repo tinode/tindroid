@@ -17,7 +17,7 @@
             android:text="@string/incognito_mode_enabled"
             android:textAppearance="?android:textAppearanceLarge" />
 
-        <Switch
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switchIncognitoMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -40,7 +40,7 @@
             android:text="@string/read_receipts_enabled"
             android:textAppearance="?android:textAppearanceLarge" />
 
-        <Switch
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switchReadReceipts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -63,7 +63,7 @@
             android:text="@string/typing_notifications_enabled"
             android:textAppearance="?android:textAppearanceLarge" />
 
-        <Switch
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switchTypingNotifications"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
