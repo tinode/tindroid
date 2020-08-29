@@ -289,13 +289,8 @@ public class TopicInfoFragment extends Fragment {
             // Group topic
             uploadAvatarButton.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
-            if (mTopic.isManager() || mTopic.isSharer()) {
-                groupMembers.setVisibility(View.VISIBLE);
-                reportContact.setVisibility(View.GONE);
-            } else {
-                groupMembers.setVisibility(View.GONE);
-                reportContact.setVisibility(View.VISIBLE);
-            }
+            groupMembers.setVisibility(View.VISIBLE);
+            reportContact.setVisibility(View.GONE);
 
             View buttonLeave = activity.findViewById(R.id.buttonLeave);
             if (mTopic.isOwner()) {
@@ -312,7 +307,11 @@ public class TopicInfoFragment extends Fragment {
 
                 buttonLeave.setVisibility(View.VISIBLE);
                 reportGroup.setVisibility(View.VISIBLE);
-                blockContact.setVisibility(View.VISIBLE);
+                if (mTopic.isChannel()) {
+                    blockContact.setVisibility(View.GONE);
+                } else {
+                    blockContact.setVisibility(View.VISIBLE);
+                }
                 deleteGroup.setVisibility(View.GONE);
             }
 

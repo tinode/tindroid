@@ -249,4 +249,6 @@
     <string name="never">не был онлайн</string>
     <string name="just_now">только что</string>
     <string name="image_too_small">Картинка слишком маленькая</string>
+    <string name="this_is_channel">Это канал</string>
+    <string name="channel_explained">Канал позволяет неограниченное число подписчиков с минимальным контролем доступа. Этот выбор окончателен.</string>
 </resources>

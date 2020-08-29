@@ -269,4 +269,7 @@
     <string name="never">决不</string>
     <string name="just_now">现在</string>
     <string name="image_too_small">图片太小</string>
+
+    <string name="this_is_channel">这是一个频道</string>
+    <string name="channel_explained">该通道允许无限的订户以最小的访问控制。 此选择是永久的。</string>
 </resources>

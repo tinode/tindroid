@@ -69,28 +69,10 @@
                 tools:text="Private topic info"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/this_is_channel"
-                android:textAppearance="?android:textAppearanceLarge" />
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/isChannel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp" />
-        </LinearLayout>
-
     </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tagEditor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/topSettings"
@@ -104,5 +86,34 @@
             android:inputType="textNoSuggestions"
             tools:text="ttag1, ttag2, ttag3"/>
     </com.google.android.material.textfield.TextInputLayout>
+
+    <LinearLayout
+        android:id="@+id/channelSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tagEditor"
+        android:gravity="center_vertical"
+        android:layout_marginTop="6dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/this_is_channel"
+            android:textAppearance="?android:textAppearanceLarge" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/isChannel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp" />
+    </LinearLayout>
+
+    <TextView
+        style="?android:textAppearanceSmall"
+        android:layout_below="@id/channelSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/channel_explained" />
 
 </RelativeLayout>
