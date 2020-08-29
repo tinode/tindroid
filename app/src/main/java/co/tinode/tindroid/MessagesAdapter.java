@@ -308,6 +308,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         int itemType;
         StoredMessage m = getMessage(position);
         Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
+        boolean isChannel = ComTopic.isChannel(mTopicName);
 
         if (m == null) {
             return VIEWTYPE_INVALID;
@@ -330,11 +331,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         if (m.userId != nextFrom) {
             itemType = isMine ? VIEWTYPE_FULL_RIGHT :
-                    tp == Topic.TopicType.GRP ? VIEWTYPE_FULL_AVATAR :
+                    (tp == Topic.TopicType.GRP) && !isChannel ? VIEWTYPE_FULL_AVATAR :
                             VIEWTYPE_FULL_LEFT;
         } else {
             itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT :
-                    tp == Topic.TopicType.GRP ? VIEWTYPE_SIMPLE_AVATAR :
+                    (tp == Topic.TopicType.GRP) && !isChannel ? VIEWTYPE_SIMPLE_AVATAR :
                             VIEWTYPE_SIMPLE_LEFT;
         }
 

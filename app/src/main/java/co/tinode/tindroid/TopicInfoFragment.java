@@ -289,8 +289,13 @@ public class TopicInfoFragment extends Fragment {
             // Group topic
             uploadAvatarButton.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
-            groupMembers.setVisibility(View.VISIBLE);
-            reportContact.setVisibility(View.GONE);
+            if (mTopic.isManager() || mTopic.isSharer()) {
+                groupMembers.setVisibility(View.VISIBLE);
+                reportContact.setVisibility(View.GONE);
+            } else {
+                groupMembers.setVisibility(View.GONE);
+                reportContact.setVisibility(View.VISIBLE);
+            }
 
             View buttonLeave = activity.findViewById(R.id.buttonLeave);
             if (mTopic.isOwner()) {
@@ -317,10 +322,17 @@ public class TopicInfoFragment extends Fragment {
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.
                 button.setEnabled(false);
-                button.setAlpha(0.5f);
+                button.setVisibility(View.GONE);
             } else {
                 button.setEnabled(true);
-                button.setAlpha(1f);
+                button.setVisibility(View.VISIBLE);
+            }
+
+            final View clearMessages = activity.findViewById(R.id.buttonClearMessages);
+            if (mTopic.isChannel()) {
+                clearMessages.setVisibility(View.GONE);
+            } else {
+                clearMessages.setVisibility(View.VISIBLE);
             }
         } else {
             // P2P topic
@@ -554,7 +566,7 @@ public class TopicInfoFragment extends Fragment {
         } else {
             actions.findViewById(R.id.buttonMakeOwner).setVisibility(View.GONE);
         }
-        if (mTopic.isAdmin() || mTopic.isOwner()) {
+        if (mTopic.isManager()) {
             actions.findViewById(R.id.buttonPermissions).setOnClickListener(ocl);
             actions.findViewById(R.id.buttonRemove).setOnClickListener(ocl);
             actions.findViewById(R.id.buttonBlock).setOnClickListener(ocl);

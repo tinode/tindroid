@@ -64,7 +64,16 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
      * @return true if the topic is archived, false otherwise.
      */
     public boolean isChannel() {
-        return mName != null && mName.startsWith(Tinode.TOPIC_CHN_PREFIX);
+        return mName != null && isChannel(mName);
+    }
+
+    /**
+     * Checks if given topic name is a name of a channel.
+     * @param name name to check.
+     * @return true if the name is a name of a channel, false otherwise.
+     */
+    public static boolean isChannel(String name) {
+        return name.startsWith(Tinode.TOPIC_CHN_PREFIX);
     }
 
     /**

@@ -766,7 +766,7 @@ public class UiUtils {
                     result.add(new AccessModeLabel(R.string.modeBlocked, COLOR_RED_BORDER));
                 } else if (acs.isOwner()) {
                     result.add(new AccessModeLabel(R.string.modeOwner, COLOR_GREEN_BORDER));
-                } else if (acs.isAdmin()) {
+                } else if (acs.isApprover()) {
                     result.add(new AccessModeLabel(R.string.modeAdmin, COLOR_GREEN_BORDER));
                 } else if (!acs.isWriter()) {
                     result.add(new AccessModeLabel(R.string.modeReadOnly, COLOR_YELLOW_BORDER));
