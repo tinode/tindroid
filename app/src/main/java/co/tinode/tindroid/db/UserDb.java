@@ -14,7 +14,6 @@ import co.tinode.tinodesdk.model.Subscription;
  * Local cache of known users
  */
 
-@SuppressWarnings("WeakerAccess")
 public class UserDb implements BaseColumns {
     @SuppressWarnings("unused")
     private static final String TAG = "UserDb";
@@ -22,32 +21,34 @@ public class UserDb implements BaseColumns {
     /**
      * The name of the main table.
      */
-    public static final String TABLE_NAME = "users";
+    static final String TABLE_NAME = "users";
     /**
      * The name of index: topic by account id and topic name.
      */
-    public static final String INDEX_NAME = "user_account_name";
+    static final String INDEX_NAME = "user_account_name";
     /**
      * Account ID, references accounts._ID
      */
-    public static final String COLUMN_NAME_ACCOUNT_ID = "account_id";
+    static final String COLUMN_NAME_ACCOUNT_ID = "account_id";
     /**
      * Topic name, indexed
      */
-    public static final String COLUMN_NAME_UID = "uid";
+    static final String COLUMN_NAME_UID = "uid";
     /**
      * When the user was updated
      */
-    public static final String COLUMN_NAME_UPDATED = "updated";
+    static final String COLUMN_NAME_UPDATED = "updated";
     /**
      * When the user was deleted
      */
-    public static final String COLUMN_NAME_DELETED = "deleted";
+    static final String COLUMN_NAME_DELETED = "deleted";
     /**
      * Public user description, (what's shown in 'me' topic), serialized as TEXT
      */
-    public static final String COLUMN_NAME_PUBLIC = "pub";
+    static final String COLUMN_NAME_PUBLIC = "pub";
 
+    // Pseudo-UID for messages with null From.
+    static final String UID_NULL = "none";
 
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_ACCOUNT_ID = 1;
@@ -104,7 +105,7 @@ public class UserDb implements BaseColumns {
     static long insert(SQLiteDatabase db, String uid, Date updated, Object pub) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_ACCOUNT_ID, BaseDb.getInstance().getAccountId());
-        values.put(COLUMN_NAME_UID, uid);
+        values.put(COLUMN_NAME_UID, uid != null ? uid : UID_NULL);
         if (updated != null) {
             values.put(COLUMN_NAME_UPDATED, updated.getTime());
         }
@@ -189,7 +190,7 @@ public class UserDb implements BaseColumns {
                         " WHERE " +
                         COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
                         " AND " +
-                        COLUMN_NAME_UID + "='" + uid + "'";
+                        COLUMN_NAME_UID + "='" + (uid != null ? uid : UID_NULL) + "'";
         // Log.d(TAG, sql);
         Cursor c = db.rawQuery(sql, null);
         if (c != null && c.getCount() > 0) {
@@ -210,7 +211,7 @@ public class UserDb implements BaseColumns {
                         " WHERE " +
                         COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
                         " AND " +
-                        COLUMN_NAME_UID + "='" + uid + "'";
+                        COLUMN_NAME_UID + "='" + (uid != null ? uid : UID_NULL) + "'";
 
         Cursor c = db.rawQuery(sql, null);
         if (c != null && c.getCount() > 0) {
