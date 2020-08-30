@@ -13,23 +13,19 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 
 ## What works:
 
-* Send and receive messages one-on-one or in group chats.
-* Register new accounts.
-* Find contacts, start new chats.
-* Edit chat parameters.
+* One-on-one conversations and group chats.
+* Channels with unlimited number of read-only subscribers.
 * In-app presence notifications.
 * Unread message counters.
-* Typing indicators.
 * Push notifications.
-* Delivered/received/read notifications (little check marks in messages).
+* Message status notifications: message delivery to server; received and read notifications; typing notifications.
 * Markdown-style formatting of text, e.g. \*styled\* &rarr; **styled**. Implemented as spannable.
 * Attachments and inline images.
-* Muting/un-muting conversations and other permission management.
+* Muting/un-muting conversations and other granular permission management.
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
 * Transport Level Security - https/wss.
 * Offline mode is mostly functional.
-* Editing of personal details.
 
 ## Not done yet:
 
