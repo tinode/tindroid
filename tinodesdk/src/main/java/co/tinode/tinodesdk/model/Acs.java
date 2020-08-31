@@ -256,8 +256,8 @@ public class Acs implements Serializable {
      * Check if Approver (A) flag is set.
      * @return true if flag is set.
      */
-    public boolean isAdmin() {
-        return mode != null && mode.isAdmin();
+    public boolean isApprover() {
+        return mode != null && mode.isApprover();
     }
 
     /**
@@ -265,7 +265,7 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isManager() {
-        return mode != null && (mode.isAdmin() || mode.isOwner());
+        return mode != null && (mode.isApprover() || mode.isOwner());
     }
 
     /**

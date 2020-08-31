@@ -12,7 +12,8 @@
         android:id="@+id/personal"
         android:clickable="true"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:focusable="true">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imageAvatar"
@@ -70,7 +71,7 @@
             android:layout_width="@dimen/settings_icon_size"
             android:layout_height="@dimen/settings_icon_size"
             android:src="@drawable/ic_notifications"
-            android:tint="@color/colorAccent" />
+            app:tint="@color/colorAccent" />
 
         <TextView
             style="?android:textAppearanceLarge"
@@ -87,7 +88,8 @@
         android:layout_height="wrap_content"
         android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:focusable="true">
 
         <ImageView
             android:id="@+id/icon_security"
@@ -96,7 +98,7 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:src="@drawable/ic_security"
-            android:tint="@color/colorAccent" />
+            app:tint="@color/colorAccent" />
 
         <TextView
             android:id="@+id/security_text"
@@ -123,7 +125,8 @@
         android:layout_height="wrap_content"
         android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:focusable="true">
 
         <ImageView
             android:id="@+id/icon_help"
@@ -132,7 +135,7 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:src="@drawable/ic_contact_support"
-            android:tint="@color/colorAccent" />
+            app:tint="@color/colorAccent" />
 
         <TextView
             android:id="@+id/help_text"

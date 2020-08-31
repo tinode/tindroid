@@ -7,9 +7,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,17 +20,18 @@ import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.android.flexbox.JustifyContent;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 import static android.app.Activity.RESULT_OK;
@@ -179,7 +177,9 @@ public class CreateGroupFragment extends Fragment {
                     // Ignore it.
                 }
 
-                createTopic(activity, topicTitle, bmp, subtitle, UiUtils.parseTags(tags), members);
+                createTopic(activity, topicTitle, bmp, subtitle,
+                        ((SwitchCompat) activity.findViewById(R.id.isChannel)).isChecked(),
+                        UiUtils.parseTags(tags), members);
             }
         });
     }
@@ -218,11 +218,11 @@ public class CreateGroupFragment extends Fragment {
         }
     }
 
-    private void createTopic(final Activity activity, final String title,
-                             final Bitmap avatar, final String subtitle, final String[] tags, final String[] members) {
-        final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), (Topic.Listener) null);
+    private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle,
+                             final boolean isChannel, final String[] tags, final String[] members) {
+        final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), null, isChannel);
         topic.setPub(new VxCard(title, avatar));
-        topic.setPriv(subtitle);
+        topic.setComment(subtitle);
         topic.setTags(tags);
         try {
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {

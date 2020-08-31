@@ -25,7 +25,6 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +34,7 @@ import java.util.HashMap;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -114,7 +114,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        final Switch muted = view.findViewById(R.id.switchMuted);
+        final SwitchCompat muted = view.findViewById(R.id.switchMuted);
         muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
@@ -135,7 +135,7 @@ public class TopicInfoFragment extends Fragment {
             }
         });
 
-        final Switch archived = view.findViewById(R.id.switchArchived);
+        final SwitchCompat archived = view.findViewById(R.id.switchArchived);
         archived.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
@@ -307,7 +307,11 @@ public class TopicInfoFragment extends Fragment {
 
                 buttonLeave.setVisibility(View.VISIBLE);
                 reportGroup.setVisibility(View.VISIBLE);
-                blockContact.setVisibility(View.VISIBLE);
+                if (mTopic.isChannel()) {
+                    blockContact.setVisibility(View.GONE);
+                } else {
+                    blockContact.setVisibility(View.VISIBLE);
+                }
                 deleteGroup.setVisibility(View.GONE);
             }
 
@@ -317,10 +321,17 @@ public class TopicInfoFragment extends Fragment {
                 // Disable and gray out "invite members" button because only admins can
                 // invite group members.
                 button.setEnabled(false);
-                button.setAlpha(0.5f);
+                button.setVisibility(View.GONE);
             } else {
                 button.setEnabled(true);
-                button.setAlpha(1f);
+                button.setVisibility(View.VISIBLE);
+            }
+
+            final View clearMessages = activity.findViewById(R.id.buttonClearMessages);
+            if (mTopic.isChannel()) {
+                clearMessages.setVisibility(View.GONE);
+            } else {
+                clearMessages.setVisibility(View.VISIBLE);
             }
         } else {
             // P2P topic
@@ -554,7 +565,7 @@ public class TopicInfoFragment extends Fragment {
         } else {
             actions.findViewById(R.id.buttonMakeOwner).setVisibility(View.GONE);
         }
-        if (mTopic.isAdmin() || mTopic.isOwner()) {
+        if (mTopic.isManager()) {
             actions.findViewById(R.id.buttonPermissions).setOnClickListener(ocl);
             actions.findViewById(R.id.buttonRemove).setOnClickListener(ocl);
             actions.findViewById(R.id.buttonBlock).setOnClickListener(ocl);
@@ -635,8 +646,8 @@ public class TopicInfoFragment extends Fragment {
             subtitle.setTextIsSelectable(false);
         }
 
-        ((Switch) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
-        ((Switch) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
+        ((SwitchCompat) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
+        ((SwitchCompat) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
 
         Acs acs = mTopic.getAccessMode();
         ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());

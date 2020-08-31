@@ -13,10 +13,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.preference.PreferenceManager;
-
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
@@ -32,6 +28,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.account.ContactsManager;

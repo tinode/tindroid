@@ -269,4 +269,6 @@
     <string name="never">nunca</string>
     <string name="just_now">ahora mismo</string>
     <string name="image_too_small">La imagen es muy pequeña.</string>
+    <string name="this_is_channel">Este es un canal</string>
+    <string name="channel_explained">El canal permite participantes ilimitados con un control de acceso mínimo. Esta elección es permanente.</string>
 </resources>

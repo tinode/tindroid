@@ -3,120 +3,76 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="@dimen/activity_default_margin"
     android:orientation="vertical">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/contactUs"
+        android:textAppearance="?android:textAppearanceLarge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
-        android:gravity="center_vertical">
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:text="@string/contact_us"
+        tools:text="Contact Us"
+        app:drawableStartCompat="@drawable/ic_contact_support"
+        app:drawableTint="@color/colorAccent"
+        android:drawablePadding="10dp"/>
 
-        <ImageView
-            android:tint="@color/colorAccent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_contact_support" />
-
-        <TextView
-            android:id="@+id/contactUs"
-            android:textAppearance="?android:textAppearanceLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/contact_us"
-            tools:text="Contact Us" />
-    </LinearLayout>
-
-    <LinearLayout
+    <TextView
+        android:id="@+id/termsOfUse"
+        tools:text="Terms of Use"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
-        android:gravity="center_vertical">
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:text="@string/terms_of_use"
+        app:drawableStartCompat="@drawable/ic_document"
+        app:drawableTint="@color/colorAccent"
+        android:drawablePadding="10dp"/>
 
-        <ImageView
-            android:tint="@color/colorAccent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_document" />
-
-        <TextView
-            android:id="@+id/termsOfUse"
-            tools:text="Terms of Use"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:textAppearance="?android:textAppearanceLarge"
-            android:text="@string/terms_of_use" />
-    </LinearLayout>
-
-    <LinearLayout
+    <TextView
+        android:id="@+id/privacyPolicy"
+        tools:text="Privacy Policy"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
-        android:gravity="center_vertical">
-        <ImageView
-            android:tint="@color/colorAccent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_privacy" />
-        <TextView
-            android:id="@+id/privacyPolicy"
-            tools:text="Privacy Policy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:textAppearance="?android:textAppearanceLarge"
-            android:text="@string/privacy_policy" />
-    </LinearLayout>
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:text="@string/privacy_policy"
+        app:drawableStartCompat="@drawable/ic_privacy"
+        app:drawableTint="@color/colorAccent"
+        android:drawablePadding="10dp"/>
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/ossLicenses"
+        tools:text="Licences"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
-        android:gravity="center_vertical">
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:text="@string/licenses"
+        app:drawableStartCompat="@drawable/ic_license"
+        app:drawableTint="@color/colorAccent"
+        android:drawablePadding="10dp"/>
 
-        <ImageView
-            android:tint="@color/colorAccent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_license" />
-        <TextView
-            android:id="@+id/ossLicenses"
-            tools:text="Licences"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:textAppearance="?android:textAppearanceLarge"
-            android:text="@string/licenses" />
-    </LinearLayout>
-
-    <LinearLayout
+    <TextView
+        android:id="@+id/aboutTheApp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:tint="@color/colorAccent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_logo_push" />
-
-        <TextView
-            android:id="@+id/aboutTheApp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:textAppearance="?android:textAppearanceLarge"
-            android:text="@string/about_the_app" />
-    </LinearLayout>
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:text="@string/about_the_app"
+        app:drawableStartCompat="@drawable/ic_logo_push"
+        app:drawableTint="@color/colorAccent"
+        android:drawablePadding="10dp"/>
 </LinearLayout>

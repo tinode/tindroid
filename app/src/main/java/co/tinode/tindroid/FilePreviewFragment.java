@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 public class FilePreviewFragment extends Fragment {

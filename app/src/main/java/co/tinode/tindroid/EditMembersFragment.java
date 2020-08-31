@@ -111,7 +111,7 @@ public class EditMembersFragment extends Fragment {
         final ArrayList<MembersAdapter.Member> members = new ArrayList<>();
         boolean cancelable = false;
         if (mTopic != null) {
-            cancelable = mTopic.isAdmin();
+            cancelable = mTopic.isApprover();
 
             Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
             if (subs != null) {

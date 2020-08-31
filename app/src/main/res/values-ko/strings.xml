@@ -268,4 +268,6 @@
     <string name="never">절대</string>
     <string name="just_now">당장</string>
     <string name="image_too_small">이미지가 너무 작습니다</string>
+    <string name="this_is_channel">이것은채널입니다</string>
+    <string name="channel_explained">채널은 최소한의 액세스 제어로 무제한 참가자를 허용합니다. 이 선택은 영구적입니다.</string>
 </resources>

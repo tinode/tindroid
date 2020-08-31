@@ -39,7 +39,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
-
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;

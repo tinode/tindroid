@@ -8,13 +8,13 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import androidx.loader.content.CursorLoader;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Date;
 
+import androidx.loader.content.CursorLoader;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgRange;
 

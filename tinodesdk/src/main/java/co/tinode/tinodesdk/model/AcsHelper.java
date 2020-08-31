@@ -94,7 +94,7 @@ public class AcsHelper implements Serializable {
         }
         a = !v ? (a | MODE_PRES) : (a & ~MODE_PRES);
     }
-    public boolean isAdmin() {
+    public boolean isApprover() {
         return (a & MODE_APPROVE) != 0;
     }
 

@@ -75,9 +75,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     Topic(Tinode tinode, String name) {
         mTinode = tinode;
-        if (name == null) {
-            name = Tinode.TOPIC_NEW + tinode.nextUniqueString();
-        }
         setName(name);
         mDesc = new Description<>();
 
@@ -86,6 +83,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mTinode != null) {
             mTinode.startTrackingTopic(this);
         }
+    }
+
+    // Create new group topic.
+    Topic(Tinode tinode, boolean isChannel) {
+        this(tinode, (isChannel ? Tinode.CHANNEL_NEW : Tinode.TOPIC_NEW) + tinode.nextUniqueString());
     }
 
     protected Topic(Tinode tinode, Subscription<SP, SR> sub) {
@@ -127,8 +129,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param tinode tinode instance
      * @param l      event listener, optional
      */
-    protected Topic(Tinode tinode, Listener<DP, DR, SP, SR> l) {
-        this(tinode, null, l);
+    protected Topic(Tinode tinode, Listener<DP, DR, SP, SR> l, boolean isChannel) {
+        this(tinode, isChannel);
+        setListener(l);
     }
 
     // Returns greater of two dates.
@@ -142,6 +145,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return a.compareTo(b) > 0 ? a : b;
     }
 
+    /**
+     * Get type of the topic from the given topic name.
+     * @param name name to get type from.
+     * @return type of the topic name.
+     */
     public static TopicType getTopicTypeByName(String name) {
         if (name != null) {
             if (name.equals(Tinode.TOPIC_ME)) {
@@ -150,7 +158,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 return TopicType.SYS;
             } else if (name.equals(Tinode.TOPIC_FND)) {
                 return TopicType.FND;
-            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW)) {
+            } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW) ||
+                    name.startsWith(Tinode.TOPIC_CHN_PREFIX) || name.startsWith(Tinode.CHANNEL_NEW)) {
                 return TopicType.GRP;
             } else if (name.startsWith(Tinode.TOPIC_USR_PREFIX)) {
                 return TopicType.P2P;
@@ -159,9 +168,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return TopicType.UNKNOWN;
     }
 
-    public static boolean getIsNewByName(String name) {
-        return name.startsWith(Tinode.TOPIC_NEW);  // "newRANDOM" when the topic was locally initialized but not yet
-        // synced with the server
+    /**
+     * Checks if given topic name is a new (unsynchronized) topic.
+     * @param name name to check
+     * @return true if the name is a name of a new topic, false otherwise.
+     */
+    public static boolean isNew(String name) {
+        // "newRANDOM" or "nchRANDOM" when the topic was locally initialized but not yet synced with the server.
+        return name.startsWith(Tinode.TOPIC_NEW) || name.startsWith(Tinode.CHANNEL_NEW);
     }
 
     /**
@@ -582,8 +596,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      *
      * @return true if the user has the permission.
      */
-    public boolean isAdmin() {
-        return mDesc.acs != null && mDesc.acs.isAdmin();
+    public boolean isApprover() {
+        return mDesc.acs != null && mDesc.acs.isApprover();
     }
 
     public PromisedReply<ServerMessage> updateAdmin(final boolean admin) {
@@ -1646,7 +1660,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @return true is topic is new (i.e. no name is yet assigned by the server)
      */
     public boolean isNew() {
-        return getIsNewByName(mName);
+        return isNew(mName);
     }
 
     /**
