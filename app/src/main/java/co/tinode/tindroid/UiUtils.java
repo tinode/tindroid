@@ -66,6 +66,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -141,16 +142,20 @@ public class UiUtils {
             @Override
             public void run() {
                 if (!TextUtils.isEmpty(topicName)) {
+                    Boolean showOnline = online;
                     final String title = pub != null && pub.fn != null ?
                             pub.fn : activity.getString(R.string.placeholder_contact_title);
                     toolbar.setTitle(title);
-                    if (lastSeen != null && !online) {
+                    if (ComTopic.isChannel(topicName)) {
+                        showOnline = null;
+                        toolbar.setSubtitle(R.string.channel);
+                    } else if (lastSeen != null && !online) {
                         toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
                     } else {
                         toolbar.setSubtitle(null);
                     }
                     constructToolbarLogo(activity, pub != null ? pub.getBitmap() : null,
-                            pub != null ? pub.fn  : null, topicName, online);
+                            pub != null ? pub.fn  : null, topicName, showOnline);
                 } else {
                     toolbar.setTitle(R.string.app_name);
                     toolbar.setSubtitle(null);
@@ -180,15 +185,20 @@ public class UiUtils {
                 DateUtils.FORMAT_ABBREV_ALL);
     }
 
-    // 0. [Avatar or LetterTileDrawable] 1. [Online indicator] 2. [Typing indicator]
+    // Constructs LayerDrawable with the following layers:
+    // 0. [Avatar or LetterTileDrawable]
+    // 1. [Online indicator]
+    // 2. [Typing indicator]
     private static void constructToolbarLogo(final Activity activity, Bitmap avatar, String name,
-                                             String uid, boolean online) {
+                                             String uid, Boolean online) {
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
         }
 
+        ArrayList<Drawable> drawables = new ArrayList<>();
         Drawable avatarDrawable;
+        AnimationDrawable typing = null;
         if (avatar != null) {
             avatarDrawable = new RoundImageDrawable(activity.getResources(), avatar);
         } else {
@@ -197,22 +207,30 @@ public class UiUtils {
                     .setContactTypeAndColor(Topic.getTopicTypeByName(uid) == Topic.TopicType.P2P ?
                             LetterTileDrawable.ContactType.PERSON : LetterTileDrawable.ContactType.GROUP);
         }
-        AnimationDrawable typing = (AnimationDrawable)
-                activity.getResources().getDrawable(R.drawable.typing_indicator);
-        typing.setOneShot(false);
-        typing.setVisible(false, true);
-        typing.setAlpha(0);
-        LayerDrawable layers = new LayerDrawable(
-                new Drawable[]{
-                        avatarDrawable,
-                        new OnlineDrawable(online),
-                        typing});
+        drawables.add(avatarDrawable);
+        if (online != null) {
+            drawables.add(new OnlineDrawable(online));
+
+            typing = (AnimationDrawable) ResourcesCompat.getDrawable(activity.getResources(),
+                    R.drawable.typing_indicator, null);
+            if (typing != null) {
+                typing.setOneShot(false);
+                typing.setVisible(false, true);
+                typing.setAlpha(0);
+                drawables.add(typing);
+            }
+        }
+        LayerDrawable layers = new LayerDrawable(drawables.toArray(new Drawable[]{}));
         layers.setId(0, LOGO_LAYER_AVATAR);
-        layers.setId(1, LOGO_LAYER_ONLINE);
-        layers.setId(2, LOGO_LAYER_TYPING);
+        if (online != null) {
+            layers.setId(1, LOGO_LAYER_ONLINE);
+            if (typing != null) {
+                layers.setId(2, LOGO_LAYER_TYPING);
+            }
+        }
         toolbar.setLogo(layers);
         Rect b = toolbar.getLogo().getBounds();
-        if (!b.isEmpty()) {
+        if (!b.isEmpty() && typing != null) {
             typing.setBounds(b.right - b.width() / 4, b.bottom - b.height() / 4, b.right, b.bottom);
         }
     }

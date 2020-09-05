@@ -270,7 +270,12 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                     pub != null ? pub.fn : null,
                     topicName));
 
-            online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
+            if (topic.isChannel()) {
+                online.setVisibility(View.INVISIBLE);
+            } else {
+                online.setVisibility(View.VISIBLE);
+                online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
+            }
 
             muted.setVisibility(topic.isMuted() ? View.VISIBLE : View.GONE);
             archived.setVisibility(topic.isArchived() ? View.VISIBLE : View.GONE);

@@ -270,6 +270,7 @@
     <string name="just_now">nur jetzt</string>
 
     <string name="image_too_small">Bild ist zu klein</string>
-    <string name="this_is_channel">Dies ist ein Kanal</string>
-    <string name="channel_explained">Der Kanal ermöglicht unbegrenzte Teilnehmer mit minimaler Zugriffskontrolle. Diese Wahl ist dauerhaft.</string>
+    <string name="this_is_channel">Dies ist ein Sender</string>
+    <string name="channel_explained">Der Sender ermöglicht unbegrenzte Teilnehmer mit minimaler Zugriffskontrolle. Diese Wahl ist dauerhaft.</string>
+    <string name="channel">Sender</string>
 </resources>

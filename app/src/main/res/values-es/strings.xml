@@ -271,4 +271,5 @@
     <string name="image_too_small">La imagen es muy pequeña.</string>
     <string name="this_is_channel">Este es un canal</string>
     <string name="channel_explained">El canal permite participantes ilimitados con un control de acceso mínimo. Esta elección es permanente.</string>
+    <string name="channel">canal</string>
 </resources>

@@ -352,6 +352,11 @@ public class MessageActivity extends AppCompatActivity {
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        if (result.ctrl.code == 303) {
+                            // Redirect.
+                            changeTopic(result.ctrl.getStringParam("topic", null));
+                            return null;
+                        }
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                                 mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
                         runOnUiThread(new Runnable() {

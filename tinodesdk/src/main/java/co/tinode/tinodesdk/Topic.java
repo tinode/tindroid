@@ -833,26 +833,29 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                        if (msg.ctrl.code >= 300) {
+                            // 3XX response: status unchanged.
+                            return null;
+                        }
                         if (!mAttached) {
                             mAttached = true;
-                            if (msg.ctrl != null) {
-                                if (msg.ctrl.params != null) {
-                                    mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
-                                    if (isNew()) {
-                                        setUpdated(msg.ctrl.ts);
-                                        setName(msg.ctrl.topic);
-                                        mTinode.changeTopicName(Topic.this, topicName);
-                                    }
-
-                                    if (mStore != null) {
-                                        mStore.topicUpdate(Topic.this);
-                                    }
+                            if (msg.ctrl.params != null) {
+                                mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
+                                if (isNew()) {
+                                    setUpdated(msg.ctrl.ts);
+                                    setName(msg.ctrl.topic);
+                                    mTinode.changeTopicName(Topic.this, topicName);
                                 }
 
-                                if (mListener != null) {
-                                    mListener.onSubscribe(msg.ctrl.code, msg.ctrl.text);
+                                if (mStore != null) {
+                                    mStore.topicUpdate(Topic.this);
                                 }
                             }
+
+                            if (mListener != null) {
+                                mListener.onSubscribe(msg.ctrl.code, msg.ctrl.text);
+                            }
+
                         }
                         return null;
                     }
