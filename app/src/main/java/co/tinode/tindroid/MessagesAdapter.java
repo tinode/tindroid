@@ -155,6 +155,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             @Override
             public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
                 mActivity.getMenuInflater().inflate(R.menu.menu_message_selected, menu);
+                menu.findItem(R.id.action_delete).setVisible(!ComTopic.isChannel(mTopicName));
                 return true;
             }
 
