@@ -231,7 +231,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      *
      * @param sub updated topic parameters
      */
-    protected void update(Subscription<SP, SR> sub) {
+    protected boolean update(Subscription<SP, SR> sub) {
         boolean changed;
 
         if (mLastSeen == null) {
@@ -252,6 +252,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (sub.online != null) {
             mOnline = sub.online;
         }
+        return changed;
     }
 
     /**
@@ -2037,7 +2038,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         public void onOnline(boolean online) {
         }
 
-        /** Called when contact is updated. */
+        /** Called when subscription is updated. */
         public void onContUpdated(String contact) {
         }
     }

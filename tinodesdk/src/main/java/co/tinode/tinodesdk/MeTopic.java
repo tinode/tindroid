@@ -250,10 +250,9 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 topic = null;
             } else {
                 // Update its record in memory and in the database.
-                topic.update(sub);
-                // Notify topic to update self.
-                if (topic.mListener != null) {
-                    topic.mListener.onContUpdated(sub.topic);
+                if (topic.update(sub) && topic.mListener != null) {
+                    // Notify topic to update self.
+                    topic.mListener.onMetaDesc(topic.mDesc);
                 }
             }
         } else if (sub.deleted == null) {
@@ -264,7 +263,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             Log.i(TAG, "Request to delete an unknown topic: " + sub.topic);
         }
 
-        // Convert p2p topics to users.
+        // Use p2p topic to update user's record.
         if (topic !=  null && topic.getTopicType() == TopicType.P2P && mStore != null) {
             // Use P2P description to generate and update user
             User user = mTinode.getUser(topic.getName());
