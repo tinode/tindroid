@@ -1457,6 +1457,7 @@ public class Tinode {
      */
     public void disconnect() {
         setAutoLogin(null, null);
+        mConnAuth = false;
         if (mConnection != null) {
             mConnection.disconnect();
         }
