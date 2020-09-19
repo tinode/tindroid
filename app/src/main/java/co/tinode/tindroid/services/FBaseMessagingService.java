@@ -131,23 +131,29 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
             // Try to resolve sender using locally stored contacts.
             String senderId = data.get("xfrom");
-            User<VxCard> sender = tinode.getUser(senderId);
-            if (sender == null) {
-                // If sender is not found, try to fetch description from the server.
-                Utils.backgroundMetaFetch(this, senderId);
-                sender = tinode.getUser(senderId);
+            String senderName = null;
+            Bitmap senderIcon = null;
+            if (senderId != null) {
+                User<VxCard> sender = tinode.getUser(senderId);
+                if (sender == null) {
+                    // If sender is not found, try to fetch description from the server.
+                    Utils.backgroundMetaFetch(this, senderId);
+                    sender = tinode.getUser(senderId);
+                }
+
+                // Assign sender's name and avatar.
+                VxCard pub = sender == null ? null : sender.pub;
+                if (pub != null) {
+                    senderName = pub.fn;
+                    senderIcon = makeLargeIcon(this, pub.getBitmap(), Topic.TopicType.P2P, senderName, senderId);
+                }
             }
 
-            // Assign sender's name and avatar.
-            VxCard pub = sender == null ? null : sender.pub;
-            String senderName;
-            Bitmap senderIcon;
-            if (pub == null) {
+            if (senderName == null) {
                 senderName = getResources().getString(R.string.sender_unknown);
+            }
+            if (senderIcon == null) {
                 senderIcon = makeLargeIcon(this, null, Topic.TopicType.P2P, null, senderId);
-            } else {
-                senderName = pub.fn;
-                senderIcon = makeLargeIcon(this, pub.getBitmap(), Topic.TopicType.P2P, senderName, senderId);
             }
 
             // Check notification type: message, subscription.
@@ -222,7 +228,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         return;
                     }
 
-                    pub = topic.getPub();
+                    VxCard pub = topic.getPub();
                     if (pub == null) {
                         body = getResources().getString(R.string.sender_unknown);
                         avatar = makeLargeIcon(this, null, tp, null, topicName);
