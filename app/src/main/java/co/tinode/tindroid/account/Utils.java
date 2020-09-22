@@ -16,6 +16,7 @@ import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgGetMeta;
@@ -145,23 +146,33 @@ public class Utils {
         boolean dataAvailable = false;
         if (topic.getSeq() < seq) {
             dataAvailable = true;
-            if (loginNow(context)) {
-                // Check if contacts have been synced already.
-                if (tinode.getTopicsUpdated() == null) {
-                    // Background sync of contacts.
-                    Cache.attachMeTopic(null);
-                    tinode.getMeTopic().leave();
-                }
-
-                // Check again if topic has attached while we tried to connect. It does not guarantee that there
-                // is no race condition to subscribe.
-                if (!topic.isAttached()) {
-                    // Fully asynchronous. We don't need to do anything with the result.
-                    // The new data will be automatically saved.
-                    topic.subscribe(null, builder.withLaterData(24).withLaterDel(24).build());
-                    topic.leave();
-                }
+            if (!loginNow(context)) {
+                return dataAvailable;
             }
+            PromisedReply result = null;
+            // Check if contacts have been synced already.
+            if (tinode.getTopicsUpdated() == null) {
+                // Background sync of contacts.
+                result = Cache.attachMeTopic(null);
+            }
+
+            // Check again if topic has attached while we tried to connect. It does not guarantee that there
+            // is no race condition to subscribe.
+            if (!topic.isAttached()) {
+                // Fully asynchronous. We don't need to do anything with the result.
+                // The new data will be automatically saved.
+                topic.subscribe(null, builder.build());
+                topic.getMeta(builder.reset().withLaterData(24).build());
+                result = topic.getMeta(builder.reset().withLaterDel(24).build());
+                topic.leave();
+            }
+            if (result != null) {
+                try {
+                    // Wait for result before disconnecting.
+                    result.getResult();
+                } catch (Exception ignored) {}
+            }
+            tinode.disconnect(true);
         }
         return dataAvailable;
     }
@@ -204,5 +215,6 @@ public class Utils {
         } catch (Exception ex) {
             Log.i(TAG, "Background Meta fetch failed", ex);
         }
+        tinode.disconnect(true);
     }
 }

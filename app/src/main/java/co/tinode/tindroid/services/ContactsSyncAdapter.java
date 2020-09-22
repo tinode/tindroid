@@ -181,6 +181,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                                 lastSyncMarker, true);
                     }
                 }
+                tinode.disconnect(true);
                 setServerSyncMarker(account, newSyncMarker != null ? newSyncMarker : new Date());
                 success = true;
             } catch (IOException e) {
@@ -196,7 +197,6 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
             if (lastSyncMarker == null) {
                 setServerSyncMarker(account, new Date());
             }
-
         }
 
         Log.d(TAG, "Network synchronization " + (success ? "completed" : "failed"));

@@ -2044,7 +2044,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Helper class for generating qury parameters for {sub get} and {meta get} packets.
+     * Helper class for generating query parameters for {sub get} and {get} packets.
      */
     public static class MetaGetBuilder {
         protected Topic topic;
@@ -2148,6 +2148,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         public MetaGetBuilder withTags() {
             meta.setTags();
+            return this;
+        }
+
+        public MetaGetBuilder reset() {
+            meta = new MsgGetMeta();
             return this;
         }
 

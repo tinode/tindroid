@@ -149,7 +149,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
         // Disconnect now, so the connection does not wait for the timeout.
         Log.i(TAG, "Lifecycle.Event.ON_STOP: disconnect now");
         if (sTinodeCache != null) {
-            sTinodeCache.disconnect();
+            sTinodeCache.disconnect(false);
         }
     }
 

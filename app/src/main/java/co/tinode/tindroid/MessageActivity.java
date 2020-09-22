@@ -420,6 +420,7 @@ public class MessageActivity extends AppCompatActivity {
                 mTopic.leave();
             }
         }
+        UiUtils.setVisibleTopic(null);
     }
 
     @Override

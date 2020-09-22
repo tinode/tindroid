@@ -67,35 +67,29 @@ import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-@SuppressWarnings("unused, WeakerAccess")
+@SuppressWarnings("WeakerAccess")
 public class Tinode {
-    private static final String TAG = "Tinode";
-
     public static final String USER_NEW = "new";
     public static final String TOPIC_NEW = "new";
     public static final String CHANNEL_NEW = "nch";
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
     public static final String TOPIC_SYS = "sys";
-
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_CHN_PREFIX = "chn";
     public static final String TOPIC_USR_PREFIX = "usr";
-
     // Names of server-provided limits.
     public static final String MAX_MESSAGE_SIZE = "maxMessageSize";
     public static final String MAX_SUBSCRIBER_COUNT = "maxSubscriberCount";
     public static final String MAX_TAG_COUNT = "maxTagCount";
     public static final String MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
-
     // Value interpreted as 'content deleted'.
     public static final String NULL_VALUE = "\u2421";
-
     // Notifications {note}.
     protected static final String NOTE_KP = "kp";
     protected static final String NOTE_READ = "read";
     protected static final String NOTE_RECV = "recv";
-
+    private static final String TAG = "Tinode";
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
@@ -134,23 +128,28 @@ public class Tinode {
         sTypeFactory = sJsonMapper.getTypeFactory();
     }
 
+    // Object for connect-disconnect synchronization.
+    private final Object mConnLock = new Object();
     private JavaType mDefaultTypeOfMetaPacket = null;
     private HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
     private MimeTypeResolver mMimeResolver = null;
     private Storage mStore;
-
     private String mApiKey;
     private String mServerHost = null;
     private boolean mUseTLS;
     private String mServerVersion = null;
     private String mServerBuild = null;
-
     private String mDeviceToken = null;
     private String mLanguage = null;
     private String mAppName;
     private String mOsVersion;
-
+    // Counter for the active background connections.
+    private int mBkgConnCounter = 0;
+    // Indicator of active foreground connection.
+    private boolean mFgConnection = false;
+    // Connector object.
     private Connection mConnection = null;
+    // Listener of connection events.
     private ConnectedWsListener mConnectionListener = null;
 
     // True is connection is authenticated
@@ -158,7 +157,7 @@ public class Tinode {
     // True if Tinode should use mLoginCredentials to automatically log in after connecting.
     private boolean mAutologin = false;
     private LoginCredentials mLoginCredentials = null;
-    // Server provided a list of credential methods to validate e.g. ["email", "tel", ...].
+    // Server provided list of credential methods to validate e.g. ["email", "tel", ...].
     private List<String> mCredToValidate = null;
 
     private String mMyUid = null;
@@ -209,7 +208,7 @@ public class Tinode {
             public void run() {
                 Date expiration = new Date(new Date().getTime() - EXPIRE_FUTURES_TIMEOUT);
                 ServerResponseException ex = new ServerResponseException(504, "timeout");
-                for (Map.Entry<String,FutureHolder> entry : mFutures.entrySet()) {
+                for (Map.Entry<String, FutureHolder> entry : mFutures.entrySet()) {
                     FutureHolder fh = entry.getValue();
                     if (fh.timestamp.before(expiration)) {
                         mFutures.remove(entry.getKey());
@@ -306,7 +305,7 @@ public class Tinode {
     public static <T> T[] jsonDeserializeArray(String input, String canonicalName) {
         try {
             return sJsonMapper.readValue(input, sTypeFactory.constructArrayType(
-                            sTypeFactory.constructFromCanonical(canonicalName)));
+                    sTypeFactory.constructFromCanonical(canonicalName)));
         } catch (IllegalArgumentException | IOException e) {
             return null;
         }
@@ -336,6 +335,22 @@ public class Tinode {
             return new FndTopic(tinode, l);
         }
         return new ComTopic(tinode, name, l);
+    }
+
+    /**
+     * Headers to be sent with an outgoing message.
+     *
+     * @param content message content
+     * @return headers in as map "header key : header value"
+     */
+    public static Map<String, Object> draftyHeadersFor(final Drafty content) {
+        Map<String, Object> head = new HashMap<>();
+        head.put("mime", Drafty.MIME_TYPE);
+        String[] refs = content.getEntReferences();
+        if (refs != null) {
+            head.put("attachments", refs);
+        }
+        return head;
     }
 
     /**
@@ -378,210 +393,121 @@ public class Tinode {
         }
     }
 
-    private void setTopicsUpdated(Date date) {
-        if (date == null) {
-            return;
-        }
-
-        if (mTopicsUpdated == null || mTopicsUpdated.before(date)) {
-            mTopicsUpdated = date;
-        }
-    }
-
     /**
      * Open a websocket connection to the server, process handshake exchange then optionally login.
      *
      * @param hostName address of the server to connect to; if hostName is null a saved address will be used.
      * @param tls      use transport layer security (wss); ignored if hostName is null.
-     *
      * @return PromisedReply to be resolved or rejected when the connection is completed.
      */
-    synchronized public PromisedReply<ServerMessage> connect(String hostName, boolean tls, boolean background) {
-        boolean newHost = false;
-        if (hostName != null) {
-            // Convert to lowercase to ensure correct comparison.
-            hostName = hostName.toLowerCase();
-            // Check if host address has changed.
-            newHost = !hostName.equals(mServerHost) || tls != mUseTLS;
-            // Save updated host name & TLS setting.
-            mServerHost = hostName;
-            mUseTLS = tls;
-        }
-
-        // Connection already exists and connected.
-        if (mConnection != null && mConnection.isConnected()) {
-            // If the connection is live and the server address has not changed, return a resolved promise.
-            if (!newHost) {
-                return new PromisedReply<>((ServerMessage) null);
-            } else {
-                // Clear auto-login because saved credentials won't work with the new server.
-                setAutoLogin(null, null);
-                // Stop exponential backoff timer if it's running.
-                mConnection.disconnect();
-                mConnection = null;
-            }
-        }
-
-        mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
-
-        URI connectTo;
-        try {
-            connectTo = new URI((mUseTLS ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/");
-        } catch (URISyntaxException ex) {
-            return new PromisedReply<>(ex);
-        }
-
-        PromisedReply<ServerMessage> completion = new PromisedReply<>();
-
-        if (mConnectionListener == null) {
-            mConnectionListener = new ConnectedWsListener();
-        }
-        mConnectionListener.addPromise(completion);
-
-        if (mConnection == null) {
-            mConnection = new Connection(connectTo, mApiKey, mConnectionListener);
-        }
-        mConnection.connect(true, background);
-
-        return completion;
-    }
-
-    // Class which listens for websocket to connect.
-    private class ConnectedWsListener extends Connection.WsListener {
-        final Vector<PromisedReply<ServerMessage>> mCompletionPromises;
-
-        ConnectedWsListener() {
-            mCompletionPromises = new Vector<>();
-        }
-
-        void addPromise(PromisedReply<ServerMessage> promise) {
-            mCompletionPromises.add(promise);
-        }
-
-        @Override
-        protected void onConnect(final Connection conn, boolean background) {
-            // Connection established, send handshake, inform listener on success
-            hello(background).thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                            boolean doLogin = mAutologin && mLoginCredentials != null;
-
-                            // Resolve outstanding promises;
-                            if (!doLogin) {
-                                resolvePromises(pkt);
-                            }
-
-                            // Success. Reset backoff counter.
-                            conn.backoffReset();
-
-                            mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
-                            if (mStore != null) {
-                                mStore.setTimeAdjustment(mTimeAdjustment);
-                            }
-
-                            mNotifier.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
-
-                            // Login automatically if it's enabled.
-                            if (doLogin) {
-                                return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
-                                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                            @Override
-                                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
-                                                resolvePromises(pkt);
-                                                return null;
-                                            }
-                                        });
-                            } else {
-                                return null;
-                            }
-                        }
-                    }
-            );
-        }
-
-        @Override
-        protected void onMessage(Connection conn, String message) {
-            try {
-                dispatchPacket(message);
-            } catch (Exception ex) {
-                Log.w(TAG, "Exception in dispatchPacket: ", ex);
-            }
-        }
-
-        @Override
-        protected void onDisconnect(Connection conn, boolean byServer, int code, String reason) {
-            handleDisconnect(byServer, -code, reason);
-        }
-
-        @Override
-        protected void onError(Connection conn, Exception err) {
-            // No need to call handleDisconnect here. It will be called from onDisconnect().
-
-            // If the promise is waiting, reject. Otherwise it's not our problem.
-            try {
-                rejectPromises(err);
-            } catch (Exception ignored) {
-                // Don't throw an exception as no one can catch it.
-            }
-        }
-
-        private void completePromises(ServerMessage pkt, Exception ex) throws Exception {
-            PromisedReply<ServerMessage>[] promises;
-            synchronized (mCompletionPromises) {
-                //noinspection unchecked
-                promises = mCompletionPromises.toArray(new PromisedReply[]{});
-                mCompletionPromises.removeAllElements();
+    public PromisedReply<ServerMessage> connect(String hostName, boolean tls, boolean background) {
+        synchronized (mConnLock) {
+            boolean newHost = false;
+            if (hostName != null) {
+                // Convert to lowercase to ensure correct comparison.
+                hostName = hostName.toLowerCase();
+                // Check if host address has changed.
+                newHost = !hostName.equals(mServerHost) || tls != mUseTLS;
+                // Save updated host name & TLS setting.
+                mServerHost = hostName;
+                mUseTLS = tls;
             }
 
-            for (int i = promises.length - 1; i >= 0; i--) {
-                if (!promises[i].isDone()) {
-                    if (ex != null) {
-                        promises[i].reject(ex);
-                    } else {
-                        promises[i].resolve(pkt);
-                    }
+            // Connection already exists and connected.
+            if (mConnection != null && mConnection.isConnected()) {
+                // If the connection is live and the server address has not changed, return a resolved promise.
+                if (!newHost) {
+                    return new PromisedReply<>((ServerMessage) null);
+                } else {
+                    // Clear auto-login because saved credentials won't work with the new server.
+                    setAutoLogin(null, null);
+                    // Stop exponential backoff timer if it's running.
+                    mConnection.disconnect();
+                    mConnection = null;
                 }
             }
-        }
-        private void resolvePromises(ServerMessage pkt) throws Exception {
-            completePromises(pkt, null);
-        }
 
-        private void rejectPromises(Exception ex) throws Exception {
-            completePromises(null, ex);
+            mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
+
+            URI connectTo;
+            try {
+                connectTo = new URI((mUseTLS ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/");
+            } catch (URISyntaxException ex) {
+                return new PromisedReply<>(ex);
+            }
+
+            PromisedReply<ServerMessage> completion = new PromisedReply<>();
+
+            if (mConnectionListener == null) {
+                mConnectionListener = new ConnectedWsListener();
+            }
+            mConnectionListener.addPromise(completion);
+
+            if (mConnection == null) {
+                mConnection = new Connection(connectTo, mApiKey, mConnectionListener);
+            }
+            mConnection.connect(true, background);
+
+            return completion;
         }
     }
 
     /**
      * Make sure connection is either already established or being established:
-     *  - If connection is already established do nothing
-     *  - If connection does not exist, create
-     *  - If not connected and waiting for backoff timer, wake it up.
+     * - If connection is already established do nothing
+     * - If connection does not exist, create
+     * - If not connected and waiting for backoff timer, wake it up.
      *
      * @param interactive set to true if user directly requested a reconnect.
-     * @param reset if true drop connection and reconnect; happens when cluster is reconfigured.
+     * @param reset       if true drop connection and reconnect; happens when cluster is reconfigured.
      */
-    synchronized public void reconnectNow(boolean interactive, boolean reset, boolean background) {
-        if (mConnection == null) {
-            // New connection using saved parameters.
-            connect(null, false, background);
-        }
-
-        if (mConnection.isConnected()) {
-            if (!reset) {
-                // If the connection is live and reset is not requested, all is fine.
+    public void reconnectNow(boolean interactive, boolean reset, boolean background) {
+        synchronized (mConnLock) {
+            if (mConnection == null) {
+                // New connection using saved parameters.
+                connect(null, false, background);
                 return;
             }
-            // Forcing a new connection.
-            mConnection.disconnect();
-            interactive = true;
-        }
 
-        // Connection exists but not connected. Try to connect immediately only if requested or if
-        // autoreconnect is not enabled.
-        if (interactive || !mConnection.isWaitingToReconnect()) {
-            mConnection.connect(true, background);
+            if (mConnection.isConnected()) {
+                if (!reset) {
+                    // If the connection is live and reset is not requested, all is fine.
+                    return;
+                }
+                // Forcing a new connection.
+                mConnection.disconnect();
+                interactive = true;
+            }
+
+            // Connection exists but not connected. Try to connect immediately only if requested or if
+            // autoreconnect is not enabled.
+            if (interactive || !mConnection.isWaitingToReconnect()) {
+                mConnection.connect(true, background);
+            }
+        }
+    }
+
+    /**
+     * Disconnect from the server.
+     * @param fromBkg request to disconnect background connection.
+     */
+    public void disconnect(boolean fromBkg) {
+        synchronized (mConnLock) {
+            if (fromBkg) {
+                mBkgConnCounter--;
+            } else {
+                mFgConnection = false;
+                setAutoLogin(null, null);
+            }
+
+            if (mBkgConnCounter > 0 || mFgConnection) {
+                return;
+            }
+
+            mConnAuth = false;
+            if (mConnection != null) {
+                mConnection.disconnect();
+            }
         }
     }
 
@@ -862,7 +788,7 @@ public class Tinode {
     /**
      * Get server-provided limit.
      *
-     * @param key name of the limit.
+     * @param key          name of the limit.
      * @param defaultValue default value if limit is missing.
      * @return limit or default value.
      */
@@ -1053,16 +979,16 @@ public class Tinode {
             ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
                     token, null, null));
             return sendWithPromise(msg, msg.hi.id).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        // Clear cached value on failure to allow for retries.
-                        mDeviceToken = null;
-                        if (mStore != null) {
-                            mStore.saveDeviceToken(null);
-                        }
-                        return null;
+                @Override
+                public PromisedReply<ServerMessage> onFailure(Exception err) {
+                    // Clear cached value on failure to allow for retries.
+                    mDeviceToken = null;
+                    if (mStore != null) {
+                        mStore.saveDeviceToken(null);
                     }
-                });
+                    return null;
+                }
+            });
 
         } else {
             // No change: return resolved promise.
@@ -1085,7 +1011,6 @@ public class Tinode {
      *
      * @param background indicator that this session should be treated as a service request,
      *                   i.e. presence notifications will be delayed.
-     *
      * @return PromisedReply of the reply ctrl message.
      */
     @SuppressWarnings("WeakerAccess")
@@ -1226,8 +1151,8 @@ public class Tinode {
     /**
      * Change user name and password for accounts using Basic auth scheme.
      *
-     * @param uid user ID being updated
-     * @param uname new login or null to keep the old login.
+     * @param uid      user ID being updated
+     * @param uname    new login or null to keep the old login.
      * @param password new password.
      * @return PromisedReply of the reply ctrl message.
      */
@@ -1275,7 +1200,7 @@ public class Tinode {
      *
      * @param scheme authentication scheme being reset.
      * @param method validation method to use, such as 'email' or 'tel'.
-     * @param value address to send validation request to using the method above, e.g. 'jdoe@example.com'.
+     * @param value  address to send validation request to using the method above, e.g. 'jdoe@example.com'.
      * @return PromisedReply of the reply ctrl message
      */
     public PromisedReply<ServerMessage> requestResetSecret(String scheme, String method, String value) {
@@ -1453,17 +1378,6 @@ public class Tinode {
     }
 
     /**
-     * Disconnect from the server.
-     */
-    public void disconnect() {
-        setAutoLogin(null, null);
-        mConnAuth = false;
-        if (mConnection != null) {
-            mConnection.disconnect();
-        }
-    }
-
-    /**
      * Log out current user.
      */
     public void logout() {
@@ -1472,7 +1386,7 @@ public class Tinode {
         setDeviceToken(NULL_VALUE).thenFinally(new PromisedReply.FinalListener() {
             @Override
             public void onFinally() {
-                disconnect();
+                disconnect(false);
                 mMyUid = null;
                 mServerLimits = null;
 
@@ -1488,8 +1402,8 @@ public class Tinode {
      * be automatically dispatched. A {@link Topic#subscribe()} should be normally used instead.
      *
      * @param topicName name of the topic to subscribe to
-     * @param set values to be assign to topic on success.
-     * @param get query for topic values.
+     * @param set       values to be assign to topic on success.
+     * @param get       query for topic values.
      * @return PromisedReply of the reply ctrl message
      */
     public <Pu, Pr, T> PromisedReply<ServerMessage> subscribe(String topicName, MsgSetMeta<Pu, Pr> set, MsgGetMeta get) {
@@ -1508,22 +1422,6 @@ public class Tinode {
     public PromisedReply<ServerMessage> leave(final String topicName, boolean unsub) {
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         return sendWithPromise(msg, msg.leave.id);
-    }
-
-    /**
-     * Headers to be sent with an outgoing message.
-     *
-     * @param content message content
-     * @return headers in as map "header key : header value"
-     */
-    public static Map<String, Object> draftyHeadersFor(final Drafty content) {
-        Map<String, Object> head = new HashMap<>();
-        head.put("mime", Drafty.MIME_TYPE);
-        String[] refs = content.getEntReferences();
-        if (refs != null) {
-            head.put("attachments", refs);
-        }
-        return head;
     }
 
     /**
@@ -1611,7 +1509,7 @@ public class Tinode {
      * Low-level request to delete topic. Use {@link Topic#delete(boolean)} instead.
      *
      * @param topicName name of the topic to delete
-     * @param hard hard-delete topic.
+     * @param hard      hard-delete topic.
      * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
@@ -1637,7 +1535,7 @@ public class Tinode {
     /**
      * Low-level request to delete a credential. Use {@link MeTopic#delCredential(String, String)} ()} instead.
      *
-     * @param cred  credential to delete.
+     * @param cred credential to delete.
      * @return PromisedReply of the reply ctrl message
      */
     @SuppressWarnings("WeakerAccess")
@@ -1659,7 +1557,7 @@ public class Tinode {
         return sendWithPromise(msg, msg.del.id).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                disconnect();
+                disconnect(false);
                 if (mStore != null) {
                     mStore.deleteAccount(mMyUid);
                 }
@@ -1748,7 +1646,7 @@ public class Tinode {
      * Takes {@link ClientMessage}, converts it to string writes to websocket.
      *
      * @param message string to write to websocket.
-     * @param id string used to identify message response so the promise can be resolved.
+     * @param id      string used to identify message response so the promise can be resolved.
      * @return PromisedReply of the reply ctrl message
      */
     protected PromisedReply<ServerMessage> sendWithPromise(ClientMessage message, String id) {
@@ -1884,6 +1782,16 @@ public class Tinode {
      */
     public Date getTopicsUpdated() {
         return mTopicsUpdated;
+    }
+
+    private void setTopicsUpdated(Date date) {
+        if (date == null) {
+            return;
+        }
+
+        if (mTopicsUpdated == null || mTopicsUpdated.before(date)) {
+            mTopicsUpdated = date;
+        }
     }
 
     /**
@@ -2148,7 +2056,6 @@ public class Tinode {
          * @param code a numeric value between 200 and 299 on success, 400 or higher on failure
          * @param text "OK" on success or error message
          */
-        @SuppressWarnings("unused")
         public void onLogin(int code, String text) {
         }
 
@@ -2157,7 +2064,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("WeakerAccess")
         public void onMessage(ServerMessage msg) {
         }
 
@@ -2168,7 +2075,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("WeakerAccess")
         public void onRawMessage(String msg) {
         }
 
@@ -2177,7 +2084,7 @@ public class Tinode {
          *
          * @param ctrl control message to process
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("WeakerAccess")
         public void onCtrlMessage(MsgServerCtrl ctrl) {
         }
 
@@ -2186,7 +2093,7 @@ public class Tinode {
          *
          * @param data control message to process
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("WeakerAccess")
         public void onDataMessage(MsgServerData data) {
         }
 
@@ -2195,7 +2102,7 @@ public class Tinode {
          *
          * @param info info message to process
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("WeakerAccess")
         public void onInfoMessage(MsgServerInfo info) {
         }
 
@@ -2204,7 +2111,7 @@ public class Tinode {
          *
          * @param meta meta message to process
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("WeakerAccess")
         public void onMetaMessage(MsgServerMeta meta) {
         }
 
@@ -2213,7 +2120,7 @@ public class Tinode {
          *
          * @param pres control message to process
          */
-        @SuppressWarnings("unused, WeakerAccess")
+        @SuppressWarnings("WeakerAccess")
         public void onPresMessage(MsgServerPres pres) {
         }
     }
@@ -2231,6 +2138,7 @@ public class Tinode {
                 listeners.add(l);
             }
         }
+
         synchronized boolean delListener(EventListener l) {
             return listeners.remove(l);
         }
@@ -2256,6 +2164,7 @@ public class Tinode {
                 local[i].onDisconnect(byServer, code, reason);
             }
         }
+
         void onLogin(int code, String text) {
             EventListener[] local;
             synchronized (this) {
@@ -2265,6 +2174,7 @@ public class Tinode {
                 local[i].onLogin(code, text);
             }
         }
+
         void onMessage(ServerMessage msg) {
             EventListener[] local;
             synchronized (this) {
@@ -2274,6 +2184,7 @@ public class Tinode {
                 local[i].onMessage(msg);
             }
         }
+
         void onRawMessage(String msg) {
             EventListener[] local;
             synchronized (this) {
@@ -2283,6 +2194,7 @@ public class Tinode {
                 local[i].onRawMessage(msg);
             }
         }
+
         void onCtrlMessage(MsgServerCtrl ctrl) {
             EventListener[] local;
             synchronized (this) {
@@ -2292,6 +2204,7 @@ public class Tinode {
                 local[i].onCtrlMessage(ctrl);
             }
         }
+
         void onDataMessage(MsgServerData data) {
             EventListener[] local;
             synchronized (this) {
@@ -2301,6 +2214,7 @@ public class Tinode {
                 local[i].onDataMessage(data);
             }
         }
+
         void onInfoMessage(MsgServerInfo info) {
             EventListener[] local;
             synchronized (this) {
@@ -2310,6 +2224,7 @@ public class Tinode {
                 local[i].onInfoMessage(info);
             }
         }
+
         void onMetaMessage(MsgServerMeta meta) {
             EventListener[] local;
             synchronized (this) {
@@ -2319,6 +2234,7 @@ public class Tinode {
                 local[i].onMetaMessage(meta);
             }
         }
+
         void onPresMessage(MsgServerPres pres) {
             EventListener[] local;
             synchronized (this) {
@@ -2337,6 +2253,133 @@ public class Tinode {
         LoginCredentials(String scheme, String secret) {
             this.scheme = scheme;
             this.secret = secret;
+        }
+    }
+
+    // Container for storing unresolved futures.
+    private static class FutureHolder {
+        PromisedReply<ServerMessage> future;
+        Date timestamp;
+
+        FutureHolder(PromisedReply<ServerMessage> future, Date timestamp) {
+            this.future = future;
+            this.timestamp = timestamp;
+        }
+    }
+
+    // Class which listens for websocket to connect.
+    private class ConnectedWsListener extends Connection.WsListener {
+        final Vector<PromisedReply<ServerMessage>> mCompletionPromises;
+
+        ConnectedWsListener() {
+            mCompletionPromises = new Vector<>();
+        }
+
+        void addPromise(PromisedReply<ServerMessage> promise) {
+            mCompletionPromises.add(promise);
+        }
+
+        @Override
+        protected void onConnect(final Connection conn, final boolean background) {
+            // Connection established, send handshake, inform listener on success
+            hello(background).thenApply(
+                    new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                            boolean doLogin = mAutologin && mLoginCredentials != null;
+
+                            // Resolve outstanding promises;
+                            if (!doLogin) {
+                                resolvePromises(pkt);
+                            }
+
+                            // Success. Reset backoff counter.
+                            conn.backoffReset();
+
+                            mTimeAdjustment = pkt.ctrl.ts.getTime() - new Date().getTime();
+                            if (mStore != null) {
+                                mStore.setTimeAdjustment(mTimeAdjustment);
+                            }
+
+                            synchronized (mConnLock) {
+                                if (background) {
+                                    mBkgConnCounter++;
+                                } else {
+                                    mFgConnection = true;
+                                }
+                            }
+
+                            mNotifier.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
+
+                            // Login automatically if it's enabled.
+                            if (doLogin) {
+                                return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
+                                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                            @Override
+                                            public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
+                                                resolvePromises(pkt);
+                                                return null;
+                                            }
+                                        });
+                            } else {
+                                return null;
+                            }
+                        }
+                    }
+            );
+        }
+
+        @Override
+        protected void onMessage(Connection conn, String message) {
+            try {
+                dispatchPacket(message);
+            } catch (Exception ex) {
+                Log.w(TAG, "Exception in dispatchPacket: ", ex);
+            }
+        }
+
+        @Override
+        protected void onDisconnect(Connection conn, boolean byServer, int code, String reason) {
+            handleDisconnect(byServer, -code, reason);
+        }
+
+        @Override
+        protected void onError(Connection conn, Exception err) {
+            // No need to call handleDisconnect here. It will be called from onDisconnect().
+
+            // If the promise is waiting, reject. Otherwise it's not our problem.
+            try {
+                rejectPromises(err);
+            } catch (Exception ignored) {
+                // Don't throw an exception as no one can catch it.
+            }
+        }
+
+        private void completePromises(ServerMessage pkt, Exception ex) throws Exception {
+            PromisedReply<ServerMessage>[] promises;
+            synchronized (mCompletionPromises) {
+                //noinspection unchecked
+                promises = mCompletionPromises.toArray(new PromisedReply[]{});
+                mCompletionPromises.removeAllElements();
+            }
+
+            for (int i = promises.length - 1; i >= 0; i--) {
+                if (!promises[i].isDone()) {
+                    if (ex != null) {
+                        promises[i].reject(ex);
+                    } else {
+                        promises[i].resolve(pkt);
+                    }
+                }
+            }
+        }
+
+        private void resolvePromises(ServerMessage pkt) throws Exception {
+            completePromises(pkt, null);
+        }
+
+        private void rejectPromises(Exception ex) throws Exception {
+            completePromises(null, ex);
         }
     }
 
@@ -2367,17 +2410,6 @@ public class Tinode {
 
         public void post(String topic, int recv) {
             recvQueue.put(topic, recv);
-        }
-    }
-
-    // Container for storing unresolved futures.
-    private static class FutureHolder {
-        PromisedReply<ServerMessage> future;
-        Date timestamp;
-
-        FutureHolder(PromisedReply<ServerMessage> future, Date timestamp) {
-            this.future = future;
-            this.timestamp = timestamp;
         }
     }
 }
