@@ -108,7 +108,7 @@ public class Tinode {
 
     protected static TypeFactory sTypeFactory;
     protected static SimpleDateFormat sDateFormat;
-    private static ObjectMapper sJsonMapper;
+    private static final ObjectMapper sJsonMapper;
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -131,17 +131,17 @@ public class Tinode {
     // Object for connect-disconnect synchronization.
     private final Object mConnLock = new Object();
     private JavaType mDefaultTypeOfMetaPacket = null;
-    private HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
+    private final HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
     private MimeTypeResolver mMimeResolver = null;
-    private Storage mStore;
-    private String mApiKey;
+    private final Storage mStore;
+    private final String mApiKey;
     private String mServerHost = null;
     private boolean mUseTLS;
     private String mServerVersion = null;
     private String mServerBuild = null;
     private String mDeviceToken = null;
     private String mLanguage = null;
-    private String mAppName;
+    private final String mAppName;
     private String mOsVersion;
     // Counter for the active background connections.
     private int mBkgConnCounter = 0;
@@ -1406,7 +1406,7 @@ public class Tinode {
      * @param get       query for topic values.
      * @return PromisedReply of the reply ctrl message
      */
-    public <Pu, Pr, T> PromisedReply<ServerMessage> subscribe(String topicName, MsgSetMeta<Pu, Pr> set, MsgGetMeta get) {
+    public <Pu, Pr> PromisedReply<ServerMessage> subscribe(String topicName, MsgSetMeta<Pu, Pr> set, MsgGetMeta get) {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
         return sendWithPromise(msg, msg.sub.id);
     }
@@ -1458,7 +1458,7 @@ public class Tinode {
      * @param meta      metadata to assign
      * @return PromisedReply of the reply ctrl or meta message
      */
-    public <Pu, Pr, T> PromisedReply<ServerMessage> setMeta(final String topicName,
+    public <Pu, Pr> PromisedReply<ServerMessage> setMeta(final String topicName,
                                                             final MsgSetMeta<Pu, Pr> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
         return sendWithPromise(msg, msg.set.id);

@@ -6,13 +6,13 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
+        classpath 'com.android.tools.build:gradle:4.1.0'
 
         // For FCM push notifications
-        classpath 'com.google.gms:google-services:4.3.3'
+        classpath 'com.google.gms:google-services:4.3.4'
 
         // Crashlytics
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.2.1'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.3.0'
 
         // Legal compliance: plugin to collect and display OSS licenses.
         classpath 'com.google.android.gms:oss-licenses-plugin:0.10.2'
@@ -20,6 +20,13 @@ buildscript {
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
+}
+
+// This block encapsulates custom properties and makes them available to all
+// modules in the project.
+ext {
+    version_code = gitVersionCode()
+    version_name = gitVersionName()
 }
 
 allprojects {
@@ -34,4 +41,15 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+static def gitVersionCode() {
+    def process = "git rev-list --count HEAD".execute()
+    return process.text.toInteger()
+}
+
+static def gitVersionName() {
+    def process = "git describe --tags".execute()
+    // Remove trailing CR and remove leading 'v' as in 'v1.2.3'
+    return process.text.trim().substring(1)
 }
