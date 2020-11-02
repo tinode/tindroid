@@ -52,7 +52,7 @@ import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
 public class AttachmentHandler extends Worker {
-    private static final String TAG = "AttachmentUploader";
+    private static final String TAG = "AttachmentHandler";
 
     final static String ARG_OPERATION = "operation";
     final static String ARG_OPERATION_IMAGE = "image";
@@ -456,41 +456,39 @@ public class AttachmentHandler extends Worker {
         try {
             if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                 Log.w(TAG, "External storage not mounted: " + path);
-
             } else if (!(path.mkdirs() || path.isDirectory())) {
                 Log.w(TAG, "Path is not a directory - " + path);
             }
 
-            Object val = data.get("val");
-            if (val != null) {
-                fos = new FileOutputStream(file);
-                fos.write(val instanceof String ?
-                        Base64.decode((String) val, Base64.DEFAULT) :
-                        (byte[]) val);
-
-                Intent intent = new Intent();
-                intent.setAction(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(FileProvider.getUriForFile(activity,
-                        "co.tinode.tindroid.provider", file), mimeType);
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                try {
-                    activity.startActivity(intent);
-                } catch (ActivityNotFoundException ignored) {
-                    activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+            Object ref = data.get("ref");
+            if (ref instanceof String) {
+                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
+                String scheme = url.getProtocol();
+                // Make sure the file is downloaded over http or https protocols.
+                if (scheme.equals("http") || scheme.equals("https")) {
+                    LargeFileHelper lfh = Cache.getTinode().getFileUploader();
+                    downloadId = startDownload(activity, Uri.parse(url.toString()), fname, mimeType, lfh.headers());
+                } else {
+                    Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
+                    Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
                 }
-
             } else {
-                Object ref = data.get("ref");
-                if (ref instanceof String) {
-                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
-                    String scheme = url.getProtocol();
-                    // Make sure the file is downloaded over http or https protocols.
-                    if (scheme.equals("http") || scheme.equals("https")) {
-                        LargeFileHelper lfh = Cache.getTinode().getFileUploader();
-                        downloadId = startDownload(activity, Uri.parse(url.toString()), fname, mimeType, lfh.headers());
-                    } else {
-                        Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
-                        Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                Object val = data.get("val");
+                if (val != null) {
+                    fos = new FileOutputStream(file);
+                    fos.write(val instanceof String ?
+                            Base64.decode((String) val, Base64.DEFAULT) :
+                            (byte[]) val);
+
+                    Intent intent = new Intent();
+                    intent.setAction(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(FileProvider.getUriForFile(activity,
+                            "co.tinode.tindroid.provider", file), mimeType);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        activity.startActivity(intent);
+                    } catch (ActivityNotFoundException ignored) {
+                        activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
                     }
                 } else {
                     Log.w(TAG, "Invalid or missing attachment");

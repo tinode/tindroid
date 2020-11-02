@@ -32,13 +32,13 @@ public class BorderedSpan extends ReplacementSpan implements LineHeightSpan {
     private int mWidth;
     // Actual width of the text in DIPs.
     private int mWidthActual;
-    private int mTextColor;
+    private final int mTextColor;
     // Minimum button width in DIPs.
-    private int mMinButtonWidth;
+    private final int mMinButtonWidth;
     // Button height in DIP
-    private int mButtonHeight;
+    private final int mButtonHeight;
     // Size of DIP in pixels.
-    private float mDipSize;
+    private final float mDipSize;
 
     /**
      * Create formatter for text which appears as clickable buttons.

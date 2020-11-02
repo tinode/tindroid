@@ -1876,7 +1876,7 @@ public class Tinode {
      * Look up user in a local cache: first in memory, then in persistent storage.
      *
      * @param uid ID of the user to find.
-     * @return {@link User} object or null if no such user is found in local cache.
+     * @return {@link User} object or {@code null} if no such user is found in local cache.
      */
     @SuppressWarnings("unchecked")
     public <SP> User<SP> getUser(String uid) {
@@ -1937,7 +1937,7 @@ public class Tinode {
      * Parse JSON received from the server into {@link ServerMessage}
      *
      * @param jsonMessage message to parse
-     * @return ServerMessage or null
+     * @return ServerMessage or {@code null}
      */
     @SuppressWarnings("WeakerAccess")
     protected ServerMessage parseServerMessageFromJson(String jsonMessage) {
@@ -1988,6 +1988,54 @@ public class Tinode {
         }
 
         return msg.isValid() ? msg : null;
+    }
+
+    /**
+     * Add API key and auth token to the URL making it usable for getting data
+     * from the server in a simple GET request.
+     *
+     * @param origUrl possibly relative URL to wrap.
+     * @return URL with appended API key and token, if valid token is present.
+     */
+    public URL authorizeURL(String origUrl) {
+        if (origUrl == null) {
+            return null;
+        }
+        URL url = null;
+        try {
+            url = new URL(getBaseUrl(), origUrl);
+            String host = url.getHost();
+            if (host != null) {
+                int port = url.getPort();
+                host += port > 0 ? ":" + port : "";
+            }
+            if ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
+                    && mServerHost.equals(host)) {
+                String query = url.getQuery();
+                if (mApiKey != null) {
+                    if (query != null) {
+                        query += "&";
+                    } else {
+                        query = "";
+                    }
+                    query += "apikey=" + mApiKey;
+                }
+                if (mAuthToken != null) {
+                    if (query != null) {
+                        query += "&";
+                    } else {
+                        query = "";
+                    }
+                    query += "auth=token&secret=" + mAuthToken;
+                }
+                URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(),
+                        url.getPath(), query, url.getRef());
+                url = uri.toURL();
+                Log.i(TAG, "Wrapped URL: " + url.toString());
+            }
+        } catch (MalformedURLException | URISyntaxException ignored) {}
+
+        return url;
     }
 
     /**
@@ -2127,7 +2175,7 @@ public class Tinode {
 
     // Helper class which calls given method of all added EventListener(s).
     private static class ListenerNotifier {
-        private Vector<EventListener> listeners;
+        private final Vector<EventListener> listeners;
 
         ListenerNotifier() {
             listeners = new Vector<>();

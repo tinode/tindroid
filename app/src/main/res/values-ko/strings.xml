@@ -271,4 +271,5 @@
     <string name="this_is_channel">이것은채널입니다</string>
     <string name="channel_explained">채널은 최소한의 액세스 제어로 무제한 참가자를 허용합니다. 이 선택은 영구적입니다.</string>
     <string name="channel">채널</string>
+    <string name="unavailable">unavailable</string>
 </resources>

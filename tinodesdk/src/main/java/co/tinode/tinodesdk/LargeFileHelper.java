@@ -25,11 +25,11 @@ public class LargeFileHelper {
     private static final String BOUNDARY = "*****" + System.currentTimeMillis() + "*****";
     private static final String LINE_END = "\r\n";
 
-    private URL mUrlUpload;
-    private String mHost;
-    private String mApiKey;
-    private String mAuthToken;
-    private String mUserAgent;
+    private final URL mUrlUpload;
+    private final String mHost;
+    private final String mApiKey;
+    private final String mAuthToken;
+    private final String mUserAgent;
 
     private boolean mCancel = false;
 
@@ -118,15 +118,18 @@ public class LargeFileHelper {
         URL url = new URL(downloadFrom);
         long size = 0;
         String scheme = url.getProtocol();
-        if (!url.getHost().equals(mHost) || (!scheme.equals("http") && !scheme.equals("https"))) {
-            // As a security measure refuse to download from an absolute URL or using non-http(s) protocols.
+        if (!scheme.equals("http") && !scheme.equals("https")) {
+            // As a security measure refuse to download using non-http(s) protocols.
             return size;
         }
         HttpURLConnection urlConnection = null;
         try {
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestProperty("X-Tinode-APIKey", mApiKey);
-            urlConnection.setRequestProperty("X-Tinode-Auth", "Token " + mAuthToken);
+            if (url.getHost().equals(mHost)) {
+                // Send authentication only if the host is known.
+                urlConnection.setRequestProperty("X-Tinode-APIKey", mApiKey);
+                urlConnection.setRequestProperty("X-Tinode-Auth", "Token " + mAuthToken);
+            }
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
             return copyStream(in, out, urlConnection.getContentLength(), progress);
         } finally {

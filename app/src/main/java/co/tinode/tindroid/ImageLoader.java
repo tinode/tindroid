@@ -37,7 +37,7 @@ public abstract class ImageLoader {
     private final Object mPauseWorkLock = new Object();
     private Bitmap mLoadingBitmap;
     private boolean mPauseWork = false;
-    private int mImageSize;
+    private final int mImageSize;
     // private Resources mResources;
 
     ImageLoader(int imageSize, FragmentManager fm) {

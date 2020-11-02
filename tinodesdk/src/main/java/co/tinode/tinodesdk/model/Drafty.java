@@ -141,7 +141,6 @@ public class Drafty implements Serializable {
 
     // Used by Jackson XML to deserialize plain text received from the server as Drafty without any parsing.
     // This is needed in order to disable secondary parsing of received text messages.
-    @SuppressWarnings("unused")
     @JsonCreator
     public static Drafty fromPlainText(String plainText) {
         Drafty that = new Drafty();
@@ -452,6 +451,7 @@ public class Drafty implements Serializable {
     }
 
     // Convert Drafty to plain text;
+    @SuppressWarnings("NullableProblems")
     @Override
     public String toString() {
         return txt != null ? txt : "";
@@ -960,7 +960,6 @@ public class Drafty implements Serializable {
             return len;
         }
 
-
         @SuppressWarnings("NullableProblems")
         @Override
         public String toString() {
@@ -988,6 +987,7 @@ public class Drafty implements Serializable {
             return data;
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public String toString() {
             return "{tp: '" + tp + "', data: " + (data != null ? data.toString() : "null") + "}";
@@ -1004,9 +1004,6 @@ public class Drafty implements Serializable {
     private static class Block {
         String txt;
         List<Style> fmt;
-
-        public Block() {
-        }
 
         Block(String txt) {
             this.txt = txt;
@@ -1056,6 +1053,7 @@ public class Drafty implements Serializable {
             return start - s.start;
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public String toString() {
             return "{" + "start=" + start + "," +

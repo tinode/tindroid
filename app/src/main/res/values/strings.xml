@@ -285,4 +285,5 @@
     <string name="this_is_channel">This is a channel</string>
     <string name="channel_explained">Channels allow unlimited subscribers with minimal access control. This selection is permanent.</string>
     <string name="channel">channel</string>
+    <string name="unavailable">unavailable</string>
 </resources>

@@ -3,6 +3,7 @@ package co.tinode.tindroid.media;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -12,6 +13,7 @@ import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.ParagraphStyle;
@@ -33,6 +35,7 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
+import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tinodesdk.model.Drafty;
 
@@ -44,8 +47,11 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private static final float FORM_LINE_SPACING = 1.2f;
     // Additional horizontal padding otherwise images sometimes fail to render.
     private static final int IMAGE_H_PADDING = 8;
+    // Size of Download and Error icons in DP.
+    private static final int ICON_SIZE_DP = 16;
 
     private final TextView mContainer;
+    // Maximum width of the container TextView. Max height is maxWidth * 0.75.
     private final int mViewport;
     private final float mFontSize;
     private final ClickListener mClicker;
@@ -95,49 +101,95 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return false;
     }
 
+    private static float scaleBitmap(int srcWidth, int srcHeight, int viewportWidth, float density) {
+        if (srcWidth == 0 || srcHeight == 0) {
+            return 0f;
+        }
+
+        Log.i(TAG, "scaling bmp " + srcWidth + " x " + srcHeight + " (" + viewportWidth + "), dpi="+ density);
+
+        // Convert DP to pixels.
+        float width = srcWidth * density;
+        float height = srcHeight * density;
+        float maxWidth = viewportWidth - IMAGE_H_PADDING * density;
+
+        // Make sure the scaled bitmap is no bigger than the viewport size;
+        float scaleX = Math.min(width, maxWidth) / width;
+        float scaleY = Math.min(height, maxWidth * 0.75f) / height;
+        return Math.min(scaleX, scaleY);
+    }
+
     private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data) {
         TreeNode result = null;
         if (data != null) {
             CharacterStyle span = null;
             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-            Bitmap bmp = null;
-            try {
-                Object val = data.get("val");
-                // If the message is unsent, the bits could be raw byte[] as opposed to
-                // base64-encoded.
-                byte[] bits = (val instanceof String) ?
-                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
-                // noinspection ConstantConditions (NullPointerException is explicitly caught).
-                bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                // Scale bitmap for display density.
-                float width = bmp.getWidth() * metrics.density;
-                float height = bmp.getHeight() * metrics.density;
-                float maxWidth = mViewport - IMAGE_H_PADDING * metrics.density;
-
-                // Make sure the scaled bitmap is no bigger than the viewport size;
-                float scaleX = Math.min(width, maxWidth) / width;
-                float scaleY = Math.min(height, maxWidth * 0.75f) / height;
-                float scale = Math.min(scaleX, scaleY);
-
-                bmp = Bitmap.createScaledBitmap(bmp, (int)(width * scale), (int)(height * scale), true);
-
-            } catch (Exception ex) {
-                Log.w(TAG, "Broken Image", ex);
+            Object val = data.get("val");
+            if (val != null) {
+                try {
+                    // If the message is not yet sent, the bits could be raw byte[] as opposed to
+                    // base64-encoded.
+                    byte[] bits = (val instanceof String) ?
+                            Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+                    Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                    if (bmp != null) {
+                        // Scale bitmap for display density. The data.get("width") and data.get("height") are ignored.
+                        int width = bmp.getWidth();
+                        int height = bmp.getHeight();
+                        float scale = scaleBitmap(width, height, mViewport, metrics.density);
+                        if (scale == 0) {
+                            bmp = null;
+                        } else {
+                            bmp = Bitmap.createScaledBitmap(bmp, (int) (width * scale * metrics.density),
+                                    (int) (height * scale * metrics.density), true);
+                        }
+                    }
+                    if (bmp != null) {
+                        span = new ImageSpan(ctx, bmp);
+                    }
+                } catch (Exception ex) {
+                    Log.w(TAG, "Broken image", ex);
+                }
+            } else {
+                Object ref = data.get("ref");
+                if (ref instanceof String) {
+                    int width = 0, height = 0;
+                    Object tmp = data.get("width");
+                    if (tmp instanceof Number) {
+                        width = ((Number) tmp).intValue();
+                    }
+                    tmp = data.get("height");
+                    if (tmp instanceof Number) {
+                        height = ((Number) tmp).intValue();
+                    }
+                    float scale = scaleBitmap(width, height, mViewport, metrics.density);
+                    if (scale > 0) {
+                        Drawable onError = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                        if (onError != null) {
+                            onError.setBounds(0, 0, onError.getIntrinsicWidth(), onError.getIntrinsicHeight());
+                        }
+                        Drawable placeholder = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
+                        if (placeholder != null) {
+                            placeholder.setBounds(0, 0, placeholder.getIntrinsicWidth(), placeholder.getIntrinsicHeight());
+                        }
+                        width = (int) (width * scale * metrics.density);
+                        height = (int) (height * scale * metrics.density);
+                        span = new UrlImageSpan(mContainer, width, height, placeholder, onError);
+                        ((UrlImageSpan) span).load(Cache.getTinode().authorizeURL((String) ref));
+                    }
+                }
             }
 
-            if (bmp == null) {
+            if (span == null) {
                 // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
                 Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
                 if (icon != null) {
                     icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
                     span = new ImageSpan(icon);
+                    result = new TreeNode(span, content);
                 }
-            } else {
-                span = new ImageSpan(ctx, bmp);
-            }
-
-            if (mClicker != null && bmp != null) {
-                // Make image clickable but wrapping ImageSpan into a ClickableSpan.
+            } else if (mClicker != null) {
+                // Make image clickable by wrapping ImageSpan into a ClickableSpan.
                 result = new TreeNode(new ClickableSpan() {
                     @Override
                     public void onClick(@NonNull View widget) {
@@ -145,9 +197,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     }
                 }, (CharSequence) null);
                 result.addNode(new TreeNode(span, content));
-            } else {
-                // Just create an image span
-                result = new TreeNode(span, content);
             }
         }
 
@@ -155,7 +204,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     }
 
     private TreeNode handleAttachment(final Context ctx,
-                                      @SuppressWarnings("unused") Object unused,
+                                      Object unused,
                                       final Map<String,Object> data) {
         TreeNode result = new TreeNode();
         if (data != null) {
@@ -168,8 +217,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 }
             } catch (ClassCastException ignored) {
             }
-
-            // result.addNode( "\n");
 
             // Insert document icon
             Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file);
@@ -194,21 +241,33 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
             // Add download link.
             if (mClicker != null) {
-                // Insert linebreak then a clickable [↓ save] line
+                boolean valid = (data.get("ref") instanceof String);
+
+                // Insert linebreak then a clickable [↓ save] or [(!) unavailable] line.
                 result.addNode("\n");
                 TreeNode saveLink = new TreeNode();
                 // Add 'download file' icon
-                icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_download_link);
+                icon = AppCompatResources.getDrawable(ctx, valid ?
+                        R.drawable.ic_download_link : R.drawable.ic_error_gray);
+                DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
                 //noinspection ConstantConditions
-                icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+                icon.setBounds(0, 0,
+                        (int) (ICON_SIZE_DP * metrics.density),
+                        (int) (ICON_SIZE_DP * metrics.density));
                 saveLink.addNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " ");
-                // Add "save" text and make it clickable.
-                saveLink.addNode(new TreeNode(new ClickableSpan() {
-                    @Override
-                    public void onClick(@NonNull View widget) {
-                        mClicker.onClick("EX", data);
-                    }
-                }, ctx.getResources().getString(R.string.download_attachment)));
+                if (valid) {
+                    // Clickable "save".
+                    saveLink.addNode(new TreeNode(new ClickableSpan() {
+                        @Override
+                        public void onClick(@NonNull View widget) {
+                            mClicker.onClick("EX", data);
+                        }
+                    }, ctx.getResources().getString(R.string.download_attachment)));
+                } else {
+                    // Grayed-out "unavailable".
+                    saveLink.addNode(new ForegroundColorSpan(Color.GRAY),
+                            " " + ctx.getResources().getString(R.string.unavailable));
+                }
                 // Add space on the left to make the link appear under the file name.
                 result.addNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink);
             }
