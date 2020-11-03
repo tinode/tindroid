@@ -101,12 +101,11 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return false;
     }
 
+    // Scale image dimensions to fit under the given viewport size.
     private static float scaleBitmap(int srcWidth, int srcHeight, int viewportWidth, float density) {
         if (srcWidth == 0 || srcHeight == 0) {
             return 0f;
         }
-
-        Log.i(TAG, "scaling bmp " + srcWidth + " x " + srcHeight + " (" + viewportWidth + "), dpi="+ density);
 
         // Convert DP to pixels.
         float width = srcWidth * density;

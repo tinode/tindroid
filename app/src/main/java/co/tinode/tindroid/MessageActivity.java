@@ -16,7 +16,6 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -148,16 +147,13 @@ public class MessageActivity extends AppCompatActivity {
             ab.setDisplayHomeAsUpEnabled(true);
             ab.setDisplayShowHomeEnabled(true);
         }
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (isFragmentVisible(FRAGMENT_MESSAGES) || isFragmentVisible(FRAGMENT_INVALID)) {
-                    Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(intent);
-                } else {
-                    getSupportFragmentManager().popBackStack();
-                }
+        toolbar.setNavigationOnClickListener(v -> {
+            if (isFragmentVisible(FRAGMENT_MESSAGES) || isFragmentVisible(FRAGMENT_INVALID)) {
+                Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+            } else {
+                getSupportFragmentManager().popBackStack();
             }
         });
 
@@ -359,20 +355,17 @@ public class MessageActivity extends AppCompatActivity {
                         }
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
                                 mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                FragmentManager fm = getSupportFragmentManager();
-                                Fragment visible = UiUtils.getVisibleFragment(fm);
-                                if (visible instanceof InvalidTopicFragment) {
-                                    // Replace InvalidTopicFragment with default FRAGMENT_MESSAGES.
-                                    fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                                    showFragment(FRAGMENT_MESSAGES, null, false);
-                                } else {
-                                    MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
-                                    if (fragmsg != null) {
-                                        fragmsg.topicSubscribed();
-                                    }
+                        runOnUiThread(() -> {
+                            FragmentManager fm = getSupportFragmentManager();
+                            Fragment visible = UiUtils.getVisibleFragment(fm);
+                            if (visible instanceof InvalidTopicFragment) {
+                                // Replace InvalidTopicFragment with default FRAGMENT_MESSAGES.
+                                fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                showFragment(FRAGMENT_MESSAGES, null, false);
+                            } else {
+                                MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
+                                if (fragmsg != null) {
+                                    fragmsg.topicSubscribed();
                                 }
                             }
                         });
@@ -479,32 +472,29 @@ public class MessageActivity extends AppCompatActivity {
 
     // Try to send the specified message.
     public void syncMessages(final long msgId, final boolean runLoader) {
-        mMessageSender.submit(new Runnable() {
-            @Override
-            public void run() {
-                PromisedReply<ServerMessage> promise;
-                if (msgId > 0) {
-                    promise = mTopic.syncOne(msgId);
-                } else {
-                    promise = mTopic.syncAll();
-                }
-                if (runLoader) {
-                    promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            runMessagesLoader();
-                            return null;
-                        }
-                    });
-                }
-                promise.thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+        mMessageSender.submit(() -> {
+            PromisedReply<ServerMessage> promise;
+            if (msgId > 0) {
+                promise = mTopic.syncOne(msgId);
+            } else {
+                promise = mTopic.syncAll();
+            }
+            if (runLoader) {
+                promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        Log.w(TAG, "Sync failed", err);
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        runMessagesLoader();
                         return null;
                     }
                 });
             }
+            promise.thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onFailure(Exception err) {
+                    Log.w(TAG, "Sync failed", err);
+                    return null;
+                }
+            });
         });
     }
 
@@ -639,14 +629,11 @@ public class MessageActivity extends AppCompatActivity {
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                MessagesFragment fragMsg = (MessagesFragment) getSupportFragmentManager()
-                        .findFragmentByTag(FRAGMENT_MESSAGES);
-                if (fragMsg != null) {
-                    fragMsg.setRefreshing(active);
-                }
+        runOnUiThread(() -> {
+            MessagesFragment fragMsg = (MessagesFragment) getSupportFragmentManager()
+                    .findFragmentByTag(FRAGMENT_MESSAGES);
+            if (fragMsg != null) {
+                fragMsg.setRefreshing(active);
             }
         });
     }
@@ -704,11 +691,11 @@ public class MessageActivity extends AppCompatActivity {
      */
     private static class PausableSingleThreadExecutor extends ThreadPoolExecutor {
         private boolean isPaused;
-        private ReentrantLock pauseLock = new ReentrantLock();
-        private Condition unpaused = pauseLock.newCondition();
+        private final ReentrantLock pauseLock = new ReentrantLock();
+        private final Condition unpaused = pauseLock.newCondition();
 
         PausableSingleThreadExecutor() {
-            super(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+            super(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         }
 
         @Override
@@ -770,18 +757,15 @@ public class MessageActivity extends AppCompatActivity {
             // noinspection SwitchStatementWithTooFewBranches
             switch (pres.what) {
                 case "acs":
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                            if (fragment != null) {
-                                if (fragment instanceof TopicInfoFragment) {
-                                    ((TopicInfoFragment) fragment).notifyDataSetChanged();
-                                } else if (fragment instanceof TopicPermissionsFragment) {
-                                    ((TopicPermissionsFragment) fragment).notifyDataSetChanged();
-                                } else if (fragment instanceof MessagesFragment) {
-                                    ((MessagesFragment) fragment).notifyDataSetChanged(true);
-                                }
+                    runOnUiThread(() -> {
+                        Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+                        if (fragment != null) {
+                            if (fragment instanceof TopicInfoFragment) {
+                                ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                            } else if (fragment instanceof TopicPermissionsFragment) {
+                                ((TopicPermissionsFragment) fragment).notifyDataSetChanged();
+                            } else if (fragment instanceof MessagesFragment) {
+                                ((MessagesFragment) fragment).notifyDataSetChanged(true);
                             }
                         }
                     });
@@ -797,25 +781,19 @@ public class MessageActivity extends AppCompatActivity {
             switch (info.what) {
                 case "read":
                 case "recv":
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
-                                    findFragmentByTag(FRAGMENT_MESSAGES);
-                            if (fragment != null && fragment.isVisible()) {
-                                fragment.notifyDataSetChanged(false);
-                            }
+                    runOnUiThread(() -> {
+                        MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+                                findFragmentByTag(FRAGMENT_MESSAGES);
+                        if (fragment != null && fragment.isVisible()) {
+                            fragment.notifyDataSetChanged(false);
                         }
                     });
                     break;
                 case "kp":
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            // Show typing indicator as animation over avatar in toolbar
-                            mTypingAnimationTimer = UiUtils.toolbarTypingIndicator(MessageActivity.this,
-                                    mTypingAnimationTimer, TYPING_INDICATOR_DURATION);
-                        }
+                    runOnUiThread(() -> {
+                        // Show typing indicator as animation over avatar in toolbar
+                        mTypingAnimationTimer = UiUtils.toolbarTypingIndicator(MessageActivity.this,
+                                mTypingAnimationTimer, TYPING_INDICATOR_DURATION);
                     });
                     break;
                 default:
@@ -825,16 +803,13 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onSubsUpdated() {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                    if (fragment != null) {
-                        if (fragment instanceof TopicInfoFragment) {
-                            ((TopicInfoFragment) fragment).notifyDataSetChanged();
-                        } else if (fragment instanceof MessagesFragment) {
-                            ((MessagesFragment) fragment).notifyDataSetChanged(true);
-                        }
+            runOnUiThread(() -> {
+                Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+                if (fragment != null) {
+                    if (fragment instanceof TopicInfoFragment) {
+                        ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                    } else if (fragment instanceof MessagesFragment) {
+                        ((MessagesFragment) fragment).notifyDataSetChanged(true);
                     }
                 }
             });
@@ -842,18 +817,15 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onMetaDesc(final Description<VxCard, PrivateType> desc) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
-                            mTopic.getOnline(), mTopic.getLastSeen());
-                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                    if (fragment != null) {
-                        if (fragment instanceof TopicInfoFragment) {
-                            ((TopicInfoFragment) fragment).notifyDataSetChanged();
-                        } else if (fragment instanceof MessagesFragment) {
-                            ((MessagesFragment) fragment).notifyDataSetChanged(true);
-                        }
+            runOnUiThread(() -> {
+                UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
+                        mTopic.getOnline(), mTopic.getLastSeen());
+                Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+                if (fragment != null) {
+                    if (fragment instanceof TopicInfoFragment) {
+                        ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                    } else if (fragment instanceof MessagesFragment) {
+                        ((MessagesFragment) fragment).notifyDataSetChanged(true);
                     }
                 }
             });
@@ -866,26 +838,18 @@ public class MessageActivity extends AppCompatActivity {
 
         @Override
         public void onMetaTags(String[] tags) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                    if (fragment instanceof TopicInfoFragment) {
-                        ((TopicInfoFragment) fragment).notifyDataSetChanged();
-                    }
+            runOnUiThread(() -> {
+                Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+                if (fragment instanceof TopicInfoFragment) {
+                    ((TopicInfoFragment) fragment).notifyDataSetChanged();
                 }
             });
         }
 
         @Override
         public void onOnline(final boolean online) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    UiUtils.toolbarSetOnline(MessageActivity.this,
-                            mTopic.getOnline(), mTopic.getLastSeen());
-                }
-            });
+            runOnUiThread(() -> UiUtils.toolbarSetOnline(MessageActivity.this,
+                    mTopic.getOnline(), mTopic.getLastSeen()));
 
         }
     }

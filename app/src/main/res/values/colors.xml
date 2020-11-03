@@ -47,6 +47,8 @@
     <!-- Background color in avatar uploads -->
     <color name="colorImagePreviewBg">#CCCCCC</color>
 
+    <color name="colorImagePlaceholder">#CCCCCC</color>
+
     <!-- Background colors for LetterTileDrawables. -->
     -->
     <array name="letter_tile_colors_light">
