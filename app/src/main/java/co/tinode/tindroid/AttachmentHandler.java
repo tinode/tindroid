@@ -52,12 +52,9 @@ import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
 public class AttachmentHandler extends Worker {
-    private static final String TAG = "AttachmentHandler";
-
     final static String ARG_OPERATION = "operation";
     final static String ARG_OPERATION_IMAGE = "image";
     final static String ARG_OPERATION_FILE = "file";
-
     // Bundle argument names.
     final static String ARG_TOPIC_NAME = "topic";
     final static String ARG_SRC_URI = "uri";
@@ -71,13 +68,248 @@ public class AttachmentHandler extends Worker {
     final static String ARG_ERROR = "error";
     final static String ARG_MIME_TYPE = "mime";
     final static String ARG_AVATAR = "square_img";
-
-    private LargeFileHelper mUploader = null;
-
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
+    private static final String TAG = "AttachmentHandler";
+    private LargeFileHelper mUploader = null;
 
     public AttachmentHandler(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
+    }
+
+    @NonNull
+    static FileDetails getFileDetails(@NonNull final Context context, @NonNull Uri uri, @Nullable String filePath) {
+        final ContentResolver resolver = context.getContentResolver();
+        String fname = null;
+        long fsize = 0L;
+        int orientation = -1;
+
+        FileDetails result = new FileDetails();
+
+        String mimeType = resolver.getType(uri);
+        if (mimeType == null) {
+            mimeType = UiUtils.getMimeType(uri);
+        }
+        result.mimeType = mimeType;
+
+        String[] projection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};
+        } else {
+            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
+        }
+        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    int idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
+                    if (idx >= 0) {
+                        orientation = cursor.getInt(idx);
+                    }
+                }
+            }
+        }
+        // In degrees.
+        result.imageOrientation = orientation;
+
+        // Still no size? Try opening directly.
+        if (fsize <= 0 || orientation < 0) {
+            String path = filePath != null ? filePath : UiUtils.getContentPath(context, uri);
+            if (path != null) {
+                result.filePath = path;
+
+                File file = new File(path);
+                if (fname == null) {
+                    fname = file.getName();
+                }
+                fsize = file.length();
+            } else {
+                try {
+                    DocumentFile df = DocumentFile.fromSingleUri(context, uri);
+                    if (df != null) {
+                        fname = df.getName();
+                        fsize = df.length();
+                    }
+                } catch (SecurityException ignored) {
+                }
+            }
+        }
+
+        result.fileName = fname;
+        result.fileSize = fsize;
+
+        return result;
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    static void enqueueUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
+        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
+        // Create a new message which will be updated with upload progress.
+        Drafty msg = new Drafty();
+        long msgId = BaseDb.getInstance().getStore()
+                .msgDraft(Cache.getTinode().getTopic(topicName), msg, Tinode.draftyHeadersFor(msg));
+        if (msgId > 0) {
+            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
+            assert uri != null;
+
+            Data.Builder data = new Data.Builder()
+                    .putString(ARG_OPERATION, operation)
+                    .putString(ARG_SRC_URI, uri.toString())
+                    .putLong(ARG_MSG_ID, msgId)
+                    .putString(ARG_TOPIC_NAME, topicName)
+                    .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
+                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
+            Constraints constraints = new Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build();
+            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentHandler.class)
+                    .setInputData(data.build())
+                    .setConstraints(constraints)
+                    .addTag(TAG_UPLOAD_WORK)
+                    .build();
+
+            // If send or upload is retried,
+            WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msgId), ExistingWorkPolicy.REPLACE, upload);
+        } else {
+            Log.w(TAG, "Failed to insert new message to DB");
+        }
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    static long enqueueDownloadAttachment(AppCompatActivity activity, Map<String, Object> data,
+                                          String fname, String mimeType) {
+        long downloadId = -1;
+        // Create file in a downloads directory by default.
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File file = new File(path, fname);
+        Uri fileUri = Uri.fromFile(file);
+
+        if (TextUtils.isEmpty(mimeType)) {
+            mimeType = UiUtils.getMimeType(fileUri);
+            if (mimeType == null) {
+                mimeType = "*/*";
+            }
+        }
+
+        FileOutputStream fos = null;
+        try {
+            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                Log.w(TAG, "External storage not mounted: " + path);
+            } else if (!(path.mkdirs() || path.isDirectory())) {
+                Log.w(TAG, "Path is not a directory - " + path);
+            }
+
+            Object ref = data.get("ref");
+            if (ref instanceof String) {
+                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
+                String scheme = url.getProtocol();
+                // Make sure the file is downloaded over http or https protocols.
+                if (scheme.equals("http") || scheme.equals("https")) {
+                    LargeFileHelper lfh = Cache.getTinode().getFileUploader();
+                    downloadId = startDownload(activity, Uri.parse(url.toString()), fname, mimeType, lfh.headers());
+                } else {
+                    Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
+                    Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Object val = data.get("val");
+                if (val != null) {
+                    fos = new FileOutputStream(file);
+                    fos.write(val instanceof String ?
+                            Base64.decode((String) val, Base64.DEFAULT) :
+                            (byte[]) val);
+
+                    Intent intent = new Intent();
+                    intent.setAction(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(FileProvider.getUriForFile(activity,
+                            "co.tinode.tindroid.provider", file), mimeType);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        activity.startActivity(intent);
+                    } catch (ActivityNotFoundException ignored) {
+                        activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                    }
+                } else {
+                    Log.w(TAG, "Invalid or missing attachment");
+                    Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        } catch (NullPointerException | ClassCastException | IOException ex) {
+            Log.w(TAG, "Failed to save attachment to storage", ex);
+            Toast.makeText(activity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
+        } catch (ActivityNotFoundException ex) {
+            Log.w(TAG, "No application can handle downloaded file");
+            Toast.makeText(activity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return downloadId;
+    }
+
+    private static long startDownload(AppCompatActivity activity, final Uri uri, final String fname, final String mime,
+                                      final Map<String, String> headers) {
+
+        DownloadManager dm = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm == null) {
+            return -1;
+        }
+
+        // Ensure directory exists.
+        Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                .mkdirs();
+
+        DownloadManager.Request req = new DownloadManager.Request(uri);
+        // Always add Origin header to satisfy CORS. If server does not need CORS it won't hurt anyway.
+        req.addRequestHeader("Origin", Cache.getTinode().getHttpOrigin());
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                req.addRequestHeader(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return dm.enqueue(
+                req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
+                        DownloadManager.Request.NETWORK_MOBILE)
+                        .setMimeType(mime)
+                        .setAllowedOverRoaming(false)
+                        .setTitle(fname)
+                        .setDescription(activity.getString(R.string.download_title))
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setVisibleInDownloadsUi(true)
+                        .setDestinationUri(Uri.fromFile(new File(Environment
+                                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname))));
+    }
+
+    // Send image in-band
+    private static Drafty draftyImage(String caption, String mimeType, byte[] bits, int width, int height, String fname) {
+        Drafty content = Drafty.fromPlainText(" ");
+        content.insertImage(0, mimeType, bits, width, height, fname);
+        if (!TextUtils.isEmpty(caption)) {
+            content.appendLineBreak()
+                    .append(Drafty.fromPlainText(caption));
+        }
+        return content;
+    }
+
+    // Send file in-band
+    private static Drafty draftyFile(String mimeType, byte[] bits, String fname) {
+        Drafty content = new Drafty();
+        content.attachFile(mimeType, bits, fname);
+        return content;
+    }
+
+    // Send file as a link.
+    private static Drafty draftyAttachment(String mimeType, String fname, String refUrl, long size) {
+        Drafty content = new Drafty();
+        content.attachFile(mimeType, fname, refUrl, size);
+        return content;
     }
 
     @NonNull
@@ -85,6 +317,8 @@ public class AttachmentHandler extends Worker {
     public ListenableWorker.Result doWork() {
         return doUpload(getApplicationContext(), getInputData());
     }
+
+    // Wrap content into Drafty.
 
     @Override
     public void onStopped() {
@@ -130,7 +364,7 @@ public class AttachmentHandler extends Worker {
             String fname = fileDetails.fileName;
 
             if (fileDetails.fileSize == 0) {
-                Log.w(TAG, "File size is zero; uri=" + uri + "; file="+filePath);
+                Log.w(TAG, "File size is zero; uri=" + uri + "; file=" + filePath);
                 store.msgDiscard(topic, msgId);
                 return ListenableWorker.Result.failure(
                         result.putString(ARG_ERROR, context.getString(R.string.unable_to_attach_file)).build());
@@ -251,16 +485,11 @@ public class AttachmentHandler extends Worker {
                     // Upload then send message with a link. This is a long-running blocking call.
                     mUploader = Cache.getTinode().getFileUploader();
                     MsgServerCtrl ctrl = mUploader.upload(is, fname, fileDetails.mimeType, fileDetails.fileSize,
-                            new LargeFileHelper.FileHelperProgress() {
-                                @Override
-                                public void onProgress(long progress, long size) {
-                                    setProgressAsync(new Data.Builder()
-                                            .putAll(result.build())
-                                            .putLong(ARG_PROGRESS, progress)
-                                            .putLong(ARG_FILE_SIZE, size)
-                                            .build());
-                                }
-                            });
+                            (progress, size) -> setProgressAsync(new Data.Builder()
+                                    .putAll(result.build())
+                                    .putLong(ARG_PROGRESS, progress)
+                                    .putLong(ARG_FILE_SIZE, size)
+                                    .build()));
                     success = (ctrl != null && ctrl.code == 200);
                     if (success) {
                         content = draftyAttachment(fileDetails.mimeType, fname,
@@ -310,12 +539,14 @@ public class AttachmentHandler extends Worker {
             if (is != null) {
                 try {
                     is.close();
-                } catch (IOException ignored) {}
+                } catch (IOException ignored) {
+                }
             }
             if (baos != null) {
                 try {
                     baos.close();
-                } catch (IOException ignored) {}
+                } catch (IOException ignored) {
+                }
             }
         }
 
@@ -336,241 +567,5 @@ public class AttachmentHandler extends Worker {
         String filePath;
         String fileName;
         long fileSize;
-    }
-
-    @NonNull
-    static FileDetails getFileDetails(@NonNull final Context context, @NonNull Uri uri, @Nullable String filePath) {
-        final ContentResolver resolver = context.getContentResolver();
-        String fname = null;
-        long fsize = 0L;
-        int orientation = -1;
-
-        FileDetails result = new FileDetails();
-
-        String mimeType = resolver.getType(uri);
-        if (mimeType == null) {
-            mimeType = UiUtils.getMimeType(uri);
-        }
-        result.mimeType = mimeType;
-
-        String[] projection;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};
-        } else {
-            projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
-        }
-        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    int idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
-                    if (idx >= 0) {
-                        orientation = cursor.getInt(idx);
-                    }
-                }
-            }
-        }
-        // In degrees.
-        result.imageOrientation = orientation;
-
-        // Still no size? Try opening directly.
-        if (fsize <= 0 || orientation < 0) {
-            String path = filePath != null ? filePath : UiUtils.getContentPath(context, uri);
-            if (path != null) {
-                result.filePath = path;
-
-                File file = new File(path);
-                if (fname == null) {
-                    fname = file.getName();
-                }
-                fsize = file.length();
-            } else {
-                try {
-                    DocumentFile df = DocumentFile.fromSingleUri(context, uri);
-                    if (df != null) {
-                        fname = df.getName();
-                        fsize = df.length();
-                    }
-                } catch (SecurityException ignored) {}
-            }
-        }
-
-        result.fileName = fname;
-        result.fileSize = fsize;
-
-        return result;
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    static void enqueueUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
-        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
-        // Create a new message which will be updated with upload progress.
-        Drafty msg = new Drafty();
-        long msgId = BaseDb.getInstance().getStore()
-                .msgDraft(Cache.getTinode().getTopic(topicName), msg, Tinode.draftyHeadersFor(msg));
-        if (msgId > 0) {
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
-            assert uri != null;
-
-            Data.Builder data = new Data.Builder()
-                    .putString(ARG_OPERATION, operation)
-                    .putString(ARG_SRC_URI, uri.toString())
-                    .putLong(ARG_MSG_ID, msgId)
-                    .putString(ARG_TOPIC_NAME, topicName)
-                    .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
-                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
-            Constraints constraints = new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build();
-            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentHandler.class)
-                    .setInputData(data.build())
-                    .setConstraints(constraints)
-                    .addTag(TAG_UPLOAD_WORK)
-                    .build();
-
-            // If send or upload is retried,
-            WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msgId), ExistingWorkPolicy.REPLACE, upload);
-        } else {
-            Log.w(TAG, "Failed to insert new message to DB");
-        }
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    static long enqueueDownloadAttachment(AppCompatActivity activity, Map<String,Object> data,
-                                          String fname, String mimeType) {
-        long downloadId = -1;
-        // Create file in a downloads directory by default.
-        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File file = new File(path, fname);
-        Uri fileUri = Uri.fromFile(file);
-
-        if (TextUtils.isEmpty(mimeType)) {
-            mimeType = UiUtils.getMimeType(fileUri);
-            if (mimeType == null) {
-                mimeType = "*/*";
-            }
-        }
-
-        FileOutputStream fos = null;
-        try {
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                Log.w(TAG, "External storage not mounted: " + path);
-            } else if (!(path.mkdirs() || path.isDirectory())) {
-                Log.w(TAG, "Path is not a directory - " + path);
-            }
-
-            Object ref = data.get("ref");
-            if (ref instanceof String) {
-                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
-                String scheme = url.getProtocol();
-                // Make sure the file is downloaded over http or https protocols.
-                if (scheme.equals("http") || scheme.equals("https")) {
-                    LargeFileHelper lfh = Cache.getTinode().getFileUploader();
-                    downloadId = startDownload(activity, Uri.parse(url.toString()), fname, mimeType, lfh.headers());
-                } else {
-                    Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
-                    Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Object val = data.get("val");
-                if (val != null) {
-                    fos = new FileOutputStream(file);
-                    fos.write(val instanceof String ?
-                            Base64.decode((String) val, Base64.DEFAULT) :
-                            (byte[]) val);
-
-                    Intent intent = new Intent();
-                    intent.setAction(android.content.Intent.ACTION_VIEW);
-                    intent.setDataAndType(FileProvider.getUriForFile(activity,
-                            "co.tinode.tindroid.provider", file), mimeType);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    try {
-                        activity.startActivity(intent);
-                    } catch (ActivityNotFoundException ignored) {
-                        activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                    }
-                } else {
-                    Log.w(TAG, "Invalid or missing attachment");
-                    Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                }
-            }
-
-        } catch (NullPointerException | ClassCastException | IOException ex) {
-            Log.w(TAG, "Failed to save attachment to storage", ex);
-            Toast.makeText(activity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
-        } catch (ActivityNotFoundException ex) {
-            Log.w(TAG, "No application can handle downloaded file");
-            Toast.makeText(activity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Exception ignored) {}
-            }
-        }
-        return downloadId;
-    }
-
-    private static long startDownload(AppCompatActivity activity, final Uri uri, final String fname, final String mime,
-                              final Map<String, String> headers) {
-
-        DownloadManager dm = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
-        if (dm == null) {
-            return -1;
-        }
-
-        // Ensure directory exists.
-        Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                .mkdirs();
-
-        DownloadManager.Request req = new DownloadManager.Request(uri);
-        // Always add Origin header to satisfy CORS. If server does not need CORS it won't hurt anyway.
-        req.addRequestHeader("Origin", Cache.getTinode().getHttpOrigin());
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                req.addRequestHeader(entry.getKey(), entry.getValue());
-            }
-        }
-
-        return dm.enqueue(
-                req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
-                        DownloadManager.Request.NETWORK_MOBILE)
-                        .setMimeType(mime)
-                        .setAllowedOverRoaming(false)
-                        .setTitle(fname)
-                        .setDescription(activity.getString(R.string.download_title))
-                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        .setVisibleInDownloadsUi(true)
-                        .setDestinationUri(Uri.fromFile(new File(Environment
-                                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname))));
-    }
-
-    // Wrap content into Drafty.
-
-    // Send image in-band
-    private static Drafty draftyImage(String caption, String mimeType, byte[] bits, int width, int height, String fname) {
-        Drafty content = Drafty.fromPlainText(" ");
-        content.insertImage(0, mimeType, bits, width, height, fname);
-        if (!TextUtils.isEmpty(caption)) {
-            content.appendLineBreak()
-                    .append(Drafty.fromPlainText(caption));
-        }
-        return content;
-    }
-
-    // Send file in-band
-    private static Drafty draftyFile(String mimeType, byte[] bits, String fname) {
-        Drafty content = new Drafty();
-        content.attachFile(mimeType, bits, fname);
-        return content;
-    }
-
-    // Send file as a link.
-    private static Drafty draftyAttachment(String mimeType, String fname, String refUrl, long size) {
-        Drafty content = new Drafty();
-        content.attachFile(mimeType, fname, refUrl, size);
-        return content;
     }
 }

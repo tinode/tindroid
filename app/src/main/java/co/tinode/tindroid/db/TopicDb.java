@@ -18,10 +18,6 @@ import co.tinode.tinodesdk.Topic;
  */
 @SuppressWarnings("WeakerAccess")
 public class TopicDb implements BaseColumns {
-    private static final String TAG = "TopicsDb";
-
-    private static final int UNSENT_ID_START = 2_000_000_000;
-
     /**
      * The name of the main table.
      */
@@ -118,8 +114,6 @@ public class TopicDb implements BaseColumns {
      * Private topic description, serialized as TEXT
      */
     public static final String COLUMN_NAME_PRIVATE = "priv";
-
-
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_STATUS = 2;
@@ -136,14 +130,13 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_LASTUSED = 13;
     static final int COLUMN_IDX_MIN_LOCAL_SEQ = 14;
     static final int COLUMN_IDX_MAX_LOCAL_SEQ = 15;
-    static final int COLUMN_IDX_NEXT_UNSENT_SEQ =16;
+    static final int COLUMN_IDX_NEXT_UNSENT_SEQ = 16;
     static final int COLUMN_IDX_TAGS = 17;
     static final int COLUMN_IDX_LAST_SEEN = 18;
     static final int COLUMN_IDX_LAST_SEEN_UA = 19;
     static final int COLUMN_IDX_CREDS = 20;
     static final int COLUMN_IDX_PUBLIC = 21;
     static final int COLUMN_IDX_PRIVATE = 22;
-
     /**
      * SQL statement to create Messages table
      */
@@ -180,7 +173,6 @@ public class TopicDb implements BaseColumns {
             "CREATE UNIQUE INDEX " + INDEX_NAME +
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_ACCOUNT_ID + "," + COLUMN_NAME_TOPIC + ")";
-
     /**
      * SQL statement to drop the table.
      */
@@ -191,6 +183,8 @@ public class TopicDb implements BaseColumns {
      */
     static final String DROP_INDEX =
             "DROP INDEX IF EXISTS " + INDEX_NAME;
+    private static final String TAG = "TopicsDb";
+    private static final int UNSENT_ID_START = 2_000_000_000;
 
     /**
      * Save topic description to DB
@@ -358,11 +352,11 @@ public class TopicDb implements BaseColumns {
     /**
      * Update cached ID of a delete transaction.
      *
-     * @param db database reference.
+     * @param db    database reference.
      * @param topic topic to update.
      * @param delId server-issued deletion ID.
      * @param lowId lowest seq ID in the deleted range, inclusive (closed).
-     * @param hiId greatest seq ID in the deletion range, exclusive (open).
+     * @param hiId  greatest seq ID in the deletion range, exclusive (open).
      * @return true on success
      */
     public static boolean msgDeleted(SQLiteDatabase db, Topic topic, int delId, int lowId, int hiId) {
@@ -383,7 +377,7 @@ public class TopicDb implements BaseColumns {
 
         if (hiId > 1) {
             // Upper bound is exclusive. Convert to inclusive.
-            hiId --;
+            hiId--;
         } else {
             // If hiId is zero all later messages are being deleted, set it to highest possible value.
             hiId = topic.getSeq();
@@ -421,6 +415,7 @@ public class TopicDb implements BaseColumns {
 
         return true;
     }
+
     /**
      * Query topics.
      *
@@ -453,7 +448,7 @@ public class TopicDb implements BaseColumns {
     /**
      * Read topic given its name
      *
-     * @param db database to use
+     * @param db   database to use
      * @param name Name of the topic to read
      * @return Subscription
      */
@@ -492,13 +487,13 @@ public class TopicDb implements BaseColumns {
         // Delete messages.
         String sql = "DELETE FROM " + MessageDb.TABLE_NAME +
                 " WHERE " + MessageDb.COLUMN_NAME_TOPIC_ID + " IN (" +
-                    "SELECT " + _ID + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_ACCOUNT_ID + "=" + accId +
+                "SELECT " + _ID + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_ACCOUNT_ID + "=" + accId +
                 ")";
         db.execSQL(sql);
         // Delete subscribers.
         sql = "DELETE FROM " + SubscriberDb.TABLE_NAME +
                 " WHERE " + SubscriberDb.COLUMN_NAME_TOPIC_ID + " IN (" +
-                    "SELECT " + _ID + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_ACCOUNT_ID + "=" + accId +
+                "SELECT " + _ID + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME_ACCOUNT_ID + "=" + accId +
                 ")";
         db.execSQL(sql);
         db.delete(TABLE_NAME, COLUMN_NAME_ACCOUNT_ID + "=" + accId, null);
@@ -507,7 +502,7 @@ public class TopicDb implements BaseColumns {
     /**
      * Given topic name, get it's database _id
      *
-     * @param db database
+     * @param db    database
      * @param topic topic name
      * @return _id of the topic
      */
@@ -526,7 +521,7 @@ public class TopicDb implements BaseColumns {
     public static synchronized int getNextUnsentSeq(SQLiteDatabase db, Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
-            st.nextUnsentId ++;
+            st.nextUnsentId++;
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_NEXT_UNSENT_SEQ, st.nextUnsentId);
             db.update(TABLE_NAME, values, _ID + "=" + st.id, null);

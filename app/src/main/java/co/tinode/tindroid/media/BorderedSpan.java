@@ -14,8 +14,6 @@ import androidx.annotation.NonNull;
 
 // Span used to represent clickable buttons in Drafty forms.
 public class BorderedSpan extends ReplacementSpan implements LineHeightSpan {
-    private static final String TAG = "BorderedSpan";
-
     // Size in DIPs.
     private static final float RADIUS_CORNER = 2.5f;
     private static final float SHADOW_SIZE = 2.5f;
@@ -28,10 +26,6 @@ public class BorderedSpan extends ReplacementSpan implements LineHeightSpan {
     // Horizontal button padding in '0' characters.
     private static final int H_PADDING = 2;
     private final Paint mPaintBackground;
-    // Width of the button with padding added and minimum applied in DIPs.
-    private int mWidth;
-    // Actual width of the text in DIPs.
-    private int mWidthActual;
     private final int mTextColor;
     // Minimum button width in DIPs.
     private final int mMinButtonWidth;
@@ -39,13 +33,17 @@ public class BorderedSpan extends ReplacementSpan implements LineHeightSpan {
     private final int mButtonHeight;
     // Size of DIP in pixels.
     private final float mDipSize;
+    // Width of the button with padding added and minimum applied in DIPs.
+    private int mWidth;
+    // Actual width of the text in DIPs.
+    private int mWidthActual;
 
     /**
      * Create formatter for text which appears as clickable buttons.
      *
-     * @param context Context (activity) which uses this formatter.
+     * @param context  Context (activity) which uses this formatter.
      * @param fontSize font size in device (unscaled) pixels as returned by view.getTextSize().
-     * @param dipSize size of the DIP unit in unscaled pixels.
+     * @param dipSize  size of the DIP unit in unscaled pixels.
      */
     BorderedSpan(final Context context, final float fontSize, float dipSize) {
         mDipSize = dipSize;

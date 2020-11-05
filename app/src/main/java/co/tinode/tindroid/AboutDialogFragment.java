@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -29,14 +28,12 @@ public class AboutDialogFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         View dialog = View.inflate(activity, R.layout.dialog_about, null);
         ((TextView) dialog.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
-        ((TextView) dialog.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d", TindroidApp.getAppBuild()));
+        ((TextView) dialog.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
+                TindroidApp.getAppBuild()));
         ((TextView) dialog.findViewById(R.id.app_server)).setText(Cache.getTinode().getHttpOrigin());
         builder.setView(dialog)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int id) {
-                        // do nothing
-                    }
+                .setPositiveButton(android.R.string.ok, (d, id) -> {
+                    // do nothing
                 });
 
         return builder.create();

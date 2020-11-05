@@ -38,10 +38,8 @@ public abstract class ImageLoader {
     private Bitmap mLoadingBitmap;
     private boolean mPauseWork = false;
     private final int mImageSize;
-    // private Resources mResources;
 
     ImageLoader(int imageSize, FragmentManager fm) {
-        // mResources = context.getResources();
         mImageSize = imageSize > 0 ? imageSize : DEFAULT_IMAGE_SIZE;
 
         final RetainFragment retainFragment = findOrCreateRetainFragment(fm);

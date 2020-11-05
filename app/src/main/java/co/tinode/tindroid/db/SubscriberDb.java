@@ -24,13 +24,29 @@ public class SubscriberDb implements BaseColumns {
      */
     static final String TABLE_NAME = "subscriptions";
     /**
+     * Topic _ID, references topics._id
+     */
+    static final String COLUMN_NAME_TOPIC_ID = "topic_id";
+    /**
+     * SQL statement to drop the table.
+     */
+    static final String DROP_TABLE =
+            "DROP TABLE IF EXISTS " + TABLE_NAME;
+    /**
      * The name of index: topic_id.
      */
     private static final String INDEX_NAME = "subscription_topic_id";
     /**
-     * Topic _ID, references topics._id
+     * Add index on topic_id
      */
-    static final String COLUMN_NAME_TOPIC_ID = "topic_id";
+    static final String CREATE_INDEX =
+            "CREATE INDEX " + INDEX_NAME +
+                    " ON " + TABLE_NAME + " (" + COLUMN_NAME_TOPIC_ID + ")";
+    /**
+     * Drop the index too
+     */
+    static final String DROP_INDEX =
+            "DROP INDEX IF EXISTS " + INDEX_NAME;
     /**
      * UID of the subscriber
      */
@@ -90,22 +106,6 @@ public class SubscriberDb implements BaseColumns {
                     COLUMN_NAME_CLEAR + " INT," +
                     COLUMN_NAME_LAST_SEEN + " INT," +
                     COLUMN_NAME_USER_AGENT + " TEXT)";
-    /**
-     * Add index on topic_id
-     */
-    static final String CREATE_INDEX =
-            "CREATE INDEX " + INDEX_NAME +
-                    " ON " + TABLE_NAME + " (" + COLUMN_NAME_TOPIC_ID + ")";
-    /**
-     * SQL statement to drop the table.
-     */
-    static final String DROP_TABLE =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
-    /**
-     * Drop the index too
-     */
-    static final String DROP_INDEX =
-            "DROP INDEX IF EXISTS " + INDEX_NAME;
     private static final String TAG = "SubscriberDb";
     private static final int COLUMN_IDX_ID = 0;
     private static final int COLUMN_IDX_TOPIC_ID = 1;

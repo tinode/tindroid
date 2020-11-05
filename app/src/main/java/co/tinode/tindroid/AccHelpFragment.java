@@ -49,12 +49,7 @@ public class AccHelpFragment extends Fragment {
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.help);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                activity.getSupportFragmentManager().popBackStack();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
         // Make policy links clickable.
         MovementMethod movementInstance = LinkMovementMethod.getInstance();
@@ -68,19 +63,12 @@ public class AccHelpFragment extends Fragment {
         link.setText(Html.fromHtml(getString(R.string.privacy_policy)));
         link.setMovementMethod(movementInstance);
 
-        fragment.findViewById(R.id.aboutTheApp).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT, null);
-            }
-        });
+        fragment.findViewById(R.id.aboutTheApp).setOnClickListener(v ->
+                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT, null));
 
-        fragment.findViewById(R.id.ossLicenses).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                activity.startActivity(new Intent(activity, OssLicensesMenuActivity.class));
-                OssLicensesMenuActivity.setActivityTitle(getString(R.string.licenses));
-            }
+        fragment.findViewById(R.id.ossLicenses).setOnClickListener(v -> {
+            activity.startActivity(new Intent(activity, OssLicensesMenuActivity.class));
+            OssLicensesMenuActivity.setActivityTitle(getString(R.string.licenses));
         });
 
         return fragment;

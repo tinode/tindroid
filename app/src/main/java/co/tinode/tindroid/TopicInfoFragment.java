@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -21,7 +20,6 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -107,132 +105,84 @@ public class TopicInfoFragment extends Fragment {
 
         // Set up listeners
 
-        view.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.requestAvatar(TopicInfoFragment.this);
-            }
-        });
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
+                UiUtils.requestAvatar(TopicInfoFragment.this));
 
         final SwitchCompat muted = view.findViewById(R.id.switchMuted);
-        muted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+        muted.setOnCheckedChangeListener((buttonView, isChecked) ->
                 mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                muted.setChecked(!isChecked);
-                            }
-                        });
+                        activity.runOnUiThread(() -> muted.setChecked(!isChecked));
                         if (err instanceof NotConnectedException) {
                             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }
-                });
-            }
-        });
+                }));
 
         final SwitchCompat archived = view.findViewById(R.id.switchArchived);
-        archived.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+        archived.setOnCheckedChangeListener((buttonView, isChecked) ->
                 mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                archived.setChecked(!isChecked);
-                            }
-                        });
+                        activity.runOnUiThread(() -> archived.setChecked(!isChecked));
                         if (err instanceof NotConnectedException) {
                             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }
-                });
-            }
-        });
+                }));
 
-        view.findViewById(R.id.permissionsSingle).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, mTopic.isP2PType() ? "OASD" : "O");
-            }
+                        UiUtils.ACTION_UPDATE_SELF_SUB, mTopic.isP2PType() ? "OASD" : "O"));
+
+        view.findViewById(R.id.permissions).setOnClickListener(v ->
+                ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_PERMISSIONS, null,
+                        true));
+
+        view.findViewById(R.id.buttonClearMessages).setOnClickListener(v -> {
+            int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
+            showConfirmationDialog(null, null, null,
+                    R.string.clear_messages, confirm, ACTION_DELMSG);
         });
 
-        view.findViewById(R.id.permissions).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_PERMISSIONS, null, true);
-            }
-        });
-
-        view.findViewById(R.id.buttonClearMessages).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
+        view.findViewById(R.id.buttonLeave).setOnClickListener(v ->
                 showConfirmationDialog(null, null, null,
-                        R.string.clear_messages, confirm, ACTION_DELMSG);
-            }
-        });
+                        R.string.leave_conversation, R.string.confirm_leave_topic, ACTION_LEAVE));
 
-        view.findViewById(R.id.buttonLeave).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.buttonDeleteGroup).setOnClickListener(v ->
                 showConfirmationDialog(null, null, null,
-                        R.string.leave_conversation, R.string.confirm_leave_topic, ACTION_LEAVE);
-            }
+                        R.string.delete_group, R.string.confirm_delete_topic, ACTION_DELETE));
+
+        view.findViewById(R.id.buttonBlock).setOnClickListener(view12 -> {
+            VxCard pub = mTopic.getPub();
+            String topicTitle = pub != null ? pub.fn : null;
+            topicTitle = TextUtils.isEmpty(topicTitle) ?
+                    activity.getString(R.string.placeholder_topic_title) : topicTitle;
+            showConfirmationDialog(topicTitle, null, null,
+                    R.string.block_contact, R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
         });
 
-        view.findViewById(R.id.buttonDeleteGroup).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showConfirmationDialog(null, null, null,
-                        R.string.delete_group, R.string.confirm_delete_topic, ACTION_DELETE);
-            }
-        });
-
-        view.findViewById(R.id.buttonBlock).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                VxCard pub = mTopic.getPub();
-                String topicTitle = pub != null ? pub.fn : null;
-                topicTitle = TextUtils.isEmpty(topicTitle) ?
-                        activity.getString(R.string.placeholder_topic_title) : topicTitle;
-                showConfirmationDialog(topicTitle, null, null,
-                        R.string.block_contact, R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
-            }
-        });
-
-        final View.OnClickListener reportListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                VxCard pub = mTopic.getPub();
-                String topicTitle = pub != null ? pub.fn : null;
-                topicTitle = TextUtils.isEmpty(topicTitle) ?
-                        activity.getString(R.string.placeholder_topic_title) :
-                        topicTitle;
-                showConfirmationDialog(topicTitle, null, null,
-                        R.string.block_and_report, R.string.confirm_report, ACTION_REPORT);
-            }
+        final View.OnClickListener reportListener = view1 -> {
+            VxCard pub = mTopic.getPub();
+            String topicTitle = pub != null ? pub.fn : null;
+            topicTitle = TextUtils.isEmpty(topicTitle) ?
+                    activity.getString(R.string.placeholder_topic_title) :
+                    topicTitle;
+            showConfirmationDialog(topicTitle, null, null,
+                    R.string.block_and_report, R.string.confirm_report, ACTION_REPORT);
         };
         view.findViewById(R.id.buttonReportContact).setOnClickListener(reportListener);
         view.findViewById(R.id.buttonReportGroup).setOnClickListener(reportListener);
 
-        view.findViewById(R.id.buttonAddMembers).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.buttonAddMembers).setOnClickListener(v ->
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS,
-                        null, true);
-            }
-        });
+                        null, true));
     }
 
-        @Override
+    @Override
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onResume() {
@@ -269,12 +219,7 @@ public class TopicInfoFragment extends Fragment {
         final View reportContact = activity.findViewById(R.id.buttonReportContact);
 
         // Launch edit dialog when title or subtitle is clicked.
-        final View.OnClickListener l = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showEditTopicText();
-            }
-        };
+        final View.OnClickListener l = v -> showEditTopicText();
         if (mTopic.isOwner()) {
             title.setOnClickListener(l);
             title.setBackgroundResource(R.drawable.dotted_line);
@@ -380,27 +325,14 @@ public class TopicInfoFragment extends Fragment {
             subtitleEditor.setText(priv.getComment());
         }
 
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String newTitle = null;
-                if (mTopic.isOwner()) {
-                    newTitle = titleEditor.getText().toString().trim();
-                }
-                String newPriv = subtitleEditor.getText().toString().trim();
-                UiUtils.updateTitle(activity, mTopic, newTitle, newPriv,
-                        new UiUtils.TitleUpdateCallbackInterface() {
-                            @Override
-                            public void onTitleUpdated() {
-                                activity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        notifyContentChanged();
-                                    }
-                                });
-                            }
-                        });
+        builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+            String newTitle = null;
+            if (mTopic.isOwner()) {
+                newTitle = titleEditor.getText().toString().trim();
             }
+            String newPriv = subtitleEditor.getText().toString().trim();
+            UiUtils.updateTitle(activity, mTopic, newTitle, newPriv,
+                    () -> activity.runOnUiThread(this::notifyContentChanged));
         });
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.show();
@@ -427,47 +359,44 @@ public class TopicInfoFragment extends Fragment {
         String message = activity.getString(message_id, arg1, arg2);
         confirmBuilder.setMessage(message);
 
-        confirmBuilder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                PromisedReply<ServerMessage> response = null;
-                switch (what) {
-                    case ACTION_LEAVE:
-                        response = mTopic.delete(true);
-                        break;
-                    case ACTION_REPORT:
-                        HashMap<String, Object> json =  new HashMap<>();
-                        json.put("action", "report");
-                        json.put("target", mTopic.getName());
-                        Drafty msg = new Drafty().attachJSON(json);
-                        Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
-                        response = mTopic.updateMode(null, "-JP");
-                        break;
-                    case ACTION_REMOVE:
-                        response = mTopic.eject(uid, false);
-                        break;
-                    case ACTION_BAN_TOPIC:
-                        response = mTopic.updateMode(null, "-JP");
-                        break;
-                    case ACTION_BAN_MEMBER:
-                        response = mTopic.eject(uid, true);
-                        break;
-                    case ACTION_DELMSG:
-                        response = mTopic.delMessages(true);
-                }
+        confirmBuilder.setPositiveButton(android.R.string.yes, (dialog, which) -> {
+            PromisedReply<ServerMessage> response = null;
+            switch (what) {
+                case ACTION_LEAVE:
+                    response = mTopic.delete(true);
+                    break;
+                case ACTION_REPORT:
+                    HashMap<String, Object> json = new HashMap<>();
+                    json.put("action", "report");
+                    json.put("target", mTopic.getName());
+                    Drafty msg = new Drafty().attachJSON(json);
+                    Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
+                    response = mTopic.updateMode(null, "-JP");
+                    break;
+                case ACTION_REMOVE:
+                    response = mTopic.eject(uid, false);
+                    break;
+                case ACTION_BAN_TOPIC:
+                    response = mTopic.updateMode(null, "-JP");
+                    break;
+                case ACTION_BAN_MEMBER:
+                    response = mTopic.eject(uid, true);
+                    break;
+                case ACTION_DELMSG:
+                    response = mTopic.delMessages(true);
+            }
 
-                if (response != null) {
-                    response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            Intent intent = new Intent(activity, ChatsActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            startActivity(intent);
-                            activity.finish();
-                            return null;
-                        }
-                    }).thenCatch(mFailureListener);
-                }
+            if (response != null) {
+                response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        Intent intent = new Intent(activity, ChatsActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        startActivity(intent);
+                        activity.finish();
+                        return null;
+                    }
+                }).thenCatch(mFailureListener);
             }
         });
         confirmBuilder.show();
@@ -501,62 +430,54 @@ public class TopicInfoFragment extends Fragment {
                 .setCancelable(true)
                 .setNegativeButton(android.R.string.cancel, null);
         final AlertDialog dialog = actionBuilder.create();
-        View.OnClickListener ocl = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    Intent intent;
-                    switch (v.getId()) {
-                        case R.id.buttonViewProfile:
-                            if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
-                                // This requires READ_CONTACTS permission
-                                String lookupKey = ContactsManager.getLookupKey(activity.getContentResolver(), uid);
-                                intent = new Intent(Intent.ACTION_VIEW,
-                                        Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey));
-                                if (intent.resolveActivity(activity.getPackageManager()) != null) {
-                                    startActivity(intent);
-                                }
-                            } else {
-                                Log.i(TAG, "Missing READ_CONTACTS permissions");
-                                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
-                                        UiUtils.CONTACTS_PERMISSION_ID);
-                                Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
-                            }
-                            break;
-                        case R.id.buttonSendMessage:
-                            intent = new Intent(activity, MessageActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            intent.putExtra("topic", uid);
+        View.OnClickListener ocl = v -> {
+            try {
+                Intent intent;
+                int id = v.getId();
+                if (id == R.id.buttonViewProfile) {
+                    if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+                        // This requires READ_CONTACTS permission
+                        String lookupKey = ContactsManager.getLookupKey(activity.getContentResolver(), uid);
+                        intent = new Intent(Intent.ACTION_VIEW,
+                                Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey));
+                        if (intent.resolveActivity(activity.getPackageManager()) != null) {
                             startActivity(intent);
-                            break;
-                        case R.id.buttonPermissions:
-                            UiUtils.showEditPermissions(activity, mTopic, mode, uid,
-                                    UiUtils.ACTION_UPDATE_SUB, "O");
-                            break;
-                        case R.id.buttonMakeOwner:
-                            mTopic.updateMode(uid, "+O").thenApply(null, mFailureListener);
-                            break;
-                        case R.id.buttonRemove: {
-                            showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
-                                    R.string.remove_from_group,
-                                    R.string.confirm_member_removal, ACTION_REMOVE);
-                            break;
                         }
-                        case R.id.buttonBlock: {
-                            showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
-                                    R.string.block,
-                                    R.string.confirm_member_ban, ACTION_BAN_MEMBER);
-                            break;
-                        }
+                    } else {
+                        Log.i(TAG, "Missing READ_CONTACTS permissions");
+                        requestPermissions(new String[]{Manifest.permission.READ_CONTACTS,
+                                Manifest.permission.WRITE_CONTACTS}, UiUtils.CONTACTS_PERMISSION_ID);
+                        Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
                     }
-                } catch (NotConnectedException ignored) {
-                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {
-                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                }
+                } else if (id == R.id.buttonSendMessage) {
+                    intent = new Intent(activity, MessageActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("topic", uid);
+                    startActivity(intent);
 
-                dialog.dismiss();
+                } else if (id == R.id.buttonPermissions) {
+                    UiUtils.showEditPermissions(activity, mTopic, mode, uid,
+                            UiUtils.ACTION_UPDATE_SUB, "O");
+
+                } else if (id == R.id.buttonMakeOwner) {
+                    mTopic.updateMode(uid, "+O").thenApply(null, mFailureListener);
+                } else if (id == R.id.buttonRemove) {
+                    showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
+                            R.string.remove_from_group,
+                            R.string.confirm_member_removal, ACTION_REMOVE);
+
+                } else if (id == R.id.buttonBlock) {
+                    showConfirmationDialog(userTitleFixed, topicTitleFixed, uid,
+                            R.string.block,
+                            R.string.confirm_member_ban, ACTION_BAN_MEMBER);
+                }
+            } catch (NotConnectedException ignored) {
+                Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+            } catch (Exception ignored) {
+                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
             }
+
+            dialog.dismiss();
         };
         actions.findViewById(R.id.buttonViewProfile).setOnClickListener(ocl);
         actions.findViewById(R.id.buttonSendMessage).setOnClickListener(ocl);
@@ -661,12 +582,7 @@ public class TopicInfoFragment extends Fragment {
         if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
             final MessageActivity activity = (MessageActivity) getActivity();
             if (activity != null) {
-                activity.submitForExecution(new Runnable() {
-                    @Override
-                    public void run() {
-                        UiUtils.updateAvatar(activity, mTopic, data);
-                    }
-                });
+                activity.submitForExecution(() -> UiUtils.updateAvatar(activity, mTopic, data));
             }
         }
     }
@@ -704,12 +620,12 @@ public class TopicInfoFragment extends Fragment {
 
     private class MembersAdapter extends RecyclerView.Adapter<MemberViewHolder> {
 
-        private Subscription<VxCard,PrivateType>[] mItems;
+        private Subscription<VxCard, PrivateType>[] mItems;
         private int mItemCount;
 
         @SuppressWarnings("unchecked")
         MembersAdapter() {
-            mItems = (Subscription<VxCard,PrivateType>[]) new Subscription[8];
+            mItems = (Subscription<VxCard, PrivateType>[]) new Subscription[8];
             mItemCount = 0;
         }
 
@@ -718,7 +634,7 @@ public class TopicInfoFragment extends Fragment {
          */
         void resetContent() {
             if (mTopic != null) {
-                Collection<Subscription<VxCard,PrivateType>> c = mTopic.getSubscriptions();
+                Collection<Subscription<VxCard, PrivateType>> c = mTopic.getSubscriptions();
                 if (c != null) {
                     mItemCount = c.size();
                     mItems = c.toArray(mItems);
@@ -755,7 +671,7 @@ public class TopicInfoFragment extends Fragment {
                 return;
             }
 
-            final Subscription<VxCard,PrivateType> sub = mItems[position];
+            final Subscription<VxCard, PrivateType> sub = mItems[position];
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
             final boolean isMe = Cache.getTinode().isMe(sub.user);
 
@@ -790,15 +706,12 @@ public class TopicInfoFragment extends Fragment {
             holder.icon.setImageDrawable(UiUtils.avatarDrawable(activity, bmp,
                     sub.pub != null ? sub.pub.fn : null, sub.user));
 
-            final View.OnClickListener action = new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int position = holder.getAdapterPosition();
-                    final Subscription<VxCard,PrivateType> sub = mItems[position];
-                    VxCard pub = mTopic.getPub();
-                    showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub.user,
-                            sub.acs.getGiven());
-                }
+            final View.OnClickListener action = v -> {
+                int position1 = holder.getAdapterPosition();
+                final Subscription<VxCard, PrivateType> sub1 = mItems[position1];
+                VxCard pub = mTopic.getPub();
+                showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub1.user,
+                        sub1.acs.getGiven());
             };
 
             holder.itemView.setOnClickListener(action);

@@ -72,7 +72,9 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     }
 
     @Override
-    public Map<String, Object> getHead() { return head; }
+    public Map<String, Object> getHead() {
+        return head;
+    }
 
     @Override
     public long getId() {

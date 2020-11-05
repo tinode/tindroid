@@ -80,27 +80,20 @@ public class CreateGroupFragment extends Fragment {
         mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                        }
-                        startActivity(new Intent(activity, ChatsActivity.class));
+                activity.runOnUiThread(() -> {
+                    if (err instanceof NotConnectedException) {
+                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                     }
+                    startActivity(new Intent(activity, ChatsActivity.class));
                 });
                 return null;
             }
         };
 
-        view.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.requestAvatar(CreateGroupFragment.this);
-            }
-        });
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
+                UiUtils.requestAvatar(CreateGroupFragment.this));
 
         // Recycler view with selected contacts.
         RecyclerView rv = view.findViewById(R.id.selected_members);
@@ -110,12 +103,8 @@ public class CreateGroupFragment extends Fragment {
         rv.setLayoutManager(lm);
         rv.setHasFixedSize(false);
 
-        mSelectedAdapter = new MembersAdapter(null, new MembersAdapter.ClickListener() {
-            @Override
-            public void onClick(String unique) {
-                mContactsAdapter.toggleSelected(unique);
-            }
-        }, true);
+        mSelectedAdapter = new MembersAdapter(null,
+                unique -> mContactsAdapter.toggleSelected(unique), true);
         rv.setAdapter(mSelectedAdapter);
 
         // Recycler view with all available Tinode contacts.
@@ -124,63 +113,57 @@ public class CreateGroupFragment extends Fragment {
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
 
-        mContactsAdapter = new ContactsAdapter(activity, mImageLoader, new ContactsAdapter.ClickListener() {
-            @Override
-            public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
-                if (!mContactsAdapter.isSelected(unique)) {
-                    mSelectedAdapter.append(unique, (String) holder.text1.getText(),
-                            holder.getIconDrawable(), true);
-                } else {
-                    mSelectedAdapter.remove(unique);
-                }
-                mContactsAdapter.toggleSelected(unique);
+        mContactsAdapter = new ContactsAdapter(activity, mImageLoader, (unique, holder) -> {
+            if (!mContactsAdapter.isSelected(unique)) {
+                mSelectedAdapter.append(unique, (String) holder.text1.getText(),
+                        holder.getIconDrawable());
+            } else {
+                mSelectedAdapter.remove(unique);
             }
+            mContactsAdapter.toggleSelected(unique);
         });
         rv.setAdapter(mContactsAdapter);
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mContactsAdapter);
 
         // This button creates the new group.
-        view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                EditText titleEdit = activity.findViewById(R.id.editTitle);
-                String topicTitle = titleEdit.getText().toString();
-                if (TextUtils.isEmpty(topicTitle)) {
-                    titleEdit.setError(getString(R.string.name_required));
-                    return;
-                }
-                // Make sure topic title is not too long.
-                if (topicTitle.length() > UiUtils.MAX_TITLE_LENGTH) {
-                    topicTitle = topicTitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
-                }
-
-                String subtitle = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
-                if (subtitle.length() > UiUtils.MAX_TITLE_LENGTH) {
-                    subtitle = subtitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
-                }
-
-                final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
-
-                String[] members = mSelectedAdapter.getAdded();
-                if (members.length == 0) {
-                    Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                Bitmap bmp = null;
-                try {
-                    bmp = ((BitmapDrawable) ((ImageView) activity.findViewById(R.id.imageAvatar))
-                            .getDrawable()).getBitmap();
-                } catch (ClassCastException ignored) {
-                    // If image is not loaded, the drawable is a vector.
-                    // Ignore it.
-                }
-
-                createTopic(activity, topicTitle, bmp, subtitle,
-                        ((SwitchCompat) activity.findViewById(R.id.isChannel)).isChecked(),
-                        UiUtils.parseTags(tags), members);
+        view.findViewById(R.id.goNext).setOnClickListener(v -> {
+            EditText titleEdit = activity.findViewById(R.id.editTitle);
+            String topicTitle = titleEdit.getText().toString();
+            if (TextUtils.isEmpty(topicTitle)) {
+                titleEdit.setError(getString(R.string.name_required));
+                return;
             }
+            // Make sure topic title is not too long.
+            if (topicTitle.length() > UiUtils.MAX_TITLE_LENGTH) {
+                topicTitle = topicTitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
+            }
+
+            String subtitle = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
+            if (subtitle.length() > UiUtils.MAX_TITLE_LENGTH) {
+                subtitle = subtitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
+            }
+
+            final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
+
+            String[] members = mSelectedAdapter.getAdded();
+            if (members.length == 0) {
+                Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Bitmap bmp = null;
+            try {
+                bmp = ((BitmapDrawable) ((ImageView) activity.findViewById(R.id.imageAvatar))
+                        .getDrawable()).getBitmap();
+            } catch (ClassCastException ignored) {
+                // If image is not loaded, the drawable is a vector.
+                // Ignore it.
+            }
+
+            createTopic(activity, topicTitle, bmp, subtitle,
+                    ((SwitchCompat) activity.findViewById(R.id.isChannel)).isChecked(),
+                    UiUtils.parseTags(tags), members);
         });
     }
 
@@ -214,7 +197,7 @@ public class CreateGroupFragment extends Fragment {
         }
 
         if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.acceptAvatar(getActivity(), (ImageView) activity.findViewById(R.id.imageAvatar), data);
+            UiUtils.acceptAvatar(getActivity(), activity.findViewById(R.id.imageAvatar), data);
         }
     }
 

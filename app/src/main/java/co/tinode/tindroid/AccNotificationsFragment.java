@@ -8,13 +8,12 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
@@ -29,7 +28,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
  */
 public class AccNotificationsFragment extends Fragment implements ChatsActivity.FormUpdatable {
 
-    private static final String TAG = "AccNotificationsFragment";
+    private static final String TAG = "AccNotificationsFrag";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,12 +52,7 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.account_settings);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                activity.getSupportFragmentManager().popBackStack();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
         return fragment;
     }
@@ -73,53 +67,37 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
         }
 
         // Incognito mode
-        final Switch incognito = activity.findViewById(R.id.switchIncognitoMode);
-        incognito.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                me.updateMode(isChecked ? "-P" : "+P").thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                        Log.i(TAG, "Incognito mode: " + isChecked, err);
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        }
-                        return null;
-                    }
-                }).thenFinally(new PromisedReply.FinalListener() {
+        final SwitchCompat incognito = activity.findViewById(R.id.switchIncognitoMode);
+        incognito.setOnCheckedChangeListener((buttonView, isChecked) ->
+                me.updateMode(isChecked ? "-P" : "+P")
+                        .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                                Log.i(TAG, "Incognito mode: " + isChecked, err);
+                                if (err instanceof NotConnectedException) {
+                                    Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                                }
+                                return null;
+                            }
+                        }).thenFinally(new PromisedReply.FinalListener() {
                     @Override
                     public void onFinally() {
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                incognito.setChecked(me.isMuted());
-                            }
-                        });
+                        activity.runOnUiThread(() -> incognito.setChecked(me.isMuted()));
                     }
-                });
-            }
-        });
+                }));
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
 
         // Read receipts
-        Switch ctrl = activity.findViewById(R.id.switchReadReceipts);
-        ctrl.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                pref.edit().putBoolean(UiUtils.PREF_READ_RCPT, isChecked).apply();
-            }
-        });
+        SwitchCompat ctrl = activity.findViewById(R.id.switchReadReceipts);
+        ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
+                pref.edit().putBoolean(UiUtils.PREF_READ_RCPT, isChecked).apply());
         ctrl.setChecked(pref.getBoolean(UiUtils.PREF_READ_RCPT, true));
 
         // Typing notifications.
         ctrl = activity.findViewById(R.id.switchTypingNotifications);
-        ctrl.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                pref.edit().putBoolean(UiUtils.PREF_TYPING_NOTIF, isChecked).apply();
-            }
-        });
+        ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
+                pref.edit().putBoolean(UiUtils.PREF_TYPING_NOTIF, isChecked).apply());
         ctrl.setChecked(pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true));
 
         updateFormValues(activity, me);
@@ -132,11 +110,11 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
         }
 
         // Incognito mode
-        Switch ctrl = activity.findViewById(R.id.switchIncognitoMode);
+        SwitchCompat ctrl = activity.findViewById(R.id.switchIncognitoMode);
         ctrl.setChecked(me.isMuted());
     }
 
-        @Override
+    @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.clear();
     }

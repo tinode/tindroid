@@ -27,7 +27,7 @@ public class SqlStore implements Storage {
 
     private static final String TAG = "SqlStore";
 
-    private BaseDb mDbh;
+    private final BaseDb mDbh;
     private long mMyId = -1;
     private long mTimeAdjustment = 0;
 
@@ -482,7 +482,7 @@ public class SqlStore implements Storage {
     @Override
     public <R extends Iterator<Message> & Closeable> R getQueuedMessages(Topic topic) {
         MessageList list = null;
-        StoredTopic st = (StoredTopic)topic.getLocal();
+        StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryUnsent(mDbh.getReadableDatabase(), st.id);
             if (c != null) {
@@ -494,7 +494,7 @@ public class SqlStore implements Storage {
 
     @Override
     public MsgRange[] getQueuedMessageDeletes(Topic topic, boolean hard) {
-        StoredTopic st = (StoredTopic)topic.getLocal();
+        StoredTopic st = (StoredTopic) topic.getLocal();
         MsgRange[] range = null;
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryDeleted(mDbh.getReadableDatabase(), st.id, hard);
@@ -513,7 +513,7 @@ public class SqlStore implements Storage {
     }
 
     private static class MessageList implements Iterator<Message>, Closeable {
-        private Cursor mCursor;
+        private final Cursor mCursor;
 
         MessageList(Cursor cursor) {
             mCursor = cursor;

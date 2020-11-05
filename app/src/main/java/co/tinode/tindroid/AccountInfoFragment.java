@@ -39,7 +39,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
                              Bundle savedInstanceState) {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
-            return  null;
+            return null;
         }
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_account_info, container, false);
@@ -50,38 +50,17 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.account_settings);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                activity.getSupportFragmentManager().popBackStack();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
-        fragment.findViewById(R.id.personal).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_PERSONAL, null);
-            }
-        });
+        fragment.findViewById(R.id.personal).setOnClickListener(v ->
+                ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_PERSONAL, null));
 
-        fragment.findViewById(R.id.notifications).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_NOTIFICATIONS, null);
-            }
-        });
-        fragment.findViewById(R.id.security).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_SECURITY, null);
-            }
-        });
-        fragment.findViewById(R.id.help).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_HELP, null);
-            }
-        });
+        fragment.findViewById(R.id.notifications).setOnClickListener(v ->
+                ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_NOTIFICATIONS, null));
+        fragment.findViewById(R.id.security).setOnClickListener(v ->
+                ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_SECURITY, null));
+        fragment.findViewById(R.id.help).setOnClickListener(v ->
+                ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_HELP, null));
 
         return fragment;
     }

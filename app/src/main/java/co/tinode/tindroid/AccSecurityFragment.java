@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -26,15 +25,11 @@ import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
-import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 
 /**
  * Fragment for editing current user details.
  */
 public class AccSecurityFragment extends Fragment implements ChatsActivity.FormUpdatable {
-
-    private static final String TAG = "AccountSecurityFragment";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,7 +42,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
                              Bundle savedInstanceState) {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
-            return  null;
+            return null;
         }
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_security, container, false);
@@ -58,12 +53,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.security);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                activity.getSupportFragmentManager().popBackStack();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
         return fragment;
     }
@@ -81,26 +71,20 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
         // Show or hide [Banned Contacts] button.
 
         final AtomicInteger countBanned = new AtomicInteger(0);
-        Cache.getTinode().getFilteredTopics(new Tinode.TopicFilter() {
-            @Override
-            public boolean isIncluded(Topic t) {
-                if (t.isUserType() && !t.isJoiner()) {
-                    countBanned.addAndGet(1);
-                }
-                return false;
+        Cache.getTinode().getFilteredTopics(t -> {
+            if (t.isUserType() && !t.isJoiner()) {
+                countBanned.addAndGet(1);
             }
+            return false;
         });
 
         if (countBanned.get() > 0) {
             activity.findViewById(R.id.bannedUsersPanel).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.buttonBlockedUsers).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // Start ChatsActivity + Chats Fragment with Bundle "banned" = true.
-                    Intent intent = new Intent(activity, ChatsActivity.class);
-                    intent.putExtra(ChatsActivity.TAG_FRAGMENT_NAME, ChatsActivity.FRAGMENT_BANNED);
-                    activity.startActivity(intent);
-                }
+            activity.findViewById(R.id.buttonBlockedUsers).setOnClickListener(v -> {
+                // Start ChatsActivity + Chats Fragment with Bundle "banned" = true.
+                Intent intent = new Intent(activity, ChatsActivity.class);
+                intent.putExtra(ChatsActivity.TAG_FRAGMENT_NAME, ChatsActivity.FRAGMENT_BANNED);
+                activity.startActivity(intent);
             });
         } else {
             activity.findViewById(R.id.bannedUsersPanel).setVisibility(View.GONE);
@@ -108,81 +92,52 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
         // Attach listeners to editable form fields.
 
-        activity.findViewById(R.id.buttonChangePassword).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                builder
-                        .setTitle(R.string.change_password)
-                        .setView(R.layout.dialog_password)
-                        .setCancelable(true)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                TextView editor = ((AlertDialog) dialog).findViewById(R.id.enterPassword);
-                                if (editor != null) {
-                                    String password = editor.getText().toString();
-                                    if (!TextUtils.isEmpty(password)) {
-                                        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
-                                        changePassword(pref.getString(LoginActivity.PREFS_LAST_LOGIN, null),
-                                                password);
-                                    } else {
-                                        Toast.makeText(activity, R.string.failed_empty_password,
-                                                Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-
+        activity.findViewById(R.id.buttonChangePassword).setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder
+                    .setTitle(R.string.change_password)
+                    .setView(R.layout.dialog_password)
+                    .setCancelable(true)
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        TextView editor = ((AlertDialog) dialog).findViewById(R.id.enterPassword);
+                        if (editor != null) {
+                            String password = editor.getText().toString();
+                            if (!TextUtils.isEmpty(password)) {
+                                final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+                                changePassword(pref.getString(LoginActivity.PREFS_LAST_LOGIN, null),
+                                        password);
+                            } else {
+                                Toast.makeText(activity, R.string.failed_empty_password,
+                                        Toast.LENGTH_SHORT).show();
                             }
-                        })
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show();
-            }
-        });
-        activity.findViewById(R.id.buttonLogout).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                logout();
-            }
-        });
+                        }
 
-        activity.findViewById(R.id.buttonDeleteAccount).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                builder.setNegativeButton(android.R.string.cancel, null)
-                        .setTitle(R.string.delete_account)
-                        .setMessage(R.string.confirm_delete_account)
-                        .setCancelable(true)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Cache.getTinode().delCurrentUser(true);
-                                activity.finish();
-                            }
-                        })
-                        .show();
-            }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        });
+        activity.findViewById(R.id.buttonLogout).setOnClickListener(v -> logout());
+
+        activity.findViewById(R.id.buttonDeleteAccount).setOnClickListener(v -> {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setNegativeButton(android.R.string.cancel, null)
+                    .setTitle(R.string.delete_account)
+                    .setMessage(R.string.confirm_delete_account)
+                    .setCancelable(true)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                        Cache.getTinode().delCurrentUser(true);
+                        activity.finish();
+                    })
+                    .show();
         });
 
         activity.findViewById(R.id.authPermissions)
-                .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        UiUtils.showEditPermissions(activity, me, me.getAuthAcsStr(), null,
-                                UiUtils.ACTION_UPDATE_AUTH, "O");
-
-                    }
-                });
+                .setOnClickListener(v -> UiUtils.showEditPermissions(activity, me, me.getAuthAcsStr(), null,
+                        UiUtils.ACTION_UPDATE_AUTH, "O"));
         activity.findViewById(R.id.anonPermissions)
-                .setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                        UiUtils.showEditPermissions(activity, me, me.getAnonAcsStr(), null,
-                                UiUtils.ACTION_UPDATE_ANON, "O");
-
-                    }
-                });
+                .setOnClickListener(v -> UiUtils.showEditPermissions(activity, me, me.getAnonAcsStr(), null,
+                        UiUtils.ACTION_UPDATE_ANON, "O"));
 
         // Assign initial form values.
         updateFormValues(activity, me);
@@ -229,12 +184,9 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
                 .setTitle(R.string.logout)
                 .setMessage(R.string.confirm_logout)
                 .setCancelable(true)
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        UiUtils.doLogout(activity);
-                        activity.finish();
-                    }
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    UiUtils.doLogout(activity);
+                    activity.finish();
                 })
                 .show();
     }

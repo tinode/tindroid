@@ -17,12 +17,10 @@ import androidx.annotation.NonNull;
 public class OnlineDrawable extends Drawable {
     private static final int COLOR_ONLINE = Color.argb(255, 0x40, 0xC0, 0x40);
     private static final int COLOR_OFFLINE = Color.argb(255, 0xC0, 0xC0, 0xC0);
-
+    private final Paint mPaint;
     private int mColorOnline;
     private int mColorOffline;
-
     private Boolean mOnline;
-    private Paint mPaint;
 
     public OnlineDrawable(boolean online) {
         super();

@@ -14,9 +14,9 @@ import co.tinode.tindroid.R;
  * ImageView with a circular cutout for previewing avatars.
  */
 public class OverlaidImageView extends AppCompatImageView {
-    private Paint mBackgroundPaint;
+    private final Paint mBackgroundPaint;
     private boolean mShowOverlay = false;
-    private Path mClipPath;
+    private final Path mClipPath;
 
     public OverlaidImageView(Context context, AttributeSet attrs) {
         super(context, attrs);

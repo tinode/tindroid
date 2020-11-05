@@ -7,14 +7,11 @@ import java.util.Date;
 import co.tinode.tinodesdk.LocalData;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Credential;
 
 /**
  * Representation of a topic stored in a database;
  */
 public class StoredTopic implements LocalData.Payload {
-    private static final String TAG = "StoredTopic";
-
     public long id;
     public Date lastUsed;
     // Seq value of the earliest cached message.
@@ -57,7 +54,7 @@ public class StoredTopic implements LocalData.Payload {
         }
 
         if (topic instanceof MeTopic) {
-            ((MeTopic) topic).setCreds((Credential[]) BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_CREDS)));
+            ((MeTopic) topic).setCreds(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_CREDS)));
         }
         topic.setPub(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PUBLIC)));
         topic.setPriv(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PRIVATE)));

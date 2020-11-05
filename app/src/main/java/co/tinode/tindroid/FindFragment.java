@@ -112,11 +112,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView rv, int scrollState) {
                 // Pause image loader to ensure smoother scrolling when flinging
-                if (scrollState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                    mImageLoader.setPauseWork(true);
-                } else {
-                    mImageLoader.setPauseWork(false);
-                }
+                mImageLoader.setPauseWork(scrollState == RecyclerView.SCROLL_STATE_DRAGGING);
             }
         });
 
@@ -140,12 +136,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                         if (activity != null) {
                             mAdapter.resetFound(activity, mSearchTerm);
                             // Refresh cursor.
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    restartLoader(mSearchTerm);
-                                }
-                            });
+                            activity.runOnUiThread(() -> restartLoader(mSearchTerm));
                         }
                         return null;
                     }
@@ -209,9 +200,10 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         // Set listeners for SearchView
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             private Handler mHandler;
+
             @Override
             public boolean onQueryTextSubmit(String queryText) {
-                Log.i(TAG, "onQueryTextSubmit='"+queryText+"'");
+                Log.i(TAG, "onQueryTextSubmit='" + queryText + "'");
 
                 if (mHandler != null) {
                     mHandler.removeCallbacksAndMessages(null);
@@ -232,12 +224,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                 }
 
                 // Delay search in case of more input
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSearchTerm = doSearch(queryText);
-                    }
-                }, SEARCH_REQUEST_DELAY);
+                mHandler.postDelayed(() -> mSearchTerm = doSearch(queryText), SEARCH_REQUEST_DELAY);
                 return true;
             }
         });
@@ -284,30 +271,26 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return true;
         }
         Intent intent;
-        switch (item.getItemId()) {
-            case R.id.action_add_contact:
-                intent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
-                startActivity(intent);
-                return true;
-
-            case R.id.action_invite:
-                ShareActionProvider provider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
-                if (provider == null) {
-                    return false;
-                }
-                intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_SUBJECT, activity.getResources().getString(R.string.tinode_invite_subject));
-                intent.putExtra(Intent.EXTRA_TEXT, activity.getResources().getString(R.string.tinode_invite_body));
-                provider.setShareIntent(intent);
-                return true;
-
-            case R.id.action_offline:
-                Cache.getTinode().reconnectNow(true, false, false);
-                return true;
+        int id = item.getItemId();
+        if (id == R.id.action_add_contact) {
+            intent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.action_invite) {
+            ShareActionProvider provider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+            if (provider == null) {
+                return false;
+            }
+            intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("text/plain");
+            intent.putExtra(Intent.EXTRA_SUBJECT, activity.getResources().getString(R.string.tinode_invite_subject));
+            intent.putExtra(Intent.EXTRA_TEXT, activity.getResources().getString(R.string.tinode_invite_body));
+            provider.setShareIntent(intent);
+            return true;
+        } else if (id == R.id.action_offline) {
+            Cache.getTinode().reconnectNow(true, false, false);
+            return true;
         }
-
-        // R.id.action_search
 
         return false;
     }
@@ -339,7 +322,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
         final FndTopic<?> fnd = Cache.getTinode().getFndTopic();
         fnd.setMeta(new MsgSetMeta<>(
-                new MetaSetDesc<String, String>(query == null ? Tinode.NULL_VALUE : query, null)));
+                new MetaSetDesc<>(query == null ? Tinode.NULL_VALUE : query, null)));
         if (query != null) {
             toggleProgressIndicator(true);
             fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
@@ -366,14 +349,11 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return;
         }
 
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (visible) {
-                    mProgress.show();
-                } else {
-                    mProgress.hide();
-                }
+        activity.runOnUiThread(() -> {
+            if (visible) {
+                mProgress.show();
+            } else {
+                mProgress.hide();
             }
         });
     }
@@ -382,20 +362,6 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     // public boolean onBackPressed() {
     //    return false;
     //}
-
-    private class FndListener extends FndTopic.FndListener<VxCard> {
-        @Override
-        public void onMetaSub(final Subscription<VxCard,String[]> sub) {
-            if (sub.pub != null) {
-                sub.pub.constructBitmap();
-            }
-        }
-
-        @Override
-        public void onSubsUpdated() {
-            onFindQueryResult();
-        }
-    }
 
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
@@ -437,6 +403,26 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         }
     }
 
+    interface ReadContactsPermissionChecker {
+        boolean shouldRequestReadContactsPermission();
+
+        void setReadContactsPermissionRequested();
+    }
+
+    private class FndListener extends FndTopic.FndListener<VxCard> {
+        @Override
+        public void onMetaSub(final Subscription<VxCard, String[]> sub) {
+            if (sub.pub != null) {
+                sub.pub.constructBitmap();
+            }
+        }
+
+        @Override
+        public void onSubsUpdated() {
+            onFindQueryResult();
+        }
+    }
+
     private class ContactClickListener implements FindAdapter.ClickListener {
         @Override
         public void onClick(String topicName) {
@@ -446,7 +432,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             }
             Intent initial = activity.getIntent();
             Intent launcher = new Intent(activity, MessageActivity.class);
-            Uri uri = initial != null ? initial.<Uri>getParcelableExtra(Intent.EXTRA_STREAM) : null;
+            Uri uri = initial != null ? initial.getParcelableExtra(Intent.EXTRA_STREAM) : null;
             if (uri != null) {
                 launcher.setDataAndType(uri, initial.getType());
                 launcher.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -457,10 +443,5 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             startActivity(launcher);
             activity.finish();
         }
-    }
-
-    interface ReadContactsPermissionChecker {
-        boolean shouldRequestReadContactsPermission();
-        void setReadContactsPermissionRequested();
     }
 }

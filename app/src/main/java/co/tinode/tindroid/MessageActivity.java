@@ -60,8 +60,6 @@ import co.tinode.tinodesdk.model.Subscription;
  * View to display a single conversation
  */
 public class MessageActivity extends AppCompatActivity {
-    private static final String TAG = "MessageActivity";
-
     static final String FRAGMENT_MESSAGES = "msg";
     static final String FRAGMENT_INVALID = "invalid";
     static final String FRAGMENT_INFO = "info";
@@ -69,7 +67,7 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
-
+    private static final String TAG = "MessageActivity";
     private static final int MESSAGES_TO_LOAD = 24;
 
     private static final int READ_DELAY = 1000;
@@ -77,29 +75,12 @@ public class MessageActivity extends AppCompatActivity {
     // How long a typing indicator should play its animation, milliseconds.
     private static final int TYPING_INDICATOR_DURATION = 4000;
 
-    private BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
+    private final BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
         public void onReceive(Context ctxt, Intent intent) {
             // FIXME: handle notification click.
             Log.d(TAG, "onNotificationClick" + intent.getExtras());
         }
     };
-
-    private Timer mTypingAnimationTimer;
-    private String mMessageText = null;
-    private PausableSingleThreadExecutor mMessageSender = null;
-
-    private String mTopicName = null;
-    private ComTopic<VxCard> mTopic = null;
-
-    private MessageEventListener mTinodeListener;
-
-    // Handler for sending {note what="read"} notifications after a READ_DELAY.
-    private Handler mNoteReadHandler = null;
-
-    // Notification settings.
-    private boolean mSendTypingNotifications = false;
-    private boolean mSendReadReceipts = false;
-
     BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
             DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
@@ -134,6 +115,17 @@ public class MessageActivity extends AppCompatActivity {
             c.close();
         }
     };
+    private Timer mTypingAnimationTimer;
+    private String mMessageText = null;
+    private PausableSingleThreadExecutor mMessageSender = null;
+    private String mTopicName = null;
+    private ComTopic<VxCard> mTopic = null;
+    private MessageEventListener mTinodeListener;
+    // Handler for sending {note what="read"} notifications after a READ_DELAY.
+    private Handler mNoteReadHandler = null;
+    // Notification settings.
+    private boolean mSendTypingNotifications = false;
+    private boolean mSendReadReceipts = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -195,7 +187,7 @@ public class MessageActivity extends AppCompatActivity {
         String type = intent.getType();
         if (attachment != null && type != null) {
             // Need to retain access right to the given Uri.
-            Bundle args  = new Bundle();
+            Bundle args = new Bundle();
             args.putParcelable(AttachmentHandler.ARG_SRC_URI, attachment);
             args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
             if (type.startsWith("image/")) {
@@ -376,25 +368,25 @@ public class MessageActivity extends AppCompatActivity {
                         return null;
                     }
                 }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        if (!(err instanceof NotConnectedException)) {
-                            Log.w(TAG, "Subscribe failed", err);
-                            if (err instanceof ServerResponseException) {
-                                int code = ((ServerResponseException) err).getCode();
-                                if (code == 404) {
-                                    showFragment(FRAGMENT_INVALID, null, false);
-                                }
-                            }
+            @Override
+            public PromisedReply<ServerMessage> onFailure(Exception err) {
+                if (!(err instanceof NotConnectedException)) {
+                    Log.w(TAG, "Subscribe failed", err);
+                    if (err instanceof ServerResponseException) {
+                        int code = ((ServerResponseException) err).getCode();
+                        if (code == 404) {
+                            showFragment(FRAGMENT_INVALID, null, false);
                         }
-                        return null;
                     }
-                }).thenFinally(new PromisedReply.FinalListener() {
-                    @Override
-                    public void onFinally() {
-                        setRefreshing(false);
-                    }
-                });
+                }
+                return null;
+            }
+        }).thenFinally(new PromisedReply.FinalListener() {
+            @Override
+            public void onFinally() {
+                setRefreshing(false);
+            }
+        });
     }
 
     // Clean up everything related to the topic being replaced of removed.
@@ -438,26 +430,23 @@ public class MessageActivity extends AppCompatActivity {
         }
 
         int id = item.getItemId();
-        switch (id) {
-            case R.id.action_view_contact:
-                showFragment(FRAGMENT_INFO, null, true);
-                return true;
+        if (id == R.id.action_view_contact) {
+            showFragment(FRAGMENT_INFO, null, true);
+            return true;
+        } else if (id == R.id.action_archive) {
+            if (mTopic != null) {
+                mTopic.updateArchived(true);
+            }
+            return true;
 
-            case R.id.action_archive:
-                if (mTopic != null) {
-                    mTopic.updateArchived(true);
-                }
-                return true;
-
-            case R.id.action_unarchive:
-                if (mTopic != null) {
-                    mTopic.updateArchived(false);
-                }
-                return true;
-
-            default:
-                return false;
+        } else if (id == R.id.action_unarchive) {
+            if (mTopic != null) {
+                mTopic.updateArchived(false);
+            }
+            return true;
         }
+
+        return false;
     }
 
     @Override
@@ -649,6 +638,7 @@ public class MessageActivity extends AppCompatActivity {
     // Handler which sends "read" notifications for received messages.
     private static class NoteHandler extends Handler {
         WeakReference<MessageActivity> ref;
+
         NoteHandler(MessageActivity activity) {
             ref = new WeakReference<>(activity);
         }
@@ -690,9 +680,9 @@ public class MessageActivity extends AppCompatActivity {
      * when the topic subscription is live.
      */
     private static class PausableSingleThreadExecutor extends ThreadPoolExecutor {
-        private boolean isPaused;
         private final ReentrantLock pauseLock = new ReentrantLock();
         private final Condition unpaused = pauseLock.newCondition();
+        private boolean isPaused;
 
         PausableSingleThreadExecutor() {
             super(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());

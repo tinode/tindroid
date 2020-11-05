@@ -27,25 +27,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.Tinode.TopicFilter;
 import co.tinode.tinodesdk.Topic;
 
 /**
  * Handling active chats, i.e. 'me' topic.
  */
 public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> {
-
-    @SuppressWarnings("unused")
-    private static final String TAG = "ChatsAdapter";
-
-    private List<ComTopic<VxCard>> mTopics;
-    private HashMap<String,Integer> mTopicIndex;
-
-    private SelectionTracker<String> mSelectionTracker;
-    private ClickListener mClickListener;
-
     private static int sColorOffline;
     private static int sColorOnline;
+    private final ClickListener mClickListener;
+    private List<ComTopic<VxCard>> mTopics;
+    private HashMap<String, Integer> mTopicIndex;
+    private SelectionTracker<String> mSelectionTracker;
 
     ChatsAdapter(Context context, ClickListener clickListener) {
         super();
@@ -65,28 +58,21 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             return;
         }
 
-        final Collection<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(new TopicFilter() {
-            @Override
-            public boolean isIncluded(Topic t) {
-                return t.getTopicType().match(Topic.TopicType.USER) &&
-                        (t.isArchived() == archive) && (t.isJoiner() != banned);
-            }
-        });
+        final Collection<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(t ->
+                t.getTopicType().match(Topic.TopicType.USER) &&
+                        (t.isArchived() == archive) && (t.isJoiner() != banned));
 
-        final HashMap<String,Integer> newTopicIndex = new HashMap<>(newTopics.size());
+        final HashMap<String, Integer> newTopicIndex = new HashMap<>(newTopics.size());
         for (Topic t : newTopics) {
             newTopicIndex.put(t.getName(), newTopicIndex.size());
         }
 
-        activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mTopics = new ArrayList<>(newTopics);
-                    mTopicIndex = newTopicIndex;
+        activity.runOnUiThread(() -> {
+            mTopics = new ArrayList<>(newTopics);
+            mTopicIndex = newTopicIndex;
 
-                    notifyDataSetChanged();
-                }
-            });
+            notifyDataSetChanged();
+        });
     }
 
     @NonNull
@@ -124,7 +110,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     private int getActualItemCount() {
-       return mTopics == null ? 0 : mTopics.size();
+        return mTopics == null ? 0 : mTopics.size();
     }
 
     @Override
@@ -144,6 +130,10 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
 
     void setSelectionTracker(SelectionTracker<String> selectionTracker) {
         mSelectionTracker = selectionTracker;
+    }
+
+    interface ClickListener {
+        void onClick(String topicName);
     }
 
     static class ContactDetailsLookup extends ItemDetailsLookup<String> {
@@ -293,12 +283,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 itemView.setBackgroundResource(typedArray.getResourceId(0, 0));
                 typedArray.recycle();
 
-                itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        clickListener.onClick(topicName);
-                    }
-                });
+                itemView.setOnClickListener(view -> clickListener.onClick(topicName));
 
                 itemView.setActivated(false);
             }
@@ -306,9 +291,5 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             // Field lengths may have changed.
             itemView.invalidate();
         }
-    }
-
-    interface ClickListener {
-        void onClick(String topicName);
     }
 }

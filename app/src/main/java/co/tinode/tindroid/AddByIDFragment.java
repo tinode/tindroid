@@ -27,20 +27,17 @@ public class AddByIDFragment extends Fragment {
             return;
         }
 
-        view.findViewById(R.id.confirm).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                TextView editor = activity.findViewById(R.id.editId);
-                if (editor != null) {
-                    String id = editor.getText().toString();
-                    if (TextUtils.isEmpty(id)) {
-                        editor.setError(getString(R.string.id_required));
-                    } else {
-                        Intent it = new Intent(activity, MessageActivity.class);
-                        it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        it.putExtra("topic", id);
-                        startActivity(it);
-                    }
+        view.findViewById(R.id.confirm).setOnClickListener(view1 -> {
+            TextView editor = activity.findViewById(R.id.editId);
+            if (editor != null) {
+                String id = editor.getText().toString();
+                if (TextUtils.isEmpty(id)) {
+                    editor.setError(getString(R.string.id_required));
+                } else {
+                    Intent it = new Intent(activity, MessageActivity.class);
+                    it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    it.putExtra("topic", id);
+                    startActivity(it);
                 }
             }
         });

@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
@@ -53,7 +52,7 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
                              Bundle savedInstanceState) {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
-            return  null;
+            return null;
         }
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_personal, container, false);
@@ -64,12 +63,7 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.general);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                activity.getSupportFragmentManager().popBackStack();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
         return fragment;
     }
@@ -86,33 +80,14 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
 
         // Attach listeners to editable form fields.
 
-        activity.findViewById(R.id.topicTitle).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showEditAccountTitle();
-            }
-        });
+        activity.findViewById(R.id.topicTitle).setOnClickListener(v -> showEditAccountTitle());
 
-        activity.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.requestAvatar(AccPersonalFragment.this);
-            }
-        });
+        activity.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
+                UiUtils.requestAvatar(AccPersonalFragment.this));
 
-        activity.findViewById(R.id.buttonManageTags).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showEditTags();
-            }
-        });
+        activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
 
-        activity.findViewById(R.id.buttonAddContact).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showAddCredential();
-            }
-        });
+        activity.findViewById(R.id.buttonAddContact).setOnClickListener(view -> showAddCredential());
 
         // Assign initial form values.
         updateFormValues(activity, me);
@@ -161,22 +136,16 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
                         btn.setVisibility(View.VISIBLE);
                         btn.setTag(cred);
                     }
-                    btn.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Credential cred = (Credential) view.getTag();
-                            showConfirmCredential(cred.meth, cred.val);
-                        }
+                    btn.setOnClickListener(view -> {
+                        Credential cred1 = (Credential) view.getTag();
+                        showConfirmCredential(cred1.meth, cred1.val);
                     });
 
                     ImageButton ibtn = container.findViewById(R.id.buttonDelete);
                     ibtn.setTag(cred);
-                    ibtn.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Credential cred = (Credential) view.getTag();
-                            showDeleteCredential(cred.meth, cred.val);
-                        }
+                    ibtn.setOnClickListener(view -> {
+                        Credential cred12 = (Credential) view.getTag();
+                        showDeleteCredential(cred12.meth, cred12.val);
                     });
                     credList.addView(container, 0);
                 }
@@ -224,25 +193,13 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
         titleEditor.setText(title);
 
         builder
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                .setPositiveButton(android.R.string.ok, (dialog, which) ->
                         UiUtils.updateTitle(activity, me, titleEditor.getText().toString().trim(), null,
-                                new UiUtils.TitleUpdateCallbackInterface() {
-                                    @Override
-                                    public void onTitleUpdated() {
-                                        activity.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                final MeTopic me = Cache.getTinode().getMeTopic();
-                                                // noinspection unchecked
-                                                updateFormValues(activity, me);
-                                            }
-                                        });
-                                    }
-                                });
-                    }
-                })
+                                () -> activity.runOnUiThread(() -> {
+                                    final MeTopic me1 = Cache.getTinode().getMeTopic();
+                                    // noinspection unchecked
+                                    updateFormValues(activity, me1);
+                                })))
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
@@ -265,14 +222,11 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
         final EditText tagsEditor = editor.findViewById(R.id.editTags);
         tagsEditor.setText(tags);
         builder
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String[] tags = UiUtils.parseTags(tagsEditor.getText().toString());
-                        // noinspection unchecked
-                        me.setMeta(new MsgSetMeta(tags))
-                                .thenCatch(new UiUtils.ToastFailureListener(activity));
-                    }
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
+                    // noinspection unchecked
+                    me.setMeta(new MsgSetMeta(tags1))
+                            .thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
@@ -290,18 +244,15 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
         builder.setView(editor).setTitle(R.string.validate_cred_title)
                 .setMessage(getString(R.string.validate_cred, meth))
                 // FIXME: check for empty input and refuse to dismiss the dialog.
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String response = ((EditText) editor.findViewById(R.id.response)).getText().toString();
-                        if (TextUtils.isEmpty(response)) {
-                            return;
-                        }
-
-                        final MeTopic me = Cache.getTinode().getMeTopic();
-                        //noinspection unchecked
-                        me.confirmCred(meth, response).thenCatch(new UiUtils.ToastFailureListener(activity));
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String response = ((EditText) editor.findViewById(R.id.response)).getText().toString();
+                    if (TextUtils.isEmpty(response)) {
+                        return;
                     }
+
+                    final MeTopic me = Cache.getTinode().getMeTopic();
+                    //noinspection unchecked
+                    me.confirmCred(meth, response).thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
@@ -319,14 +270,11 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
                 .setTitle(R.string.delete_credential_title)
                 .setMessage(getString(R.string.delete_credential_confirmation, meth, val))
                 .setCancelable(true)
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        final MeTopic me = Cache.getTinode().getMeTopic();
-                        // noinspection unchecked
-                        me.delCredential(meth, val)
-                                .thenCatch(new UiUtils.ToastFailureListener(activity));
-                    }
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    final MeTopic me = Cache.getTinode().getMeTopic();
+                    // noinspection unchecked
+                    me.delCredential(meth, val)
+                            .thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .show();
     }
@@ -344,33 +292,26 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
                 .setNegativeButton(android.R.string.cancel, null)
                 .create();
 
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialogInterface) {
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View button) {
-                        EditText credEditor = editor.findViewById(R.id.editCredential);
-                        String cred = credEditor.getText().toString().trim().toLowerCase();
-                        if (TextUtils.isEmpty(cred)) {
-                            return;
-                        }
-                        Credential parsed = UiUtils.parseCredential(cred);
-                        if (parsed != null) {
-                            final MeTopic me = Cache.getTinode().getMeTopic();
-                            // noinspection unchecked
-                            me.setMeta(new MsgSetMeta(parsed))
-                                    .thenCatch(new UiUtils.ToastFailureListener(activity));
-
-                            // Dismiss once everything is OK.
-                            dialog.dismiss();
-                        } else {
-                            credEditor.setError(activity.getString(R.string.unrecognized_credential));
-                        }
+        dialog.setOnShowListener(dialogInterface ->
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button -> {
+                    EditText credEditor = editor.findViewById(R.id.editCredential);
+                    String cred = credEditor.getText().toString().trim().toLowerCase();
+                    if (TextUtils.isEmpty(cred)) {
+                        return;
                     }
-                });
-            }
-        });
+                    Credential parsed = UiUtils.parseCredential(cred);
+                    if (parsed != null) {
+                        final MeTopic me = Cache.getTinode().getMeTopic();
+                        // noinspection unchecked
+                        me.setMeta(new MsgSetMeta(parsed))
+                                .thenCatch(new UiUtils.ToastFailureListener(activity));
+
+                        // Dismiss once everything is OK.
+                        dialog.dismiss();
+                    } else {
+                        credEditor.setError(activity.getString(R.string.unrecognized_credential));
+                    }
+                }));
 
         dialog.show();
     }

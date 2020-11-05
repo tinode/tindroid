@@ -28,7 +28,7 @@ public class AccAboutFragment extends Fragment {
                              Bundle savedInstanceState) {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
-            return  null;
+            return null;
         }
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.dialog_about, container, false);
@@ -39,15 +39,11 @@ public class AccAboutFragment extends Fragment {
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.about_the_app);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                activity.getSupportFragmentManager().popBackStack();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
         ((TextView) fragment.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
-        ((TextView) fragment.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d", TindroidApp.getAppBuild()));
+        ((TextView) fragment.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
+                TindroidApp.getAppBuild()));
         ((TextView) fragment.findViewById(R.id.app_server)).setText(Cache.getTinode().getHttpOrigin());
 
         return fragment;

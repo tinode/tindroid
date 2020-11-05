@@ -14,7 +14,6 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,6 +33,7 @@ import java.io.InputStream;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import co.tinode.tindroid.widgets.OverlaidImageView;
@@ -69,6 +69,7 @@ public class ImageViewFragment extends Fragment {
     // This is an avatar preview before upload.
     private boolean mAvatarUpload;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -113,8 +114,8 @@ public class ImageViewFragment extends Fragment {
                                 && mWorkingRect.height() >= mCutOutRect.height())
                                 || (/* not too small */!mAvatarUpload
                                 && (mWorkingRect.width() >= mInitialRect.width()
-                                        || mWorkingRect.width() >= mScreenRect.width()
-                                        || mWorkingRect.height() >= mScreenRect.height())))) {
+                                || mWorkingRect.width() >= mScreenRect.width()
+                                || mWorkingRect.height() >= mScreenRect.height())))) {
 
                     mMatrix.set(mWorkingMatrix);
                     mImageView.setImageMatrix(mMatrix);
@@ -127,42 +128,26 @@ public class ImageViewFragment extends Fragment {
         };
         mScaleGestureDetector = new ScaleGestureDetector(activity, scaleListener);
 
-        view.setOnTouchListener(new View.OnTouchListener() {
-            @SuppressLint("ClickableViewAccessibility")
-            public boolean onTouch(View v, MotionEvent event) {
-                if (mWorkingMatrix == null) {
-                    // The image is invalid. Disable scrolling/panning.
-                    return false;
-                }
-
-                mGestureDetector.onTouchEvent(event);
-                mScaleGestureDetector.onTouchEvent(event);
-                return true;
+        view.setOnTouchListener((v, event) -> {
+            if (mWorkingMatrix == null) {
+                // The image is invalid. Disable scrolling/panning.
+                return false;
             }
+
+            mGestureDetector.onTouchEvent(event);
+            mScaleGestureDetector.onTouchEvent(event);
+            return true;
         });
 
         // Send message on button click.
-        view.findViewById(R.id.chatSendButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendImage();
-            }
-        });
+        view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendImage());
         // Upload avatar.
-        view.findViewById(R.id.acceptAvatar).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                acceptAvatar();
-            }
-        });
+        view.findViewById(R.id.acceptAvatar).setOnClickListener(v -> acceptAvatar());
         // Send message on Enter.
         ((EditText) view.findViewById(R.id.editMessage)).setOnEditorActionListener(
-                new TextView.OnEditorActionListener() {
-                    @Override
-                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                        sendImage();
-                        return true;
-                    }
+                (v, actionId, event) -> {
+                    sendImage();
+                    return true;
                 });
 
         return view;
@@ -282,7 +267,7 @@ public class ImageViewFragment extends Fragment {
                             scaling = Math.max(scaling, mCutOutRect.height() / mInitialRect.height());
                         }
                         if (scaling > 1f) {
-                            mMatrix.postScale(scaling, scaling,0, 0);
+                            mMatrix.postScale(scaling, scaling, 0, 0);
                         }
 
                         // Center scaled image within the mCutOutRect.
@@ -300,7 +285,8 @@ public class ImageViewFragment extends Fragment {
         } else {
             // Show broken image.
             mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            mImageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_broken_image));
+            mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(),
+                    R.drawable.ic_broken_image, null));
             activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
 
             setHasOptionsMenu(false);
@@ -393,8 +379,8 @@ public class ImageViewFragment extends Fragment {
             // Make sure cut out rectangle is fully inside the bitmap.
             cutOut.intersect(0, 0, bmp.getWidth(), bmp.getHeight());
             // Actually make the cut.
-            bmp = Bitmap.createBitmap(bmp, (int)cutOut.left, (int)cutOut.top,
-                    (int)cutOut.width(), (int)cutOut.height());
+            bmp = Bitmap.createBitmap(bmp, (int) cutOut.left, (int) cutOut.top,
+                    (int) cutOut.width(), (int) cutOut.height());
         }
         // TODO: upload avatar
 
@@ -417,7 +403,7 @@ public class ImageViewFragment extends Fragment {
     }
 
     private float translateToBoundsY(RectF bounds) {
-        float top =  mWorkingRect.top;
+        float top = mWorkingRect.top;
         if (mWorkingRect.height() >= bounds.height()) {
             // Image taller than the viewport.
             top = Math.max(Math.min(bounds.top, top), bounds.top + bounds.height() - mWorkingRect.height());

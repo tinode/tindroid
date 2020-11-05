@@ -166,10 +166,10 @@ public class Tinode {
 
     private int mMsgId = 0;
     private int mPacketCount;
-    private ListenerNotifier mNotifier;
-    private ConcurrentMap<String, FutureHolder> mFutures;
-    private ConcurrentHashMap<String, Topic> mTopics;
-    private ConcurrentHashMap<String, User> mUsers;
+    private final ListenerNotifier mNotifier;
+    private final ConcurrentMap<String, FutureHolder> mFutures;
+    private final ConcurrentHashMap<String, Topic> mTopics;
+    private final ConcurrentHashMap<String, User> mUsers;
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
     // Timestamp of the latest topic desc update.
@@ -2026,7 +2026,9 @@ public class Tinode {
                     } else {
                         query = "";
                     }
-                    query += "auth=token&secret=" + mAuthToken;
+                    // Convert standard base64 encoding to URL base64 encoding.
+                    query += "auth=token&secret=" +
+                            mAuthToken.replace('+', '-').replace('/', '_');
                 }
                 URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(),
                         url.getPath(), query, url.getRef());

@@ -17,9 +17,9 @@ class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
 
     // private static final String TAG = "ContactsLoaderCallback";
 
-    private int mID;
-    private Context mContext;
-    private CursorSwapper mAdapter;
+    private final int mID;
+    private final Context mContext;
+    private final CursorSwapper mAdapter;
     private String mSearchTerm;
 
     ContactsLoaderCallback(int loaderID, Context context, CursorSwapper adapter) {
@@ -50,7 +50,7 @@ class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
                     ContactsQuery.SORT_ORDER);
         }
 
-        throw new IllegalArgumentException("Unknown loader ID "+id);
+        throw new IllegalArgumentException("Unknown loader ID " + id);
     }
 
     @Override

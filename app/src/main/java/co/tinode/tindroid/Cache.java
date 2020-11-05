@@ -2,9 +2,7 @@ package co.tinode.tindroid;
 
 import android.os.Build;
 
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -22,9 +20,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Shared resources.
  */
 public class Cache {
-    @SuppressWarnings("unused")
-    private static final String TAG = "Cache";
-
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
 
     private static Tinode sTinode;
@@ -51,14 +46,11 @@ public class Cache {
         //noinspection ConstantConditions: Google lies about getInstance not returning null.
         if (fbId != null) {
             fbId.getInstanceId()
-                .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
-                    @Override
-                    public void onSuccess(InstanceIdResult instanceIdResult) {
+                    .addOnSuccessListener(instanceIdResult -> {
                         if (sTinode != null) {
                             sTinode.setDeviceToken(instanceIdResult.getToken());
                         }
-                    }
-                });
+                    });
         }
         return sTinode;
     }
@@ -72,7 +64,8 @@ public class Cache {
                 FirebaseInstanceId
                         .getInstance()
                         .deleteInstanceId();
-            } catch (IOException ignored) { }
+            } catch (IOException ignored) {
+            }
         }
     }
 

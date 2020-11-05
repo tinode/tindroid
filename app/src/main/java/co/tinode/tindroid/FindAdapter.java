@@ -28,19 +28,12 @@ import co.tinode.tinodesdk.model.Subscription;
 public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         implements ContactsLoaderCallback.CursorSwapper {
 
-    @SuppressWarnings("unused")
-    private static final String TAG = "FindAdapter";
-
-    private TextAppearanceSpan mHighlightTextSpan;
-
-    private List<Subscription<VxCard,String[]>> mFound;
-
+    private final TextAppearanceSpan mHighlightTextSpan;
+    private final ImageLoader mImageLoader;
+    private final ClickListener mClickListener;
+    private List<Subscription<VxCard, String[]>> mFound;
     private Cursor mCursor;
     private String mSearchTerm;
-    private ImageLoader mImageLoader;
-
-    private ClickListener mClickListener;
-
     // TRUE is user granted access to contacts, FALSE otherwise.
     private boolean mPermissionGranted = false;
 
@@ -68,12 +61,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
         mSearchTerm = searchTerm;
         if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    notifyDataSetChanged();
-                }
-            });
+            activity.runOnUiThread(this::notifyDataSetChanged);
         }
     }
 
@@ -106,16 +94,15 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(viewType, parent, false);
-        switch (viewType) {
-            case R.layout.not_found:
-            case R.layout.no_permission:
-            case R.layout.no_search_query:
-                return new ViewHolderEmpty(view);
-            case R.layout.contact_section:
-                return new ViewHolderSection(view);
-            default:
-                return new ViewHolderItem(view, mClickListener);
+        if (viewType == R.layout.not_found ||
+                viewType == R.layout.no_permission ||
+                viewType == R.layout.no_search_query) {
+            return new ViewHolderEmpty(view);
+        } else if (viewType == R.layout.contact_section) {
+            return new ViewHolderSection(view);
         }
+
+        return new ViewHolderItem(view, mClickListener);
     }
 
     @Override
@@ -129,7 +116,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             return R.layout.contact_section;
         }
 
-        position --;
+        position--;
 
         int count = getCursorItemCount();
         if (count == 0) {
@@ -149,7 +136,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             return R.layout.contact_section;
         }
 
-        position --;
+        position--;
 
         count = getFoundItemCount();
         if (count == 0 && position == 0) {
@@ -166,7 +153,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         }
 
         // Subtract section title.
-        position --;
+        position--;
 
         int count = getCursorItemCount();
         if (count == 0) {
@@ -192,7 +179,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         }
 
         // Subtract section title.
-        position --;
+        position--;
 
         count = getFoundItemCount();
         if (count == 0 && position == 0) {
@@ -217,7 +204,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             return null;
         }
 
-        position --;
+        position--;
 
         // Count the section title element.
         int count = getCursorItemCount();
@@ -242,7 +229,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         }
 
         // Skip the 'DIRECTORY' element;
-        position --;
+        position--;
 
         count = getFoundItemCount();
         if (count == 0 && position == 0) {
@@ -266,6 +253,10 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         return itemCount;
     }
 
+    interface ClickListener {
+        void onClick(String topicName);
+    }
+
     static class ViewHolderSection extends ViewHolder {
         ViewHolderSection(@NonNull View item) {
             super(item);
@@ -287,6 +278,15 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
         public void bind(int position, Object data) {
         }
+    }
+
+    static abstract class ViewHolder extends RecyclerView.ViewHolder {
+
+        ViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+
+        abstract void bind(int position, Object data);
     }
 
     class ViewHolderItem extends ViewHolder {
@@ -313,13 +313,13 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         public void bind(int position, final Object data) {
             if (data instanceof Subscription) {
                 // noinspection unchecked
-                bind(position, (Subscription<VxCard, String[]>)data);
+                bind((Subscription<VxCard, String[]>) data);
             } else {
-                bind(position, (Cursor) data);
+                bind((Cursor) data);
             }
         }
 
-        private void bind(int position, final Cursor cursor) {
+        private void bind(final Cursor cursor) {
             final String photoUri = cursor.getString(ContactsLoaderCallback.ContactsQuery.PHOTO_THUMBNAIL_DATA);
             final String displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
             final String unique = cursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
@@ -368,15 +368,10 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             icon.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
             mImageLoader.loadImage(context, photoUri, icon);
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    clickListener.onClick(unique);
-                }
-            });
+            itemView.setOnClickListener(view -> clickListener.onClick(unique));
         }
 
-        private void bind(int position, final Subscription<VxCard, String[]> sub) {
+        private void bind(final Subscription<VxCard, String[]> sub) {
             final Context context = itemView.getContext();
             final String unique = sub.getUnique();
 
@@ -396,30 +391,11 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
             icon.setImageDrawable(
                     UiUtils.avatarDrawable(context,
-                    pub != null ? pub.getBitmap() : null,
-                    pub != null ? pub.fn : null,
-                    unique));
+                            pub != null ? pub.getBitmap() : null,
+                            pub != null ? pub.fn : null,
+                            unique));
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    clickListener.onClick(unique);
-                }
-            });
+            itemView.setOnClickListener(view -> clickListener.onClick(unique));
         }
-    }
-
-    static abstract class ViewHolder extends RecyclerView.ViewHolder {
-
-        ViewHolder(@NonNull View itemView) {
-            super(itemView);
-        }
-
-        abstract void bind(int position, Object data);
-    }
-
-
-    interface ClickListener {
-        void onClick(String topicName);
     }
 }

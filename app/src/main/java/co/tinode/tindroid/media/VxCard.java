@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.VCard;
 
-
 /**
  * VxCard - contact descriptor.
  * Adds avatar conversion from bits to Android bitmap and back.
@@ -46,11 +45,13 @@ public class VxCard extends VCard {
         }
         return (avatar != null) ? avatar.getBitmap() : null;
     }
+
     @JsonIgnore
     public void setBitmap(Bitmap bmp) {
         avatar = new AvatarPhoto(bmp);
         photo = new Photo(avatar.data, avatar.type);
     }
+
     @JsonIgnore
     public void setAvatar(AvatarPhoto bmp) {
         avatar = bmp;
@@ -70,7 +71,7 @@ public class VxCard extends VCard {
             return 0;
         }
         int changed = super.merge(another);
-        VxCard avc = (VxCard)another;
+        VxCard avc = (VxCard) another;
         if (avc.avatar != null) {
             avatar = avc.avatar;
             changed++;

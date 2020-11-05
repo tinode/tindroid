@@ -21,9 +21,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class CredentialsFragment extends Fragment implements View.OnClickListener{
-    private static final String TAG = "CredentialsFragment";
-
+public class CredentialsFragment extends Fragment implements View.OnClickListener {
     private String mMethod = null;
 
     @Override
@@ -48,12 +46,8 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
 
         View fragment = inflater.inflate(R.layout.fragment_validate, container, false);
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
-        fragment.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
-            }
-        });
+        fragment.findViewById(R.id.cancel).setOnClickListener(v ->
+                parent.showFragment(LoginActivity.FRAGMENT_LOGIN));
 
         return fragment;
     }
@@ -107,30 +101,30 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         cred[0] = new Credential(mMethod, null, code, null);
 
         tinode.loginToken(token, cred).thenApply(
-            new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
-                    if (msg.ctrl.code >= 300) {
-                        // Credential still unconfirmed.
-                        parent.reportError(null, confirm, R.id.response, R.string.invalid_confirmation_code);
-                    } else {
-                        // Login succeeded.
-                        tinode.setAutoLoginToken(tinode.getAuthToken());
-                        UiUtils.onLoginSuccess(parent, confirm, tinode.getMyId());
+                new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                        if (msg.ctrl.code >= 300) {
+                            // Credential still unconfirmed.
+                            parent.reportError(null, confirm, R.id.response, R.string.invalid_confirmation_code);
+                        } else {
+                            // Login succeeded.
+                            tinode.setAutoLoginToken(tinode.getAuthToken());
+                            UiUtils.onLoginSuccess(parent, confirm, tinode.getMyId());
+                        }
+                        return null;
                     }
-                    return null;
-                }
-            },
-            new PromisedReply.FailureListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onFailure(Exception err) {
-                    parent.reportError(err, confirm, 0, R.string.failed_credential_confirmation);
-                    // Something went wrong like a duplicate credential or expired token.
-                    // Go back to login, nothing we can do here.
-                    parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
-                    return null;
-                }
-            });
+                },
+                new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        parent.reportError(err, confirm, 0, R.string.failed_credential_confirmation);
+                        // Something went wrong like a duplicate credential or expired token.
+                        // Go back to login, nothing we can do here.
+                        parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
+                        return null;
+                    }
+                });
 
     }
 }

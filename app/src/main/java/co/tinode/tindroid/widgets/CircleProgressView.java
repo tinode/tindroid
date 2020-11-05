@@ -37,24 +37,15 @@ import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
  * This class is used to display circular progress indicator (infinite spinner).
  * It matches the style of the spinner in SwipeRefreshLayout + optionally can be shown only after a
  * 500 ms delay like ContentLoadingProgressBar.
- *
+ * <p>
  * Adopted from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
  */
 public class CircleProgressView extends AppCompatImageView {
-    private static final String TAG = "CircleProgressView";
-
     // This is the same functionality as ContentLoadingProgressBar.
     // If stop is called earlier than this, the spinner is not shown at all.
     private static final int MIN_SHOW_TIME = 300; // ms
     private static final int MIN_DELAY = 500; // ms
-
-    private long mStartTime = -1;
-    private boolean mPostedHide = false;
-    private boolean mPostedShow = false;
-    private boolean mDismissed = false;
-
     private static final int CIRCLE_BG_LIGHT = 0xFFFAFAFA;
-
     private static final int KEY_SHADOW_COLOR = 0x1E000000;
     private static final int FILL_SHADOW_COLOR = 0x3D000000;
     // PX
@@ -62,48 +53,43 @@ public class CircleProgressView extends AppCompatImageView {
     private static final float Y_OFFSET = 1.75f;
     private static final float SHADOW_RADIUS = 3.5f;
     private static final int SHADOW_ELEVATION = 4;
-
-    private int mMediumAnimationDuration;
     private static final int SCALE_DOWN_DURATION = 150;
-
-    private CircularProgressDrawable mProgress;
-    private Animation.AnimationListener mListener;
     int mShadowRadius;
-
-    private Animation.AnimationListener mProgressStartListener = new AnimationEndListener() {
-        @Override
-        public void onAnimationEnd(Animation animation) {
-            // mProgressView is already visible, start the spinner.
-            mProgress.start();
-        }
+    private long mStartTime = -1;
+    private boolean mPostedHide = false;
+    private boolean mPostedShow = false;
+    private boolean mDismissed = false;
+    private int mMediumAnimationDuration;
+    private CircularProgressDrawable mProgress;
+    private final Animation.AnimationListener mProgressStartListener =
+            new AnimationEndListener() {
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    // mProgressView is already visible, start the spinner.
+                    mProgress.start();
+                }
+            };
+    private final Animation.AnimationListener mProgressStopListener =
+            new AnimationEndListener() {
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    clearAnimation();
+                    mProgress.stop();
+                    setVisibility(View.GONE);
+                    setAnimationProgress(0);
+                }
+            };
+    private Animation.AnimationListener mListener;
+    private final Runnable mDelayedHide = () -> {
+        mPostedHide = false;
+        mStartTime = -1;
+        stop();
     };
-
-    private Animation.AnimationListener mProgressStopListener = new AnimationEndListener() {
-        @Override
-        public void onAnimationEnd(Animation animation) {
-            clearAnimation();
-            mProgress.stop();
-            setVisibility(View.GONE);
-            setAnimationProgress(0);
-        }
-    };
-
-    private final Runnable mDelayedHide = new Runnable() {
-        @Override
-        public void run() {
-            mPostedHide = false;
-            mStartTime = -1;
-            stop();
-        }
-    };
-    private final Runnable mDelayedShow = new Runnable() {
-        @Override
-        public void run() {
-            mPostedShow = false;
-            if (!mDismissed) {
-                mStartTime = System.currentTimeMillis();
-                start();
-            }
+    private final Runnable mDelayedShow = () -> {
+        mPostedShow = false;
+        if (!mDismissed) {
+            mStartTime = System.currentTimeMillis();
+            start();
         }
     };
 
@@ -174,6 +160,7 @@ public class CircleProgressView extends AppCompatImageView {
             postDelayed(mDelayedHide, MIN_SHOW_TIME - diff);
         }
     }
+
     /**
      * Show the progress view after waiting for a minimum delay. If
      * during that time, hide() is called, the view is never made visible.
@@ -276,9 +263,9 @@ public class CircleProgressView extends AppCompatImageView {
     }
 
     private static class OvalShadow extends OvalShape {
-        private Paint mShadowPaint;
-        private int mShadowRadius;
-        private CircleProgressView mCircleProgressView;
+        private final Paint mShadowPaint;
+        private final int mShadowRadius;
+        private final CircleProgressView mCircleProgressView;
 
         OvalShadow(CircleProgressView circleProgressView, int shadowRadius) {
             super();
@@ -304,10 +291,10 @@ public class CircleProgressView extends AppCompatImageView {
 
         private void updateRadialGradient(int diameter) {
             mShadowPaint.setShader(new RadialGradient(
-                    diameter  * .5f,
-                    diameter  * .5f,
+                    diameter * .5f,
+                    diameter * .5f,
                     mShadowRadius,
-                    new int[] { FILL_SHADOW_COLOR, Color.TRANSPARENT },
+                    new int[]{FILL_SHADOW_COLOR, Color.TRANSPARENT},
                     null,
                     Shader.TileMode.CLAMP));
         }
@@ -318,6 +305,7 @@ public class CircleProgressView extends AppCompatImageView {
         @Override
         public void onAnimationStart(Animation animation) {
         }
+
         @Override
         public void onAnimationRepeat(Animation animation) {
         }

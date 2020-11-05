@@ -19,7 +19,7 @@ public class StoredUser implements LocalData.Payload {
         su.id = c.getLong(UserDb.COLUMN_IDX_ID);
 
         user.uid = c.getString(UserDb.COLUMN_IDX_UID);
-        if(!c.isNull(UserDb.COLUMN_IDX_UPDATED)) {
+        if (!c.isNull(UserDb.COLUMN_IDX_UPDATED)) {
             user.updated = new Date(c.getLong(UserDb.COLUMN_IDX_UPDATED));
         } else {
             user.updated = null;

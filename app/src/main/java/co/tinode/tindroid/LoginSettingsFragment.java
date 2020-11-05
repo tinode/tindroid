@@ -67,7 +67,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
         switch (preference.getKey()) {
             case "pref_wireTransport":
                 ListPreference listPreference = (ListPreference) preference;
-                int prefIndex = listPreference.findIndexOfValue(sharedPreferences.getString(key,null));
+                int prefIndex = listPreference.findIndexOfValue(sharedPreferences.getString(key, null));
                 if (prefIndex >= 0) {
                     preference.setSummary(getString(R.string.settings_wire_explained,
                             listPreference.getEntries()[prefIndex]));

@@ -40,11 +40,6 @@ public class MessageDb implements BaseColumns {
     static final String TABLE_NAME = "messages";
 
     /**
-     * Content URI for retrieving messages (content://co.tinode.tindroid/messages)
-     */
-    static final Uri CONTENT_URI = Uri.withAppendedPath(BaseDb.BASE_CONTENT_URI, TABLE_NAME);
-
-    /**
      * Topic ID, references topics._ID
      */
     static final String COLUMN_NAME_TOPIC_ID = "topic_id";
@@ -641,9 +636,9 @@ public class MessageDb implements BaseColumns {
     public static class Loader extends CursorLoader {
         SQLiteDatabase mDb;
 
-        private long topicId;
-        private int pageCount;
-        private int pageSize;
+        private final long topicId;
+        private final int pageCount;
+        private final int pageSize;
 
         public Loader(Context context, String topic, int pageCount, int pageSize) {
             super(context);

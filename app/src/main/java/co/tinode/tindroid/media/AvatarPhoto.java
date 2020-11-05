@@ -29,7 +29,7 @@ public class AvatarPhoto implements Serializable {
         serializeBitmap();
     }
 
-    public boolean constructBitmap() {
+    public void constructBitmap() {
         if (data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
             if (bmp != null) {
@@ -40,7 +40,6 @@ public class AvatarPhoto implements Serializable {
                 }
             }
         }
-        return mImage != null;
     }
 
     public Bitmap getBitmap() {

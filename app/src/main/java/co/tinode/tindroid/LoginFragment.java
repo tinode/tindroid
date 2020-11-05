@@ -76,6 +76,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     /**
      * Either [Signin] or [Forgot password] pressed.
+     *
      * @param v ignored
      */
     public void onClick(View v) {
@@ -110,7 +111,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
         final Tinode tinode = Cache.getTinode();
-            // This is called on the websocket thread.
+        // This is called on the websocket thread.
         tinode.connect(hostName, tls, false)
                 .thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
@@ -134,11 +135,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 // msg could be null if earlier login has succeeded.
                                 if (msg != null && msg.ctrl.code >= 300 &&
                                         msg.ctrl.text.contains("validate credentials")) {
-                                    parent.runOnUiThread(new Runnable() {
-                                        public void run() {
-                                            signIn.setEnabled(true);
-                                            parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
-                                        }
+                                    parent.runOnUiThread(() -> {
+                                        signIn.setEnabled(true);
+                                        parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
                                     });
                                 } else {
                                     tinode.setAutoLoginToken(tinode.getAuthToken());

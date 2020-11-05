@@ -20,9 +20,7 @@ import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-public class PasswordResetFragment extends Fragment  implements View.OnClickListener{
-    private static final String TAG = "PasswordResetFragment";
-
+public class PasswordResetFragment extends Fragment implements View.OnClickListener {
     private static final String ARG_KEY = "method";
 
     public PasswordResetFragment() {
@@ -51,12 +49,7 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
 
         View fragment = inflater.inflate(R.layout.fragment_pass_reset, container, false);
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
-        fragment.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
-            }
-        });
+        fragment.findViewById(R.id.cancel).setOnClickListener(v -> parent.showFragment(LoginActivity.FRAGMENT_LOGIN));
 
         return fragment;
     }
@@ -97,30 +90,30 @@ public class PasswordResetFragment extends Fragment  implements View.OnClickList
         final Tinode tinode = Cache.getTinode();
         Cache.getTinode().connect(hostName, tls, false)
                 .thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            return tinode.requestResetSecret("basic", method, value);
-                        }
-                    })
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                return tinode.requestResetSecret("basic", method, value);
+                            }
+                        })
                 .thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
-                            parent.reportError(null, confirm, 0, R.string.password_reset_message_sent);
-                            parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
-                            return null;
-                        }
-                    })
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                parent.reportError(null, confirm, 0, R.string.password_reset_message_sent);
+                                parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
+                                return null;
+                            }
+                        })
                 .thenCatch(
-                    new PromisedReply.FailureListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onFailure(Exception err) {
-                            // Something went wrong.
-                            parent.reportError(err, confirm, R.id.response, R.string.invalid_or_unknown_credential);
-                            return null;
-                        }
-                    });
+                        new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(Exception err) {
+                                // Something went wrong.
+                                parent.reportError(err, confirm, R.id.response, R.string.invalid_or_unknown_credential);
+                                return null;
+                            }
+                        });
     }
 }
 

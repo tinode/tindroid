@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -30,7 +29,7 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 public class TopicPermissionsFragment extends Fragment {
 
-    private static final String TAG = "TopicPermissionsFragment";
+    private static final String TAG = "TopicPermissionsFrag";
 
     private ComTopic<VxCard> mTopic;
 
@@ -55,51 +54,31 @@ public class TopicPermissionsFragment extends Fragment {
 
         // Set up listeners
 
-        view.findViewById(R.id.permissionsSingle).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "O");
-            }
-        });
+                        UiUtils.ACTION_UPDATE_SELF_SUB, "O"));
 
-        view.findViewById(R.id.authPermissions).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.authPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_AUTH, "O");
-            }
-        });
+                        UiUtils.ACTION_UPDATE_AUTH, "O"));
 
-        view.findViewById(R.id.anonPermissions).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.anonPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_ANON, "O");
-            }
-        });
+                        UiUtils.ACTION_UPDATE_ANON, "O"));
 
-        view.findViewById(R.id.userOne).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.userOne).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "ASDO");
-            }
-        });
+                        UiUtils.ACTION_UPDATE_SELF_SUB, "ASDO"));
 
-        view.findViewById(R.id.userTwo).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        view.findViewById(R.id.userTwo).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getSubscription(mTopic.getName()).acs.getGiven(),
                         mTopic.getName(),
-                        UiUtils.ACTION_UPDATE_SUB, "ASDO");
-            }
-        });
+                        UiUtils.ACTION_UPDATE_SUB, "ASDO"));
     }
 
-        @Override
+    @Override
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onResume() {
@@ -132,12 +111,7 @@ public class TopicPermissionsFragment extends Fragment {
             if (mTopic.isOwner()) {
                 tagManager.setVisibility(View.VISIBLE);
                 tagManager.findViewById(R.id.buttonManageTags)
-                        .setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        showEditTags();
-                    }
-                });
+                        .setOnClickListener(view -> showEditTags());
 
                 LayoutInflater inflater = LayoutInflater.from(activity);
                 FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
@@ -187,22 +161,19 @@ public class TopicPermissionsFragment extends Fragment {
         String tags = tagArray != null ? TextUtils.join(", ", mTopic.getTags()) : "";
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        @SuppressLint("InflateParams")
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
+        @SuppressLint("InflateParams") final View editor =
+                LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
         builder.setView(editor).setTitle(R.string.tags_management);
 
         final EditText tagsEditor = editor.findViewById(R.id.editTags);
         tagsEditor.setText(tags);
         tagsEditor.setSelection(tags.length());
         builder
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String[] tags = UiUtils.parseTags(tagsEditor.getText().toString());
-                        // noinspection unchecked
-                        mTopic.setMeta(new MsgSetMeta(tags))
-                                .thenCatch(new UiUtils.ToastFailureListener(activity));
-                    }
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
+                    // noinspection unchecked
+                    mTopic.setMeta(new MsgSetMeta(tags1))
+                            .thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();

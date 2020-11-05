@@ -83,7 +83,7 @@ public class EditMembersFragment extends Fragment {
             public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
                 if (!mContactsAdapter.isSelected(unique)) {
                     mSelectedAdapter.append(unique, (String) holder.text1.getText(),
-                            holder.getIconDrawable(), true);
+                            holder.getIconDrawable());
                     mContactsAdapter.toggleSelected(unique);
                 } else {
                     if (mSelectedAdapter.remove(unique)) {

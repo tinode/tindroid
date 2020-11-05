@@ -8,7 +8,6 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -109,10 +108,9 @@ public class UiUtils {
 
     // Maximum length of user name or topic title.
     static final int MAX_TITLE_LENGTH = 60;
-
+    static final int MAX_BITMAP_SIZE = 1024;
     private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
-    static final int MAX_BITMAP_SIZE = 1024;
     private static final int MIN_TAG_LENGTH = 4;
 
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
@@ -138,29 +136,26 @@ public class UiUtils {
             return;
         }
 
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!TextUtils.isEmpty(topicName)) {
-                    Boolean showOnline = online;
-                    final String title = pub != null && pub.fn != null ?
-                            pub.fn : activity.getString(R.string.placeholder_contact_title);
-                    toolbar.setTitle(title);
-                    if (ComTopic.isChannel(topicName)) {
-                        showOnline = null;
-                        toolbar.setSubtitle(R.string.channel);
-                    } else if (lastSeen != null && !online) {
-                        toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
-                    } else {
-                        toolbar.setSubtitle(null);
-                    }
-                    constructToolbarLogo(activity, pub != null ? pub.getBitmap() : null,
-                            pub != null ? pub.fn  : null, topicName, showOnline);
+        activity.runOnUiThread(() -> {
+            if (!TextUtils.isEmpty(topicName)) {
+                Boolean showOnline = online;
+                final String title = pub != null && pub.fn != null ?
+                        pub.fn : activity.getString(R.string.placeholder_contact_title);
+                toolbar.setTitle(title);
+                if (ComTopic.isChannel(topicName)) {
+                    showOnline = null;
+                    toolbar.setSubtitle(R.string.channel);
+                } else if (lastSeen != null && !online) {
+                    toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
                 } else {
-                    toolbar.setTitle(R.string.app_name);
                     toolbar.setSubtitle(null);
-                    toolbar.setLogo(null);
                 }
+                constructToolbarLogo(activity, pub != null ? pub.getBitmap() : null,
+                        pub != null ? pub.fn : null, topicName, showOnline);
+            } else {
+                toolbar.setTitle(R.string.app_name);
+                toolbar.setSubtitle(null);
+                toolbar.setLogo(null);
             }
         });
     }
@@ -270,12 +265,9 @@ public class UiUtils {
                     return;
                 }
 
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        typing.setVisible(false, true);
-                        typing.setAlpha(0);
-                    }
+                activity.runOnUiThread(() -> {
+                    typing.setVisible(false, true);
+                    typing.setAlpha(0);
                 });
             }
         }, duration);
@@ -314,11 +306,7 @@ public class UiUtils {
      */
     static void onLoginSuccess(Activity activity, final Button button, final String uid) {
         if (button != null) {
-            activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    button.setEnabled(true);
-                }
-            });
+            activity.runOnUiThread(() -> button.setEnabled(true));
         }
 
         Account acc = Utils.getSavedAccount(AccountManager.get(activity), uid);
@@ -362,12 +350,7 @@ public class UiUtils {
             return;
         }
 
-        Collection<ComTopic<VxCard>> topics = Cache.getTinode().getFilteredTopics(new Tinode.TopicFilter() {
-            @Override
-            public boolean isIncluded(Topic topic) {
-                return topic.isP2PType();
-            }
-        });
+        Collection<ComTopic<VxCard>> topics = Cache.getTinode().getFilteredTopics(Topic::isP2PType);
         ContactsManager.updateContacts(activity, acc, topics);
 
         TindroidApp.startWatchingContacts(activity, acc);
@@ -399,21 +382,18 @@ public class UiUtils {
             return;
         }
 
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                final Toolbar toolbar = activity.findViewById(R.id.toolbar);
-                if (toolbar != null) {
-                    Menu menu = toolbar.getMenu();
-                    if (menu != null) {
-                        menu.setGroupVisible(R.id.offline, !online);
-                    } else {
-                        Log.i(TAG, "Toolbar menu is null");
-                    }
-                    View line = activity.findViewById(R.id.offline_indicator);
-                    if (line != null) {
-                        line.setVisibility(online ? View.INVISIBLE : View.VISIBLE);
-                    }
+        activity.runOnUiThread(() -> {
+            final Toolbar toolbar = activity.findViewById(R.id.toolbar);
+            if (toolbar != null) {
+                Menu menu = toolbar.getMenu();
+                if (menu != null) {
+                    menu.setGroupVisible(R.id.offline, !online);
+                } else {
+                    Log.i(TAG, "Toolbar menu is null");
+                }
+                View line = activity.findViewById(R.id.offline_indicator);
+                if (line != null) {
+                    line.setVisibility(online ? View.INVISIBLE : View.VISIBLE);
                 }
             }
         });
@@ -487,7 +467,7 @@ public class UiUtils {
     /**
      * Scale bitmap down to be under certain liner dimensions but no less than by the given amount.
      *
-     * @param bmp bitmap to scale.
+     * @param bmp     bitmap to scale.
      * @param atLeast shrink bitmap by at least this amount (>1). Values <=1 are ignored.
      * @return scaled bitmap or original, it it does not need ot be scaled.
      */
@@ -520,8 +500,6 @@ public class UiUtils {
     static Bitmap rotateBitmap(@NonNull Bitmap bmp, int orientation) {
         Matrix matrix = new Matrix();
         switch (orientation) {
-            case ExifInterface.ORIENTATION_NORMAL:
-                return bmp;
             case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
                 matrix.setScale(-1, 1);
                 break;
@@ -546,6 +524,7 @@ public class UiUtils {
             case ExifInterface.ORIENTATION_ROTATE_270:
                 matrix.setRotate(-90);
                 break;
+            case ExifInterface.ORIENTATION_NORMAL:
             default:
                 return bmp;
         }
@@ -832,12 +811,9 @@ public class UiUtils {
                 .setView(editor)
                 .setTitle(R.string.edit_permissions);
 
-        View.OnClickListener checkListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                boolean checked = !((CheckedTextView) view).isChecked();
-                ((CheckedTextView) view).setChecked(checked);
-            }
+        View.OnClickListener checkListener = view -> {
+            boolean checked = !((CheckedTextView) view).isChecked();
+            ((CheckedTextView) view).setChecked(checked);
         };
 
         for (int i = 0; i < "JRWPASDO".length(); i++) {
@@ -855,68 +831,62 @@ public class UiUtils {
             editor.addView(check, editor.getChildCount());
         }
 
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                StringBuilder newAcsStr = new StringBuilder();
-                for (int i = 0; i < editor.getChildCount(); i++) {
-                    CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
-                    if (check.isChecked()) {
-                        newAcsStr.append(check.getTag());
-                    }
+        builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+            StringBuilder newAcsStr = new StringBuilder();
+            for (int i = 0; i < editor.getChildCount(); i++) {
+                CheckedTextView check = (CheckedTextView) editor.getChildAt(i);
+                if (check.isChecked()) {
+                    newAcsStr.append(check.getTag());
                 }
-                if (newAcsStr.length() == 0) {
-                    newAcsStr.append('N');
-                }
+            }
+            if (newAcsStr.length() == 0) {
+                newAcsStr.append('N');
+            }
 
-                PromisedReply<ServerMessage> reply = null;
-                switch (what) {
-                    case ACTION_UPDATE_SELF_SUB:
-                        //noinspection unchecked
-                        reply = topic.updateMode(null, newAcsStr.toString());
-                        break;
-                    case ACTION_UPDATE_SUB:
-                        //noinspection unchecked
-                        reply = topic.updateMode(uid, newAcsStr.toString());
-                        break;
-                    case ACTION_UPDATE_AUTH:
-                        //noinspection unchecked
-                        reply = topic.updateDefAcs(newAcsStr.toString(), null);
-                        break;
-                    case ACTION_UPDATE_ANON:
-                        //noinspection unchecked
-                        reply = topic.updateDefAcs(null, newAcsStr.toString());
-                        break;
-                    default:
-                        Log.w(TAG, "Unknown action " + what);
-                }
+            PromisedReply<ServerMessage> reply = null;
+            switch (what) {
+                case ACTION_UPDATE_SELF_SUB:
+                    //noinspection unchecked
+                    reply = topic.updateMode(null, newAcsStr.toString());
+                    break;
+                case ACTION_UPDATE_SUB:
+                    //noinspection unchecked
+                    reply = topic.updateMode(uid, newAcsStr.toString());
+                    break;
+                case ACTION_UPDATE_AUTH:
+                    //noinspection unchecked
+                    reply = topic.updateDefAcs(newAcsStr.toString(), null);
+                    break;
+                case ACTION_UPDATE_ANON:
+                    //noinspection unchecked
+                    reply = topic.updateDefAcs(null, newAcsStr.toString());
+                    break;
+                default:
+                    Log.w(TAG, "Unknown action " + what);
+            }
 
-                if (reply != null) {
-                    reply.thenApply(
-                            new PromisedReply.SuccessListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+            if (reply != null) {
+                reply.thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                return null;
+                            }
+                        },
+                        new PromisedReply.FailureListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                                if (activity.isFinishing() || activity.isDestroyed()) {
                                     return null;
                                 }
-                            },
-                            new PromisedReply.FailureListener<ServerMessage>() {
-                                @Override
-                                public PromisedReply<ServerMessage> onFailure(final Exception err) {
-                                    if (activity.isFinishing() || activity.isDestroyed()) {
-                                        return null;
-                                    }
 
-                                    activity.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Log.w(TAG, "Failed", err);
-                                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
-                                    return null;
-                                }
-                            });
-                }
+                                activity.runOnUiThread(() -> {
+                                    Log.w(TAG, "Failed", err);
+                                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                });
+                                return null;
+                            }
+                        });
             }
         });
         builder.setNegativeButton(android.R.string.cancel, null);
@@ -945,11 +915,6 @@ public class UiUtils {
 
         pub.setBitmap(scaleSquareBitmap(bmp));
         topic.setDescription(pub, null).thenCatch(new ToastFailureListener(activity));
-    }
-
-    // Provides callback for when title/subtitle get successfully updated.
-    interface TitleUpdateCallbackInterface {
-        void onTitleUpdated();
     }
 
     static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTitle(final Activity activity,
@@ -1007,24 +972,24 @@ public class UiUtils {
 
         // If connection exists attachMeTopic returns resolved promise.
         Cache.attachMeTopic(l).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        Log.w(TAG, "Error subscribing to 'me' topic", err);
-                        l.onSubscriptionError(err);
-                        if (err instanceof ServerResponseException) {
-                            ServerResponseException sre = (ServerResponseException) err;
-                            int errCode = sre.getCode();
-                            if (errCode == 401 || errCode == 403 || errCode == 404) {
-                                doLogout(activity);
-                                activity.finish();
-                            } else if (errCode == 502 && "cluster unreachable".equals(sre.getMessage())) {
-                                // Must reset connection.
-                                Cache.getTinode().reconnectNow(false,true, false);
-                            }
-                        }
-                        return null;
+            @Override
+            public PromisedReply<ServerMessage> onFailure(Exception err) {
+                Log.w(TAG, "Error subscribing to 'me' topic", err);
+                l.onSubscriptionError(err);
+                if (err instanceof ServerResponseException) {
+                    ServerResponseException sre = (ServerResponseException) err;
+                    int errCode = sre.getCode();
+                    if (errCode == 401 || errCode == 403 || errCode == 404) {
+                        doLogout(activity);
+                        activity.finish();
+                    } else if (errCode == 502 && "cluster unreachable".equals(sre.getMessage())) {
+                        // Must reset connection.
+                        Cache.getTinode().reconnectNow(false, true, false);
                     }
-                });
+                }
+                return null;
+            }
+        });
 
         return true;
     }
@@ -1059,7 +1024,7 @@ public class UiUtils {
 
             tag = tag.trim();
             // Remove possible quotes.
-            if (tag.length() > 1 && tag.charAt(0) == '\"' && tag.charAt(tag.length()-1) == '\"') {
+            if (tag.length() > 1 && tag.charAt(0) == '\"' && tag.charAt(tag.length() - 1) == '\"') {
                 tag = tag.substring(1, tag.length() - 1).trim();
             }
             if (tag.length() >= MIN_TAG_LENGTH) {
@@ -1110,12 +1075,12 @@ public class UiUtils {
 
                         // Possible locations of downloads directory.
                         String[] contentUriPrefixes = new String[]{
-                            "content://downloads/public_downloads",
-                            "content://downloads/my_downloads",
-                            "content://downloads/all_downloads"
+                                "content://downloads/public_downloads",
+                                "content://downloads/my_downloads",
+                                "content://downloads/all_downloads"
                         };
 
-                        for (String uriPrefix: contentUriPrefixes) {
+                        for (String uriPrefix : contentUriPrefixes) {
                             Uri contentUri = ContentUris.withAppendedId(Uri.parse(uriPrefix), id);
                             String path = getResolverData(context, contentUri, null, null);
                             if (path != null) {
@@ -1230,6 +1195,15 @@ public class UiUtils {
         return null;
     }
 
+    // Provides callback for when title/subtitle get successfully updated.
+    interface TitleUpdateCallbackInterface {
+        void onTitleUpdated();
+    }
+
+    interface ProgressIndicator {
+        void toggleProgressIndicator(boolean on);
+    }
+
     static class MeEventListener extends MeTopic.MeListener<VxCard> {
         // Called on failed subscription request.
         public void onSubscriptionError(Exception ex) {
@@ -1237,7 +1211,7 @@ public class UiUtils {
     }
 
     static class EventListener extends Tinode.EventListener {
-        private Activity mActivity;
+        private final Activity mActivity;
         private Boolean mConnected;
 
         EventListener(Activity owner, Boolean connected) {
@@ -1286,7 +1260,7 @@ public class UiUtils {
     }
 
     static class ToastFailureListener extends PromisedReply.FailureListener<ServerMessage> {
-        private Activity mActivity;
+        private final Activity mActivity;
 
         ToastFailureListener(Activity activity) {
             mActivity = activity;
@@ -1298,21 +1272,14 @@ public class UiUtils {
                 return null;
             }
             Log.d(TAG, mActivity.getLocalClassName() + ": promise rejected", err);
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (err instanceof NotConnectedException) {
-                        Toast.makeText(mActivity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                    }
+            mActivity.runOnUiThread(() -> {
+                if (err instanceof NotConnectedException) {
+                    Toast.makeText(mActivity, R.string.no_connection, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                 }
             });
             return null;
         }
-    }
-
-    interface ProgressIndicator {
-        void toggleProgressIndicator(boolean on);
     }
 }

@@ -15,9 +15,6 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 
 public class UserDb implements BaseColumns {
-    @SuppressWarnings("unused")
-    private static final String TAG = "UserDb";
-
     /**
      * The name of the main table.
      */
@@ -46,17 +43,14 @@ public class UserDb implements BaseColumns {
      * Public user description, (what's shown in 'me' topic), serialized as TEXT
      */
     static final String COLUMN_NAME_PUBLIC = "pub";
-
     // Pseudo-UID for messages with null From.
     static final String UID_NULL = "none";
-
     static final int COLUMN_IDX_ID = 0;
     static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_UID = 2;
     static final int COLUMN_IDX_UPDATED = 3;
     static final int COLUMN_IDX_DELETED = 4;
     static final int COLUMN_IDX_PUBLIC = 5;
-
     /**
      * SQL statement to create Messages table
      */
@@ -76,7 +70,6 @@ public class UserDb implements BaseColumns {
             "CREATE UNIQUE INDEX " + INDEX_NAME +
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_ACCOUNT_ID + "," + COLUMN_NAME_UID + ")";
-
     /**
      * SQL statement to drop the table.
      */
@@ -178,7 +171,7 @@ public class UserDb implements BaseColumns {
     /**
      * Given UID, get it's database _id
      *
-     * @param db database
+     * @param db  database
      * @param uid UID
      * @return _id of the user
      */

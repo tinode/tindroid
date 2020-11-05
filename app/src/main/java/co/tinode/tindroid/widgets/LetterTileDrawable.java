@@ -22,23 +22,13 @@ import co.tinode.tindroid.R;
  * com/android/contacts/common/lettertiles/LetterTileDrawable.java
  */
 public class LetterTileDrawable extends Drawable {
-    private final String TAG = "LetterTileDrawable";
-
-    /**
-     * Contact type constants
-     */
-    public enum ContactType {
-        PERSON, GROUP
-    }
     private static final ContactType TYPE_DEFAULT = ContactType.PERSON;
-
     /**
      * Reusable components to avoid new allocations
      */
     private static final Paint sPaint = new Paint();
     private static final Rect sRect = new Rect();
     private static final char[] sFirstChar = new char[1];
-
     private static final int INTRINSIC_SIZE = 128;
     /**
      * Letter tile
@@ -51,17 +41,14 @@ public class LetterTileDrawable extends Drawable {
     private static float sLetterToTileRatio;
     private static Bitmap DEFAULT_PERSON_AVATAR;
     private static Bitmap DEFAULT_GROUP_AVATAR;
-
     private final Paint mPaint;
     private ContactType mContactType = TYPE_DEFAULT;
     private float mScale = 0.7f;
     private float mOffset = 0.0f;
     private boolean mIsCircle = true;
-
     private int mColor;
     private Character mLetter = null;
     private int mHashCode = 0;
-
     public LetterTileDrawable(final Context context) {
         Resources res = context.getResources();
         if (sColorsLight == null) {
@@ -80,6 +67,38 @@ public class LetterTileDrawable extends Drawable {
         mPaint.setFilterBitmap(true);
         mPaint.setDither(true);
         mColor = sDefaultColor;
+    }
+
+    /**
+     * Load vector drawable from the given resource id, then convert drawable to bitmap.
+     *
+     * @param context    context
+     * @param drawableId vector drawable resource id
+     * @return bitmap extracted from the drawable.
+     */
+    private static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (drawable == null) {
+            throw new IllegalStateException("getBitmapFromVectorDrawable failed: null drawable");
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
+    }
+
+    private static Bitmap getBitmapForContactType(ContactType contactType) {
+        switch (contactType) {
+            case PERSON:
+            default:
+                return DEFAULT_PERSON_AVATAR;
+            case GROUP:
+                return DEFAULT_GROUP_AVATAR;
+        }
     }
 
     @Override
@@ -125,38 +144,6 @@ public class LetterTileDrawable extends Drawable {
         setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         draw(canvas);
         return bmp;
-    }
-
-    /**
-     * Load vector drawable from the given resource id, then convert drawable to bitmap.
-     *
-     * @param context context
-     * @param drawableId vector drawable resource id
-     * @return bitmap extracted from the drawable.
-     */
-    private static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
-        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
-        if (drawable == null) {
-            throw new IllegalStateException("getBitmapFromVectorDrawable failed: null drawable");
-        }
-
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-
-        return bitmap;
-    }
-
-    private static Bitmap getBitmapForContactType(ContactType contactType) {
-        switch (contactType) {
-            case PERSON:
-            default:
-                return DEFAULT_PERSON_AVATAR;
-            case GROUP:
-                return DEFAULT_GROUP_AVATAR;
-        }
     }
 
     public int getColor() {
@@ -215,6 +202,7 @@ public class LetterTileDrawable extends Drawable {
 
     /**
      * Change type of the tile: person or group.
+     *
      * @param ct type of icon to use when the tile has no letter.
      * @return this
      */
@@ -226,6 +214,7 @@ public class LetterTileDrawable extends Drawable {
 
     /**
      * Change shape of the tile: circular (default) or rectangular.
+     *
      * @param isCircle true to make tile circular, false for rectangular.
      * @return this
      */
@@ -233,8 +222,6 @@ public class LetterTileDrawable extends Drawable {
         mIsCircle = isCircle;
         return this;
     }
-
-    // Private methods.
 
     /**
      * Draw the bitmap onto the canvas at the current bounds taking into account the current scale.
@@ -256,6 +243,8 @@ public class LetterTileDrawable extends Drawable {
 
         canvas.drawBitmap(bitmap, sRect, destRect, mPaint);
     }
+
+    // Private methods.
 
     private void drawLetterTile(final Canvas canvas) {
         // Draw background color.
@@ -305,5 +294,12 @@ public class LetterTileDrawable extends Drawable {
         TypedArray colors = mContactType == ContactType.PERSON ? sColorsDark : sColorsLight;
         final int color = mHashCode % colors.length();
         return colors.getColor(color, sDefaultColor);
+    }
+
+    /**
+     * Contact type constants
+     */
+    public enum ContactType {
+        PERSON, GROUP
     }
 }

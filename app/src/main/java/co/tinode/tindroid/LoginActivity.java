@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -25,49 +24,45 @@ import co.tinode.tindroid.db.BaseDb;
 
 /**
  * LoginActivity is a FrameLayout which switches between fragments:
- *  - LoginFragment
- *  - SignUpFragment
- *  - LoginSettingsFragment
- *  - PasswordResetFragment
- *  - CredentialsFragment
- *
- *  1. If connection to the server is already established and authenticated, launch ContactsActivity
- *  2. If no connection to the server, get the last used account:
- *  3.1 Connect to server
- *  3.1.1 If connection is successful, authenticate with the token received from the account
- *  3.1.1.1 If authentication is successful go to 1.
- *  3.1.1.2 If not, go to 4.
- *  3.1.2 If connection is not successful
- *  3.1.2 Show offline indicator
- *  3.1.3 Access locally stored account.
- *  3.1.3.1 If locally stored account is found, launch ContactsActivity
- *  3.1.3.2 If not found, go to 4.
- *  4. If account not found, show login form
- *
+ * - LoginFragment
+ * - SignUpFragment
+ * - LoginSettingsFragment
+ * - PasswordResetFragment
+ * - CredentialsFragment
+ * <p>
+ * 1. If connection to the server is already established and authenticated, launch ContactsActivity
+ * 2. If no connection to the server, get the last used account:
+ * 3.1 Connect to server
+ * 3.1.1 If connection is successful, authenticate with the token received from the account
+ * 3.1.1.1 If authentication is successful go to 1.
+ * 3.1.1.2 If not, go to 4.
+ * 3.1.2 If connection is not successful
+ * 3.1.2 Show offline indicator
+ * 3.1.3 Access locally stored account.
+ * 3.1.3.1 If locally stored account is found, launch ContactsActivity
+ * 3.1.3.2 If not found, go to 4.
+ * 4. If account not found, show login form
  */
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "LoginActivity";
-
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
-
     static final String FRAGMENT_LOGIN = "login";
     static final String FRAGMENT_SIGNUP = "signup";
     static final String FRAGMENT_SETTINGS = "settings";
     static final String FRAGMENT_RESET = "reset";
     static final String FRAGMENT_CREDENTIALS = "cred";
-
     static final String PREFS_LAST_LOGIN = "pref_lastLogin";
-
-    private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
-    private Bundle mResultBundle = null;
+    private static final String TAG = "LoginActivity";
 
     static {
         // Otherwise crash on API 21.
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
+
+    private final Bundle mResultBundle = null;
+    private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,12 +76,7 @@ public class LoginActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         // Handle clicks on the '<-' arrow in the toolbar.
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getSupportFragmentManager().popBackStack();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> getSupportFragmentManager().popBackStack());
 
         BaseDb db = BaseDb.getInstance();
         if (db.isReady()) {
@@ -128,17 +118,15 @@ public class LoginActivity extends AppCompatActivity {
                 (!TextUtils.isEmpty(errMessage) ? (": " + errMessage + "") : "");
         Log.i(TAG, finalMessage, err);
 
-        runOnUiThread(new Runnable() {
-            public void run() {
-                if (button != null) {
-                    button.setEnabled(true);
-                }
-                EditText field = attachTo != 0 ? (EditText) findViewById(attachTo) : null;
-                if (field != null) {
-                    field.setError(finalMessage);
-                } else {
-                    Toast.makeText(LoginActivity.this, finalMessage, Toast.LENGTH_LONG).show();
-                }
+        runOnUiThread(() -> {
+            if (button != null) {
+                button.setEnabled(true);
+            }
+            EditText field = attachTo != 0 ? (EditText) findViewById(attachTo) : null;
+            if (field != null) {
+                field.setError(finalMessage);
+            } else {
+                Toast.makeText(LoginActivity.this, finalMessage, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -149,25 +137,20 @@ public class LoginActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
-
-        switch (id) {
-            case R.id.action_settings: {
-                showFragment(FRAGMENT_SETTINGS);
-                return true;
-            }
-            case R.id.action_signup: {
-                showFragment(FRAGMENT_SIGNUP);
-                return true;
-            }
-            case R.id.action_about:
-                DialogFragment about = new AboutDialogFragment();
-                about.show(getSupportFragmentManager(), "about");
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
+        if (id == R.id.action_settings) {
+            showFragment(FRAGMENT_SETTINGS);
+            return true;
+        } else if (id == R.id.action_signup) {
+            showFragment(FRAGMENT_SIGNUP);
+            return true;
+        } else if (id == R.id.action_about) {
+            DialogFragment about = new AboutDialogFragment();
+            about.show(getSupportFragmentManager(), "about");
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     void showFragment(String tag) {

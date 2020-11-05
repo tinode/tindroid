@@ -12,7 +12,6 @@ import android.view.Menu;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -34,10 +33,7 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 public class ChatsActivity extends AppCompatActivity implements UiUtils.ProgressIndicator {
 
-    private static final String TAG = "ContactsActivity";
-
     static final String TAG_FRAGMENT_NAME = "fragment";
-
     static final String FRAGMENT_CHATLIST = "contacts";
     static final String FRAGMENT_ACCOUNT_INFO = "account_info";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
@@ -48,7 +44,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
     static final String FRAGMENT_ACC_ABOUT = "acc_about";
     static final String FRAGMENT_ARCHIVE = "archive";
     static final String FRAGMENT_BANNED = "banned";
-
+    private static final String TAG = "ContactsActivity";
     private ContactsEventListener mTinodeListener = null;
     private MeListener mMeTopicListener = null;
     private MeTopic<VxCard> mMeTopic = null;
@@ -61,7 +57,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         setContentView(R.layout.activity_contacts);
 
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        setSupportActionBar(findViewById(R.id.toolbar));
 
         Fragment fragment = new ChatsFragment();
         getSupportFragmentManager().beginTransaction()
@@ -178,7 +174,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
                     fragment = new ChatsFragment();
                     break;
                 default:
-                    throw new IllegalArgumentException("Failed to create fragment: unknown tag "+tag);
+                    throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);
             }
         }
 
@@ -206,14 +202,11 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
     // This is called on Websocket thread.
     private class MeListener extends UiUtils.MeEventListener {
         private void updateVisibleInfoFragment() {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    List<Fragment> fragments = getSupportFragmentManager().getFragments();
-                    for(Fragment f : fragments) {
-                        if (f != null && f.isVisible() && f instanceof FormUpdatable) {
-                            ((FormUpdatable) f).updateFormValues(ChatsActivity.this, mMeTopic);
-                        }
+            runOnUiThread(() -> {
+                List<Fragment> fragments = getSupportFragmentManager().getFragments();
+                for (Fragment f : fragments) {
+                    if (f != null && f.isVisible() && f instanceof FormUpdatable) {
+                        ((FormUpdatable) f).updateFormValues(ChatsActivity.this, mMeTopic);
                     }
                 }
             });
@@ -235,7 +228,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         }
 
         @Override
-        public void onMetaSub(final Subscription<VxCard,PrivateType> sub) {
+        public void onMetaSub(final Subscription<VxCard, PrivateType> sub) {
             if (sub.deleted == null) {
                 if (sub.pub != null) {
                     sub.pub.constructBitmap();
@@ -260,7 +253,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         }
 
         @Override
-        public void onMetaDesc(final Description<VxCard,PrivateType> desc) {
+        public void onMetaDesc(final Description<VxCard, PrivateType> desc) {
             if (desc.pub != null) {
                 desc.pub.constructBitmap();
             }
@@ -275,13 +268,10 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         @Override
         public void onSubscriptionError(Exception ex) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                    if (fragment instanceof UiUtils.ProgressIndicator) {
-                        ((UiUtils.ProgressIndicator) fragment).toggleProgressIndicator(false);
-                    }
+            runOnUiThread(() -> {
+                Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+                if (fragment instanceof UiUtils.ProgressIndicator) {
+                    ((UiUtils.ProgressIndicator) fragment).toggleProgressIndicator(false);
                 }
             });
         }
@@ -297,7 +287,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         }
 
         @Override
-        public  void onCredUpdated(Credential[] cred) {
+        public void onCredUpdated(Credential[] cred) {
             updateVisibleInfoFragment();
         }
     }

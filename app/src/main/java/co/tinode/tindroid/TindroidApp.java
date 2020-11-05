@@ -71,6 +71,74 @@ public class TindroidApp extends Application implements LifecycleObserver {
         sContext = this;
     }
 
+    public static Context getAppContext() {
+        return sContext;
+    }
+
+    public static String getAppVersion() {
+        return sAppVersion;
+    }
+
+    public static int getAppBuild() {
+        return sAppBuild;
+    }
+
+    public static String getDefaultHostName(Context context) {
+        return context.getResources().getString(isEmulator() ?
+                R.string.emulator_host_name :
+                R.string.default_host_name);
+    }
+
+    public static boolean getDefaultTLS() {
+        return !isEmulator();
+    }
+
+    public static void retainTinodeCache(Tinode tinode) {
+        sTinodeCache = tinode;
+        sTinodeCache.setServer(sServerHost, sUseTLS);
+    }
+
+    // Detect if the code is running in an emulator.
+    // Used mostly for convenience to use correct server address i.e. 10.0.2.2:6060 vs sandbox.tinode.co and
+    // to enable/disable Crashlytics. It's OK if it's imprecise.
+    public static boolean isEmulator() {
+        return Build.FINGERPRINT.startsWith("sdk_gphone_x86")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT)
+                || Build.PRODUCT.startsWith("sdk")
+                || Build.PRODUCT.startsWith("vbox");
+    }
+
+    static synchronized void startWatchingContacts(Context context, Account acc) {
+        if (sContactsObserver == null) {
+            // Check if we have already obtained contacts permissions.
+            if (!UiUtils.isPermissionGranted(context, Manifest.permission.READ_CONTACTS)) {
+                // No permissions, can't set up contacts sync.
+                return;
+            }
+
+            // Create and start a new thread set up as a looper.
+            HandlerThread thread = new HandlerThread("ContactsObserverHandlerThread");
+            thread.start();
+
+            sContactsObserver = new ContactsObserver(acc, new Handler(thread.getLooper()));
+            // Observer which triggers sync when contacts change.
+            sContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI,
+                    true, sContactsObserver);
+        }
+    }
+
+    static synchronized void stopWatchingContacts() {
+        if (sContactsObserver != null) {
+            sContext.getContentResolver().unregisterContentObserver(sContactsObserver);
+        }
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -108,14 +176,14 @@ public class TindroidApp extends Application implements LifecycleObserver {
         NetworkRequest req = new NetworkRequest.
                 Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build();
         cm.registerNetworkCallback(req, new ConnectivityManager.NetworkCallback() {
-                @Override
-                public void onAvailable(@NonNull Network network) {
-                    super.onAvailable(network);
-                    if (sTinodeCache != null) {
-                        sTinodeCache.reconnectNow(true, false, false);
-                    }
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                super.onAvailable(network);
+                if (sTinodeCache != null) {
+                    sTinodeCache.reconnectNow(true, false, false);
                 }
-            });
+            }
+        });
 
         // Check if preferences already exist. If not, create them.
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -153,33 +221,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
         }
     }
 
-    public static Context getAppContext() {
-        return sContext;
-    }
-
-    public static String getAppVersion() {
-        return sAppVersion;
-    }
-
-    public static int getAppBuild() {
-        return sAppBuild;
-    }
-
-    public static String getDefaultHostName(Context context) {
-        return context.getResources().getString(isEmulator() ?
-                R.string.emulator_host_name :
-                R.string.default_host_name);
-    }
-
-    public static boolean getDefaultTLS() {
-        return !isEmulator();
-    }
-
-    public static void retainTinodeCache(Tinode tinode) {
-        sTinodeCache = tinode;
-        sTinodeCache.setServer(sServerHost, sUseTLS);
-    }
-
     private void createNotificationChannel() {
         // Create the NotificationChannel on API 26+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -191,22 +232,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
                 nm.createNotificationChannel(channel);
             }
         }
-    }
-
-    // Detect if the code is running in an emulator.
-    // Used mostly for convenience to use correct server address i.e. 10.0.2.2:6060 vs sandbox.tinode.co and
-    // to enable/disable Crashlytics. It's OK if it's imprecise.
-    public static boolean isEmulator() {
-        return Build.FINGERPRINT.startsWith("sdk_gphone_x86")
-                || Build.FINGERPRINT.startsWith("unknown")
-                || Build.MODEL.contains("google_sdk")
-                || Build.MODEL.contains("Emulator")
-                || Build.MODEL.contains("Android SDK built for x86")
-                || Build.MANUFACTURER.contains("Genymotion")
-                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
-                || "google_sdk".equals(Build.PRODUCT)
-                || Build.PRODUCT.startsWith("sdk")
-                || Build.PRODUCT.startsWith("vbox");
     }
 
     // Read saved account credentials and try to connect to server using them.
@@ -293,31 +318,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
                 UiUtils.doLogout(TindroidApp.this);
             }
             return null;
-        }
-    }
-
-    static synchronized void startWatchingContacts(Context context, Account acc) {
-        if (sContactsObserver == null) {
-            // Check if we have already obtained contacts permissions.
-            if (!UiUtils.isPermissionGranted(context, Manifest.permission.READ_CONTACTS)) {
-                // No permissions, can't set up contacts sync.
-                return;
-            }
-
-            // Create and start a new thread set up as a looper.
-            HandlerThread thread = new HandlerThread("ContactsObserverHandlerThread");
-            thread.start();
-
-            sContactsObserver = new ContactsObserver(acc, new Handler(thread.getLooper()));
-            // Observer which triggers sync when contacts change.
-            sContext.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI,
-                    true, sContactsObserver);
-        }
-    }
-
-    static synchronized void stopWatchingContacts() {
-        if (sContactsObserver != null) {
-            sContext.getContentResolver().unregisterContentObserver(sContactsObserver);
         }
     }
 }

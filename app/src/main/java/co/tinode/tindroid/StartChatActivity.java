@@ -3,7 +3,6 @@ package co.tinode.tindroid;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.View;
 
 import com.google.android.material.tabs.TabLayout;
 
@@ -21,9 +20,6 @@ import androidx.viewpager.widget.ViewPager;
  */
 public class StartChatActivity extends AppCompatActivity
         implements FindFragment.ReadContactsPermissionChecker {
-
-    @SuppressWarnings("unused")
-    private static final String TAG = "StartChatActivity";
 
     private static final int COUNT_OF_TABS = 3;
     private static final int TAB_SEARCH = 0;
@@ -43,14 +39,11 @@ public class StartChatActivity extends AppCompatActivity
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(StartChatActivity.this, ChatsActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(intent);
-                    finish();
-                }
+            toolbar.setNavigationOnClickListener(v -> {
+                Intent intent = new Intent(StartChatActivity.this, ChatsActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                finish();
             });
         }
 
@@ -73,10 +66,12 @@ public class StartChatActivity extends AppCompatActivity
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
         });
     }
 

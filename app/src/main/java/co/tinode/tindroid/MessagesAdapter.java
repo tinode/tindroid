@@ -104,22 +104,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private MessageActivity mActivity;
+    private final MessageActivity mActivity;
+    private final ActionMode.Callback mSelectionModeCallback;
+    private final SwipeRefreshLayout mRefresher;
+    private final MessageLoaderCallbacks mMessageLoaderCallback;
+    private final SpanClicker mSpanFormatterClicker;
     private RecyclerView mRecyclerView;
-
     private Cursor mCursor;
     private String mTopicName = null;
-    private ActionMode.Callback mSelectionModeCallback;
     private ActionMode mSelectionMode;
-
     private SparseBooleanArray mSelectedItems = null;
-
     private int mPagesToLoad;
-    private SwipeRefreshLayout mRefresher;
-
-    private MessageLoaderCallbacks mMessageLoaderCallback;
-
-    private SpanClicker mSpanFormatterClicker;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
@@ -161,24 +156,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             @Override
             public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
-                switch (menuItem.getItemId()) {
-                    case R.id.action_delete:
-                        sendDeleteMessages(getSelectedArray());
-                        return true;
-                    case R.id.action_copy:
-                        copyMessageText(getSelectedArray());
-                        return true;
-                    case R.id.action_send_now:
-                        // FIXME: implement resending now.
-                        Log.d(TAG, "Try re-sending selected item");
-                        return true;
-                    case R.id.action_view_details:
-                        // FIXME: implement viewing message details.
-                        Log.d(TAG, "Show message details");
-                        return true;
-                    default:
-                        break;
+                int id = menuItem.getItemId();
+                if (id == R.id.action_delete) {
+                    sendDeleteMessages(getSelectedArray());
+                    return true;
+                } else if (id == R.id.action_copy) {
+                    copyMessageText(getSelectedArray());
+                    return true;
+                } else if (id == R.id.action_send_now) {
+                    // FIXME: implement resending now.
+                    Log.d(TAG, "Try re-sending selected item");
+                    return true;
+                } else if (id == R.id.action_view_details) {
+                    // FIXME: implement viewing message details.
+                    Log.d(TAG, "Show message details");
+                    return true;
                 }
+
                 return false;
             }
         };
@@ -288,12 +282,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                 runLoader(false);
-                                mActivity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        updateSelectionMode();
-                                    }
-                                });
+                                mActivity.runOnUiThread(() -> updateSelectionMode());
                                 return null;
                             }
                         }, new UiUtils.ToastFailureListener(mActivity));
@@ -457,13 +446,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 // Show progress bar.
                 holder.mProgress.setVisibility(View.VISIBLE);
                 holder.mProgressInclude.setVisibility(View.VISIBLE);
-                holder.mCancelProgress.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (cancelUpload(msgId)) {
-                            holder.mProgress.setVisibility(View.GONE);
-                            holder.mProgressResult.setVisibility(View.VISIBLE);
-                        }
+                holder.mCancelProgress.setOnClickListener(v -> {
+                    if (cancelUpload(msgId)) {
+                        holder.mProgress.setVisibility(View.GONE);
+                        holder.mProgressResult.setVisibility(View.VISIBLE);
                     }
                 });
             } else if (uploadFailed) {
@@ -544,31 +530,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
         }
 
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
+        holder.itemView.setOnLongClickListener(v -> {
+            int pos = holder.getAdapterPosition();
+
+            if (mSelectedItems == null) {
+                mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
+            }
+
+            toggleSelectionAt(pos);
+            notifyItemChanged(pos);
+            updateSelectionMode();
+
+            return true;
+        });
+        holder.itemView.setOnClickListener(v -> {
+            if (mSelectedItems != null) {
                 int pos = holder.getAdapterPosition();
-
-                if (mSelectedItems == null) {
-                    mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
-                }
-
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
                 updateSelectionMode();
-
-                return true;
-            }
-        });
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSelectedItems != null) {
-                    int pos = holder.getAdapterPosition();
-                    toggleSelectionAt(pos);
-                    notifyItemChanged(pos);
-                    updateSelectionMode();
-                }
             }
         });
     }
@@ -661,26 +641,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (refresh != REFRESH_NONE) {
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    int position = -1;
-                    if (cursor != null) {
-                        LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-                        if (lm != null) {
-                            position = lm.findFirstVisibleItemPosition();
-                        }
+            mActivity.runOnUiThread(() -> {
+                int position = -1;
+                if (cursor != null) {
+                    LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+                    if (lm != null) {
+                        position = lm.findFirstVisibleItemPosition();
                     }
-                    mRefresher.setRefreshing(false);
-                    if (refresh == REFRESH_HARD) {
-                        mRecyclerView.setAdapter(MessagesAdapter.this);
-                    } else {
-                        notifyDataSetChanged();
-                    }
-                    if (cursor != null) {
-                        if (position == 0) {
-                            mRecyclerView.scrollToPosition(0);
-                        }
+                }
+                mRefresher.setRefreshing(false);
+                if (refresh == REFRESH_HARD) {
+                    mRecyclerView.setAdapter(MessagesAdapter.this);
+                } else {
+                    notifyDataSetChanged();
+                }
+                if (cursor != null) {
+                    if (position == 0) {
+                        mRecyclerView.scrollToPosition(0);
                     }
                 }
             });
@@ -705,18 +682,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // Run loader on UI thread
     private void runLoader(final boolean hard) {
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                final LoaderManager lm = LoaderManager.getInstance(mActivity);
-                final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
-                Bundle args = new Bundle();
-                args.putBoolean(HARD_RESET, hard);
-                if (loader != null && !loader.isReset()) {
-                    lm.restartLoader(MESSAGES_QUERY_ID, args, mMessageLoaderCallback);
-                } else {
-                    lm.initLoader(MESSAGES_QUERY_ID, args, mMessageLoaderCallback);
-                }
+        mActivity.runOnUiThread(() -> {
+            final LoaderManager lm = LoaderManager.getInstance(mActivity);
+            final Loader<Cursor> loader = lm.getLoader(MESSAGES_QUERY_ID);
+            Bundle args = new Bundle();
+            args.putBoolean(HARD_RESET, hard);
+            if (loader != null && !loader.isReset()) {
+                lm.restartLoader(MESSAGES_QUERY_ID, args, mMessageLoaderCallback);
+            } else {
+                lm.initLoader(MESSAGES_QUERY_ID, args, mMessageLoaderCallback);
             }
         });
     }

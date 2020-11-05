@@ -18,14 +18,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
 public class FilePreviewFragment extends Fragment {
-    @SuppressWarnings("unused")
     private static final String TAG = "FilePreviewFragment";
 
     // Icon ID for mime type. Add more mime type to icon mappings here.
-    private static Map<String,Integer> sMime2Icon;
+    private static final Map<String, Integer> sMime2Icon;
     private static final int DEFAULT_ICON_ID = R.drawable.ic_file;
     private static final int INVALID_ICON_ID = R.drawable.ic_file_alert;
 
@@ -37,6 +37,9 @@ public class FilePreviewFragment extends Fragment {
         sMime2Icon.put("text", R.drawable.ic_text_file);
         sMime2Icon.put("video", R.drawable.ic_movie);
     }
+
+    private ImageView mImageView;
+    private ImageButton mSendButton;
 
     private static int getIconIdForMimeType(String mime) {
         if (TextUtils.isEmpty(mime)) {
@@ -59,9 +62,6 @@ public class FilePreviewFragment extends Fragment {
         return DEFAULT_ICON_ID;
     }
 
-    private ImageView mImageView;
-    private ImageButton mSendButton;
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -70,12 +70,7 @@ public class FilePreviewFragment extends Fragment {
 
         // Send message on button click.
         mSendButton = view.findViewById(R.id.chatSendButton);
-        mSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendFile();
-            }
-        });
+        mSendButton.setOnClickListener(v -> sendFile());
         return view;
     }
 
@@ -104,7 +99,7 @@ public class FilePreviewFragment extends Fragment {
         if (uri != null) {
             updateFormValues(activity, args, uri, accessGranted);
         } else {
-            mImageView.setImageDrawable(getResources().getDrawable(INVALID_ICON_ID));
+            mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(), INVALID_ICON_ID, null));
             ((TextView) activity.findViewById(R.id.content_type)).setText(getString(R.string.invalid_file));
             ((TextView) activity.findViewById(R.id.file_name)).setText(getString(R.string.invalid_file));
             ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(0));
@@ -155,7 +150,8 @@ public class FilePreviewFragment extends Fragment {
         }
 
         // Show icon for mime type.
-        mImageView.setImageDrawable(getResources().getDrawable(getIconIdForMimeType(mimeType)));
+        mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(),
+                getIconIdForMimeType(mimeType), null));
         ((TextView) activity.findViewById(R.id.content_type)).setText(mimeType);
         ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
         ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(fileSize));

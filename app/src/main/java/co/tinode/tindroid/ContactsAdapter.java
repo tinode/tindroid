@@ -30,18 +30,15 @@ import androidx.recyclerview.widget.RecyclerView;
  */
 class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
         implements SectionIndexer, ContactsLoaderCallback.CursorSwapper {
-    private static final String TAG = "ContactsAdapter";
 
-    private AlphabetIndexer mAlphabetIndexer; // Stores the AlphabetIndexer instance
-    private TextAppearanceSpan mHighlightTextSpan; // Stores the highlight text appearance style
-
-    private String mSearchTerm;
-    private ClickListener mClickListener;
-    private Cursor mCursor;
-    private ImageLoader mImageLoader;
-
+    private final AlphabetIndexer mAlphabetIndexer; // Stores the AlphabetIndexer instance
+    private final TextAppearanceSpan mHighlightTextSpan; // Stores the highlight text appearance style
+    private final ClickListener mClickListener;
+    private final ImageLoader mImageLoader;
     // Selected items
-    private HashMap<String,Integer> mSelected;
+    private final HashMap<String, Integer> mSelected;
+    private String mSearchTerm;
+    private Cursor mCursor;
 
     ContactsAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
 
@@ -195,6 +192,10 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
         notifyDataSetChanged();
     }
 
+    interface ClickListener {
+        void onClick(String topicName, ViewHolder holder);
+    }
+
     class ViewHolder extends RecyclerView.ViewHolder {
         int viewType;
         String unique;
@@ -286,28 +287,21 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
             }
 
             if (mClickListener != null) {
-                itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        mClickListener.onClick(unique, ViewHolder.this);
-                        if (isSelected(unique)) {
-                            ViewHolder.this.switcher.setImageResource(R.drawable.ic_selected);
-                        } else {
-                            Context context = itemView.getContext();
-                            mImageLoader.loadImage(context, photoUri, (ImageView) ViewHolder.this.switcher.getNextView());
-                            ViewHolder.this.switcher.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
-                        }
+                itemView.setOnClickListener(view -> {
+                    mClickListener.onClick(unique, ViewHolder.this);
+                    if (isSelected(unique)) {
+                        ViewHolder.this.switcher.setImageResource(R.drawable.ic_selected);
+                    } else {
+                        Context context = itemView.getContext();
+                        mImageLoader.loadImage(context, photoUri, (ImageView) ViewHolder.this.switcher.getNextView());
+                        ViewHolder.this.switcher.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
                     }
                 });
             }
         }
 
         Drawable getIconDrawable() {
-           return ((ImageView) switcher.getCurrentView()).getDrawable();
+            return ((ImageView) switcher.getCurrentView()).getDrawable();
         }
-    }
-
-    interface ClickListener {
-        void onClick(String topicName, ViewHolder holder);
     }
 }

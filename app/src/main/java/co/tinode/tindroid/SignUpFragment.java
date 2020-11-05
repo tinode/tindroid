@@ -34,8 +34,6 @@ import static android.app.Activity.RESULT_OK;
  * Fragment for managing registration of a new account.
  */
 public class SignUpFragment extends Fragment implements View.OnClickListener {
-    private static final String TAG = "SignUpFragment";
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -69,12 +67,8 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
 
         // Get avatar from the gallery
         // TODO(gene): add support for taking a picture
-        view.findViewById(R.id.uploadAvatar).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UiUtils.requestAvatar(SignUpFragment.this);
-            }
-        });
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
+                UiUtils.requestAvatar(SignUpFragment.this));
     }
 
     /**
@@ -150,7 +144,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                 VxCard vcard = new VxCard(fullName, bmp);
                                 return tinode.createAccountBasic(
                                         login, password, true, null,
-                                        new MetaSetDesc<VxCard,String>(vcard, null),
+                                        new MetaSetDesc<VxCard, String>(vcard, null),
                                         Credential.append(null, new Credential("email", email)));
                             }
                         })
@@ -163,17 +157,15 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                         tinode.getAuthToken(), tinode.getAuthTokenExpiration());
 
                                 // Flip back to login screen on success;
-                                parent.runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
-                                            signUp.setEnabled(true);
-                                            parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
-                                        } else {
-                                            // We are requesting immediate login with the new account.
-                                            // If the action succeeded, assume we have logged in.
-                                            tinode.setAutoLoginToken(tinode.getAuthToken());
-                                            UiUtils.onLoginSuccess(parent, signUp, tinode.getMyId());
-                                        }
+                                parent.runOnUiThread(() -> {
+                                    if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
+                                        signUp.setEnabled(true);
+                                        parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
+                                    } else {
+                                        // We are requesting immediate login with the new account.
+                                        // If the action succeeded, assume we have logged in.
+                                        tinode.setAutoLoginToken(tinode.getAuthToken());
+                                        UiUtils.onLoginSuccess(parent, signUp, tinode.getMyId());
                                     }
                                 });
                                 return null;
@@ -186,22 +178,21 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                 if (parent.isFinishing() || parent.isDestroyed()) {
                                     return null;
                                 }
-                                final String cause = ((ServerResponseException)err).getReason();
+                                final String cause = ((ServerResponseException) err).getReason();
                                 if (cause != null) {
-                                    parent.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            signUp.setEnabled(true);
-                                            switch (cause) {
-                                                case "auth":
-                                                    // Invalid login
-                                                    ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.login_rejected));
-                                                    break;
-                                                case "email":
-                                                    // Duplicate email:
-                                                    ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_rejected));
-                                                    break;
-                                            }
+                                    parent.runOnUiThread(() -> {
+                                        signUp.setEnabled(true);
+                                        switch (cause) {
+                                            case "auth":
+                                                // Invalid login
+                                                ((EditText) parent.findViewById(R.id.newLogin))
+                                                        .setError(getText(R.string.login_rejected));
+                                                break;
+                                            case "email":
+                                                // Duplicate email:
+                                                ((EditText) parent.findViewById(R.id.email))
+                                                        .setError(getText(R.string.email_rejected));
+                                                break;
                                         }
                                     });
                                 }
@@ -219,7 +210,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
         }
 
         if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.acceptAvatar(activity, (ImageView) activity.findViewById(R.id.imageAvatar), data);
+            UiUtils.acceptAvatar(activity, activity.findViewById(R.id.imageAvatar), data);
         }
     }
 }

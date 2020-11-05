@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
@@ -35,6 +36,7 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.res.ResourcesCompat;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tinodesdk.model.Drafty;
@@ -118,9 +120,34 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return Math.min(scaleX, scaleY);
     }
 
+    // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
+    static Drawable getPlaceholder(Context ctx, Drawable fg, int width, int height) {
+        Drawable bkg = ResourcesCompat.getDrawable(ctx.getResources(),
+                R.drawable.placeholder_image_bkg, null);
+        int fgWidth = fg.getIntrinsicWidth();
+        int fgHeight = fg.getIntrinsicHeight();
+        LayerDrawable result = new LayerDrawable(new Drawable[] {bkg, fg});
+        result.setBounds(0, 0, width, height);
+        // Move foreground to the center of the drawable.
+        int dx = Math.max((width - fgWidth)/2, 0);
+        int dy = Math.max((height - fgHeight)/2, 0);
+        fg.setBounds(dx, dy, dx+fgWidth, dy+fgHeight);
+        return result;
+    }
+
     private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data) {
         TreeNode result = null;
         if (data != null) {
+            int width = 0, height = 0;
+            Object tmp = data.get("width");
+            if (tmp instanceof Number) {
+                width = ((Number) tmp).intValue();
+            }
+            tmp = data.get("height");
+            if (tmp instanceof Number) {
+                height = ((Number) tmp).intValue();
+            }
+
             CharacterStyle span = null;
             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
             Object val = data.get("val");
@@ -133,14 +160,14 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                     Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                     if (bmp != null) {
                         // Scale bitmap for display density. The data.get("width") and data.get("height") are ignored.
-                        int width = bmp.getWidth();
-                        int height = bmp.getHeight();
-                        float scale = scaleBitmap(width, height, mViewport, metrics.density);
+                        int bmpWidth = bmp.getWidth();
+                        int bmpHeight = bmp.getHeight();
+                        float scale = scaleBitmap(bmpWidth, bmpHeight, mViewport, metrics.density);
                         if (scale == 0) {
                             bmp = null;
                         } else {
-                            bmp = Bitmap.createScaledBitmap(bmp, (int) (width * scale * metrics.density),
-                                    (int) (height * scale * metrics.density), true);
+                            bmp = Bitmap.createScaledBitmap(bmp, (int) (bmpWidth * scale * metrics.density),
+                                    (int) (bmpHeight * scale * metrics.density), true);
                         }
                     }
                     if (bmp != null) {
@@ -152,15 +179,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             } else {
                 Object ref = data.get("ref");
                 if (ref instanceof String) {
-                    int width = 0, height = 0;
-                    Object tmp = data.get("width");
-                    if (tmp instanceof Number) {
-                        width = ((Number) tmp).intValue();
-                    }
-                    tmp = data.get("height");
-                    if (tmp instanceof Number) {
-                        height = ((Number) tmp).intValue();
-                    }
                     float scale = scaleBitmap(width, height, mViewport, metrics.density);
                     if (scale > 0) {
                         Drawable onError = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
@@ -169,7 +187,9 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         }
                         Drawable placeholder = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
                         if (placeholder != null) {
-                            placeholder.setBounds(0, 0, placeholder.getIntrinsicWidth(), placeholder.getIntrinsicHeight());
+                            placeholder.setBounds(0, 0,
+                                    placeholder.getIntrinsicWidth(),
+                                    placeholder.getIntrinsicHeight());
                         }
                         width = (int) (width * scale * metrics.density);
                         height = (int) (height * scale * metrics.density);
@@ -181,10 +201,13 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
             if (span == null) {
                 // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-                Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
-                if (icon != null) {
-                    icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
-                    span = new ImageSpan(icon);
+                float scale = scaleBitmap(width, height, mViewport, metrics.density);
+                Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                if (broken != null) {
+                    broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
+                    span = new ImageSpan(getPlaceholder(ctx, broken,
+                            (int) (width * scale * metrics.density),
+                            (int) (height * scale * metrics.density)));
                     result = new TreeNode(span, content);
                 }
             } else if (mClicker != null) {
