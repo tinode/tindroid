@@ -1,10 +1,10 @@
 package co.tinode.tindroid.media;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.text.style.DynamicDrawableSpan;
 import android.util.Log;
@@ -16,9 +16,8 @@ import com.squareup.picasso.Target;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
-import androidx.core.content.res.ResourcesCompat;
-import co.tinode.tindroid.R;
 
 /* Spannable which updates associated image as it's loaded from the given URL */
 public class UrlImageSpan extends DynamicDrawableSpan implements Target {
@@ -35,7 +34,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
         mWidth = width;
         mHeight = height;
         mOnError = onError;
-        mDrawable = getPlaceholder(parent, placeholder);
+        mDrawable = SpanFormatter.getPlaceholder(parent.getContext(), placeholder, mWidth, mHeight);
     }
 
     public void load(URL from) {
@@ -50,21 +49,22 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
 
     @Override
     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-        Log.i(TAG, "Received bitmap " + from.name());
+        Log.i(TAG, "Received bitmap " + from.name() +
+                "; WxH=" + bitmap.getWidth() + " x " + bitmap.getHeight());
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = new BitmapDrawable(parent.getResources(), bitmap);
-            parent.invalidate();
+            parent.postInvalidate();
         }
     }
 
     @Override
     public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-        Log.i(TAG, "Bitmap failed", e);
         View parent = mParentRef.get();
         if (parent != null) {
-            mDrawable = getPlaceholder(parent, mOnError);
-            parent.invalidate();
+            mDrawable = SpanFormatter.getPlaceholder(parent.getContext(), mOnError, mWidth, mHeight);
+            Log.i(TAG, "Bitmap failed", e);
+            parent.postInvalidate();
         }
     }
 
@@ -84,23 +84,22 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
         return mWidth;
     }
 
-    // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
-    private Drawable getPlaceholder(View parent, Drawable fg) {
-        Drawable bkg = ResourcesCompat.getDrawable(parent.getResources(),
-                R.drawable.placeholder_image_bkg, null);
-        int fgWidth = fg.getIntrinsicWidth();
-        int fgHeight = fg.getIntrinsicHeight();
-        LayerDrawable result = new LayerDrawable(new Drawable[] {bkg, fg});
-        result.setBounds(0, 0, mWidth, mHeight);
-        //bkg.setBounds(0, 0, mWidth, mHeight);
-        //
-        // Move foreground to the center of the drawable.
-        int dx = Math.max((mWidth - fgWidth)/2, 0);
-        int dy = Math.max((mHeight - fgHeight)/2, 0);
-        //result.setLayerInset(1, 50, 50, 50, 50);
-        fg.setBounds(dx, dy, dx+fgWidth, dy+fgHeight);
-        Log.i(TAG, "bg=" + mWidth + " x " + mHeight +
-                "; fg="+fgWidth + " x " + fgHeight + "; dx=" + dx + "; dy=" + dy);
-        return result;
+    @Override
+    // This has to be overridden because of brain-damaged design of DynamicDrawableSpan:
+    // it caches Drawable and the cache cannot be invalidated.
+    public void draw(@NonNull Canvas canvas, CharSequence text,
+                     @IntRange(from = 0) int start, @IntRange(from = 0) int end, float x,
+                     int top, int y, int bottom, @NonNull Paint paint) {
+        Drawable b = getDrawable();
+        canvas.save();
+        int transY = bottom - b.getBounds().bottom;
+        if (mVerticalAlignment == ALIGN_BASELINE) {
+            transY -= paint.getFontMetricsInt().descent;
+        } else if (mVerticalAlignment == ALIGN_CENTER) {
+            transY = top + (bottom - top) / 2 - b.getBounds().height() / 2;
+        }
+        canvas.translate(x, transY);
+        b.draw(canvas);
+        canvas.restore();
     }
 }
