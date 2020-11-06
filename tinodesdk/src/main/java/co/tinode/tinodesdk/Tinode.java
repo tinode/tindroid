@@ -105,10 +105,9 @@ public class Tinode {
     private static final long EXPIRE_FUTURES_TIMEOUT = 5000L;
     // Periodicity of garbage collection of unresolved futures.
     private static final long EXPIRE_FUTURES_PERIOD = 1000L;
-
+    private static final ObjectMapper sJsonMapper;
     protected static TypeFactory sTypeFactory;
     protected static SimpleDateFormat sDateFormat;
-    private static final ObjectMapper sJsonMapper;
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -130,18 +129,22 @@ public class Tinode {
 
     // Object for connect-disconnect synchronization.
     private final Object mConnLock = new Object();
-    private JavaType mDefaultTypeOfMetaPacket = null;
     private final HashMap<Topic.TopicType, JavaType> mTypeOfMetaPacket;
-    private MimeTypeResolver mMimeResolver = null;
     private final Storage mStore;
     private final String mApiKey;
+    private final String mAppName;
+    private final ListenerNotifier mNotifier;
+    private final ConcurrentMap<String, FutureHolder> mFutures;
+    private final ConcurrentHashMap<String, Topic> mTopics;
+    private final ConcurrentHashMap<String, User> mUsers;
+    private JavaType mDefaultTypeOfMetaPacket = null;
+    private final MimeTypeResolver mMimeResolver = null;
     private String mServerHost = null;
     private boolean mUseTLS;
     private String mServerVersion = null;
     private String mServerBuild = null;
     private String mDeviceToken = null;
     private String mLanguage = null;
-    private final String mAppName;
     private String mOsVersion;
     // Counter for the active background connections.
     private int mBkgConnCounter = 0;
@@ -151,7 +154,6 @@ public class Tinode {
     private Connection mConnection = null;
     // Listener of connection events.
     private ConnectedWsListener mConnectionListener = null;
-
     // True is connection is authenticated
     private boolean mConnAuth = false;
     // True if Tinode should use mLoginCredentials to automatically log in after connecting.
@@ -159,17 +161,11 @@ public class Tinode {
     private LoginCredentials mLoginCredentials = null;
     // Server provided list of credential methods to validate e.g. ["email", "tel", ...].
     private List<String> mCredToValidate = null;
-
     private String mMyUid = null;
     private String mAuthToken = null;
     private Date mAuthTokenExpires = null;
-
     private int mMsgId = 0;
     private int mPacketCount;
-    private final ListenerNotifier mNotifier;
-    private final ConcurrentMap<String, FutureHolder> mFutures;
-    private final ConcurrentHashMap<String, Topic> mTopics;
-    private final ConcurrentHashMap<String, User> mUsers;
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
     // Timestamp of the latest topic desc update.
@@ -489,6 +485,7 @@ public class Tinode {
 
     /**
      * Disconnect from the server.
+     *
      * @param fromBkg request to disconnect background connection.
      */
     public void disconnect(boolean fromBkg) {
@@ -1459,7 +1456,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl or meta message
      */
     public <Pu, Pr> PromisedReply<ServerMessage> setMeta(final String topicName,
-                                                            final MsgSetMeta<Pu, Pr> meta) {
+                                                         final MsgSetMeta<Pu, Pr> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
         return sendWithPromise(msg, msg.set.id);
     }
@@ -2001,43 +1998,95 @@ public class Tinode {
         if (origUrl == null) {
             return null;
         }
-        URL url = null;
-        try {
-            url = new URL(getBaseUrl(), origUrl);
-            String host = url.getHost();
-            if (host != null) {
-                int port = url.getPort();
-                host += port > 0 ? ":" + port : "";
+        URL url = toAbsoluteURL(origUrl);
+        if (url == null) {
+            return null;
+        }
+
+        if (isTrustedURL(url)) {
+            String query = url.getQuery();
+            if (mApiKey != null) {
+                if (query != null) {
+                    query += "&";
+                } else {
+                    query = "";
+                }
+                query += "apikey=" + mApiKey;
             }
-            if ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
-                    && mServerHost.equals(host)) {
-                String query = url.getQuery();
-                if (mApiKey != null) {
-                    if (query != null) {
-                        query += "&";
-                    } else {
-                        query = "";
-                    }
-                    query += "apikey=" + mApiKey;
+            if (mAuthToken != null) {
+                if (query != null) {
+                    query += "&";
+                } else {
+                    query = "";
                 }
-                if (mAuthToken != null) {
-                    if (query != null) {
-                        query += "&";
-                    } else {
-                        query = "";
-                    }
-                    // Convert standard base64 encoding to URL base64 encoding.
-                    query += "auth=token&secret=" +
-                            mAuthToken.replace('+', '-').replace('/', '_');
-                }
+                // Convert standard base64 encoding to URL base64 encoding.
+                query += "auth=token&secret=" +
+                        mAuthToken.replace('+', '-').replace('/', '_');
+            }
+
+            try {
+
                 URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(),
                         url.getPath(), query, url.getRef());
                 url = uri.toURL();
                 Log.i(TAG, "Wrapped URL: " + url.toString());
+            } catch (MalformedURLException | URISyntaxException ignored) {
             }
-        } catch (MalformedURLException | URISyntaxException ignored) {}
+        }
 
         return url;
+    }
+
+    /**
+     * Convert relative URL to absolute URL using Tinode server address as base.
+     * If the URL is already absolute it's left unchanged.
+     *
+     * @param origUrl possibly relative URL to convert to absolute.
+     * @return absolute URL or {@code null} if origUrl is invalid.
+     */
+    public URL toAbsoluteURL(String origUrl) {
+        URL url = null;
+        try {
+            url = new URL(getBaseUrl(), origUrl);
+        } catch (MalformedURLException ignored) {
+        }
+
+        return url;
+    }
+
+    /**
+     * Check if the given URL is trusted: points to Tinode server using HTTP or HTTPS protocol.
+     *
+     * @param url URL to check.
+     * @return true if the URL is trusted, false otherwise.
+     */
+    public boolean isTrustedURL(URL url) {
+        String host = url.getHost();
+
+        if (host != null) {
+            int port = url.getPort();
+            host += port > 0 ? ":" + port : "";
+        }
+
+        return ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
+                && mServerHost.equals(host));
+    }
+
+    /**
+     * Get map with HTTP request parameters suitable for requests to Tinode server.
+     *
+     * @return Map with API key, authentication headers and User agent.
+     */
+    public Map<String, String> getRequestHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+        if (mApiKey != null) {
+            headers.put("X-Tinode-APIKey", mApiKey);
+        }
+        if (mAuthToken != null) {
+            headers.put("X-Tinode-Auth", "Token " + mAuthToken);
+        }
+        headers.put("User-Agent", makeUserAgent());
+        return headers.isEmpty() ? null : headers;
     }
 
     /**
@@ -2439,7 +2488,7 @@ public class Tinode {
     class HeartBeat extends Timer {
         public static final String TAG = "HeartBeat";
 
-        private ConcurrentHashMap<String, Integer> recvQueue;
+        private final ConcurrentHashMap<String, Integer> recvQueue;
 
         public HeartBeat() {
             super(TAG, true);

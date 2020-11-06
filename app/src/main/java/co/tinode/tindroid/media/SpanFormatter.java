@@ -139,12 +139,11 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         TreeNode result = null;
         if (data != null) {
             int width = 0, height = 0;
-            Object tmp = data.get("width");
-            if (tmp instanceof Number) {
+            Object tmp;
+            if ((tmp = data.get("width")) instanceof Number) {
                 width = ((Number) tmp).intValue();
             }
-            tmp = data.get("height");
-            if (tmp instanceof Number) {
+            if ((tmp = data.get("height")) instanceof Number) {
                 height = ((Number) tmp).intValue();
             }
 
@@ -194,7 +193,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         width = (int) (width * scale * metrics.density);
                         height = (int) (height * scale * metrics.density);
                         span = new UrlImageSpan(mContainer, width, height, placeholder, onError);
-                        ((UrlImageSpan) span).load(Cache.getTinode().authorizeURL((String) ref));
+                        ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) ref));
                     }
                 }
             }

@@ -31,9 +31,12 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.squareup.picasso.OkHttp3Downloader;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
@@ -47,6 +50,8 @@ import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 /**
  * A class for providing global context for database access
@@ -199,6 +204,29 @@ public class TindroidApp extends Application implements LifecycleObserver {
         } else {
             sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
+
+        // Setting up Picasso with auth headers.
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    Request picassoReq = chain.request();
+                    Map<String, String> headers;
+                    if (sTinodeCache != null && sTinodeCache.isTrustedURL(picassoReq.url().url()) &&
+                            (headers = sTinodeCache.getRequestHeaders()) != null) {
+                        Request.Builder builder = picassoReq.newBuilder();
+                        for (Map.Entry<String, String> el : headers.entrySet()) {
+                            builder = builder.addHeader(el.getKey(), el.getValue());
+                        }
+                        return chain.proceed(builder.build());
+                    } else {
+                        return chain.proceed(picassoReq);
+                    }
+                })
+                .build();
+        Picasso.setSingletonInstance(new Picasso.Builder(this)
+                .downloader(new OkHttp3Downloader(client))
+                .loggingEnabled(true) // Debugging
+                .indicatorsEnabled(true) // Debugging
+                .build());
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)

@@ -49,11 +49,10 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
 
     @Override
     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-        Log.i(TAG, "Received bitmap " + from.name() +
-                "; WxH=" + bitmap.getWidth() + " x " + bitmap.getHeight());
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = new BitmapDrawable(parent.getResources(), bitmap);
+            mDrawable.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
             parent.postInvalidate();
         }
     }
@@ -63,7 +62,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = SpanFormatter.getPlaceholder(parent.getContext(), mOnError, mWidth, mHeight);
-            Log.i(TAG, "Bitmap failed", e);
+            Log.i(TAG, "Failed to load bitmap", e);
             parent.postInvalidate();
         }
     }

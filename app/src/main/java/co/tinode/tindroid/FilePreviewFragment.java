@@ -95,7 +95,7 @@ public class FilePreviewFragment extends Fragment {
             accessGranted = true;
         }
 
-        Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
+        Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
         if (uri != null) {
             updateFormValues(activity, args, uri, accessGranted);
         } else {
@@ -125,7 +125,7 @@ public class FilePreviewFragment extends Fragment {
         }
 
         if (uri == null) {
-            uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
+            uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
         }
 
         if (uri == null) {

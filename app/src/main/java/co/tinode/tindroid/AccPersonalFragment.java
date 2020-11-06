@@ -38,9 +38,6 @@ import static android.app.Activity.RESULT_OK;
  * Fragment for editing current user details.
  */
 public class AccPersonalFragment extends Fragment implements ChatsActivity.FormUpdatable {
-
-    private static final String TAG = "AccPersonalFragment";
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -325,7 +322,7 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
 
         if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
             Bundle args = new Bundle();
-            args.putParcelable(AttachmentHandler.ARG_SRC_URI, data.getData());
+            args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
             ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_AVATAR_PREVIEW, args);
         }
     }

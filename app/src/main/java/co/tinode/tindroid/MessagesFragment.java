@@ -707,12 +707,12 @@ public class MessagesFragment extends Fragment {
                     if (data == null || data.getData() == null) {
                         // Camera
                         args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
-                        args.putParcelable(AttachmentHandler.ARG_SRC_URI, mCurrentPhotoUri);
+                        args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, mCurrentPhotoUri);
                         mCurrentPhotoFile = null;
                         mCurrentPhotoUri = null;
                     } else {
                         // Gallery
-                        args.putParcelable(AttachmentHandler.ARG_SRC_URI, data.getData());
+                        args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
                     }
 
                     args.putString(AttachmentHandler.ARG_OPERATION,

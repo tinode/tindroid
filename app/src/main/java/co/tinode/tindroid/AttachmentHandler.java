@@ -57,8 +57,10 @@ public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION_FILE = "file";
     // Bundle argument names.
     final static String ARG_TOPIC_NAME = "topic";
-    final static String ARG_SRC_URI = "uri";
+    final static String ARG_SRC_LOCAL_URI = "local_uri";
+    final static String ARG_SRC_REMOTE_URI = "remote_url";
     final static String ARG_SRC_BYTES = "bytes";
+
     final static String ARG_FILE_PATH = "filePath";
     final static String ARG_FILE_NAME = "fileName";
     final static String ARG_MSG_ID = "msgId";
@@ -149,12 +151,12 @@ public class AttachmentHandler extends Worker {
         long msgId = BaseDb.getInstance().getStore()
                 .msgDraft(Cache.getTinode().getTopic(topicName), msg, Tinode.draftyHeadersFor(msg));
         if (msgId > 0) {
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_URI);
+            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
             assert uri != null;
 
             Data.Builder data = new Data.Builder()
                     .putString(ARG_OPERATION, operation)
-                    .putString(ARG_SRC_URI, uri.toString())
+                    .putString(ARG_SRC_LOCAL_URI, uri.toString())
                     .putLong(ARG_MSG_ID, msgId)
                     .putString(ARG_TOPIC_NAME, topicName)
                     .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
@@ -335,7 +337,7 @@ public class AttachmentHandler extends Worker {
         final String operation = args.getString(ARG_OPERATION);
         final String topicName = args.getString(ARG_TOPIC_NAME);
         // URI must exist.
-        final Uri uri = Uri.parse(args.getString(ARG_SRC_URI));
+        final Uri uri = Uri.parse(args.getString(ARG_SRC_LOCAL_URI));
         // filePath is optional
         final String filePath = args.getString(ARG_FILE_PATH);
         final long msgId = args.getLong(ARG_MSG_ID, 0);

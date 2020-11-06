@@ -831,20 +831,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                 case "IM":
                     // Image
-                    Bundle args = new Bundle();
+                    Bundle args = null;
                     if (data != null) {
-                        try {
-                            Object val = data.get("val");
-                            args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, val instanceof String ?
+                        Object val = data.get("val");
+                        if (val != null) {
+                            byte[] bytes = val instanceof String ?
                                     Base64.decode((String) val, Base64.DEFAULT) :
-                                    (byte[]) val);
+                                        val instanceof byte[] ? (byte[]) val : null;
+                            if (bytes != null) {
+                                args = new Bundle();
+                                args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
+                            }
+                        } else if ((val = data.get("ref")) instanceof String) {
+                            args = new Bundle();
+                            URL url = Cache.getTinode().toAbsoluteURL((String) val);
+                            args.putParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI, Uri.parse(url.toString()));
+                        }
+
+                        if (args != null) {
                             args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
                             args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
-                        } catch (ClassCastException ignored) {
                         }
                     }
 
-                    if (args.getByteArray(AttachmentHandler.ARG_SRC_BYTES) != null) {
+                    if (args != null) {
                         mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
                     } else {
                         Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
