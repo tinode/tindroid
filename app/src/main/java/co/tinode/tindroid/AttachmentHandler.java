@@ -70,6 +70,9 @@ public class AttachmentHandler extends Worker {
     final static String ARG_ERROR = "error";
     final static String ARG_MIME_TYPE = "mime";
     final static String ARG_AVATAR = "square_img";
+    final static String ARG_IMAGE_WIDTH = "width";
+    final static String ARG_IMAGE_HEIGHT = "height";
+
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
     private static final String TAG = "AttachmentHandler";
     private LargeFileHelper mUploader = null;

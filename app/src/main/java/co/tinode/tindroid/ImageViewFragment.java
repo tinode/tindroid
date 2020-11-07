@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -33,7 +34,6 @@ import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.WeakReference;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -120,9 +120,9 @@ public class ImageViewFragment extends Fragment {
                                 && (mWorkingRect.width() >= mInitialRect.width()
                                 || mWorkingRect.width() >= mScreenRect.width()
                                 || mWorkingRect.height() >= mScreenRect.height())))) {
-
                     mMatrix.set(mWorkingMatrix);
                     mImageView.setImageMatrix(mMatrix);
+
                 } else {
                     // Skip the change: the image is too large or too small already.
                     mWorkingMatrix.set(mMatrix);
@@ -171,9 +171,9 @@ public class ImageViewFragment extends Fragment {
 
         mMatrix.reset();
 
-        String filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
-        if (TextUtils.isEmpty(filename)) {
-            filename = getResources().getString(R.string.tinode_image);
+        String fileName = args.getString(AttachmentHandler.ARG_FILE_NAME);
+        if (TextUtils.isEmpty(fileName)) {
+            fileName = getResources().getString(R.string.tinode_image);
         }
 
         Bitmap bmp = null;
@@ -210,21 +210,35 @@ public class ImageViewFragment extends Fragment {
             } else {
                 Uri ref = args.getParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI);
                 if (ref != null) {
+                    final String fn = fileName;
                     Picasso.get().load(ref).centerInside().fit().into(mImageView, new Callback() {
                         @Override
                         public void onSuccess() {
-                            Log.i("PICASSO", "Bitmap loaded successfully, " + mImageView.getDrawable().getBounds());
-                            Activity activity1 = getActivity();
-                            if (activity1 == null) {
+                            Activity activity = getActivity();
+                            if (activity == null) {
                                 return;
                             }
-                            // setupImagePostview(activity, args, "some_blank_value", 100);
+
+                            Drawable drw = mImageView.getDrawable();
+                            if (drw instanceof BitmapDrawable) {
+                                Bitmap bmp = ((BitmapDrawable) drw).getBitmap();
+                                if (bmp != null) {
+                                    mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
+                                    mWorkingRect = new RectF(mInitialRect);
+                                    mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
+                                    mWorkingMatrix = new Matrix(mMatrix);
+                                    mImageView.setImageMatrix(mMatrix);
+                                    mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+                                    mImageView.enableOverlay(false);
+                                    activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+                                    setupImagePostview(activity, args, fn, bmp.getByteCount());
+                                }
+                            }
                         }
 
                         @Override
                         public void onError(Exception e) {
-                            // do nothing.
-                            Log.e("PICASSO", "Failed", e);
+                            Log.i(TAG, "Picasso failed to load image", e);
                         }
                     });
                 }
@@ -243,7 +257,7 @@ public class ImageViewFragment extends Fragment {
                 setupImagePreview(activity);
             } else {
                 // The image is downloaded.
-                setupImagePostview(activity, args, filename, bits.length);
+                setupImagePostview(activity, args, fileName, bits.length);
             }
 
             mImageView.setImageDrawable(new BitmapDrawable(getResources(), bmp));
@@ -276,6 +290,7 @@ public class ImageViewFragment extends Fragment {
                     mCutOutRect.left = 0f;
                     mCutOutRect.right = mScreenRect.width();
                 }
+
                 if (mAvatarUpload) {
                     // Scale to fill mCutOutRect.
                     float scaling = 1f;
@@ -293,16 +308,21 @@ public class ImageViewFragment extends Fragment {
                     mMatrix.mapRect(mWorkingRect, mInitialRect);
                     mMatrix.postTranslate(mCutOutRect.left + (mCutOutRect.width() - mWorkingRect.width()) * 0.5f,
                             mCutOutRect.top + (mCutOutRect.height() - mWorkingRect.height()) * 0.5f);
-                } else {
-                    if (mInitialRect != null) {
-                        mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
-                    }
+                } else if (mInitialRect != null) {
+                    mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
                 }
                 mWorkingMatrix = new Matrix(mMatrix);
 
                 mImageView.setImageMatrix(mMatrix);
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        Picasso.get().cancelRequest(mImageView);
     }
 
     // Setup fields for image preview
@@ -319,14 +339,15 @@ public class ImageViewFragment extends Fragment {
     }
 
     // Setup fields for viewing downloaded image
-    private void setupImagePostview(final Activity activity, Bundle args, String fileName, int length) {
+    private void setupImagePostview(final Activity activity, Bundle args, String fileName, long length) {
         // The received image is viewed.
         String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
         activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.annotation).setVisibility(View.VISIBLE);
         ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
         ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
-        ((TextView) activity.findViewById(R.id.image_size)).setText(String.format("%s%s", size, UiUtils.bytesToHumanSize(length)));
+        ((TextView) activity.findViewById(R.id.image_size))
+                .setText(String.format("%s%s", size, UiUtils.bytesToHumanSize(length)));
         setHasOptionsMenu(true);
     }
 
