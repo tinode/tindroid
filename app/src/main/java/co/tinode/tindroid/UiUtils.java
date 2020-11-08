@@ -108,7 +108,11 @@ public class UiUtils {
 
     // Maximum length of user name or topic title.
     static final int MAX_TITLE_LENGTH = 60;
+
+    // Maximum linear dimensions of image.
     static final int MAX_BITMAP_SIZE = 1024;
+    static final int IMAGE_PREVIEW_DIM = 64;
+
     private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
     private static final int MIN_TAG_LENGTH = 4;
@@ -472,7 +476,7 @@ public class UiUtils {
      * @return scaled bitmap or original, it it does not need ot be scaled.
      */
     @NonNull
-    static Bitmap scaleBitmap(@NonNull Bitmap bmp, float atLeast) {
+    static Bitmap scaleBitmap(@NonNull Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         float factor = 1.0f;
@@ -486,8 +490,7 @@ public class UiUtils {
                 factor = (float) height / MAX_BITMAP_SIZE;
             }
         }
-        // Additional scaling.
-        factor = Math.max(atLeast, factor);
+        // Scale down.
         if (factor > 1.0) {
             height /= factor;
             width /= factor;

@@ -25,6 +25,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
@@ -293,9 +296,20 @@ public class AttachmentHandler extends Worker {
     }
 
     // Send image in-band
-    private static Drafty draftyImage(String caption, String mimeType, byte[] bits, int width, int height, String fname) {
+    private static Drafty draftyImage(String caption, String mimeType, byte[] bits, String refUrl,
+                                      int width, int height, String fname, long size) {
         Drafty content = Drafty.fromPlainText(" ");
-        content.insertImage(0, mimeType, bits, width, height, fname);
+        URI ref = null;
+        if (refUrl != null) {
+            try {
+                ref = new URI(refUrl);
+                if (ref.isAbsolute()) {
+                    ref = new URI(Cache.getTinode().getBaseUrl().toString()).relativize(ref);
+                }
+            } catch (URISyntaxException | MalformedURLException ignored) {
+            }
+        }
+        content.insertImage(0, mimeType, bits, width, height, fname, ref, size);
         if (!TextUtils.isEmpty(caption)) {
             content.appendLineBreak()
                     .append(Drafty.fromPlainText(caption));
@@ -396,18 +410,8 @@ public class AttachmentHandler extends Worker {
 
                 // Make sure the image dimensions are not too large.
                 if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
-                    bmp = UiUtils.scaleBitmap(bmp, 1.0f);
+                    bmp = UiUtils.scaleBitmap(bmp);
 
-                    is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
-                    fileDetails.fileSize = is.available();
-                    is.close();
-                }
-
-                // Ensure bitmap byte size is under maxInbandAttachmentSize.
-                while (fileDetails.fileSize > maxInbandAttachmentSize) {
-                    bmp = UiUtils.scaleBitmap(bmp,
-                            (float) Math.max(1.2,
-                                    Math.sqrt((float) fileDetails.fileSize / (float) maxInbandAttachmentSize)));
                     is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
                     fileDetails.fileSize = is.available();
                     is.close();
@@ -464,6 +468,7 @@ public class AttachmentHandler extends Worker {
             }
 
             if (fileDetails.fileSize > maxFileUploadSize) {
+                // File is too big to be send in-band or out of band.
                 Log.w(TAG, "Unable to process attachment: too big, size=" + fileDetails.fileSize);
                 return ListenableWorker.Result.failure(
                         result.putString(ARG_ERROR,
@@ -477,10 +482,18 @@ public class AttachmentHandler extends Worker {
                     is = resolver.openInputStream(uri);
                 }
 
-                if ("file".equals(operation) && fileDetails.fileSize > maxInbandAttachmentSize) {
-
-                    // Update draft with file data.
-                    store.msgDraftUpdate(topic, msgId, draftyAttachment(fileDetails.mimeType, fname, uri.toString(), -1));
+                if (fileDetails.fileSize > maxInbandAttachmentSize) {
+                    // Update draft with file or image data.
+                    String ref = "mid:uploading-" + msgId;
+                    if ("file".equals(operation)) {
+                        store.msgDraftUpdate(topic, msgId, draftyAttachment(fileDetails.mimeType,
+                                fname, ref, -1));
+                    } else {
+                        store.msgDraftUpdate(topic, msgId,
+                                draftyImage(args.getString(ARG_IMAGE_CAPTION),
+                                        fileDetails.mimeType, null, ref, imageWidth, imageHeight,
+                                        fname, -1));
+                    }
 
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
@@ -497,8 +510,14 @@ public class AttachmentHandler extends Worker {
                                     .build()));
                     success = (ctrl != null && ctrl.code == 200);
                     if (success) {
-                        content = draftyAttachment(fileDetails.mimeType, fname,
-                                ctrl.getStringParam("url", null), fileDetails.fileSize);
+                        if ("file".equals(operation)) {
+                            content = draftyAttachment(fileDetails.mimeType, fname,
+                                    ctrl.getStringParam("url", null), fileDetails.fileSize);
+                        } else {
+                            content = draftyImage(args.getString(ARG_IMAGE_CAPTION), fileDetails.mimeType,
+                                    null, ctrl.getStringParam("url", null),
+                                    imageWidth, imageHeight, fname, fileDetails.fileSize);
+                        }
                     }
                 } else {
                     baos = new ByteArrayOutputStream();
@@ -517,6 +536,7 @@ public class AttachmentHandler extends Worker {
                             BitmapFactory.Options options = new BitmapFactory.Options();
                             options.inJustDecodeBounds = true;
                             InputStream bais = new ByteArrayInputStream(bits);
+                            len = bais.available();
                             BitmapFactory.decodeStream(bais, null, options);
                             bais.close();
 
@@ -525,7 +545,7 @@ public class AttachmentHandler extends Worker {
                         }
                         store.msgDraftUpdate(topic, msgId,
                                 draftyImage(args.getString(ARG_IMAGE_CAPTION),
-                                        fileDetails.mimeType, bits, imageWidth, imageHeight, fname));
+                                        fileDetails.mimeType, bits, null, imageWidth, imageHeight, fname, len));
                     }
                     success = true;
                     setProgressAsync(new Data.Builder()

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -511,7 +512,7 @@ public class Drafty implements Serializable {
      *
      * @return 'this' Drafty object.
      */
-    public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname, URL refurl, long size) {
+    public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname, URI refurl, long size) {
         if (bits == null && refurl == null) {
             throw new IllegalArgumentException("Either image bits or reference URL must not be null.");
         }

@@ -30,6 +30,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     }
 
     public static Spanned toSpanned(final TextView container, final Drafty content,
-                                     final ClickListener clicker) {
+                                    final ClickListener clicker) {
         if (content == null) {
             return new SpannedString("");
         }
@@ -126,16 +127,16 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 R.drawable.placeholder_image_bkg, null);
         int fgWidth = fg.getIntrinsicWidth();
         int fgHeight = fg.getIntrinsicHeight();
-        LayerDrawable result = new LayerDrawable(new Drawable[] {bkg, fg});
+        LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, fg});
         result.setBounds(0, 0, width, height);
         // Move foreground to the center of the drawable.
-        int dx = Math.max((width - fgWidth)/2, 0);
-        int dy = Math.max((height - fgHeight)/2, 0);
-        fg.setBounds(dx, dy, dx+fgWidth, dy+fgHeight);
+        int dx = Math.max((width - fgWidth) / 2, 0);
+        int dy = Math.max((height - fgHeight) / 2, 0);
+        fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
         return result;
     }
 
-    private TreeNode handleImage(final Context ctx, Object content, final Map<String,Object> data) {
+    private TreeNode handleImage(final Context ctx, Object content, final Map<String, Object> data) {
         TreeNode result = null;
         if (data != null) {
             int width = 0, height = 0;
@@ -192,8 +193,11 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                         }
                         width = (int) (width * scale * metrics.density);
                         height = (int) (height * scale * metrics.density);
-                        span = new UrlImageSpan(mContainer, width, height, placeholder, onError);
-                        ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) ref));
+                        URL url = Cache.getTinode().toAbsoluteURL((String) ref);
+                        if (url != null) {
+                            span = new UrlImageSpan(mContainer, width, height, placeholder, onError);
+                            ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) ref));
+                        }
                     }
                 }
             }
@@ -226,7 +230,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
     private TreeNode handleAttachment(final Context ctx,
                                       Object unused,
-                                      final Map<String,Object> data) {
+                                      final Map<String, Object> data) {
         TreeNode result = new TreeNode();
         if (data != null) {
             try {
@@ -297,7 +301,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     }
 
     // Button: URLSpan wrapped into LineHeightSpan and then BorderedSpan.
-    private TreeNode handleButton(final Map<String,Object> data, final Object content) {
+    private TreeNode handleButton(final Map<String, Object> data, final Object content) {
         // This is needed for button shadows.
         mContainer.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
@@ -324,7 +328,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     }
 
     @Override
-    public TreeNode apply(final String tp, final Map<String,Object> data, final Object content) {
+    public TreeNode apply(final String tp, final Map<String, Object> data, final Object content) {
         if (tp != null) {
             TreeNode span = null;
             switch (tp) {
@@ -355,7 +359,8 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                                 }
                             }
                         }, content);
-                    } catch (ClassCastException | NullPointerException ignored) {}
+                    } catch (ClassCastException | NullPointerException ignored) {
+                    }
                     break;
                 case "MN":
                 case "HT":
@@ -411,7 +416,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     }
 
     public interface ClickListener {
-        void onClick(String type, Map<String,Object> data);
+        void onClick(String type, Map<String, Object> data);
     }
 
     // Structure representing Drafty as a tree of formatting nodes.
@@ -454,6 +459,16 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             assignContent(content);
         }
 
+        TreeNode(CharacterStyle style, Object content) {
+            this.cStyle = style;
+            assignContent(content);
+        }
+
+        TreeNode(ParagraphStyle style, Object content) {
+            this.pStyle = style;
+            assignContent(content);
+        }
+
         @SuppressWarnings("unchecked")
         private void assignContent(Object content) {
             if (content == null) {
@@ -471,16 +486,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             } else {
                 throw new IllegalArgumentException("Invalid content");
             }
-        }
-
-        TreeNode(CharacterStyle style, Object content) {
-            this.cStyle = style;
-            assignContent(content);
-        }
-
-        TreeNode(ParagraphStyle style, Object content) {
-            this.pStyle = style;
-            assignContent(content);
         }
 
         void addNode(TreeNode node) {
@@ -559,10 +564,10 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
         private String styleName() {
             if (pStyle != null) {
-                return ", stl="+pStyle.getClass().getName();
+                return ", stl=" + pStyle.getClass().getName();
             }
             if (cStyle != null) {
-                return ", stl="+cStyle.getClass().getName();
+                return ", stl=" + cStyle.getClass().getName();
             }
             return "";
         }
