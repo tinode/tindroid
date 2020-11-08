@@ -172,13 +172,6 @@ public class MessagesFragment extends Fragment {
         view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity));
 
         EditText editor = view.findViewById(R.id.editMessage);
-        // Send message on Enter
-        editor.setOnEditorActionListener(
-                (v, actionId, event) -> {
-                    sendText();
-                    return true;
-                });
-
         // Send notification on key presses
         editor.addTextChangedListener(new TextWatcher() {
             @Override
