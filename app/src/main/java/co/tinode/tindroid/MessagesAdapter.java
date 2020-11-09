@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.NonNull;
@@ -439,29 +440,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setAutoLinkMask(0);
         }
 
-        if (hasAttachment && holder.mProgressInclude != null) {
+        if (hasAttachment && holder.mProgressContainer != null) {
             if (uploadingAttachment) {
-                // Hide the word 'cancelled'.
+                // Hide the word 'canceled'.
                 holder.mProgressResult.setVisibility(View.GONE);
                 // Show progress bar.
                 holder.mProgress.setVisibility(View.VISIBLE);
-                holder.mProgressInclude.setVisibility(View.VISIBLE);
+                holder.mProgressContainer.setVisibility(View.VISIBLE);
                 holder.mCancelProgress.setOnClickListener(v -> {
-                    if (cancelUpload(msgId)) {
-                        holder.mProgress.setVisibility(View.GONE);
-                        holder.mProgressResult.setVisibility(View.VISIBLE);
-                    }
+                    cancelUpload(msgId);
+                    holder.mProgress.setVisibility(View.GONE);
+                    holder.mProgressResult.setVisibility(View.VISIBLE);
                 });
             } else if (uploadFailed) {
-                // Show the word 'cancelled'.
+                // Show the word 'canceled'.
                 holder.mProgressResult.setVisibility(View.VISIBLE);
                 // Hide progress bar.
                 holder.mProgress.setVisibility(View.GONE);
-                holder.mProgressInclude.setVisibility(View.VISIBLE);
+                holder.mProgressContainer.setVisibility(View.VISIBLE);
                 holder.mCancelProgress.setOnClickListener(null);
             } else {
                 // Hide the entire progress bar component.
-                holder.mProgressInclude.setVisibility(View.GONE);
+                holder.mProgressContainer.setVisibility(View.GONE);
                 holder.mCancelProgress.setOnClickListener(null);
             }
         }
@@ -705,7 +705,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return false;
     }
 
-    private boolean cancelUpload(long msgId) {
+    private void cancelUpload(long msgId) {
         final String uniqueID = Long.toString(msgId);
 
         WorkManager wm = WorkManager.getInstance(mActivity);
@@ -716,14 +716,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 WorkInfo wi = lwi.get(0);
                 state = wi.getState();
             }
-        } catch (ExecutionException | InterruptedException ignored) {
+        } catch (CancellationException | ExecutionException | InterruptedException ignored) {
         }
 
         if (state == null || !state.isFinished()) {
-            wm.cancelUniqueWork(Long.toString(msgId));
-            return true;
+            wm.cancelUniqueWork(uniqueID);
         }
-        return state == WorkInfo.State.CANCELLED;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -737,7 +735,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         TextView mUserName;
         View mSelected;
         View mOverlay;
-        View mProgressInclude;
+        View mProgressContainer;
         ProgressBar mProgressBar;
         AppCompatImageButton mCancelProgress;
         View mProgress;
@@ -756,7 +754,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mUserName = itemView.findViewById(R.id.userName);
             mSelected = itemView.findViewById(R.id.selected);
             mOverlay = itemView.findViewById(R.id.overlay);
-            mProgressInclude = itemView.findViewById(R.id.progressInclide);
+            mProgressContainer = itemView.findViewById(R.id.progressContainer);
             mProgress = itemView.findViewById(R.id.progressPanel);
             mProgressBar = itemView.findViewById(R.id.attachmentProgressBar);
             mCancelProgress = itemView.findViewById(R.id.attachmentProgressCancel);

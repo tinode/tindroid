@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 import co.tinode.tinodesdk.model.MsgServerCtrl;
 
@@ -43,7 +44,7 @@ public class LargeFileHelper {
 
     // Upload file out of band. This should not be called on the UI thread.
     public MsgServerCtrl upload(InputStream in, String filename, String mimetype, long size,
-                                FileHelperProgress progress) throws IOException {
+                                FileHelperProgress progress) throws IOException, CancellationException {
         mCancel = false;
         HttpURLConnection conn = null;
         MsgServerCtrl ctrl;
@@ -114,7 +115,8 @@ public class LargeFileHelper {
     }
 
     // Download file from the given URL if the URL's host is the default host. Should not be called on the UI thread.
-    public long download(String downloadFrom, OutputStream out, FileHelperProgress progress) throws IOException {
+    public long download(String downloadFrom, OutputStream out, FileHelperProgress progress)
+            throws IOException, CancellationException {
         URL url = new URL(downloadFrom);
         long size = 0;
         String scheme = url.getProtocol();
@@ -165,19 +167,28 @@ public class LargeFileHelper {
         mCancel = true;
     }
 
-    private int copyStream(InputStream in, OutputStream out, long size, FileHelperProgress p) throws IOException {
+    public boolean isCanceled() {
+        return mCancel;
+    }
+
+    private int copyStream(InputStream in, OutputStream out, long size, FileHelperProgress p)
+            throws IOException, CancellationException {
         byte[] buffer = new byte[BUFFER_SIZE];
         int len, sent = 0;
         while ((len = in.read(buffer)) != -1) {
-            sent += len;
-            out.write(buffer, 0, len);
-            if (p != null) {
-                p.onProgress(sent, size);
+            if (mCancel) {
+                throw new CancellationException();
             }
 
+            sent += len;
+            out.write(buffer, 0, len);
+
             if (mCancel) {
-                mCancel = false;
-                throw new IOException("cancelled");
+                throw new CancellationException();
+            }
+
+            if (p != null) {
+                p.onProgress(sent, size);
             }
         }
         return sent;

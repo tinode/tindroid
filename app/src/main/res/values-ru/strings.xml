@@ -47,7 +47,7 @@
     <string name="email_rejected">Емейл неверен</string>
     <string name="login_rejected">Логин неверен</string>
     <string name="your_permissions">Ваши</string>
-    <string name="cancelled">отменено</string>
+    <string name="canceled">отменено</string>
     <string name="unable_to_attach_file">Невозможно прикрепить этот файл</string>
     <string name="notification_channel_name">Новое сообщение</string>
     <string name="new_message">Новое сообщение</string>

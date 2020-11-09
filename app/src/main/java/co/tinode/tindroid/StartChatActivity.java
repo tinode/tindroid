@@ -80,7 +80,7 @@ public class StartChatActivity extends AppCompatActivity
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == UiUtils.READ_EXTERNAL_STORAGE_PERMISSION) {
-            // If request is cancelled, the result arrays are empty.
+            // If request is canceled, the result arrays are empty.
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 UiUtils.requestAvatar(getSupportFragmentManager().findFragmentById(R.id.contentFragment));

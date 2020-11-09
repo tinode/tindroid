@@ -21,7 +21,7 @@ import androidx.annotation.NonNull;
 
 /* Spannable which updates associated image as it's loaded from the given URL */
 public class UrlImageSpan extends DynamicDrawableSpan implements Target {
-    private static final String TAG = "DynamicDrawableSpan";
+    private static final String TAG = "UrlImageSpan";
 
     private final WeakReference<View> mParentRef;
     private Drawable mDrawable;
@@ -38,7 +38,6 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     }
 
     public void load(URL from) {
-        Log.i(TAG, "Fetching " + from);
         Picasso.get().load(Uri.parse(from.toString())).resize(mWidth, mHeight).into(this);
     }
 

@@ -162,7 +162,7 @@
     <string name="download_title">Tinode 다운로드</string>
     <string name="some_permissions_missing">요청된 모든 권한을 부여하세요</string>
     <string name="unable_to_attach_file">해당 파일을 첨부할 수 없습니다.</string>
-    <string name="cancelled">취소됨</string>
+    <string name="canceled">취소됨</string>
     <string name="login_rejected">로그인 거부됨</string>
     <string name="email_rejected">이메일 거부됨</string>
     <string name="invalid_confirmation_code">올바르지 않은 코드</string>

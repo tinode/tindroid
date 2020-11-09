@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -77,6 +78,7 @@ public class AttachmentHandler extends Worker {
     final static String ARG_IMAGE_HEIGHT = "height";
 
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
+
     private static final String TAG = "AttachmentHandler";
     private LargeFileHelper mUploader = null;
 
@@ -508,7 +510,10 @@ public class AttachmentHandler extends Worker {
                                     .putLong(ARG_PROGRESS, progress)
                                     .putLong(ARG_FILE_SIZE, size)
                                     .build()));
-                    success = (ctrl != null && ctrl.code == 200);
+                    if (mUploader.isCanceled()) {
+                        throw new CancellationException();
+                    }
+                    success = ctrl != null && ctrl.code == 200;
                     if (success) {
                         if ("file".equals(operation)) {
                             content = draftyAttachment(fileDetails.mimeType, fname,
@@ -555,11 +560,10 @@ public class AttachmentHandler extends Worker {
                             .build());
                 }
             }
+        } catch (CancellationException ignored) {
         } catch (IOException | NullPointerException | SecurityException ex) {
             result.putString(ARG_ERROR, ex.getMessage());
-            if (!"cancelled".equals(ex.getMessage())) {
-                Log.w(TAG, "Failed to attach file", ex);
-            }
+            Log.w(TAG, "Failed to upload file", ex);
         } finally {
             if (is != null) {
                 try {

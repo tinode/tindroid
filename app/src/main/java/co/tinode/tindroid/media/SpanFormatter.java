@@ -275,7 +275,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 icon = AppCompatResources.getDrawable(ctx, valid ?
                         R.drawable.ic_download_link : R.drawable.ic_error_gray);
                 DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-                //noinspection ConstantConditions
+                // noinspection ConstantConditions
                 icon.setBounds(0, 0,
                         (int) (ICON_SIZE_DP * metrics.density),
                         (int) (ICON_SIZE_DP * metrics.density));

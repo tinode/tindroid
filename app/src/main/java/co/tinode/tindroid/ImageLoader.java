@@ -398,7 +398,7 @@ public abstract class ImageLoader {
 
             Bitmap bitmap = null;
 
-            // Wait here if work is paused and the task is not cancelled
+            // Wait here if work is paused and the task is not canceled
             synchronized (mPauseWorkLock) {
                 while (mPauseWork && !isCancelled()) {
                     try {

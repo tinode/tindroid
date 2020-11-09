@@ -45,6 +45,7 @@ import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.work.WorkManager;
 import co.tinode.tindroid.account.ContactsObserver;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -205,6 +206,9 @@ public class TindroidApp extends Application implements LifecycleObserver {
             sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
 
+        // Clear completed/failed upload tasks.
+        WorkManager.getInstance(this).pruneWork();
+
         // Setting up Picasso with auth headers.
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(chain -> {
@@ -224,8 +228,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
                 .build();
         Picasso.setSingletonInstance(new Picasso.Builder(this)
                 .downloader(new OkHttp3Downloader(client))
-                .loggingEnabled(true) // Debugging
-                .indicatorsEnabled(true) // Debugging
                 .build());
     }
 

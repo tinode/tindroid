@@ -3,6 +3,7 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="co.tinode.tindroid">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
 

@@ -231,14 +231,20 @@ public class MessagesFragment extends Fragment {
                                 }
                                 break;
                             }
+                            case CANCELLED:
                             case SUCCEEDED: {
-                                Data success = wi.getOutputData();
-                                long msgId = success.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
-                                if (msgId > 0) {
+                                Data result = wi.getOutputData();
+                                String topicName = result.getString(AttachmentHandler.ARG_TOPIC_NAME);
+                                long msgId = result.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
+                                if (msgId > 0 && mTopicName.equals(topicName)) {
                                     activity.syncMessages(msgId, true);
                                 }
                                 break;
                             }
+                            case ENQUEUED:
+                            case BLOCKED:
+                                // Do nothing.
+                                break;
                             case FAILED: {
                                 Data failure = wi.getOutputData();
                                 String topicName = failure.getString(AttachmentHandler.ARG_TOPIC_NAME);
@@ -248,7 +254,6 @@ public class MessagesFragment extends Fragment {
                                         String error = failure.getString(AttachmentHandler.ARG_ERROR);
                                         runMessagesLoader(mTopicName);
                                         Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
-                                        Log.i(TAG, "Upload failed: " + error);
                                     }
                                 }
                                 break;

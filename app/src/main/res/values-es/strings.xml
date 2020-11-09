@@ -162,7 +162,7 @@
     <string name="download_title">Descargar</string>
     <string name="some_permissions_missing">Por favor, otorga todos los permisos solicitados.</string>
     <string name="unable_to_attach_file">No se puede adjuntar este archivo</string>
-    <string name="cancelled">cancelado</string>
+    <string name="canceled">cancelado</string>
     <string name="login_rejected">El nombre de usuario ha sido rechazado</string>
     <string name="email_rejected">La dirección de correo electrónico ha sido rechazado</string>
     <string name="invalid_confirmation_code">Código inválido</string>

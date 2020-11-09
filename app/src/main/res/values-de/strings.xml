@@ -162,7 +162,7 @@
     <string name="download_title">Herunterladen</string>
     <string name="some_permissions_missing">Bitte erteilen Sie alle beantragten Genehmigungen.</string>
     <string name="unable_to_attach_file">Diese Datei kann nicht angehängt werden</string>
-    <string name="cancelled">Abbrechen</string>
+    <string name="canceled">Abbrechen</string>
     <string name="login_rejected">Benutzername wurde abgelehnt</string>
     <string name="email_rejected">Die E-Mail-Adresse wurde abgelehnt</string>
     <string name="invalid_confirmation_code">Ungültiger Code</string>
