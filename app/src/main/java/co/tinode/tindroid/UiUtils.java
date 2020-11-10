@@ -472,22 +472,23 @@ public class UiUtils {
      * Scale bitmap down to be under certain liner dimensions but no less than by the given amount.
      *
      * @param bmp     bitmap to scale.
-     * @param atLeast shrink bitmap by at least this amount (>1). Values <=1 are ignored.
+     * @param maxWidth maximum allowed bitmap width.
+     * @param maxHeight maximum allowed bitmap height.
      * @return scaled bitmap or original, it it does not need ot be scaled.
      */
     @NonNull
-    static Bitmap scaleBitmap(@NonNull Bitmap bmp) {
+    static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         float factor = 1.0f;
         // Calculate scaling factor due to large linear dimensions.
         if (width >= height) {
-            if (width > MAX_BITMAP_SIZE) {
-                factor = (float) width / MAX_BITMAP_SIZE;
+            if (width > maxWidth) {
+                factor = (float) width / maxWidth;
             }
         } else {
-            if (height > MAX_BITMAP_SIZE) {
-                factor = (float) height / MAX_BITMAP_SIZE;
+            if (height > maxHeight) {
+                factor = (float) height / maxHeight;
             }
         }
         // Scale down.
@@ -679,6 +680,11 @@ public class UiUtils {
 
     @NonNull
     static ByteArrayInputStream bitmapToStream(@NonNull Bitmap bmp, String mimeType) {
+        return new ByteArrayInputStream(bitmapToBytes(bmp, mimeType));
+    }
+
+    @NonNull
+    static byte[] bitmapToBytes(@NonNull Bitmap bmp, String mimeType) {
         Bitmap.CompressFormat fmt;
         if ("image/jpeg".equals(mimeType)) {
             fmt = Bitmap.CompressFormat.JPEG;
@@ -687,7 +693,12 @@ public class UiUtils {
         }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bmp.compress(fmt, 70, bos);
-        return new ByteArrayInputStream(bos.toByteArray());
+        byte[] bits = bos.toByteArray();
+        try {
+            bos.close();
+        } catch (IOException ignored) {}
+
+        return bits;
     }
 
     /**

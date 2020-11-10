@@ -202,6 +202,8 @@ public class MessageActivity extends AppCompatActivity {
 
         mSendReadReceipts = pref.getBoolean(UiUtils.PREF_READ_RCPT, true);
         mSendTypingNotifications = pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true);
+
+        BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
     }
 
     // Topic has changed. Update all the views with the new data.

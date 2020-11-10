@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.text.SpannableStringBuilder;
@@ -139,6 +140,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
     private TreeNode handleImage(final Context ctx, Object content, final Map<String, Object> data) {
         TreeNode result = null;
         if (data != null) {
+            // Bitmap dimensions specified by the sender.
             int width = 0, height = 0;
             Object tmp;
             if ((tmp = data.get("width")) instanceof Number) {
@@ -148,69 +150,101 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 height = ((Number) tmp).intValue();
             }
 
-            CharacterStyle span = null;
+            // Calculate scaling factor for images to fit into the viewport.
             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+            float scale = scaleBitmap(width, height, mViewport, metrics.density);
+            // Bitmap dimensions specified by the sender converted to viewport size in display pixels.
+            int scaledWidth = 0, scaledHeight = 0;
+            if (scale > 0) {
+                scaledWidth = (int) (width * scale * metrics.density);
+                scaledHeight = (int) (height * scale * metrics.density);
+            }
+
+            CharacterStyle span = null;
+            Bitmap bmpPreview = null;
+
+            // Inline image.
             Object val = data.get("val");
             if (val != null) {
                 try {
+                    // True if inline image is only a preview: try to use out of band image (default).
+                    boolean isPreviewOnly = true;
                     // If the message is not yet sent, the bits could be raw byte[] as opposed to
                     // base64-encoded.
                     byte[] bits = (val instanceof String) ?
                             Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
-                    Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                    if (bmp != null) {
-                        // Scale bitmap for display density. The data.get("width") and data.get("height") are ignored.
-                        int bmpWidth = bmp.getWidth();
-                        int bmpHeight = bmp.getHeight();
-                        float scale = scaleBitmap(bmpWidth, bmpHeight, mViewport, metrics.density);
+                    bmpPreview = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                    if (bmpPreview != null) {
+                        // Check if the inline bitmap is big enough to be used as primary image.
+                        int previewWidth = bmpPreview.getWidth();
+                        int previewHeight = bmpPreview.getHeight();
                         if (scale == 0) {
-                            bmp = null;
-                        } else {
-                            bmp = Bitmap.createScaledBitmap(bmp, (int) (bmpWidth * scale * metrics.density),
-                                    (int) (bmpHeight * scale * metrics.density), true);
+                            // If dimensions are not specified in the attachment metadata, try to use bitmap dimensions.
+                            scale = scaleBitmap(previewWidth, previewHeight, mViewport, metrics.density);
+                            if (scale != 0) {
+                                // Because sender-provided dimensions are unknown or invalid we have to use
+                                // this inline image as the primary one (out of band image is ignored).
+                                isPreviewOnly = false;
+                                scaledWidth = (int) (previewWidth * scale * metrics.density);
+                                scaledHeight = (int) (previewHeight * scale * metrics.density);
+                            }
                         }
+
+                        Bitmap oldBmp = bmpPreview;
+                        if (scale == 0) {
+                            // Can't scale the image. There must be something wrong with it.
+                            bmpPreview = null;
+                        } else {
+                            bmpPreview = Bitmap.createScaledBitmap(bmpPreview, scaledWidth, scaledHeight, true);
+                            // Check if the image is big enough to use as the primary one (ignoring possible full-size
+                            // out-of-band image). If it's not already suitable for preview don't bother.
+                            isPreviewOnly = isPreviewOnly && previewWidth * metrics.density < scaledWidth * 0.35f;
+
+                        }
+                        oldBmp.recycle();
                     }
-                    if (bmp != null) {
-                        span = new ImageSpan(ctx, bmp);
+
+                    if (bmpPreview != null && !isPreviewOnly) {
+                        span = new ImageSpan(ctx, bmpPreview);
                     }
                 } catch (Exception ex) {
-                    Log.w(TAG, "Broken image", ex);
+                    Log.w(TAG, "Broken image preview", ex);
                 }
-            } else {
-                Object ref = data.get("ref");
-                if (ref instanceof String) {
-                    float scale = scaleBitmap(width, height, mViewport, metrics.density);
-                    if (scale > 0) {
-                        Drawable onError = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
-                        if (onError != null) {
-                            onError.setBounds(0, 0, onError.getIntrinsicWidth(), onError.getIntrinsicHeight());
-                        }
-                        Drawable placeholder = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
+            }
+
+            // Out of band image.
+            if (span == null && (val = data.get("ref")) instanceof String) {
+                String ref = (String) val;
+                if (scale > 0) {
+                    Drawable onError = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                    if (onError != null) {
+                        onError.setBounds(0, 0, onError.getIntrinsicWidth(), onError.getIntrinsicHeight());
+                    }
+                    Drawable placeholder;
+                    if (bmpPreview != null) {
+                        placeholder = new BitmapDrawable(ctx.getResources(), bmpPreview);
+                    } else {
+                        placeholder = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
                         if (placeholder != null) {
                             placeholder.setBounds(0, 0,
                                     placeholder.getIntrinsicWidth(),
                                     placeholder.getIntrinsicHeight());
                         }
-                        width = (int) (width * scale * metrics.density);
-                        height = (int) (height * scale * metrics.density);
-                        URL url = Cache.getTinode().toAbsoluteURL((String) ref);
-                        if (url != null) {
-                            span = new UrlImageSpan(mContainer, width, height, placeholder, onError);
-                            ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) ref));
-                        }
+                    }
+                    URL url = Cache.getTinode().toAbsoluteURL((String) ref);
+                    if (url != null) {
+                        span = new UrlImageSpan(mContainer, scaledWidth, scaledHeight, placeholder, onError);
+                        ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) ref));
                     }
                 }
             }
 
             if (span == null) {
                 // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-                float scale = scaleBitmap(width, height, mViewport, metrics.density);
                 Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
                 if (broken != null) {
                     broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-                    span = new ImageSpan(getPlaceholder(ctx, broken,
-                            (int) (width * scale * metrics.density),
-                            (int) (height * scale * metrics.density)));
+                    span = new ImageSpan(getPlaceholder(ctx, broken, scaledWidth, scaledHeight));
                     result = new TreeNode(span, content);
                 }
             } else if (mClicker != null) {

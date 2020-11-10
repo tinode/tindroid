@@ -211,6 +211,10 @@ public class ImageViewFragment extends Fragment {
                 Uri ref = args.getParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI);
                 if (ref != null) {
                     final String fn = fileName;
+                    // Set placeholder image.
+                    mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(),
+                            R.drawable.ic_image, null));
                     Picasso.get().load(ref).centerInside().fit().into(mImageView, new Callback() {
                         @Override
                         public void onSuccess() {

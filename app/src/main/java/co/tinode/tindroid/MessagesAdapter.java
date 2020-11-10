@@ -833,10 +833,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     if (data != null) {
                         Object val;
                         if ((val = data.get("ref")) instanceof String) {
-                            args = new Bundle();
                             URL url = Cache.getTinode().toAbsoluteURL((String) val);
-                            args.putParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI, Uri.parse(url.toString()));
-                        } else if ((val = data.get("val")) != null) {
+                            // URL is null when the image is not sent yet.
+                            if (url != null) {
+                                args = new Bundle();
+                                args.putParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI, Uri.parse(url.toString()));
+                            }
+                        }
+
+                        if (args == null && (val = data.get("val")) != null) {
                             byte[] bytes = val instanceof String ?
                                     Base64.decode((String) val, Base64.DEFAULT) :
                                         val instanceof byte[] ? (byte[]) val : null;

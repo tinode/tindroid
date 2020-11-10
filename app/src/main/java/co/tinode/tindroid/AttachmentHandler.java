@@ -378,6 +378,7 @@ public class AttachmentHandler extends Worker {
         boolean success = false;
         InputStream is = null;
         ByteArrayOutputStream baos = null;
+        Bitmap bmp = null;
         try {
             int imageWidth = 0, imageHeight = 0;
 
@@ -404,7 +405,7 @@ public class AttachmentHandler extends Worker {
                 if (is == null) {
                     throw new IOException("Failed to open " + uri.toString());
                 }
-                Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
+                bmp = BitmapFactory.decodeStream(is, null, null);
                 is.close();
                 if (bmp == null) {
                     throw new IOException("Failed to decode bitmap");
@@ -412,11 +413,10 @@ public class AttachmentHandler extends Worker {
 
                 // Make sure the image dimensions are not too large.
                 if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
-                    bmp = UiUtils.scaleBitmap(bmp);
+                    bmp = UiUtils.scaleBitmap(bmp, UiUtils.MAX_BITMAP_SIZE, UiUtils.MAX_BITMAP_SIZE);
 
-                    is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
-                    fileDetails.fileSize = is.available();
-                    is.close();
+                    byte[] bits = UiUtils.bitmapToBytes(bmp, fileDetails.mimeType);
+                    fileDetails.fileSize = bits.length;
                 }
 
                 // Also ensure the image has correct orientation.
@@ -464,7 +464,6 @@ public class AttachmentHandler extends Worker {
 
                 imageWidth = bmp.getWidth();
                 imageHeight = bmp.getHeight();
-
                 is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
                 fileDetails.fileSize = is.available();
             }
@@ -485,15 +484,23 @@ public class AttachmentHandler extends Worker {
                 }
 
                 if (fileDetails.fileSize > maxInbandAttachmentSize) {
+                    byte[] previewBits = null;
                     // Update draft with file or image data.
                     String ref = "mid:uploading-" + msgId;
                     if ("file".equals(operation)) {
                         store.msgDraftUpdate(topic, msgId, draftyAttachment(fileDetails.mimeType,
                                 fname, ref, -1));
                     } else {
+                        // Create a tiny preview bitmap.
+                        if (bmp != null &&
+                                (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM ||
+                                        bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM)) {
+                            previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
+                                            UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM), "image/jpeg");
+                        }
                         store.msgDraftUpdate(topic, msgId,
                                 draftyImage(args.getString(ARG_IMAGE_CAPTION),
-                                        fileDetails.mimeType, null, ref, imageWidth, imageHeight,
+                                        fileDetails.mimeType, previewBits, ref, imageWidth, imageHeight,
                                         fname, -1));
                     }
 
@@ -520,7 +527,7 @@ public class AttachmentHandler extends Worker {
                                     ctrl.getStringParam("url", null), fileDetails.fileSize);
                         } else {
                             content = draftyImage(args.getString(ARG_IMAGE_CAPTION), fileDetails.mimeType,
-                                    null, ctrl.getStringParam("url", null),
+                                    previewBits, ctrl.getStringParam("url", null),
                                     imageWidth, imageHeight, fname, fileDetails.fileSize);
                         }
                     }
@@ -565,6 +572,9 @@ public class AttachmentHandler extends Worker {
             result.putString(ARG_ERROR, ex.getMessage());
             Log.w(TAG, "Failed to upload file", ex);
         } finally {
+            if (bmp != null) {
+                bmp.recycle();
+            }
             if (is != null) {
                 try {
                     is.close();
