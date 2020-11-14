@@ -180,8 +180,6 @@ public class AttachmentHandler extends Worker {
 
             // If send or upload is retried,
             WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msgId), ExistingWorkPolicy.REPLACE, upload);
-        } else {
-            Log.w(TAG, "Failed to insert new message to DB");
         }
     }
 
@@ -425,7 +423,6 @@ public class AttachmentHandler extends Worker {
                     // Opening original image, not a scaled copy.
                     if (fileDetails.imageOrientation == -1) {
                         is = resolver.openInputStream(uri);
-                        //noinspection ConstantConditions
                         ExifInterface exif = new ExifInterface(is);
                         orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                                 ExifInterface.ORIENTATION_UNDEFINED);
@@ -535,7 +532,6 @@ public class AttachmentHandler extends Worker {
                     baos = new ByteArrayOutputStream();
                     byte[] buffer = new byte[16384];
                     int len;
-                    // noinspection ConstantConditions: NullPointerException is handled explicitly.
                     while ((len = is.read(buffer)) > 0) {
                         baos.write(buffer, 0, len);
                     }
@@ -594,8 +590,8 @@ public class AttachmentHandler extends Worker {
             store.msgReady(topic, msgId, content);
             return ListenableWorker.Result.success(result.build());
         } else {
-            // Failure: discard draft.
-            store.msgFailed(topic, msgId);
+            // Failure. Draft has been discarded earlier. We cannot discard it here because
+            // copyStream cannot be interrupted.
             return ListenableWorker.Result.failure(result.build());
         }
     }

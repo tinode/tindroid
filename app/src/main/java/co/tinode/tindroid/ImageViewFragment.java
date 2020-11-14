@@ -208,7 +208,7 @@ public class ImageViewFragment extends Fragment {
                     Log.i(TAG, "Failed to read image from " + uri, ex);
                 }
             } else {
-                Uri ref = args.getParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI);
+                final Uri ref = args.getParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI);
                 if (ref != null) {
                     final String fn = fileName;
                     // Set placeholder image.
@@ -242,7 +242,7 @@ public class ImageViewFragment extends Fragment {
 
                         @Override
                         public void onError(Exception e) {
-                            Log.i(TAG, "Picasso failed to load image", e);
+                            Log.i(TAG, "Failed to get image: " + e.getMessage() + " (" + ref + ")");
                         }
                     });
                 }

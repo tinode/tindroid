@@ -231,7 +231,6 @@ public class MessagesFragment extends Fragment {
                                 }
                                 break;
                             }
-                            case CANCELLED:
                             case SUCCEEDED: {
                                 Data result = wi.getOutputData();
                                 String topicName = result.getString(AttachmentHandler.ARG_TOPIC_NAME);
@@ -241,19 +240,24 @@ public class MessagesFragment extends Fragment {
                                 }
                                 break;
                             }
+                            case CANCELLED:
+                                // When cancelled wi.getOutputData() returns empty Data.
                             case ENQUEUED:
                             case BLOCKED:
                                 // Do nothing.
                                 break;
+
                             case FAILED: {
                                 Data failure = wi.getOutputData();
                                 String topicName = failure.getString(AttachmentHandler.ARG_TOPIC_NAME);
                                 if (mTopicName.equals(topicName)) {
                                     long msgId = failure.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
                                     if (BaseDb.getInstance().getStore().getMessageById(mTopic, msgId) != null) {
-                                        String error = failure.getString(AttachmentHandler.ARG_ERROR);
                                         runMessagesLoader(mTopicName);
-                                        Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
+                                        if (state == WorkInfo.State.FAILED) {
+                                            String error = failure.getString(AttachmentHandler.ARG_ERROR);
+                                            Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
+                                        }
                                     }
                                 }
                                 break;

@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
 import android.provider.BaseColumns;
 import android.util.Log;
 import android.util.SparseArray;
@@ -31,15 +30,6 @@ public class BaseDb extends SQLiteOpenHelper {
      * Filename for SQLite file.
      */
     private static final String DATABASE_NAME = "base.db";
-
-    /**
-     * Content provider authority.
-     */
-    private static final String CONTENT_AUTHORITY = "co.tinode.tindroid.provider";
-    /**
-     * Base content URI. (content://co.tinode.tindroid)
-     */
-    static final Uri BASE_CONTENT_URI = Uri.parse("content://" + BaseDb.CONTENT_AUTHORITY);
 
     public enum Status {
         // Status undefined/not set.

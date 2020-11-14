@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.util.Log;
@@ -556,16 +555,13 @@ public class MessageDb implements BaseColumns {
      *
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
-     * @return  true if any messages were deleted.
      */
-    static boolean deleteAll(SQLiteDatabase db, long topicId) {
-        int affected = 0;
+    static void deleteAll(SQLiteDatabase db, long topicId) {
         try {
-            affected = db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId, null);
+            db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId, null);
         } catch (SQLException ex) {
             Log.w(TAG, "Delete failed", ex);
         }
-        return affected > 0;
     }
 
     /**

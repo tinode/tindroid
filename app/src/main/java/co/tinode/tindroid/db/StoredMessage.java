@@ -34,11 +34,6 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         content = m.content;
     }
 
-    public StoredMessage(MsgServerData m, BaseDb.Status status) {
-        this(m);
-        this.status = status;
-    }
-
     public static StoredMessage readMessage(Cursor c) {
         StoredMessage msg = new StoredMessage();
 

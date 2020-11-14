@@ -24,6 +24,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     private static final String TAG = "UrlImageSpan";
 
     private final WeakReference<View> mParentRef;
+    private URL mSource = null;
     private Drawable mDrawable;
     private final Drawable mOnError;
     private final int mWidth;
@@ -38,6 +39,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     }
 
     public void load(URL from) {
+        mSource = from;
         Picasso.get().load(Uri.parse(from.toString())).resize(mWidth, mHeight).into(this);
     }
 
@@ -61,7 +63,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = SpanFormatter.getPlaceholder(parent.getContext(), mOnError, mWidth, mHeight);
-            Log.i(TAG, "Failed to load bitmap", e);
+            Log.i(TAG, "Failed to get image: " + e.getMessage() + " (" + mSource + ")");
             parent.postInvalidate();
         }
     }
