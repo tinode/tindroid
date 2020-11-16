@@ -98,7 +98,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics:17.3.0'
     implementation 'com.google.firebase:firebase-messaging:21.0.0'
 
-    // Don't change to 2.7... The 2.8 is the latest.
+    // Don't change to 2.7182... The 2.8 is the latest.
     // noinspection GradleDependency
     implementation 'com.squareup.picasso:picasso:2.8'
 
