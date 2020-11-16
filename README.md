@@ -37,15 +37,20 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 
 ## Dependencies
 
-### SDK (otherwise plain Java):
+### SDK:
 
 * [Jackson](https://github.com/FasterXML/jackson) for JSON serialization.
 * [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket/) for websocket support.
 
+SDK contains no Android-specific dependencies.
+
 ### Application
 
 * [Google-Services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
+* [Crashlytics](https://firebase.google.com/docs/android/setup) for crash reporting.
 * [Picasso](https://square.github.io/picasso/) for image downloading and caching.
+* [OSS Licenses Gradle Plugin](https://github.com/google/play-services-plugins/tree/master/oss-licenses-plugin) for legal compliance with OSS licenses.
+* Standard Android dependencies.
 
 ## Other
 
