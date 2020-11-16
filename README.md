@@ -39,13 +39,13 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 
 ### SDK (otherwise plain Java):
 
-* [jackson](https://github.com/FasterXML/jackson) for json serialization.
-* [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket/) for
-websocket support.
+* [Jackson](https://github.com/FasterXML/jackson) for JSON serialization.
+* [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket/) for websocket support.
 
 ### Application
 
-* [google-services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
+* [Google-Services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
+* [Picasso](https://square.github.io/picasso/) for image downloading and caching.
 
 ## Other
 
