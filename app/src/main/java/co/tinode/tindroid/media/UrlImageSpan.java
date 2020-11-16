@@ -35,7 +35,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
         mWidth = width;
         mHeight = height;
         mOnError = onError;
-        mDrawable = SpanFormatter.getPlaceholder(parent.getContext(), placeholder, mWidth, mHeight);
+        mDrawable = placeholder;
     }
 
     public void load(URL from) {
@@ -62,7 +62,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     public void onBitmapFailed(Exception e, Drawable errorDrawable) {
         View parent = mParentRef.get();
         if (parent != null) {
-            mDrawable = SpanFormatter.getPlaceholder(parent.getContext(), mOnError, mWidth, mHeight);
+            mDrawable = mOnError;
             Log.i(TAG, "Failed to get image: " + e.getMessage() + " (" + mSource + ")");
             parent.postInvalidate();
         }

@@ -161,7 +161,7 @@ public class ImageViewFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        Activity activity = getActivity();
+        final Activity activity = getActivity();
         Bundle args = getArguments();
         if (activity == null || args == null) {
             return;
@@ -211,11 +211,11 @@ public class ImageViewFragment extends Fragment {
                 final Uri ref = args.getParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI);
                 if (ref != null) {
                     final String fn = fileName;
-                    // Set placeholder image.
                     mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(),
-                            R.drawable.ic_image, null));
-                    Picasso.get().load(ref).centerInside().fit().into(mImageView, new Callback() {
+                    Picasso.get().load(ref)
+                            .placeholder(R.drawable.ic_image)
+                            .error(R.drawable.ic_broken_image)
+                            .centerInside().fit().into(mImageView, new Callback() {
                         @Override
                         public void onSuccess() {
                             Activity activity = getActivity();

@@ -18,6 +18,7 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
@@ -719,6 +720,31 @@ public class UiUtils {
         drawable.draw(canvas);
 
         return bitmap;
+    }
+
+    // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
+    // Used to generate placeholder and error images for Picasso.
+    public static Drawable getPlaceholder(Context ctx, Drawable fg, Drawable bkg, int width, int height) {
+        Drawable filter;
+        if (bkg == null) {
+            // Uniformly gray background with rounded corners.
+            bkg = ResourcesCompat.getDrawable(ctx.getResources(), R.drawable.placeholder_image_bkg, null);
+            // Transparent filter.
+            filter = new ColorDrawable(0x00000000);
+        } else {
+            // Translucent filter.
+            filter = new ColorDrawable(0xCCCCCCCC);
+        }
+
+        final int fgWidth = fg.getIntrinsicWidth();
+        final int fgHeight = fg.getIntrinsicHeight();
+        final LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, filter, fg});
+        result.setBounds(0, 0, width, height);
+        // Move foreground to the center of the drawable.
+        int dx = Math.max((width - fgWidth) / 2, 0);
+        int dy = Math.max((height - fgHeight) / 2, 0);
+        fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
+        return result;
     }
 
     /**

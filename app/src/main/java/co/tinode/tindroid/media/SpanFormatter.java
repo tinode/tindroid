@@ -8,7 +8,6 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
@@ -38,9 +37,9 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.content.res.ResourcesCompat;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
+import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.model.Drafty;
 
 /**
@@ -122,21 +121,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
         return Math.min(scaleX, scaleY);
     }
 
-    // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
-    static Drawable getPlaceholder(Context ctx, Drawable fg, int width, int height) {
-        Drawable bkg = ResourcesCompat.getDrawable(ctx.getResources(),
-                R.drawable.placeholder_image_bkg, null);
-        int fgWidth = fg.getIntrinsicWidth();
-        int fgHeight = fg.getIntrinsicHeight();
-        LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, fg});
-        result.setBounds(0, 0, width, height);
-        // Move foreground to the center of the drawable.
-        int dx = Math.max((width - fgWidth) / 2, 0);
-        int dy = Math.max((height - fgHeight) / 2, 0);
-        fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
-        return result;
-    }
-
     private TreeNode handleImage(final Context ctx, Object content, final Map<String, Object> data) {
         TreeNode result = null;
         if (data != null) {
@@ -215,27 +199,32 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
             // Out of band image.
             if (span == null && (val = data.get("ref")) instanceof String) {
                 String ref = (String) val;
-                if (scale > 0) {
-                    Drawable onError = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
-                    if (onError != null) {
-                        onError.setBounds(0, 0, onError.getIntrinsicWidth(), onError.getIntrinsicHeight());
-                    }
+                URL url = Cache.getTinode().toAbsoluteURL(ref);
+                if (scale > 0 && url != null) {
+                    Drawable fg, bg = null;
+
+                    // "Image loading" placeholder.
                     Drawable placeholder;
                     if (bmpPreview != null) {
                         placeholder = new BitmapDrawable(ctx.getResources(), bmpPreview);
+                        bg = placeholder;
                     } else {
-                        placeholder = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
-                        if (placeholder != null) {
-                            placeholder.setBounds(0, 0,
-                                    placeholder.getIntrinsicWidth(),
-                                    placeholder.getIntrinsicHeight());
+                        fg = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
+                        if (fg != null) {
+                            fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                         }
+                        placeholder = UiUtils.getPlaceholder(ctx, fg, null, scaledWidth, scaledHeight);
                     }
-                    URL url = Cache.getTinode().toAbsoluteURL((String) ref);
-                    if (url != null) {
-                        span = new UrlImageSpan(mContainer, scaledWidth, scaledHeight, placeholder, onError);
-                        ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) ref));
+
+                    // "Failed to load image" placeholder.
+                    fg = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                    if (fg != null) {
+                        fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                     }
+                    Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, scaledWidth, scaledHeight);
+
+                    span = new UrlImageSpan(mContainer, scaledWidth, scaledHeight, placeholder, onError);
+                    ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL(ref));
                 }
             }
 
@@ -244,7 +233,7 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
                 if (broken != null) {
                     broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-                    span = new ImageSpan(getPlaceholder(ctx, broken, scaledWidth, scaledHeight));
+                    span = new ImageSpan(UiUtils.getPlaceholder(ctx, broken, null, scaledWidth, scaledHeight));
                     result = new TreeNode(span, content);
                 }
             } else if (mClicker != null) {
@@ -279,7 +268,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
 
             // Insert document icon
             Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file);
-            //noinspection ConstantConditions
             icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
             ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
             final Rect bounds = span.getDrawable().getBounds();
@@ -309,7 +297,6 @@ public class SpanFormatter implements Drafty.Formatter<SpanFormatter.TreeNode> {
                 icon = AppCompatResources.getDrawable(ctx, valid ?
                         R.drawable.ic_download_link : R.drawable.ic_error_gray);
                 DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-                // noinspection ConstantConditions
                 icon.setBounds(0, 0,
                         (int) (ICON_SIZE_DP * metrics.density),
                         (int) (ICON_SIZE_DP * metrics.density));

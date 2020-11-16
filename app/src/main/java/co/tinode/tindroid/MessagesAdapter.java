@@ -712,7 +712,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             store.msgFailed(topic, msgId);
             // Invalidate cached data.
             runLoader(false);
-            StoredMessage m = store.getMessageById(topic, msgId);
         }
 
         final String uniqueID = Long.toString(msgId);
