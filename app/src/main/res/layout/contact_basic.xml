@@ -18,15 +18,17 @@
         android:layout_alignParentStart="true"
         android:layout_marginEnd="5dp">
         <ImageView
-            android:layout_width="48sp"
-            android:layout_height="48sp"
-            app:srcCompat="@drawable/ic_person_circle"/>
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:srcCompat="@drawable/ic_person_circle"
+            tools:ignore="ContentDescription" />
 
         <ImageView
             android:id="@+id/selected"
-            android:layout_width="48sp"
-            android:layout_height="48sp"
-            app:srcCompat="@drawable/ic_selected"/>
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:srcCompat="@drawable/ic_selected"
+            tools:ignore="ContentDescription" />
     </ImageSwitcher>
 
     <TextView
@@ -39,7 +41,8 @@
             android:paddingEnd="16sp"
             android:layout_alignParentTop="true"
             android:maxLines="1"
-            tools:text="Contact title"/>
+            tools:text="Contact title"
+        tools:ignore="RtlSymmetry" />
 
     <TextView
             android:id="@android:id/text2"

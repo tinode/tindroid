@@ -5,6 +5,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowActionModeOverlay">true</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="android:listDivider">@drawable/list_divider</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.ActionBar">
@@ -22,7 +23,8 @@
         <item name="checkBoxPreferenceStyle">@style/Preference.CheckBoxPreference</item>
         <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat</item>
         <item name="dialogPreferenceStyle">@style/Preference.DialogPreference</item>
-        <item name="editTextPreferenceStyle">@style/Preference.DialogPreference.EditTextPreference</item>
+        <item name="editTextPreferenceStyle">@style/Preference.DialogPreference.EditTextPreference
+        </item>
         <item name="preferenceFragmentListStyle">@style/PreferenceFragmentList</item>
     </style>
 
@@ -30,8 +32,7 @@
         <item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
 
-    <style name="LicensesTheme" parent="Theme.AppCompat.DayNight">
-    </style>
+    <style name="LicensesTheme" parent="Theme.AppCompat.DayNight"></style>
 
     <style name="searchTextHighlight">
         <item name="android:textColor">@color/colorAccent</item>

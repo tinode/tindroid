@@ -86,6 +86,10 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         return status == BaseDb.Status.DRAFT;
     }
 
+    public boolean isPending() {
+        return status == BaseDb.Status.DRAFT || status == BaseDb.Status.QUEUED || status == BaseDb.Status.SENDING;
+    }
+
     @Override
     public boolean isReady() {
         return status == BaseDb.Status.QUEUED;

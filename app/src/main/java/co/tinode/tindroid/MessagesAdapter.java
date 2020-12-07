@@ -409,8 +409,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final long msgId = m.getId();
 
         boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
-        boolean uploadingAttachment = hasAttachment &&
-                (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING);
+        boolean uploadingAttachment = hasAttachment && m.isPending();
         boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
         mSpanFormatterClicker.setPosition(position);

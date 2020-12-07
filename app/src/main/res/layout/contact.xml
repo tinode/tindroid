@@ -11,20 +11,20 @@
     android:gravity="center_vertical">
 
     <RelativeLayout
-        android:layout_width="48sp"
-        android:layout_height="48sp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginEnd="5dp">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/avatar"
-            android:layout_width="48sp"
-            android:layout_height="48sp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             app:srcCompat="@drawable/ic_person_circle" />
 
         <ImageView
             android:id="@+id/online"
-            android:layout_width="16sp"
-            android:layout_height="16sp"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
             android:contentDescription="@string/avatar"
