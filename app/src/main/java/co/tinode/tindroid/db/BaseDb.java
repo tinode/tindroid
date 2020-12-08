@@ -24,7 +24,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 11;
+    private static final int DATABASE_VERSION = 12;
 
     /**
      * Filename for SQLite file.
@@ -35,21 +35,21 @@ public class BaseDb extends SQLiteOpenHelper {
         // Status undefined/not set.
         UNDEFINED(0),
         // Object is not ready to be sent to the server.
-        DRAFT(1),
+        DRAFT(10),
         // Object is waiting in the queue to be sent to the server.
-        QUEUED(2),
+        QUEUED(20),
         // Object is in the process of being sent to the server.
-        SENDING(3),
-        // Object is received by the server.
-        SYNCED(4),
-        // Object is hard-deleted.
-        DELETED_HARD(5),
-        // Object is soft-deleted.
-        DELETED_SOFT(6),
-        // The object is a deletion range marker synchronized with the server.
-        DELETED_SYNCED(7),
+        SENDING(30),
         // Send failed.
-        FAILED(8);
+        FAILED(40),
+        // Object is received by the server.
+        SYNCED(50),
+        // Object is hard-deleted.
+        DELETED_HARD(60),
+        // Object is soft-deleted.
+        DELETED_SOFT(70),
+        // The object is a deletion range marker synchronized with the server.
+        DELETED_SYNCED(80);
 
         public int value;
 

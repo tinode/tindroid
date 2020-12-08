@@ -154,6 +154,7 @@ public interface Storage {
      * @param dbMessageId database ID of the message.
      * @return true on success, false otherwise
      */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgFailed(Topic topic, long dbMessageId);
 
     /**
@@ -162,6 +163,7 @@ public interface Storage {
      * @param topic topic which sent the message
      * @return true on success, false otherwise
      */
+    @SuppressWarnings("UnusedReturnValue")
     boolean msgPruneFailed(Topic topic);
 
     /**

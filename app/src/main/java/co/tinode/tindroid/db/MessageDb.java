@@ -356,10 +356,10 @@ public class MessageDb implements BaseColumns {
      */
     private static boolean deleteOrMarkDeleted(SQLiteDatabase db, long topicId, int delId, int fromId, int toId,
                                                boolean markAsHard) {
-        // 1. Delete all messages within the give range (sent and unsent).
+        // 1. Delete all messages within the given range (sent, unsent, failed).
         // 2. Delete all unsynchronized (soft and hard) deletion ranges fully within this range
         // (no point in synchronizing them, they are superseded).
-        // 3.1 If server record, consume older partially overlapping server records,
+        // 3.1 If server record, consume older partially overlapping server records.
         // 3.2 If client hard-record, consume partially overlapping client hard-records.
         // 3.3 If client soft-record, consume partially overlapping client soft records.
         // 4. Expand current record to consumed range.
@@ -410,8 +410,7 @@ public class MessageDb implements BaseColumns {
         db.beginTransaction();
         try {
             // 1. Delete all messages in the range.
-            db.delete(TABLE_NAME, messageSelector +
-                    " AND " + COLUMN_NAME_STATUS + "<=" + BaseDb.Status.SYNCED.value, null);
+            db.delete(TABLE_NAME, messageSelector, null);
 
             // 2. Delete all deletion records fully within the new range.
             db.delete(TABLE_NAME, rangeDeleteSelector, null);
@@ -526,7 +525,7 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Delete messages between 'from' and 'to'. To delete all messages make before equal to -1.
+     * Delete messages between 'from' and 'to'. To delete all messages make 'before' equal to -1.
      *
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
