@@ -1950,7 +1950,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         USER(0x04 | 0x08), INTERNAL(0x01 | 0x02 | 0x10), UNKNOWN(0x00),
         ANY(0x01 | 0x02 | 0x04 | 0x08);
 
-        private int val;
+        private final int val;
 
         TopicType(int val) {
             this.val = val;
