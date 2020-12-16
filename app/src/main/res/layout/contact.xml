@@ -13,7 +13,7 @@
     <RelativeLayout
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginEnd="5dp">
+        android:layout_marginEnd="8dp">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/avatar"
@@ -51,9 +51,20 @@
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:overScrollMode="never"
-                android:paddingEnd="16sp"
+                android:paddingEnd="4dp"
                 tools:ignore="RtlSymmetry"
                 tools:text="Contact title"/>
+
+            <ImageView
+                android:id="@+id/icon_channel"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:baseline="-4dp"
+                android:alpha="0.75"
+                android:contentDescription="@string/channel"
+                android:visibility="visible"
+                app:tint="?android:attr/textColorSecondary"
+                app:srcCompat="@drawable/ic_channel"/>
 
             <TextView
                 android:id="@+id/unreadCount"
@@ -61,6 +72,7 @@
                 android:layout_height="20dp"
                 android:layout_gravity="end|center_vertical"
                 android:background="@drawable/pill_counter"
+                android:layout_marginStart="12dp"
                 android:padding="3dp"
                 android:gravity="center"
                 android:textColor="@color/white"
@@ -75,8 +87,9 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:alpha="0.75"
+                android:baseline="-2dp"
                 android:contentDescription="@string/topic_muted"
-                android:visibility="gone"
+                android:visibility="visible"
                 app:tint="@color/colorGray"
                 app:srcCompat="@drawable/ic_notifications_off"/>
 
@@ -85,8 +98,9 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:alpha="0.75"
+                android:baseline="-2dp"
                 android:contentDescription="@string/topic_blocked"
-                android:visibility="gone"
+                android:visibility="visible"
                 app:tint="@color/colorGray"
                 app:srcCompat="@drawable/ic_block"/>
 
@@ -95,8 +109,9 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:alpha="0.75"
+                android:baseline="-2dp"
                 android:contentDescription="@string/topic_archived"
-                android:visibility="gone"
+                android:visibility="visible"
                 app:tint="@color/colorGray"
                 app:srcCompat="@drawable/ic_filecab"/>
 

@@ -198,6 +198,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         TextView contactPriv;
         AppCompatImageView avatar;
         ImageView online;
+        ImageView channel;
         ImageView muted;
         ImageView blocked;
         ImageView archived;
@@ -215,6 +216,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 contactPriv = item.findViewById(R.id.contactPriv);
                 avatar = item.findViewById(R.id.avatar);
                 online = item.findViewById(R.id.online);
+                channel = item.findViewById(R.id.icon_channel);
                 muted = item.findViewById(R.id.icon_muted);
                 blocked = item.findViewById(R.id.icon_blocked);
                 archived = item.findViewById(R.id.icon_archived);
@@ -262,9 +264,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
 
             if (topic.isChannel()) {
                 online.setVisibility(View.INVISIBLE);
+                channel.setVisibility(View.VISIBLE);
             } else {
                 online.setVisibility(View.VISIBLE);
                 online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
+                channel.setVisibility(View.GONE);
             }
 
             muted.setVisibility(topic.isMuted() ? View.VISIBLE : View.GONE);

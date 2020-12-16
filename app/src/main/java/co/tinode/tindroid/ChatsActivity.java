@@ -189,7 +189,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
     public void toggleProgressIndicator(boolean on) {
         List<Fragment> fragments = getSupportFragmentManager().getFragments();
         for (Fragment f : fragments) {
-            if (f instanceof UiUtils.ProgressIndicator) {
+            if (f instanceof UiUtils.ProgressIndicator && (f.isVisible() || !on)) {
                 ((UiUtils.ProgressIndicator) f).toggleProgressIndicator(on);
             }
         }
