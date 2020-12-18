@@ -94,8 +94,8 @@ public class Drafty implements Serializable {
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {
             new EntityProc("LN",
-                    Pattern.compile("\\b(https?://)?(?:www\\.)?(?:[a-zA-Z0-9][-a-zA-Z0-9]*[a-zA-Z0-9]\\.){1,5}" +
-                            "\\.[a-zA-Z]{2,6}(?:[/?#:][-a-zA-Z0-9@:%_+.~#?&/=]*)?")) {
+                    Pattern.compile("\\b(https?://)?(?:www\\.)?(?:[a-z0-9][-a-z0-9]*[a-z0-9]\\.){1,5}" +
+                            "[a-z]{2,6}(?:[/?#:][-a-z0-9@:%_+.~#?&/=]*)?", Pattern.CASE_INSENSITIVE)) {
 
                 @Override
                 Map<String, Object> pack(Matcher m) {
