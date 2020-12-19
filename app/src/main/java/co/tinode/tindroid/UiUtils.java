@@ -816,9 +816,6 @@ public class UiUtils {
                     result.add(new AccessModeLabel(R.string.modeInvited, COLOR_GRAY_BORDER));
                 } else if (!acs.isGivenDefined() && acs.isWantDefined()) {
                     result.add(new AccessModeLabel(R.string.modeRequested, COLOR_GRAY_BORDER));
-                } else {
-                    // Undefined state
-                    result.add(new AccessModeLabel(R.string.modeUndefined, COLOR_GRAY_BORDER));
                 }
             }
         }
