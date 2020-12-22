@@ -7,6 +7,8 @@
     <color name="colorChipBackground">#212121</color>
     <color name="colorChipBorder">#666666</color>
 
+    <color name="colorListDivider">#666666</color>
+
     <color name="colorAccent">#26A69A</color>
 
     <color name="colorDanger">#d32f2f</color>
