@@ -1,8 +1,6 @@
 package co.tinode.tindroid.media;
 
 import android.content.Context;
-import android.text.style.CharacterStyle;
-import android.text.style.ParagraphStyle;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -11,7 +9,8 @@ import java.util.Map;
 
 import co.tinode.tinodesdk.model.Drafty;
 
-public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.TreeNode> implements Drafty.Formatter<T> {
+public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.TreeNode>
+        implements Drafty.Formatter<AbstractDraftyFormatter.TreeNode> {
     private static final String TAG = "AbstractDraftyFormatter";
 
     protected final TextView mContainer;
@@ -21,49 +20,49 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
         mContainer = container;
     }
 
-    protected abstract TreeNode handleStrong(Object content);
+    protected abstract T handleStrong(Object content);
 
-    protected abstract TreeNode handleEmphasized(Object content);
+    protected abstract T handleEmphasized(Object content);
 
-    protected abstract TreeNode handleDeleted(Object content);
+    protected abstract T handleDeleted(Object content);
 
-    protected abstract TreeNode handleCode(Object content);
+    protected abstract T handleCode(Object content);
 
-    protected abstract TreeNode handleHidden(Object content);
+    protected abstract T handleHidden(Object content);
 
-    protected abstract TreeNode handleLineBreak();
+    protected abstract T handleLineBreak();
 
     // URL.
-    protected abstract TreeNode handleLink(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleLink(final Context ctx, Object content, final Map<String, Object> data);
 
     // Mention @user.
-    protected abstract TreeNode handleMention(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleMention(final Context ctx, Object content, final Map<String, Object> data);
 
     // Hashtag #searchterm.
-    protected abstract TreeNode handleHashtag(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleHashtag(final Context ctx, Object content, final Map<String, Object> data);
 
     // Embedded image.
-    protected abstract TreeNode handleImage(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleImage(final Context ctx, Object content, final Map<String, Object> data);
 
     // File attachment.
-    protected abstract TreeNode handleAttachment(final Context ctx, final Map<String, Object> data);
+    protected abstract T handleAttachment(final Context ctx, final Map<String, Object> data);
 
     // Button: clickable form element.
-    protected abstract TreeNode handleButton(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleButton(final Context ctx, final Map<String, Object> data, final Object content);
 
     // Grouping of form elements.
-    protected abstract TreeNode handleFormRow(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleFormRow(final Context ctx, final Map<String, Object> data, final Object content);
 
     // Interactive form.
-    protected abstract TreeNode handleForm(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleForm(final Context ctx, final Map<String, Object> data, final Object content);
 
     // Unknown or unsupported element.
-    protected abstract TreeNode handleUnknown(final Context ctx, final Object content, final Map<String, Object> data);
+    protected abstract T handleUnknown(final Context ctx, final Object content, final Map<String, Object> data);
 
     @Override
-    public T apply(final String tp, final Map<String, Object> data, final Object content) {
+    public TreeNode apply(final String tp, final Map<String, Object> data, final Object content) {
         if (tp != null) {
-            TreeNode span;
+            T span;
             switch (tp) {
                 case "ST":
                     span = handleStrong(content);
@@ -117,9 +116,9 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
                     // Unknown element
                     span = handleUnknown(mContainer.getContext(), content, data);
             }
-            return (T) span;
+            return span;
         }
-        return (T) new TreeNode(content);
+        return new TreeNode(content);
     }
 
     // Structure representing Drafty as a tree of formatting nodes.
@@ -177,9 +176,24 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
             addNode(new TreeNode(content));
         }
 
+        protected boolean isPlain() {
+            return text != null;
+        }
+
+        protected boolean hasChildren() {
+            return children != null;
+        }
+
         protected boolean isEmpty() {
             return (text == null || text.equals("")) &&
                     (children == null || children.size() == 0);
+        }
+
+        protected CharSequence getText() {
+            return text;
+        }
+        protected List<TreeNode> getChildren() {
+            return children;
         }
     }
 }

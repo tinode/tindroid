@@ -46,6 +46,7 @@ import co.tinode.tinodesdk.model.Drafty;
  */
 public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNode> {
     private static final String TAG = "SpanFormatter";
+
     private static final float FORM_LINE_SPACING = 1.2f;
     // Additional horizontal padding otherwise images sometimes fail to render.
     private static final int IMAGE_H_PADDING = 8;
@@ -57,7 +58,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
     private final float mFontSize;
     private final ClickListener mClicker;
 
-    private SpanFormatter(final TextView container, final ClickListener clicker) {
+    protected SpanFormatter(final TextView container, final ClickListener clicker) {
         super(container);
 
         mViewport = container.getMaxWidth();
@@ -73,8 +74,13 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
         if (content.isPlain()) {
             return new SpannedString(content.toString());
         }
-        TreeNode result = content.format(new SpanFormatter(container, clicker));
-        return result.toSpanned();
+
+        AbstractDraftyFormatter.TreeNode result = content.format(new SpanFormatter(container, clicker));
+        if (result instanceof TreeNode) {
+            return ((TreeNode)result).toSpanned();
+        }
+
+        return new SpannedString("");
     }
 
     public static boolean hasClickableSpans(final Drafty content) {
@@ -104,7 +110,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
     }
 
     // Scale image dimensions to fit under the given viewport size.
-    private static float scaleBitmap(int srcWidth, int srcHeight, int viewportWidth, float density) {
+    protected static float scaleBitmap(int srcWidth, int srcHeight, int viewportWidth, float density) {
         if (srcWidth == 0 || srcHeight == 0) {
             return 0f;
         }
@@ -121,37 +127,37 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleStrong(Object content) {
+    protected TreeNode handleStrong(Object content) {
         return new TreeNode(new StyleSpan(Typeface.BOLD), content);
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleEmphasized(Object content) {
+    protected TreeNode handleEmphasized(Object content) {
         return new TreeNode(new StyleSpan(Typeface.ITALIC), content);
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleDeleted(Object content) {
+    protected TreeNode handleDeleted(Object content) {
         return new TreeNode(new StrikethroughSpan(), content);
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleCode(Object content) {
+    protected TreeNode handleCode(Object content) {
         return new TreeNode(new TypefaceSpan("monospace"), content);
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleHidden(Object content) {
+    protected TreeNode handleHidden(Object content) {
         return null;
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleLineBreak() {
+    protected TreeNode handleLineBreak() {
         return new TreeNode("\n");
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleLink(Context ctx, Object content, Map<String, Object> data) {
+    protected TreeNode handleLink(Context ctx, Object content, Map<String, Object> data) {
         try {
             // We don't need to specify an URL for URLSpan
             // as it's not going to be used.
@@ -169,12 +175,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
+    protected TreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
         return null;
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleHashtag(Context ctx, Object content, Map<String, Object> data) {
+    protected TreeNode handleHashtag(Context ctx, Object content, Map<String, Object> data) {
         return null;
     }
 
@@ -312,12 +318,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleFormRow(Context ctx, Map<String, Object> data, Object content) {
+    protected TreeNode handleFormRow(Context ctx, Map<String, Object> data, Object content) {
         return new TreeNode(content);
     }
 
     @Override
-    protected AbstractDraftyFormatter.TreeNode handleForm(Context ctx, Map<String, Object> data, Object content) {
+    protected TreeNode handleForm(Context ctx, Map<String, Object> data, Object content) {
         TreeNode span = null;
         if (content instanceof List) {
             // Add line breaks between form elements.
@@ -507,19 +513,9 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
             super(content);
         }
 
-        private TreeNode(CharacterStyle style, List<TreeNode> children) {
-            super(children);
-            this.cStyle = style;
-        }
-
         private TreeNode(CharacterStyle style, CharSequence text) {
             super(text);
             this.cStyle = style;
-        }
-
-        private TreeNode(ParagraphStyle style, CharSequence text) {
-            super(text);
-            this.pStyle = style;
         }
 
         TreeNode(CharacterStyle style, Object content) {
@@ -546,60 +542,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpanFormatter.TreeNod
             addNode(new TreeNode(style, content));
         }
 
-/*
-        @NonNull
-        @Override
-        public String toString() {
-            StringBuilder result = new StringBuilder("{");
-            if (text != null) {
-                if (text.equals("\n")) {
-                    result.append("txt='BR'");
-                } else {
-                    result.append("txt='").append(text.toString()).append("'");
-                }
-            } else if (children != null) {
-                if (children.size() == 0) {
-                    result.append("ERROR:EMPTY");
-                } else if (children.size() == 1) {
-                    result.append(children.get(0).toString());
-                } else {
-                    result.append("[");
-                    for (TreeNode child : children) {
-                        if (child != null) {
-                            result.append(child.toString());
-                            result.append(",");
-                        } else {
-                            result.append("ERROR:NULL,");
-                        }
-                    }
-                    // Remove dangling comma.
-                    result.setLength(result.length() - 1);
-                    result.append("]");
-                }
-            } else {
-                result.append("ERROR:NULL");
-            }
-            result.append(styleName());
-            result.append("}");
-            return result.toString();
-        }
-
-        private String styleName() {
-            if (pStyle != null) {
-                return ", stl=" + pStyle.getClass().getName();
-            }
-            if (cStyle != null) {
-                return ", stl=" + cStyle.getClass().getName();
-            }
-            return "";
-        }
-*/
         Spanned toSpanned() {
             SpannableStringBuilder spanned = new SpannableStringBuilder();
-            if (text != null) {
-                spanned.append(text);
-            } else if (children != null) {
-                for (AbstractDraftyFormatter.TreeNode child : children) {
+            if (isPlain()) {
+                spanned.append(getText());
+            } else if (hasChildren()) {
+                for (AbstractDraftyFormatter.TreeNode child : getChildren()) {
                     if (child == null) {
                         Log.w(TAG, "NULL child. Should not happen!!!");
                     } else if (child instanceof TreeNode){
