@@ -273,5 +273,9 @@
     <string name="this_is_channel">Dies ist ein Sender</string>
     <string name="channel_explained">Der Sender ermöglicht unbegrenzte Teilnehmer mit minimaler Zugriffskontrolle. Diese Wahl ist dauerhaft.</string>
     <string name="channel">Sender</string>
-    <string name="unavailable">unavailable</string>
+    <string name="unavailable">nicht verfügbar</string>
+    <string name="picture">Bild</string>
+    <string name="attachment">Anhang</string>
+    <string name="unknown">Unbekannt</string>
+    <string name="form">Bilden</string>
 </resources>

@@ -67,12 +67,10 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             newTopicIndex.put(t.getName(), newTopicIndex.size());
         }
 
-        activity.runOnUiThread(() -> {
-            mTopics = new ArrayList<>(newTopics);
-            mTopicIndex = newTopicIndex;
+        mTopics = new ArrayList<>(newTopics);
+        mTopicIndex = newTopicIndex;
 
-            notifyDataSetChanged();
-        });
+        activity.runOnUiThread(this::notifyDataSetChanged);
     }
 
     @NonNull

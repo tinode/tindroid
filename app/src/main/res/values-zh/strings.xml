@@ -273,5 +273,9 @@
     <string name="this_is_channel">这是一个频道</string>
     <string name="channel_explained">该通道允许无限的订户以最小的访问控制。 此选择是永久的。</string>
     <string name="channel">频道</string>
-    <string name="unavailable">unavailable</string>
+    <string name="unavailable">不可用</string>
+    <string name="picture">图片</string>
+    <string name="attachment">附属</string>
+    <string name="unknown">未知</string>
+    <string name="form">表格</string>
 </resources>

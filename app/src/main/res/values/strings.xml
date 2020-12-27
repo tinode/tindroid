@@ -286,4 +286,8 @@
     <string name="channel_explained">Channels allow unlimited subscribers with minimal access control. This selection is permanent.</string>
     <string name="channel">channel</string>
     <string name="unavailable">unavailable</string>
+    <string name="picture">Picture</string>
+    <string name="attachment">Attachment</string>
+    <string name="unknown">Unknown</string>
+    <string name="form">Form</string>
 </resources>

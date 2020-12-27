@@ -492,6 +492,17 @@ public class SqlStore implements Storage {
         return (R) list;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R extends Iterator<Message> & Closeable> R getLatestMessages() {
+        MessageList list = null;
+        Cursor c = MessageDb.getLatestMessages(mDbh.getReadableDatabase());
+        if (c != null) {
+            list = new MessageList(c);
+        }
+        return (R) list;
+    }
+
     @Override
     public MsgRange[] getQueuedMessageDeletes(Topic topic, boolean hard) {
         StoredTopic st = (StoredTopic) topic.getLocal();

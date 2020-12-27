@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.MalformedURLException;
@@ -63,6 +64,7 @@ import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.Pair;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -135,7 +137,7 @@ public class Tinode {
     private final String mAppName;
     private final ListenerNotifier mNotifier;
     private final ConcurrentMap<String, FutureHolder> mFutures;
-    private final ConcurrentHashMap<String, Topic> mTopics;
+    private final ConcurrentHashMap<String, Pair<Topic, Storage.Message>> mTopics;
     private final ConcurrentHashMap<String, User> mUsers;
     private JavaType mDefaultTypeOfMetaPacket = null;
     private final MimeTypeResolver mMimeResolver = null;
@@ -375,15 +377,26 @@ public class Tinode {
         mOsVersion = os;
     }
 
-    private void loadTopics() {
+    private <ML extends Iterator<Storage.Message> & Closeable> void loadTopics() {
         if (mStore != null && mStore.isReady() && !mTopicsLoaded) {
             Topic[] topics = mStore.topicGetAll(this);
             if (topics != null) {
                 for (Topic tt : topics) {
                     tt.setStorage(mStore);
-                    mTopics.put(tt.getName(), tt);
+                    mTopics.put(tt.getName(), new Pair<Topic, Storage.Message>(tt, null));
                     setTopicsUpdated(tt.getUpdated());
                 }
+            }
+            // Load last message for each topic.
+            ML latest = mStore.getLatestMessages();
+            if (latest != null) {
+                while (latest.hasNext()) {
+                    Storage.Message msg = latest.next();
+                    msg.
+                }
+                try {
+                    latest.close();
+                } catch (IOException ignored) {}
             }
             mTopicsLoaded = true;
         }

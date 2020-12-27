@@ -17,6 +17,7 @@
 
     <color name="colorGray">#CCCCCC</color>
     <color name="colorDarkerGray">#999999</color>
+    <color name="colorDarkGray">#757575</color>
 
     <color name="colorListDivider">#CCCCCC</color>
 

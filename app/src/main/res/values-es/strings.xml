@@ -272,5 +272,9 @@
     <string name="this_is_channel">Este es un canal</string>
     <string name="channel_explained">El canal permite participantes ilimitados con un control de acceso mínimo. Esta elección es permanente.</string>
     <string name="channel">canal</string>
-    <string name="unavailable">unavailable</string>
+    <string name="unavailable">indisponible</string>
+    <string name="picture">Imagen</string>
+    <string name="attachment">Adjunto archivo</string>
+    <string name="unknown">Desconocido</string>
+    <string name="form">Formulario</string>
 </resources>

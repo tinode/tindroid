@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -668,13 +667,16 @@ public class Drafty implements Serializable {
                 }
             }
 
-            for (int i=0; i<that.fmt.length; i++) {
-                Style style = new Style(null, that.fmt[i].at + len, that.fmt[i].len);
-                if (that.fmt[i].tp != null) {
-                    style.tp = that.fmt[i].tp;
-                } else if (that.ent != null) {
+            for (Style thatst : that.fmt) {
+                Style style = new Style(null, thatst.at + len, thatst.len);
+                int key = thatst.key != null ? thatst.key : 0;
+                if (thatst.tp != null && !thatst.tp.equals("")) {
+                    style.tp = thatst.tp;
+                } else if (that.ent != null && that.ent.length > key) {
                     style.key = ent_idx;
-                    ent[ent_idx ++] = that.ent[that.fmt[i].key];
+                    ent[ent_idx ++] = that.ent[key];
+                } else {
+                    continue;
                 }
                 fmt[fmt_idx ++] = style;
             }
@@ -738,7 +740,7 @@ public class Drafty implements Serializable {
     }
 
     /**
-     * Check if the give Drafty can be represented by plain text.
+     * Check if the given Drafty can be represented by plain text.
      *
      * @return true if this Drafty has no markup other thn line breaks.
      */
@@ -913,6 +915,65 @@ public class Drafty implements Serializable {
                 "ent: " + Arrays.toString(ent) + "}";
     }
 
+    /**
+     * Shorten Drafty document and strip all entity data leaving just inline styles and entity references.
+     * @param length length in characters to shorten to.
+     * @return new shortened Drafty object leaving the original intact.
+     */
+    public Drafty preview(final int length) {
+        Drafty preview = new Drafty();
+
+        if (txt != null) {
+            if (txt.length() > length) {
+                preview.txt = txt.substring(0, length);
+            } else {
+                preview.txt = txt;
+            }
+        }
+
+        int len = preview.txt != null ? preview.txt.length() : 0;
+        if (fmt != null && fmt.length > 0) {
+            // Count styles and entities which cover just the new length of the text.
+            int fmt_count = 0, ent_count = 0;
+            for (Style st : fmt) {
+                if (st.at < len) {
+                    fmt_count ++;
+                    if (st.key != null) {
+                        ent_count ++;
+                    }
+                }
+            }
+
+            // Allocate space for copying styles and entities.
+            preview.fmt = new Style[fmt_count];
+            if (ent != null && ent_count > 0) {
+                preview.ent = new Entity[ent_count];
+            }
+
+            // Insertion point for styles.
+            int fmt_idx = 0;
+            // Insertion point for entities.
+            int ent_idx = 0;
+            for (Style st : fmt) {
+                if (st.at < len) {
+                    Style style = new Style(null, st.at, st.len);
+                    int key = st.key != null ? st.key : 0;
+                    if (st.tp != null && !st.tp.equals("")) {
+                        style.tp = st.tp;
+                    } else if (ent != null && ent.length > key) {
+                        style.key = ent_idx;
+                        preview.ent[ent_idx++] = ent[key].copyLight();
+                    } else {
+                        continue;
+                    }
+                    fmt[fmt_idx++] = style;
+                }
+            }
+        }
+
+        return preview;
+    }
+
     public static class Style implements Serializable, Comparable<Style> {
         public int at;
         public int len;
@@ -986,6 +1047,11 @@ public class Drafty implements Serializable {
 
         public Map<String,Object> getData() {
             return data;
+        }
+
+        @JsonIgnore
+        protected Entity copyLight() {
+            return new Entity(tp, null);
         }
 
         @SuppressWarnings("NullableProblems")

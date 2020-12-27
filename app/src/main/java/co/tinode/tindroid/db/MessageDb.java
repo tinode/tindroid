@@ -255,6 +255,20 @@ public class MessageDb implements BaseColumns {
         return db.rawQuery(sql, null);
     }
 
+    /*
+     * Get a list of the latest message for every topic, sent or received.
+     * See explanation here: https://stackoverflow.com/a/2111420
+     */
+    static Cursor getLatestMessages(SQLiteDatabase db) {
+        final String sql = "SELECT m1.* FROM " + TABLE_NAME + " AS m1" +
+                " LEFT JOIN " + TABLE_NAME + " AS m2" +
+                " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
+                    " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
+                " WHERE m2." + _ID + " IS NULL";
+
+        return db.rawQuery(sql, null);
+    }
+
     /**
      * Query messages which are ready for sending but has not been sent yet.
      *

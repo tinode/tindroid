@@ -252,5 +252,9 @@
     <string name="this_is_channel">Это канал</string>
     <string name="channel_explained">Канал позволяет неограниченное число подписчиков с минимальным контролем доступа. Этот выбор окончателен.</string>
     <string name="channel">канал</string>
-    <string name="unavailable">unavailable</string>
+    <string name="unavailable">недоступно</string>
+    <string name="picture">Картинка</string>
+    <string name="attachment">Вложение</string>
+    <string name="unknown">Неизвестно</string>
+    <string name="form">Форма</string>
 </resources>

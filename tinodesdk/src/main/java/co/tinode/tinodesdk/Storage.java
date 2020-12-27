@@ -204,8 +204,12 @@ public interface Storage {
     /** Retrieve a single message by database id */
     <T extends Message> T getMessageById(Topic topic, long dbMessageId);
 
-    /** Get a list of unsent messages */
+    /** Get the latest message for each topic. Close the result after use. */
+    <T extends Iterator<Message> & Closeable> T getLatestMessages();
+
+    /** Get a list of unsent messages. Close the result after use. */
     <T extends Iterator<Message> & Closeable> T getQueuedMessages(Topic topic);
+
     /**
      * Get a list of pending delete message ranges.
      * @param topic topic where the messages were deleted.
