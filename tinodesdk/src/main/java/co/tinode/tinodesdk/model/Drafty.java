@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -933,36 +934,40 @@ public class Drafty implements Serializable {
 
         int len = preview.txt != null ? preview.txt.length() : 0;
         if (fmt != null && fmt.length > 0) {
-            // Count styles and entities which cover just the new length of the text.
-            int fmt_count = 0, ent_count = 0;
+            // Old key to new key entity mapping.
+            HashMap<Integer, Integer> ent_refs = new HashMap<>();
+            // Count styles which start within the new length of the text and save entity keys as set.
+            int fmt_count = 0;
             for (Style st : fmt) {
                 if (st.at < len) {
                     fmt_count ++;
-                    if (st.key != null) {
-                        ent_count ++;
+                    if (st.tp == null || st.tp.equals("")) {
+                        Integer key = st.key != null ? st.key : 0;
+                        if (!ent_refs.containsKey(key)) {
+                            ent_refs.put(key, ent_refs.size());
+                        }
                     }
                 }
             }
 
             // Allocate space for copying styles and entities.
             preview.fmt = new Style[fmt_count];
-            if (ent != null && ent_count > 0) {
-                preview.ent = new Entity[ent_count];
+            if (ent != null && !ent_refs.isEmpty()) {
+                preview.ent = new Entity[ent_refs.size()];
             }
 
             // Insertion point for styles.
             int fmt_idx = 0;
-            // Insertion point for entities.
-            int ent_idx = 0;
             for (Style st : fmt) {
                 if (st.at < len) {
                     Style style = new Style(null, st.at, st.len);
                     int key = st.key != null ? st.key : 0;
                     if (st.tp != null && !st.tp.equals("")) {
                         style.tp = st.tp;
-                    } else if (ent != null && ent.length > key) {
-                        style.key = ent_idx;
-                        preview.ent[ent_idx++] = ent[key].copyLight();
+                    } else if (ent != null && ent.length > key && ent_refs.containsKey(key)) {
+                        style.key = ent_refs.get(key);
+                        //noinspection ConstantConditions: ent_refs.containsKey(key) is checked above.
+                        preview.ent[style.key] = ent[key].copyLight();
                     } else {
                         continue;
                     }

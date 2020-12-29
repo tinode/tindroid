@@ -218,6 +218,9 @@ public interface Storage {
     MsgRange[] getQueuedMessageDeletes(Topic topic, boolean hard);
 
     interface Message {
+        String getTopic();
+
+        /** Get message headers */
         Map<String, Object> getHead();
         /** Get current message payload */
         Drafty getContent();

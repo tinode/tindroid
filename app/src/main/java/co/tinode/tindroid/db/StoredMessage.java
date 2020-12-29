@@ -21,7 +21,6 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     public int delId;
     public int high;
 
-
     StoredMessage() {
     }
 
@@ -48,6 +47,9 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         msg.delId = c.isNull(MessageDb.COLUMN_IDX_DEL_ID) ? 0 : c.getInt(MessageDb.COLUMN_IDX_DEL_ID);
         msg.head = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_HEAD));
         msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
+        if (c.getColumnCount() > MessageDb.COLUMN_IDX_TOPIC_NAME) {
+            msg.topic = c.getString(MessageDb.COLUMN_IDX_TOPIC_NAME);
+        }
 
         return msg;
     }
@@ -55,6 +57,11 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     static MsgRange readDelRange(Cursor c) {
         // 0: delId, 1: seq, 2: high
         return new MsgRange(c.getInt(1), c.getInt(2));
+    }
+
+    @Override
+    public String getTopic() {
+        return topic;
     }
 
     public boolean isMine() {

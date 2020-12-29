@@ -167,7 +167,6 @@ public class Tinode {
     private String mAuthToken = null;
     private Date mAuthTokenExpires = null;
     private int mMsgId = 0;
-    private int mPacketCount;
     private transient int mNameCounter = 0;
     private boolean mTopicsLoaded = false;
     // Timestamp of the latest topic desc update.
@@ -392,8 +391,15 @@ public class Tinode {
             if (latest != null) {
                 while (latest.hasNext()) {
                     Storage.Message msg = latest.next();
-                    msg.
+                    String topic = msg.getTopic();
+                    if (topic != null) {
+                        Pair<Topic, Storage.Message> pair = mTopics.get(topic);
+                        if (pair != null) {
+                            pair.second = msg;
+                        }
+                    }
                 }
+
                 try {
                     latest.close();
                 } catch (IOException ignored) {}
@@ -545,7 +551,6 @@ public class Tinode {
 
         mConnAuth = false;
 
-        // TODO(gene): should this be cleared?
         mServerBuild = null;
         mServerVersion = null;
 
@@ -561,8 +566,8 @@ public class Tinode {
         mFutures.clear();
 
         // Mark all topics as un-attached.
-        for (Topic topic : mTopics.values()) {
-            topic.topicLeft(false, 503, "disconnected");
+        for (Pair<Topic, ?> pair : mTopics.values()) {
+            pair.first.topicLeft(false, 503, "disconnected");
         }
 
         mNotifier.onDisconnect(byServer, code, reason);
@@ -582,8 +587,6 @@ public class Tinode {
             return;
 
         Log.d(TAG, "in: " + message);
-
-        mPacketCount++;
 
         mNotifier.onRawMessage(message);
 
@@ -1780,7 +1783,10 @@ public class Tinode {
      */
     @SuppressWarnings("unchecked")
     public Collection<Topic> getTopics() {
-        List<Topic> result = new ArrayList<>(mTopics.values());
+        List<Topic> result = new ArrayList<>(mTopics.size());
+        for (Pair<Topic, Storage.Message> p : mTopics.values()) {
+            result.add(p.first);
+        }
         Collections.sort(result);
         return result;
     }
@@ -1817,9 +1823,9 @@ public class Tinode {
             return (Collection<T>) getTopics();
         }
         ArrayList<T> result = new ArrayList<>();
-        for (T t : (Collection<T>) mTopics.values()) {
-            if (filter.isIncluded(t)) {
-                result.add(t);
+        for (Pair<Topic, Storage.Message> p : mTopics.values()) {
+            if (filter.isIncluded(p.first)) {
+                result.add((T) p.first);
             }
         }
         Collections.sort(result);
@@ -1832,11 +1838,12 @@ public class Tinode {
      * @param name name of the topic to find.
      * @return existing topic or null if no such topic was found
      */
-    public Topic<?, ?, ?, ?> getTopic(String name) {
+    public Topic getTopic(String name) {
         if (name == null) {
             return null;
         }
-        return mTopics.get(name);
+        Pair<Topic, ?> p = mTopics.get(name);
+        return p != null? p.first : null;
     }
 
     /**
@@ -1847,7 +1854,7 @@ public class Tinode {
         if (mTopics.containsKey(name)) {
             throw new IllegalStateException("Topic '" + name + "' is already registered");
         }
-        mTopics.put(name, topic);
+        mTopics.put(name, new Pair<Topic,Storage.Message>(topic, null));
         topic.setStorage(mStore);
     }
 
@@ -1865,17 +1872,35 @@ public class Tinode {
         return mTopics.containsKey(topicName);
     }
 
+    public Storage.Message getLastMessage(String topicName) {
+        if (topicName == null) {
+            return null;
+        }
+        Pair<?, Storage.Message> p = mTopics.get(topicName);
+        return p != null? p.second : null;
+    }
+
+    void setLastMessage(String topicName, Storage.Message msg) {
+        if (topicName == null || msg == null) {
+            return;
+        }
+        Pair<?, Storage.Message> p = mTopics.get(topicName);
+        if (p != null) {
+            p.second = msg;
+        }
+    }
+
     /**
      * Topic is cached by name, update the name used to cache the topic.
      *
      * @param topic   topic being updated
-     * @param oldName old name of the topic (e.g. "newXYZ" or "usrZYX")
+     * @param oldName old name of the topic (e.g. "newXYZ")
      * @return true if topic was found by the old name
      */
     @SuppressWarnings("UnusedReturnValue")
     synchronized boolean changeTopicName(Topic topic, String oldName) {
         boolean found = mTopics.remove(oldName) != null;
-        mTopics.put(topic.getName(), topic);
+        mTopics.put(topic.getName(), new Pair<Topic,Storage.Message>(topic, null));
         if (mStore != null) {
             mStore.topicUpdate(topic);
         }

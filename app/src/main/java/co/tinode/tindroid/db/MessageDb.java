@@ -81,7 +81,10 @@ public class MessageDb implements BaseColumns {
      * Serialized message content
      */
     private static final String COLUMN_NAME_CONTENT = "content";
-
+    /**
+     * Name of the topic when doing a join.
+     */
+    private static final String COLUMN_NAME_TOPIC_NAME = "topic";
 
     /**
      * SQL statement to create Messages table
@@ -136,7 +139,7 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_DEL_ID = 8;
     static final int COLUMN_IDX_HEAD = 9;
     static final int COLUMN_IDX_CONTENT = 10;
-
+    static final int COLUMN_IDX_TOPIC_NAME = 11;
     /**
      * Save message to DB
      *
@@ -260,10 +263,13 @@ public class MessageDb implements BaseColumns {
      * See explanation here: https://stackoverflow.com/a/2111420
      */
     static Cursor getLatestMessages(SQLiteDatabase db) {
-        final String sql = "SELECT m1.* FROM " + TABLE_NAME + " AS m1" +
+        final String sql = "SELECT m1.*, t." + TopicDb.COLUMN_NAME_TOPIC + " AS topic" +
+                " FROM " + TABLE_NAME + " AS m1" +
                 " LEFT JOIN " + TABLE_NAME + " AS m2" +
-                " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
-                    " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
+                    " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
+                        " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
+                " LEFT JOIN " + TopicDb.TABLE_NAME + " AS t" +
+                    " ON m1." + COLUMN_NAME_TOPIC_ID + "=t." + TopicDb._ID +
                 " WHERE m2." + _ID + " IS NULL";
 
         return db.rawQuery(sql, null);
