@@ -11,7 +11,6 @@ import co.tinode.tinodesdk.model.Drafty;
 
 public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.TreeNode>
         implements Drafty.Formatter<AbstractDraftyFormatter.TreeNode> {
-    private static final String TAG = "AbstractDraftyFormatter";
 
     protected final TextView mContainer;
     // Maximum width of the container TextView. Max height is maxWidth * 0.75.
@@ -58,6 +57,9 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
 
     // Unknown or unsupported element.
     protected abstract T handleUnknown(final Context ctx, final Object content, final Map<String, Object> data);
+
+    // Unstyled content
+    protected abstract T handlePlain(Object content);
 
     @Override
     public TreeNode apply(final String tp, final Map<String, Object> data, final Object content) {
@@ -118,7 +120,7 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
             }
             return span;
         }
-        return new TreeNode(content);
+        return handlePlain(content);
     }
 
     // Structure representing Drafty as a tree of formatting nodes.

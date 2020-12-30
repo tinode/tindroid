@@ -151,6 +151,11 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
         return annotatedIcon(ctx, R.drawable.ic_unkn_type, R.string.unknown);
     }
 
+    @Override
+    protected MeasuredTreeNode handlePlain(final Object content) {
+        return new MeasuredTreeNode(content);
+    }
+
     static class MeasuredTreeNode extends StyledTreeNode {
         private static final String TAG = "MeasuredTreeNode";
 

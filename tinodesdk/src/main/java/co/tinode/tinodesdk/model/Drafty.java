@@ -76,8 +76,6 @@ public class Drafty implements Serializable {
 
     private static final String JSON_MIME_TYPE = "application/json";
 
-    private static final int MAX_FORM_ELEMENTS = 8;
-
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end
     private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
@@ -254,7 +252,6 @@ public class Drafty implements Serializable {
         if (chunks == null) {
             return null;
         }
-
 
         Block block = new Block("");
         List<Style> ranges = new ArrayList<>();

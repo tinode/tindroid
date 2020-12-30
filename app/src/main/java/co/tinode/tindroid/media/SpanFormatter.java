@@ -72,12 +72,15 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         if (content.isPlain()) {
             return new SpannedString(content.toString());
         }
+        Log.i(TAG, "formatting: '" + content.txt + "'");
 
         AbstractDraftyFormatter.TreeNode result = content.format(new SpanFormatter(container, clicker));
         if (result instanceof StyledTreeNode) {
+            Log.i(TAG, "result: '" + result.text + "'");
             return ((StyledTreeNode)result).toSpanned();
         }
 
+        Log.i(TAG, "BAD result: '" + result + "'");
         return new SpannedString("");
     }
 
@@ -486,6 +489,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
 
         return result;
+    }
+
+    // Plain (unstyled) content.
+    @Override
+    protected StyledTreeNode handlePlain(final Object content) {
+        return new StyledTreeNode(content);
     }
 
     public interface ClickListener {
