@@ -265,12 +265,14 @@ public class MessageDb implements BaseColumns {
     static Cursor getLatestMessages(SQLiteDatabase db) {
         final String sql = "SELECT m1.*, t." + TopicDb.COLUMN_NAME_TOPIC + " AS topic" +
                 " FROM " + TABLE_NAME + " AS m1" +
-                " LEFT JOIN " + TABLE_NAME + " AS m2" +
-                    " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
-                        " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
-                " LEFT JOIN " + TopicDb.TABLE_NAME + " AS t" +
-                    " ON m1." + COLUMN_NAME_TOPIC_ID + "=t." + TopicDb._ID +
-                " WHERE m2." + _ID + " IS NULL";
+                    " LEFT JOIN " + TABLE_NAME + " AS m2" +
+                        " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
+                            " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
+                    " LEFT JOIN " + TopicDb.TABLE_NAME + " AS t" +
+                        " ON m1." + COLUMN_NAME_TOPIC_ID + "=t." + TopicDb._ID +
+                " WHERE m1." + COLUMN_NAME_DEL_ID + " IS NULL" +
+                    " AND m2." + COLUMN_NAME_DEL_ID + " IS NULL" +
+                    " AND m2." + _ID + " IS NULL";
 
         return db.rawQuery(sql, null);
     }

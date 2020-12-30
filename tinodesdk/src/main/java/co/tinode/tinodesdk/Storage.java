@@ -48,20 +48,6 @@ public interface Storage {
     @SuppressWarnings("UnusedReturnValue")
     boolean topicDelete(Topic topic);
 
-    /** Get seq IDs of the stored messages as a MsgRange, inclusive-exclusive [low, hi) */
-    MsgRange getCachedMessagesRange(Topic topic);
-    /**
-     * Get the maximum seq ID range of the messages missing in cache, inclusive-exclusive [low, hi).
-     * Returns null if all messages are present or no messages are found.
-     */
-    MsgRange getNextMissingRange(Topic topic);
-    /** Local user reported messages as read */
-    @SuppressWarnings("UnusedReturnValue")
-    boolean setRead(Topic topic, int read);
-    /** Local user reported messages as received */
-    @SuppressWarnings("UnusedReturnValue")
-    boolean setRecv(Topic topic, int recv);
-
     /** Add subscription in a generic topic. The subscription is received from the server. */
     @SuppressWarnings("UnusedReturnValue")
     long subAdd(Topic topic, Subscription sub);
@@ -90,7 +76,7 @@ public interface Storage {
     /**
      * Message received from the server.
      */
-    long msgReceived(Topic topic, Subscription sub, MsgServerData msg);
+    Message msgReceived(Topic topic, Subscription sub, MsgServerData msg);
 
     /**
      * Save message to DB as "sending".
@@ -101,7 +87,7 @@ public interface Storage {
      * @return database ID of the message suitable for use in
      *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
      */
-    long msgSend(Topic topic, Drafty data, Map<String, Object> head);
+    Message msgSend(Topic topic, Drafty data, Map<String, Object> head);
 
     /**
      * Save message to database as a draft. Draft will not be sent to server until it status changes.
@@ -112,7 +98,7 @@ public interface Storage {
      * @return database ID of the message suitable for use in
      *  {@link #msgDelivered(Topic topic, long id, Date timestamp, int seq)}
      */
-    long msgDraft(Topic topic, Drafty data, Map<String, Object> head);
+    Message msgDraft(Topic topic, Drafty data, Map<String, Object> head);
 
     /**
      * Update message draft content without
@@ -201,11 +187,27 @@ public interface Storage {
     @SuppressWarnings("UnusedReturnValue")
     boolean msgReadByRemote(Subscription sub, int read);
 
+    /** Get seq IDs of the stored messages as a MsgRange, inclusive-exclusive [low, hi) */
+    MsgRange getCachedMessagesRange(Topic topic);
+    /**
+     * Get the maximum seq ID range of the messages missing in cache, inclusive-exclusive [low, hi).
+     * Returns null if all messages are present or no messages are found.
+     */
+    MsgRange getNextMissingRange(Topic topic);
+    /** Local user reported messages as read */
+    @SuppressWarnings("UnusedReturnValue")
+    boolean setRead(Topic topic, int read);
+    /** Local user reported messages as received */
+    @SuppressWarnings("UnusedReturnValue")
+    boolean setRecv(Topic topic, int recv);
+
     /** Retrieve a single message by database id */
     <T extends Message> T getMessageById(Topic topic, long dbMessageId);
 
-    /** Get the latest message for each topic. Close the result after use. */
-    <T extends Iterator<Message> & Closeable> T getLatestMessages();
+    /** Get the latest message in each topic. Close the result after use.
+     * @param previewLength shorten message content to this length; if previewLength is <=0 then no shortening.
+     */
+    <T extends Iterator<Message> & Closeable> T getLatestMessages(int previewLength);
 
     /** Get a list of unsent messages. Close the result after use. */
     <T extends Iterator<Message> & Closeable> T getQueuedMessages(Topic topic);
@@ -222,10 +224,13 @@ public interface Storage {
 
         /** Get message headers */
         Map<String, Object> getHead();
-        /** Get current message payload */
+        /** Get message payload */
         Drafty getContent();
+        /** Set message payload */
+        void setContent(Drafty content);
+
         /** Get current message unique ID (database ID) */
-        long getId();
+        long getDbId();
 
         /** Get Tinode seq Id of the message (different from database ID */
         int getSeqId();

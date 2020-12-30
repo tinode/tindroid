@@ -33,7 +33,7 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         content = m.content;
     }
 
-    public static StoredMessage readMessage(Cursor c) {
+    public static StoredMessage readMessage(Cursor c, int previewLength) {
         StoredMessage msg = new StoredMessage();
 
         msg.id = c.getLong(MessageDb.COLUMN_IDX_ID);
@@ -47,6 +47,9 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         msg.delId = c.isNull(MessageDb.COLUMN_IDX_DEL_ID) ? 0 : c.getInt(MessageDb.COLUMN_IDX_DEL_ID);
         msg.head = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_HEAD));
         msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
+        if (previewLength > 0 && msg.content != null) {
+            msg.content = msg.content.preview(previewLength);
+        }
         if (c.getColumnCount() > MessageDb.COLUMN_IDX_TOPIC_NAME) {
             msg.topic = c.getString(MessageDb.COLUMN_IDX_TOPIC_NAME);
         }
@@ -74,12 +77,17 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     }
 
     @Override
+    public void setContent(Drafty content) {
+        this.content = content;
+    }
+
+    @Override
     public Map<String, Object> getHead() {
         return head;
     }
 
     @Override
-    public long getId() {
+    public long getDbId() {
         return id;
     }
 

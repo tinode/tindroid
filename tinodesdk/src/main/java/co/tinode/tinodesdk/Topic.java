@@ -972,28 +972,37 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     public PromisedReply<ServerMessage> publish(final Drafty content) {
         final Map<String, Object> head = !content.isPlain() ? Tinode.draftyHeadersFor(content) : null;
-        final long id;
+        final Storage.Message msg;
         if (mStore != null) {
-            id = mStore.msgSend(this, content, head);
+            msg = mStore.msgSend(this, content, head);
         } else {
-            id = -1;
+            msg = null;
+        }
+
+        final long msgId;
+        if (msg != null) {
+            // Cache the message.
+            mTinode.setLastMessage(getName(), msg);
+            msgId = msg.getDbId();
+        } else {
+            msgId = -1;
         }
 
         if (mAttached) {
-            return publish(content, head, id);
+            return publish(content, head, msgId);
         } else {
             return subscribe()
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            return publish(content, head, id);
+                            return publish(content, head, msgId);
                         }
                     })
                     .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                             if (mStore != null) {
-                                mStore.msgSyncing(Topic.this, id, false);
+                                mStore.msgSyncing(Topic.this, msgId, false);
                             }
 
                             throw err;
@@ -1047,7 +1056,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         try {
             while (toSend.hasNext()) {
                 Storage.Message msg = toSend.next();
-                final long msgId = msg.getId();
+                final long msgId = msg.getDbId();
                 mStore.msgSyncing(this, msgId, true);
                 last = publish(msg.getContent(), msg.getHead(), msgId);
             }
@@ -1078,8 +1087,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (m.isDeleted()) {
                 result = mTinode.delMessage(getName(), m.getSeqId(), m.isDeleted(true));
             } else if (m.isReady()) {
-                mStore.msgSyncing(this, m.getId(), true);
-                result = publish(m.getContent(), m.getHead(), m.getId());
+                mStore.msgSyncing(this, m.getDbId(), true);
+                result = publish(m.getContent(), m.getHead(), m.getDbId());
             }
         }
 
@@ -1800,7 +1809,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     protected void routeData(MsgServerData data) {
         if (mStore != null) {
-            if (mStore.msgReceived(this, getSubscription(data.from), data) > 0) {
+            Storage.Message msg = mStore.msgReceived(this, getSubscription(data.from), data);
+            if (msg != null) {
+                mTinode.setLastMessage(getName(), msg);
                 noteRecv(mTinode.isMe(data.from));
             }
         } else {

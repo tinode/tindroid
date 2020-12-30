@@ -271,7 +271,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     if (msg.status == BaseDb.Status.SYNCED) {
                         toDelete.add(msg.seq);
                     } else {
-                        store.msgDiscard(topic, msg.getId());
+                        store.msgDiscard(topic, msg.getDbId());
                         discarded++;
                     }
                 }
@@ -406,7 +406,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
-        final long msgId = m.getId();
+        final long msgId = m.getDbId();
 
         boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
         boolean uploadingAttachment = hasAttachment && m.isPending();
@@ -555,7 +555,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
         if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
-            return StoredMessage.readMessage(mCursor);
+            return StoredMessage.readMessage(mCursor, -1);
         }
         return null;
     }

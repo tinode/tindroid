@@ -163,17 +163,17 @@ public class AttachmentHandler extends Worker {
     static void enqueueUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
         String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
         // Create a new message which will be updated with upload progress.
-        Drafty msg = new Drafty();
-        long msgId = BaseDb.getInstance().getStore()
-                .msgDraft(Cache.getTinode().getTopic(topicName), msg, Tinode.draftyHeadersFor(msg));
-        if (msgId > 0) {
+        Drafty content = new Drafty();
+        Storage.Message msg = BaseDb.getInstance().getStore()
+                .msgDraft(Cache.getTinode().getTopic(topicName), content, Tinode.draftyHeadersFor(content));
+        if (msg != null) {
             Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
             assert uri != null;
 
             Data.Builder data = new Data.Builder()
                     .putString(ARG_OPERATION, operation)
                     .putString(ARG_SRC_LOCAL_URI, uri.toString())
-                    .putLong(ARG_MSG_ID, msgId)
+                    .putLong(ARG_MSG_ID, msg.getDbId())
                     .putString(ARG_TOPIC_NAME, topicName)
                     .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
                     .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
@@ -187,7 +187,7 @@ public class AttachmentHandler extends Worker {
                     .build();
 
             // If send or upload is retried,
-            WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msgId), ExistingWorkPolicy.REPLACE, upload);
+            WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()), ExistingWorkPolicy.REPLACE, upload);
         }
     }
 

@@ -230,7 +230,7 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public long msgReceived(Topic topic, Subscription sub, MsgServerData m) {
+    public Storage.Message msgReceived(Topic topic, Subscription sub, MsgServerData m) {
         final SQLiteDatabase db = mDbh.getWritableDatabase();
         long topicId, userId;
         StoredSubscription ss = sub != null ? (StoredSubscription) sub.getLocal() : null;
@@ -255,7 +255,7 @@ public class SqlStore implements Storage {
 
         if (topicId < 0 || userId < 0) {
             Log.w(TAG, "Failed to save message, topicId=" + topicId + ", userId=" + userId);
-            return -1;
+            return null;
         }
 
         final StoredMessage msg = new StoredMessage(m);
@@ -277,16 +277,16 @@ public class SqlStore implements Storage {
             db.endTransaction();
         }
 
-        return msg.id;
+        return msg;
     }
 
-    private long insertMessage(Topic topic, Drafty data, Map<String, Object> head, BaseDb.Status initialStatus) {
+    private Storage.Message insertMessage(Topic topic, Drafty data, Map<String, Object> head, BaseDb.Status initialStatus) {
         StoredMessage msg = new StoredMessage();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 
         if (topic == null) {
             Log.w(TAG, "Failed to insert message: topic is null");
-            return -1;
+            return null;
         }
 
         msg.topic = topic.getName();
@@ -305,16 +305,18 @@ public class SqlStore implements Storage {
         }
         msg.userId = mMyId;
 
-        return MessageDb.insert(db, topic, msg);
+        MessageDb.insert(db, topic, msg);
+
+        return msg.id > 0 ? msg : null;
     }
 
     @Override
-    public long msgSend(Topic topic, Drafty data, Map<String, Object> head) {
+    public Storage.Message msgSend(Topic topic, Drafty data, Map<String, Object> head) {
         return insertMessage(topic, data, head, BaseDb.Status.SENDING);
     }
 
     @Override
-    public long msgDraft(Topic topic, Drafty data, Map<String, Object> head) {
+    public Storage.Message msgDraft(Topic topic, Drafty data, Map<String, Object> head) {
         return insertMessage(topic, data, head, BaseDb.Status.DRAFT);
     }
 
@@ -472,7 +474,7 @@ public class SqlStore implements Storage {
         Cursor c = MessageDb.getMessageById(mDbh.getReadableDatabase(), dbMessageId);
         if (c != null && c.moveToFirst()) {
             //noinspection unchecked
-            msg = (T) StoredMessage.readMessage(c);
+            msg = (T) StoredMessage.readMessage(c, -1);
             c.close();
         }
         return msg;
@@ -486,7 +488,7 @@ public class SqlStore implements Storage {
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryUnsent(mDbh.getReadableDatabase(), st.id);
             if (c != null) {
-                list = new MessageList(c);
+                list = new MessageList(c, -1);
             }
         }
         return (R) list;
@@ -494,11 +496,11 @@ public class SqlStore implements Storage {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends Iterator<Message> & Closeable> R getLatestMessages() {
+    public <R extends Iterator<Message> & Closeable> R getLatestMessages(final int previewLength) {
         MessageList list = null;
         Cursor c = MessageDb.getLatestMessages(mDbh.getReadableDatabase());
         if (c != null) {
-            list = new MessageList(c);
+            list = new MessageList(c, previewLength);
         }
         return (R) list;
     }
@@ -525,10 +527,12 @@ public class SqlStore implements Storage {
 
     private static class MessageList implements Iterator<Message>, Closeable {
         private final Cursor mCursor;
+        private final int mPreviewLength;
 
-        MessageList(Cursor cursor) {
+        MessageList(Cursor cursor, int previewLength) {
             mCursor = cursor;
             mCursor.moveToFirst();
+            mPreviewLength = previewLength;
         }
 
         @Override
@@ -543,7 +547,7 @@ public class SqlStore implements Storage {
 
         @Override
         public StoredMessage next() {
-            StoredMessage msg = StoredMessage.readMessage(mCursor);
+            StoredMessage msg = StoredMessage.readMessage(mCursor, mPreviewLength);
             mCursor.moveToNext();
             return msg;
         }

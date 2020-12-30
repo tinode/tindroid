@@ -111,6 +111,8 @@ public class Tinode {
     protected static TypeFactory sTypeFactory;
     protected static SimpleDateFormat sDateFormat;
 
+    protected static final int MSG_PREVIEW_LENGTH = 120;
+
     static {
         sJsonMapper = new ObjectMapper();
         // Silently ignore unknown properties
@@ -387,7 +389,7 @@ public class Tinode {
                 }
             }
             // Load last message for each topic.
-            ML latest = mStore.getLatestMessages();
+            ML latest = mStore.getLatestMessages(MSG_PREVIEW_LENGTH);
             if (latest != null) {
                 while (latest.hasNext()) {
                     Storage.Message msg = latest.next();
@@ -1886,7 +1888,9 @@ public class Tinode {
         }
         Pair<?, Storage.Message> p = mTopics.get(topicName);
         if (p != null) {
-            p.second = msg;
+            if (p.second.getSeqId() < msg.getSeqId()) {
+                p.second = msg;
+            }
         }
     }
 

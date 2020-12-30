@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -73,8 +72,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class Drafty implements Serializable {
-    private static final String TAG = "Drafty";
-
     public static final String MIME_TYPE = "text/x-drafty";
 
     private static final String JSON_MIME_TYPE = "application/json";
@@ -971,11 +968,10 @@ public class Drafty implements Serializable {
                     } else {
                         continue;
                     }
-                    fmt[fmt_idx++] = style;
+                    preview.fmt[fmt_idx++] = style;
                 }
             }
         }
-
         return preview;
     }
 

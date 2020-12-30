@@ -25,9 +25,12 @@ import androidx.recyclerview.selection.ItemKeyProvider;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.db.StoredTopic;
+import co.tinode.tindroid.media.PreviewFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.Drafty;
 
 /**
  * Handling active chats, i.e. 'me' topic.
@@ -85,7 +88,8 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if (holder.viewType == R.layout.contact) {
             ComTopic<VxCard> topic = mTopics.get(position);
-            holder.bind(position, topic, mSelectionTracker != null &&
+            Storage.Message msg = Cache.getTinode().getLastMessage(topic.getName());
+            holder.bind(position, topic, msg, mSelectionTracker != null &&
                     mSelectionTracker.isSelected(topic.getName()));
         }
     }
@@ -230,7 +234,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             return details;
         }
 
-        void bind(int position, final ComTopic<VxCard> topic, boolean selected) {
+        void bind(int position, final ComTopic<VxCard> topic, Storage.Message msg, boolean selected) {
             final Context context = itemView.getContext();
             final String topicName = topic.getName();
 
@@ -245,7 +249,12 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 name.setText(R.string.placeholder_contact_title);
                 name.setTypeface(null, Typeface.ITALIC);
             }
-            contactPriv.setText(topic.getComment());
+            Drafty content = msg != null ? msg.getContent() : null;
+            if (content != null) {
+                contactPriv.setText(PreviewFormatter.toSpanned(contactPriv, content, 40));
+            } else {
+                contactPriv.setText(topic.getComment());
+            }
 
             int unread = topic.getUnreadCount();
             if (unread > 0) {
