@@ -258,7 +258,7 @@ public class MessageDb implements BaseColumns {
         return db.rawQuery(sql, null);
     }
 
-    /*
+    /**
      * Get a list of the latest message for every topic, sent or received.
      * See explanation here: https://stackoverflow.com/a/2111420
      */
@@ -650,6 +650,9 @@ public class MessageDb implements BaseColumns {
         return id;
     }
 
+    /**
+     * Message Loader for loading messages in background.
+     */
     public static class Loader extends CursorLoader {
         SQLiteDatabase mDb;
 

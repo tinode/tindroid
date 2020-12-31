@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -747,6 +748,22 @@ public class UiUtils {
         return result;
     }
 
+    public static void setMessageStatusIcon(ImageView holder, int status, int read, int recv) {
+        if (status <= BaseDb.Status.SENDING.value) {
+            holder.setImageResource(R.drawable.ic_schedule);
+        } else if (status == BaseDb.Status.FAILED.value) {
+            holder.setImageTintList(ColorStateList.valueOf(0xFFFFA000));
+            holder.setImageResource(R.drawable.ic_warning);
+        } else {
+            if (read > 0) {
+                holder.setImageResource(R.drawable.ic_visibility);
+            } else if (recv > 0) {
+                holder.setImageResource(R.drawable.ic_done_all);
+            } else {
+                holder.setImageResource(R.drawable.ic_done);
+            }
+        }
+    }
     /**
      * Identifies the start of the search string (needle) in the display name (haystack).
      * E.g. If display name was "Adam" and search query was "da" this would

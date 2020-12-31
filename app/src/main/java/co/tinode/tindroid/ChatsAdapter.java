@@ -199,7 +199,8 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         int viewType;
         TextView name;
         TextView unreadCount;
-        TextView contactPriv;
+        TextView priv;
+        ImageView messageStatus;
         AppCompatImageView avatar;
         ImageView online;
         ImageView channel;
@@ -217,7 +218,8 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             if (viewType == R.layout.contact) {
                 name = item.findViewById(R.id.contactName);
                 unreadCount = item.findViewById(R.id.unreadCount);
-                contactPriv = item.findViewById(R.id.contactPriv);
+                priv = item.findViewById(R.id.contactPriv);
+                messageStatus = item.findViewById(R.id.messageStatus);
                 avatar = item.findViewById(R.id.avatar);
                 online = item.findViewById(R.id.online);
                 channel = item.findViewById(R.id.icon_channel);
@@ -253,9 +255,17 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             }
             Drafty content = msg != null ? msg.getContent() : null;
             if (content != null) {
-                contactPriv.setText(PreviewFormatter.toSpanned(contactPriv, content, MAX_MESSAGE_PREVIEW_LENGTH));
+                if (msg.isMine()) {
+                    messageStatus.setVisibility(View.VISIBLE);
+                    UiUtils.setMessageStatusIcon(messageStatus, msg.getStatus(),
+                            topic.msgReadCount(msg.getSeqId()), topic.msgRecvCount(msg.getSeqId()));
+                } else {
+                    messageStatus.setVisibility(View.GONE);
+                }
+                priv.setText(PreviewFormatter.toSpanned(priv, content, MAX_MESSAGE_PREVIEW_LENGTH));
             } else {
-                contactPriv.setText(topic.getComment());
+                messageStatus.setVisibility(View.GONE);
+                priv.setText(topic.getComment());
             }
 
             int unread = topic.getUnreadCount();

@@ -228,6 +228,10 @@ public class BaseDb extends SQLiteOpenHelper {
         return uid != null && uid.equals(sInstance.getUid());
     }
 
+    /**
+     * get UID of the currently logged in user.
+     * @return UID or {@code null} if user is not logged in.
+     */
     public String getUid() {
         return mAcc != null ? mAcc.uid : null;
     }

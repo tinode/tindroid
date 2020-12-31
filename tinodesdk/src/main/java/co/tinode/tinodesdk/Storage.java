@@ -235,6 +235,10 @@ public interface Storage {
         /** Get Tinode seq Id of the message (different from database ID */
         int getSeqId();
 
+        /** Get delivery status */
+        int getStatus();
+
+        boolean isMine();
         boolean isDraft();
         boolean isReady();
         boolean isDeleted();

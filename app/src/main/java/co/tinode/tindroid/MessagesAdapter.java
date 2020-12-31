@@ -512,20 +512,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (holder.mDeliveredIcon != null) {
             holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
-                if (m.status.value <= BaseDb.Status.SENDING.value) {
-                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_schedule);
-                } else if (m.status.value == BaseDb.Status.FAILED.value) {
-                    holder.mDeliveredIcon.setImageTintList(ColorStateList.valueOf(0xFFFFA000));
-                    holder.mDeliveredIcon.setImageResource(R.drawable.ic_warning);
-                } else {
-                    if (topic.msgReadCount(m.seq) > 0) {
-                        holder.mDeliveredIcon.setImageResource(R.drawable.ic_visibility);
-                    } else if (topic.msgRecvCount(m.seq) > 0) {
-                        holder.mDeliveredIcon.setImageResource(R.drawable.ic_done_all);
-                    } else {
-                        holder.mDeliveredIcon.setImageResource(R.drawable.ic_done);
-                    }
-                }
+                UiUtils.setMessageStatusIcon(holder.mDeliveredIcon, m.status.value,
+                        topic.msgReadCount(m.seq), topic.msgRecvCount(m.seq));
             }
         }
 

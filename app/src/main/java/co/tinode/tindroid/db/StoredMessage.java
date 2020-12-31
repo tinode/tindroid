@@ -67,6 +67,7 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         return topic;
     }
 
+    @Override
     public boolean isMine() {
         return BaseDb.isMe(from);
     }
@@ -84,6 +85,10 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     @Override
     public Map<String, Object> getHead() {
         return head;
+    }
+
+    public int getStatus() {
+        return status.value;
     }
 
     @Override

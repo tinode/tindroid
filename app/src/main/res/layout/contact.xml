@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="?attr/listPreferredItemHeight"
     android:background="@drawable/contact_background"
+    android:gravity="center_vertical"
     android:paddingStart="@dimen/activity_padding"
-    android:paddingEnd="@dimen/activity_padding"
-    android:gravity="center_vertical">
+    android:paddingEnd="@dimen/activity_padding">
 
     <RelativeLayout
         android:layout_width="48dp"
@@ -25,10 +24,10 @@
             android:id="@+id/online"
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
             android:contentDescription="@string/avatar"
-            app:srcCompat="@drawable/ic_circle"/>
+            app:srcCompat="@drawable/ic_circle" />
 
     </RelativeLayout>
 
@@ -44,43 +43,42 @@
 
             <TextView
                 android:id="@+id/contactName"
-                android:textAppearance="@style/contactListTextPrimary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:maxLines="1"
                 android:ellipsize="end"
+                android:maxLines="1"
                 android:overScrollMode="never"
                 android:paddingEnd="4dp"
+                android:textAppearance="@style/contactListTextPrimary"
                 tools:ignore="RtlSymmetry"
-                tools:text="Contact title"/>
+                tools:text="Contact title" />
 
             <ImageView
                 android:id="@+id/icon_channel"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:baseline="-4dp"
                 android:alpha="0.75"
+                android:baseline="-4dp"
                 android:contentDescription="@string/channel"
                 android:visibility="visible"
-                app:tint="?android:attr/textColorSecondary"
-                app:srcCompat="@drawable/ic_channel"/>
+                app:srcCompat="@drawable/ic_channel"
+                app:tint="?android:attr/textColorSecondary" />
 
             <TextView
                 android:id="@+id/unreadCount"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="end|center_vertical"
-                android:background="@drawable/pill_counter"
                 android:layout_marginStart="12dp"
-                android:padding="3dp"
+                android:background="@drawable/pill_counter"
                 android:gravity="center"
+                android:padding="3dp"
                 android:textColor="@color/white"
                 android:textSize="10sp"
                 android:textStyle="bold"
                 tools:ignore="SmallSp"
-                tools:text="9+"
-                />
+                tools:text="9+" />
 
             <ImageView
                 android:id="@+id/icon_muted"
@@ -90,8 +88,8 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/topic_muted"
                 android:visibility="visible"
-                app:tint="@color/colorGray"
-                app:srcCompat="@drawable/ic_notifications_off"/>
+                app:srcCompat="@drawable/ic_notifications_off"
+                app:tint="@color/colorGray" />
 
             <ImageView
                 android:id="@+id/icon_blocked"
@@ -101,8 +99,8 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/topic_blocked"
                 android:visibility="visible"
-                app:tint="@color/colorGray"
-                app:srcCompat="@drawable/ic_block"/>
+                app:srcCompat="@drawable/ic_block"
+                app:tint="@color/colorGray" />
 
             <ImageView
                 android:id="@+id/icon_archived"
@@ -112,22 +110,42 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/topic_archived"
                 android:visibility="visible"
-                app:tint="@color/colorGray"
-                app:srcCompat="@drawable/ic_filecab"/>
+                app:srcCompat="@drawable/ic_filecab"
+                app:tint="@color/colorGray" />
 
         </LinearLayout>
 
-        <TextView android:id="@+id/contactPriv"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:ellipsize="end"
-            android:overScrollMode="never"
-            android:maxLines="1"
-            android:maxWidth="240sp"
-            android:text=""
-            android:textAppearance="?android:textAppearanceSmall"
-            tools:text="Contact private: Lorem ipsum dolor sit amet, consectetur adipiscing elit" />
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/messageStatus"
+                android:layout_width="18sp"
+                android:layout_height="11sp"
+                android:layout_gravity="center_vertical"
+                android:alpha="0.8"
+                android:paddingEnd="2dp"
+                android:paddingTop="2dp"
+                app:tint="?android:textColorSecondary"
+                tools:ignore="ContentDescription,RtlSymmetry,SmallSp"
+                tools:src="@drawable/ic_visibility" />
+
+            <TextView
+                android:id="@+id/contactPriv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:ellipsize="end"
+                android:maxWidth="240sp"
+                android:maxLines="1"
+                android:overScrollMode="never"
+                android:text=""
+                android:textAppearance="?android:textAppearanceSmall"
+                tools:text="Contact private: Lorem ipsum dolor sit amet, consectetur adipiscing elit" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
