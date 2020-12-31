@@ -1028,6 +1028,7 @@ public class Drafty implements Serializable {
     }
 
     public static class Entity implements Serializable {
+        private static final String[] lightData = new String[] {"mime", "name", "width", "height", "size"};
         public String tp;
         public Map<String,Object> data;
 
@@ -1049,7 +1050,20 @@ public class Drafty implements Serializable {
 
         @JsonIgnore
         protected Entity copyLight() {
-            return new Entity(tp, null);
+            Map<String,Object> dc = null;
+            if (data != null && !data.isEmpty()) {
+                dc = new HashMap<>();
+                for (String key : lightData) {
+                    Object val = data.get(key);
+                    if (val != null) {
+                        dc.put(key, val);
+                    }
+                }
+                if (dc.isEmpty()) {
+                    dc = null;
+                }
+            }
+            return new Entity(tp, dc);
         }
 
         @SuppressWarnings("NullableProblems")
