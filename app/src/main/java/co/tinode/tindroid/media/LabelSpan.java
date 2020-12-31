@@ -62,7 +62,7 @@ public class LabelSpan extends ReplacementSpan {
 
     @Override
     public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
-        RectF outline = new RectF(x, top + PADDING_TOP * mDipSize, x + mWidth * mDipSize, bottom);
+        RectF outline = new RectF(x, top + PADDING_TOP * mDipSize, x + mWidth * mDipSize - 1, bottom - 1);
 
         // Draw background.
         canvas.drawRoundRect(outline, RADIUS_CORNER * mDipSize, RADIUS_CORNER * mDipSize, mPaintBackground);

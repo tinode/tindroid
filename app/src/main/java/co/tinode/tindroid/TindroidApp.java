@@ -233,7 +233,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     void onStart() {
-        Log.i(TAG, "Lifecycle.Event.ON_START");
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
@@ -245,7 +244,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     void onStop() {
         // Disconnect now, so the connection does not wait for the timeout.
-        Log.i(TAG, "Lifecycle.Event.ON_STOP: disconnect now");
         if (sTinodeCache != null) {
             sTinodeCache.disconnect(false);
         }

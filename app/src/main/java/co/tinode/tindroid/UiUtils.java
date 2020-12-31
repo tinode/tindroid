@@ -756,7 +756,8 @@ public class UiUtils {
             holder.setImageResource(R.drawable.ic_warning);
         } else {
             if (read > 0) {
-                holder.setImageResource(R.drawable.ic_visibility);
+                holder.setImageTintList(ColorStateList.valueOf(0xFF009688));
+                holder.setImageResource(R.drawable.ic_done_all);
             } else if (recv > 0) {
                 holder.setImageResource(R.drawable.ic_done_all);
             } else {

@@ -43,6 +43,9 @@
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
     <color name="colorMessageBubbleMeta">#FFe3f2fd</color>
 
+    <color name="colorMsgStatusFailed">#FFFFA000</color>
+    <color name="colorMsgStatusSeen">#FF009688</color>
+
     <!-- Indicator of user's online/offline status -->
     <color name="online">#FF40C040</color>
     <color name="offline">#FFC0C0C0</color>

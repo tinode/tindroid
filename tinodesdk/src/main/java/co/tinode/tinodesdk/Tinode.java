@@ -1888,7 +1888,7 @@ public class Tinode {
         }
         Pair<?, Storage.Message> p = mTopics.get(topicName);
         if (p != null) {
-            if (p.second.getSeqId() < msg.getSeqId()) {
+            if (p.second == null || p.second.getSeqId() < msg.getSeqId()) {
                 p.second = msg;
             }
         }
