@@ -431,7 +431,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
         // Create BorderSpan.
         final StyledTreeNode span = new StyledTreeNode(
-                (CharacterStyle) new BorderedSpan(mContainer.getContext(), mFontSize, dipSize), (Object) null);
+                (CharacterStyle) new ButtonSpan(mContainer.getContext(), mFontSize, dipSize), (Object) null);
 
         // Wrap URLSpan into BorderSpan.
         span.addNode(new StyledTreeNode(new URLSpan("") {

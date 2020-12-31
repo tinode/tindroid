@@ -12,6 +12,7 @@ import android.text.style.ImageSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
+import android.util.TypedValue;
 import android.widget.TextView;
 
 import java.util.Map;
@@ -83,7 +84,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     @Override
     protected MeasuredTreeNode handleLineBreak() {
-        return null;
+        return new MeasuredTreeNode(" ");
     }
 
     @Override
@@ -126,16 +127,18 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     @Override
     protected MeasuredTreeNode handleButton(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode node = new MeasuredTreeNode();
-        node.addNode(new MeasuredTreeNode("[ "));
-        node.addNode(new MeasuredTreeNode(content));
-        node.addNode(new MeasuredTreeNode(" ]"));
-        return node;
+        // Size of a DIP pixel.
+        float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f,
+                mContainer.getContext().getResources().getDisplayMetrics());
+        return new MeasuredTreeNode(new LabelSpan(mContainer.getContext(), mFontSize, dipSize), content);
     }
 
     @Override
     protected MeasuredTreeNode handleFormRow(Context ctx, Map<String, Object> data, Object content) {
-        return new MeasuredTreeNode(content);
+        MeasuredTreeNode node = new MeasuredTreeNode();
+        node.addNode(new MeasuredTreeNode(" "));
+        node.addNode(new MeasuredTreeNode(content));
+        return node;
     }
 
     @Override

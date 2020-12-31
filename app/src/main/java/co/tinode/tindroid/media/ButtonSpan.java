@@ -13,7 +13,7 @@ import android.text.style.ReplacementSpan;
 import androidx.annotation.NonNull;
 
 // Span used to represent clickable buttons in Drafty forms.
-public class BorderedSpan extends ReplacementSpan implements LineHeightSpan {
+public class ButtonSpan extends ReplacementSpan implements LineHeightSpan {
     // Size in DIPs.
     private static final float RADIUS_CORNER = 2.5f;
     private static final float SHADOW_SIZE = 2.5f;
@@ -45,7 +45,7 @@ public class BorderedSpan extends ReplacementSpan implements LineHeightSpan {
      * @param fontSize font size in device (unscaled) pixels as returned by view.getTextSize().
      * @param dipSize  size of the DIP unit in unscaled pixels.
      */
-    BorderedSpan(final Context context, final float fontSize, float dipSize) {
+    ButtonSpan(final Context context, final float fontSize, float dipSize) {
         mDipSize = dipSize;
 
         int[] attrs = {android.R.attr.textColorPrimary, android.R.attr.colorButtonNormal};

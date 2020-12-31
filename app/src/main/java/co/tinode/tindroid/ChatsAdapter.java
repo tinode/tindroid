@@ -36,6 +36,8 @@ import co.tinode.tinodesdk.model.Drafty;
  * Handling active chats, i.e. 'me' topic.
  */
 public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> {
+    private static final int MAX_MESSAGE_PREVIEW_LENGTH = 60;
+
     private static int sColorOffline;
     private static int sColorOnline;
     private final ClickListener mClickListener;
@@ -251,7 +253,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             }
             Drafty content = msg != null ? msg.getContent() : null;
             if (content != null) {
-                contactPriv.setText(PreviewFormatter.toSpanned(contactPriv, content, 40));
+                contactPriv.setText(PreviewFormatter.toSpanned(contactPriv, content, MAX_MESSAGE_PREVIEW_LENGTH));
             } else {
                 contactPriv.setText(topic.getComment());
             }
