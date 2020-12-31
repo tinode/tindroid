@@ -125,6 +125,8 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
 
     // Structure representing Drafty as a tree of formatting nodes.
     public static class TreeNode {
+        private static final String TAG = "TreeNode";
+
         protected CharSequence text;
         protected List<TreeNode> children;
 
@@ -169,13 +171,6 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
                 children = new ArrayList<>();
             }
             children.add(node);
-        }
-
-        protected void addNode(CharSequence content) {
-            if (content == null) {
-                return;
-            }
-            addNode(new TreeNode(content));
         }
 
         protected boolean isPlain() {

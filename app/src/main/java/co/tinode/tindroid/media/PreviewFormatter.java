@@ -12,7 +12,6 @@ import android.text.style.ImageSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
-import android.util.Log;
 import android.widget.TextView;
 
 import java.util.Map;
@@ -107,10 +106,10 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
         if (icon != null) {
             icon.setTint(ctx.getResources().getColor(R.color.colorDarkGray));
-            icon.setBounds(0, 0, (int) mFontSize, (int) mFontSize);
+            icon.setBounds(0, 0, (int) (mFontSize * 1.3), (int) (mFontSize * 1.3));
             node = new MeasuredTreeNode();
-            node.addNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " ");
-            node.addNode(" " + ctx.getResources().getString(stringId));
+            node.addNode(new MeasuredTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " "));
+            node.addNode(new MeasuredTreeNode(" " + ctx.getResources().getString(stringId)));
         }
         return node;
     }
@@ -127,9 +126,10 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     @Override
     protected MeasuredTreeNode handleButton(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode node = new MeasuredTreeNode("[");
+        MeasuredTreeNode node = new MeasuredTreeNode();
+        node.addNode(new MeasuredTreeNode("[ "));
         node.addNode(new MeasuredTreeNode(content));
-        node.addNode(new MeasuredTreeNode("]"));
+        node.addNode(new MeasuredTreeNode(" ]"));
         return node;
     }
 
@@ -157,8 +157,6 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
     }
 
     static class MeasuredTreeNode extends StyledTreeNode {
-        private static final String TAG = "MeasuredTreeNode";
-
         MeasuredTreeNode() {
             super();
         }
@@ -190,11 +188,11 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
                 try {
                     for (AbstractDraftyFormatter.TreeNode child : getChildren()) {
                         if (child == null) {
-                            Log.w(TAG, "NULL child. Should not happen!!!");
-                        } else if (child instanceof MeasuredTreeNode) {
+                            continue;
+                        }
+
+                        if (child instanceof MeasuredTreeNode) {
                             spanned.append(((MeasuredTreeNode) child).toSpanned(maxLength - spanned.length()));
-                        } else {
-                            Log.w(TAG, "Wrong child class: " + child.getClass().getSimpleName());
                         }
                     }
                 } catch (LengthExceededException ex) {
@@ -214,6 +212,53 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
             return spanned;
         }
+/*
+        @Override
+        public String toString() {
+            StringBuilder result = new StringBuilder("{");
+            if (text != null) {
+                if (text.equals("\n")) {
+                    result.append("txt='BR'");
+                } else {
+                    result.append("txt='").append(text.toString()).append("'");
+                }
+            } else if (children != null) {
+                if (children.size() == 0) {
+                    result.append("ERROR:EMPTY");
+                } else if (children.size() == 1) {
+                    result.append("*").append(children.get(0).toString());
+                } else {
+                    result.append("[");
+                    for (TreeNode child : children) {
+                        if (child != null) {
+                            result.append(child.toString());
+                            result.append(",");
+                        } else {
+                            result.append("ERROR:NULL,");
+                        }
+                    }
+                    // Remove dangling comma.
+                    result.setLength(result.length() - 1);
+                    result.append("]");
+                }
+            } else {
+                result.append("ERROR:NULL");
+            }
+            result.append(styleName());
+            result.append("}");
+            return result.toString();
+        }
+
+        private String styleName() {
+            if (pStyle != null) {
+                return ", stl=" + pStyle.getClass().getSimpleName();
+            }
+            if (cStyle != null) {
+                return ", stl=" + cStyle.getClass().getSimpleName();
+            }
+            return "";
+        }
+        */
     }
 
     static class LengthExceededException extends RuntimeException {

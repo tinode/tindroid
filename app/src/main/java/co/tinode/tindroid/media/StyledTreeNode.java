@@ -36,20 +36,6 @@ class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
         this.pStyle = style;
     }
 
-    void addNode(CharacterStyle style, Object content) {
-        if (content == null) {
-            return;
-        }
-        addNode(new StyledTreeNode(style, content));
-    }
-
-    void addNode(ParagraphStyle style, Object content) {
-        if (content == null) {
-            return;
-        }
-        addNode(new StyledTreeNode(style, content));
-    }
-
     protected Spanned toSpanned() {
         SpannableStringBuilder spanned = new SpannableStringBuilder();
         if (isPlain()) {

@@ -72,15 +72,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         if (content.isPlain()) {
             return new SpannedString(content.toString());
         }
-        Log.i(TAG, "formatting: '" + content.txt + "'");
 
         AbstractDraftyFormatter.TreeNode result = content.format(new SpanFormatter(container, clicker));
         if (result instanceof StyledTreeNode) {
-            Log.i(TAG, "result: '" + result.text + "'");
             return ((StyledTreeNode)result).toSpanned();
         }
 
-        Log.i(TAG, "BAD result: '" + result + "'");
         return new SpannedString("");
     }
 
@@ -335,7 +332,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                     span = new StyledTreeNode();
                     for (TreeNode child : children) {
                         span.addNode(child);
-                        span.addNode("\n");
+                        span.addNode(new StyledTreeNode("\n"));
                     }
                 }
             } catch (ClassCastException ex) {
@@ -373,7 +370,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
         ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
         final Rect bounds = span.getDrawable().getBounds();
-        result.addNode(new SubscriptSpan(), new StyledTreeNode(span, " "));
+        result.addNode(new StyledTreeNode(new SubscriptSpan(), new StyledTreeNode(span, " ")));
 
         // Insert document's file name
         String fname = null;
@@ -386,14 +383,14 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         } else if (fname.length() > 32) {
             fname = fname.substring(0, 14) + "…" + fname.substring(fname.length() - 14);
         }
-        result.addNode(new TypefaceSpan("monospace"), fname);
+        result.addNode(new StyledTreeNode(new TypefaceSpan("monospace"), fname));
 
         // Add download link.
         if (mClicker != null) {
             boolean valid = (data.get("ref") instanceof String);
 
             // Insert linebreak then a clickable [↓ save] or [(!) unavailable] line.
-            result.addNode("\n");
+            result.addNode(new StyledTreeNode("\n"));
             StyledTreeNode saveLink = new StyledTreeNode();
             // Add 'download file' icon
             icon = AppCompatResources.getDrawable(ctx, valid ?
@@ -402,7 +399,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             icon.setBounds(0, 0,
                     (int) (ICON_SIZE_DP * metrics.density),
                     (int) (ICON_SIZE_DP * metrics.density));
-            saveLink.addNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " ");
+            saveLink.addNode(new StyledTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " "));
             if (valid) {
                 // Clickable "save".
                 saveLink.addNode(new StyledTreeNode(new ClickableSpan() {
@@ -413,11 +410,11 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 }, ctx.getResources().getString(R.string.download_attachment)));
             } else {
                 // Grayed-out "unavailable".
-                saveLink.addNode(new ForegroundColorSpan(Color.GRAY),
-                        " " + ctx.getResources().getString(R.string.unavailable));
+                saveLink.addNode(new StyledTreeNode(new ForegroundColorSpan(Color.GRAY),
+                        " " + ctx.getResources().getString(R.string.unavailable)));
             }
             // Add space on the left to make the link appear under the file name.
-            result.addNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink);
+            result.addNode(new StyledTreeNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink));
         }
         return result;
     }
@@ -437,14 +434,14 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 (CharacterStyle) new BorderedSpan(mContainer.getContext(), mFontSize, dipSize), (Object) null);
 
         // Wrap URLSpan into BorderSpan.
-        span.addNode(new URLSpan("") {
+        span.addNode(new StyledTreeNode(new URLSpan("") {
             @Override
             public void onClick(View widget) {
                 if (mClicker != null) {
                     mClicker.onClick("BN", data);
                 }
             }
-        }, content);
+        }, content));
 
         return span;
     }
