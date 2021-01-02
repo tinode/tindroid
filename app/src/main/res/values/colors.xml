@@ -12,8 +12,8 @@
 
     <color name="colorTextPlaceholder">#80999999</color>
 
-    <color name="colorChipBackground">#EEEEEE</color>
-    <color name="colorChipBorder">#999999</color>
+    <color name="colorChipBackground">#CFD8DC</color>
+    <color name="colorChipBorder">#90A4AE</color>
 
     <color name="colorGray">#CCCCCC</color>
     <color name="colorDarkerGray">#999999</color>

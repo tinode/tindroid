@@ -59,11 +59,14 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         setSupportActionBar(findViewById(R.id.toolbar));
 
-        Fragment fragment = new ChatsFragment();
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.contentFragment, fragment, FRAGMENT_CHATLIST)
-                .setPrimaryNavigationFragment(fragment)
-                .commit();
+        FragmentManager fm = getSupportFragmentManager();
+        if (fm.findFragmentByTag(FRAGMENT_CHATLIST) == null) {
+            Fragment fragment = new ChatsFragment();
+            fm.beginTransaction()
+                    .replace(R.id.contentFragment, fragment, FRAGMENT_CHATLIST)
+                    .setPrimaryNavigationFragment(fragment)
+                    .commit();
+        }
 
         mMeTopic = Cache.getTinode().getOrCreateMeTopic();
         mMeTopicListener = new MeListener();

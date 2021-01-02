@@ -71,8 +71,8 @@ public class LabelSpan extends ReplacementSpan {
 
         // paint.setColor(mTextColor);
         canvas.drawText(text, start, end,
-                x + (mWidth - mWidthActual) * mDipSize * 0.5f,
-                top + PADDING_TOP * mDipSize + (bottom - paint.ascent() - paint.descent()) * 0.5f,
+                x + (mWidth - mWidthActual - 1) * mDipSize * 0.5f,
+                top + PADDING_TOP * mDipSize * 0.5f + (bottom - paint.ascent() - paint.descent()) * 0.5f,
                 paint);
     }
 }

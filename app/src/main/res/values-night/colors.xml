@@ -4,8 +4,8 @@
     <color name="colorMessageBubbleOther">#FF002008</color>
     <color name="colorMessageBubbleMeta">#FF000820</color>
 
-    <color name="colorChipBackground">#212121</color>
-    <color name="colorChipBorder">#666666</color>
+    <color name="colorChipBackground">#263238</color>
+    <color name="colorChipBorder">#546E7A</color>
 
     <color name="colorListDivider">#666666</color>
 

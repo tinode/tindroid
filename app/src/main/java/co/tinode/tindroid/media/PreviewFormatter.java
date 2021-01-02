@@ -9,6 +9,7 @@ import android.text.SpannedString;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
@@ -117,12 +118,12 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     @Override
     protected MeasuredTreeNode handleImage(Context ctx, Object content, Map<String, Object> data) {
-        return annotatedIcon(ctx, R.drawable.ic_image, R.string.picture);
+        return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
     }
 
     @Override
     protected MeasuredTreeNode handleAttachment(Context ctx, Map<String, Object> data) {
-        return annotatedIcon(ctx, R.drawable.ic_attach, R.string.attachment);
+        return annotatedIcon(ctx, R.drawable.ic_attach_ol, R.string.attachment);
     }
 
     @Override
@@ -130,7 +131,11 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
         // Size of a DIP pixel.
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f,
                 mContainer.getContext().getResources().getDisplayMetrics());
-        return new MeasuredTreeNode(new LabelSpan(mContainer.getContext(), mFontSize, dipSize), content);
+        // Make button font slightly smaller.
+        MeasuredTreeNode node = new MeasuredTreeNode(new RelativeSizeSpan(0.8f), null);
+        // Change background color and draw a box around text.
+        node.addNode(new MeasuredTreeNode(new LabelSpan(mContainer.getContext(), mFontSize, dipSize), content));
+        return node;
     }
 
     @Override
@@ -143,7 +148,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     @Override
     protected MeasuredTreeNode handleForm(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode node = annotatedIcon(ctx, R.drawable.ic_form, R.string.form);
+        MeasuredTreeNode node = annotatedIcon(ctx, R.drawable.ic_form_ol, R.string.form);
         node.addNode(new MeasuredTreeNode(": "));
         node.addNode(new MeasuredTreeNode(content));
         return node;
@@ -151,7 +156,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     @Override
     protected MeasuredTreeNode handleUnknown(Context ctx, Object content, Map<String, Object> data) {
-        return annotatedIcon(ctx, R.drawable.ic_unkn_type, R.string.unknown);
+        return annotatedIcon(ctx, R.drawable.ic_unkn_type_ol, R.string.unknown);
     }
 
     @Override
