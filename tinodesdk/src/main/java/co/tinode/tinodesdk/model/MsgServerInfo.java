@@ -7,6 +7,7 @@ import java.io.Serializable;
  */
 public class MsgServerInfo implements Serializable {
     public String topic;
+    public String src;
     public String from;
     public String what;
     public Integer seq;

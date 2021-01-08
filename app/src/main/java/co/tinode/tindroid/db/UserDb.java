@@ -113,7 +113,7 @@ public class UserDb implements BaseColumns {
      *
      * @return ID of the newly added user
      */
-    static <Pu> long insert(SQLiteDatabase db, User<Pu> user) {
+    static long insert(SQLiteDatabase db, User user) {
         long id = insert(db, user.uid, user.updated, user.pub);
         if (id > 0) {
             StoredUser su = new StoredUser();

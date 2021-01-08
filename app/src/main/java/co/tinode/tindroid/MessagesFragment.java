@@ -67,8 +67,10 @@ import static android.app.Activity.RESULT_OK;
  * Fragment handling message display and message sending.
  */
 public class MessagesFragment extends Fragment {
-    static final String MESSAGE_TO_SEND = "messageText";
     private static final String TAG = "MessageFragment";
+
+    static final String MESSAGE_TO_SEND = "messageText";
+
     private static final int MESSAGES_TO_LOAD = 24;
 
     private static final int ACTION_ATTACH_FILE = 100;
@@ -252,7 +254,7 @@ public class MessagesFragment extends Fragment {
                                 String topicName = failure.getString(AttachmentHandler.ARG_TOPIC_NAME);
                                 if (mTopicName.equals(topicName)) {
                                     long msgId = failure.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
-                                    if (BaseDb.getInstance().getStore().getMessageById(mTopic, msgId) != null) {
+                                    if (BaseDb.getInstance().getStore().getMessageById(msgId) != null) {
                                         runMessagesLoader(mTopicName);
                                         if (state == WorkInfo.State.FAILED) {
                                             String error = failure.getString(AttachmentHandler.ARG_ERROR);
@@ -397,7 +399,6 @@ public class MessagesFragment extends Fragment {
         // Close cursor.
         mMessagesAdapter.resetContent(null);
     }
-
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {

@@ -12,7 +12,7 @@
 
     <color name="colorTextPlaceholder">#80999999</color>
 
-    <color name="colorChipBackground">#CFD8DC</color>
+    <color name="colorChipBackground">#ECEFF1</color>
     <color name="colorChipBorder">#90A4AE</color>
 
     <color name="colorGray">#CCCCCC</color>

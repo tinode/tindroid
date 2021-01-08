@@ -111,8 +111,6 @@ public class Tinode {
     protected static TypeFactory sTypeFactory;
     protected static SimpleDateFormat sDateFormat;
 
-    protected static final int MSG_PREVIEW_LENGTH = 120;
-
     static {
         sJsonMapper = new ObjectMapper();
         // Silently ignore unknown properties
@@ -389,7 +387,7 @@ public class Tinode {
                 }
             }
             // Load last message for each topic.
-            ML latest = mStore.getLatestMessages(MSG_PREVIEW_LENGTH);
+            ML latest = mStore.getLatestMessagePreviews();
             if (latest != null) {
                 while (latest.hasNext()) {
                     Storage.Message msg = latest.next();
@@ -1868,12 +1866,10 @@ public class Tinode {
     }
 
     /**
-     * Check if topic is being tracked.
+     * Get the latest cached message in the given topic.
+     * @param topicName name of the topic to get message for.
+     * @return last cached message or null.
      */
-    boolean isTopicTracked(String topicName) {
-        return mTopics.containsKey(topicName);
-    }
-
     public Storage.Message getLastMessage(String topicName) {
         if (topicName == null) {
             return null;
@@ -1888,7 +1884,9 @@ public class Tinode {
         }
         Pair<?, Storage.Message> p = mTopics.get(topicName);
         if (p != null) {
-            if (p.second == null || p.second.getSeqId() < msg.getSeqId()) {
+            if (p.second == null ||
+                    (p.second.isPending() && !msg.isPending()) ||
+                    p.second.getSeqId() < msg.getSeqId()) {
                 p.second = msg;
             }
         }
@@ -2027,56 +2025,6 @@ public class Tinode {
         }
 
         return msg.isValid() ? msg : null;
-    }
-
-    /**
-     * Add API key and auth token to the URL making it usable for getting data
-     * from the server in a simple GET request.
-     *
-     * @param origUrl possibly relative URL to wrap.
-     * @return URL with appended API key and token, if valid token is present.
-     */
-    public URL authorizeURL(String origUrl) {
-        if (origUrl == null) {
-            return null;
-        }
-        URL url = toAbsoluteURL(origUrl);
-        if (url == null) {
-            return null;
-        }
-
-        if (isTrustedURL(url)) {
-            String query = url.getQuery();
-            if (mApiKey != null) {
-                if (query != null) {
-                    query += "&";
-                } else {
-                    query = "";
-                }
-                query += "apikey=" + mApiKey;
-            }
-            if (mAuthToken != null) {
-                if (query != null) {
-                    query += "&";
-                } else {
-                    query = "";
-                }
-                // Convert standard base64 encoding to URL base64 encoding.
-                query += "auth=token&secret=" +
-                        mAuthToken.replace('+', '-').replace('/', '_');
-            }
-
-            try {
-
-                URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(),
-                        url.getPath(), query, url.getRef());
-                url = uri.toURL();
-                Log.i(TAG, "Wrapped URL: " + url.toString());
-            } catch (MalformedURLException | URISyntaxException ignored) {
-            }
-        }
-
-        return url;
     }
 
     /**

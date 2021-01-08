@@ -12,11 +12,11 @@ import co.tinode.tinodesdk.model.Drafty;
 public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.TreeNode>
         implements Drafty.Formatter<AbstractDraftyFormatter.TreeNode> {
 
-    protected final TextView mContainer;
+    protected final Context mContext;
     // Maximum width of the container TextView. Max height is maxWidth * 0.75.
 
-    protected AbstractDraftyFormatter(final TextView container) {
-        mContainer = container;
+    protected AbstractDraftyFormatter(final Context context) {
+        mContext = context;
     }
 
     protected abstract T handleStrong(Object content);
@@ -86,37 +86,37 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
                     span = handleLineBreak();
                     break;
                 case "LN":
-                    span = handleLink(mContainer.getContext(), content, data);
+                    span = handleLink(mContext, content, data);
                     break;
                 case "MN":
-                    span = handleMention(mContainer.getContext(), content, data);
+                    span = handleMention(mContext, content, data);
                     break;
                 case "HT":
-                    span = handleHashtag(mContainer.getContext(), content, data);
+                    span = handleHashtag(mContext, content, data);
                     break;
                 case "IM":
                     // Additional processing for images
-                    span = handleImage(mContainer.getContext(), content, data);
+                    span = handleImage(mContext, content, data);
                     break;
                 case "EX":
                     // Attachments; attachments cannot have sub-elements.
-                    span = handleAttachment(mContainer.getContext(), data);
+                    span = handleAttachment(mContext, data);
                     break;
                 case "BN":
                     // Button
-                    span = handleButton(mContainer.getContext(), data, content);
+                    span = handleButton(mContext, data, content);
                     break;
                 case "FM":
                     // Form
-                    span = handleForm(mContainer.getContext(), data, content);
+                    span = handleForm(mContext, data, content);
                     break;
                 case "RW":
                     // Form element formatting is dependent on element content.
-                    span = handleFormRow(mContainer.getContext(), data, content);
+                    span = handleFormRow(mContext, data, content);
                     break;
                 default:
                     // Unknown element
-                    span = handleUnknown(mContainer.getContext(), content, data);
+                    span = handleUnknown(mContext, content, data);
             }
             return span;
         }

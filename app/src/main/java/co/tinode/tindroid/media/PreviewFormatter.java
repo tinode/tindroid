@@ -14,7 +14,6 @@ import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.util.TypedValue;
-import android.widget.TextView;
 
 import java.util.Map;
 
@@ -28,13 +27,13 @@ import co.tinode.tinodesdk.model.Drafty;
 public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.MeasuredTreeNode> {
     private final float mFontSize;
 
-    PreviewFormatter(final TextView container) {
-        super(container);
+    PreviewFormatter(final Context context, float fontSize) {
+        super(context);
 
-        mFontSize = container.getTextSize();
+        mFontSize = fontSize;
     }
 
-    public static Spanned toSpanned(final TextView container, final Drafty content, final int maxLength) {
+    public static Spanned toSpanned(final Context context, float fontSize, final Drafty content, final int maxLength) {
         if (content == null) {
             return new SpannedString("");
         }
@@ -46,7 +45,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
             return new SpannedString(text);
         }
 
-        AbstractDraftyFormatter.TreeNode result = content.format(new PreviewFormatter(container));
+        AbstractDraftyFormatter.TreeNode result = content.format(new PreviewFormatter(context, fontSize));
         if (result instanceof MeasuredTreeNode) {
             try {
                 return ((MeasuredTreeNode) result).toSpanned(maxLength);
@@ -130,11 +129,11 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
     protected MeasuredTreeNode handleButton(Context ctx, Map<String, Object> data, Object content) {
         // Size of a DIP pixel.
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f,
-                mContainer.getContext().getResources().getDisplayMetrics());
+                ctx.getResources().getDisplayMetrics());
         // Make button font slightly smaller.
         MeasuredTreeNode node = new MeasuredTreeNode(new RelativeSizeSpan(0.8f), null);
         // Change background color and draw a box around text.
-        node.addNode(new MeasuredTreeNode(new LabelSpan(mContainer.getContext(), mFontSize, dipSize), content));
+        node.addNode(new MeasuredTreeNode(new LabelSpan(ctx, mFontSize, dipSize), content));
         return node;
     }
 

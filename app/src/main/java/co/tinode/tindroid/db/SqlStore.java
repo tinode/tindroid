@@ -468,16 +468,25 @@ public class SqlStore implements Storage {
         return result;
     }
 
-    @Override
-    public <T extends Storage.Message> T getMessageById(Topic topic, long dbMessageId) {
+    private <T extends Storage.Message> T messageById(long dbMessageId, int previewLength) {
         T msg = null;
         Cursor c = MessageDb.getMessageById(mDbh.getReadableDatabase(), dbMessageId);
         if (c != null && c.moveToFirst()) {
             //noinspection unchecked
-            msg = (T) StoredMessage.readMessage(c, -1);
+            msg = (T) StoredMessage.readMessage(c, previewLength);
             c.close();
         }
         return msg;
+    }
+
+    @Override
+    public <T extends Storage.Message> T getMessageById(long dbMessageId) {
+        return messageById(dbMessageId, -1);
+    }
+
+    @Override
+    public <T extends Storage.Message> T getMessagePreviewById(long dbMessageId) {
+        return messageById(dbMessageId, MessageDb.MESSAGE_PREVIEW_LENGTH);
     }
 
     @SuppressWarnings("unchecked")
@@ -496,11 +505,11 @@ public class SqlStore implements Storage {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends Iterator<Message> & Closeable> R getLatestMessages(final int previewLength) {
+    public <R extends Iterator<Message> & Closeable> R getLatestMessagePreviews() {
         MessageList list = null;
         Cursor c = MessageDb.getLatestMessages(mDbh.getReadableDatabase());
         if (c != null) {
-            list = new MessageList(c, previewLength);
+            list = new MessageList(c, MessageDb.MESSAGE_PREVIEW_LENGTH);
         }
         return (R) list;
     }

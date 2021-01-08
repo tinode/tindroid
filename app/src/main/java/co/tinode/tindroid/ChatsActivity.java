@@ -217,8 +217,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
 
         @Override
         public void onInfo(MsgServerInfo info) {
-            // FIXME: this is not supposed to happen.
-            Log.e(TAG, "Contacts got onInfo update '" + info.what + "'");
+            datasetChanged();
         }
 
         @Override

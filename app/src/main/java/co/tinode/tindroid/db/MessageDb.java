@@ -33,6 +33,8 @@ import co.tinode.tinodesdk.model.MsgRange;
 public class MessageDb implements BaseColumns {
     private static final String TAG = "MessageDb";
 
+    static final int MESSAGE_PREVIEW_LENGTH = 80;
+
     /**
      * The name of the main table.
      */

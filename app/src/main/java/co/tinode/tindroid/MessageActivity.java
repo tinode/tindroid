@@ -68,6 +68,7 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
     private static final String TAG = "MessageActivity";
+    static final String TOPIC_NAME = "topicName";
     private static final int MESSAGES_TO_LOAD = 24;
 
     private static final int READ_DELAY = 1000;
@@ -130,6 +131,11 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            mTopicName = savedInstanceState.getString(TOPIC_NAME);
+        }
+
         setContentView(R.layout.activity_messages);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -204,6 +210,13 @@ public class MessageActivity extends AppCompatActivity {
         mSendTypingNotifications = pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true);
 
         BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString(TOPIC_NAME, mTopicName);
     }
 
     // Topic has changed. Update all the views with the new data.

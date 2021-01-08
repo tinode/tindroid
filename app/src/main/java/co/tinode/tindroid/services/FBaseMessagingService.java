@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.RingtoneManager;
@@ -27,6 +28,7 @@ import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
+import co.tinode.tindroid.media.PreviewFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -34,6 +36,7 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
+import co.tinode.tinodesdk.model.Drafty;
 
 /**
  * Receive and handle (e.g. show) a push notification message.
@@ -44,6 +47,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
     // Width and height of the large icon (avatar).
     private static final int AVATAR_SIZE = 128;
+    // Max length of the message.
+    private static final int MAX_MESAGE_LENGTH = 80;
 
     private static Bitmap makeLargeIcon(Context context, Bitmap bmp, Topic.TopicType tp, String name, String id) {
         Resources res = context.getResources();
@@ -159,7 +164,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             // Check notification type: message, subscription.
             String what = data.get("what");
             String title = null;
-            String body = null;
+            CharSequence body = null;
             Bitmap avatar = null;
             if (TextUtils.isEmpty(what) || what.equals("msg")) {
                 // Message notification.
@@ -175,9 +180,30 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 }
 
                 avatar = senderIcon;
-                body = data.get("content");
+
+                // Try to retrieve rich message content.
+                String json = data.get("rc");
+                if (!TextUtils.isEmpty(json)) {
+                    try {
+                        Drafty draftyBody = Tinode.jsonDeserialize(Drafty.class.getCanonicalName(), json);
+                        if (draftyBody != null) {
+                            int[] attrs = {android.R.attr.textSize};
+                            TypedArray ta = obtainStyledAttributes(androidx.appcompat.R.style.TextAppearance_Compat_Notification, attrs);
+                            float fontSize = ta.getFloat(0, 14f);
+                            ta.recycle();
+                            body = PreviewFormatter.toSpanned(this, fontSize, draftyBody, MAX_MESAGE_LENGTH);
+                        }
+                    } catch (ClassCastException ex) {
+                        Log.w(TAG, "Failed to de-serialize payload", ex);
+                    }
+                }
+
+                // If rich content is not available, use plain text content.
                 if (TextUtils.isEmpty(body)) {
-                    body = getResources().getString(R.string.new_message);
+                    body = data.get("content");
+                    if (TextUtils.isEmpty(body)) {
+                        body = getResources().getString(R.string.new_message);
+                    }
                 }
 
                 if (tp == Topic.TopicType.P2P) {
@@ -234,7 +260,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         avatar = makeLargeIcon(this, null, tp, null, topicName);
                     } else {
                         body = pub.fn;
-                        avatar = makeLargeIcon(this, pub.getBitmap(), tp, body, topicName);
+                        avatar = makeLargeIcon(this, pub.getBitmap(), tp, pub.fn, topicName);
                     }
                 }
             }
@@ -294,7 +320,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      * @param body  message body.
      * @param avatar sender's avatar.
      */
-    private NotificationCompat.Builder composeNotification(String title, String body, Bitmap avatar) {
+    private NotificationCompat.Builder composeNotification(String title, CharSequence body, Bitmap avatar) {
         // Log.d(TAG, "Notification title=" + title + ", body=" + body + ", topic=" + topic);
         @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
@@ -363,7 +389,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             int id = res.getIdentifier(locKey, "string", packageName);
             if (id != 0) {
                 if (locArgs != null) {
-                    //noinspection RedundantCast (it's not redundant)
                     result = res.getString(id, (Object[]) locArgs);
                 } else {
                     result = res.getString(id);

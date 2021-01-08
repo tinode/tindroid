@@ -202,12 +202,17 @@ public interface Storage {
     boolean setRecv(Topic topic, int recv);
 
     /** Retrieve a single message by database id */
-    <T extends Message> T getMessageById(Topic topic, long dbMessageId);
+    <T extends Message> T getMessageById(long dbMessageId);
 
-    /** Get the latest message in each topic. Close the result after use.
-     * @param previewLength shorten message content to this length; if previewLength is <=0 then no shortening.
+    /**
+     * Retrieve a single message preview by database id.
      */
-    <T extends Iterator<Message> & Closeable> T getLatestMessages(int previewLength);
+    <T extends Message> T getMessagePreviewById(long dbMessageId);
+
+    /**
+     * Get the latest message in each topic. Caller must close the result after use.
+     */
+    <T extends Iterator<Message> & Closeable> T getLatestMessagePreviews();
 
     /** Get a list of unsent messages. Close the result after use. */
     <T extends Iterator<Message> & Closeable> T getQueuedMessages(Topic topic);
@@ -239,7 +244,7 @@ public interface Storage {
         int getStatus();
 
         boolean isMine();
-        boolean isDraft();
+        boolean isPending();
         boolean isReady();
         boolean isDeleted();
         boolean isDeleted(boolean hard);

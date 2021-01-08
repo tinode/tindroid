@@ -51,14 +51,16 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
     // Size of Download and Error icons in DP.
     private static final int ICON_SIZE_DP = 16;
 
+    private final TextView mContainer;
     // Maximum width of the container TextView. Max height is maxWidth * 0.75.
     private final int mViewport;
     private final float mFontSize;
     private final ClickListener mClicker;
 
     protected SpanFormatter(final TextView container, final ClickListener clicker) {
-        super(container);
+        super(container.getContext());
 
+        mContainer = container;
         mViewport = container.getMaxWidth();
         mFontSize = container.getTextSize();
         mClicker = clicker;
@@ -425,13 +427,13 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         // This is needed for button shadows.
         mContainer.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
-        DisplayMetrics metrics = mContainer.getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
         // Size of a DIP pixel.
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f, metrics);
 
         // Create BorderSpan.
         final StyledTreeNode span = new StyledTreeNode(
-                (CharacterStyle) new ButtonSpan(mContainer.getContext(), mFontSize, dipSize), (Object) null);
+                (CharacterStyle) new ButtonSpan(ctx, mFontSize, dipSize), (Object) null);
 
         // Wrap URLSpan into BorderSpan.
         span.addNode(new StyledTreeNode(new URLSpan("") {

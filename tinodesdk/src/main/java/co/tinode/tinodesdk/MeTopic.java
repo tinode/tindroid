@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import co.tinode.tinodesdk.model.Acs;
@@ -17,8 +16,8 @@ import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
-import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerCtrl;
+import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -303,7 +302,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 // Empty list. Create and add.
                 mCreds = new ArrayList<>();
                 mCreds.add(cred);
-                changed = true;
             } else {
                 // Try finding this credential among confirmed or not.
                 int idx = findCredIndex(cred, false);
@@ -323,8 +321,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     Credential el = mCreds.get(idx);
                     el.done = cred.isDone();
                 }
-                changed = true;
             }
+            changed = true;
         } else if (cred.resp != null && mCreds != null) {
             // Handle credential confirmation.
             int idx = findCredIndex(cred, true);
@@ -467,6 +465,31 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 mListener.onSubsUpdated();
             }
             mListener.onPres(pres);
+        }
+    }
+
+    @Override
+    protected void routeInfo(MsgServerInfo info) {
+        if (info.what.equals(Tinode.NOTE_KP)) {
+            return;
+        }
+        if (info.src == null) {
+            Log.d(TAG, "Source not found in me.routeInfo");
+            return;
+        }
+
+        Topic topic = mTinode.getTopic(info.src);
+        if (topic != null) {
+            topic.setReadRecvByRemote(info.from, info.what, info.seq);
+        }
+
+        // If this is an update from the current user, update the contact with the new count too.
+        if (mTinode.isMe(info.from)) {
+            setMsgReadRecv(info.src, info.what, info.seq);
+        }
+
+        if (mListener != null) {
+            mListener.onInfo(info);
         }
     }
 

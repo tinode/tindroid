@@ -136,7 +136,7 @@ public class Drafty implements Serializable {
     }
 
     // Used by Jackson XML to deserialize plain text received from the server as Drafty without any parsing.
-    // This is needed in order to disable secondary parsing of received text messages.
+    // This is needed in order to disable secondary parsing of received plain-text messages.
     @JsonCreator
     public static Drafty fromPlainText(String plainText) {
         Drafty that = new Drafty();
@@ -918,15 +918,16 @@ public class Drafty implements Serializable {
     public Drafty preview(final int length) {
         Drafty preview = new Drafty();
 
+        int len = 0;
         if (txt != null) {
             if (txt.length() > length) {
                 preview.txt = txt.substring(0, length);
             } else {
                 preview.txt = txt;
             }
+            len = preview.txt.length();
         }
 
-        int len = preview.txt != null ? preview.txt.length() : 0;
         if (fmt != null && fmt.length > 0) {
             // Old key to new key entity mapping.
             HashMap<Integer, Integer> ent_refs = new HashMap<>();

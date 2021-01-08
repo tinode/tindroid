@@ -45,6 +45,7 @@ import co.tinode.tinodesdk.model.Subscription;
 @SuppressWarnings("WeakerAccess, unused")
 public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     private static final String TAG = "tinodesdk.Topic";
+
     protected Tinode mTinode;
     protected String mName;
     // The bulk of topic data
@@ -935,6 +936,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 setRead(seq);
                 if (mStore != null) {
                     mStore.setRead(this, seq);
+
+                    // Update cached message.
+                    Storage.Message msg = mStore.getMessagePreviewById(id);
+                    mTinode.setLastMessage(getName(), msg);
                 }
             }
         }
@@ -942,7 +947,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     protected PromisedReply<ServerMessage> publish(final Drafty content, Map<String, Object> head, final long msgId) {
         if (content.isPlain() && head != null) {
-            // Plain text content should not be sent with the "mine" header. Clear it.
+            // Plain text content should not have "mime" header. Clear it.
             head.remove("mime");
         }
         return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head).thenApply(
@@ -1082,7 +1087,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return result;
         }
 
-        final Storage.Message m = mStore.getMessageById(this, msgDatabaseId);
+        final Storage.Message m = mStore.getMessageById(msgDatabaseId);
         if (m != null) {
             if (m.isDeleted()) {
                 result = mTinode.delMessage(getName(), m.getSeqId(), m.isDeleted(true));
@@ -1900,39 +1905,44 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
+    protected void setReadRecvByRemote(final String userId, final String what, final int seq) {
+        Subscription<SP, SR> sub = getSubscription(userId);
+        if (sub == null) {
+            return;
+        }
+        switch (what) {
+            case Tinode.NOTE_RECV:
+                sub.recv = seq;
+                if (mStore != null) {
+                    mStore.msgRecvByRemote(sub, seq);
+                }
+                break;
+            case Tinode.NOTE_READ:
+                sub.read = seq;
+                if (sub.recv < sub.read) {
+                    sub.recv = sub.read;
+                    if (mStore != null) {
+                        mStore.msgRecvByRemote(sub, seq);
+                    }
+                }
+                if (mStore != null) {
+                    mStore.msgReadByRemote(sub, seq);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
     protected void routeInfo(MsgServerInfo info) {
         if (!info.what.equals(Tinode.NOTE_KP)) {
-            Subscription<SP, SR> sub = getSubscription(info.from);
-            if (sub != null) {
-                switch (info.what) {
-                    case Tinode.NOTE_RECV:
-                        sub.recv = info.seq;
-                        if (mStore != null) {
-                            mStore.msgRecvByRemote(sub, info.seq);
-                        }
-                        break;
-                    case Tinode.NOTE_READ:
-                        sub.read = info.seq;
-                        if (sub.recv < sub.read) {
-                            sub.recv = sub.read;
-                            if (mStore != null) {
-                                mStore.msgRecvByRemote(sub, info.seq);
-                            }
-                        }
-                        if (mStore != null) {
-                            mStore.msgReadByRemote(sub, info.seq);
-                        }
-                        break;
-                    default:
-                        break;
-                }
+            setReadRecvByRemote(info.from, info.what, info.seq);
 
-                // If this is an update from the current user, update the contact with the new count too.
-                if (mTinode.isMe(info.from)) {
-                    MeTopic me = mTinode.getMeTopic();
-                    if (me != null) {
-                        me.setMsgReadRecv(getName(), info.what, info.seq);
-                    }
+            // If this is an update from the current user, update the contact with the new count too.
+            if (mTinode.isMe(info.from)) {
+                MeTopic me = mTinode.getMeTopic();
+                if (me != null) {
+                    me.setMsgReadRecv(getName(), info.what, info.seq);
                 }
             }
         }
