@@ -285,8 +285,6 @@ public class MessagesFragment extends Fragment {
         if (args != null) {
             mTopicName = args.getString("topic");
             mMessageToSend = args.getString(MESSAGE_TO_SEND);
-        } else {
-            mTopicName = null;
         }
 
         if (mTopicName != null) {
@@ -397,7 +395,9 @@ public class MessagesFragment extends Fragment {
         super.onDestroy();
 
         // Close cursor.
-        mMessagesAdapter.resetContent(null);
+        if (mMessagesAdapter != null) {
+            mMessagesAdapter.resetContent(null);
+        }
     }
 
     @Override

@@ -221,13 +221,12 @@ public class MessageActivity extends AppCompatActivity {
 
     // Topic has changed. Update all the views with the new data.
     private boolean changeTopic(String topicName) {
-        final Tinode tinode = Cache.getTinode();
-
         if (TextUtils.isEmpty(topicName)) {
             Log.w(TAG, "Activity resumed with an empty topic name");
             return false;
         }
 
+        final Tinode tinode = Cache.getTinode();
         ComTopic<VxCard> topic;
         try {
             //noinspection unchecked
@@ -237,33 +236,36 @@ public class MessageActivity extends AppCompatActivity {
             return false;
         }
 
-        // Cancel all pending notifications addressed to the current topic.
-        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) {
-            nm.cancel(mTopicName, 0);
-        }
-
-        mTopicName = topicName;
         mTopic = topic;
 
-        if (mTopic == null) {
-            UiUtils.setupToolbar(this, null, mTopicName, false, null);
-            try {
-                //noinspection unchecked
-                mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
-            } catch (ClassCastException ex) {
-                Log.w(TAG, "The unknown topic is a non-comm topic: " + mTopicName);
-                return false;
-            }
-            showFragment(FRAGMENT_INVALID, null, false);
+        if (mTopicName == null || !mTopicName.equals(topicName)) {
+            mTopicName = topicName;
 
-        } else {
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
-            // Check if another fragment is already visible. If so, don't change it.
-            if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
-                // No fragment is visible. Show default and clear back stack.
-                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                showFragment(FRAGMENT_MESSAGES, null, false);
+            // Cancel all pending notifications addressed to the current topic.
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.cancel(mTopicName, 0);
+            }
+
+            if (mTopic == null) {
+                UiUtils.setupToolbar(this, null, mTopicName, false, null);
+                try {
+                    //noinspection unchecked
+                    mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
+                } catch (ClassCastException ex) {
+                    Log.w(TAG, "The unknown topic is a non-comm topic: " + mTopicName);
+                    return false;
+                }
+                showFragment(FRAGMENT_INVALID, null, false);
+
+            } else {
+                UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
+                // Check if another fragment is already visible. If so, don't change it.
+                if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+                    // No fragment is visible. Show default and clear back stack.
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                    showFragment(FRAGMENT_MESSAGES, null, false);
+                }
             }
         }
 
