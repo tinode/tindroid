@@ -59,7 +59,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     void resetContent(Activity activity, final boolean archive, final boolean banned) {
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

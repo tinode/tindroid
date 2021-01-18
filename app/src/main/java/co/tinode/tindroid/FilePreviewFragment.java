@@ -162,7 +162,7 @@ public class FilePreviewFragment extends Fragment {
 
     private void sendFile() {
         final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

@@ -219,7 +219,7 @@ public class ImageViewFragment extends Fragment {
                         @Override
                         public void onSuccess() {
                             Activity activity = getActivity();
-                            if (activity == null) {
+                            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                                 return;
                             }
 
@@ -389,7 +389,7 @@ public class ImageViewFragment extends Fragment {
 
     private void sendImage() {
         final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -413,7 +413,7 @@ public class ImageViewFragment extends Fragment {
 
     private void acceptAvatar() {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

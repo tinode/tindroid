@@ -367,7 +367,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     // necessary content Uri from mSearchTerm.
     private void restartLoader(String searchTerm) {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -392,7 +392,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Sync p2p topics to Contacts.
                 AppCompatActivity activity = (AppCompatActivity) getActivity();
-                if (activity == null) {
+                if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
                     return;
                 }
                 // Sync contacts.

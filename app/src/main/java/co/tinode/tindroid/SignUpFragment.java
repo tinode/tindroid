@@ -205,7 +205,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
 

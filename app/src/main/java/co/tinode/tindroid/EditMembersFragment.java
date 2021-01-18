@@ -169,7 +169,7 @@ public class EditMembersFragment extends Fragment {
     // necessary content Uri from mSearchTerm.
     private void restartLoader() {
         final FragmentActivity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
 
@@ -209,7 +209,7 @@ public class EditMembersFragment extends Fragment {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Sync p2p topics to Contacts.
                 Activity activity = getActivity();
-                if (activity == null) {
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
                 UiUtils.onContactsPermissionsGranted(activity);

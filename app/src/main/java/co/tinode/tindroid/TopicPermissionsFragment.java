@@ -181,7 +181,7 @@ public class TopicPermissionsFragment extends Fragment {
 
     void notifyDataSetChanged() {
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

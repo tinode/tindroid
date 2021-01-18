@@ -316,7 +316,7 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

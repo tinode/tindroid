@@ -34,6 +34,11 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
     }
 
     public static Spanned toSpanned(final Context context, float fontSize, final Drafty content, final int maxLength) {
+        return toSpanned(new PreviewFormatter(context, fontSize), context, fontSize, content, maxLength);
+    }
+
+    protected static <T extends PreviewFormatter> Spanned toSpanned(T formatter, final Context context, float fontSize,
+                                                                    final Drafty content, final int maxLength) {
         if (content == null) {
             return new SpannedString("");
         }
@@ -45,7 +50,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
             return new SpannedString(text);
         }
 
-        AbstractDraftyFormatter.TreeNode result = content.format(new PreviewFormatter(context, fontSize));
+        AbstractDraftyFormatter.TreeNode result = content.format(formatter);
         if (result instanceof MeasuredTreeNode) {
             try {
                 return ((MeasuredTreeNode) result).toSpanned(maxLength);
@@ -219,53 +224,6 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
             return spanned;
         }
-/*
-        @Override
-        public String toString() {
-            StringBuilder result = new StringBuilder("{");
-            if (text != null) {
-                if (text.equals("\n")) {
-                    result.append("txt='BR'");
-                } else {
-                    result.append("txt='").append(text.toString()).append("'");
-                }
-            } else if (children != null) {
-                if (children.size() == 0) {
-                    result.append("ERROR:EMPTY");
-                } else if (children.size() == 1) {
-                    result.append("*").append(children.get(0).toString());
-                } else {
-                    result.append("[");
-                    for (TreeNode child : children) {
-                        if (child != null) {
-                            result.append(child.toString());
-                            result.append(",");
-                        } else {
-                            result.append("ERROR:NULL,");
-                        }
-                    }
-                    // Remove dangling comma.
-                    result.setLength(result.length() - 1);
-                    result.append("]");
-                }
-            } else {
-                result.append("ERROR:NULL");
-            }
-            result.append(styleName());
-            result.append("}");
-            return result.toString();
-        }
-
-        private String styleName() {
-            if (pStyle != null) {
-                return ", stl=" + pStyle.getClass().getSimpleName();
-            }
-            if (cStyle != null) {
-                return ", stl=" + cStyle.getClass().getSimpleName();
-            }
-            return "";
-        }
-        */
     }
 
     static class LengthExceededException extends RuntimeException {

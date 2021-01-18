@@ -28,7 +28,7 @@ import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.media.PreviewFormatter;
+import co.tinode.tindroid.media.FontFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -184,14 +184,17 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 // Try to retrieve rich message content.
                 String json = data.get("rc");
                 if (!TextUtils.isEmpty(json)) {
+                    Log.i(TAG, "parsing json: " +json);
                     try {
-                        Drafty draftyBody = Tinode.jsonDeserialize(Drafty.class.getCanonicalName(), json);
+                        Drafty draftyBody = Tinode.jsonDeserialize(json, Drafty.class.getCanonicalName());
                         if (draftyBody != null) {
                             int[] attrs = {android.R.attr.textSize};
                             TypedArray ta = obtainStyledAttributes(androidx.appcompat.R.style.TextAppearance_Compat_Notification, attrs);
-                            float fontSize = ta.getFloat(0, 14f);
+                            float fontSize = ta.getDimension(0, 14f);
                             ta.recycle();
-                            body = PreviewFormatter.toSpanned(this, fontSize, draftyBody, MAX_MESAGE_LENGTH);
+                            body = FontFormatter.toSpanned(this, fontSize, draftyBody, MAX_MESAGE_LENGTH);
+                        } else {
+                            Log.i(TAG, "parsed json is NULL");
                         }
                     } catch (ClassCastException ex) {
                         Log.w(TAG, "Failed to de-serialize payload", ex);

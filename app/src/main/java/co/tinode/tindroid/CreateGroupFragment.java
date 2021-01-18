@@ -238,7 +238,7 @@ public class CreateGroupFragment extends Fragment {
     // necessary content Uri from mSearchTerm.
     private void restartLoader() {
         final StartChatActivity activity = (StartChatActivity) getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
 

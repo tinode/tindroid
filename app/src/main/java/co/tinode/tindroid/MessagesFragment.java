@@ -751,7 +751,7 @@ public class MessagesFragment extends Fragment {
 
     private void sendText() {
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
         final EditText inputField = activity.findViewById(R.id.editMessage);

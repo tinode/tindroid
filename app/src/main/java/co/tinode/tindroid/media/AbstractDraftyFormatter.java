@@ -1,7 +1,6 @@
 package co.tinode.tindroid.media;
 
 import android.content.Context;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;

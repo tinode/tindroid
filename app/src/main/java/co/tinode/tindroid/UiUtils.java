@@ -598,7 +598,7 @@ public class UiUtils {
      */
     static ImageLoader getImageLoaderInstance(final Fragment parent) {
         FragmentActivity activity = parent.getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return null;
         }
 

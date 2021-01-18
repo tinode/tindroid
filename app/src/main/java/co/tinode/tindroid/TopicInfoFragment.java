@@ -299,7 +299,7 @@ public class TopicInfoFragment extends Fragment {
     // Dialog for editing pub.fn and priv
     private void showEditTopicText() {
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -500,7 +500,7 @@ public class TopicInfoFragment extends Fragment {
 
     void notifyDataSetChanged() {
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

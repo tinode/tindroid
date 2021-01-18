@@ -292,7 +292,6 @@ public class Drafty implements Serializable {
                 ExtractedEnt ee = new ExtractedEnt();
                 ee.at = matcher.start(0);
                 ee.value = matcher.group(0);
-                //noinspection ConstantConditions
                 ee.len = ee.value.length();
                 ee.tp = ENTITY_NAME[i];
                 ee.data = ENTITY_PROC[i].pack(matcher);
@@ -945,6 +944,11 @@ public class Drafty implements Serializable {
                 }
             }
 
+            // Check if there are any styles in the preview fragment.
+            if (fmt_count == 0) {
+                return preview;
+            }
+
             // Allocate space for copying styles and entities.
             preview.fmt = new Style[fmt_count];
             if (ent != null && !ent_refs.isEmpty()) {
@@ -961,7 +965,7 @@ public class Drafty implements Serializable {
                         style.tp = st.tp;
                     } else if (ent != null && ent.length > key && ent_refs.containsKey(key)) {
                         style.key = ent_refs.get(key);
-                        //noinspection ConstantConditions: ent_refs.containsKey(key) is checked above.
+                        // ent_refs.containsKey(key) is checked above.
                         preview.ent[style.key] = ent[key].copyLight();
                     } else {
                         continue;
