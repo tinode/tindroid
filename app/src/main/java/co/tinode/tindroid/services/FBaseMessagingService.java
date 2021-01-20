@@ -357,7 +357,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 .setVisibility(unwrapInteger(remote.getVisibility(), NotificationCompat.VISIBILITY_PRIVATE))
                 .setSmallIcon(resourceId(res, remote.getIcon(), R.drawable.ic_logo_push, "drawable", packageName))
                 .setColor(unwrapColor(remote.getColor(), ContextCompat.getColor(this, R.color.colorNotificationBackground)))
-                .setContentTitle(locText(res, remote.getTitleLocalizationKey(), remote.getBodyLocalizationArgs(),
+                .setContentTitle(locText(res, remote.getTitleLocalizationKey(), remote.getTitleLocalizationArgs(),
                         remote.getTitle(), packageName))
                 .setContentText(locText(res, remote.getBodyLocalizationKey(), remote.getBodyLocalizationArgs(),
                         remote.getBody(), packageName))
