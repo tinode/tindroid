@@ -88,7 +88,7 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     }
 
     public int getStatus() {
-        return status.value;
+        return status != null ? status.value : BaseDb.Status.UNDEFINED.value;
     }
 
     @Override
