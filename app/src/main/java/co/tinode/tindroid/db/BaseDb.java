@@ -66,8 +66,9 @@ public class BaseDb extends SQLiteOpenHelper {
 
         public static Status fromInt(int i) {
             Status type = intToTypeMap.get(i);
-            if (type == null)
+            if (type == null) {
                 return Status.UNDEFINED;
+            }
             return type;
         }
     }

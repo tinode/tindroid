@@ -115,7 +115,8 @@ public class MessagesFragment extends Fragment {
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override
             public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
-                // This is a hack for IndexOutOfBoundsException: Inconsistency detected. Invalid view holder adapter positionViewHolder
+                // This is a hack for IndexOutOfBoundsException:
+                //  Inconsistency detected. Invalid view holder adapter positionViewHolder
                 // It happens when two uploads are started at the same time.
                 // See discussion here:
                 // https://stackoverflow.com/questions/31759171/recyclerview-and-java-lang-indexoutofboundsexception-inconsistency-detected-in

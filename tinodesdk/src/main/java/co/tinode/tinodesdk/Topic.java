@@ -919,6 +919,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return leave(false);
     }
 
+    // Handle server response to publish().
     private void processDelivery(final MsgServerCtrl ctrl, final long id) {
         if (ctrl != null) {
             int seq = ctrl.getIntParam("seq", 0);
@@ -932,6 +933,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 } else {
                     setRecv(seq);
                 }
+
                 // FIXME: this causes READ notification not to be sent.
                 setRead(seq);
                 if (mStore != null) {

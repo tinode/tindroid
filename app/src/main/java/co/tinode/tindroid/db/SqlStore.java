@@ -261,7 +261,7 @@ public class SqlStore implements Storage {
         final StoredMessage msg = new StoredMessage(m);
         msg.topicId = topicId;
         msg.userId = userId;
-
+        msg.status = BaseDb.Status.SYNCED;
         try {
             db.beginTransaction();
 
