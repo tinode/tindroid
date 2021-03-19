@@ -322,9 +322,14 @@ public class TindroidApp extends Application implements LifecycleObserver {
                         // Do not invalidate token on network failure.
                     } catch (ServerResponseException ex) {
                         Log.w(TAG, "Server rejected login sequence", ex);
-                        // Login failed due to invalid (expired) token or missing/disabled account.
-                        accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
-                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                        // Another try-catch because some users revoke needed permission after granting it.
+                        try {
+                            // Login failed due to invalid (expired) token or missing/disabled account.
+                            accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
+                            accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                        } catch (SecurityException ex2) {
+                            Log.e(TAG, "Unable to access android account", ex2);
+                        }
                         // Force new login.
                         UiUtils.doLogout(TindroidApp.this);
                         // 409 Already authenticated should not be possible here.
@@ -333,10 +338,14 @@ public class TindroidApp extends Application implements LifecycleObserver {
                     }
                 } else {
                     Log.i(TAG, "No token or expired token. Forcing re-login");
-                    if (!TextUtils.isEmpty(token)) {
-                        accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, token);
+                    try {
+                        if (!TextUtils.isEmpty(token)) {
+                            accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
+                        }
+                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                    } catch (SecurityException ex) {
+                        Log.e(TAG, "Unable to access android account", ex);
                     }
-                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
                     // Force new login.
                     UiUtils.doLogout(TindroidApp.this);
                 }

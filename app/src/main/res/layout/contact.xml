@@ -122,12 +122,12 @@
 
             <ImageView
                 android:id="@+id/messageStatus"
-                android:layout_width="14sp"
-                android:layout_height="14dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:layout_gravity="center_vertical"
                 android:alpha="0.8"
                 android:paddingEnd="2dp"
-                android:paddingTop="4dp"
+                android:paddingTop="2dp"
                 app:tint="?android:textColorSecondary"
                 tools:ignore="ContentDescription,RtlSymmetry,SmallSp"
                 tools:src="@drawable/ic_done_all" />
