@@ -9,7 +9,7 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     signingConfigs {
         release {
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "co.tinode.tindroidx"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         vectorDrawables.useSupportLibrary = true
 
         // If you are getting errors due to git not being set up comment out lines gitVersion*()
