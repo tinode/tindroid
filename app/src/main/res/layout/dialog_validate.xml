@@ -11,14 +11,14 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_margin="@dimen/activity_default_margin"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:hint="@string/validation_example">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/response"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:hint="@string/validation_example"
             android:inputType="text"/>
     </com.google.android.material.textfield.TextInputLayout>
 </LinearLayout>

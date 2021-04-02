@@ -11,13 +11,13 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/editTitleWrapper"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:hint="@string/full_name">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/full_name"
             android:inputType="text"
             tools:text="Bambarbia Kirgudu"/>
 

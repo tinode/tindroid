@@ -34,14 +34,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/appTitle"
+        android:hint="@string/login_hint"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp">
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/editLogin"
-            android:inputType="text"
-            android:hint="@string/login_hint" />
+            android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -51,13 +51,13 @@
         android:layout_below="@+id/editLoginWrapper"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
+        android:hint="@string/password_hint"
         app:passwordToggleEnabled="true">
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
-            android:id="@+id/editPassword"
-            android:hint="@string/password_hint"/>
+            android:id="@+id/editPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatButton

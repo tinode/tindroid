@@ -44,13 +44,13 @@
             android:id="@+id/editTitleWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:hint="@string/topic_title"
             android:layout_marginTop="6dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/topic_title"
                 android:inputType="text"
                 tools:text="Topic title"/>
 
@@ -58,13 +58,13 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:hint="@string/topic_private">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editPrivate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/topic_private"
                 android:inputType="text"
                 tools:text="Private topic info"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -76,13 +76,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/topSettings"
+        android:hint="@string/topic_tags"
         android:layout_marginTop="6dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editTags"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/topic_tags"
             android:inputType="textNoSuggestions"
             tools:text="ttag1, ttag2, ttag3"/>
     </com.google.android.material.textfield.TextInputLayout>
