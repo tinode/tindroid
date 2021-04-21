@@ -58,14 +58,14 @@
                     <ImageView
                         android:id="@+id/messageViewedIcon"
                         android:layout_width="18sp"
-                        android:layout_height="11sp"
+                        android:layout_height="12sp"
                         android:layout_gravity="center_vertical"
                         android:paddingEnd="3dp"
                         android:paddingStart="5dp"
                         app:tint="?android:textColorSecondary"
                         android:alpha="0.8"
                         tools:ignore="ContentDescription,SmallSp"
-                        tools:src="@drawable/ic_visibility" />
+                        tools:src="@drawable/ic_done_all" />
 
                 </LinearLayout>
 
