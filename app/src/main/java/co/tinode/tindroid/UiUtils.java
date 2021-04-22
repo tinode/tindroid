@@ -11,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -752,12 +751,10 @@ public class UiUtils {
         if (status <= BaseDb.Status.SENDING.value) {
             holder.setImageResource(R.drawable.ic_schedule);
         } else if (status == BaseDb.Status.FAILED.value) {
-            holder.setImageTintList(ColorStateList.valueOf(0xFFFFA000));
             holder.setImageResource(R.drawable.ic_warning);
         } else {
             if (read > 0) {
-                holder.setImageTintList(ColorStateList.valueOf(0xFF009688));
-                holder.setImageResource(R.drawable.ic_done_all);
+                holder.setImageResource(R.drawable.ic_done_all2);
             } else if (recv > 0) {
                 holder.setImageResource(R.drawable.ic_done_all);
             } else {

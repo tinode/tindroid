@@ -57,11 +57,11 @@
 
                     <ImageView
                         android:id="@+id/messageViewedIcon"
-                        android:layout_width="18sp"
-                        android:layout_height="12sp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:layout_gravity="center_vertical"
-                        android:paddingEnd="3dp"
-                        android:paddingStart="5dp"
+                        android:paddingEnd="2dp"
+                        android:paddingStart="2dp"
                         app:tint="?android:textColorSecondary"
                         android:alpha="0.8"
                         tools:ignore="ContentDescription,SmallSp"

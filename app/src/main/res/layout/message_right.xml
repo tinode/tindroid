@@ -56,12 +56,12 @@
 
                 <ImageView
                     android:id="@+id/messageViewedIcon"
-                    android:layout_width="18sp"
-                    android:layout_height="12sp"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
                     android:layout_gravity="center_vertical"
                     android:alpha="0.8"
-                    android:paddingStart="5sp"
-                    android:paddingEnd="3sp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
                     app:tint="?android:textColorSecondary"
                     tools:ignore="ContentDescription,SmallSp"
                     tools:src="@drawable/ic_done_all" />
