@@ -387,37 +387,42 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
         result.addNode(new StyledTreeNode(new TypefaceSpan("monospace"), fname));
 
-        // Add download link.
-        if (mClicker != null) {
-            boolean valid = (data.get("ref") instanceof String);
-
-            // Insert linebreak then a clickable [↓ save] or [(!) unavailable] line.
-            result.addNode(new StyledTreeNode("\n"));
-            StyledTreeNode saveLink = new StyledTreeNode();
-            // Add 'download file' icon
-            icon = AppCompatResources.getDrawable(ctx, valid ?
-                    R.drawable.ic_download_link : R.drawable.ic_error_gray);
-            DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-            icon.setBounds(0, 0,
-                    (int) (ICON_SIZE_DP * metrics.density),
-                    (int) (ICON_SIZE_DP * metrics.density));
-            saveLink.addNode(new StyledTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " "));
-            if (valid) {
-                // Clickable "save".
-                saveLink.addNode(new StyledTreeNode(new ClickableSpan() {
-                    @Override
-                    public void onClick(@NonNull View widget) {
-                        mClicker.onClick("EX", data);
-                    }
-                }, ctx.getResources().getString(R.string.download_attachment)));
-            } else {
-                // Grayed-out "unavailable".
-                saveLink.addNode(new StyledTreeNode(new ForegroundColorSpan(Color.GRAY),
-                        " " + ctx.getResources().getString(R.string.unavailable)));
-            }
-            // Add space on the left to make the link appear under the file name.
-            result.addNode(new StyledTreeNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink));
+        if (mClicker == null) {
+            return result;
         }
+
+        // Add download link.
+
+        // Do we have attachment bits out-of-band or in-band?
+        boolean valid = (data.get("ref") instanceof String) || (data.get("val") != null);
+
+        // Insert linebreak then a clickable [↓ save] or [(!) unavailable] line.
+        result.addNode(new StyledTreeNode("\n"));
+        StyledTreeNode saveLink = new StyledTreeNode();
+        // Add 'download file' icon
+        icon = AppCompatResources.getDrawable(ctx, valid ?
+                R.drawable.ic_download_link : R.drawable.ic_error_gray);
+        DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+        icon.setBounds(0, 0,
+                (int) (ICON_SIZE_DP * metrics.density),
+                (int) (ICON_SIZE_DP * metrics.density));
+        saveLink.addNode(new StyledTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " "));
+        if (valid) {
+            // Clickable "save".
+            saveLink.addNode(new StyledTreeNode(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    mClicker.onClick("EX", data);
+                }
+            }, ctx.getResources().getString(R.string.download_attachment)));
+        } else {
+            // Grayed-out "unavailable".
+            saveLink.addNode(new StyledTreeNode(new ForegroundColorSpan(Color.GRAY),
+                    " " + ctx.getResources().getString(R.string.unavailable)));
+        }
+        // Add space on the left to make the link appear under the file name.
+        result.addNode(new StyledTreeNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink));
+
         return result;
     }
 
