@@ -116,7 +116,10 @@ public class UiUtils {
 
     private static final String TAG = "UiUtils";
     private static final int AVATAR_SIZE = 128;
-    private static final int MIN_TAG_LENGTH = 4;
+    // Default tag parameters
+    private static final int DEFAULT_MIN_TAG_LENGTH = 4;
+    private static final int DEFAULT_MAX_TAG_LENGTH = 96;
+    private static final int DEFAULT_MAX_TAG_COUNT = 16;
 
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
     private static final int COLOR_RED_BORDER = 0xFFE57373;
@@ -1054,7 +1057,11 @@ public class UiUtils {
 
         ArrayList<String> tags = new ArrayList<>();
         int start = 0;
-        final long maxTagCount = Cache.getTinode().getServerLimit(Tinode.MAX_TAG_COUNT, 16);
+        final Tinode tinode = Cache.getTinode();
+        final long maxTagCount = tinode.getServerLimit(Tinode.MAX_TAG_COUNT, DEFAULT_MAX_TAG_COUNT);
+        final long maxTagLength = tinode.getServerLimit(Tinode.MAX_TAG_LENGTH, DEFAULT_MAX_TAG_LENGTH);
+        final long minTagLength = tinode.getServerLimit(Tinode.MIN_TAG_LENGTH, DEFAULT_MIN_TAG_LENGTH);
+
         final int length = tagList.length();
         boolean quoted = false;
         for (int idx = 0; idx < length && tags.size() < maxTagCount; idx++) {
@@ -1079,7 +1086,7 @@ public class UiUtils {
             if (tag.length() > 1 && tag.charAt(0) == '\"' && tag.charAt(tag.length() - 1) == '\"') {
                 tag = tag.substring(1, tag.length() - 1).trim();
             }
-            if (tag.length() >= MIN_TAG_LENGTH) {
+            if (tag.length() >= minTagLength && tag.length() <= maxTagLength) {
                 tags.add(tag);
             }
         }

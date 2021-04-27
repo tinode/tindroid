@@ -83,6 +83,8 @@ public class Tinode {
     // Names of server-provided limits.
     public static final String MAX_MESSAGE_SIZE = "maxMessageSize";
     public static final String MAX_SUBSCRIBER_COUNT = "maxSubscriberCount";
+    public static final String MAX_TAG_LENGTH = "maxTagLength";
+    public static final String MIN_TAG_LENGTH = "minTagLength";
     public static final String MAX_TAG_COUNT = "maxTagCount";
     public static final String MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
     // Value interpreted as 'content deleted'.
