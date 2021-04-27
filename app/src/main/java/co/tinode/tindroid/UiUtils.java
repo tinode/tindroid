@@ -758,7 +758,6 @@ public class UiUtils {
             } else if (recv > 0) {
                 holder.setImageResource(R.drawable.ic_done_all);
             } else {
-                Log.i(TAG, "Message sent");
                 holder.setImageResource(R.drawable.ic_done);
             }
         }
