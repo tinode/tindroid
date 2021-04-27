@@ -62,7 +62,6 @@
                     android:alpha="0.8"
                     android:paddingStart="2dp"
                     android:paddingEnd="2dp"
-                    app:tint="?android:textColorSecondary"
                     tools:ignore="ContentDescription,SmallSp"
                     tools:src="@drawable/ic_done_all" />
 

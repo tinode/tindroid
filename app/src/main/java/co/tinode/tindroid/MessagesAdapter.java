@@ -510,7 +510,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (holder.mDeliveredIcon != null) {
-            holder.mDeliveredIcon.setImageResource(android.R.color.transparent);
             if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
                 UiUtils.setMessageStatusIcon(holder.mDeliveredIcon, m.status.value,
                         topic.msgReadCount(m.seq), topic.msgRecvCount(m.seq));

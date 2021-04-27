@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <!-- Needed for saving attachments -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
@@ -38,8 +38,8 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:allowBackup="false"
-        tools:ignore="AllowBackup"
         android:requestLegacyExternalStorage="true"
+        tools:ignore="AllowBackup"
         tools:targetApi="q">
 
         <meta-data

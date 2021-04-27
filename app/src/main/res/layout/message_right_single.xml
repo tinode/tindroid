@@ -62,7 +62,6 @@
                         android:layout_gravity="center_vertical"
                         android:paddingEnd="2dp"
                         android:paddingStart="2dp"
-                        app:tint="?android:textColorSecondary"
                         android:alpha="0.8"
                         tools:ignore="ContentDescription,SmallSp"
                         tools:src="@drawable/ic_done_all" />
