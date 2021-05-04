@@ -501,7 +501,7 @@ public class AttachmentHandler extends Worker {
                                 (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM ||
                                         bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM)) {
                             previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
-                                            UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM), "image/jpeg");
+                                    UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM), "image/jpeg");
                         }
                         store.msgDraftUpdate(topic, msgId,
                                 draftyImage(args.getString(ARG_IMAGE_CAPTION),

@@ -44,7 +44,7 @@ class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
             for (AbstractDraftyFormatter.TreeNode child : getChildren()) {
                 if (child == null) {
                     Log.w(TAG, "NULL child. Should not happen!!!");
-                } else if (child instanceof StyledTreeNode){
+                } else if (child instanceof StyledTreeNode) {
                     spanned.append(((StyledTreeNode) child).toSpanned());
                 } else {
                     Log.w(TAG, "Wrong child class: " + child.getClass().getSimpleName());

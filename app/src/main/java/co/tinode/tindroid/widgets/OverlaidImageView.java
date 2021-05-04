@@ -15,8 +15,8 @@ import co.tinode.tindroid.R;
  */
 public class OverlaidImageView extends AppCompatImageView {
     private final Paint mBackgroundPaint;
-    private boolean mShowOverlay = false;
     private final Path mClipPath;
+    private boolean mShowOverlay = false;
 
     public OverlaidImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -31,6 +31,7 @@ public class OverlaidImageView extends AppCompatImageView {
 
     /**
      * Show or hide circular image overlay.
+     *
      * @param on true to show, false to hide
      */
     public void enableOverlay(boolean on) {

@@ -245,7 +245,7 @@ public class PromisedReply<T> {
         return mState == State.REJECTED;
     }
 
-    @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "WeakerAccess"})
+    @SuppressWarnings({"WeakerAccess"})
     public boolean isDone() {
         return mState == State.RESOLVED || mState == State.REJECTED;
     }

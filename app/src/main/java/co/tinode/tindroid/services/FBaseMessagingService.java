@@ -67,6 +67,43 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         return new RoundImageDrawable(res, scaled).getRoundedBitmap();
     }
 
+    private static int unwrapInteger(Integer value, int defaultValue) {
+        return value != null ? value : defaultValue;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static int resourceId(Resources res, String name, int defaultId, String resourceType, String packageName) {
+        int id = res.getIdentifier(name, resourceType, packageName);
+        return id != 0 ? id : defaultId;
+    }
+
+    private static int unwrapColor(String strColor, int defaultColor) {
+        int color = defaultColor;
+        if (strColor != null) {
+            try {
+                color = Color.parseColor(strColor);
+            } catch (IllegalAccessError ignored) {
+            }
+        }
+        return color;
+    }
+
+    // Localized text from resource name.
+    private static String locText(Resources res, String locKey, String[] locArgs, String defaultText, String packageName) {
+        String result = defaultText;
+        if (locKey != null) {
+            int id = res.getIdentifier(locKey, "string", packageName);
+            if (id != 0) {
+                if (locArgs != null) {
+                    result = res.getString(id, locArgs);
+                } else {
+                    result = res.getString(id);
+                }
+            }
+        }
+        return result;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -184,7 +221,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 // Try to retrieve rich message content.
                 String json = data.get("rc");
                 if (!TextUtils.isEmpty(json)) {
-                    Log.i(TAG, "parsing json: " +json);
+                    Log.i(TAG, "parsing json: " + json);
                     try {
                         Drafty draftyBody = Tinode.jsonDeserialize(json, Drafty.class.getCanonicalName());
                         if (draftyBody != null) {
@@ -319,8 +356,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     /**
      * Create and show a simple notification containing the received FCM message.
      *
-     * @param title message title.
-     * @param body  message body.
+     * @param title  message title.
+     * @param body   message body.
      * @param avatar sender's avatar.
      */
     private NotificationCompat.Builder composeNotification(String title, CharSequence body, Bitmap avatar) {
@@ -364,41 +401,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 .setAutoCancel(true)
                 // TODO: use remote.getSound() instead of default.
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-    }
-
-    private static int unwrapInteger(Integer value, int defaultValue) {
-        return value != null ? value : defaultValue;
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private static int resourceId(Resources res, String name, int defaultId, String resourceType, String packageName) {
-        int id = res.getIdentifier(name, resourceType, packageName);
-        return id != 0 ? id : defaultId;
-    }
-
-    private static int unwrapColor(String strColor, int defaultColor) {
-        int color = defaultColor;
-        if (strColor != null) {
-            try {
-                color = Color.parseColor(strColor);
-            } catch (IllegalAccessError ignored) {}
-        }
-        return color;
-    }
-    // Localized text from resource name.
-    private static String locText(Resources res, String locKey, String[] locArgs, String defaultText, String packageName) {
-        String result = defaultText;
-        if (locKey != null) {
-            int id = res.getIdentifier(locKey, "string", packageName);
-            if (id != 0) {
-                if (locArgs != null) {
-                    result = res.getString(id, (Object[]) locArgs);
-                } else {
-                    result = res.getString(id);
-                }
-            }
-        }
-        return result;
     }
 
     @Override

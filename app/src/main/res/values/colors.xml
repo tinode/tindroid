@@ -38,6 +38,9 @@
 
     <color name="colorBorderGray">#9E9E9E</color>
 
+    <color name="circularProgressBg">#FFFAFAFA</color>
+    <color name="circularProgressFg">#FF212121</color>
+
     <!-- Background of message bubbles-->
     <color name="colorMessageBubbleMine">#FFFAFAFA</color>
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>

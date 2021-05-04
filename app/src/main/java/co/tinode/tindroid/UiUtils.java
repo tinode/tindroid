@@ -475,8 +475,8 @@ public class UiUtils {
     /**
      * Scale bitmap down to be under certain liner dimensions but no less than by the given amount.
      *
-     * @param bmp     bitmap to scale.
-     * @param maxWidth maximum allowed bitmap width.
+     * @param bmp       bitmap to scale.
+     * @param maxWidth  maximum allowed bitmap width.
      * @param maxHeight maximum allowed bitmap height.
      * @return scaled bitmap or original, it it does not need ot be scaled.
      */
@@ -700,7 +700,8 @@ public class UiUtils {
         byte[] bits = bos.toByteArray();
         try {
             bos.close();
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
         return bits;
     }
@@ -765,6 +766,7 @@ public class UiUtils {
             }
         }
     }
+
     /**
      * Identifies the start of the search string (needle) in the display name (haystack).
      * E.g. If display name was "Adam" and search query was "da" this would

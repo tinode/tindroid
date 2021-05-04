@@ -30,7 +30,35 @@ class ContactOperations {
     private long mRawContactId;
     private int mBackReference;
     private boolean mIsNewContact;
-    private boolean mIsSyncContext;
+    private final boolean mIsSyncContext;
+
+    private ContactOperations(Context context, BatchOperation batchOperation, boolean isSyncContext) {
+        mValues = new ContentValues();
+        mContext = context;
+        mBatchOperation = batchOperation;
+        mIsSyncContext = isSyncContext;
+    }
+
+    // Create new RAW_CONTACT record.
+    private ContactOperations(Context context, String uid, String accountName,
+                              BatchOperation batchOperation, boolean isSyncContext) {
+        this(context, batchOperation, isSyncContext);
+
+        mBackReference = mBatchOperation.size();
+        mIsNewContact = true;
+        mValues.put(RawContacts.SOURCE_ID, uid);
+        mValues.put(RawContacts.ACCOUNT_TYPE, Utils.ACCOUNT_TYPE);
+        mValues.put(RawContacts.ACCOUNT_NAME, accountName);
+
+        mBatchOperation.add(newInsertCpo(RawContacts.CONTENT_URI, mIsSyncContext).withValues(mValues).build());
+    }
+
+    private ContactOperations(Context context, long rawContactId, BatchOperation batchOperation,
+                              boolean isSyncContext) {
+        this(context, batchOperation, isSyncContext);
+        mIsNewContact = false;
+        mRawContactId = rawContactId;
+    }
 
     /**
      * Returns an instance of ContactOperations instance for adding new contact
@@ -64,32 +92,28 @@ class ContactOperations {
         return new ContactOperations(context, rawContactId, batchOperation, isSyncContext);
     }
 
-    private ContactOperations(Context context, BatchOperation batchOperation, boolean isSyncContext) {
-        mValues = new ContentValues();
-        mContext = context;
-        mBatchOperation = batchOperation;
-        mIsSyncContext = isSyncContext;
+    private static ContentProviderOperation.Builder newInsertCpo(Uri uri, boolean isSyncContext) {
+        return ContentProviderOperation
+                .newInsert(addCallerIsSyncAdapterParameter(uri, isSyncContext))
+                .withYieldAllowed(false);
     }
 
-    // Create new RAW_CONTACT record.
-    private ContactOperations(Context context, String uid, String accountName,
-                             BatchOperation batchOperation, boolean isSyncContext) {
-        this(context, batchOperation, isSyncContext);
-
-        mBackReference = mBatchOperation.size();
-        mIsNewContact = true;
-        mValues.put(RawContacts.SOURCE_ID, uid);
-        mValues.put(RawContacts.ACCOUNT_TYPE, Utils.ACCOUNT_TYPE);
-        mValues.put(RawContacts.ACCOUNT_NAME, accountName);
-
-        mBatchOperation.add(newInsertCpo(RawContacts.CONTENT_URI, mIsSyncContext).withValues(mValues).build());
+    private static ContentProviderOperation.Builder newUpdateCpo(Uri uri, boolean isSyncContext) {
+        return ContentProviderOperation
+                .newUpdate(addCallerIsSyncAdapterParameter(uri, isSyncContext))
+                .withYieldAllowed(false);
     }
 
-    private ContactOperations(Context context, long rawContactId, BatchOperation batchOperation,
-                              boolean isSyncContext) {
-        this(context, batchOperation, isSyncContext);
-        mIsNewContact = false;
-        mRawContactId = rawContactId;
+    static ContentProviderOperation.Builder newDeleteCpo(Uri uri, boolean isSyncContext) {
+        return ContentProviderOperation
+                .newDelete(addCallerIsSyncAdapterParameter(uri, isSyncContext))
+                .withYieldAllowed(false);
+    }
+
+    private static Uri addCallerIsSyncAdapterParameter(Uri uri, boolean isSyncContext) {
+        return uri.buildUpon()
+                .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, String.valueOf(isSyncContext))
+                .build();
     }
 
     /**
@@ -215,7 +239,6 @@ class ContactOperations {
         return this;
     }
 
-
     /**
      * Updates contact's email
      *
@@ -246,12 +269,12 @@ class ContactOperations {
      * @return instance of ContactOperations
      */
     ContactOperations updateName(Uri uri,
-                                        String existingFirstName,
-                                        String existingLastName,
-                                        String existingFullName,
-                                        String firstName,
-                                        String lastName,
-                                        String fullName) {
+                                 String existingFirstName,
+                                 String existingLastName,
+                                 String existingFullName,
+                                 String firstName,
+                                 String lastName,
+                                 String fullName) {
         mValues.clear();
         if (TextUtils.isEmpty(fullName)) {
             if (!TextUtils.equals(existingFirstName, firstName)) {
@@ -318,29 +341,5 @@ class ContactOperations {
      */
     private void addUpdateOp(Uri uri) {
         mBatchOperation.add(newUpdateCpo(uri, mIsSyncContext).withValues(mValues).build());
-    }
-
-    private static ContentProviderOperation.Builder newInsertCpo(Uri uri, boolean isSyncContext) {
-        return ContentProviderOperation
-                .newInsert(addCallerIsSyncAdapterParameter(uri, isSyncContext))
-                .withYieldAllowed(false);
-    }
-
-    private static ContentProviderOperation.Builder newUpdateCpo(Uri uri, boolean isSyncContext) {
-        return ContentProviderOperation
-                .newUpdate(addCallerIsSyncAdapterParameter(uri, isSyncContext))
-                .withYieldAllowed(false);
-    }
-
-    static ContentProviderOperation.Builder newDeleteCpo(Uri uri, boolean isSyncContext) {
-        return ContentProviderOperation
-                .newDelete(addCallerIsSyncAdapterParameter(uri, isSyncContext))
-                .withYieldAllowed(false);
-    }
-
-    private static Uri addCallerIsSyncAdapterParameter(Uri uri, boolean isSyncContext) {
-        return uri.buildUpon()
-                .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, String.valueOf(isSyncContext))
-                .build();
     }
 }

@@ -67,10 +67,8 @@ import static android.app.Activity.RESULT_OK;
  * Fragment handling message display and message sending.
  */
 public class MessagesFragment extends Fragment {
-    private static final String TAG = "MessageFragment";
-
     static final String MESSAGE_TO_SEND = "messageText";
-
+    private static final String TAG = "MessageFragment";
     private static final int MESSAGES_TO_LOAD = 24;
 
     private static final int ACTION_ATTACH_FILE = 100;

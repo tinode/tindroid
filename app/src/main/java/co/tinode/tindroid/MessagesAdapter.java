@@ -6,7 +6,6 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -838,7 +837,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         if (args == null && (val = data.get("val")) != null) {
                             byte[] bytes = val instanceof String ?
                                     Base64.decode((String) val, Base64.DEFAULT) :
-                                        val instanceof byte[] ? (byte[]) val : null;
+                                    val instanceof byte[] ? (byte[]) val : null;
                             if (bytes != null) {
                                 args = new Bundle();
                                 args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);

@@ -46,14 +46,14 @@ public class ContactsManager {
      * sync request.
      */
     public static synchronized Date updateContacts(Context context, Account account,
-                                            Collection<Subscription<VxCard,?>> subscriptions,
-                                            Date lastSyncMarker,
-                                            // It's a false positive.
-                                            @SuppressWarnings("SameParameterValue") boolean isSyncContext) {
+                                                   Collection<Subscription<VxCard, ?>> subscriptions,
+                                                   Date lastSyncMarker,
+                                                   // It's a false positive.
+                                                   @SuppressWarnings("SameParameterValue") boolean isSyncContext) {
         Date currentSyncMarker = lastSyncMarker;
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
-        for (Subscription<VxCard,?> sub : subscriptions) {
+        for (Subscription<VxCard, ?> sub : subscriptions) {
             // The server returns a timestamp with each record. On the next sync we can just
             // ask for changes that have occurred since that most-recent change.
             if (currentSyncMarker == null || (sub.updated != null && sub.updated.after(currentSyncMarker))) {
@@ -86,7 +86,7 @@ public class ContactsManager {
      * @param topics  The list of contacts to update
      */
     public static synchronized void updateContacts(Context context, Account account,
-                                            Collection<ComTopic<VxCard>> topics) {
+                                                   Collection<ComTopic<VxCard>> topics) {
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
 
@@ -132,7 +132,7 @@ public class ContactsManager {
             batchOperation = new BatchOperation(resolver);
             noBatching = true;
         }
-         // Check if we have this contact in the database.
+        // Check if we have this contact in the database.
         long rawContactId = lookupRawContact(resolver, unique);
         if (deleted) {
             if (rawContactId > 0) {
@@ -192,12 +192,12 @@ public class ContactsManager {
                 .addAvatar(pub.photo != null ? pub.photo.data : null);
 
         if (pub.email != null) {
-            for (VCard.Contact email: pub.email) {
+            for (VCard.Contact email : pub.email) {
                 contactOp.addEmail(email.uri);
             }
         }
         if (pub.tel != null) {
-            for (VCard.Contact phone: pub.tel) {
+            for (VCard.Contact phone : pub.tel) {
                 contactOp.addPhone(phone.uri, vcardTypeToDbType(phone.getType()));
             }
         }
@@ -334,7 +334,7 @@ public class ContactsManager {
      * to the server, and for contacts that were deleted on the server and the
      * deletion was synced to the client.
      *
-     * @param id     the unique Id for this rawContact in contacts provider, locally issued
+     * @param id the unique Id for this rawContact in contacts provider, locally issued
      */
     private static void deleteContact(long id, BatchOperation batchOperation, boolean isSyncContext) {
         batchOperation.add(ContactOperations.newDeleteCpo(
@@ -363,7 +363,7 @@ public class ContactsManager {
      * Returns the RawContact id for a contact, or 0 if the user isn't found.
      *
      * @param resolver the content resolver to use
-     * @param contact the contact value to lookup
+     * @param contact  the contact value to lookup
      * @return the RawContact id, or 0 if not found
      */
     private static long lookupRawContact(final ContentResolver resolver, final String contact) {

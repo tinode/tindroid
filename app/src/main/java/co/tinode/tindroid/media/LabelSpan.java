@@ -14,22 +14,19 @@ public class LabelSpan extends ReplacementSpan {
     // All sizes are in DIPs.
     private static final float RADIUS_CORNER = 1.5f;
     private static final float PADDING_TOP = 2.0f;
-
+    private final float mDipSize;
+    private final float mCharWidth;
+    private final Paint mPaintFrame;
+    private final Paint mPaintBackground;
     // Width of the label with padding added, in DIPs.
     private int mWidth;
     // Actual width of the text in DIPs.
     private int mWidthActual;
 
-    private final float mDipSize;
-    private final float mCharWidth;
-
-    private final Paint mPaintFrame;
-    private final Paint mPaintBackground;
-
     /**
      * Create formatter for text which appears as a label with background and a border.
      *
-     * @param ctx  Context (activity) which uses this formatter.
+     * @param ctx      Context (activity) which uses this formatter.
      * @param fontSize font size in device (unscaled) pixels as returned by view.getTextSize().
      * @param dipSize  size of the DIP unit in unscaled pixels.
      */

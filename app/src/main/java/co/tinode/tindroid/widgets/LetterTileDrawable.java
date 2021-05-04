@@ -49,6 +49,7 @@ public class LetterTileDrawable extends Drawable {
     private int mColor;
     private Character mLetter = null;
     private int mHashCode = 0;
+
     public LetterTileDrawable(final Context context) {
         Resources res = context.getResources();
         if (sColorsLight == null) {

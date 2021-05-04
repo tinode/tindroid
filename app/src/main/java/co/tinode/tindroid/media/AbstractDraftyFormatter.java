@@ -188,6 +188,7 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
         protected CharSequence getText() {
             return text;
         }
+
         protected List<TreeNode> getChildren() {
             return children;
         }

@@ -77,6 +77,118 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     /**
+     * Read address book contacts from the Contacts content provider.
+     * The results are ordered by 'data1' field.
+     *
+     * @param resolver content resolver to use.
+     * @return contacts
+     */
+    private static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver) {
+        SparseArray<ContactHolder> map = new SparseArray<>();
+
+        final String[] projection = {
+                ContactsContract.Data.CONTACT_ID,
+                ContactsContract.Data.MIMETYPE,
+                ContactsContract.CommonDataKinds.Email.DATA,
+                ContactsContract.CommonDataKinds.Email.TYPE
+        };
+
+        // Need to make the list order consistent so the hash does not change too often.
+        final String orderBy = ContactsContract.CommonDataKinds.Email.DATA;
+
+        LinkedList<String> args = new LinkedList<>();
+        args.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+        args.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+
+        StringBuilder sel = new StringBuilder(ContactsContract.Data.MIMETYPE);
+        sel.append(" IN (");
+        for (int i = 0; i < args.size(); i++) {
+            sel.append("?,");
+        }
+        // Strip final comma.
+        sel.setLength(sel.length() - 1);
+        sel.append(")");
+
+        final String selection = sel.toString();
+
+        final String[] selectionArgs = args.toArray(new String[]{});
+
+        // Get contacts from the database.
+        Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI, projection,
+                selection, selectionArgs, orderBy);
+        if (cursor == null) {
+            Log.d(TAG, "Failed to fetch contacts");
+            return map;
+        }
+
+        final int contactIdIdx = cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID);
+        final int mimeTypeIdx = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE);
+        final int dataIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
+
+        while (cursor.moveToNext()) {
+            int contact_id = cursor.getInt(contactIdIdx);
+            String data = cursor.getString(dataIdx);
+            String mimeType = cursor.getString(mimeTypeIdx);
+
+            ContactHolder holder = map.get(contact_id);
+            if (holder == null) {
+                holder = new ContactHolder();
+                map.put(contact_id, holder);
+            }
+
+            switch (mimeType) {
+                case ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE:
+                    // This is an email
+                    if (!TextUtils.isEmpty(data) && Patterns.EMAIL_ADDRESS.matcher(data).matches()) {
+                        holder.putEmail(data);
+                    } else {
+                        Log.i(TAG, "'" + data + "' is not an email");
+                    }
+                    break;
+                case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
+                    // This is a phone number. Syncing phones of all types. The 'mobile' marker is ignored
+                    // because users ignore it these days.
+                    if (!TextUtils.isEmpty(data) && Patterns.PHONE.matcher(data).matches()) {
+                        // Remove all characters other than 0-9 and +, save the result.
+                        holder.putPhone(data.replaceAll("[^0-9+]", ""));
+                    } else {
+                        Log.i(TAG, "'" + data + "' is not a valid phone number");
+                    }
+                    break;
+            }
+        }
+        cursor.close();
+
+        return map;
+    }
+
+    // Generate a hash from a string.
+    private static String hash(String s) {
+        if (s == null || s.equals("")) {
+            return "";
+        }
+
+        try {
+            // Create MD5 Hash
+            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+            digest.update(s.getBytes());
+            byte[] messageDigest = digest.digest();
+
+            // Create a String from the byte array.
+            StringBuilder hexString = new StringBuilder();
+            for (byte x : messageDigest) {
+                hexString.append(Integer.toString(0xFF & x, 32));
+            }
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        return String.valueOf(s.hashCode());
+    }
+
+    /**
      * Called by the Android system in response to a request to run the sync adapter. The work
      * required to read data from the network, parse it, and store it in the content provider is
      * done here. Extending AbstractThreadedSyncAdapter ensures that all methods within SyncAdapter
@@ -121,7 +233,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
         // Load contacts and send them to server as fnd.Private.
         SparseArray<ContactHolder> contactList = fetchContacts(getContext().getContentResolver());
         StringBuilder contactsBuilder = new StringBuilder();
-        for (int i=0; i<contactList.size(); i++) {
+        for (int i = 0; i < contactList.size(); i++) {
             ContactHolder ch = contactList.get(contactList.keyAt(i));
             String contact = ch.toString();
             if (!TextUtils.isEmpty(contact)) {
@@ -226,118 +338,6 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
         if (hash != null && !hash.equals("")) {
             mAccountManager.setUserData(account, ACCKEY_QUERY_HASH, hash);
         }
-    }
-
-    /**
-     * Read address book contacts from the Contacts content provider.
-     * The results are ordered by 'data1' field.
-     *
-     * @param resolver content resolver to use.
-     * @return contacts
-     */
-    private static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver) {
-        SparseArray<ContactHolder> map = new SparseArray<>();
-
-        final String[] projection = {
-                ContactsContract.Data.CONTACT_ID,
-                ContactsContract.Data.MIMETYPE,
-                ContactsContract.CommonDataKinds.Email.DATA,
-                ContactsContract.CommonDataKinds.Email.TYPE
-        };
-
-        // Need to make the list order consistent so the hash does not change too often.
-        final String orderBy = ContactsContract.CommonDataKinds.Email.DATA;
-
-        LinkedList<String> args = new LinkedList<>();
-        args.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-        args.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-
-        StringBuilder sel = new StringBuilder(ContactsContract.Data.MIMETYPE);
-        sel.append(" IN (");
-        for (int i = 0; i < args.size(); i++) {
-            sel.append("?,");
-        }
-        // Strip final comma.
-        sel.setLength(sel.length() - 1);
-        sel.append(")");
-
-        final String selection = sel.toString();
-
-        final String[] selectionArgs = args.toArray(new String[]{});
-
-        // Get contacts from the database.
-        Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI, projection,
-                selection, selectionArgs, orderBy);
-        if (cursor == null) {
-            Log.d(TAG, "Failed to fetch contacts");
-            return map;
-        }
-
-        final int contactIdIdx = cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID);
-        final int mimeTypeIdx = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE);
-        final int dataIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
-
-        while (cursor.moveToNext()) {
-            int contact_id = cursor.getInt(contactIdIdx);
-            String data = cursor.getString(dataIdx);
-            String mimeType = cursor.getString(mimeTypeIdx);
-
-            ContactHolder holder = map.get(contact_id);
-            if (holder == null) {
-                holder = new ContactHolder();
-                map.put(contact_id, holder);
-            }
-
-            switch (mimeType) {
-                case ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE:
-                    // This is an email
-                    if (!TextUtils.isEmpty(data) && Patterns.EMAIL_ADDRESS.matcher(data).matches()) {
-                        holder.putEmail(data);
-                    } else {
-                        Log.i(TAG, "'" + data + "' is not an email");
-                    }
-                    break;
-                case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
-                    // This is a phone number. Syncing phones of all types. The 'mobile' marker is ignored
-                    // because users ignore it these days.
-                    if (!TextUtils.isEmpty(data) && Patterns.PHONE.matcher(data).matches()) {
-                        // Remove all characters other than 0-9 and +, save the result.
-                        holder.putPhone(data.replaceAll("[^0-9+]",""));
-                    } else {
-                        Log.i(TAG, "'" + data + "' is not a valid phone number");
-                    }
-                    break;
-            }
-        }
-        cursor.close();
-
-        return map;
-    }
-
-    // Generate a hash from a string.
-    private static String hash(String s) {
-        if (s == null || s.equals("")) {
-            return "";
-        }
-
-        try {
-            // Create MD5 Hash
-            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
-            digest.update(s.getBytes());
-            byte[] messageDigest = digest.digest();
-
-            // Create a String from the byte array.
-            StringBuilder hexString = new StringBuilder();
-            for (byte x : messageDigest) {
-                hexString.append(Integer.toString(0xFF & x, 32));
-            }
-            return hexString.toString();
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-
-        return String.valueOf(s.hashCode());
     }
 
     private static class ContactHolder {

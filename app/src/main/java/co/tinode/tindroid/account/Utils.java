@@ -25,20 +25,15 @@ import co.tinode.tinodesdk.model.MsgGetMeta;
  * Constants and misc utils
  */
 public class Utils {
-    private static final String TAG = "Utils";
-
     // Account management constants
     public static final String TOKEN_TYPE = "co.tinode.token";
     public static final String TOKEN_EXPIRATION_TIME = "co.tinode.token_expires";
-
     public static final String ACCOUNT_TYPE = "co.tinode.account";
     public static final String SYNC_AUTHORITY = "com.android.contacts";
     public static final String TINODE_IM_PROTOCOL = "Tinode";
-
     // Constants for accessing shared preferences
     public static final String PREFS_HOST_NAME = "pref_hostName";
     public static final String PREFS_USE_TLS = "pref_useTLS";
-
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */
@@ -47,6 +42,7 @@ public class Utils {
     public static final String DATA_PID = Data.DATA1;
     static final String DATA_SUMMARY = Data.DATA2;
     static final String DATA_DETAIL = Data.DATA3;
+    private static final String TAG = "Utils";
 
     public static Account createAccount(String uid) {
         return new Account(uid, ACCOUNT_TYPE);
@@ -100,7 +96,7 @@ public class Utils {
             String token = AccountManager.get(context).blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
 
             tinode.loginToken(token).getResult();
-        }  catch (Exception ex) {
+        } catch (Exception ex) {
             Log.w(TAG, "Failed to connect to server", ex);
             return false;
         }
@@ -110,7 +106,7 @@ public class Utils {
 
     /**
      * Fetch messages (and maybe topic description and subscriptions) in background.
-     *
+     * <p>
      * This method SHOULD NOT be called on UI thread.
      *
      * @param context   context to use for resources.
@@ -170,7 +166,8 @@ public class Utils {
                 try {
                     // Wait for result before disconnecting.
                     result.getResult();
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
             tinode.disconnect(true);
         }
@@ -180,7 +177,7 @@ public class Utils {
     /**
      * Fetch description of a previously unknown topic or user in background.
      * Fetch subscriptions for GRP topics.
-     *
+     * <p>
      * This method SHOULD NOT be called on UI thread.
      *
      * @param context   context to use for resources.

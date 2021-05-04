@@ -38,7 +38,7 @@ public class AccHelpFragment extends Fragment {
                              Bundle savedInstanceState) {
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity == null) {
-            return  null;
+            return null;
         }
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_help, container, false);
@@ -64,7 +64,7 @@ public class AccHelpFragment extends Fragment {
         link.setMovementMethod(movementInstance);
 
         fragment.findViewById(R.id.aboutTheApp).setOnClickListener(v ->
-                ((ChatsActivity)activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT, null));
+                ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT, null));
 
         fragment.findViewById(R.id.ossLicenses).setOnClickListener(v -> {
             activity.startActivity(new Intent(activity, OssLicensesMenuActivity.class));

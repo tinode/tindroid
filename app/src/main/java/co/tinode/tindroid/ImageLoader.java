@@ -31,13 +31,11 @@ public abstract class ImageLoader {
     private static final String TAG = "ImageLoader";
     private static final float MEMORY_PERCENT = 0.1f;
     private static final int DEFAULT_IMAGE_SIZE = 24;
-
-    private LruCache<String, Bitmap> mBitmapCache;
-
     private final Object mPauseWorkLock = new Object();
+    private final int mImageSize;
+    private LruCache<String, Bitmap> mBitmapCache;
     private Bitmap mLoadingBitmap;
     private boolean mPauseWork = false;
-    private final int mImageSize;
 
     ImageLoader(int imageSize, FragmentManager fm) {
         mImageSize = imageSize > 0 ? imageSize : DEFAULT_IMAGE_SIZE;
@@ -116,9 +114,9 @@ public abstract class ImageLoader {
      * Decode and sample down a bitmap from an input stream to the requested width and height.
      * It was orifinally decoded from a AssetFileDescriptior, but it's buggy in API 19.
      *
-     * @param is         Bitmap bits as an input stream.
-     * @param reqWidth   The requested width of the resulting bitmap
-     * @param reqHeight  The requested height of the resulting bitmap
+     * @param is        Bitmap bits as an input stream.
+     * @param reqWidth  The requested width of the resulting bitmap
+     * @param reqHeight The requested height of the resulting bitmap
      * @return A bitmap sampled down from the original with the same aspect ratio and dimensions
      * that are equal to or greater than the requested width and height
      */
@@ -147,6 +145,7 @@ public abstract class ImageLoader {
         bais.reset();
         return BitmapFactory.decodeStream(bais, null, options);
     }
+
     /**
      * Calculate an inSampleSize for use in a {@link BitmapFactory.Options} object when decoding
      * bitmaps using the decode* methods from {@link BitmapFactory}. This implementation calculates

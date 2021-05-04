@@ -24,11 +24,11 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     private static final String TAG = "UrlImageSpan";
 
     private final WeakReference<View> mParentRef;
-    private URL mSource = null;
-    private Drawable mDrawable;
     private final Drawable mOnError;
     private final int mWidth;
     private final int mHeight;
+    private URL mSource = null;
+    private Drawable mDrawable;
 
     public UrlImageSpan(View parent, int width, int height, Drawable placeholder, Drawable onError) {
         mParentRef = new WeakReference<>(parent);

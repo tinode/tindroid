@@ -836,7 +836,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                         if (msg.ctrl.code >= 300) {
-                            // 3XX response: status unchanged.
+                            // 3XX response: already subscribed.
+                            mAttached = true;
                             return null;
                         }
                         if (!mAttached) {

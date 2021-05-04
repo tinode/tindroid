@@ -77,7 +77,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
         AbstractDraftyFormatter.TreeNode result = content.format(new SpanFormatter(container, clicker));
         if (result instanceof StyledTreeNode) {
-            return ((StyledTreeNode)result).toSpanned();
+            return ((StyledTreeNode) result).toSpanned();
         }
 
         return new SpannedString("");
@@ -310,7 +310,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("IM", data);
                 }
-            }, (Object) null);
+            }, null);
             result.addNode(new StyledTreeNode(span, content));
         }
 
@@ -438,7 +438,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
         // Create BorderSpan.
         final StyledTreeNode span = new StyledTreeNode(
-                (CharacterStyle) new ButtonSpan(ctx, mFontSize, dipSize), (Object) null);
+                (CharacterStyle) new ButtonSpan(ctx, mFontSize, dipSize), null);
 
         // Wrap URLSpan into BorderSpan.
         span.addNode(new StyledTreeNode(new URLSpan("") {

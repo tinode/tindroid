@@ -67,8 +67,8 @@ public class MessageActivity extends AppCompatActivity {
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
-    private static final String TAG = "MessageActivity";
     static final String TOPIC_NAME = "topicName";
+    private static final String TAG = "MessageActivity";
     private static final int MESSAGES_TO_LOAD = 24;
 
     private static final int READ_DELAY = 1000;

@@ -20,7 +20,7 @@ import co.tinode.tinodesdk.model.MsgRange;
 /**
  * The table contains messages synchronized with the server and not yet synchronized.
  * It also contains message deletion markers, synchronized and not yet synchronized.
- *
+ * <p>
  * Storage structure for messages:
  * public String id -> _id
  * public String topic -> as topic_id
@@ -31,19 +31,33 @@ import co.tinode.tinodesdk.model.MsgRange;
  * public T content -> serialized into JSON;
  */
 public class MessageDb implements BaseColumns {
-    private static final String TAG = "MessageDb";
-
     static final int MESSAGE_PREVIEW_LENGTH = 80;
-
     /**
      * The name of the main table.
      */
     static final String TABLE_NAME = "messages";
-
     /**
      * Topic ID, references topics._ID
      */
     static final String COLUMN_NAME_TOPIC_ID = "topic_id";
+    /**
+     * SQL statement to drop Messages table.
+     */
+    static final String DROP_TABLE =
+            "DROP TABLE IF EXISTS " + TABLE_NAME;
+    static final int COLUMN_IDX_ID = 0;
+    static final int COLUMN_IDX_TOPIC_ID = 1;
+    static final int COLUMN_IDX_USER_ID = 2;
+    static final int COLUMN_IDX_STATUS = 3;
+    static final int COLUMN_IDX_SENDER = 4;
+    static final int COLUMN_IDX_TS = 5;
+    static final int COLUMN_IDX_SEQ = 6;
+    static final int COLUMN_IDX_HIGH = 7;
+    static final int COLUMN_IDX_DEL_ID = 8;
+    static final int COLUMN_IDX_HEAD = 9;
+    static final int COLUMN_IDX_CONTENT = 10;
+    static final int COLUMN_IDX_TOPIC_NAME = 11;
+    private static final String TAG = "MessageDb";
     /**
      * Id of the originator of the message, references users._ID
      */
@@ -84,11 +98,6 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_CONTENT = "content";
     /**
-     * Name of the topic when doing a join.
-     */
-    private static final String COLUMN_NAME_TOPIC_NAME = "topic";
-
-    /**
      * SQL statement to create Messages table
      */
     static final String CREATE_TABLE =
@@ -107,11 +116,9 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
     /**
-     * SQL statement to drop Messages table.
+     * Name of the topic when doing a join.
      */
-    static final String DROP_TABLE =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
-
+    private static final String COLUMN_NAME_TOPIC_NAME = "topic";
     /**
      * The name of index: messages by topic and sequence.
      */
@@ -130,18 +137,6 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_TOPIC_ID + "," +
                     COLUMN_NAME_SEQ + " DESC)";
 
-    static final int COLUMN_IDX_ID = 0;
-    static final int COLUMN_IDX_TOPIC_ID = 1;
-    static final int COLUMN_IDX_USER_ID = 2;
-    static final int COLUMN_IDX_STATUS = 3;
-    static final int COLUMN_IDX_SENDER = 4;
-    static final int COLUMN_IDX_TS = 5;
-    static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_HIGH = 7;
-    static final int COLUMN_IDX_DEL_ID = 8;
-    static final int COLUMN_IDX_HEAD = 9;
-    static final int COLUMN_IDX_CONTENT = 10;
-    static final int COLUMN_IDX_TOPIC_NAME = 11;
     /**
      * Save message to DB
      *
@@ -239,9 +234,9 @@ public class MessageDb implements BaseColumns {
     public static Cursor query(SQLiteDatabase db, long topicId, int pageCount, int pageSize) {
         final String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE "
-                        + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                + COLUMN_NAME_TOPIC_ID + "=" + topicId +
                 " ORDER BY "
-                    + COLUMN_NAME_SEQ + " DESC" +
+                + COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
 
         return db.rawQuery(sql, null);
@@ -250,8 +245,8 @@ public class MessageDb implements BaseColumns {
     /**
      * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
      *
-     * @param db     database to select from;
-     * @param msgId  _id of the message to retrieve.
+     * @param db    database to select from;
+     * @param msgId _id of the message to retrieve.
      * @return cursor with the message.
      */
     static Cursor getMessageById(SQLiteDatabase db, long msgId) {
@@ -267,14 +262,14 @@ public class MessageDb implements BaseColumns {
     static Cursor getLatestMessages(SQLiteDatabase db) {
         final String sql = "SELECT m1.*, t." + TopicDb.COLUMN_NAME_TOPIC + " AS topic" +
                 " FROM " + TABLE_NAME + " AS m1" +
-                    " LEFT JOIN " + TABLE_NAME + " AS m2" +
-                        " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
-                            " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
-                    " LEFT JOIN " + TopicDb.TABLE_NAME + " AS t" +
-                        " ON m1." + COLUMN_NAME_TOPIC_ID + "=t." + TopicDb._ID +
+                " LEFT JOIN " + TABLE_NAME + " AS m2" +
+                " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
+                " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
+                " LEFT JOIN " + TopicDb.TABLE_NAME + " AS t" +
+                " ON m1." + COLUMN_NAME_TOPIC_ID + "=t." + TopicDb._ID +
                 " WHERE m1." + COLUMN_NAME_DEL_ID + " IS NULL" +
-                    " AND m2." + COLUMN_NAME_DEL_ID + " IS NULL" +
-                    " AND m2." + _ID + " IS NULL";
+                " AND m2." + COLUMN_NAME_DEL_ID + " IS NULL" +
+                " AND m2." + _ID + " IS NULL";
 
         return db.rawQuery(sql, null);
     }
@@ -322,7 +317,7 @@ public class MessageDb implements BaseColumns {
     /**
      * Find the latest missing range of messages for fetching from the server.
      *
-     * @param db database to select from;
+     * @param db      database to select from;
      * @param topicId Tinode topic ID (topics._id) to select from;
      * @return range of missing IDs if found, null if either all messages are present or no messages are found.
      */
@@ -332,10 +327,10 @@ public class MessageDb implements BaseColumns {
                 " FROM " + TABLE_NAME + " AS m1" +
                 " LEFT JOIN " + TABLE_NAME + " AS m2" +
                 " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +
-                    " AND m1." + COLUMN_NAME_TOPIC_ID + "= m2." + COLUMN_NAME_TOPIC_ID +
+                " AND m1." + COLUMN_NAME_TOPIC_ID + "= m2." + COLUMN_NAME_TOPIC_ID +
                 " WHERE m2." + COLUMN_NAME_SEQ + " IS NULL" +
-                    " AND m1." + COLUMN_NAME_SEQ + ">1" +
-                    " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId;
+                " AND m1." + COLUMN_NAME_SEQ + ">1" +
+                " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId;
 
         Cursor c = db.rawQuery(sqlHigh, null);
         if (c != null) {
@@ -369,13 +364,13 @@ public class MessageDb implements BaseColumns {
     /**
      * Delete messages replacing them with deletion markers.
      *
-     * @param db            Database to use.
-     * @param topicId       Tinode topic ID to delete messages from.
-     * @param delId         Server-issued delete record ID. If delId <= 0, the operation is not
-     *                      yet synced with the server.
-     * @param fromId        minimum seq value to delete, inclusive (closed).
-     * @param toId          maximum seq value to delete, exclusive (open).
-     * @param markAsHard    mark messages as hard-deleted.
+     * @param db         Database to use.
+     * @param topicId    Tinode topic ID to delete messages from.
+     * @param delId      Server-issued delete record ID. If delId <= 0, the operation is not
+     *                   yet synced with the server.
+     * @param fromId     minimum seq value to delete, inclusive (closed).
+     * @param toId       maximum seq value to delete, exclusive (open).
+     * @param markAsHard mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
     private static boolean deleteOrMarkDeleted(SQLiteDatabase db, long topicId, int delId, int fromId, int toId,
@@ -468,7 +463,7 @@ public class MessageDb implements BaseColumns {
                 fromId = 1;
             }
             parts.add(COLUMN_NAME_SEQ + "<=" + toId);
-            rangeWide +=  " AND " + TextUtils.join(" AND ", parts);
+            rangeWide += " AND " + TextUtils.join(" AND ", parts);
             db.delete(TABLE_NAME, rangeConsumeSelector + rangeWide, null);
 
             // 4. Insert new range.
@@ -493,12 +488,12 @@ public class MessageDb implements BaseColumns {
     /**
      * Delete messages in the given ranges.
      *
-     * @param db            Database to use.
-     * @param topicId       Tinode topic ID to delete messages from.
-     * @param delId         Server-issued delete record ID. If delId <= 0, the operation is not
-     *                      yet synced with the server.
-     * @param ranges        array of ranges to delete.
-     * @param markAsHard    mark messages as hard-deleted.
+     * @param db         Database to use.
+     * @param topicId    Tinode topic ID to delete messages from.
+     * @param delId      Server-issued delete record ID. If delId <= 0, the operation is not
+     *                   yet synced with the server.
+     * @param ranges     array of ranges to delete.
+     * @param markAsHard mark messages as hard-deleted.
      * @return true on success, false otherwise.
      */
     private static boolean deleteOrMarkDeleted(SQLiteDatabase db, long topicId, int delId, MsgRange[] ranges,
@@ -524,10 +519,10 @@ public class MessageDb implements BaseColumns {
     /**
      * Mark sent messages as deleted without actually deleting them. Delete unsent messages.
      *
-     * @param db            Database to use.
-     * @param topicId       Tinode topic ID to delete messages from.
-     * @param ranges        ranges of message IDs to delete.
-     * @param markAsHard    mark messages as hard-deleted.
+     * @param db         Database to use.
+     * @param topicId    Tinode topic ID to delete messages from.
+     * @param ranges     ranges of message IDs to delete.
+     * @param markAsHard mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
     static boolean markDeleted(SQLiteDatabase db, long topicId, MsgRange[] ranges, boolean markAsHard) {
@@ -537,11 +532,11 @@ public class MessageDb implements BaseColumns {
     /**
      * Mark sent messages as deleted without actually deleting them. Delete unsent messages.
      *
-     * @param db            Database to use.
-     * @param topicId       Tinode topic ID to delete messages from.
-     * @param fromId        minimum seq value to delete, inclusive (closed).
-     * @param toId          maximum seq value to delete, exclusive (open).
-     * @param markAsHard    mark messages as hard-deleted.
+     * @param db         Database to use.
+     * @param topicId    Tinode topic ID to delete messages from.
+     * @param fromId     minimum seq value to delete, inclusive (closed).
+     * @param toId       maximum seq value to delete, exclusive (open).
+     * @param markAsHard mark messages as hard-deleted.
      * @return true if some messages were updated or deleted, false otherwise
      */
     static boolean markDeleted(SQLiteDatabase db, long topicId, int fromId, int toId, boolean markAsHard) {
@@ -592,7 +587,7 @@ public class MessageDb implements BaseColumns {
      *
      * @param db      Database to use.
      * @param topicId Tinode topic ID to delete messages from.
-     * @return  true if any messages were deleted.
+     * @return true if any messages were deleted.
      */
     static boolean deleteFailed(SQLiteDatabase db, long topicId) {
         int affected = 0;
@@ -608,8 +603,8 @@ public class MessageDb implements BaseColumns {
     /**
      * Delete single message by database ID.
      *
-     * @param db      Database to use.
-     * @param msgId   Database ID of the message (_id).
+     * @param db    Database to use.
+     * @param msgId Database ID of the message (_id).
      * @return true on success, false on failure
      */
     static boolean delete(SQLiteDatabase db, long msgId) {
@@ -639,9 +634,9 @@ public class MessageDb implements BaseColumns {
     private static long getId(SQLiteDatabase db, long topicId, int seq) {
         long id = -1;
         Cursor c = db.query(
-                TABLE_NAME, new String[]{ _ID },
+                TABLE_NAME, new String[]{_ID},
                 COLUMN_NAME_TOPIC_ID + "=?" + " AND " + COLUMN_NAME_SEQ + "=?",
-                new String[] { Long.toString(topicId), Integer.toString(seq) },
+                new String[]{Long.toString(topicId), Integer.toString(seq)},
                 null, null, null);
         if (c != null) {
             if (c.moveToFirst()) {
@@ -656,11 +651,10 @@ public class MessageDb implements BaseColumns {
      * Message Loader for loading messages in background.
      */
     public static class Loader extends CursorLoader {
-        SQLiteDatabase mDb;
-
         private final long topicId;
         private final int pageCount;
         private final int pageSize;
+        SQLiteDatabase mDb;
 
         public Loader(Context context, String topic, int pageCount, int pageSize) {
             super(context);

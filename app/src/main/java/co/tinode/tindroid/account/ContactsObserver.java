@@ -13,7 +13,7 @@ import android.util.Log;
 public class ContactsObserver extends ContentObserver {
     private static final String TAG = "ContactsObserver";
 
-    private Account mAcc;
+    private final Account mAcc;
 
     public ContactsObserver(Account acc, Handler handler) {
         super(handler);

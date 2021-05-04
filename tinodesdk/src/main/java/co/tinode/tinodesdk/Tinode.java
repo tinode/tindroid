@@ -653,9 +653,6 @@ public class Tinode {
             }
 
             mNotifier.onMetaMessage(pkt.meta);
-
-            resolveWithPacket(pkt.meta.id, pkt);
-
         } else if (pkt.data != null) {
             Topic topic = getTopic(pkt.data.topic);
             if (topic != null) {
@@ -663,9 +660,6 @@ public class Tinode {
             }
 
             mNotifier.onDataMessage(pkt.data);
-
-            resolveWithPacket(pkt.data.id, pkt);
-
         } else if (pkt.pres != null) {
             Topic topic = getTopic(pkt.pres.topic);
             if (topic != null) {
@@ -690,15 +684,6 @@ public class Tinode {
         }
 
         // TODO(gene): decide what to do on unknown message type
-    }
-
-    private void resolveWithPacket(String id, ServerMessage pkt) throws Exception {
-        if (id != null) {
-            FutureHolder fh = mFutures.remove(id);
-            if (fh != null && !fh.future.isDone()) {
-                fh.future.resolve(pkt);
-            }
-        }
     }
 
     /**

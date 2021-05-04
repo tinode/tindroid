@@ -9,20 +9,21 @@ import android.provider.BaseColumns;
 /**
  * List of Tinode accounts.
  * Schema:
- *  _ID -- account ID
- *  name - UID of the account
- *  last_active -- 1 if the account was used for last login, 0 otherwise
+ * _ID -- account ID
+ * name - UID of the account
+ * last_active -- 1 if the account was used for last login, 0 otherwise
  */
 public class AccountDb implements BaseColumns {
     static final String TABLE_NAME = "accounts";
+    /**
+     * Statements to drop accounts table and index
+     */
+    static final String DROP_TABLE =
+            "DROP TABLE IF EXISTS " + TABLE_NAME;
     private static final String COLUMN_NAME_UID = "uid";
     private static final String COLUMN_NAME_ACTIVE = "last_active";
     private static final String COLUMN_NAME_CRED_METHODS = "cred_methods";
     private static final String COLUMN_NAME_DEVICE_ID = "device_id";
-
-    private static final String INDEX_UID = "accounts_uid";
-    private static final String INDEX_ACTIVE = "accounts_active";
-
     /**
      * Statement to create account table - mapping of account UID to long id
      */
@@ -33,6 +34,7 @@ public class AccountDb implements BaseColumns {
                     COLUMN_NAME_ACTIVE + " INTEGER," +
                     COLUMN_NAME_CRED_METHODS + " TEXT," +
                     COLUMN_NAME_DEVICE_ID + " TEXT)";
+    private static final String INDEX_UID = "accounts_uid";
     /**
      * Add index on account name
      */
@@ -40,6 +42,9 @@ public class AccountDb implements BaseColumns {
             "CREATE UNIQUE INDEX " + INDEX_UID +
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_UID + ")";
+    static final String DROP_INDEX_1 =
+            "DROP INDEX IF EXISTS " + INDEX_UID;
+    private static final String INDEX_ACTIVE = "accounts_active";
     /**
      * Add index on last active
      */
@@ -47,16 +52,6 @@ public class AccountDb implements BaseColumns {
             "CREATE INDEX " + INDEX_ACTIVE +
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_ACTIVE + ")";
-
-    /**
-     * Statements to drop accounts table and index
-     */
-    static final String DROP_TABLE =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
-
-    static final String DROP_INDEX_1 =
-            "DROP INDEX IF EXISTS " + INDEX_UID;
-
     static final String DROP_INDEX_2 =
             "DROP INDEX IF EXISTS " + INDEX_ACTIVE;
 
@@ -128,9 +123,9 @@ public class AccountDb implements BaseColumns {
         StoredAccount acc = null;
         Cursor c = db.query(
                 TABLE_NAME,
-                new String[]{ _ID, COLUMN_NAME_CRED_METHODS },
+                new String[]{_ID, COLUMN_NAME_CRED_METHODS},
                 COLUMN_NAME_UID + "=?",
-                new String[] { uid },
+                new String[]{uid},
                 null, null, null);
         if (c != null) {
             if (c.moveToFirst()) {

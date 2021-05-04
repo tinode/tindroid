@@ -228,6 +228,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     static class LengthExceededException extends RuntimeException {
         private final Spanned tail;
+
         LengthExceededException(Spanned tail) {
             this.tail = tail;
         }

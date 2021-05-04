@@ -30,53 +30,8 @@ public class BaseDb extends SQLiteOpenHelper {
      * Filename for SQLite file.
      */
     private static final String DATABASE_NAME = "base.db";
-
-    public enum Status {
-        // Status undefined/not set.
-        UNDEFINED(0),
-        // Object is not ready to be sent to the server.
-        DRAFT(10),
-        // Object is waiting in the queue to be sent to the server.
-        QUEUED(20),
-        // Object is in the process of being sent to the server.
-        SENDING(30),
-        // Send failed.
-        FAILED(40),
-        // Object is received by the server.
-        SYNCED(50),
-        // Object is hard-deleted.
-        DELETED_HARD(60),
-        // Object is soft-deleted.
-        DELETED_SOFT(70),
-        // The object is a deletion range marker synchronized with the server.
-        DELETED_SYNCED(80);
-
-        public int value;
-
-        Status(int v) {
-            value = v;
-        }
-
-        private static final SparseArray<Status> intToTypeMap = new SparseArray<>();
-        static {
-            for (Status type : Status.values()) {
-                intToTypeMap.put(type.value, type);
-            }
-        }
-
-        public static Status fromInt(int i) {
-            Status type = intToTypeMap.get(i);
-            if (type == null) {
-                return Status.UNDEFINED;
-            }
-            return type;
-        }
-    }
-
     private static BaseDb sInstance = null;
-
     private StoredAccount mAcc = null;
-
     private SqlStore mStore = null;
 
     /**
@@ -123,7 +78,7 @@ public class BaseDb extends SQLiteOpenHelper {
      * "canonical_class_name[];json of array of objects"
      *
      * @param input string to parse
-     * @param <T> type of the parsed object
+     * @param <T>   type of the parsed object
      * @return parsed object or null
      */
     static <T> T deserialize(String input) {
@@ -231,6 +186,7 @@ public class BaseDb extends SQLiteOpenHelper {
 
     /**
      * get UID of the currently logged in user.
+     *
      * @return UID or {@code null} if user is not logged in.
      */
     public String getUid() {
@@ -326,5 +282,48 @@ public class BaseDb extends SQLiteOpenHelper {
     @Override
     public void onConfigure(SQLiteDatabase db) {
         db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    public enum Status {
+        // Status undefined/not set.
+        UNDEFINED(0),
+        // Object is not ready to be sent to the server.
+        DRAFT(10),
+        // Object is waiting in the queue to be sent to the server.
+        QUEUED(20),
+        // Object is in the process of being sent to the server.
+        SENDING(30),
+        // Send failed.
+        FAILED(40),
+        // Object is received by the server.
+        SYNCED(50),
+        // Object is hard-deleted.
+        DELETED_HARD(60),
+        // Object is soft-deleted.
+        DELETED_SOFT(70),
+        // The object is a deletion range marker synchronized with the server.
+        DELETED_SYNCED(80);
+
+        private static final SparseArray<Status> intToTypeMap = new SparseArray<>();
+
+        static {
+            for (Status type : Status.values()) {
+                intToTypeMap.put(type.value, type);
+            }
+        }
+
+        public int value;
+
+        Status(int v) {
+            value = v;
+        }
+
+        public static Status fromInt(int i) {
+            Status type = intToTypeMap.get(i);
+            if (type == null) {
+                return Status.UNDEFINED;
+            }
+            return type;
+        }
     }
 }

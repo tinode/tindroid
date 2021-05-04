@@ -30,13 +30,15 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
+import co.tinode.tindroid.R;
 
 /**
  * This class is used to display circular progress indicator (infinite spinner).
  * It matches the style of the spinner in SwipeRefreshLayout + optionally can be shown only after a
- * 500 ms delay like ContentLoadingProgressBar.
+ * 500 ms delay like ContentLoadingProgressBar +  + supports night theme.
  * <p>
  * Adopted from android/9.0.0/androidx/swiperefreshlayout/widget/circleimageview.java
  */
@@ -45,7 +47,6 @@ public class CircleProgressView extends AppCompatImageView {
     // If stop is called earlier than this, the spinner is not shown at all.
     private static final int MIN_SHOW_TIME = 300; // ms
     private static final int MIN_DELAY = 500; // ms
-    private static final int CIRCLE_BG_LIGHT = 0xFFFAFAFA;
     private static final int KEY_SHADOW_COLOR = 0x1E000000;
     private static final int FILL_SHADOW_COLOR = 0x3D000000;
     // PX
@@ -94,23 +95,21 @@ public class CircleProgressView extends AppCompatImageView {
     };
 
     public CircleProgressView(Context context) {
-        this(context, CIRCLE_BG_LIGHT);
+        super(context);
+        init(context);
     }
 
     public CircleProgressView(Context context, AttributeSet attrSet) {
         super(context, attrSet);
-        init(context, CIRCLE_BG_LIGHT);
+        init(context);
     }
 
-    public CircleProgressView(Context context, int color) {
-        super(context);
-        init(context, color);
-    }
-
-    private void init(Context context, int color) {
+    private void init(Context context) {
         final float density = getContext().getResources().getDisplayMetrics().density;
         final int shadowYOffset = (int) (density * Y_OFFSET);
         final int shadowXOffset = (int) (density * X_OFFSET);
+        final int bgColor = ContextCompat.getColor(context, R.color.circularProgressBg);
+        final int fgColor = ContextCompat.getColor(context, R.color.circularProgressFg);
 
         mShadowRadius = (int) (density * SHADOW_RADIUS);
 
@@ -127,13 +126,15 @@ public class CircleProgressView extends AppCompatImageView {
             // set padding so the inner image sits correctly within the shadow.
             setPadding(padding, padding, padding, padding);
         }
-        circle.getPaint().setColor(color);
+        circle.getPaint().setColor(bgColor);
         ViewCompat.setBackground(this, circle);
 
         mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
 
         mProgress = new CircularProgressDrawable(context);
         mProgress.setStyle(CircularProgressDrawable.DEFAULT);
+        mProgress.setBackgroundColor(bgColor);
+        mProgress.setColorSchemeColors(fgColor);
         setImageDrawable(mProgress);
     }
 
