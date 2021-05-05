@@ -278,4 +278,5 @@
     <string name="attachment">Anhang</string>
     <string name="unknown">Unbekannt</string>
     <string name="form">Bilden</string>
+    <string name="accept_avatar_button_hint">Akzeptiere den Avatar</string>
 </resources>

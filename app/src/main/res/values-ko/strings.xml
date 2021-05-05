@@ -276,4 +276,5 @@
     <string name="attachment">첨부 파일</string>
     <string name="unknown">알려지지 않은</string>
     <string name="form">양식</string>
+    <string name="accept_avatar_button_hint">아바타 수락</string>
 </resources>

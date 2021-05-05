@@ -14,5 +14,4 @@
     android:textColor="?android:textColorPrimary"
     android:textSize="14sp"
     android:typeface="monospace"
-    tools:text="basic:alice"
-    />
+    tools:text="basic:alice" />

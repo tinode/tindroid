@@ -17,7 +17,10 @@
         android:layout_margin="16dp"
         android:clickable="true"
         android:focusable="true"
+        android:background="@color/button_background"
+        app:backgroundTint="@color/button_background"
         app:elevation="@dimen/fab_elevation"
-        app:srcCompat="@drawable/ic_check" />
+        app:srcCompat="@drawable/ic_check"
+        android:contentDescription="TODO" />
 
 </RelativeLayout>

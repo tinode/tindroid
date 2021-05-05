@@ -2,12 +2,12 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Disabled state. -->
     <item android:state_enabled="false"
-        android:color="?attr/colorButtonNormal" />
+        android:color="@color/colorButtonNormal" />
 
     <!-- Enabled state. -->
-    <item android:color="?attr/colorAccent"/>
+    <item android:color="@color/colorAccent"/>
     <!-- Pressed -->
     <item android:state_pressed="true"
-        android:color="?attr/colorAccent"
+        android:color="@color/colorAccent"
         android:alpha="0.9" />
 </selector>

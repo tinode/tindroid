@@ -257,4 +257,5 @@
     <string name="attachment">Вложение</string>
     <string name="unknown">Неизвестно</string>
     <string name="form">Форма</string>
+    <string name="accept_avatar_button_hint">Принять аватарку</string>
 </resources>

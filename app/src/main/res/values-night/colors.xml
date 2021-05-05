@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorMessageBubbleMine">#FF202020</color>
-    <color name="colorMessageBubbleOther">#FF002008</color>
-    <color name="colorMessageBubbleMeta">#FF000820</color>
+    <color name="colorMessageBubbleOther">#FF003308</color>
+    <color name="colorMessageBubbleMeta">#FF001633</color>
 
     <color name="colorChipBackground">#263238</color>
     <color name="colorChipBorder">#546E7A</color>
 
     <color name="colorListDivider">#666666</color>
 
-    <color name="colorAccent">#26A69A</color>
+    <color name="colorAccent">#00897B</color>
 
     <color name="colorDanger">#d32f2f</color>
 
@@ -21,4 +21,6 @@
 
     <color name="circularProgressBg">#FF666666</color>
     <color name="circularProgressFg">#FFCCCCCC</color>
+
+    <color name="colorImageMetaPanel">#80000000</color>
 </resources>

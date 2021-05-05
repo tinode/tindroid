@@ -277,4 +277,5 @@
     <string name="attachment">Adjunto archivo</string>
     <string name="unknown">Desconocido</string>
     <string name="form">Formulario</string>
+    <string name="accept_avatar_button_hint">Aceptar avatar</string>
 </resources>

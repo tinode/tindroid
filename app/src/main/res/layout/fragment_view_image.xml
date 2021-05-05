@@ -71,7 +71,7 @@
         <LinearLayout
             android:id="@+id/annotation"
             android:padding="6sp"
-            android:background="@color/white_50"
+            android:background="@color/colorImageMetaPanel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:baselineAligned="false"
@@ -155,8 +155,11 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:visibility="gone"
+        android:contentDescription="@string/accept_avatar_button_hint"
+        android:background="@color/button_background"
+        app:backgroundTint="@color/button_background"
         app:elevation="@dimen/fab_elevation"
         app:borderWidth="0dp"
-        app:srcCompat="@drawable/ic_check" />
+        app:srcCompat="@drawable/ic_check"/>
 
 </RelativeLayout>

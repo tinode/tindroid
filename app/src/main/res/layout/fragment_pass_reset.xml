@@ -39,6 +39,14 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end">
 
+        <Button
+            android:id="@+id/cancel"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@android:string/cancel"
+            android:textSize="@dimen/button_text"/>
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/confirm"
             style="?attr/buttonStyle"
@@ -48,14 +56,6 @@
             android:textColor="@color/white"
             android:textSize="@dimen/button_text"
             app:backgroundTint="@color/button_background"/>
-
-        <Button
-            android:id="@+id/cancel"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@android:string/cancel"
-            android:textSize="@dimen/button_text"/>
 
     </LinearLayout>
 </LinearLayout>

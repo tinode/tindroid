@@ -290,4 +290,5 @@
     <string name="attachment">Attachment</string>
     <string name="unknown">Unknown</string>
     <string name="form">Form</string>
+    <string name="accept_avatar_button_hint">Accept avatar</string>
 </resources>

@@ -32,7 +32,7 @@
                 android:alpha="0.8"
                 android:contentDescription=""
                 android:scaleType="fitCenter"
-                android:tint="?android:textColorSecondary"
+                app:tint="?android:textColorSecondary"
                 tools:ignore="ContentDescription"
                 tools:src="@drawable/ic_file" />
 

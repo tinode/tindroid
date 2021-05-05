@@ -2,11 +2,11 @@
 <resources>
     <color name="white">#FFFFFF</color>
     <color name="grey">#9E9E9E</color>
-    <color name="white_50">#80FFFFFF</color>
 
     <color name="colorAccentLight">#E0F2F1</color>
     <color name="colorAccent">#00897B</color>
     <color name="colorAccentDark">#004D40</color>
+    <color name="colorButtonNormal">#D6D7D7</color>
 
     <color name="colorDanger">#B71C1C</color>
 
@@ -48,6 +48,8 @@
 
     <color name="colorMsgStatusFailed">#FFFFA000</color>
     <color name="colorMsgStatusSeen">#FF009688</color>
+
+    <color name="colorImageMetaPanel">#80FFFFFF</color>
 
     <!-- Indicator of user's online/offline status -->
     <color name="online">#FF40C040</color>
