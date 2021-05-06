@@ -87,6 +87,11 @@ public class ImageViewFragment extends Fragment {
         GestureDetector.OnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float dX, float dY) {
+                if (mWorkingRect == null || mInitialRect == null) {
+                    // The image is not initialized yet.
+                    return false;
+                }
+
                 mWorkingMatrix.postTranslate(-dX, -dY);
                 mWorkingMatrix.mapRect(mWorkingRect, mInitialRect);
 
@@ -106,6 +111,11 @@ public class ImageViewFragment extends Fragment {
         ScaleGestureDetector.OnScaleGestureListener scaleListener = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector scaleDetector) {
+                if (mWorkingRect == null || mInitialRect == null) {
+                    // The image is not initialized yet.
+                    return false;
+                }
+
                 float factor = scaleDetector.getScaleFactor();
                 mWorkingMatrix.postScale(factor, factor, scaleDetector.getFocusX(), scaleDetector.getFocusY());
 
