@@ -45,6 +45,6 @@
         app:layout_anchor="@id/content"
         app:layout_anchorGravity="bottom|end"
         app:srcCompat="@drawable/ic_add"
-        android:contentDescription="TODO" />
+        android:contentDescription="@string/next_button_hint" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

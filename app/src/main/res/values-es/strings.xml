@@ -278,4 +278,5 @@
     <string name="unknown">Desconocido</string>
     <string name="form">Formulario</string>
     <string name="accept_avatar_button_hint">Aceptar avatar</string>
+    <string name="next_button_hint">Siguiente</string>
 </resources>

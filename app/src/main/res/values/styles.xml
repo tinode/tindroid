@@ -32,6 +32,8 @@
         <item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
 
+    <!--suppress CheckTagEmptyBody. This is required by the component.
+    Otherwise it won't compile. -->
     <style name="LicensesTheme" parent="Theme.AppCompat.DayNight"></style>
 
     <style name="searchTextHighlight">

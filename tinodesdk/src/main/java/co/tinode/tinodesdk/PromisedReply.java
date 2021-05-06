@@ -66,7 +66,7 @@ public class PromisedReply<T> {
 
     private PromisedReply<T> mNextPromise = null;
 
-    private CountDownLatch mDoneSignal;
+    private final CountDownLatch mDoneSignal;
 
     /**
      * Create promise in a WAITING state.

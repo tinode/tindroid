@@ -848,7 +848,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             try {
                                 args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
                                 args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
+                                //noinspection ConstantConditions
                                 args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
+                                //noinspection ConstantConditions
                                 args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
                             } catch (NullPointerException | ClassCastException ex) {
                                 Log.i(TAG, "Invalid type of image parameters", ex);

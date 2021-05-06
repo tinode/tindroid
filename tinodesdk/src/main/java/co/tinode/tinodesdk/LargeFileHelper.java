@@ -98,16 +98,13 @@ public class LargeFileHelper {
                                                      final long size,
                                                      final FileHelperProgress progress) {
         final PromisedReply<MsgServerCtrl> result = new PromisedReply<>();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        new Thread(() -> {
+            try {
+                result.resolve(upload(in, filename, mimetype, size, progress));
+            } catch (Exception ex) {
                 try {
-                    result.resolve(upload(in, filename, mimetype, size, progress));
-                } catch (Exception ex) {
-                    try {
-                        result.reject(ex);
-                    } catch (Exception ignored) {
-                    }
+                    result.reject(ex);
+                } catch (Exception ignored) {
                 }
             }
         }).start();
@@ -146,16 +143,13 @@ public class LargeFileHelper {
                                                  final OutputStream out,
                                                  final FileHelperProgress progress) {
         final PromisedReply<Long> result = new PromisedReply<>();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        new Thread(() -> {
+            try {
+                result.resolve(download(downloadFrom, out, progress));
+            } catch (Exception ex) {
                 try {
-                    result.resolve(download(downloadFrom, out, progress));
-                } catch (Exception ex) {
-                    try {
-                        result.reject(ex);
-                    } catch (Exception ignored) {
-                    }
+                    result.reject(ex);
+                } catch (Exception ignored) {
                 }
             }
         }).start();

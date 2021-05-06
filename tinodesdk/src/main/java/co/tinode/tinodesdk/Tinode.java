@@ -142,7 +142,6 @@ public class Tinode {
     private final ConcurrentHashMap<String, Pair<Topic, Storage.Message>> mTopics;
     private final ConcurrentHashMap<String, User> mUsers;
     private JavaType mDefaultTypeOfMetaPacket = null;
-    private final MimeTypeResolver mMimeResolver = null;
     private String mServerHost = null;
     private boolean mUseTLS;
     private String mServerVersion = null;
@@ -384,7 +383,7 @@ public class Tinode {
             if (topics != null) {
                 for (Topic tt : topics) {
                     tt.setStorage(mStore);
-                    mTopics.put(tt.getName(), new Pair<Topic, Storage.Message>(tt, null));
+                    mTopics.put(tt.getName(), new Pair<>(tt, null));
                     setTopicsUpdated(tt.getUpdated());
                 }
             }
@@ -904,28 +903,6 @@ public class Tinode {
     protected JavaType getTypeOfMetaPacket(String topicName) {
         JavaType result = mTypeOfMetaPacket.get(Topic.getTopicTypeByName(topicName));
         return result != null ? result : getDefaultTypeOfMetaPacket();
-    }
-
-    /**
-     * Get Jackson's JavaType for mime string.
-     *
-     * @return JavaType for mime string. Cannot be null.
-     */
-    protected JavaType resolveMimeType(String mimeType) {
-        JavaType type = null;
-        if (mMimeResolver != null) {
-            type = mMimeResolver.resolve(mimeType);
-        }
-        if (type == null) {
-            if (mimeType == null) {
-                // Default mime type = text/plain -> String
-                type = sTypeFactory.constructType(String.class);
-            } else {
-                // All other mime-types convert to byte array.
-                type = sTypeFactory.constructType(Byte[].class);
-            }
-        }
-        return type;
     }
 
     /**
@@ -1841,7 +1818,7 @@ public class Tinode {
         if (mTopics.containsKey(name)) {
             throw new IllegalStateException("Topic '" + name + "' is already registered");
         }
-        mTopics.put(name, new Pair<Topic,Storage.Message>(topic, null));
+        mTopics.put(name, new Pair<>(topic, null));
         topic.setStorage(mStore);
     }
 
@@ -1889,7 +1866,7 @@ public class Tinode {
     @SuppressWarnings("UnusedReturnValue")
     synchronized boolean changeTopicName(Topic topic, String oldName) {
         boolean found = mTopics.remove(oldName) != null;
-        mTopics.put(topic.getName(), new Pair<Topic,Storage.Message>(topic, null));
+        mTopics.put(topic.getName(), new Pair<>(topic, null));
         if (mStore != null) {
             mStore.topicUpdate(topic);
         }

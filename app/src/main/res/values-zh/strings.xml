@@ -279,4 +279,5 @@
     <string name="unknown">未知</string>
     <string name="form">表格</string>
     <string name="accept_avatar_button_hint">接受头像</string>
+    <string name="next_button_hint">往下走</string>
 </resources>

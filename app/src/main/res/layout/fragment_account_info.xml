@@ -71,7 +71,8 @@
             android:layout_width="@dimen/settings_icon_size"
             android:layout_height="@dimen/settings_icon_size"
             android:src="@drawable/ic_notifications"
-            app:tint="@color/colorAccent" />
+            app:tint="@color/colorAccent"
+            tools:ignore="ContentDescription" />
 
         <TextView
             style="?android:textAppearanceLarge"
@@ -98,7 +99,8 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:src="@drawable/ic_security"
-            app:tint="@color/colorAccent" />
+            app:tint="@color/colorAccent"
+            tools:ignore="ContentDescription" />
 
         <TextView
             android:id="@+id/security_text"
@@ -135,7 +137,8 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:src="@drawable/ic_contact_support"
-            app:tint="@color/colorAccent" />
+            app:tint="@color/colorAccent"
+            tools:ignore="ContentDescription" />
 
         <TextView
             android:id="@+id/help_text"

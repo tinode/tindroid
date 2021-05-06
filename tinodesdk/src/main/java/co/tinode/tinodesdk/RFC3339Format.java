@@ -10,7 +10,7 @@ import java.util.TimeZone;
  * Augmented SimpleDateFormat for handling optional milliseconds in RFC3339 timestamps.
  */
 public class RFC3339Format extends SimpleDateFormat {
-    private SimpleDateFormat mShortDate;
+    private final SimpleDateFormat mShortDate;
 
     public RFC3339Format() {
         super("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",Locale.US);

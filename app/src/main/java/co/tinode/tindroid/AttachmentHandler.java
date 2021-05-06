@@ -108,9 +108,7 @@ public class AttachmentHandler extends Worker {
             projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE};
         }
 
-        Cursor cursor = null;
-        try {
-            cursor = resolver.query(uri, projection, null, null, null);
+        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                 fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
@@ -122,10 +120,6 @@ public class AttachmentHandler extends Worker {
                 }
             }
         } catch (Exception ignored) {
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
         }
         // In degrees.
         result.imageOrientation = orientation;

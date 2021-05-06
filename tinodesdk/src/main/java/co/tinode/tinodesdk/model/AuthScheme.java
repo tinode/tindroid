@@ -3,7 +3,6 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.core.Base64Variants;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 

@@ -10,9 +10,4 @@
         <item>ws</item>
         <item>lp</item>
     </string-array>
-
-    <string-array name="cred_methods">
-        <item>email</item>
-        <item>tel</item>
-    </string-array>
 </resources>

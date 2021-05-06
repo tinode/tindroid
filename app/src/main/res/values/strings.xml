@@ -291,4 +291,5 @@
     <string name="unknown">Unknown</string>
     <string name="form">Form</string>
     <string name="accept_avatar_button_hint">Accept avatar</string>
+    <string name="next_button_hint">Next</string>
 </resources>

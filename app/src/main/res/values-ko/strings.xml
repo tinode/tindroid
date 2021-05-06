@@ -116,7 +116,7 @@
     <string name="remove_from_group">삭제</string>
     <string name="block">차단</string>
 
-    <string name="confirm_member_removal">%1$에서 \"%2$s\"까지 삭제?</string>
+    <string name="confirm_member_removal">%1$s에서 \"%2$s\"까지 삭제?</string>
     <string name="confirm_member_ban">%1$s에서 \"%2$s\"까지 삭제 및 차단?</string>
     <string name="confirm_leave_topic">정말 이 대화를 끝내시겠습니까?</string>
     <string name="confirm_delete_topic">이 대화를 모두 삭제하시겠습니까?</string>
@@ -277,4 +277,5 @@
     <string name="unknown">알려지지 않은</string>
     <string name="form">양식</string>
     <string name="accept_avatar_button_hint">아바타 수락</string>
+    <string name="next_button_hint">다음으로 이동</string>
 </resources>

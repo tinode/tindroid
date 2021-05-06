@@ -141,10 +141,10 @@ public class Utils {
 
         boolean dataAvailable = false;
         if (topic.getSeq() < seq) {
-            dataAvailable = true;
             if (!loginNow(context)) {
-                return dataAvailable;
+                return false;
             }
+            dataAvailable = true;
             PromisedReply result = null;
             // Check if contacts have been synced already.
             if (tinode.getTopicsUpdated() == null) {

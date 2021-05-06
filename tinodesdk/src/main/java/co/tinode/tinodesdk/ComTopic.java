@@ -98,7 +98,7 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public PromisedReply<ServerMessage> updateArchived(final boolean arch) {
         PrivateType priv = new PrivateType();
         priv.setArchived(arch);
-        return setMeta(new MsgSetMeta<>(new MetaSetDesc<DP,PrivateType>(null, priv)));
+        return setMeta(new MsgSetMeta<>(new MetaSetDesc<>(null, priv)));
     }
 
     public static class ComListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {

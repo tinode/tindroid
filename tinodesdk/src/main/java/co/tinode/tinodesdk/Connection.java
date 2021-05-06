@@ -30,7 +30,7 @@ import javax.net.ssl.SSLSocketFactory;
 public class Connection extends WebSocketClient {
     private static final String TAG = "Connection";
 
-    private static int CONNECTION_TIMEOUT = 3000; // in milliseconds
+    private static final int CONNECTION_TIMEOUT = 3000; // in milliseconds
 
     // Connection states
     // TODO: consider extending ReadyState
@@ -47,7 +47,7 @@ public class Connection extends WebSocketClient {
         CLOSED
     }
 
-    private WsListener mListener;
+    private final WsListener mListener;
 
     // Connection status
     private State mStatus;
@@ -124,20 +124,17 @@ public class Connection extends WebSocketClient {
     }
 
     private void connectSocket(final boolean reconnect) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (reconnect) {
-                        reconnectBlocking();
-                    } else {
-                        connectBlocking(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-                    }
-                } catch (Exception ex) {
-                    Log.d(TAG, "socketConnectionRunnable exception!", ex);
-                    if (mListener != null) {
-                        mListener.onError(Connection.this, ex);
-                    }
+        new Thread(() -> {
+            try {
+                if (reconnect) {
+                    reconnectBlocking();
+                } else {
+                    connectBlocking(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+                }
+            } catch (Exception ex) {
+                Log.d(TAG, "socketConnectionRunnable exception!", ex);
+                if (mListener != null) {
+                    mListener.onError(Connection.this, ex);
                 }
             }
         }).start();
@@ -271,21 +268,18 @@ public class Connection extends WebSocketClient {
         }
 
         if (mAutoreconnect) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (mStatus == State.WAITING_TO_RECONNECT) {
-                        backoff.doSleep();
+            new Thread(() -> {
+                while (mStatus == State.WAITING_TO_RECONNECT) {
+                    backoff.doSleep();
 
-                        synchronized (Connection.this) {
-                            // Check if we no longer need to connect.
-                            if (mStatus != State.WAITING_TO_RECONNECT) {
-                                break;
-                            }
-                            mStatus = State.CONNECTING;
+                    synchronized (Connection.this) {
+                        // Check if we no longer need to connect.
+                        if (mStatus != State.WAITING_TO_RECONNECT) {
+                            break;
                         }
-                        connectSocket(true);
+                        mStatus = State.CONNECTING;
                     }
+                    connectSocket(true);
                 }
             }).start();
         }

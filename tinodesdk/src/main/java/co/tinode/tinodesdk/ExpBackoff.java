@@ -6,8 +6,6 @@ import java.util.Random;
  * Exponential backoff for reconnects.
  */
 public class ExpBackoff {
-    private static final String TAG = "ExpBackoff";
-
     // Minimum delay = 1000ms, expected ~1500ms;
     private static final int BASE_SLEEP_MS = 1000;
     // Maximum delay 2^10 ~ 2000 seconds ~ 34 min.

@@ -95,7 +95,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             int id = res.getIdentifier(locKey, "string", packageName);
             if (id != 0) {
                 if (locArgs != null) {
-                    result = res.getString(id, locArgs);
+                    result = res.getString(id, (Object[]) locArgs);
                 } else {
                     result = res.getString(id);
                 }

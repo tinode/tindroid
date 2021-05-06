@@ -1159,7 +1159,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     public PromisedReply<ServerMessage> updateDefAcs(String auth, String anon) {
-        return setDescription(new MetaSetDesc<DP, DR>(new Defacs(auth, anon)));
+        return setDescription(new MetaSetDesc<>(new Defacs(auth, anon)));
     }
 
     /**
@@ -1169,7 +1169,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) {
-        return setMeta(new MsgSetMeta<DP, DR>(sub));
+        return setMeta(new MsgSetMeta<>(sub));
     }
 
     /**

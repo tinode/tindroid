@@ -4,8 +4,8 @@ package co.tinode.tinodesdk;
  * Exception generated in response to a packet containing an error code.
  */
 public class ServerResponseException extends Exception {
-    private int code;
-    private String reason;
+    private final int code;
+    private final String reason;
 
     ServerResponseException(int code, String text, String reason) {
         super(text);

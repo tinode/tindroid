@@ -797,7 +797,7 @@ public class Drafty implements Serializable {
 
             if (span.type.equals("BN")) {
                 // Make button content unstyled.
-                span.data = span.data != null ? span.data : new HashMap<String, Object>();
+                span.data = span.data != null ? span.data : new HashMap<>();
                 String title = line.substring(span.start, span.end);
                 span.data.put("title", title);
                 T fs = formatter.apply(span.type, span.data, title);
@@ -876,14 +876,11 @@ public class Drafty implements Serializable {
         }
 
         // Sort spans first by start index (asc) then by length (desc).
-        Collections.sort(spans, new Comparator<Span>() {
-            @Override
-            public int compare(Span a, Span b) {
-                if (a.start - b.start == 0) {
-                    return b.end - a.end; // longer one comes first (<0)
-                }
-                return a.start - b.start;
+        Collections.sort(spans, (a, b) -> {
+            if (a.start - b.start == 0) {
+                return b.end - a.end; // longer one comes first (<0)
             }
+            return a.start - b.start;
         });
 
         for (Span span : spans) {
@@ -966,6 +963,7 @@ public class Drafty implements Serializable {
                     } else if (ent != null && ent.length > key && ent_refs.containsKey(key)) {
                         style.key = ent_refs.get(key);
                         // ent_refs.containsKey(key) is checked above.
+                        //noinspection ConstantConditions
                         preview.ent[style.key] = ent[key].copyLight();
                     } else {
                         continue;

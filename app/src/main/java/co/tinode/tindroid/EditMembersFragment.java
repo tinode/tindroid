@@ -78,17 +78,14 @@ public class EditMembersFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
-        mContactsAdapter = new ContactsAdapter(activity, mImageLoader, new ContactsAdapter.ClickListener() {
-            @Override
-            public void onClick(final String unique, final ContactsAdapter.ViewHolder holder) {
-                if (!mContactsAdapter.isSelected(unique)) {
-                    mSelectedAdapter.append(unique, (String) holder.text1.getText(),
-                            holder.getIconDrawable());
+        mContactsAdapter = new ContactsAdapter(activity, mImageLoader, (unique, holder) -> {
+            if (!mContactsAdapter.isSelected(unique)) {
+                mSelectedAdapter.append(unique, (String) holder.text1.getText(),
+                        holder.getIconDrawable());
+                mContactsAdapter.toggleSelected(unique);
+            } else {
+                if (mSelectedAdapter.remove(unique)) {
                     mContactsAdapter.toggleSelected(unique);
-                } else {
-                    if (mSelectedAdapter.remove(unique)) {
-                        mContactsAdapter.toggleSelected(unique);
-                    }
                 }
             }
         });
@@ -133,22 +130,14 @@ public class EditMembersFragment extends Fragment {
             }
         }
 
-        mSelectedAdapter = new MembersAdapter(members, new MembersAdapter.ClickListener() {
-            @Override
-            public void onClick(String unique) {
-                // onClick is called after removing the item.
-                mContactsAdapter.toggleSelected(unique);
-            }
+        mSelectedAdapter = new MembersAdapter(members, unique -> {
+            // onClick is called after removing the item.
+            mContactsAdapter.toggleSelected(unique);
         }, cancelable);
         rv.setAdapter(mSelectedAdapter);
 
         // This button updates the group members.
-        view.findViewById(R.id.goNext).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                updateContacts(activity);
-            }
-        });
+        view.findViewById(R.id.goNext).setOnClickListener(view1 -> updateContacts(activity));
     }
 
     @Override
