@@ -16,7 +16,6 @@
         android:layout_margin="@dimen/fab_margin"
         android:clickable="true"
         android:focusable="true"
-        android:background="@color/button_background"
         android:contentDescription="@string/button_hint_start_new_chat"
         app:backgroundTint="@color/button_background"
         app:layout_constraintBottom_toBottomOf="parent"

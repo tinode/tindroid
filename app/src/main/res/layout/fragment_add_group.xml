@@ -39,7 +39,6 @@
         android:layout_margin="@dimen/fab_margin"
         android:clickable="true"
         android:focusable="true"
-        android:background="@color/button_background"
         app:backgroundTint="@color/button_background"
         app:elevation="@dimen/fab_elevation"
         app:layout_anchor="@id/content"
