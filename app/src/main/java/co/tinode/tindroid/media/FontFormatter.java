@@ -44,6 +44,17 @@ public class FontFormatter extends PreviewFormatter {
 
     @Override
     protected MeasuredTreeNode handleAttachment(Context ctx, Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+        try {
+            String mimeType = (String) data.get("mime");
+            if ("application/json".equals(mimeType)) {
+                // Skip JSON attachments. They are not meant to be user-visible.
+                return null;
+            }
+        } catch (ClassCastException ignored) {
+        }
         return annotatedIcon(ctx, ATTACHMENT, R.string.attachment);
     }
 

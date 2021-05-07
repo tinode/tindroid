@@ -359,8 +359,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         try {
             String mimeType = (String) data.get("mime");
             if ("application/json".equals(mimeType)) {
-                // Skip JSON attachments.
-                // They are not meant to be user-visible.
+                // Skip JSON attachments. They are not meant to be user-visible.
                 return null;
             }
         } catch (ClassCastException ignored) {

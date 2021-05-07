@@ -122,6 +122,18 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
 
     @Override
     protected MeasuredTreeNode handleImage(Context ctx, Object content, Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+
+        try {
+            String mimeType = (String) data.get("mime");
+            if ("application/json".equals(mimeType)) {
+                // Skip JSON attachments. They are not meant to be user-visible.
+                return null;
+            }
+        } catch (ClassCastException ignored) {
+        }
         return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
     }
 
