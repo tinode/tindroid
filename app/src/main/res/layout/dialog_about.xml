@@ -52,7 +52,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                tools:text="(" />
+                android:text="("
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:id="@+id/app_build"
@@ -67,7 +68,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                tools:text=")" />
+                android:text=")"
+                tools:ignore="HardcodedText" />
         </LinearLayout>
 
         <LinearLayout
