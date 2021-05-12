@@ -3,10 +3,8 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,8 +31,12 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Map;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -92,6 +94,44 @@ public class MessagesFragment extends Fragment {
     private Uri mCurrentPhotoUri;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
+
+    private final ActivityResultLauncher<String> mFileOpenerRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+        // Check if permission is granted.
+        if (isGranted) {
+            openFileSelector(getActivity());
+        }
+    });
+
+    private final ActivityResultLauncher<String[]> mImagePickerRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Try to open the image selector again.
+                openImageSelector(getActivity());
+            });
+
+    private final ActivityResultLauncher<String> mFilePickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), content -> {
+                if (content == null) {
+                    return;
+                }
+
+                final MessageActivity activity = (MessageActivity) getActivity();
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
+
+                final Bundle args = new Bundle();
+                args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, content);
+                args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
+                args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+                activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
+            });
 
     public MessagesFragment() {
     }
@@ -451,23 +491,6 @@ public class MessagesFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == ATTACH_FILE_PERMISSIONS) {
-            // Request to attach file.
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openFileSelector(getActivity());
-            }
-        } else if (requestCode == ATTACH_IMAGE_PERMISSIONS) {
-            // Request to attach image
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openImageSelector(getActivity());
-            }
-        }
-    }
-
     void setRefreshing(boolean active) {
         if (!isAdded()) {
             return;
@@ -515,8 +538,6 @@ public class MessagesFragment extends Fragment {
         invitation.setCancelable(false);
         invitation.setCanceledOnTouchOutside(false);
 
-        //final AlertDialog invitation = builder.create();
-
         View.OnClickListener l = view1 -> {
             PromisedReply<ServerMessage> response = null;
             int id = view1.getId();
@@ -542,7 +563,7 @@ public class MessagesFragment extends Fragment {
                 mTopic.updateMode(null, "-JP");
                 HashMap<String, Object> json = new HashMap<>();
                 json.put("action", "report");
-                json.put("tagret", mTopic.getName());
+                json.put("target", mTopic.getName());
                 Drafty msg = new Drafty().attachJSON(json);
                 Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
             } else {
@@ -592,31 +613,22 @@ public class MessagesFragment extends Fragment {
         }
 
         if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    ATTACH_FILE_PERMISSIONS);
+            mFileOpenerRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
             return;
         }
 
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        try {
-            startActivityForResult(
-                    Intent.createChooser(intent, getString(R.string.select_file)), ACTION_ATTACH_FILE);
-        } catch (ActivityNotFoundException ex) {
-            Toast.makeText(getActivity(), R.string.file_manager_not_found, Toast.LENGTH_SHORT).show();
-            Log.i(TAG, "Unable to open file chooser", ex);
-        }
+        mFilePickerLauncher.launch("*/*");
     }
 
-    private void openImageSelector(@Nullable Activity activity) {
+    private void openImageSelector(@Nullable final Activity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
-                    ATTACH_IMAGE_PERMISSIONS);
+        LinkedList<String> request = UiUtils.getMissingPermissions(activity,
+                new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE});
+        if (!request.isEmpty()) {
+            mImagePickerRequestPermissionLauncher.launch(request.toArray(new String[]{}));
             return;
         }
 
@@ -686,12 +698,42 @@ public class MessagesFragment extends Fragment {
         return imageFile;
     }
 
+    // Show image preview fragment.
+    private void launchImagePreview(@NonNull final Activity activity, Intent data) {
+        final MessageActivity ma = (MessageActivity) activity;
+
+        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.CAMERA}, ATTACH_IMAGE_PERMISSIONS);
+            return;
+        }
+
+        final Bundle args = new Bundle();
+        if (data == null || data.getData() == null) {
+            // Camera
+            args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
+            args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, mCurrentPhotoUri);
+            mCurrentPhotoFile = null;
+            mCurrentPhotoUri = null;
+        } else {
+            // Gallery
+            args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
+        }
+
+        args.putString(AttachmentHandler.ARG_OPERATION,AttachmentHandler.ARG_OPERATION_IMAGE);
+        args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+
+        // Show attachment preview.
+        ma.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
-                case ACTION_ATTACH_IMAGE:
-                case ACTION_ATTACH_FILE: {
+                case ACTION_ATTACH_FILE:
+                    break;
+                case ACTION_ATTACH_IMAGE: {
                     final MessageActivity activity = (MessageActivity) getActivity();
                     if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                         return;
@@ -733,6 +775,7 @@ public class MessagesFragment extends Fragment {
                 }
             }
         }
+
         super.onActivityResult(requestCode, resultCode, data);
     }
 

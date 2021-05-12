@@ -3,7 +3,6 @@ package co.tinode.tindroid;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -55,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -352,6 +352,19 @@ public class UiUtils {
                 ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
+    static LinkedList<String> getMissingPermissions(Context context, String[] permissions) {
+        LinkedList<String> missing = new LinkedList<>();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return missing;
+        }
+        for (String permission: permissions) {
+            if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                missing.add(permission);
+            }
+        }
+        return missing;
+    }
+
     static void onContactsPermissionsGranted(Activity activity) {
         Account acc = Utils.getSavedAccount(AccountManager.get(activity), Cache.getTinode().getMyId());
         if (acc == null) {
@@ -427,7 +440,6 @@ public class UiUtils {
         return "null date";
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     static void requestAvatar(@Nullable Fragment fragment) {
         if (fragment == null) {
             return;
