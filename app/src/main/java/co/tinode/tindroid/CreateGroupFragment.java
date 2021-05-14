@@ -3,7 +3,6 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -20,6 +19,10 @@ import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.android.flexbox.JustifyContent;
 
+import java.util.Map;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
@@ -53,6 +56,17 @@ public class CreateGroupFragment extends Fragment {
 
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
+
+    private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                restartLoader((StartChatActivity) getActivity());
+            });
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -172,12 +186,7 @@ public class CreateGroupFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        restartLoader();
+        restartLoader((StartChatActivity) getActivity());
     }
 
     @Override
@@ -236,8 +245,7 @@ public class CreateGroupFragment extends Fragment {
 
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
-    private void restartLoader() {
-        final StartChatActivity activity = (StartChatActivity) getActivity();
+    private void restartLoader(StartChatActivity activity) {
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
@@ -246,20 +254,8 @@ public class CreateGroupFragment extends Fragment {
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
         } else if (activity.shouldRequestReadContactsPermission()) {
             activity.setReadContactsPermissionRequested();
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
-                    UiUtils.CONTACTS_PERMISSION_ID);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission is granted
-                restartLoader();
-            }
+            mRequestPermissionLauncher.launch(new String[]{
+                    Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS});
         }
     }
 }

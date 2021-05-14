@@ -233,6 +233,11 @@ public class ImageViewFragment extends Fragment {
                                 return;
                             }
 
+                            if (mScreenRect == null) {
+                                Log.i(TAG, "Image loaded before ImageView is ready");
+                                return;
+                            }
+
                             Drawable drw = mImageView.getDrawable();
                             if (drw instanceof BitmapDrawable) {
                                 Bitmap bmp = ((BitmapDrawable) drw).getBitmap();

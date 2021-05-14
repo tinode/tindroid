@@ -155,10 +155,10 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     }
 
     static class Member {
-        String unique;
-        String name;
-        Drawable icon;
-        Boolean removable;
+        final String unique;
+        final String name;
+        final Drawable icon;
+        final Boolean removable;
 
         Member(String unique, String name, Drawable icon, boolean removable) {
             this.unique = unique;
@@ -169,7 +169,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
-        int viewType;
+        final int viewType;
         ImageView icon;
         TextView title;
         AppCompatImageButton close;
@@ -195,7 +195,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             if (user.removable && (mCancelable || !mInitialMembers.contains(user.unique))) {
                 close.setVisibility(View.VISIBLE);
                 close.setOnClickListener(view -> {
-                    int pos1 = getAdapterPosition();
+                    int pos1 = getBindingAdapterPosition();
                     Member user1 = mCurrentMembers.remove(pos1);
                     mOnCancel.onClick(user1.unique);
                     notifyItemRemoved(pos1);

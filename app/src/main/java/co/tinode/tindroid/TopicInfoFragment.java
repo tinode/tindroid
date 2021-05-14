@@ -595,12 +595,12 @@ public class TopicInfoFragment extends Fragment {
     }
 
     private static class MemberViewHolder extends RecyclerView.ViewHolder {
-        TextView name;
-        TextView extraInfo;
-        LinearLayout statusContainer;
-        TextView[] status;
-        ImageButton more;
-        AppCompatImageView icon;
+        final TextView name;
+        final TextView extraInfo;
+        final LinearLayout statusContainer;
+        final TextView[] status;
+        final ImageButton more;
+        final AppCompatImageView icon;
 
 
         MemberViewHolder(View item) {

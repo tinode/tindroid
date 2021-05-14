@@ -82,7 +82,7 @@ public class MessageActivity extends AppCompatActivity {
             Log.d(TAG, "onNotificationClick" + intent.getExtras());
         }
     };
-    BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
+    final BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         public void onReceive(Context ctx, Intent intent) {
             DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
             long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
@@ -654,7 +654,7 @@ public class MessageActivity extends AppCompatActivity {
 
     // Handler which sends "read" notifications for received messages.
     private static class NoteHandler extends Handler {
-        WeakReference<MessageActivity> ref;
+        final WeakReference<MessageActivity> ref;
 
         NoteHandler(MessageActivity activity) {
             ref = new WeakReference<>(activity);

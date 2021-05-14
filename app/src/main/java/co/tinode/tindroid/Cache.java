@@ -2,9 +2,8 @@ package co.tinode.tindroid;
 
 import android.os.Build;
 
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.FirebaseMessaging;
 
-import java.io.IOException;
 import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
@@ -42,15 +41,14 @@ public class Cache {
             TindroidApp.retainTinodeCache(sTinode);
         }
 
-        FirebaseInstanceId fbId = FirebaseInstanceId.getInstance();
+        FirebaseMessaging fbId = FirebaseMessaging.getInstance();
         //noinspection ConstantConditions: Google lies about getInstance not returning null.
         if (fbId != null) {
-            fbId.getInstanceId()
-                    .addOnSuccessListener(instanceIdResult -> {
-                        if (sTinode != null) {
-                            sTinode.setDeviceToken(instanceIdResult.getToken());
-                        }
-                    });
+            fbId.getToken().addOnSuccessListener(token -> {
+                if (sTinode != null) {
+                    sTinode.setDeviceToken(token);
+                }
+            });
         }
         return sTinode;
     }
@@ -60,12 +58,7 @@ public class Cache {
         if (sTinode != null) {
             sTinode.logout();
             sTinode = null;
-            try {
-                FirebaseInstanceId
-                        .getInstance()
-                        .deleteInstanceId();
-            } catch (IOException ignored) {
-            }
+            FirebaseMessaging.getInstance().deleteToken();
         }
     }
 

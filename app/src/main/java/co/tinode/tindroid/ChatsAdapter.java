@@ -141,7 +141,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     static class ContactDetailsLookup extends ItemDetailsLookup<String> {
-        RecyclerView mRecyclerView;
+        final RecyclerView mRecyclerView;
 
         ContactDetailsLookup(RecyclerView rv) {
             mRecyclerView = rv;
@@ -176,7 +176,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     static class ContactKeyProvider extends ItemKeyProvider<String> {
-        ChatsAdapter mAdapter;
+        final ChatsAdapter mAdapter;
 
         ContactKeyProvider(ChatsAdapter adapter) {
             super(SCOPE_MAPPED);
@@ -196,7 +196,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        int viewType;
+        final int viewType;
         TextView name;
         TextView unreadCount;
         TextView priv;
@@ -208,7 +208,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         ImageView blocked;
         ImageView archived;
 
-        ContactDetails details;
+        final ContactDetails details;
         ClickListener clickListener;
 
         ViewHolder(@NonNull View item, ClickListener cl, int viewType) {

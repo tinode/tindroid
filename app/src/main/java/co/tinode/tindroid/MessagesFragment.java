@@ -63,8 +63,6 @@ import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-import static android.app.Activity.RESULT_OK;
-
 /**
  * Fragment handling message display and message sending.
  */
@@ -72,12 +70,6 @@ public class MessagesFragment extends Fragment {
     static final String MESSAGE_TO_SEND = "messageText";
     private static final String TAG = "MessageFragment";
     private static final int MESSAGES_TO_LOAD = 24;
-
-    private static final int ACTION_ATTACH_FILE = 100;
-    private static final int ACTION_ATTACH_IMAGE = 101;
-
-    private static final int ATTACH_FILE_PERMISSIONS = 1;
-    private static final int ATTACH_IMAGE_PERMISSIONS = 2;
 
     private ComTopic<VxCard> mTopic;
 
@@ -130,7 +122,38 @@ public class MessagesFragment extends Fragment {
                 args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, content);
                 args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
                 args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+                // Show attachment preview.
                 activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
+            });
+
+    private final ActivityResultLauncher<Intent> mImagePickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result == null || result.getResultCode() != Activity.RESULT_OK) {
+                    return;
+                }
+
+                final Intent data = result.getData();
+                final MessageActivity activity = (MessageActivity) getActivity();
+                if (data == null || activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
+
+                final Bundle args = new Bundle();
+                if (data.getData() == null) {
+                    // Image from the camera.
+                    args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
+                    args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, mCurrentPhotoUri);
+                    mCurrentPhotoFile = null;
+                    mCurrentPhotoUri = null;
+                } else {
+                    // Image from the gallery.
+                    args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
+                }
+
+                args.putString(AttachmentHandler.ARG_OPERATION,AttachmentHandler.ARG_OPERATION_IMAGE);
+                args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+                // Show attachment preview.
+                activity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
             });
 
     public MessagesFragment() {
@@ -674,8 +697,8 @@ public class MessagesFragment extends Fragment {
         if (cameraIntent != null) {
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
         }
-
-        startActivityForResult(chooserIntent, ACTION_ATTACH_IMAGE);
+        mImagePickerLauncher.launch(chooserIntent);
+        // startActivityForResult(chooserIntent, ACTION_ATTACH_IMAGE);
     }
 
     private File createImageFile(Activity activity) throws IOException {
@@ -696,87 +719,6 @@ public class MessagesFragment extends Fragment {
         }
 
         return imageFile;
-    }
-
-    // Show image preview fragment.
-    private void launchImagePreview(@NonNull final Activity activity, Intent data) {
-        final MessageActivity ma = (MessageActivity) activity;
-
-        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.CAMERA}, ATTACH_IMAGE_PERMISSIONS);
-            return;
-        }
-
-        final Bundle args = new Bundle();
-        if (data == null || data.getData() == null) {
-            // Camera
-            args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
-            args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, mCurrentPhotoUri);
-            mCurrentPhotoFile = null;
-            mCurrentPhotoUri = null;
-        } else {
-            // Gallery
-            args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
-        }
-
-        args.putString(AttachmentHandler.ARG_OPERATION,AttachmentHandler.ARG_OPERATION_IMAGE);
-        args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
-
-        // Show attachment preview.
-        ma.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case ACTION_ATTACH_FILE:
-                    break;
-                case ACTION_ATTACH_IMAGE: {
-                    final MessageActivity activity = (MessageActivity) getActivity();
-                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                        return;
-                    }
-
-                    if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
-                                        Manifest.permission.CAMERA},
-                                requestCode == ACTION_ATTACH_IMAGE ?
-                                        ATTACH_IMAGE_PERMISSIONS : ATTACH_FILE_PERMISSIONS);
-                        return;
-                    }
-
-                    final Bundle args = new Bundle();
-                    if (data == null || data.getData() == null) {
-                        // Camera
-                        args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
-                        args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, mCurrentPhotoUri);
-                        mCurrentPhotoFile = null;
-                        mCurrentPhotoUri = null;
-                    } else {
-                        // Gallery
-                        args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
-                    }
-
-                    args.putString(AttachmentHandler.ARG_OPERATION,
-                            requestCode == ACTION_ATTACH_IMAGE ?
-                                    AttachmentHandler.ARG_OPERATION_IMAGE :
-                                    AttachmentHandler.ARG_OPERATION_FILE);
-                    args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
-
-                    // Show attachment preview.
-                    activity.showFragment(requestCode == ACTION_ATTACH_IMAGE ?
-                                    MessageActivity.FRAGMENT_VIEW_IMAGE :
-                                    MessageActivity.FRAGMENT_FILE_PREVIEW,
-                            args, true);
-
-                    return;
-                }
-            }
-        }
-
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private boolean sendMessage(Drafty content) {

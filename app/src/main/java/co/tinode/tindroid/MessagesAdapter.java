@@ -516,7 +516,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         holder.itemView.setOnLongClickListener(v -> {
-            int pos = holder.getAdapterPosition();
+            int pos = holder.getBindingAdapterPosition();
 
             if (mSelectedItems == null) {
                 mSelectionMode = mActivity.startSupportActionMode(mSelectionModeCallback);
@@ -530,7 +530,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         });
         holder.itemView.setOnClickListener(v -> {
             if (mSelectedItems != null) {
-                int pos = holder.getAdapterPosition();
+                int pos = holder.getBindingAdapterPosition();
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
                 updateSelectionMode();
@@ -718,21 +718,21 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        int mViewType;
-        ImageView mIcon;
-        ImageView mAvatar;
-        View mMessageBubble;
-        AppCompatImageView mDeliveredIcon;
-        TextView mText;
-        TextView mMeta;
-        TextView mUserName;
-        View mSelected;
-        View mOverlay;
-        View mProgressContainer;
-        ProgressBar mProgressBar;
-        AppCompatImageButton mCancelProgress;
-        View mProgress;
-        View mProgressResult;
+        final int mViewType;
+        final ImageView mIcon;
+        final ImageView mAvatar;
+        final View mMessageBubble;
+        final AppCompatImageView mDeliveredIcon;
+        final TextView mText;
+        final TextView mMeta;
+        final TextView mUserName;
+        final View mSelected;
+        final View mOverlay;
+        final View mProgressContainer;
+        final ProgressBar mProgressBar;
+        final AppCompatImageButton mCancelProgress;
+        final View mProgress;
+        final View mProgressResult;
 
         ViewHolder(View itemView, int viewType) {
             super(itemView);

@@ -197,7 +197,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
-        int viewType;
+        final int viewType;
         String unique;
         TextView text1;
         TextView text2;

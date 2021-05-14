@@ -290,11 +290,11 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     }
 
     class ViewHolderItem extends ViewHolder {
-        TextView name;
-        TextView contactPriv;
-        AppCompatImageView icon;
+        final TextView name;
+        final TextView contactPriv;
+        final AppCompatImageView icon;
 
-        ClickListener clickListener;
+        final ClickListener clickListener;
 
         ViewHolderItem(@NonNull View item, ClickListener cl) {
             super(item);

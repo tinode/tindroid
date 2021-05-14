@@ -1323,8 +1323,8 @@ public class UiUtils {
     }
 
     static class AccessModeLabel {
-        public int color;
-        int nameId;
+        public final int color;
+        final int nameId;
 
         AccessModeLabel(int nameId, int color) {
             this.nameId = nameId;

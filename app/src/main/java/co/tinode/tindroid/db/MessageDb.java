@@ -654,7 +654,7 @@ public class MessageDb implements BaseColumns {
         private final long topicId;
         private final int pageCount;
         private final int pageSize;
-        SQLiteDatabase mDb;
+        final SQLiteDatabase mDb;
 
         public Loader(Context context, String topic, int pageCount, int pageSize) {
             super(context);
