@@ -5,18 +5,19 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 /**
- * View to display a single conversation
+ * Starting a new chat.
  */
 public class StartChatActivity extends AppCompatActivity
         implements FindFragment.ReadContactsPermissionChecker {
@@ -25,6 +26,8 @@ public class StartChatActivity extends AppCompatActivity
     private static final int TAB_SEARCH = 0;
     private static final int TAB_NEW_GROUP = 1;
     private static final int TAB_BY_ID = 2;
+
+    private static final int[] TAB_NAMES = new int[] {R.string.find, R.string.group, R.string.by_id};
 
     // Limit the number of times permissions are requested per session.
     private boolean mReadContactsPermissionsAlreadyRequested = false;
@@ -39,6 +42,8 @@ public class StartChatActivity extends AppCompatActivity
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(R.string.action_new_chat);
+
             toolbar.setNavigationOnClickListener(v -> {
                 Intent intent = new Intent(StartChatActivity.this, ChatsActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -50,29 +55,9 @@ public class StartChatActivity extends AppCompatActivity
         TabLayout tabLayout = findViewById(R.id.tabsContacts);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
-        final ViewPager viewPager = findViewById(R.id.tabPager);
-        final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager());
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
-                final ActionBar actionBar = getSupportActionBar();
-                if (actionBar != null) {
-                    actionBar.setDisplayHomeAsUpEnabled(true);
-                    actionBar.setTitle(R.string.action_new_chat);
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
+        final ViewPager2 viewPager = findViewById(R.id.tabPager);
+        viewPager.setAdapter(new PagerAdapter(this));
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> tab.setText(TAB_NAMES[position])).attach();
     }
 
     @Override
@@ -96,41 +81,28 @@ public class StartChatActivity extends AppCompatActivity
         mReadContactsPermissionsAlreadyRequested = true;
     }
 
-    private static class PagerAdapter extends FragmentStatePagerAdapter {
-        Fragment mSearch;
-        Fragment mCreateGroup;
-        Fragment mById;
-
-        PagerAdapter(FragmentManager fm) {
-            super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+    private static class PagerAdapter extends FragmentStateAdapter {
+        PagerAdapter(FragmentActivity fa) {
+            super(fa);
         }
 
-        @Override
         @NonNull
-        public Fragment getItem(int position) {
+        @Override
+        public Fragment createFragment(int position) {
             switch (position) {
                 case TAB_SEARCH:
-                    if (mSearch == null) {
-                        mSearch = new FindFragment();
-                    }
-                    return mSearch;
+                    return new FindFragment();
                 case TAB_NEW_GROUP:
-                    if (mCreateGroup == null) {
-                        mCreateGroup = new CreateGroupFragment();
-                    }
-                    return mCreateGroup;
+                    return new CreateGroupFragment();
                 case TAB_BY_ID:
-                    if (mById == null) {
-                        mById = new AddByIDFragment();
-                    }
-                    return mById;
+                    return new AddByIDFragment();
                 default:
                     throw new IllegalArgumentException("Invalid TAB position " + position);
             }
         }
 
         @Override
-        public int getCount() {
+        public int getItemCount() {
             return COUNT_OF_TABS;
         }
     }
