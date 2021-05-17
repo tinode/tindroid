@@ -10,9 +10,9 @@
 
     <RelativeLayout
         android:id="@+id/personal"
-        android:clickable="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clickable="true"
         android:focusable="true">
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -32,8 +32,10 @@
             android:layout_alignParentTop="true"
             android:layout_toStartOf="@id/imageAvatar"
             android:maxLines="2"
-            android:textIsSelectable="true"
+            android:textIsSelectable="false"
             android:ellipsize="end"
+            android:clickable="false"
+            android:focusable="false"
             tools:text="User name" />
 
         <TextView
@@ -43,9 +45,11 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/topicTitle"
             android:fontFamily="monospace"
-            android:textIsSelectable="true"
+            android:textIsSelectable="false"
             android:typeface="monospace"
             android:ellipsize="end"
+            android:clickable="false"
+            android:focusable="false"
             tools:text="usrfv2qrUr6vAd" />
 
         <View

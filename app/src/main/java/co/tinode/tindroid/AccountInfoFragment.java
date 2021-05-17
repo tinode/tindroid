@@ -102,11 +102,9 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         if (!TextUtils.isEmpty(fn)) {
             title.setText(fn);
             title.setTypeface(null, Typeface.NORMAL);
-            title.setTextIsSelectable(true);
         } else {
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
-            title.setTextIsSelectable(false);
         }
     }
 
