@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.StringTokenizer;
 
@@ -42,6 +44,7 @@ public class AcsHelper implements Serializable {
         this.a = a != null ? a : MODE_INVALID;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return encode(a);

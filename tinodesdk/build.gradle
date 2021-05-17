@@ -46,4 +46,6 @@ dependencies {
     api 'com.fasterxml.jackson.core:jackson-annotations:2.12.3'
     //noinspection GradleDependency: 1.5.0 requires Android API 24.
     api 'org.java-websocket:Java-WebSocket:1.4.1'
+
+    implementation 'org.jetbrains:annotations:20.1.0'
 }

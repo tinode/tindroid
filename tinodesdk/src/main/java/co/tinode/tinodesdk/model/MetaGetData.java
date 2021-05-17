@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -23,7 +25,7 @@ public class MetaGetData implements Serializable {
         this.limit = limit;
     }
 
-
+    @NotNull
     @Override
     public String toString() {
         return "since=" + since + ", before=" + before + ", limit=" + limit;

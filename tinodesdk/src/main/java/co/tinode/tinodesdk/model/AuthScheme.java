@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.core.Base64Variants;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
@@ -24,6 +26,7 @@ public class AuthScheme implements Serializable {
         this.secret = secret;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return scheme + ":" + secret;

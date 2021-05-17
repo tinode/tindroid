@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.Map;
 
@@ -368,6 +370,7 @@ public class Acs implements Serializable {
         return AcsHelper.diff(given, want);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "{\"given\":" + (given != null ? " \"" + given.toString() + "\"" : " null") +

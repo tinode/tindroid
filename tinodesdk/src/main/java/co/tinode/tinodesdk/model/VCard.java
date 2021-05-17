@@ -3,6 +3,8 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -268,6 +270,7 @@ public class VCard implements Serializable, Mergeable {
             return uri.compareTo(c.uri);
         }
 
+        @NotNull
         @Override
         public String toString() {
             return type + ":" + uri;

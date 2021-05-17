@@ -5,6 +5,8 @@ import android.util.Log;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
@@ -417,8 +419,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     @Override
-    public int compareTo(Topic t) {
-        if (t == null || t.mDesc.touched == null) {
+    public int compareTo(@NotNull Topic t) {
+        if (t.mDesc.touched == null) {
             if (mDesc.touched == null) {
                 return 0;
             }
@@ -735,7 +737,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      *
      * @return true if the topic is persisted in local storage, false otherwise
      */
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     protected boolean isPersisted() {
         return getLocal() != null;
     }

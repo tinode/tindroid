@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,7 +25,7 @@ public class RFC3339Format extends SimpleDateFormat {
     // Server may generate timestamps without milliseconds.
     // SDF cannot parse optional millis. Must treat them explicitly.
     @Override
-    public Date parse(String text) throws ParseException {
+    public Date parse(@NotNull String text) throws ParseException {
         Date date;
         try {
             date = super.parse(text);

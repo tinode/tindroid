@@ -3,6 +3,8 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.LinkedList;
@@ -78,7 +80,7 @@ public class MsgGetMeta implements Serializable {
         this.what = what;
     }
 
-
+    @NotNull
     @Override
     public String toString() {
         return "[" + what + "]" +

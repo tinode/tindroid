@@ -2,6 +2,8 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -32,6 +34,7 @@ public class MetaGetSub implements Serializable {
         this.topic = topic;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "user=[" + user + "]," +
