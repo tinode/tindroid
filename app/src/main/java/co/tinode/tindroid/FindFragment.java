@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,12 +18,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
 
+import java.util.Map;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.ShareActionProvider;
 import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -67,6 +70,21 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     private CircleProgressView mProgress = null;
 
+    private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Permissions are granted.
+                FragmentActivity activity = getActivity();
+                UiUtils.onContactsPermissionsGranted(activity);
+                // Try to open the image selector again.
+                restartLoader(getActivity(), mSearchTerm);
+            });
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,8 +109,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     @Override
     public void onViewCreated(@NonNull final View fragment, Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
+        final FragmentActivity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -132,12 +150,14 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-                        if (activity != null) {
-                            mAdapter.resetFound(activity, mSearchTerm);
-                            // Refresh cursor.
-                            activity.runOnUiThread(() -> restartLoader(mSearchTerm));
+                        final FragmentActivity activity = getActivity();
+                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                            return null;
                         }
+
+                        mAdapter.resetFound(activity, mSearchTerm);
+                        // Refresh cursor.
+                        activity.runOnUiThread(() -> restartLoader(activity, mSearchTerm));
                         return null;
                     }
                 })
@@ -171,8 +191,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         menu.clear();
         inflater.inflate(R.menu.menu_contacts, menu);
 
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
+        final FragmentActivity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -266,10 +286,11 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
+        final FragmentActivity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return true;
         }
+
         Intent intent;
         int id = item.getItemId();
         if (id == R.id.action_add_contact) {
@@ -313,7 +334,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return mSearchTerm;
         }
 
-        restartLoader(query);
+        restartLoader(getActivity(), query);
 
         // Query is too short to be sent to the server.
         if (query != null && query.length() < MIN_TAG_LENGTH) {
@@ -344,8 +365,9 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         if (mProgress == null) {
             return;
         }
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
+
+        FragmentActivity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -365,8 +387,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
-    private void restartLoader(String searchTerm) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+    private void restartLoader(final FragmentActivity activity, final String searchTerm) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -379,27 +400,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         } else if (((ReadContactsPermissionChecker) activity).shouldRequestReadContactsPermission()) {
             mAdapter.setContactsPermission(false);
             ((ReadContactsPermissionChecker) activity).setReadContactsPermissionRequested();
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
-                    UiUtils.CONTACTS_PERMISSION_ID);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Sync p2p topics to Contacts.
-                AppCompatActivity activity = (AppCompatActivity) getActivity();
-                if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
-                    return;
-                }
-                // Sync contacts.
-                UiUtils.onContactsPermissionsGranted(activity);
-                // Permission is granted
-                restartLoader(mSearchTerm);
-            }
+            mRequestPermissionLauncher.launch(new String[]{Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.WRITE_CONTACTS});
         }
     }
 
@@ -426,7 +428,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     private class ContactClickListener implements FindAdapter.ClickListener {
         @Override
         public void onClick(String topicName) {
-            AppCompatActivity activity = (AppCompatActivity) getActivity();
+            FragmentActivity activity = getActivity();
+
             if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }

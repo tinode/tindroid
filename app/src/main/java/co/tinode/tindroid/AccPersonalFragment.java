@@ -19,6 +19,10 @@ import android.widget.TextView;
 
 import com.google.android.flexbox.FlexboxLayout;
 
+import java.util.Map;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -26,18 +30,35 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 
-import static android.app.Activity.RESULT_OK;
-
 /**
  * Fragment for editing current user details.
  */
-public class AccPersonalFragment extends Fragment implements ChatsActivity.FormUpdatable {
+public class AccPersonalFragment extends Fragment
+        implements ChatsActivity.FormUpdatable, UiUtils.AvatarPreviewer {
+
+    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
+            UiUtils.avatarPickerLauncher(this, this);
+
+    private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Try to open the image selector again.
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+            });
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,7 +89,7 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
     @Override
     public void onResume() {
         super.onResume();
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+        final FragmentActivity activity = getActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
 
         if (me == null || activity == null) {
@@ -80,7 +101,8 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
         activity.findViewById(R.id.topicTitle).setOnClickListener(v -> showEditAccountTitle());
 
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-                UiUtils.requestAvatar(AccPersonalFragment.this));
+            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestPermissionLauncher))
+        );
 
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
 
@@ -91,7 +113,7 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
     }
 
     @Override
-    public void updateFormValues(final AppCompatActivity activity, final MeTopic<VxCard> me) {
+    public void updateFormValues(final FragmentActivity activity, final MeTopic<VxCard> me) {
         if (activity == null) {
             return;
         }
@@ -314,17 +336,12 @@ public class AccPersonalFragment extends Fragment implements ChatsActivity.FormU
     }
 
     @Override
-    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+    public void showAvatarPreview(final Bundle args) {
         final Activity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-
-        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
-            Bundle args = new Bundle();
-            args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
-            ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_AVATAR_PREVIEW, args);
-        }
+        ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_AVATAR_PREVIEW, args);
     }
 
     @Override

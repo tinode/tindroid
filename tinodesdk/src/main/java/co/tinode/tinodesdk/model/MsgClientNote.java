@@ -11,11 +11,11 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class MsgClientNote implements Serializable {
-    public String topic; // topic to notify, required
-    public String what;  // one of "kp" (key press), "read" (read notification),
+    public final String topic; // topic to notify, required
+    public final String what;  // one of "kp" (key press), "read" (read notification),
                 // "rcpt" (received notification), any other string will cause
                 // message to be silently dropped, required
-    public Integer seq; // ID of the message being acknowledged, required for rcpt & read
+    public final Integer seq; // ID of the message being acknowledged, required for rcpt & read
 
     public MsgClientNote(String topic, String what, int seq) {
         this.topic = topic;

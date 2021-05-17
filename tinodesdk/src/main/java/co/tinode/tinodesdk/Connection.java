@@ -311,7 +311,7 @@ public class Connection extends WebSocketClient {
     }
 
     private class SNISocketFactory extends SocketFactory {
-        SocketFactory mWrapped;
+        final SocketFactory mWrapped;
 
         SNISocketFactory(SocketFactory parent) {
             mWrapped = parent;

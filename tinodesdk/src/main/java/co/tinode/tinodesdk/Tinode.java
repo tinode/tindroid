@@ -110,8 +110,8 @@ public class Tinode {
     // Periodicity of garbage collection of unresolved futures.
     private static final long EXPIRE_FUTURES_PERIOD = 1000L;
     private static final ObjectMapper sJsonMapper;
-    protected static TypeFactory sTypeFactory;
-    protected static SimpleDateFormat sDateFormat;
+    protected static final TypeFactory sTypeFactory;
+    protected static final SimpleDateFormat sDateFormat;
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -2300,8 +2300,8 @@ public class Tinode {
     }
 
     private static class LoginCredentials {
-        String scheme;
-        String secret;
+        final String scheme;
+        final String secret;
 
         LoginCredentials(String scheme, String secret) {
             this.scheme = scheme;
@@ -2311,8 +2311,8 @@ public class Tinode {
 
     // Container for storing unresolved futures.
     private static class FutureHolder {
-        PromisedReply<ServerMessage> future;
-        Date timestamp;
+        final PromisedReply<ServerMessage> future;
+        final Date timestamp;
 
         FutureHolder(PromisedReply<ServerMessage> future, Date timestamp) {
             this.future = future;

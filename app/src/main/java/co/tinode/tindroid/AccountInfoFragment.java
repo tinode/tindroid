@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
@@ -25,9 +26,6 @@ import co.tinode.tinodesdk.MeTopic;
  * Fragment for editing current user details.
  */
 public class AccountInfoFragment extends Fragment implements ChatsActivity.FormUpdatable {
-
-    private static final String TAG = "AccountInfoFragment";
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,7 +78,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
     }
 
     @Override
-    public void updateFormValues(final AppCompatActivity activity, final MeTopic<VxCard> me) {
+    public void updateFormValues(final FragmentActivity activity, final MeTopic<VxCard> me) {
         if (activity == null) {
             return;
         }

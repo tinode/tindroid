@@ -13,16 +13,16 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class MsgClientAcc<Pu,Pr> implements Serializable {
-    public String id;
-    public String user;
-    public String scheme;
-    public String secret;
+    public final String id;
+    public final String user;
+    public final String scheme;
+    public final String secret;
     // Use the new account for immediate authentication.
-    public Boolean login;
+    public final Boolean login;
     public String[] tags;
     public Credential[] cred;
     // New account parameters
-    public MetaSetDesc<Pu,Pr> desc;
+    public final MetaSetDesc<Pu,Pr> desc;
 
     public MsgClientAcc(String id, String uid, String scheme, String secret, boolean doLogin,
                         MetaSetDesc<Pu, Pr> desc) {

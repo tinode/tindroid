@@ -68,6 +68,7 @@ public class Utils {
         return account;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean loginNow(Context context) {
         String uid = BaseDb.getInstance().getUid();
         if (TextUtils.isEmpty(uid)) {

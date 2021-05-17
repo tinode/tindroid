@@ -19,7 +19,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 @SuppressWarnings("WeakerAccess")
 public class MsgRange implements Comparable<MsgRange>, Serializable {
     // The low value is required, thus it's a primitive type.
-    public int low;
+    public final int low;
     // The high value is optional.
     public Integer hi;
 

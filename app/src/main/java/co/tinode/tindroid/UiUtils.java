@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
@@ -24,6 +25,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -61,6 +63,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -71,6 +75,7 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
+
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -445,7 +450,7 @@ public class UiUtils {
             return;
         }
 
-        final Activity activity = fragment.getActivity();
+        final FragmentActivity activity = fragment.getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -461,6 +466,75 @@ public class UiUtils {
             fragment.startActivityForResult(Intent.createChooser(intent, fragment.getString(R.string.select_image)),
                     ACTIVITY_RESULT_SELECT_PICTURE);
         }
+    }
+
+    static Intent avatarSelectorIntent(@Nullable final Activity activity,
+                                           @Nullable ActivityResultLauncher<String[]> missingPermissionsLauncher) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return null;
+        }
+
+        if (missingPermissionsLauncher != null) {
+            LinkedList<String> request = getMissingPermissions(activity,
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE});
+            if (!request.isEmpty()) {
+                missingPermissionsLauncher.launch(request.toArray(new String[]{}));
+                return null;
+            }
+        }
+
+        // Option 1: pick image from the gallery.
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png", "image/gif"});
+
+        // Option 2: take a photo.
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Make sure camera is available.
+        if (cameraIntent.resolveActivity(activity.getPackageManager()) == null) {
+            cameraIntent = null;
+        }
+
+        // Pack two intents into a chooser.
+        Intent chooserIntent = Intent.createChooser(galleryIntent, activity.getString(R.string.select_image));
+        if (cameraIntent != null) {
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
+        }
+
+        return chooserIntent;
+    }
+
+    static ActivityResultLauncher<Intent> avatarPickerLauncher(@NonNull Fragment fragment,
+                                                               @NonNull AvatarPreviewer previewer) {
+        return fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result == null || result.getResultCode() != Activity.RESULT_OK) {
+                return;
+            }
+
+            final Intent data = result.getData();
+            if (data == null) {
+                return;
+            }
+
+            final Bundle args = new Bundle();
+            Bitmap photo = data.getParcelableExtra("data");
+            Uri uri = data.getData();
+            if (photo != null) {
+                // Image from the camera.
+                args.putParcelable(AttachmentHandler.ARG_SRC_BITMAP, photo);
+            } else if (uri != null){
+                // Image from the gallery.
+                args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
+            }
+
+            // Show avatar preview.
+            if (!args.isEmpty()) {
+                previewer.showAvatarPreview(args);
+            }
+        });
+    }
+
+    interface AvatarPreviewer {
+        void showAvatarPreview(Bundle args);
     }
 
     @NonNull

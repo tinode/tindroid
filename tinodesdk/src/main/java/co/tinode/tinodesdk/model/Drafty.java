@@ -9,7 +9,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -292,6 +291,7 @@ public class Drafty implements Serializable {
                 ExtractedEnt ee = new ExtractedEnt();
                 ee.at = matcher.start(0);
                 ee.value = matcher.group(0);
+                //noinspection ConstantConditions
                 ee.len = ee.value.length();
                 ee.tp = ENTITY_NAME[i];
                 ee.data = ENTITY_PROC[i].pack(matcher);
@@ -1156,8 +1156,8 @@ public class Drafty implements Serializable {
     }
 
     private static abstract class EntityProc {
-        String name;
-        Pattern re;
+        final String name;
+        final Pattern re;
 
         EntityProc(String name, Pattern patten) {
             this.name = name;

@@ -64,6 +64,7 @@ public class AttachmentHandler extends Worker {
     final static String ARG_SRC_LOCAL_URI = "local_uri";
     final static String ARG_SRC_REMOTE_URI = "remote_url";
     final static String ARG_SRC_BYTES = "bytes";
+    final static String ARG_SRC_BITMAP = "bitmap";
 
     final static String ARG_FILE_PATH = "filePath";
     final static String ARG_FILE_NAME = "fileName";

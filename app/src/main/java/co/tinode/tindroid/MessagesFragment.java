@@ -648,10 +648,10 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        LinkedList<String> request = UiUtils.getMissingPermissions(activity,
+        LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE});
-        if (!request.isEmpty()) {
-            mImagePickerRequestPermissionLauncher.launch(request.toArray(new String[]{}));
+        if (!missing.isEmpty()) {
+            mImagePickerRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
         }
 
@@ -698,7 +698,6 @@ public class MessagesFragment extends Fragment {
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
         }
         mImagePickerLauncher.launch(chooserIntent);
-        // startActivityForResult(chooserIntent, ACTION_ATTACH_IMAGE);
     }
 
     private File createImageFile(Activity activity) throws IOException {

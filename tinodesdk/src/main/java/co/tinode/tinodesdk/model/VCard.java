@@ -210,7 +210,7 @@ public class VCard implements Serializable, Mergeable {
 
     public static class Contact implements Serializable, Comparable<Contact> {
         public String type;
-        public String uri;
+        public final String uri;
 
         private ContactType tp;
 

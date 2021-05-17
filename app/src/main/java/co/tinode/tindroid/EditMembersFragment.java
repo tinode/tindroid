@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,7 +16,11 @@ import com.google.android.flexbox.JustifyContent;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -52,6 +55,21 @@ public class EditMembersFragment extends Fragment {
     private ImageLoader mImageLoader;
 
     private ContactsLoaderCallback mContactsLoaderCallback;
+
+    private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Permissions are granted.
+                FragmentActivity activity = getActivity();
+                UiUtils.onContactsPermissionsGranted(activity);
+                // Try to open the image selector again.
+                restartLoader(getActivity());
+            });
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -144,7 +162,7 @@ public class EditMembersFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        restartLoader();
+        restartLoader(getActivity());
     }
 
     @Override
@@ -156,17 +174,16 @@ public class EditMembersFragment extends Fragment {
 
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
-    private void restartLoader() {
-        final FragmentActivity activity = getActivity();
+    private void restartLoader(final FragmentActivity activity) {
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
-
-        if (UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS)) {
+        List<String> missing = UiUtils.getMissingPermissions(activity,
+                new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS});
+        if (missing.isEmpty()) {
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
         } else {
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS},
-                    UiUtils.CONTACTS_PERMISSION_ID);
+            mRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
         }
     }
 
@@ -187,24 +204,6 @@ public class EditMembersFragment extends Fragment {
         } catch (Exception ex) {
             Log.w(TAG, "Failed to change member's status", ex);
             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == UiUtils.CONTACTS_PERMISSION_ID) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Sync p2p topics to Contacts.
-                Activity activity = getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                    return;
-                }
-                UiUtils.onContactsPermissionsGranted(activity);
-                // Permission is granted
-                restartLoader();
-            }
         }
     }
 }

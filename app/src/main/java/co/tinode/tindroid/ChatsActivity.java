@@ -13,6 +13,7 @@ import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import co.tinode.tindroid.account.ContactsManager;
@@ -31,7 +32,8 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * This activity owns 'me' topic.
  */
-public class ChatsActivity extends AppCompatActivity implements UiUtils.ProgressIndicator {
+public class ChatsActivity extends AppCompatActivity
+        implements UiUtils.ProgressIndicator, UiUtils.AvatarPreviewer {
 
     static final String TAG_FRAGMENT_NAME = "fragment";
     static final String FRAGMENT_CHATLIST = "contacts";
@@ -129,6 +131,11 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
         return true;
     }
 
+    @Override
+    public void showAvatarPreview(Bundle args) {
+        showFragment(FRAGMENT_AVATAR_PREVIEW, args);
+    }
+
     void showFragment(String tag, Bundle args) {
         if (isFinishing() || isDestroyed()) {
             return;
@@ -199,7 +206,7 @@ public class ChatsActivity extends AppCompatActivity implements UiUtils.Progress
     }
 
     interface FormUpdatable {
-        void updateFormValues(final AppCompatActivity activity, final MeTopic<VxCard> me);
+        void updateFormValues(final FragmentActivity activity, final MeTopic<VxCard> me);
     }
 
     // This is called on Websocket thread.

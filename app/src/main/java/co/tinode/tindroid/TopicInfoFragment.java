@@ -29,6 +29,8 @@ import android.widget.Toast;
 import java.util.Collection;
 import java.util.HashMap;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
@@ -37,6 +39,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.media.VxCard;
@@ -74,6 +77,9 @@ public class TopicInfoFragment extends Fragment {
     private MembersAdapter mMembersAdapter;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
+
+    private final ActivityResultLauncher<String[]> mRequestPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {});
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -444,9 +450,8 @@ public class TopicInfoFragment extends Fragment {
                             startActivity(intent);
                         }
                     } else {
-                        Log.i(TAG, "Missing READ_CONTACTS permissions");
-                        requestPermissions(new String[]{Manifest.permission.READ_CONTACTS,
-                                Manifest.permission.WRITE_CONTACTS}, UiUtils.CONTACTS_PERMISSION_ID);
+                        mRequestPermissionsLauncher.launch(new String[]{Manifest.permission.READ_CONTACTS,
+                                Manifest.permission.WRITE_CONTACTS});
                         Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
                     }
                 } else if (id == R.id.buttonSendMessage) {
@@ -707,7 +712,7 @@ public class TopicInfoFragment extends Fragment {
                     sub.pub != null ? sub.pub.fn : null, sub.user));
 
             final View.OnClickListener action = v -> {
-                int position1 = holder.getAdapterPosition();
+                int position1 = holder.getBindingAdapterPosition();
                 final Subscription<VxCard, PrivateType> sub1 = mItems[position1];
                 VxCard pub = mTopic.getPub();
                 showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub1.user,

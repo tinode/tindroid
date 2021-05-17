@@ -186,13 +186,20 @@ public class ImageViewFragment extends Fragment {
             fileName = getResources().getString(R.string.tinode_image);
         }
 
-        Bitmap bmp = null;
-        byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
-        if (bits != null) {
-            // View received image.
-            bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-        } else {
-            // Preview before sending.
+        // Check if the bitmap is directly attached.
+        int length = 0;
+        Bitmap bmp = args.getParcelable(AttachmentHandler.ARG_SRC_BITMAP);
+        if (bmp == null) {
+            // Check if bitmap is attached as an array of bytes (received).
+            byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
+            if (bits != null) {
+                bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                length = bits.length;
+            }
+        }
+
+        if (bmp == null) {
+            // Preview large image before sending.
             Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
             if (uri != null) {
                 final ContentResolver resolver = activity.getContentResolver();
@@ -271,12 +278,12 @@ public class ImageViewFragment extends Fragment {
 
             mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
             mWorkingRect = new RectF(mInitialRect);
-            if (bits == null) {
+            if (length == 0) {
                 // The image is being previewed before sending or uploading.
                 setupImagePreview(activity);
             } else {
                 // The image is downloaded.
-                setupImagePostview(activity, args, fileName, bits.length);
+                setupImagePostview(activity, args, fileName, length);
             }
 
             mImageView.setImageDrawable(new BitmapDrawable(getResources(), bmp));

@@ -21,6 +21,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
@@ -144,7 +145,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
     }
 
     @Override
-    public void updateFormValues(final AppCompatActivity activity, final MeTopic<VxCard> me) {
+    public void updateFormValues(final FragmentActivity activity, final MeTopic<VxCard> me) {
         if (activity == null) {
             return;
         }

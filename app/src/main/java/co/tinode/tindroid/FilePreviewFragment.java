@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,6 +16,8 @@ import android.widget.TextView;
 import java.util.HashMap;
 import java.util.Map;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
@@ -29,8 +30,6 @@ public class FilePreviewFragment extends Fragment {
     private static final int DEFAULT_ICON_ID = R.drawable.ic_file;
     private static final int INVALID_ICON_ID = R.drawable.ic_file_alert;
 
-    private static final int READ_STORAGE_PERMISSION = 1;
-
     static {
         sMime2Icon = new HashMap<>();
         sMime2Icon.put("image", R.drawable.ic_image);
@@ -40,6 +39,14 @@ public class FilePreviewFragment extends Fragment {
 
     private ImageView mImageView;
     private ImageButton mSendButton;
+
+    private final ActivityResultLauncher<String> mRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                // Check if permission is granted.
+                if (isGranted) {
+                    updateFormValues(getActivity(), getArguments(), null, true);
+                }
+            });
 
     private static int getIconIdForMimeType(String mime) {
         if (TextUtils.isEmpty(mime)) {
@@ -88,8 +95,7 @@ public class FilePreviewFragment extends Fragment {
 
         if (!UiUtils.isPermissionGranted(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
             accessGranted = false;
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    READ_STORAGE_PERMISSION);
+            mRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
         } else {
             Log.i(TAG, "Can read external storage");
             accessGranted = true;
@@ -106,17 +112,6 @@ public class FilePreviewFragment extends Fragment {
             mSendButton.setEnabled(false);
         }
         setHasOptionsMenu(false);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == READ_STORAGE_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                updateFormValues(getActivity(), getArguments(), null, true);
-            }
-        }
     }
 
     private void updateFormValues(Activity activity, Bundle args, Uri uri, boolean accessGranted) {
