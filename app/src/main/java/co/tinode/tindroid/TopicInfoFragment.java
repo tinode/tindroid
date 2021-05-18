@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -28,6 +27,7 @@ import android.widget.Toast;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -36,6 +36,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -56,12 +57,10 @@ import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
-import static android.app.Activity.RESULT_OK;
-
 /**
  * Topic Info fragment: p2p or a group topic.
  */
-public class TopicInfoFragment extends Fragment {
+public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreviewer {
 
     private static final String TAG = "TopicInfoFragment";
 
@@ -78,7 +77,22 @@ public class TopicInfoFragment extends Fragment {
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
-    private final ActivityResultLauncher<String[]> mRequestPermissionsLauncher =
+    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
+            UiUtils.avatarPickerLauncher(this, this);
+
+    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Try to open the image selector again.
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+            });
+
+    private final ActivityResultLauncher<String[]> mRequestContactsPermissionsLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {});
 
     @Override
@@ -95,7 +109,7 @@ public class TopicInfoFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
         }
@@ -112,7 +126,7 @@ public class TopicInfoFragment extends Fragment {
         // Set up listeners
 
         view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-                UiUtils.requestAvatar(TopicInfoFragment.this));
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher)));
 
         final SwitchCompat muted = view.findViewById(R.id.switchMuted);
         muted.setOnCheckedChangeListener((buttonView, isChecked) ->
@@ -194,7 +208,7 @@ public class TopicInfoFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         final Bundle args = getArguments();
 
         if (activity == null || args == null) {
@@ -304,7 +318,7 @@ public class TopicInfoFragment extends Fragment {
 
     // Dialog for editing pub.fn and priv
     private void showEditTopicText() {
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -352,7 +366,7 @@ public class TopicInfoFragment extends Fragment {
                                         final String uid,
                                         int title_id, int message_id,
                                         final int what) {
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
         }
@@ -410,7 +424,7 @@ public class TopicInfoFragment extends Fragment {
 
     // Dialog-menu with actions for individual subscribers, like "send message", "change permissions", "ban", etc.
     private void showMemberAction(final String topicTitle, final String userTitle, final String uid, final String mode) {
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
         }
@@ -450,7 +464,7 @@ public class TopicInfoFragment extends Fragment {
                             startActivity(intent);
                         }
                     } else {
-                        mRequestPermissionsLauncher.launch(new String[]{Manifest.permission.READ_CONTACTS,
+                        mRequestContactsPermissionsLauncher.launch(new String[]{Manifest.permission.READ_CONTACTS,
                                 Manifest.permission.WRITE_CONTACTS});
                         Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
                     }
@@ -504,7 +518,7 @@ public class TopicInfoFragment extends Fragment {
     }
 
     void notifyDataSetChanged() {
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -518,8 +532,7 @@ public class TopicInfoFragment extends Fragment {
 
     // Called when topic description is changed.
     private void notifyContentChanged() {
-
-        final Activity activity = getActivity();
+        final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -580,23 +593,19 @@ public class TopicInfoFragment extends Fragment {
     }
 
     @Override
-    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        // Execution has to be delayed because the topic is not yet subscribed:
-        // The image selection activity was on top while MessageActivity was paused. It just got
-        // unpaused and did not have time to re-subscribe.
-        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
-            final MessageActivity activity = (MessageActivity) getActivity();
-            if (activity != null) {
-                activity.submitForExecution(() -> UiUtils.updateAvatar(activity, mTopic, data));
-            }
-        }
-    }
-
-    @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         // inflater.inflate(R.menu.menu_topic_info, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void showAvatarPreview(Bundle args) {
+        final FragmentActivity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_AVATAR_PREVIEW, args, true);
     }
 
     private static class MemberViewHolder extends RecyclerView.ViewHolder {
@@ -671,7 +680,7 @@ public class TopicInfoFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull final MemberViewHolder holder, int position) {
-            final Activity activity = getActivity();
+            final FragmentActivity activity = getActivity();
             if (activity == null) {
                 return;
             }

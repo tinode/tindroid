@@ -42,6 +42,7 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import co.tinode.tindroid.widgets.OverlaidImageView;
 import co.tinode.tinodesdk.MeTopic;
+import co.tinode.tinodesdk.Topic;
 
 /**
  * Fragment for expanded display of an image: being attached or received.
@@ -466,11 +467,16 @@ public class ImageViewFragment extends Fragment {
             bmp = Bitmap.createBitmap(bmp, (int) cutOut.left, (int) cutOut.top,
                     (int) cutOut.width(), (int) cutOut.height());
         }
-        // TODO: upload avatar
 
-        final MeTopic me = Cache.getTinode().getMeTopic();
-        // noinspection unchecked
-        UiUtils.updateAvatar(activity, me, bmp);
+        // TODO: add support for uploading avatar out of band.
+
+        // If topic name is provided, assume it's updating the topic's description, otherwise user's profile.
+        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
+        final Topic topic = TextUtils.isEmpty(topicName) ? Cache.getTinode().getMeTopic() :
+                Cache.getTinode().getTopic(topicName);
+
+        //noinspection unchecked
+        UiUtils.updateAvatar(activity, topic, bmp);
 
         activity.getSupportFragmentManager().popBackStack();
     }

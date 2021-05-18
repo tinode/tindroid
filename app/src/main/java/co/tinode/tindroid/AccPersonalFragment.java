@@ -46,7 +46,7 @@ public class AccPersonalFragment extends Fragment
     private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
             UiUtils.avatarPickerLauncher(this, this);
 
-    private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
+    private final ActivityResultLauncher<String[]> mRequestPermissionsLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     // Check if all required permissions are granted.
@@ -101,7 +101,7 @@ public class AccPersonalFragment extends Fragment
         activity.findViewById(R.id.topicTitle).setOnClickListener(v -> showEditAccountTitle());
 
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestPermissionLauncher))
+            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestPermissionsLauncher))
         );
 
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());

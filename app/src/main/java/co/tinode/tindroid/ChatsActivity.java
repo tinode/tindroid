@@ -163,7 +163,6 @@ public class ChatsActivity extends AppCompatActivity
                         args = new Bundle();
                     }
                     args.putBoolean(AttachmentHandler.ARG_AVATAR, true);
-                    fragment.setArguments(args);
                     break;
                 case FRAGMENT_ACC_SECURITY:
                     fragment = new AccSecurityFragment();
@@ -178,13 +177,23 @@ public class ChatsActivity extends AppCompatActivity
                         args = new Bundle();
                     }
                     args.putBoolean(tag, true);
-                    fragment.setArguments(args);
                     break;
                 case FRAGMENT_CHATLIST:
                     fragment = new ChatsFragment();
                     break;
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);
+            }
+        } else if (args == null) {
+            // Retain old arguments.
+            args = fragment.getArguments();
+        }
+
+        if (args != null) {
+            if (fragment.getArguments() != null) {
+                fragment.getArguments().putAll(args);
+            } else {
+                fragment.setArguments(args);
             }
         }
 
