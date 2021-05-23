@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -59,7 +60,8 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * View to display a single conversation
  */
-public class MessageActivity extends AppCompatActivity {
+public class MessageActivity extends AppCompatActivity
+        implements ImageViewFragment.AvatarCompletionHandler {
     private static final String TAG = "MessageActivity";
 
     static final String FRAGMENT_MESSAGES = "msg";
@@ -664,6 +666,12 @@ public class MessageActivity extends AppCompatActivity {
             Message msg = mNoteReadHandler.obtainMessage(0, seq, 0, mTopicName);
             mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
         }
+    }
+
+    @Override
+    public void onAcceptAvatar(String topicName, Bitmap avatar) {
+        //noinspection unchecked
+        UiUtils.updateAvatar(this, Cache.getTinode().getTopic(topicName), avatar);
     }
 
     // Handler which sends "read" notifications for received messages.

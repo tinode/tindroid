@@ -27,6 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -37,12 +38,10 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-import static android.app.Activity.RESULT_OK;
-
 /**
  * Fragment for adding/editing a group topic
  */
-public class CreateGroupFragment extends Fragment {
+public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPreviewer {
 
     private static final String TAG = "CreateGroupFragment";
     private static final int LOADER_ID = 102;
@@ -57,7 +56,22 @@ public class CreateGroupFragment extends Fragment {
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
 
-    private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
+    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
+            UiUtils.avatarPickerLauncher(this, this);
+
+    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Try to open the image selector again.
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+            });
+
+    private final ActivityResultLauncher<String[]> mRequestContactsPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     // Check if all required permissions are granted.
@@ -106,8 +120,12 @@ public class CreateGroupFragment extends Fragment {
             }
         };
 
+        AvatarViewModel avatarVM = new ViewModelProvider(activity).get(AvatarViewModel.class);
+        avatarVM.getAvatar().observe(getViewLifecycleOwner(), bmp ->
+            UiUtils.acceptAvatar(activity, view.findViewById(R.id.imageAvatar), bmp));
+
         view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-                UiUtils.requestAvatar(CreateGroupFragment.this));
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher)));
 
         // Recycler view with selected contacts.
         RecyclerView rv = view.findViewById(R.id.selected_members);
@@ -198,18 +216,6 @@ public class CreateGroupFragment extends Fragment {
         mImageLoader.setPauseWork(false);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.acceptAvatar(getActivity(), activity.findViewById(R.id.imageAvatar), data);
-        }
-    }
-
     private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle,
                              final boolean isChannel, final String[] tags, final String[] members) {
         final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), null, isChannel);
@@ -254,8 +260,18 @@ public class CreateGroupFragment extends Fragment {
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
         } else if (activity.shouldRequestReadContactsPermission()) {
             activity.setReadContactsPermissionRequested();
-            mRequestPermissionLauncher.launch(new String[]{
+            mRequestContactsPermissionLauncher.launch(new String[]{
                     Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS});
         }
+    }
+
+    @Override
+    public void showAvatarPreview(Bundle args) {
+        StartChatActivity activity = (StartChatActivity) getActivity();
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+            return;
+        }
+
+        activity.showFragment(StartChatActivity.FRAGMENT_AVATAR_PREVIEW, args, true);
     }
 }

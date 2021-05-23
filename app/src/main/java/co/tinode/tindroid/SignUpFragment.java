@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -13,10 +12,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import java.util.Map;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
@@ -28,12 +33,27 @@ import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-import static android.app.Activity.RESULT_OK;
-
 /**
  * Fragment for managing registration of a new account.
  */
-public class SignUpFragment extends Fragment implements View.OnClickListener {
+public class SignUpFragment extends Fragment
+        implements View.OnClickListener, UiUtils.AvatarPreviewer {
+
+    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
+            UiUtils.avatarPickerLauncher(this, this);
+
+    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Try to open the image selector again.
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+            });
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -52,34 +72,36 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
 
         View fragment = inflater.inflate(R.layout.fragment_signup, container, false);
 
+        // Get avatar from the gallery or photo camera.
+        fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(),
+                        mRequestAvatarPermissionsLauncher)));
+        // Handle click on the sign up button.
         fragment.findViewById(R.id.signUp).setOnClickListener(this);
 
         return fragment;
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-
-        Activity activity = getActivity();
-        if (activity == null) {
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        final LoginActivity parent = (LoginActivity) getActivity();
+        if (parent == null || parent.isFinishing() || parent.isDestroyed()) {
             return;
         }
 
-        // Get avatar from the gallery
-        // TODO(gene): add support for taking a picture
-        view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-                UiUtils.requestAvatar(SignUpFragment.this));
+        AvatarViewModel avatarVM = new ViewModelProvider(parent).get(AvatarViewModel.class);
+        avatarVM.getAvatar().observe(getViewLifecycleOwner(), bmp ->
+            UiUtils.acceptAvatar(parent, parent.findViewById(R.id.imageAvatar), bmp)
+        );
     }
 
     /**
-     * Create new account with various methods
-     *
-     * @param v button pressed
+     * Create new account.
      */
     @Override
     public void onClick(View v) {
         final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null) {
+        if (parent == null || parent.isFinishing() || parent.isDestroyed()) {
             return;
         }
 
@@ -156,11 +178,14 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                                         AuthScheme.basicInstance(login, password).toString(),
                                         tinode.getAuthToken(), tinode.getAuthTokenExpiration());
 
+                                // Remove used avatar from the view model.
+                                new ViewModelProvider(parent).get(AvatarViewModel.class).clear();
+
                                 // Flip back to login screen on success;
                                 parent.runOnUiThread(() -> {
                                     if (msg.ctrl.code >= 300 && msg.ctrl.text.contains("validate credentials")) {
                                         signUp.setEnabled(true);
-                                        parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
+                                        parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS, null);
                                     } else {
                                         // We are requesting immediate login with the new account.
                                         // If the action succeeded, assume we have logged in.
@@ -175,7 +200,7 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
                         new PromisedReply.FailureListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                if (parent.isFinishing() || parent.isDestroyed()) {
+                                if (!SignUpFragment.this.isVisible()) {
                                     return null;
                                 }
                                 final String cause = ((ServerResponseException) err).getReason();
@@ -203,14 +228,11 @@ public class SignUpFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        final Activity activity = getActivity();
-        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+    public void showAvatarPreview(Bundle args) {
+        final FragmentActivity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-
-        if (requestCode == UiUtils.ACTIVITY_RESULT_SELECT_PICTURE && resultCode == RESULT_OK) {
-            UiUtils.acceptAvatar(activity, activity.findViewById(R.id.imageAvatar), data);
-        }
+        ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_AVATAR_PREVIEW, args);
     }
 }

@@ -237,68 +237,68 @@
             android:layout_marginBottom="@dimen/activity_padding"
             android:background="@color/grey" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/buttonClearMessages"
             style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="4dp"
-            android:drawableTint="?android:textColorPrimary"
+            app:drawableTint="?android:textColorPrimary"
             android:text="@string/clear_messages"
             android:textColor="?android:textColorPrimary"
             app:drawableStartCompat="@drawable/ic_delete" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/buttonLeave"
             style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="4dp"
-            android:drawableTint="?android:textColorPrimary"
+            app:drawableTint="?android:textColorPrimary"
             android:text="@string/leave_conversation"
             android:textColor="?android:textColorPrimary"
             app:drawableStartCompat="@drawable/ic_exit" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/buttonDeleteGroup"
             style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="4dp"
-            android:drawableTint="@color/colorDanger"
+            app:drawableTint="@color/colorDanger"
             android:text="@string/delete_group"
             android:textColor="@color/colorDanger"
             app:drawableStartCompat="@drawable/ic_delete_red" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/buttonBlock"
             style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="4dp"
-            android:drawableTint="@color/colorDanger"
+            app:drawableTint="@color/colorDanger"
             android:text="@string/block_contact"
             android:textColor="@color/colorDanger"
             app:drawableStartCompat="@drawable/ic_block_red" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/buttonReportContact"
             style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="4dp"
-            android:drawableTint="@color/colorDanger"
+            app:drawableTint="@color/colorDanger"
             android:text="@string/report_contact"
             android:textColor="@color/colorDanger"
             app:drawableStartCompat="@drawable/ic_report_red" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/buttonReportGroup"
             style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="4dp"
-            android:drawableTint="@color/colorDanger"
+            app:drawableTint="@color/colorDanger"
             android:text="@string/report_group"
             android:textColor="@color/colorDanger"
             app:drawableStartCompat="@drawable/ic_report_red" />
@@ -323,14 +323,14 @@
                 android:layout_height="wrap_content"
                 android:text="@string/group_members" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/buttonAddMembers"
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/manage_members"
                 android:drawablePadding="4sp"
-                android:drawableTint="?android:textColorPrimary"
+                app:drawableTint="?android:textColorPrimary"
                 android:text="@string/add_members"
                 android:textColor="?android:textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_person_add" />

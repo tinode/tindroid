@@ -11,7 +11,7 @@
     android:visibility="visible"
     tools:ignore="RtlSymmetry">
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/attachImage"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -20,10 +20,10 @@
         android:contentDescription="@string/send_image_button_hint"
         android:paddingLeft="6sp"
         android:paddingRight="6sp"
-        android:tint="?attr/colorAccent"
+        app:tint="?attr/colorAccent"
         app:srcCompat="@drawable/ic_photo"/>
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/attachFile"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -32,7 +32,7 @@
         android:contentDescription="@string/send_file_button_hint"
         android:paddingLeft="6sp"
         android:paddingRight="6sp"
-        android:tint="?attr/colorAccent"
+        app:tint="?attr/colorAccent"
         app:srcCompat="@drawable/ic_attach"/>
 
     <EditText
@@ -47,7 +47,7 @@
         android:maxLines="3"
         android:importantForAutofill="no" />
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/chatSendButton"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -56,7 +56,7 @@
         android:contentDescription="@string/send_message_button_hint"
         android:paddingStart="4sp"
         android:paddingEnd="8sp"
-        android:tint="?attr/colorAccent"
+        app:tint="?attr/colorAccent"
         app:srcCompat="@drawable/ic_send"/>
 
 </LinearLayout>

@@ -1,7 +1,7 @@
 package co.tinode.tindroid;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import com.google.android.material.tabs.TabLayout;
@@ -13,6 +13,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -20,22 +23,30 @@ import androidx.viewpager2.widget.ViewPager2;
  * Starting a new chat.
  */
 public class StartChatActivity extends AppCompatActivity
-        implements FindFragment.ReadContactsPermissionChecker {
+        implements FindFragment.ReadContactsPermissionChecker, ImageViewFragment.AvatarCompletionHandler {
 
     private static final int COUNT_OF_TABS = 3;
     private static final int TAB_SEARCH = 0;
     private static final int TAB_NEW_GROUP = 1;
     private static final int TAB_BY_ID = 2;
 
+    static final String FRAGMENT_TABS = "tabs";
+    static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
+
     private static final int[] TAB_NAMES = new int[] {R.string.find, R.string.group, R.string.by_id};
 
     // Limit the number of times permissions are requested per session.
     private boolean mReadContactsPermissionsAlreadyRequested = false;
 
+    private AvatarViewModel mAvatarVM;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
+
+        // Add the default fragment.
+        showFragment(FRAGMENT_TABS, null, false);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -52,25 +63,13 @@ public class StartChatActivity extends AppCompatActivity
             });
         }
 
-        TabLayout tabLayout = findViewById(R.id.tabsContacts);
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
+        final TabLayout tabLayout = findViewById(R.id.tabsCreationOptions);
         final ViewPager2 viewPager = findViewById(R.id.tabPager);
         viewPager.setAdapter(new PagerAdapter(this));
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> tab.setText(TAB_NAMES[position])).attach();
-    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == UiUtils.READ_EXTERNAL_STORAGE_PERMISSION) {
-            // If request is canceled, the result arrays are empty.
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                UiUtils.requestAvatar(getSupportFragmentManager().findFragmentById(R.id.contentFragment));
-            }
-        }
+        // Initialize View Model to store avatar bitmap before it's sent to the server.
+        mAvatarVM = new ViewModelProvider(this).get(AvatarViewModel.class);
     }
 
     public boolean shouldRequestReadContactsPermission() {
@@ -80,6 +79,55 @@ public class StartChatActivity extends AppCompatActivity
     public void setReadContactsPermissionRequested() {
         mReadContactsPermissionsAlreadyRequested = true;
     }
+
+    @Override
+    public void onAcceptAvatar(String topicName, Bitmap avatar) {
+        if (isDestroyed() || isFinishing()) {
+            return;
+        }
+
+        mAvatarVM.setAvatar(avatar);
+    }
+
+    void showFragment(String tag, Bundle args, Boolean addToBackstack) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentByTag(tag);
+        if (fragment == null) {
+            switch (tag) {
+                case FRAGMENT_TABS:
+                    fragment = new LoginFragment();
+                    break;
+                case FRAGMENT_AVATAR_PREVIEW:
+                    fragment = new ImageViewFragment();
+                    if (args == null) {
+                        args = new Bundle();
+                    }
+                    args.putBoolean(AttachmentHandler.ARG_AVATAR, true);
+                    break;
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
+
+        if (fragment.getArguments() != null) {
+            fragment.getArguments().putAll(args);
+        } else {
+            fragment.setArguments(args);
+        }
+
+        FragmentTransaction tx = fm.beginTransaction()
+                .replace(R.id.contentFragment, fragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        if (addToBackstack) {
+            tx = tx.addToBackStack(null);
+        }
+        tx.commitAllowingStateLoss();
+    }
+
 
     private static class PagerAdapter extends FragmentStateAdapter {
         PagerAdapter(FragmentActivity fa) {

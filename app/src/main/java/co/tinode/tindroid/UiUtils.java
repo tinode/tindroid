@@ -647,18 +647,18 @@ public class UiUtils {
         }
     }
 
-    static void acceptAvatar(final Activity activity, final ImageView avatar, final Intent data) {
-        if (activity == null || avatar == null) {
+    static void acceptAvatar(final Activity activity, final ImageView avatarContainer, final Bitmap avatar) {
+        if (activity == null || avatarContainer == null) {
             return;
         }
 
-        final Bitmap bmp = extractBitmap(activity, data);
-        if (bmp == null) {
+        if (avatar == null) {
             Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
             return;
         }
 
-        avatar.setImageDrawable(new RoundImageDrawable(avatar.getResources(), scaleSquareBitmap(bmp)));
+        avatarContainer.setImageDrawable(new RoundImageDrawable(avatarContainer.getResources(),
+                scaleSquareBitmap(avatar)));
     }
 
     // Construct avatar drawable: use bitmap if it is not null,
@@ -1056,6 +1056,7 @@ public class UiUtils {
             pub = new VxCard();
         }
 
+        // TODO: add support for uploading avatar out of band.
         pub.setBitmap(scaleSquareBitmap(bmp));
         topic.setDescription(pub, null).thenCatch(new ToastFailureListener(activity));
     }

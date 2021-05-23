@@ -165,7 +165,7 @@
                 android:layout_weight="1"
                 android:background="@color/colorGray" />
 
-            <ImageButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/chatSendButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -174,7 +174,7 @@
                 android:contentDescription="@string/send_message_button_hint"
                 android:paddingStart="4sp"
                 android:paddingEnd="8sp"
-                android:tint="?attr/colorAccent"
+                app:tint="?attr/colorAccent"
                 app:srcCompat="@drawable/ic_send" />
         </LinearLayout>
 

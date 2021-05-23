@@ -70,8 +70,8 @@
         android:textSize="@dimen/button_text"
         android:textColor="@color/white"
         android:enabled="true"
-        app:backgroundTint="@color/button_background"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        app:backgroundTint="@color/button_background" />
 
     <Button
         android:id="@+id/forgotPassword"
@@ -80,7 +80,6 @@
         android:layout_height="wrap_content"
         android:text="@string/forgot_password"
         android:layout_below="@+id/signIn"
-        android:layout_centerHorizontal="true"
-        />
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

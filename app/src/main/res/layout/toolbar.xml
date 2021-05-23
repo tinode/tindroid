@@ -9,10 +9,10 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        app:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:contentInsetStartWithNavigation="4dp"
-        app:subtitleTextAppearance="@style/ToolbarSubtitleAppearance"
-        app:popupTheme="@style/AppTheme.PopupOverlay" />
+        app:popupTheme="@style/AppTheme.PopupOverlay"
+        app:subtitleTextAppearance="@style/ToolbarSubtitleAppearance" />
 
     <View
         android:layout_width="match_parent"

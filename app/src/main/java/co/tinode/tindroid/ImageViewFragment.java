@@ -468,15 +468,8 @@ public class ImageViewFragment extends Fragment {
                     (int) cutOut.width(), (int) cutOut.height());
         }
 
-        // TODO: add support for uploading avatar out of band.
-
-        // If topic name is provided, assume it's updating the topic's description, otherwise user's profile.
         String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
-        final Topic topic = TextUtils.isEmpty(topicName) ? Cache.getTinode().getMeTopic() :
-                Cache.getTinode().getTopic(topicName);
-
-        //noinspection unchecked
-        UiUtils.updateAvatar(activity, topic, bmp);
+        ((AvatarCompletionHandler) activity).onAcceptAvatar(topicName, bmp);
 
         activity.getSupportFragmentManager().popBackStack();
     }
@@ -501,5 +494,9 @@ public class ImageViewFragment extends Fragment {
             top = Math.min(Math.max(bounds.top, top), bounds.top + bounds.height() - mWorkingRect.height());
         }
         return top - mWorkingRect.top;
+    }
+
+    public interface AvatarCompletionHandler {
+        void onAcceptAvatar(String topicName, Bitmap avatar);
     }
 }

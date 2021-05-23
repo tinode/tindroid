@@ -29,7 +29,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/topic_tags_description" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/buttonManageTags"
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
@@ -37,7 +37,7 @@
                 android:contentDescription="@string/manage"
                 android:drawablePadding="4sp"
                 android:text="@string/manage"
-                android:drawableTint="?android:textColorPrimary"
+                app:drawableTint="?android:textColorPrimary"
                 android:textColor="?android:textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_edit_black"/>
 

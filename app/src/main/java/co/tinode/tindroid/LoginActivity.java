@@ -4,6 +4,7 @@ package co.tinode.tindroid;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -19,6 +20,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.db.BaseDb;
 
@@ -44,7 +46,8 @@ import co.tinode.tindroid.db.BaseDb;
  * 4. If account not found, show login form
  */
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity implements ImageViewFragment.AvatarCompletionHandler {
+    private static final String TAG = "LoginActivity";
 
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
     public static final String EXTRA_ADDING_ACCOUNT = "addNewAccount";
@@ -53,16 +56,15 @@ public class LoginActivity extends AppCompatActivity {
     static final String FRAGMENT_SETTINGS = "settings";
     static final String FRAGMENT_RESET = "reset";
     static final String FRAGMENT_CREDENTIALS = "cred";
+    static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String PREFS_LAST_LOGIN = "pref_lastLogin";
-    private static final String TAG = "LoginActivity";
+
+    private AvatarViewModel mAvatarVM;
 
     static {
         // Otherwise crash on API 21.
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
-
-    private final Bundle mResultBundle = null;
-    private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +93,9 @@ public class LoginActivity extends AppCompatActivity {
         // Check if we need full authentication or just credentials.
         showFragment(db.isCredValidationRequired() ? FRAGMENT_CREDENTIALS : FRAGMENT_LOGIN,
                 null, false);
+
+        // Used to store uploaded avatar before sending it to the server.
+        mAvatarVM = new ViewModelProvider(this).get(AvatarViewModel.class);
     }
 
     @Override
@@ -140,10 +145,10 @@ public class LoginActivity extends AppCompatActivity {
 
         int id = item.getItemId();
         if (id == R.id.action_settings) {
-            showFragment(FRAGMENT_SETTINGS);
+            showFragment(FRAGMENT_SETTINGS, null);
             return true;
         } else if (id == R.id.action_signup) {
-            showFragment(FRAGMENT_SIGNUP);
+            showFragment(FRAGMENT_SIGNUP, null);
             return true;
         } else if (id == R.id.action_about) {
             DialogFragment about = new AboutDialogFragment();
@@ -153,8 +158,8 @@ public class LoginActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    void showFragment(String tag) {
-        showFragment(tag, null, true);
+    void showFragment(String tag, Bundle args) {
+        showFragment(tag, args, true);
     }
 
     private void showFragment(String tag, Bundle args, Boolean addToBackstack) {
@@ -181,12 +186,21 @@ public class LoginActivity extends AppCompatActivity {
                 case FRAGMENT_CREDENTIALS:
                     fragment = new CredentialsFragment();
                     break;
+                case FRAGMENT_AVATAR_PREVIEW:
+                    fragment = new ImageViewFragment();
+                    if (args == null) {
+                        args = new Bundle();
+                    }
+                    args.putBoolean(AttachmentHandler.ARG_AVATAR, true);
+                    break;
                 default:
                     throw new IllegalArgumentException();
             }
         }
 
-        if (args != null) {
+        if (fragment.getArguments() != null) {
+            fragment.getArguments().putAll(args);
+        } else {
             fragment.setArguments(args);
         }
 
@@ -199,20 +213,11 @@ public class LoginActivity extends AppCompatActivity {
         tx.commitAllowingStateLoss();
     }
 
-    /**
-     * Sends the result or a Constants.ERROR_CODE_CANCELED error if a result isn't present.
-     */
     @Override
-    public void finish() {
-        if (mAccountAuthenticatorResponse != null) {
-            // send the result bundle back if set, otherwise send an error.
-            if (mResultBundle != null) {
-                mAccountAuthenticatorResponse.onResult(mResultBundle);
-            } else {
-                mAccountAuthenticatorResponse.onError(AccountManager.ERROR_CODE_CANCELED, "canceled");
-            }
-            mAccountAuthenticatorResponse = null;
+    public void onAcceptAvatar(String topicName, Bitmap avatar) {
+        if (isFinishing() || isDestroyed()) {
+            return;
         }
-        super.finish();
+        mAvatarVM.setAvatar(avatar);
     }
 }

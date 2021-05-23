@@ -464,5 +464,4 @@ public abstract class ImageLoader {
             return null;
         }
     }
-
 }

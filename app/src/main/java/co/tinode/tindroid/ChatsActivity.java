@@ -4,6 +4,7 @@ import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -33,7 +34,10 @@ import co.tinode.tinodesdk.model.Subscription;
  * This activity owns 'me' topic.
  */
 public class ChatsActivity extends AppCompatActivity
-        implements UiUtils.ProgressIndicator, UiUtils.AvatarPreviewer {
+        implements UiUtils.ProgressIndicator, UiUtils.AvatarPreviewer,
+        ImageViewFragment.AvatarCompletionHandler {
+
+    private static final String TAG = "ContactsActivity";
 
     static final String TAG_FRAGMENT_NAME = "fragment";
     static final String FRAGMENT_CHATLIST = "contacts";
@@ -46,7 +50,7 @@ public class ChatsActivity extends AppCompatActivity
     static final String FRAGMENT_ACC_ABOUT = "acc_about";
     static final String FRAGMENT_ARCHIVE = "archive";
     static final String FRAGMENT_BANNED = "banned";
-    private static final String TAG = "ContactsActivity";
+
     private ContactsEventListener mTinodeListener = null;
     private MeListener mMeTopicListener = null;
     private MeTopic<VxCard> mMeTopic = null;
@@ -212,6 +216,12 @@ public class ChatsActivity extends AppCompatActivity
                 ((UiUtils.ProgressIndicator) f).toggleProgressIndicator(on);
             }
         }
+    }
+
+    @Override
+    public void onAcceptAvatar(String topicName, Bitmap avatar) {
+        // TODO: add support for uploading avatar out of band.
+        UiUtils.updateAvatar(this, Cache.getTinode().getMeTopic(), avatar);
     }
 
     interface FormUpdatable {
