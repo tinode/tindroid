@@ -86,7 +86,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         }
 
         if (v.getId() == R.id.forgotPassword) {
-            parent.showFragment(LoginActivity.FRAGMENT_RESET);
+            parent.showFragment(LoginActivity.FRAGMENT_RESET, null);
             return;
         }
 
@@ -137,7 +137,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                         msg.ctrl.text.contains("validate credentials")) {
                                     parent.runOnUiThread(() -> {
                                         signIn.setEnabled(true);
-                                        parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS);
+                                        parent.showFragment(LoginActivity.FRAGMENT_CREDENTIALS, null);
                                     });
                                 } else {
                                     tinode.setAutoLoginToken(tinode.getAuthToken());

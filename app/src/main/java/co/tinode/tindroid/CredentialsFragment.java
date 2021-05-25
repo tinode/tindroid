@@ -47,7 +47,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         View fragment = inflater.inflate(R.layout.fragment_validate, container, false);
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
         fragment.findViewById(R.id.cancel).setOnClickListener(v ->
-                parent.showFragment(LoginActivity.FRAGMENT_LOGIN));
+                parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null));
 
         return fragment;
     }
@@ -67,7 +67,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         // TODO: convert method like 'tel' or 'email' to localazable human-readable string.
         // use cred_methods string-array from resource.
         if (TextUtils.isEmpty(mMethod)) {
-            parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
+            parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null);
         } else {
             TextView callToAction = parent.findViewById(R.id.call_to_validate);
             callToAction.setText(getString(R.string.validate_cred, mMethod));
@@ -84,7 +84,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         final Tinode tinode = Cache.getTinode();
         String token = tinode.getAuthToken();
         if (TextUtils.isEmpty(token)) {
-            parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
+            parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null);
             return;
         }
 
@@ -121,7 +121,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                         parent.reportError(err, confirm, 0, R.string.failed_credential_confirmation);
                         // Something went wrong like a duplicate credential or expired token.
                         // Go back to login, nothing we can do here.
-                        parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
+                        parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null);
                         return null;
                     }
                 });

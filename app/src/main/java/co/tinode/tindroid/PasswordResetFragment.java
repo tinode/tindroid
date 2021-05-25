@@ -49,7 +49,8 @@ public class PasswordResetFragment extends Fragment implements View.OnClickListe
 
         View fragment = inflater.inflate(R.layout.fragment_pass_reset, container, false);
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
-        fragment.findViewById(R.id.cancel).setOnClickListener(v -> parent.showFragment(LoginActivity.FRAGMENT_LOGIN));
+        fragment.findViewById(R.id.cancel).setOnClickListener(v ->
+                parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null));
 
         return fragment;
     }
@@ -101,7 +102,7 @@ public class PasswordResetFragment extends Fragment implements View.OnClickListe
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                                 parent.reportError(null, confirm, 0, R.string.password_reset_message_sent);
-                                parent.showFragment(LoginActivity.FRAGMENT_LOGIN);
+                                parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null);
                                 return null;
                             }
                         })
