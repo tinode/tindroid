@@ -41,8 +41,6 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import co.tinode.tindroid.widgets.OverlaidImageView;
-import co.tinode.tinodesdk.MeTopic;
-import co.tinode.tinodesdk.Topic;
 
 /**
  * Fragment for expanded display of an image: being attached or received.

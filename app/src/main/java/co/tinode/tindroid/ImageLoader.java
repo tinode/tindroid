@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.widget.ImageView;
 
 import java.io.ByteArrayInputStream;
@@ -18,8 +17,11 @@ import java.lang.ref.WeakReference;
 
 import androidx.annotation.NonNull;
 import androidx.collection.LruCache;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 
 /**
@@ -37,14 +39,13 @@ public abstract class ImageLoader {
     private Bitmap mLoadingBitmap;
     private boolean mPauseWork = false;
 
-    ImageLoader(int imageSize, FragmentManager fm) {
+    ImageLoader(int imageSize, FragmentActivity context) {
         mImageSize = imageSize > 0 ? imageSize : DEFAULT_IMAGE_SIZE;
 
-        final RetainFragment retainFragment = findOrCreateRetainFragment(fm);
-        // See if we already have an ImageCache stored in RetainFragment
-        //noinspection unchecked
-        mBitmapCache = (LruCache<String, Bitmap>) retainFragment.getObject();
-        // No existing ImageCache, create one and store it in RetainFragment
+        final BitmapCache bitmapCache = new ViewModelProvider(context).get(BitmapCache.class);
+        // See if we already have an ImageCache stored in ViewModel
+        mBitmapCache = bitmapCache.getCache().getValue();
+        // No existing ImageCache, create one and store it in ViewModel.
         if (mBitmapCache == null) {
             int maxSize = Math.round(MEMORY_PERCENT * Runtime.getRuntime().maxMemory() / 1024);
             mBitmapCache = new LruCache<String, Bitmap>(maxSize) {
@@ -58,7 +59,7 @@ public abstract class ImageLoader {
                     return bitmapSize == 0 ? 1 : bitmapSize;
                 }
             };
-            retainFragment.saveObject(mBitmapCache);
+            bitmapCache.setCache(mBitmapCache);
         }
     }
 
@@ -195,27 +196,6 @@ public abstract class ImageLoader {
         return inSampleSize;
     }
 
-    /**
-     * Locate an existing instance of this Fragment or if not found, create and
-     * add it using FragmentManager.
-     *
-     * @param fm The FragmentManager manager to use.
-     * @return The existing instance of the Fragment or the new instance if just
-     * created.
-     */
-    private static RetainFragment findOrCreateRetainFragment(FragmentManager fm) {
-        // Check to see if we have retained the worker fragment.
-        RetainFragment retainFragment = (RetainFragment) fm.findFragmentByTag(TAG);
-
-        // If not retained (or first time running), we need to create and add it.
-        if (retainFragment == null) {
-            retainFragment = new RetainFragment();
-            fm.beginTransaction().add(retainFragment, TAG).commit();
-        }
-
-        return retainFragment;
-    }
-
     int getImageSize() {
         return mImageSize;
     }
@@ -335,43 +315,15 @@ public abstract class ImageLoader {
         }
     }
 
-    /**
-     * A simple non-UI Fragment that stores a single Object and is retained over configuration
-     * changes. It will be used to retain the BitmapCache object.
-     */
-    public static class RetainFragment extends Fragment {
-        private Object mObject;
+    private static class BitmapCache extends ViewModel {
+        private final MutableLiveData<LruCache<String, Bitmap>> mCache = new MutableLiveData<>();
 
-        /**
-         * Empty constructor as per the Fragment documentation
-         */
-        public RetainFragment() {
+        public void setCache(LruCache<String, Bitmap> cache) {
+            mCache.postValue(cache);
         }
 
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            // Make sure this Fragment is retained over a configuration change
-            setRetainInstance(true);
-        }
-
-        /**
-         * Store a single object in this Fragment.
-         *
-         * @param object The object to store
-         */
-        void saveObject(Object object) {
-            mObject = object;
-        }
-
-        /**
-         * Get the stored object.
-         *
-         * @return The stored object
-         */
-        public Object getObject() {
-            return mObject;
+        public LiveData<LruCache<String, Bitmap>> getCache() {
+            return mCache;
         }
     }
 

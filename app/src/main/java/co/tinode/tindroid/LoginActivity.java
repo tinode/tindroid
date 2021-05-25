@@ -1,8 +1,5 @@
 package co.tinode.tindroid;
 
-
-import android.accounts.AccountAuthenticatorResponse;
-import android.accounts.AccountManager;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;

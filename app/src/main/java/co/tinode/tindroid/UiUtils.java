@@ -83,6 +83,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
+
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -103,11 +104,6 @@ public class UiUtils {
     static final int ACTION_UPDATE_SUB = 1;
     static final int ACTION_UPDATE_AUTH = 2;
     static final int ACTION_UPDATE_ANON = 3;
-
-    static final int ACTIVITY_RESULT_SELECT_PICTURE = 1;
-
-    static final int READ_EXTERNAL_STORAGE_PERMISSION = 100;
-    static final int CONTACTS_PERMISSION_ID = 101;
 
     static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     static final String PREF_READ_RCPT = "pref_readReceipts";
@@ -445,29 +441,6 @@ public class UiUtils {
         return "null date";
     }
 
-    static void requestAvatar(@Nullable Fragment fragment) {
-        if (fragment == null) {
-            return;
-        }
-
-        final FragmentActivity activity = fragment.getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
-        if (!isPermissionGranted(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            fragment.requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
-                    READ_EXTERNAL_STORAGE_PERMISSION);
-        } else {
-            Intent intent = new Intent();
-            intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-
-            fragment.startActivityForResult(Intent.createChooser(intent, fragment.getString(R.string.select_image)),
-                    ACTIVITY_RESULT_SELECT_PICTURE);
-        }
-    }
-
     static Intent avatarSelectorIntent(@Nullable final Activity activity,
                                            @Nullable ActivityResultLauncher<String[]> missingPermissionsLauncher) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
@@ -633,20 +606,6 @@ public class UiUtils {
         }
     }
 
-    private static Bitmap extractBitmap(final Activity activity, final Intent data) {
-        if (data == null) {
-            return null;
-        }
-
-        try {
-            return MediaStore.Images.Media.getBitmap(activity.getContentResolver(),
-                    data.getData());
-        } catch (IOException | SecurityException ex) {
-            Log.w(TAG, "Failed to get bitmap", ex);
-            return null;
-        }
-    }
-
     static void acceptAvatar(final Activity activity, final ImageView avatarContainer, final Bitmap avatar) {
         if (activity == null || avatarContainer == null) {
             return;
@@ -690,8 +649,7 @@ public class UiUtils {
             return null;
         }
 
-        ImageLoader il = new ImageLoader(getListPreferredItemHeight(parent),
-                activity.getSupportFragmentManager()) {
+        ImageLoader il = new ImageLoader(getListPreferredItemHeight(parent), activity) {
             @Override
             protected Bitmap processBitmap(Object data) {
                 // This gets called in a background thread and passed the data from
@@ -1034,17 +992,6 @@ public class UiUtils {
         });
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.show();
-    }
-
-    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateAvatar(final Activity activity,
-                                                                          final T topic, final Intent data) {
-        Bitmap bmp = UiUtils.extractBitmap(activity, data);
-        if (bmp == null) {
-            Toast.makeText(activity, activity.getString(R.string.image_is_unavailable), Toast.LENGTH_SHORT).show();
-            Log.i(TAG, "Failed to extract bitmap from intent");
-            return;
-        }
-        updateAvatar(activity, topic, bmp);
     }
 
     static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateAvatar(final Activity activity,

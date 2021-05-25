@@ -22,17 +22,17 @@
         android:layout_centerVertical="true"
         app:srcCompat="@drawable/ic_person_circle" />
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/optionsMenu"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_alignParentEnd="true"
-        app:srcCompat="@drawable/ic_more_vert"
-        android:tint="?android:attr/textColorSecondary"
         android:focusable="false"
         android:layout_centerVertical="true"
         android:contentDescription="@string/options_menu"
-        android:background="?attr/selectableItemBackgroundBorderless" />
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:srcCompat="@drawable/ic_more_vert"
+        app:tint="?android:attr/textColorSecondary" />
 
     <LinearLayout
         android:id="@+id/statusContainer"

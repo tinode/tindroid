@@ -25,7 +25,7 @@
             android:paddingRight="2dp"
             tools:progress="33" />
 
-        <ImageButton
+        <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/attachmentProgressCancel"
             app:srcCompat="@drawable/ic_close"
             android:layout_width="wrap_content"
@@ -33,12 +33,12 @@
             android:layout_weight="0.1"
             android:contentDescription="@string/action_cancel"
             android:background="@android:color/transparent"
-            android:tint="?android:colorControlNormal"
             android:foregroundTint="?android:colorControlNormal"
             android:paddingStart="4dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
-            android:paddingEnd="8dp" />
+            android:paddingEnd="8dp"
+            app:tint="?android:colorControlNormal" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
