@@ -64,17 +64,6 @@ public abstract class ImageLoader {
     }
 
     /**
-     * Cancels any pending work attached to the provided ImageView.
-     */
-    public static void cancelWork(ImageView imageView) {
-        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
-
-        if (bitmapWorkerTask != null) {
-            bitmapWorkerTask.cancel(true);
-        }
-    }
-
-    /**
      * Returns true if the current work has been canceled or if there was no work in
      * progress on this image view.
      * Returns false if the work in progress deals with the same data. The work is not
@@ -315,7 +304,8 @@ public abstract class ImageLoader {
         }
     }
 
-    private static class BitmapCache extends ViewModel {
+    // This class must be public, otherwise ViewModel cannot instantiate it.
+    public static class BitmapCache extends ViewModel {
         private final MutableLiveData<LruCache<String, Bitmap>> mCache = new MutableLiveData<>();
 
         public void setCache(LruCache<String, Bitmap> cache) {

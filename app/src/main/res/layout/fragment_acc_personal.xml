@@ -60,7 +60,7 @@
                 android:background="@drawable/dotted_line"
                 tools:text="User name" />
 
-            <Space
+            <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
@@ -88,7 +88,7 @@
 
             </LinearLayout>
 
-            <Space
+            <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
@@ -99,7 +99,7 @@
                 android:layout_marginBottom="@dimen/activity_padding"
                 android:background="@color/grey" />
 
-            <Space
+            <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
@@ -115,17 +115,17 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/buttonAddContact"
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/add_contact"
                 android:drawablePadding="4sp"
-                android:drawableTint="?android:textColorPrimary"
                 android:text="@string/add_contact"
                 android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_add_black" />
+                app:drawableStartCompat="@drawable/ic_add_black"
+                app:drawableTint="?android:textColorPrimary" />
 
             <View
                 android:layout_width="match_parent"
@@ -134,7 +134,7 @@
                 android:layout_marginBottom="@dimen/activity_padding"
                 android:background="@color/grey" />
 
-            <Space
+            <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
@@ -150,19 +150,19 @@
                 android:layout_height="wrap_content"
                 android:text="@string/user_tags_description" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/buttonManageTags"
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/manage"
                 android:drawablePadding="4sp"
-                android:drawableTint="?android:textColorPrimary"
                 android:text="@string/manage"
                 android:textColor="?android:textColorPrimary"
+                app:drawableTint="?android:textColorPrimary"
                 app:drawableStartCompat="@drawable/ic_edit_black" />
 
-            <Space
+            <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 

@@ -50,7 +50,7 @@ public class User<P> implements LocalData {
                     this.pub = null;
                     changed = true;
                 } else if (this.pub != null && (this.pub instanceof Mergeable)) {
-                    changed = (((Mergeable) this.pub).merge((Mergeable) pub) > 0);
+                    changed = ((Mergeable) this.pub).merge((Mergeable) pub);
                 } else {
                     this.pub = pub;
                     changed = true;

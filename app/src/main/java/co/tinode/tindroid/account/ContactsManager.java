@@ -23,7 +23,7 @@ import co.tinode.tindroid.R;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.model.Subscription;
-import co.tinode.tinodesdk.model.VCard;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * Class for managing contacts sync related mOperations
@@ -192,12 +192,12 @@ public class ContactsManager {
                 .addAvatar(pub.photo != null ? pub.photo.data : null);
 
         if (pub.email != null) {
-            for (VCard.Contact email : pub.email) {
+            for (TheCard.Contact email : pub.email) {
                 contactOp.addEmail(email.uri);
             }
         }
         if (pub.tel != null) {
-            for (VCard.Contact phone : pub.tel) {
+            for (TheCard.Contact phone : pub.tel) {
                 contactOp.addPhone(phone.uri, vcardTypeToDbType(phone.getType()));
             }
         }
@@ -459,12 +459,12 @@ public class ContactsManager {
                     if (pub == null) {
                         pub = new VxCard();
                     }
-                    pub.addEmail(value, VCard.TYPE_OTHER);
+                    pub.addEmail(value, TheCard.TYPE_OTHER);
                 } else if ("tel".equals(parts[0])) {
                     if (pub == null) {
                         pub = new VxCard();
                     }
-                    pub.addPhone(value, VCard.TYPE_OTHER);
+                    pub.addPhone(value, TheCard.TYPE_OTHER);
                 }
             }
         }

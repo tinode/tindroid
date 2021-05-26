@@ -5,13 +5,13 @@ import android.graphics.Bitmap;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import co.tinode.tinodesdk.model.Mergeable;
-import co.tinode.tinodesdk.model.VCard;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * VxCard - contact descriptor.
  * Adds avatar conversion from bits to Android bitmap and back.
  */
-public class VxCard extends VCard {
+public class VxCard extends TheCard {
     @JsonIgnore
     public AvatarPhoto avatar;
 
@@ -64,17 +64,16 @@ public class VxCard extends VCard {
         }
     }
 
-    @JsonIgnore
     @Override
-    public int merge(Mergeable another) {
+    public boolean merge(Mergeable another) {
         if (!(another instanceof VxCard)) {
-            return 0;
+            return false;
         }
-        int changed = super.merge(another);
+        boolean changed = super.merge(another);
         VxCard avc = (VxCard) another;
         if (avc.avatar != null) {
             avatar = avc.avatar;
-            changed++;
+            changed = true;
         }
         return changed;
     }

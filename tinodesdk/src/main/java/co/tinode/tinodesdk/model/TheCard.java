@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import co.tinode.tinodesdk.Tinode;
@@ -13,7 +14,7 @@ import co.tinode.tinodesdk.Tinode;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 @JsonInclude(NON_DEFAULT)
-public class VCard implements Serializable, Mergeable {
+public class TheCard implements Serializable, Mergeable {
 
     public final static String TYPE_HOME = "HOME";
     public final static String TYPE_WORK = "WORK";
@@ -24,23 +25,35 @@ public class VCard implements Serializable, Mergeable {
     // Full name
     public String fn;
     public Name n;
-    public String org;
-    public String title;
-    // List of phone numbers associated with the contact
+    public Organization org;
+    // List of phone numbers associated with the contact.
     public Contact[] tel;
-    // List of contact's email addresses
+    // List of contact's email addresses.
     public Contact[] email;
-    public Contact[] impp;
-    // Avatar photo. Java does not have a useful bitmap class, so keeping it as bits here.
-
+    // All other communication options.
+    public Contact[] comm;
+    // Avatar photo. Pure java does not have a useful bitmap class, so keeping it as bits here.
     public Photo photo;
+    // Birthday.
+    public Birthday bday;
+    // Free-form note.
+    public String note;
 
-    public VCard() {
+    public TheCard() {
     }
 
-    public VCard(String fullName, byte[] avatar, String avatarImageType) {
+    public TheCard(String fullName, byte[] avatarBits, String avatarImageType) {
         this.fn = fullName;
-        this.photo = new Photo(avatar, avatarImageType);
+        if (avatarBits != null) {
+            this.photo = new Photo(avatarBits, avatarImageType);
+        }
+    }
+
+    public TheCard(String fullName, String avatarRef, String avatarImageType) {
+        this.fn = fullName;
+        if (avatarRef != null) {
+            this.photo = new Photo(avatarRef, avatarImageType);
+        }
     }
 
     private static String typeToString(ContactType tp) {
@@ -85,9 +98,52 @@ public class VCard implements Serializable, Mergeable {
         }
     }
 
+    private static boolean merge(@NotNull Field[] fields, @NotNull Mergeable dst, Mergeable src) {
+        boolean updated = false;
+
+        if (src == null) {
+            return updated;
+        }
+
+        try {
+            for (Field f : fields) {
+                Object sf = f.get(src);
+                Object df = f.get(dst);
+                if (sf != null) {
+                    // TODO: handle Collection / Array types.
+                    // Source is provided.
+                    if (df == null) {
+                        // Destination is null, use source.
+                        f.set(dst, sf);
+                        updated = true;
+                    } else if (df instanceof Mergeable) {
+                        // Complex mergeable types, use merge().
+                        updated = ((Mergeable) df).merge((Mergeable) sf) || updated;
+                    } else if (!sf.equals(df)) {
+                        if (sf instanceof String) {
+                            // String, check for Tinode NULL.
+                            f.set(dst, !Tinode.isNull(sf) ? sf : null);
+                        } else {
+                            // All other non-mergeable types: replace.
+                            f.set(dst, sf);
+                        }
+                        updated = true;
+                    }
+                }
+            }
+        } catch (IllegalAccessException ignored) {
+        }
+
+        return updated;
+    }
+
     @JsonIgnore
     public byte[] getPhotoBits() {
         return photo == null ? null : photo.data;
+    }
+    @JsonIgnore
+    public String getPhotoRef() {
+        return photo == null ? null : photo.ref;
     }
     @JsonIgnore
     public String getPhotoType() {
@@ -97,9 +153,9 @@ public class VCard implements Serializable, Mergeable {
     public void setPhotoBits(byte[] bits, String type) {
         photo = new Photo(bits, type);
     }
-
-    public void addPhone(String phone, ContactType type) {
-        addPhone(phone, typeToString(type));
+    @JsonIgnore
+    public void setPhotoRef(String ref, String type) {
+        photo = new Photo(ref, type);
     }
 
     public void addPhone(String phone, String type) {
@@ -131,68 +187,32 @@ public class VCard implements Serializable, Mergeable {
 
     public enum ContactType {HOME, WORK, MOBILE, PERSONAL, BUSINESS, OTHER}
 
-    public static <T extends VCard> T copy(T dst, VCard src) {
+    public static <T extends TheCard> T copy(T dst, TheCard src) {
         dst.fn = src.fn;
         dst.n = src.n != null ? src.n.copy() : null;
-        dst.org = src.org;
-        dst.title = src.title;
+        dst.org = src.org != null ? src.org.copy() : null;
         dst.tel = Contact.copyArray(src.tel);
         dst.email = Contact.copyArray(src.email);
-        dst.impp = Contact.copyArray(src.impp);
+        dst.comm = Contact.copyArray(src.comm);
         // Shallow copy of the photo
         dst.photo = src.photo != null ? src.photo.copy() : null;
 
         return dst;
     }
 
-    public VCard copy() {
-        return copy(new VCard(), this);
+    public TheCard copy() {
+        return copy(new TheCard(), this);
     }
 
-    @JsonIgnore
     @Override
-    public int merge(Mergeable another) {
-        if (!(another instanceof VCard)) {
-            return 0;
+    public boolean merge(Mergeable another) {
+        if (!(another instanceof TheCard)) {
+            return false;
         }
-        int changed = 0;
-        VCard vc = (VCard)another;
-        if (vc.fn != null) {
-            fn = !Tinode.isNull(vc.fn) ? vc.fn : null;
-            changed++;
-        }
-        if (vc.n != null) {
-            n = !Tinode.isNull(vc.n) ? vc.n : null;
-            changed++;
-        }
-        if (vc.org != null) {
-            org = !Tinode.isNull(vc.org) ? vc.org : null;
-            changed++;
-        }
-        if (vc.title != null) {
-            title = !Tinode.isNull(vc.title) ? vc.title : null;
-            changed++;
-        }
-        if (vc.tel != null) {
-            tel = !Tinode.isNull(vc.tel) ? vc.tel : null;
-            changed++;
-        }
-        if (vc.email != null) {
-            email = !Tinode.isNull(vc.email) ? vc.email : null;
-            changed++;
-        }
-        if (vc.impp != null) {
-            impp = !Tinode.isNull(vc.impp) ? vc.impp : null;
-            changed++;
-        }
-        if (vc.photo != null) {
-            photo = !Tinode.isNull(vc.photo) ? vc.photo : null;
-            changed++;
-        }
-        return changed;
+        return merge(this.getClass().getFields(), this, another);
     }
 
-    public static class Name implements Serializable {
+    public static class Name implements Serializable, Mergeable {
         public String surname;
         public String given;
         public String additional;
@@ -208,16 +228,50 @@ public class VCard implements Serializable, Mergeable {
             dst.suffix = suffix;
             return dst;
         }
+
+        @Override
+        public boolean merge(Mergeable another) {
+            if (!(another instanceof Name)) {
+                return false;
+            }
+            return TheCard.merge(this.getClass().getFields(), this, another);
+        }
     }
 
-    public static class Contact implements Serializable, Comparable<Contact> {
+    public static class Organization implements Serializable, Mergeable {
+        public String fn;
+        public String title;
+
+        public Organization copy() {
+            Organization dst = new Organization();
+            dst.fn = fn;
+            dst.title = title;
+            return dst;
+        }
+
+        @Override
+        public boolean merge(Mergeable another) {
+            if (!(another instanceof Organization)) {
+                return false;
+            }
+            return TheCard.merge(this.getClass().getFields(), this, another);
+        }
+    }
+
+    public static class Contact implements Serializable, Comparable<Contact>, Mergeable {
         public String type;
-        public final String uri;
+        public String name;
+        public String uri;
 
         private ContactType tp;
 
         public Contact(String type, String uri) {
+            this(type, null, uri);
+        }
+
+        public Contact(String type, String name, String uri) {
             this.type = type;
+            this.name = name;
             this.uri = uri;
             this.tp = stringToType(type);
         }
@@ -231,10 +285,10 @@ public class VCard implements Serializable, Mergeable {
         }
 
         public Contact copy() {
-            return new Contact(type, uri);
+            return new Contact(type, name, uri);
         }
 
-        static Contact[] copyArray(Contact[] src){
+        static Contact[] copyArray(Contact[] src) {
             Contact[] dst = null;
             if (src != null) {
                 dst = Arrays.copyOf(src, src.length);
@@ -275,14 +329,26 @@ public class VCard implements Serializable, Mergeable {
         public String toString() {
             return type + ":" + uri;
         }
+
+        @Override
+        public boolean merge(Mergeable another) {
+            if (!(another instanceof Contact)) {
+                return false;
+            }
+            return TheCard.merge(this.getClass().getFields(), this, another);
+        }
     }
 
     /**
      * Generic container for image data.
      */
-    public static class Photo implements Serializable {
+    public static class Photo implements Serializable, Mergeable {
         public byte[] data;
         public String type;
+        public String ref;
+        public Integer width;
+        public Integer height;
+        public Integer size;
 
         public Photo() {}
 
@@ -298,6 +364,17 @@ public class VCard implements Serializable, Mergeable {
         }
 
         /**
+         * The main constructor.
+         *
+         * @param ref Uri of the image.
+         * @param type the specific part of image/ mime type, i.e. 'jpeg' or 'png'.
+         */
+        public Photo(String ref, String type) {
+            this.ref = ref;
+            this.type = type;
+        }
+
+        /**
          * Creates a copy of a photo instance.
          * @return new instance of Photo.
          */
@@ -305,7 +382,46 @@ public class VCard implements Serializable, Mergeable {
             Photo ret = new Photo();
             ret.data = data;
             ret.type = type;
+            ret.ref = ref;
+            ret.width = width;
+            ret.height = height;
+            ret.size = size;
             return ret;
+        }
+
+        @Override
+        public boolean merge(Mergeable another) {
+            if (!(another instanceof Photo)) {
+                return false;
+            }
+            return TheCard.merge(this.getClass().getFields(), this, another);
+        }
+    }
+
+    public static class Birthday implements Serializable, Mergeable {
+        // Year like 1975
+        Integer y;
+        // Month 1..12.
+        Integer m;
+        // Day 1..31.
+        Integer d;
+
+        public Birthday() {}
+
+        public Birthday copy() {
+            Birthday ret = new Birthday();
+            ret.y = y;
+            ret.m = m;
+            ret.d = d;
+            return ret;
+        }
+
+        @Override
+        public boolean merge(Mergeable another) {
+            if (!(another instanceof Birthday)) {
+                return false;
+            }
+            return TheCard.merge(this.getClass().getFields(), this, another);
         }
     }
 }

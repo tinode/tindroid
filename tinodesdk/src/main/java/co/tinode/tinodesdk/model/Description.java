@@ -30,37 +30,33 @@ public class Description<DP, DR> implements Serializable {
     public Description() {
     }
 
-    private int mergePub(DP spub) {
-        int changed = 0;
+    private boolean mergePub(DP spub) {
+        boolean changed;
         if (Tinode.isNull(spub)) {
             pub = null;
-            changed++;
+            changed = true;
         } else {
             if (pub != null && (pub instanceof Mergeable)) {
-                if (((Mergeable)pub).merge((Mergeable)spub) > 0) {
-                    changed++;
-                }
+                changed = ((Mergeable)pub).merge((Mergeable)spub);
             } else {
                 pub = spub;
-                changed++;
+                changed = true;
             }
         }
         return changed;
     }
 
-    private int mergePriv(DR spriv) {
-        int changed = 0;
+    private boolean mergePriv(DR spriv) {
+        boolean changed;
         if (Tinode.isNull(spriv)) {
             priv = null;
-            changed++;
+            changed = true;
         } else {
             if (priv != null && (priv instanceof Mergeable)) {
-                if (((Mergeable)priv).merge((Mergeable)spriv) > 0) {
-                    changed++;
-                }
+                changed = ((Mergeable)priv).merge((Mergeable)spriv);
             } else {
                 priv = spriv;
-                changed++;
+                changed = true;
             }
         }
         return changed;
@@ -72,155 +68,151 @@ public class Description<DP, DR> implements Serializable {
      * @param desc object to copy.
      */
     public boolean merge(Description<DP,DR> desc) {
-        int changed = 0;
+        boolean changed = false;
 
         if (created == null && desc.created != null) {
             created = desc.created;
-            changed ++;
+            changed = true;
         }
         if (desc.updated != null && (updated == null || updated.before(desc.updated))) {
             updated = desc.updated;
-            changed ++;
+            changed = true;
         }
         if (desc.touched != null && (touched == null || touched.before(desc.touched))) {
             touched = desc.touched;
-            changed ++;
+            changed = true;
         }
 
         if (desc.defacs != null) {
             if (defacs == null) {
                 defacs = desc.defacs;
-                changed ++;
+                changed = true;
             } else {
-                changed += defacs.merge(desc.defacs) ? 1 : 0;
+                changed = defacs.merge(desc.defacs) || changed;
             }
         }
 
         if (desc.acs != null) {
             if (acs == null) {
                 acs = desc.acs;
-                changed++;
+                changed = true;
             } else {
-                changed += acs.merge(desc.acs) ? 1 : 0;
+                changed = acs.merge(desc.acs) || changed;
             }
         }
 
         if (desc.seq > seq) {
             seq = desc.seq;
-            changed ++;
+            changed = true;
         }
         if (desc.read > read) {
             read = desc.read;
-            changed ++;
+            changed = true;
         }
         if (desc.recv > recv) {
             recv = desc.recv;
-            changed ++;
+            changed = true;
         }
         if (desc.clear > clear) {
             clear = desc.clear;
-            changed ++;
+            changed = true;
         }
 
         if (desc.pub != null) {
-            if (mergePub(desc.pub) > 0) changed++;
+            changed = mergePub(desc.pub) || changed;
         }
 
         // FIXME: this does not take into account partial updates.
         if (desc.priv != null) {
-            if (mergePriv(desc.priv) > 0) changed++;
+            changed = mergePriv(desc.priv) || changed;
         }
 
-        return changed > 0;
+        return changed;
     }
 
     /**
      * Merge subscription into a description
      */
     public <SP,SR> boolean merge(Subscription<SP,SR> sub) {
-        int changed = 0;
+        boolean changed = false;
 
         if (sub.updated != null && (updated == null || updated.before(sub.updated))) {
             updated = sub.updated;
-            changed++;
+            changed = true;
         }
 
         if (sub.touched != null && (touched == null || touched.before(sub.touched))) {
             touched = sub.touched;
-            changed ++;
+            changed = true;
         }
 
         if (sub.acs != null) {
             if (acs == null) {
                 acs = sub.acs;
-                changed++;
+                changed = true;
             } else {
-                changed += acs.merge(sub.acs) ? 1 : 0;
+                changed = acs.merge(sub.acs) || changed;
             }
         }
 
         if (sub.seq > seq) {
             seq = sub.seq;
-            changed++;
+            changed = true;
         }
 
         if (sub.read > read) {
             read = sub.read;
-            changed++;
+            changed = true;
         }
 
         if (sub.recv > recv) {
             recv = sub.recv;
-            changed++;
+            changed = true;
         }
 
         if (sub.clear > clear) {
             clear = sub.clear;
-            changed++;
+            changed = true;
         }
 
         if (sub.pub != null) {
             // This may throw a ClassCastException.
             // This is intentional behavior to catch cases of wrong assignment.
             //noinspection unchecked
-            if (mergePub((DP) sub.pub) > 0) {
-                changed++;
-            }
+            changed = mergePub((DP) sub.pub) || changed;
         }
 
         if (sub.priv != null) {
             try {
                 //noinspection unchecked
-                if (mergePriv((DR)sub.priv) > 0) {
-                    changed++;
-                }
+                changed = mergePriv((DR)sub.priv) || changed;
             } catch (ClassCastException ignored) {}
 
         }
 
-        return changed > 0;
+        return changed;
     }
 
     public boolean merge(MetaSetDesc<DP,DR> desc) {
-        int changed = 0;
+        boolean changed = false;
 
         if (desc.defacs != null) {
             if (defacs == null) {
                 defacs = desc.defacs;
-                changed ++;
+                changed = true;
             } else {
-                changed += defacs.merge(desc.defacs) ? 1 : 0;
+                changed = defacs.merge(desc.defacs) || changed;
             }
         }
 
         if (desc.pub != null) {
-            if (mergePub(desc.pub) > 0) changed++;
+            changed = mergePub(desc.pub) || changed;
         }
 
         if (desc.priv != null) {
-            if (mergePriv(desc.priv) > 0) changed++;
+            changed = mergePriv(desc.priv) || changed;
         }
 
-        return changed > 0;
+        return changed;
     }
 }

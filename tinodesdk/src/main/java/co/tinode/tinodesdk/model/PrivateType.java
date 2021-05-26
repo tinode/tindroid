@@ -51,14 +51,15 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
         put("arch", arch ? true : Tinode.NULL_VALUE);
     }
 
-    public int merge(Mergeable another) {
+    @Override
+    public boolean merge(Mergeable another) {
         if (!(another instanceof PrivateType)) {
-            return 0;
+            return false;
         }
-        PrivateType apt = (PrivateType)another;
+        PrivateType apt = (PrivateType) another;
         for (Map.Entry<String, Object> e : apt.entrySet()) {
             put(e.getKey(), e.getValue());
         }
-        return apt.size();
+        return apt.size() > 0;
     }
 }

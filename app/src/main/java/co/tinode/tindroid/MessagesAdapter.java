@@ -477,15 +477,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             if (sub != null && sub.pub != null) {
                 Bitmap avatar = sub.pub.getBitmap();
                 if (holder.mAvatar != null) {
-                    if (avatar != null) {
-                        holder.mAvatar.setImageDrawable(
-                                new RoundImageDrawable(mActivity.getResources(), avatar));
-                    } else {
-                        holder.mAvatar.setImageDrawable(
-                                new LetterTileDrawable(mActivity)
-                                        .setLetterAndColor(sub.pub.fn, sub.user)
-                                        .setContactTypeAndColor(LetterTileDrawable.ContactType.PERSON));
-                    }
+                    holder.mAvatar.setImageDrawable(UiUtils.avatarDrawable(mActivity, avatar, sub.pub.fn, sub.user));
                 }
 
                 if (holder.mUserName != null) {

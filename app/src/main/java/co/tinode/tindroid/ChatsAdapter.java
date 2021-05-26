@@ -3,13 +3,17 @@ package co.tinode.tindroid;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -201,7 +205,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         TextView unreadCount;
         TextView priv;
         ImageView messageStatus;
-        AppCompatImageView avatar;
+        AppCompatImageView avatarView;
         ImageView online;
         ImageView channel;
         ImageView muted;
@@ -220,7 +224,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 unreadCount = item.findViewById(R.id.unreadCount);
                 priv = item.findViewById(R.id.contactPriv);
                 messageStatus = item.findViewById(R.id.messageStatus);
-                avatar = item.findViewById(R.id.avatar);
+                avatarView = item.findViewById(R.id.avatar);
                 online = item.findViewById(R.id.online);
                 channel = item.findViewById(R.id.icon_channel);
                 muted = item.findViewById(R.id.icon_muted);
@@ -277,10 +281,21 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 unreadCount.setVisibility(View.GONE);
             }
 
-            avatar.setImageDrawable(UiUtils.avatarDrawable(context,
-                    pub != null ? pub.getBitmap() : null,
-                    pub != null ? pub.fn : null,
-                    topicName));
+            Bitmap avatar = null;
+            String ref = null;
+            String fullName = null;
+            if (pub != null) {
+                avatar = pub.getBitmap();
+                fullName = pub.fn;
+                ref = pub.getPhotoRef();
+            }
+
+            Drawable local = UiUtils.avatarDrawable(context, avatar, fullName, topicName);
+            if (ref != null) {
+                Picasso.get().load(ref).resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE).error(local).fit().into(avatarView);
+            } else {
+                avatarView.setImageDrawable(local);
+            }
 
             if (topic.isChannel()) {
                 online.setVisibility(View.INVISIBLE);

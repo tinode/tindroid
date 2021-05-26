@@ -70,8 +70,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
     /**
      * Constructor. Obtains handle to content resolver for later use.
      */
-    ContactsSyncAdapter(Context context, boolean autoInitialize) {
-        super(context, autoInitialize);
+    ContactsSyncAdapter(Context context) {
+        super(context, true);
         mContext = context;
         mAccountManager = AccountManager.get(context);
     }

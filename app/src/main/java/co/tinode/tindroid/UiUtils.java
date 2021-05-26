@@ -100,6 +100,8 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Static utilities for UI support.
  */
 public class UiUtils {
+    private static final String TAG = "UiUtils";
+
     static final int ACTION_UPDATE_SELF_SUB = 0;
     static final int ACTION_UPDATE_SUB = 1;
     static final int ACTION_UPDATE_AUTH = 2;
@@ -111,12 +113,11 @@ public class UiUtils {
     // Maximum length of user name or topic title.
     static final int MAX_TITLE_LENGTH = 60;
 
-    // Maximum linear dimensions of image.
+    // Maximum linear dimensions of images.
     static final int MAX_BITMAP_SIZE = 1024;
     static final int IMAGE_PREVIEW_DIM = 64;
+    static final int AVATAR_SIZE = 128;
 
-    private static final String TAG = "UiUtils";
-    private static final int AVATAR_SIZE = 128;
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;
     private static final int DEFAULT_MAX_TAG_LENGTH = 96;
@@ -159,8 +160,7 @@ public class UiUtils {
                 } else {
                     toolbar.setSubtitle(null);
                 }
-                constructToolbarLogo(activity, pub != null ? pub.getBitmap() : null,
-                        pub != null ? pub.fn : null, topicName, showOnline);
+                constructToolbarLogo(activity, pub, topicName, showOnline);
             } else {
                 toolbar.setTitle(R.string.app_name);
                 toolbar.setSubtitle(null);
@@ -193,7 +193,7 @@ public class UiUtils {
     // 0. [Avatar or LetterTileDrawable]
     // 1. [Online indicator]
     // 2. [Typing indicator]
-    private static void constructToolbarLogo(final Activity activity, Bitmap avatar, String name,
+    private static void constructToolbarLogo(final Activity activity, final VxCard pub,
                                              String uid, Boolean online) {
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
@@ -201,17 +201,9 @@ public class UiUtils {
         }
 
         ArrayList<Drawable> drawables = new ArrayList<>();
-        Drawable avatarDrawable;
         AnimationDrawable typing = null;
-        if (avatar != null) {
-            avatarDrawable = new RoundImageDrawable(activity.getResources(), avatar);
-        } else {
-            avatarDrawable = new LetterTileDrawable(activity)
-                    .setLetterAndColor(name, uid)
-                    .setContactTypeAndColor(Topic.getTopicTypeByName(uid) == Topic.TopicType.P2P ?
-                            LetterTileDrawable.ContactType.PERSON : LetterTileDrawable.ContactType.GROUP);
-        }
-        drawables.add(avatarDrawable);
+        drawables.add(avatarDrawable(activity, pub != null ? pub.getBitmap() : null,
+                pub != null ? pub.fn : null, uid));
         if (online != null) {
             drawables.add(new OnlineDrawable(online));
 

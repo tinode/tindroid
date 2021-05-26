@@ -35,7 +35,7 @@ public class ContactsSyncService extends Service {
 
         synchronized (sSyncAdapterLock) {
             if (sSyncAdapter == null) {
-                sSyncAdapter = new ContactsSyncAdapter(getApplicationContext(), true);
+                sSyncAdapter = new ContactsSyncAdapter(getApplicationContext());
             }
         }
     }
