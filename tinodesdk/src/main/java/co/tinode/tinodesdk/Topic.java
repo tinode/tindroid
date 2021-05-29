@@ -248,8 +248,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             changed = true;
         }
 
-        if (changed && mStore != null) {
-            mStore.topicUpdate(this);
+        if (changed) {
+            if (mStore != null) {
+                mStore.topicUpdate(this);
+            }
+            if (isP2PType()) {
+                mTinode.updateUser(getName(), mDesc);
+            }
         }
 
         if (sub.online != null) {
@@ -264,8 +269,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param desc updated topic parameters
      */
     protected void update(Description<DP, DR> desc) {
-        if (mDesc.merge(desc) && mStore != null) {
-            mStore.topicUpdate(this);
+        if (mDesc.merge(desc)) {
+            if (mStore != null) {
+                mStore.topicUpdate(this);
+            }
+            if (isP2PType()) {
+                mTinode.updateUser(getName(), mDesc);
+            }
         }
     }
 
@@ -303,8 +313,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 changed = mDesc.acs.merge(acs);
             }
 
-            if (changed && mStore != null) {
-                mStore.topicUpdate(this);
+            if (changed) {
+                if (mStore != null) {
+                    mStore.topicUpdate(this);
+                }
+                if (isP2PType()) {
+                    mTinode.updateUser(getName(), mDesc);
+                }
             }
         }
 
@@ -334,8 +349,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param desc updated topic parameters
      */
     protected void update(MetaSetDesc<DP, DR> desc) {
-        if (mDesc.merge(desc) && mStore != null) {
-            mStore.topicUpdate(this);
+        if (mDesc.merge(desc)) {
+            if (mStore != null) {
+                mStore.topicUpdate(this);
+            }
+            if (isP2PType()) {
+                mTinode.updateUser(getName(), mDesc);
+            }
         }
     }
 
@@ -750,6 +770,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (on) {
                 if (!isPersisted()) {
                     mStore.topicAdd(this);
+                    if (isP2PType()) {
+                        mTinode.updateUser(getName(), mDesc);
+                    }
                 }
             } else {
                 mStore.topicDelete(this);
@@ -853,6 +876,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
                                 if (mStore != null) {
                                     mStore.topicUpdate(Topic.this);
+                                }
+                                if (isP2PType()) {
+                                    mTinode.updateUser(getName(), mDesc);
                                 }
                             }
 
@@ -1831,6 +1857,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         if (mListener != null) {
             mListener.onData(data);
+        }
+
+        // Call notification listener on 'me' to refresh chat list, if appropriate.
+        MeTopic me = mTinode.getMeTopic();
+        if (me != null) {
+            me.setMsgReadRecv(getName(), "", 0);
         }
     }
 

@@ -306,7 +306,7 @@ public class ChatsActivity extends AppCompatActivity
 
         @Override
         public void onContUpdated(final String contact) {
-            Log.d(TAG, "Contacts got onContUpdated update '" + contact + "'");
+            datasetChanged();
         }
 
         @Override

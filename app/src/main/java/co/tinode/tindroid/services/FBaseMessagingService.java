@@ -371,7 +371,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                .setSmallIcon(R.drawable.ic_logo_push)
+                .setSmallIcon(R.drawable.ic_icon_push)
                 .setLargeIcon(avatar)
                 .setColor(ContextCompat.getColor(this, R.color.colorNotificationBackground))
                 .setContentTitle(title)
@@ -392,7 +392,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         return notificationBuilder
                 .setPriority(unwrapInteger(remote.getNotificationPriority(), NotificationCompat.PRIORITY_HIGH))
                 .setVisibility(unwrapInteger(remote.getVisibility(), NotificationCompat.VISIBILITY_PRIVATE))
-                .setSmallIcon(resourceId(res, remote.getIcon(), R.drawable.ic_logo_push, "drawable", packageName))
+                .setSmallIcon(resourceId(res, remote.getIcon(), R.drawable.ic_icon_push, "drawable", packageName))
                 .setColor(unwrapColor(remote.getColor(), ContextCompat.getColor(this, R.color.colorNotificationBackground)))
                 .setContentTitle(locText(res, remote.getTitleLocalizationKey(), remote.getTitleLocalizationArgs(),
                         remote.getTitle(), packageName))

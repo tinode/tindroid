@@ -49,7 +49,7 @@
         <!-- Default icon for push notifications. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_logo_push" />
+            android:resource="@drawable/ic_icon_push" />
         <!-- Default color for push notifications. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"

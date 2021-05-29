@@ -15,11 +15,11 @@
         android:layout_marginStart="2dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
+        android:drawablePadding="10dp"
         android:text="@string/contact_us"
         tools:text="Contact Us"
         app:drawableStartCompat="@drawable/ic_contact_support"
-        app:drawableTint="@color/colorAccent"
-        android:drawablePadding="10dp"/>
+        app:drawableTint="@color/colorAccent" />
 
     <TextView
         android:id="@+id/termsOfUse"
@@ -29,11 +29,11 @@
         android:layout_marginStart="2dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
+        android:drawablePadding="10dp"
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/terms_of_use"
         app:drawableStartCompat="@drawable/ic_document"
-        app:drawableTint="@color/colorAccent"
-        android:drawablePadding="10dp"/>
+        app:drawableTint="@color/colorAccent" />
 
     <TextView
         android:id="@+id/privacyPolicy"
@@ -43,11 +43,11 @@
         android:layout_marginStart="2dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
+        android:drawablePadding="10dp"
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/privacy_policy"
         app:drawableStartCompat="@drawable/ic_privacy"
-        app:drawableTint="@color/colorAccent"
-        android:drawablePadding="10dp"/>
+        app:drawableTint="@color/colorAccent" />
 
     <TextView
         android:id="@+id/ossLicenses"
@@ -59,9 +59,9 @@
         android:layout_marginBottom="10dp"
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/licenses"
+        android:drawablePadding="10dp"
         app:drawableStartCompat="@drawable/ic_license"
-        app:drawableTint="@color/colorAccent"
-        android:drawablePadding="10dp"/>
+        app:drawableTint="@color/colorAccent" />
 
     <TextView
         android:id="@+id/aboutTheApp"
@@ -70,9 +70,9 @@
         android:layout_marginStart="2dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
+        android:drawablePadding="10dp"
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/about_the_app"
-        app:drawableStartCompat="@drawable/ic_logo_push"
-        app:drawableTint="@color/colorAccent"
-        android:drawablePadding="10dp"/>
+        app:drawableStartCompat="@drawable/ic_icon_push"
+        app:drawableTint="@color/colorAccent" />
 </LinearLayout>

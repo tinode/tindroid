@@ -72,7 +72,7 @@ public class Utils {
     private static boolean loginNow(Context context) {
         String uid = BaseDb.getInstance().getUid();
         if (TextUtils.isEmpty(uid)) {
-            Log.w(TAG, "Data fetch failed: not logged in");
+            Log.w(TAG, "Data fetch failed: no login credentials");
             // Unknown if data is available, assuming it is.
             return false;
         }
@@ -91,11 +91,10 @@ public class Utils {
         final Tinode tinode = Cache.getTinode();
 
         try {
-            // Will return immediately if it's already connected.
-            tinode.connect(hostName, tls, true).getResult();
 
             String token = AccountManager.get(context).blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-
+            // Will return immediately if it's already connected.
+            tinode.connect(hostName, tls, true).getResult();
             tinode.loginToken(token).getResult();
         } catch (Exception ex) {
             Log.w(TAG, "Failed to connect to server", ex);

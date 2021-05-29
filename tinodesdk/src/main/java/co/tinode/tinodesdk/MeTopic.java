@@ -513,19 +513,21 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     void setMsgReadRecv(String topicName, String what, int seq) {
-        Topic topic = mTinode.getTopic(topicName);
-        if (topic == null) {
-            return;
-        }
+        if (seq > 0) {
+            final Topic topic = mTinode.getTopic(topicName);
+            if (topic == null) {
+                return;
+            }
 
-        switch (what) {
-            case Tinode.NOTE_RECV:
-                assignRecv(topic, seq);
-                break;
-            case Tinode.NOTE_READ:
-                assignRead(topic, seq);
-                break;
-            default:
+            switch (what) {
+                case Tinode.NOTE_RECV:
+                    assignRecv(topic, seq);
+                    break;
+                case Tinode.NOTE_READ:
+                    assignRead(topic, seq);
+                    break;
+                default:
+            }
         }
 
         if (mListener != null) {
