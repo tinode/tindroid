@@ -275,7 +275,7 @@ public class MessagesFragment extends Fragment {
                                     // Not a progress report, just a status change.
                                     break;
                                 }
-                                if (!mTopicName.equals(topicName)) {
+                                if (!topicName.equals(mTopicName)) {
                                     break;
                                 }
                                 long progress = data.getLong(AttachmentHandler.ARG_PROGRESS, -1);
@@ -298,8 +298,11 @@ public class MessagesFragment extends Fragment {
                             case SUCCEEDED: {
                                 Data result = wi.getOutputData();
                                 String topicName = result.getString(AttachmentHandler.ARG_TOPIC_NAME);
+                                if (topicName == null) {
+                                    break;
+                                }
                                 long msgId = result.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
-                                if (msgId > 0 && mTopicName.equals(topicName)) {
+                                if (msgId > 0 && topicName.equals(mTopicName)) {
                                     activity.syncMessages(msgId, true);
                                 }
                                 break;
@@ -314,7 +317,10 @@ public class MessagesFragment extends Fragment {
                             case FAILED: {
                                 Data failure = wi.getOutputData();
                                 String topicName = failure.getString(AttachmentHandler.ARG_TOPIC_NAME);
-                                if (mTopicName.equals(topicName)) {
+                                if (topicName == null) {
+                                    break;
+                                }
+                                if (topicName.equals(mTopicName)) {
                                     long msgId = failure.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
                                     if (BaseDb.getInstance().getStore().getMessageById(msgId) != null) {
                                         runMessagesLoader(mTopicName);
