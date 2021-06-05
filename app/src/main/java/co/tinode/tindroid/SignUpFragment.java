@@ -50,8 +50,12 @@ public class SignUpFragment extends Fragment
                         return;
                     }
                 }
+                FragmentActivity activity = getActivity();
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
                 // Try to open the image selector again.
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, null));
             });
 
     @Override
@@ -73,9 +77,12 @@ public class SignUpFragment extends Fragment
         View fragment = inflater.inflate(R.layout.fragment_signup, container, false);
 
         // Get avatar from the gallery or photo camera.
-        fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(),
-                        mRequestAvatarPermissionsLauncher)));
+        fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), mRequestAvatarPermissionsLauncher));
+        });
         // Handle click on the sign up button.
         fragment.findViewById(R.id.signUp).setOnClickListener(this);
 

@@ -54,8 +54,12 @@ public class AccPersonalFragment extends Fragment
                         return;
                     }
                 }
+                FragmentActivity activity = getActivity();
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
                 // Try to open the image selector again.
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, null));
             });
 
 

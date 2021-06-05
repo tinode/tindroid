@@ -433,12 +433,8 @@ public class UiUtils {
         return "null date";
     }
 
-    static Intent avatarSelectorIntent(@Nullable final Activity activity,
+    static Intent avatarSelectorIntent(@NonNull final Activity activity,
                                            @Nullable ActivityResultLauncher<String[]> missingPermissionsLauncher) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return null;
-        }
-
         if (missingPermissionsLauncher != null) {
             LinkedList<String> request = getMissingPermissions(activity,
                     new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE});

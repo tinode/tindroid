@@ -67,8 +67,12 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                         return;
                     }
                 }
+                FragmentActivity activity = getActivity();
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
                 // Try to open the image selector again.
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, null));
             });
 
     private final ActivityResultLauncher<String[]> mRequestContactsPermissionLauncher =
@@ -124,8 +128,12 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         avatarVM.getAvatar().observe(getViewLifecycleOwner(), bmp ->
             UiUtils.acceptAvatar(activity, view.findViewById(R.id.imageAvatar), bmp));
 
-        view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher)));
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher));
+        });
 
         // Recycler view with selected contacts.
         RecyclerView rv = view.findViewById(R.id.selected_members);

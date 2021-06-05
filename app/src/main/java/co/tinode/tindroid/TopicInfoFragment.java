@@ -88,8 +88,12 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
                         return;
                     }
                 }
+                FragmentActivity activity = getActivity();
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
                 // Try to open the image selector again.
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), null));
+                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, null));
             });
 
     private final ActivityResultLauncher<String[]> mRequestContactsPermissionsLauncher =
@@ -125,8 +129,12 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
 
         // Set up listeners
 
-        view.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher)));
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher));
+        });
 
         final SwitchCompat muted = view.findViewById(R.id.switchMuted);
         muted.setOnCheckedChangeListener((buttonView, isChecked) ->
