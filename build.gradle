@@ -9,10 +9,10 @@ buildscript {
         classpath 'com.android.tools.build:gradle:4.2.1'
 
         // For FCM push notifications
-        classpath 'com.google.gms:google-services:4.3.5'
+        classpath 'com.google.gms:google-services:4.3.8'
 
         // Crashlytics
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.5.2'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.0'
 
         // Legal compliance: plugin to collect and display OSS licenses.
         classpath 'com.google.android.gms:oss-licenses-plugin:0.10.4'

@@ -55,11 +55,13 @@ public class AccPersonalFragment extends Fragment
                     }
                 }
                 FragmentActivity activity = getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                    return;
+                if (activity != null) {
+                    // Try to open the image selector again.
+                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
+                    if (launcher != null) {
+                        mAvatarPickerLauncher.launch(launcher);
+                    }
                 }
-                // Try to open the image selector again.
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, null));
             });
 
 
@@ -104,9 +106,12 @@ public class AccPersonalFragment extends Fragment
 
         activity.findViewById(R.id.topicTitle).setOnClickListener(v -> showEditAccountTitle());
 
-        activity.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
-            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestPermissionsLauncher))
-        );
+        activity.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
+                    Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestPermissionsLauncher);
+                    if (launcher != null) {
+                        mAvatarPickerLauncher.launch(launcher);
+                    }
+                });
 
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
 

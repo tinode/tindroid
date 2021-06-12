@@ -89,11 +89,13 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
                     }
                 }
                 FragmentActivity activity = getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                    return;
+                if (activity != null) {
+                    // Try to open the image selector again.
+                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
+                    if (launcher != null) {
+                        mAvatarPickerLauncher.launch(launcher);
+                    }
                 }
-                // Try to open the image selector again.
-                mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, null));
             });
 
     private final ActivityResultLauncher<String[]> mRequestContactsPermissionsLauncher =
