@@ -247,7 +247,7 @@
     <string name="full_name_required">Full name required</string>
 
     <string name="default_contact_name">Tinode User %1$s</string>
-    <string name="permission_missing">Required permission missing</string>
+    <string name="permission_missing">Required permission is missing</string>
     <string name="enter_search_query">Enter search query</string>
     <string name="image_caption_hint">Image caption</string>
     <string name="action_download">Download</string>

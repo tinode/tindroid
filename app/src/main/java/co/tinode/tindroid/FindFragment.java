@@ -29,11 +29,11 @@ import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
+import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -117,7 +117,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         RecyclerView rv = fragment.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
-        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
+        rv.addItemDecoration(new HorizontalListDivider(activity));
         mAdapter = new FindAdapter(activity, mImageLoader, new ContactClickListener());
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);

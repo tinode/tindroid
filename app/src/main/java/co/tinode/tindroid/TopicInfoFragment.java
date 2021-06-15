@@ -37,7 +37,6 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,6 +44,7 @@ import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
+import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -125,7 +125,7 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
 
         RecyclerView rv = view.findViewById(R.id.groupMembers);
         rv.setLayoutManager(new LinearLayoutManager(activity, RecyclerView.VERTICAL, false));
-        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
+        rv.addItemDecoration(new HorizontalListDivider(activity));
         rv.setAdapter(mMembersAdapter);
         rv.setNestedScrollingEnabled(false);
 

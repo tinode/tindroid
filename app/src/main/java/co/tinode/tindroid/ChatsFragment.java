@@ -23,11 +23,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.selection.Selection;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.selection.StorageStrategy;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
+import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -95,7 +95,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         RecyclerView rv = view.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
-        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
+        rv.addItemDecoration(new HorizontalListDivider(activity));
         mAdapter = new ChatsAdapter(activity, topicName -> {
             if (mActionMode != null || mIsBanned) {
                 return;

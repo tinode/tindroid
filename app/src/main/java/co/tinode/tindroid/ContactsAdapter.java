@@ -39,6 +39,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
     private final HashMap<String, Integer> mSelected;
     private String mSearchTerm;
     private Cursor mCursor;
+    private boolean mPermissionGranted = false;
 
     ContactsAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
 
@@ -85,6 +86,10 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
         }
     }
 
+    void setContactsPermission(boolean granted) {
+        mPermissionGranted = granted;
+    }
+
     @Override
     public void swapCursor(Cursor newCursor, String newSearchTerm) {
         mSearchTerm = newSearchTerm;
@@ -123,7 +128,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
 
     public int getItemViewType(int position) {
         if (getActualItemCount() == 0) {
-            return R.layout.contact_empty;
+            return mPermissionGranted ? R.layout.contact_empty : R.layout.no_permission;
         }
 
         return R.layout.contact_basic;
@@ -177,10 +182,6 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
 
     boolean isSelected(String unique) {
         return mSelected.containsKey(unique);
-    }
-
-    Set<String> getSelected() {
-        return mSelected.keySet();
     }
 
     void toggleSelected(String unique) {

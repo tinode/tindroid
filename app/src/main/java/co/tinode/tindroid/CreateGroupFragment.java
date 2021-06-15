@@ -29,10 +29,11 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.loader.app.LoaderManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -85,6 +86,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                         return;
                     }
                 }
+                mContactsAdapter.setContactsPermission(true);
                 restartLoader((StartChatActivity) getActivity());
             });
 
@@ -152,8 +154,8 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         // Recycler view with all available Tinode contacts.
         rv = view.findViewById(R.id.contact_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
-        rv.setHasFixedSize(true);
-        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
+        rv.setHasFixedSize(false);
+        rv.addItemDecoration(new HorizontalListDivider(activity));
 
         mContactsAdapter = new ContactsAdapter(activity, mImageLoader, (unique, holder) -> {
             if (!mContactsAdapter.isSelected(unique)) {

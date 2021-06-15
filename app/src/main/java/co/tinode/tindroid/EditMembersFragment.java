@@ -25,10 +25,10 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -56,19 +56,25 @@ public class EditMembersFragment extends Fragment {
 
     private ContactsLoaderCallback mContactsLoaderCallback;
 
+    // Break an endless loop of requesting permissions.
+    // Ask for permissions only once.
+    private boolean mPermissionsDenied = false;
+
     private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     // Check if all required permissions are granted.
                     if (!e.getValue()) {
+                        mPermissionsDenied = true;
                         return;
                     }
                 }
                 // Permissions are granted.
                 FragmentActivity activity = getActivity();
                 UiUtils.onContactsPermissionsGranted(activity);
+                mContactsAdapter.setContactsPermission(true);
                 // Try to open the image selector again.
-                restartLoader(getActivity());
+                restartLoader(activity);
             });
 
     @Override
@@ -94,8 +100,8 @@ public class EditMembersFragment extends Fragment {
         // Recycler view with all available Tinode contacts.
         RecyclerView rv = view.findViewById(R.id.contact_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
-        rv.setHasFixedSize(true);
-        rv.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
+        rv.setHasFixedSize(false);
+        rv.addItemDecoration(new HorizontalListDivider(activity));
         mContactsAdapter = new ContactsAdapter(activity, mImageLoader, (unique, holder) -> {
             if (!mContactsAdapter.isSelected(unique)) {
                 mSelectedAdapter.append(unique, (String) holder.text1.getText(),
@@ -182,7 +188,7 @@ public class EditMembersFragment extends Fragment {
                 new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS});
         if (missing.isEmpty()) {
             LoaderManager.getInstance(activity).restartLoader(LOADER_ID, null, mContactsLoaderCallback);
-        } else {
+        } else if (!mPermissionsDenied) {
             mRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
         }
     }
