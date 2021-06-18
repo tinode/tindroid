@@ -23,6 +23,9 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.URI;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -133,6 +136,12 @@ public class MessageActivity extends AppCompatActivity
     // Notification settings.
     private boolean mSendTypingNotifications = false;
     private boolean mSendReadReceipts = false;
+
+    // Only for grp topics:
+    // Keeps track of the known subscriptions for the given topic.
+    private Set<String> mKnownSubs = null;
+    // True when new subscriptions were added to the topic.
+    private boolean mNewSubsAvailable = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -271,6 +280,18 @@ public class MessageActivity extends AppCompatActivity
                     // No fragment is visible. Show default and clear back stack.
                     getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     showFragment(FRAGMENT_MESSAGES, null, false);
+                }
+            }
+        }
+        mNewSubsAvailable = false;
+        mKnownSubs = new HashSet<String>();
+        if (mTopic != null && mTopic.isGrpType()) {
+            Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
+            if (subs != null) {
+                for (Subscription<VxCard, PrivateType> sub : subs) {
+                    if (sub.user != null) {
+                        mKnownSubs.add(sub.user);
+                    }
                 }
             }
         }
@@ -839,6 +860,12 @@ public class MessageActivity extends AppCompatActivity
                         ((TopicInfoFragment) fragment).notifyDataSetChanged();
                     } else if (fragment instanceof MessagesFragment) {
                         ((MessagesFragment) fragment).notifyDataSetChanged(true);
+                        if (mNewSubsAvailable) {
+                            mNewSubsAvailable = false;
+                            // Reload so we can correctly display messages from
+                            // new users (subscriptions).
+                            ((MessagesFragment) fragment).notifyDataSetChanged(false);
+                        }
                     }
                 }
             });
@@ -858,6 +885,14 @@ public class MessageActivity extends AppCompatActivity
                     }
                 }
             });
+        }
+
+        @Override
+        public void onMetaSub(Subscription<VxCard, PrivateType> sub) {
+            if (mTopic.isGrpType() && sub.user != null && !mKnownSubs.contains(sub.user)) {
+                mKnownSubs.add(sub.user);
+                mNewSubsAvailable = true;
+            }
         }
 
         @Override
