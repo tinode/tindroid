@@ -80,10 +80,10 @@ public class SignUpFragment extends Fragment
 
         // Get avatar from the gallery or photo camera.
         fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
-            if (activity.isFinishing() || activity.isDestroyed()) {
-                return;
+            Intent launcher = UiUtils.avatarSelectorIntent(getActivity(), mRequestAvatarPermissionsLauncher);
+            if (launcher != null) {
+                mAvatarPickerLauncher.launch(launcher);
             }
-            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(getActivity(), mRequestAvatarPermissionsLauncher));
         });
         // Handle click on the sign up button.
         fragment.findViewById(R.id.signUp).setOnClickListener(this);
