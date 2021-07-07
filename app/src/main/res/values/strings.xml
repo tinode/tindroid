@@ -7,7 +7,7 @@
     <string name="app_name" translatable="false">Tinode</string>
     <string name="app_name_full" translatable="false">Tinode Chat</string>
     <string name="app_version">Version</string>
-    <string name="copyright" translatable="false">© 2014 – 2020 Tinode</string>
+    <string name="copyright" translatable="false">© 2014 – 2021 Tinode</string>
     <string name="tinode" translatable="false">Tinode</string>
 
     <string name="login_hint">Login</string>
@@ -283,7 +283,7 @@
 
     <string name="image_too_small">Image is too small</string>
     <string name="this_is_channel">This is a channel</string>
-    <string name="channel_explained">Channels allow unlimited subscribers with minimal access control. This selection is permanent.</string>
+    <string name="channel_explained">Channels allow unlimited read-only subscribers. This selection is permanent.</string>
     <string name="channel">channel</string>
     <string name="unavailable">unavailable</string>
     <string name="picture">Picture</string>
