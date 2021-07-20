@@ -41,9 +41,9 @@ static def gitVersionName() {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    api 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
-    api 'com.fasterxml.jackson.core:jackson-core:2.12.3'
-    api 'com.fasterxml.jackson.core:jackson-annotations:2.12.3'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    api 'com.fasterxml.jackson.core:jackson-core:2.12.4'
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
     //noinspection GradleDependency: 1.5.0 requires Android API 24.
     api 'org.java-websocket:Java-WebSocket:1.4.1'
 
