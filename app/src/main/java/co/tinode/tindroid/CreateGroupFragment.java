@@ -136,7 +136,11 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
             if (activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }
-            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher));
+
+            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher);
+            if (launcher != null) {
+                mAvatarPickerLauncher.launch(launcher);
+            }
         });
 
         // Recycler view with selected contacts.
