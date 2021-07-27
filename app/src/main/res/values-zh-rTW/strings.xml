@@ -242,7 +242,7 @@
     <string name="action_download">下載</string>
     <string name="invalid_content">內容無效</string>
     <string name="failed">失敗</string>
-    <string name="processing">處理中 …</string>
+    <string name="processing">處理中……</string>
     <string name="incognito_mode_enabled">無痕模式</string>
     <string name="about_the_app">關於應用程式</string>
     <string name="general">一般</string>
@@ -264,7 +264,7 @@
     <string name="licenses">授權</string>
     <string name="blocked_contacts">已封鎖的聯絡人</string>
     <string name="action_restore">解除封鎖</string>
-    <string name="send_to">傳送至。。。</string>
+    <string name="send_to">傳送至……</string>
     <string name="never">永不</string>
     <string name="just_now">僅此一次</string>
 

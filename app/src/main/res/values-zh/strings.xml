@@ -240,7 +240,7 @@
     <string name="action_download">保存</string>
     <string name="invalid_content">无效内容</string>
     <string name="failed">失败</string>
-    <string name="processing">处理中…</string>
+    <string name="processing">处理中……</string>
     <string name="incognito_mode_enabled">无痕模式</string>
     <string name="about_the_app">关于申请</string>
     <string name="general">通用设置</string>
@@ -265,7 +265,7 @@
     <string name="licenses">执照</string>
     <string name="blocked_contacts">被阻止的联系人列表</string>
     <string name="action_restore">解除封锁</string>
-    <string name="send_to">发送至…</string>
+    <string name="send_to">发送至……</string>
     <string name="never">决不</string>
     <string name="just_now">现在</string>
     <string name="image_too_small">图片太小</string>
