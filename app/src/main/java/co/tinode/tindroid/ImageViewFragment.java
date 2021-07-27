@@ -50,6 +50,11 @@ public class ImageViewFragment extends Fragment {
     // Minimum size of the avatar image after cropping.
     private static final int MIN_AVATAR_SIZE = 8;
 
+    // Maximum count of pixels in a zoomed image: width * height * scale^2.
+    private static final int MAX_SCALED_PIXELS = 1024 * 1024 * 16;
+    // How much bigger any image dimension is allowed to be compare to the screen size.
+    private static final float MAX_SCALE_FACTOR = 8f;
+
     // The matrix actually used for scaling.
     private Matrix mMatrix = null;
     // Working matrix for pre-testing image bounds.
@@ -63,8 +68,6 @@ public class ImageViewFragment extends Fragment {
 
     // Working rectangle for testing image bounds after panning and zooming.
     private RectF mWorkingRect;
-    // Minimum scaling factor
-    // private float mMinScalingFactor = 1f;
 
     private GestureDetector mGestureDetector;
     private ScaleGestureDetector mScaleGestureDetector;
@@ -118,17 +121,25 @@ public class ImageViewFragment extends Fragment {
                 float factor = scaleDetector.getScaleFactor();
                 mWorkingMatrix.postScale(factor, factor, scaleDetector.getFocusX(), scaleDetector.getFocusY());
 
-                // Make sure it's not too large or too small: not larger than 10x the screen size,
+                // Make sure it's not too large or too small: not larger than MAX_SCALE_FACTOR the screen size,
                 // and not smaller of either the screen size or the actual image size.
                 mWorkingMatrix.mapRect(mWorkingRect, mInitialRect);
-                if ((/* max size */ mWorkingRect.width() < mScreenRect.width() * 10f) &&
-                        (/* covers cut out area */(mAvatarUpload
-                                && mWorkingRect.width() >= mCutOutRect.width()
-                                && mWorkingRect.height() >= mCutOutRect.height())
-                                || (/* not too small */!mAvatarUpload
-                                && (mWorkingRect.width() >= mInitialRect.width()
-                                || mWorkingRect.width() >= mScreenRect.width()
-                                || mWorkingRect.height() >= mScreenRect.height())))) {
+
+                final float width = mWorkingRect.width();
+                final float height = mWorkingRect.height();
+
+                // Prevent scaling too much: much bigger than the screen size or overall pixel count too high.
+                if (width > mScreenRect.width() * MAX_SCALE_FACTOR ||
+                        height > mScreenRect.height() * MAX_SCALE_FACTOR ||
+                        width * height > MAX_SCALED_PIXELS) {
+                    mWorkingMatrix.set(mMatrix);
+                    return true;
+                }
+
+                if (/* covers cut out area */(mAvatarUpload && width >= mCutOutRect.width() &&
+                        height >= mCutOutRect.height())
+                        || (/* not too small */!mAvatarUpload && (width >= mInitialRect.width() ||
+                        width >= mScreenRect.width() || height >= mScreenRect.height()))) {
                     mMatrix.set(mWorkingMatrix);
                     mImageView.setImageMatrix(mMatrix);
 
