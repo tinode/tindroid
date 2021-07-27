@@ -26,6 +26,7 @@ public class Description<DP, DR> implements Serializable {
     public DP pub;
     @JsonProperty("private")
     public DR priv;
+    public LastSeen seen;
 
     public Description() {
     }
@@ -125,6 +126,15 @@ public class Description<DP, DR> implements Serializable {
         // FIXME: this does not take into account partial updates.
         if (desc.priv != null) {
             changed = mergePriv(desc.priv) || changed;
+        }
+
+        if (desc.seen != null) {
+            if (seen == null) {
+                seen = desc.seen;
+                changed = true;
+            } else {
+                changed = seen.merge(desc.seen) || changed;
+            }
         }
 
         return changed;
