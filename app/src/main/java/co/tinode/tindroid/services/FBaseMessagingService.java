@@ -219,11 +219,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 avatar = senderIcon;
 
                 // Try to retrieve rich message content.
-                String json = data.get("rc");
-                if (!TextUtils.isEmpty(json)) {
-                    Log.i(TAG, "parsing json: " + json);
+                String richContent = data.get("rc");
+                if (!TextUtils.isEmpty(richContent)) {
                     try {
-                        Drafty draftyBody = Tinode.jsonDeserialize(json, Drafty.class.getCanonicalName());
+                        Drafty draftyBody = Tinode.jsonDeserialize(richContent, Drafty.class.getCanonicalName());
                         if (draftyBody != null) {
                             int[] attrs = {android.R.attr.textSize};
                             TypedArray ta = obtainStyledAttributes(androidx.appcompat.R.style.TextAppearance_Compat_Notification, attrs);
@@ -231,7 +230,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                             ta.recycle();
                             body = FontFormatter.toSpanned(this, fontSize, draftyBody, MAX_MESAGE_LENGTH);
                         } else {
-                            Log.i(TAG, "parsed json is NULL");
+                            // The content is plain text.
+                            body = richContent;
                         }
                     } catch (ClassCastException ex) {
                         Log.w(TAG, "Failed to de-serialize payload", ex);

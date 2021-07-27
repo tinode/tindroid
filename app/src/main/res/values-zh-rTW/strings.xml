@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
-    <string name="tinode_url" translatable="false">https://tinode.co</string>
-    <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
-
-    <string name="app_name" translatable="false">Tinode</string>
-    <string name="app_name_full" translatable="false">Tinode Chat</string>
     <string name="app_version">版本</string>
-    <string name="copyright" translatable="false">© 2014 – 2021 Tinode</string>
-    <string name="tinode" translatable="false">Tinode</string>
 
     <string name="login_hint">登入</string>
     <string name="password_hint">密碼</string>
@@ -18,13 +10,11 @@
     <string name="send_file_button_hint">傳送檔案</string>
 
     <string name="sign_in">登入</string>
-    <string name="app_description" translatable="false">Tinode Chat</string>
     <string name="action_signup">註冊</string>
     <string name="sign_up">註冊</string>
     <string name="login_new">登入</string>
     <string name="password_new">密碼</string>
     <string name="full_name">全名，例如：王小明</string>
-    <string name="tinode_logo" translatable="false">Tinode Logo</string>
     <string name="action_cancel">取消</string>
     <string name="settings_host_name">伺服器位址</string>
     <string name="settings_use_tls">使用安全連線</string>
@@ -143,7 +133,6 @@
     <string name="edit_account">編輯帳號名稱</string>
     <string name="invalid_login">登入無效</string>
 
-    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
     <string name="download_attachment">儲存</string>
     <string name="broken_image">未知或無效的圖片格式</string>
     <string name="file_manager_not_found">找不到檔案總管</string>
@@ -251,7 +240,6 @@
     <string name="enter_search_query">輸入搜尋關鍵字</string>
     <string name="image_caption_hint">圖片說明</string>
     <string name="action_download">下載</string>
-    <string name="tinode_image" translatable="false">tinode_image</string>
     <string name="invalid_content">內容無效</string>
     <string name="failed">失敗</string>
     <string name="processing">處理中 …</string>
@@ -274,10 +262,9 @@
     <string name="confirm_delmsg_for_all">您確定要為所有成員刪除訊息嗎？</string>
     <string name="confirm_delmsg_for_self">您確定要刪除所有訊息嗎？ (其他人仍可見)</string>
     <string name="licenses">授權</string>
-    <string name="invalid_file" translatable="false">invalid</string>
     <string name="blocked_contacts">已封鎖的聯絡人</string>
     <string name="action_restore">解除封鎖</string>
-    <string name="send_to">傳送至...</string>
+    <string name="send_to">傳送至。。。</string>
     <string name="never">永不</string>
     <string name="just_now">僅此一次</string>
 

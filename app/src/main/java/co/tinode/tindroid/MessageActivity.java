@@ -284,7 +284,7 @@ public class MessageActivity extends AppCompatActivity
             }
         }
         mNewSubsAvailable = false;
-        mKnownSubs = new HashSet<String>();
+        mKnownSubs = new HashSet<>();
         if (mTopic != null && mTopic.isGrpType()) {
             Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
             if (subs != null) {
@@ -294,6 +294,10 @@ public class MessageActivity extends AppCompatActivity
                     }
                 }
             }
+        }
+
+        if (mTopic == null) {
+            return true;
         }
 
         mTopic.setListener(new TListener());

@@ -224,7 +224,7 @@ public class MessagesFragment extends Fragment {
             }
         });
 
-        mFailureListener = new UiUtils.ToastFailureListener(getActivity());
+        mFailureListener = new UiUtils.ToastFailureListener(activity);
 
         // Send message on button click
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendText());
