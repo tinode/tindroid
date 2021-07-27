@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
+    <string name="tinode_url" translatable="false">https://tinode.co</string>
+    <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
+
+    <string name="app_name" translatable="false">Tinode</string>
+    <string name="app_name_full" translatable="false">Tinode Chat</string>
+    <string name="app_version">版本</string>
+    <string name="copyright" translatable="false">© 2014 – 2021 Tinode</string>
+    <string name="tinode" translatable="false">Tinode</string>
+
+    <string name="login_hint">登入</string>
+    <string name="password_hint">密碼</string>
+    <string name="new_message_hint">新訊息</string>
+    <string name="send_message_button_hint">傳送訊息</string>
+    <string name="send_image_button_hint">傳送圖片</string>
+    <string name="send_file_button_hint">傳送檔案</string>
+
+    <string name="sign_in">登入</string>
+    <string name="app_description" translatable="false">Tinode Chat</string>
+    <string name="action_signup">註冊</string>
+    <string name="sign_up">註冊</string>
+    <string name="login_new">登入</string>
+    <string name="password_new">密碼</string>
+    <string name="full_name">全名，例如：王小明</string>
+    <string name="tinode_logo" translatable="false">Tinode Logo</string>
+    <string name="action_cancel">取消</string>
+    <string name="settings_host_name">伺服器位址</string>
+    <string name="settings_use_tls">使用安全連線</string>
+    <string name="settings_wire_transport">Wire transport</string>
+    <string name="settings_tls_explained">加密至伺服器的連線</string>
+    <string name="settings_host_name_explained">正在連接至 \'%1$s\'</string>
+    <string name="settings_wire_explained">正在使用 \'%1$s\'</string>
+
+    <!-- access mode definitions -->
+    <string name="modeReadOnly">唯讀</string>
+    <string name="modeAdmin">管理員</string>
+    <string name="modeOwner">擁有者</string>
+    <string name="modeBlocked">已封鎖</string>
+    <!-- mode-like access statuses -->
+    <string name="modeInvited">已邀請</string>
+    <string name="modeRequested">已請求</string>
+    <string name="modeUndefined">未定義</string>
+    <string name="modePending">待處理</string>
+
+    <!-- Menu actions -->
+    <string name="action_settings">設定</string>
+    <string name="action_delete">刪除</string>
+    <string name="action_mute">將對話靜音</string>
+    <string name="action_unmute">將對話解除靜音</string>
+    <string name="action_clear_messages">清除所有訊息</string>
+    <string name="action_view_contact">檢視聯絡人</string>
+    <string name="action_new_chat">新對話</string>
+    <string name="action_about">關於</string>
+    <string name="action_search">搜尋</string>
+    <string name="action_add_contact">新增聯絡人</string>
+    <string name="action_send_now">立刻傳送</string>
+    <string name="action_view_details">查看詳細資訊</string>
+    <string name="action_copy">複製</string>
+    <string name="action_offline">離線狀態下運作</string>
+    <string name="action_delete_group">刪除對話…</string>
+    <string name="action_leave_topic">離開對話…</string>
+
+    <string name="avatar">大頭貼</string>
+    <string name="select_image">選擇圖片</string>
+    <string name="select_file">選擇檔案</string>
+    <string name="image_is_unavailable">圖片無法使用</string>
+    <string name="error_login_failed">登入失敗：</string>
+    <string name="error_connection_failed">連線失敗：</string>
+    <string name="login_required">需要登入</string>
+    <string name="password_required">需要密碼</string>
+    <string name="error_new_account_failed">註冊失敗：</string>
+    <string name="no_chats">您沒有任何對話\n\n¯\\_(ツ)_/¯</string>
+
+    <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
+     alphabet using ListView fast scroll. -->
+    <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+
+    <string name="tinode_invite_subject">試試 Tinode Messenger</string>
+    <string name="tinode_invite_body">試試 Tinode Messenger。從 https://tinode.co 下載。</string>
+
+    <string name="profile_action">Tinode 個人檔案</string>
+    <string name="view_profile">查看個人檔案</string>
+    <string name="tinode_message">傳送 Tinode 訊息</string>
+    <string name="topic_title">群組名稱</string>
+    <string name="group_members">群組成員</string>
+    <string name="name_required">需要主題名稱</string>
+    <string name="no_members">無群組成員</string>
+    <string name="add_one_member">請至少新增一名群組成員</string>
+    <string name="add_members">新增成員</string>
+    <string name="leave_group">離開群組</string>
+    <string name="id">ID：</string>
+    <string name="topic_muted">已靜音</string>
+    <string name="permissions">權限</string>
+    <string name="your_permissions">您</string>
+
+    <string name="no_connection">您處於離線狀態</string>
+    <string name="action_failed">操作失敗</string>
+
+    <string name="placeholder_contact_title">未命名或未知</string>
+    <string name="placeholder_topic_title">未命名</string>
+    <string name="placeholder_private">私人資訊：未設定</string>
+
+    <string name="options_menu">設定選單</string>
+    <string name="current_user">您</string>
+    <string name="default_permissions">預設權限</string>
+    <string name="auth_permissions">已驗證的使用者</string>
+    <string name="anon_permissions">匿名使用者</string>
+    <string name="topic_private">額外資訊 (僅您可見)</string>
+    <string name="edit_topic">編輯主題</string>
+    <string name="edit_permissions">編輯權限</string>
+
+    <string name="permission_owner">完全控制 (擁有者)</string>
+    <string name="permission_join">加入</string>
+    <string name="permission_read">讀取</string>
+    <string name="permission_write">撰寫</string>
+    <string name="permission_approve">核准新成員</string>
+    <string name="permission_share">邀請新成員</string>
+    <string name="permission_notifications">接收通知</string>
+    <string name="permission_delete">刪除訊息</string>
+
+    <string name="send_message">傳送訊息</string>
+    <string name="change_permissions">修改權限</string>
+    <string name="make_owner">轉移擁有者</string>
+    <string name="remove_from_group">移除</string>
+    <string name="block">封鎖</string>
+
+    <string name="confirm_member_removal">要將 %1$s 從 \"%2$s\" 踢除嗎？</string>
+    <string name="confirm_member_ban">要將 %1$s 從 \"%2$s\" 剔除並封禁嗎？</string>
+    <string name="confirm_leave_topic">您確定要離開此對話嗎？</string>
+    <string name="confirm_delete_topic">您確定要刪除所有人的對話嗎？</string>
+    <string name="confirm_delete_multiple_topics">您確定要刪除這些對話嗎？</string>
+    <string name="modeWriteOnly">唯寫</string>
+    <string name="owner_cannot_unsubscribe">擁有者無法取消訂閱</string>
+    <string name="read_receipts_enabled">傳送已讀提示</string>
+    <string name="typing_notifications_enabled">顯示輸入中提示</string>
+    <string name="logout">登出</string>
+    <string name="change_password">修改密碼</string>
+    <string name="account_settings">帳號設定</string>
+    <string name="enter_new_password">輸入新的密碼</string>
+    <string name="confirm_logout">您確定要登出嗎？</string>
+    <string name="edit_account">編輯帳號名稱</string>
+    <string name="invalid_login">登入無效</string>
+
+    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
+    <string name="download_attachment">儲存</string>
+    <string name="broken_image">未知或無效的圖片格式</string>
+    <string name="file_manager_not_found">找不到檔案總管</string>
+    <string name="attachment_too_large">檔案大小 %1$s 超出 %2$s 限制。</string>
+
+    <string name="failed_to_download">無法下載檔案</string>
+    <string name="failed_to_save_download">無法儲存已下載的檔案</string>
+    <string name="failed_to_open_file">沒有其他應用程式可以檢視此類型的檔案</string>
+    <string name="failed_empty_password">未修改：密碼欄為空</string>
+    <string name="failed_credential_confirmation">確認碼錯誤</string>
+    <string name="failed_to_create_topic">建立主題失敗</string>
+
+    <string name="contacts_section_contacts">手機聯絡人</string>
+    <string name="contacts_section_directory">目錄</string>
+
+    <string name="email">電子郵件地址</string>
+    <string name="email_required">需要電子郵件地址</string>
+    <string name="validate_cred">輸入 %1$s 傳送給您的確認碼：</string>
+    <string name="validate_cred_title">確認聯絡人</string>
+    <string name="confirm">確認</string>
+    <string name="validation_example">僅數字</string>
+    <string name="enter_confirmation_code">輸入確認碼</string>
+    <string name="hint_add_by_id">輸入主題或使用者 ID</string>
+    <string name="hint_search_tags">以標籤搜尋</string>
+    <string name="topic_not_found_or_invalid">找不到主題或是主題無效</string>
+    <string name="sending_disabled">不可用</string>
+    <string name="download_title">Tinode 下載</string>
+    <string name="some_permissions_missing">請授權所有需要的權限。</string>
+    <string name="unable_to_attach_file">無法附加此檔案</string>
+    <string name="canceled">已取消</string>
+    <string name="login_rejected">登入遭拒</string>
+    <string name="email_rejected">電子郵件遭拒</string>
+    <string name="invalid_confirmation_code">代碼無效</string>
+    <string name="notification_channel_name">新訊息</string>
+    <string name="new_message">新訊息</string>
+    <string name="notification_channel_description">收到了新訊息</string>
+    <string name="request_pass_reset_title">重設密碼</string>
+    <string name="request_pass_reset">由 %1$s 要求的代碼：</string>
+    <string name="validated_address_to_use">已驗證 %1$s 可用來傳送代碼</string>
+    <string name="request">要求</string>
+    <string name="forgot_password">忘記密碼</string>
+    <string name="enter_valid_address">輸入有效的 %1$s</string>
+    <string name="invalid_or_unknown_credential">無效或未知的位址</string>
+    <string name="password_reset_message_sent">已傳送包含流程的訊息</string>
+    <string name="user_not_found">找不到</string>
+    <string name="topic_tags">標籤，以逗號分隔</string>
+    <string name="sender_unknown">未知</string>
+    <string name="action_archive">封存</string>
+    <string name="archived_chats">已封存的對話</string>
+    <string name="action_show_archive">已封存的對話</string>
+    <string name="request_new_chat_title">新對話</string>
+    <string name="request_new_chat_message">您已被邀請開始新對話，您要做什麼呢？</string>
+    <string name="new_chat_accept">接受</string>
+    <string name="new_chat_ignore">忽略</string>
+    <string name="new_chat_block">封鎖</string>
+    <string name="new_chat">新對話</string>
+    <string name="messages_not_readable">沒有存取新訊息的權限</string>
+    <string name="content_deleted">內容已被刪除</string>
+    <string name="peers_messaging_disabled">Peer 的訊息已被停用</string>
+    <string name="action_enable">啟用</string>
+    <string name="find">尋找</string>
+    <string name="by_id">以 ID</string>
+    <string name="group">群組</string>
+    <string name="id_required">ID 為必填項</string>
+    <string name="settings">設定</string>
+    <string name="no_results">無結果</string>
+    <string name="file_name_label">檔名：</string>
+    <string name="content_type_label">類型：</string>
+    <string name="image_size_label">大小：</string>
+    <string name="must_subscribe_first">必須先訂閱</string>
+    <string name="topic_blocked">已封鎖</string>
+    <string name="topic_archived">已封存</string>
+    <string name="action_unarchive">取消封存</string>
+    <string name="action_invite">邀請</string>
+    <string name="tags_management">標籤</string>
+    <string name="contacts">連略人</string>
+    <string name="add_contact">新增其他人</string>
+    <string name="manage">管理</string>
+    <string name="delete">刪除</string>
+    <string name="add_credential">輸入電子郵件地址或電話號碼</string>
+    <string name="unrecognized_credential">無效或是無法辨識的驗證方式</string>
+    <string name="add_credential_title">新增聯絡人</string>
+    <string name="delete_credential_title">刪除聯絡人</string>
+    <string name="delete_credential_confirmation">您確定要移除 %1$s:%2$s 嗎？</string>
+    <string name="leave_conversation">離開對話</string>
+    <string name="confirm_delete_account">您確定要永久刪除您的帳號嗎？此操作無法還原。</string>
+    <string name="block_contact">封鎖聯絡人</string>
+    <string name="report_contact">檢舉聯絡人</string>
+    <string name="report_group">檢舉群組</string>
+    <string name="clear_messages">清除訊息</string>
+    <string name="manage_members">管理成員</string>
+    <string name="block_and_report">封鎖並檢舉</string>
+    <string name="confirm_contact_ban">要封鎖 %1$s 嗎？</string>
+    <string name="confirm_report">要封鎖並檢舉 %1$s 嗎？</string>
+    <string name="legal">法律聲明</string>
+    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Terms of Use</a>]]></string>
+    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contact Us</a>]]></string>
+    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Privacy Policy</a>]]></string>
+    <string name="button_hint_start_new_chat">開始新對話</string>
+    <string name="app_server">伺服器</string>
+    <string name="full_name_required">需要全名</string>
+
+    <string name="default_contact_name">Tinode 使用者 %1$s</string>
+    <string name="permission_missing">缺少必要的權限</string>
+    <string name="enter_search_query">輸入搜尋關鍵字</string>
+    <string name="image_caption_hint">圖片說明</string>
+    <string name="action_download">下載</string>
+    <string name="tinode_image" translatable="false">tinode_image</string>
+    <string name="invalid_content">內容無效</string>
+    <string name="failed">失敗</string>
+    <string name="processing">處理中 …</string>
+    <string name="incognito_mode_enabled">無痕模式</string>
+    <string name="about_the_app">關於應用程式</string>
+    <string name="general">一般</string>
+    <string name="delete_account">刪除帳號</string>
+    <string name="help">Help</string>
+    <string name="security">安全性</string>
+    <string name="notifications">通知</string>
+    <string name="user_tags_description">其他人可以透過這些標籤找到您</string>
+    <string name="help_explained">支援、法律聲明、關於</string>
+    <string name="security_explained">密碼、權限、刪除帳號</string>
+    <string name="topic_tags_description">其他人可以透過這些標籤找到主題</string>
+    <string name="permissions_explained">存取權限、搜尋標籤</string>
+    <string name="delete_group">刪除群組</string>
+
+    <string name="topic_default_permissions_explained">新成員將自動獲得這些權限</string>
+    <string name="user_default_permissions_explained">其他人與您對話時將獲得這些權限</string>
+    <string name="confirm_delmsg_for_all">您確定要為所有成員刪除訊息嗎？</string>
+    <string name="confirm_delmsg_for_self">您確定要刪除所有訊息嗎？ (其他人仍可見)</string>
+    <string name="licenses">授權</string>
+    <string name="invalid_file" translatable="false">invalid</string>
+    <string name="blocked_contacts">已封鎖的聯絡人</string>
+    <string name="action_restore">解除封鎖</string>
+    <string name="send_to">傳送至...</string>
+    <string name="never">永不</string>
+    <string name="just_now">僅此一次</string>
+
+    <string name="image_too_small">圖片過小</string>
+    <string name="this_is_channel">這是頻道</string>
+    <string name="channel_explained">頻道能夠容納無限多個的唯讀訂閱者。此選擇無法改變。</string>
+    <string name="channel">頻道</string>
+    <string name="unavailable">不可用</string>
+    <string name="picture">圖片</string>
+    <string name="attachment">附加檔案</string>
+    <string name="unknown">未知</string>
+    <string name="form">表單</string>
+    <string name="accept_avatar_button_hint">接受大頭貼</string>
+    <string name="next_button_hint">下一步</string>
+</resources>
