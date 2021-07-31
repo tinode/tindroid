@@ -6,8 +6,6 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode gitVersionCode()
-        versionName gitVersionName()
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
         buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.ext.version_name}\""
     }
@@ -28,6 +26,7 @@ android {
     }
 }
 
+/*
 static def gitVersionCode() {
     def process = "git rev-list --count HEAD".execute()
     return process.text.toInteger()
@@ -38,6 +37,7 @@ static def gitVersionName() {
     // Remove trailing CR and remove leading 'v' as in 'v1.2.3'
     return process.text.trim().substring(1)
 }
+*/
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')

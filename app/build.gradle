@@ -29,10 +29,12 @@ android {
         // If you are getting errors due to git not being set up comment out lines gitVersion*()
         // and uncomment lines with static assignments.
 
+        buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
+        buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.ext.version_name}\""
         // versionCode 100
-        versionCode gitVersionCode()
+        // versionCode gitVersionCode()
         // versionName "1.0.0"
-        versionName gitVersionName()
+        // versionName gitVersionName()
     }
 
     buildTypes {
