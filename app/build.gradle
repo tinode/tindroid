@@ -9,7 +9,7 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     signingConfigs {
         release {
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "co.tinode.tindroidx"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         vectorDrawables.useSupportLibrary = true
 
         // If you are getting errors due to git not being set up comment out lines gitVersion*()
@@ -31,10 +31,6 @@ android {
 
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
         buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.ext.version_name}\""
-        // versionCode 100
-        // versionCode gitVersionCode()
-        // versionName "1.0.0"
-        // versionName gitVersionName()
     }
 
     buildTypes {
@@ -64,17 +60,6 @@ android {
     }
 }
 
-static def gitVersionCode() {
-    def process = "git rev-list --count HEAD".execute()
-    return process.text.toInteger()
-}
-
-static def gitVersionName() {
-    def process = "git describe --tags".execute()
-    // Remove trailing CR and remove leading 'v' as in 'v1.2.3'
-    return process.text.trim().substring(1)
-}
-
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(path: ':tinodesdk')
@@ -94,7 +79,7 @@ dependencies {
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
     implementation 'androidx.work:work-runtime:2.5.0'
 
-    implementation 'com.google.android:flexbox:1.1.0'
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'com.google.firebase:firebase-core:19.0.0'
