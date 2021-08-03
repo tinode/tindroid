@@ -30,11 +30,11 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toStartOf="@id/imageAvatar"
+            android:clickable="false"
+            android:ellipsize="end"
+            android:focusable="false"
             android:maxLines="2"
             android:textIsSelectable="false"
-            android:ellipsize="end"
-            android:clickable="false"
-            android:focusable="false"
             tools:text="User name" />
 
         <LinearLayout
@@ -58,12 +58,12 @@
                 style="?android:textAppearanceMedium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
                 android:fontFamily="monospace"
                 android:textIsSelectable="false"
                 android:typeface="monospace"
-                android:ellipsize="end"
-                android:clickable="false"
-                android:focusable="false"
                 tools:text="usrfv2qrUr6vAd" />
         </LinearLayout>
 
@@ -74,13 +74,11 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/userIDwrapper"
             android:layout_toStartOf="@id/imageAvatar"
-            android:gravity="center_vertical"
-            android:clickable="false"
             android:ellipsize="end"
-            android:focusable="false"
+            android:gravity="center_vertical"
             android:minHeight="32dp"
             android:text="@string/badge_verified"
-            android:textIsSelectable="false"
+            android:visibility="gone"
             app:drawableStartCompat="@drawable/ic_verified" />
 
         <TextView
@@ -90,13 +88,11 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/verified"
             android:layout_toStartOf="@id/imageAvatar"
-            android:gravity="center_vertical"
-            android:textIsSelectable="false"
-            android:text="@string/badge_staff"
             android:ellipsize="end"
-            android:clickable="false"
-            android:focusable="false"
+            android:gravity="center_vertical"
             android:minHeight="32dp"
+            android:text="@string/badge_staff"
+            android:visibility="gone"
             app:drawableStartCompat="@drawable/ic_verified_user" />
 
         <TextView
@@ -106,33 +102,40 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/staff"
             android:layout_toStartOf="@id/imageAvatar"
-            android:textIsSelectable="false"
-            android:text="@string/badge_danger"
-            android:gravity="center_vertical"
             android:ellipsize="end"
-            android:clickable="false"
-            android:focusable="false"
+            android:gravity="center_vertical"
             android:minHeight="32dp"
+            android:visibility="gone"
+            android:text="@string/badge_danger"
             app:drawableStartCompat="@drawable/ic_danger" />
 
     </RelativeLayout>
 
-    <TextView
-        style="@style/sectionTitleStyle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/topicDescriptionWrapper"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/description" />
+        android:visibility="gone"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/topicDescription"
-        style="@style/textSecondary"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="3"
-        android:textIsSelectable="false"
-        android:layout_marginBottom="@dimen/activity_padding"
-        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+        <TextView
+            style="@style/sectionTitleStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/description" />
+
+        <TextView
+            android:id="@+id/topicDescription"
+            style="@style/textSecondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:textIsSelectable="false"
+            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
@@ -146,10 +149,10 @@
         android:id="@+id/notifications"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
+        android:focusable="true"
         android:gravity="center_vertical"
-        android:focusable="true">
+        android:minHeight="?attr/listPreferredItemHeight">
 
         <ImageView
             android:layout_width="@dimen/settings_icon_size"
@@ -171,10 +174,10 @@
         android:id="@+id/security"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
+        android:focusable="true"
         android:gravity="center_vertical"
-        android:focusable="true">
+        android:minHeight="?attr/listPreferredItemHeight">
 
         <ImageView
             android:id="@+id/icon_security"
@@ -199,9 +202,9 @@
             style="?android:textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@id/security_text"
             android:layout_marginStart="16dp"
             android:layout_toEndOf="@id/icon_security"
-            android:layout_below="@id/security_text"
             android:text="@string/security_explained" />
     </RelativeLayout>
 
@@ -209,10 +212,10 @@
         android:id="@+id/help"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/listPreferredItemHeight"
         android:clickable="true"
+        android:focusable="true"
         android:gravity="center_vertical"
-        android:focusable="true">
+        android:minHeight="?attr/listPreferredItemHeight">
 
         <ImageView
             android:id="@+id/icon_help"
@@ -237,9 +240,9 @@
             style="?android:textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@id/help_text"
             android:layout_marginStart="16dp"
             android:layout_toEndOf="@id/icon_help"
-            android:layout_below="@id/help_text"
             android:text="@string/help_explained" />
 
     </RelativeLayout>

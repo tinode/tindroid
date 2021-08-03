@@ -70,6 +70,7 @@ public class MessageActivity extends AppCompatActivity
     static final String FRAGMENT_MESSAGES = "msg";
     static final String FRAGMENT_INVALID = "invalid";
     static final String FRAGMENT_INFO = "info";
+    static final String FRAGMENT_GENERAL = "general";
     static final String FRAGMENT_PERMISSIONS = "permissions";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
@@ -86,7 +87,7 @@ public class MessageActivity extends AppCompatActivity
     private static final int TYPING_INDICATOR_DURATION = 4000;
 
     private final BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
-        public void onReceive(Context ctxt, Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             // FIXME: handle notification click.
             Log.d(TAG, "onNotificationClick" + intent.getExtras());
         }
@@ -556,6 +557,9 @@ public class MessageActivity extends AppCompatActivity
                 case FRAGMENT_INFO:
                     fragment = new TopicInfoFragment();
                     break;
+                case FRAGMENT_GENERAL:
+                    fragment = new TopicGeneralFragment();
+                    break;
                 case FRAGMENT_PERMISSIONS:
                     fragment = new TopicPermissionsFragment();
                     break;
@@ -661,10 +665,6 @@ public class MessageActivity extends AppCompatActivity
         if (fragment != null && fragment.isVisible()) {
             fragment.runMessagesLoader(mTopicName);
         }
-    }
-
-    public void submitForExecution(Runnable runnable) {
-        mMessageSender.submit(runnable);
     }
 
     /**

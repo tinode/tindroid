@@ -780,6 +780,26 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
+    protected boolean isTrusted(final String key) {
+        if (mDesc != null && mDesc.trusted != null) {
+            Object val = mDesc.trusted.get(key);
+            if (val instanceof Boolean) {
+                return (Boolean) val;
+            }
+        }
+        return false;
+    }
+
+    public boolean isTrustedVerified() {
+        return isTrusted("verified");
+    }
+    public boolean isTrustedStaff() {
+        return isTrusted("staff");
+    }
+    public boolean isTrustedDanger() {
+        return isTrusted("danger");
+    }
+
     /**
      * Update timestamp and user agent of when the topic was last online.
      */

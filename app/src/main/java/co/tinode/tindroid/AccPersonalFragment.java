@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -133,19 +134,8 @@ public class AccPersonalFragment extends Fragment
         if (me != null) {
             LayoutInflater inflater = LayoutInflater.from(activity);
 
-            FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
-            tagsView.removeAllViews();
-
-            String[] tags = me.getTags();
-            if (tags != null) {
-                for (String tag : tags) {
-                    TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
-                    label.setText(tag);
-                    tagsView.addView(label);
-                }
-            }
-
             LinearLayout credList = activity.findViewById(R.id.credList);
+
             // Remove all items from the list of credentials.
             while (credList.getChildCount() > 0) {
                 credList.removeViewAt(0);
@@ -178,6 +168,7 @@ public class AccPersonalFragment extends Fragment
                     credList.addView(container, 0);
                 }
             }
+            credList.requestLayout();
 
             VxCard pub = me.getPub();
             if (pub != null) {
@@ -188,6 +179,20 @@ public class AccPersonalFragment extends Fragment
                             .setImageDrawable(new RoundImageDrawable(getResources(), bmp));
                 }
             }
+
+            FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
+            tagsView.removeAllViews();
+
+            String[] tags = me.getTags();
+            if (tags != null) {
+                for (String tag : tags) {
+                    TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
+                    label.setText(tag);
+                    tagsView.addView(label);
+                    label.requestLayout();
+                }
+            }
+            tagsView.requestLayout();
         }
 
         final TextView title = activity.findViewById(R.id.topicTitle);
@@ -355,6 +360,7 @@ public class AccPersonalFragment extends Fragment
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        menu.clear();
+        inflater.inflate(R.menu.menu_save, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 }

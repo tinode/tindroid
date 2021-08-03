@@ -86,6 +86,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
 
         String fn = null;
+        String note = null;
         if (me != null) {
             VxCard pub = me.getPub();
             if (pub != null) {
@@ -95,7 +96,12 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
                     ((AppCompatImageView) activity.findViewById(R.id.imageAvatar))
                             .setImageDrawable(new RoundImageDrawable(getResources(), bmp));
                 }
+                note = pub.note;
             }
+
+            activity.findViewById(R.id.verified).setVisibility(me.isTrustedVerified() ? View.VISIBLE : View.GONE);
+            activity.findViewById(R.id.staff).setVisibility(me.isTrustedStaff() ? View.VISIBLE : View.GONE);
+            activity.findViewById(R.id.danger).setVisibility(me.isTrustedDanger() ? View.VISIBLE : View.GONE);
         }
 
         final TextView title = activity.findViewById(R.id.topicTitle);
@@ -106,10 +112,19 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
         }
+
+        if (!TextUtils.isEmpty(note)) {
+            ((TextView) activity.findViewById(R.id.topicDescription)).setText(note);
+            activity.findViewById(R.id.topicDescriptionWrapper).setVisibility(View.VISIBLE);
+        } else {
+            activity.findViewById(R.id.topicDescriptionWrapper).setVisibility(View.GONE);
+        }
     }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        menu.clear();
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.menu_edit, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 }

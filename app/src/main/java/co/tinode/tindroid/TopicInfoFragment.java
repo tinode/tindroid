@@ -345,6 +345,7 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         if (mTopic.isOwner()) {
             if (!TextUtils.isEmpty(title)) {
                 titleEditor.setText(title);
+                //noinspection ConstantConditions
                 titleEditor.setSelection(title.length());
             }
         } else {

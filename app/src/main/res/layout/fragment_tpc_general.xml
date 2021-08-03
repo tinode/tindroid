@@ -5,125 +5,135 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/activity_default_margin">
+        android:layout_margin="@dimen/activity_default_margin"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/activity_default_margin">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/imageAvatar"
-            android:layout_width="@dimen/avatar_size_large"
-            android:layout_height="@dimen/avatar_size_large"
-            android:layout_centerHorizontal="true"
-            android:layout_margin="4sp"
-            android:clickable="true"
-            android:contentDescription="@string/avatar"
-            android:focusable="true"
-            app:srcCompat="@drawable/ic_group_grey" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <Button
-            android:id="@+id/uploadAvatar"
-            android:layout_width="48sp"
-            android:layout_height="48sp"
-            android:layout_alignEnd="@id/imageAvatar"
-            android:layout_alignBottom="@id/imageAvatar"
-            android:layout_margin="2sp"
-            android:background="@drawable/pill_counter"
-            android:gravity="center"
-            android:paddingTop="10dp"
-            android:contentDescription="@string/change_avatar"
-            app:drawableTopCompat="@drawable/ic_add_a_photo" />
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageAvatar"
+                android:layout_width="@dimen/avatar_size_large"
+                android:layout_height="@dimen/avatar_size_large"
+                android:layout_centerHorizontal="true"
+                android:layout_margin="4sp"
+                android:clickable="true"
+                android:contentDescription="@string/avatar"
+                android:focusable="true"
+                app:srcCompat="@drawable/ic_group_grey" />
+
+            <Button
+                android:id="@+id/uploadAvatar"
+                android:layout_width="48sp"
+                android:layout_height="48sp"
+                android:layout_alignEnd="@id/imageAvatar"
+                android:layout_alignBottom="@id/imageAvatar"
+                android:layout_margin="2sp"
+                android:background="@drawable/pill_counter"
+                android:contentDescription="@string/change_avatar"
+                android:gravity="center"
+                android:paddingTop="10dp"
+                app:drawableTopCompat="@drawable/ic_add_a_photo" />
+
+        </RelativeLayout>
+
+        <TextView
+            style="@style/sectionTitleStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/topicTitle"
+                style="?android:textAppearanceLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:hint="@string/group_title"
+                tools:text="Group about travel" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/topicPrivate"
+                style="?android:textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:hint="@string/placeholder_private"
+                android:maxLines="1"
+                tools:text="This is a very good group. I like it" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/topicDescription"
+                style="?android:textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:hint="@string/description_optional"
+                android:inputType="textPersonName|textMultiLine"
+                android:maxLines="3"
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <androidx.legacy.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp" />
 
         <LinearLayout
+            android:id="@+id/topicAddressWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/imageAvatar"
-            android:orientation="vertical"
-            android:paddingTop="@dimen/activity_default_margin">
+            android:gravity="center_vertical"
+            android:minHeight="36dp">
 
             <TextView
                 style="@style/sectionTitleStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/id" />
+
+            <TextView
+                android:id="@+id/topicAddress"
+                style="?android:textAppearanceMedium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/general" />
+                android:fontFamily="monospace"
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/topicTitle"
-                    style="?android:textAppearanceLarge"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:hint="@string/group_title"
-                    tools:text="Group about travel" />
-            </com.google.android.material.textfield.TextInputLayout>
+                android:textIsSelectable="true"
+                android:typeface="monospace"
+                tools:ignore="TouchTargetSizeCheck"
+                tools:text="grpFv2qrUr6vAd" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/topicPrivate"
-                    style="?android:textAppearanceMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:hint="@string/placeholder_private"
-                    tools:text="This is a very good group. I like it" />
-            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/topicDescription"
-                    style="?android:textAppearanceMedium"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="3"
-                    android:inputType="textPersonName|textMultiLine"
-                    android:hint="@string/description_optional"
-                    tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
-            </com.google.android.material.textfield.TextInputLayout>
+        <androidx.legacy.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp" />
 
-            <androidx.legacy.widget.Space
-                android:layout_width="match_parent"
-                android:layout_height="6dp" />
-
-            <LinearLayout
-                android:id="@+id/topicAddressWrapper"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:minHeight="36dp">
-
-                <TextView
-                    style="@style/sectionTitleStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/id" />
-
-                <TextView
-                    android:id="@+id/topicAddress"
-                    style="?android:textAppearanceMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-
-                    android:textIsSelectable="true"
-                    android:typeface="monospace"
-                    tools:ignore="TouchTargetSizeCheck"
-                    tools:text="grpFv2qrUr6vAd" />
-
-            </LinearLayout>
-
-            <androidx.legacy.widget.Space
-                android:layout_width="match_parent"
-                android:layout_height="6dp" />
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/tagsManagerWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <View
                 android:layout_width="match_parent"
@@ -157,8 +167,8 @@
                 android:drawablePadding="4sp"
                 android:text="@string/manage"
                 android:textColor="?android:textColorPrimary"
-                app:drawableTint="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_edit_black" />
+                app:drawableStartCompat="@drawable/ic_edit_black"
+                app:drawableTint="?android:textColorPrimary" />
 
             <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
@@ -172,7 +182,8 @@
                 app:alignItems="flex_start"
                 app:flexWrap="wrap" />
 
-        </LinearLayout>
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
-    </RelativeLayout>
+    </LinearLayout>
+
 </ScrollView>

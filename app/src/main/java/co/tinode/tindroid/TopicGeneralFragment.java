@@ -25,18 +25,18 @@ import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Topic permissions fragment: p2p or a group topic.
+ * Topic general info fragment: p2p or a group topic.
  */
-public class TopicPermissionsFragment extends Fragment {
+public class TopicGeneralFragment extends Fragment {
 
-    private static final String TAG = "TopicPermissionsFrag";
+    private static final String TAG = "TopicGeneralFragment";
 
     private ComTopic<VxCard> mTopic;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_tpc_security, container, false);
+        return inflater.inflate(R.layout.fragment_tpc_general, container, false);
     }
 
     @Override
@@ -100,6 +100,7 @@ public class TopicPermissionsFragment extends Fragment {
         }
 
         final View defaultPermissions = activity.findViewById(R.id.defaultPermissionsWrapper);
+        final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
 
         if (mTopic.isGrpType()) {
             // Group topic
@@ -108,6 +109,9 @@ public class TopicPermissionsFragment extends Fragment {
             activity.findViewById(R.id.p2pPermissions).setVisibility(View.GONE);
 
             if (mTopic.isOwner()) {
+                tagManager.setVisibility(View.VISIBLE);
+                tagManager.findViewById(R.id.buttonManageTags)
+                        .setOnClickListener(view -> showEditTags());
 
                 LayoutInflater inflater = LayoutInflater.from(activity);
                 FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
@@ -121,12 +125,17 @@ public class TopicPermissionsFragment extends Fragment {
                         tagsView.addView(label);
                     }
                 }
+
+            } else {
+                tagManager.setVisibility(View.GONE);
             }
 
             defaultPermissions.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
         } else {
             // P2P topic
+            tagManager.setVisibility(View.GONE);
+
             activity.findViewById(R.id.singleUserPermissions).setVisibility(View.GONE);
             activity.findViewById(R.id.p2pPermissions).setVisibility(View.VISIBLE);
 
@@ -206,8 +215,7 @@ public class TopicPermissionsFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // inflater.inflate(R.menu.menu_topic_info, menu);
+        inflater.inflate(R.menu.menu_save, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
 }
