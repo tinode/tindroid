@@ -37,29 +37,110 @@
             android:focusable="false"
             tools:text="User name" />
 
-        <TextView
-            android:id="@+id/topicAddress"
-            style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/userIDwrapper"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/topicTitle"
-            android:fontFamily="monospace"
+            android:layout_toStartOf="@id/imageAvatar"
+            android:gravity="center_vertical"
+            android:minHeight="36dp">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:text="@string/id" />
+
+            <TextView
+                android:id="@+id/topicAddress"
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                android:ellipsize="end"
+                android:clickable="false"
+                android:focusable="false"
+                tools:text="usrfv2qrUr6vAd" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/verified"
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/userIDwrapper"
+            android:layout_toStartOf="@id/imageAvatar"
+            android:gravity="center_vertical"
+            android:clickable="false"
+            android:ellipsize="end"
+            android:focusable="false"
+            android:minHeight="32dp"
+            android:text="@string/badge_verified"
             android:textIsSelectable="false"
-            android:typeface="monospace"
+            app:drawableStartCompat="@drawable/ic_verified" />
+
+        <TextView
+            android:id="@+id/staff"
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/verified"
+            android:layout_toStartOf="@id/imageAvatar"
+            android:gravity="center_vertical"
+            android:textIsSelectable="false"
+            android:text="@string/badge_staff"
             android:ellipsize="end"
             android:clickable="false"
             android:focusable="false"
-            tools:text="usrfv2qrUr6vAd" />
+            android:minHeight="32dp"
+            app:drawableStartCompat="@drawable/ic_verified_user" />
 
-        <View
+        <TextView
+            android:id="@+id/danger"
+            style="?android:textAppearanceMedium"
             android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_below="@id/imageAvatar"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:background="@color/grey" />
+            android:layout_height="wrap_content"
+            android:layout_below="@id/staff"
+            android:layout_toStartOf="@id/imageAvatar"
+            android:textIsSelectable="false"
+            android:text="@string/badge_danger"
+            android:gravity="center_vertical"
+            android:ellipsize="end"
+            android:clickable="false"
+            android:focusable="false"
+            android:minHeight="32dp"
+            app:drawableStartCompat="@drawable/ic_danger" />
 
     </RelativeLayout>
+
+    <TextView
+        style="@style/sectionTitleStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/description" />
+
+    <TextView
+        android:id="@+id/topicDescription"
+        style="@style/textSecondary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:textIsSelectable="false"
+        android:layout_marginBottom="@dimen/activity_padding"
+        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1sp"
+        android:layout_marginTop="@dimen/activity_padding"
+        android:layout_marginBottom="@dimen/activity_padding"
+        android:background="@color/grey"
+        tools:ignore="SmallSp" />
 
     <LinearLayout
         android:id="@+id/notifications"

@@ -100,7 +100,7 @@
 
     <string name="placeholder_contact_title">Unnamed or unknown</string>
     <string name="placeholder_topic_title">Unnamed</string>
-    <string name="placeholder_private">Private info: not set</string>
+    <string name="placeholder_private">Private notes</string>
 
     <string name="options_menu">Options menu</string>
     <string name="current_user">You</string>
@@ -292,4 +292,15 @@
     <string name="form">Form</string>
     <string name="accept_avatar_button_hint">Accept avatar</string>
     <string name="next_button_hint">Next</string>
+    <string name="your_name">Your name</string>
+    <string name="description_optional">Description (optional)</string>
+    <string name="change_avatar">Change avatar</string>
+    <string name="group_title">Group title</string>
+    <string name="group_tags_description">Group can be found by these tags</string>
+    <string name="badge_verified">Verified/official</string>
+    <string name="badge_staff">Staff-managed</string>
+    <string name="badge_danger">Untrustworthy</string>
+    <string name="group_name">Group name</string>
+    <string name="description">Description</string>
+    <string name="group_security_explained">Permissions, leave or report the group</string>
 </resources>

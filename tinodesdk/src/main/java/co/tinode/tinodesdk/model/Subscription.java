@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import co.tinode.tinodesdk.LocalData;
 
@@ -29,6 +31,7 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
     public int clear;
     @JsonProperty("public")
     public SP pub;
+    public Map<String,Object> trusted;
     public LastSeen seen;
 
     // Local values
@@ -58,11 +61,11 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
      * Merge two subscriptions.
      */
     public boolean merge(Subscription<SP,SR> sub) {
-        int changed = 0;
+        boolean changed = false;
 
         if (user == null && sub.user != null && !sub.user.equals("")) {
             user = sub.user;
-            changed ++;
+            changed = true;
         }
 
         if ((sub.updated != null) && (updated == null || updated.before(sub.updated))) {
@@ -72,9 +75,21 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
                 pub = sub.pub;
             }
 
-            changed ++;
-        } else if (pub == null && sub.pub != null) {
-            pub = sub.pub;
+            if (sub.trusted != null) {
+                if (trusted == null) {
+                    trusted = new HashMap<>();
+                }
+                trusted.putAll(sub.trusted);
+            }
+
+            changed = true;
+        } else {
+            if (pub == null && sub.pub != null) {
+                pub = sub.pub;
+            }
+            if (trusted == null && sub.trusted != null) {
+                trusted = sub.trusted;
+            }
         }
 
         if ((sub.touched != null) && (touched == null || touched.before(sub.touched))) {
@@ -88,23 +103,23 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
         if (sub.acs != null) {
             if (acs == null) {
                 acs = new Acs(sub.acs);
-                changed++;
+                changed = true;
             } else {
-                changed += acs.merge(sub.acs) ? 1 : 0;
+                changed = acs.merge(sub.acs) || changed;
             }
         }
 
         if (sub.read > read) {
             read = sub.read;
-            changed ++;
+            changed = true;
         }
         if (sub.recv > recv) {
             recv = sub.recv;
-            changed ++;
+            changed = true;
         }
         if (sub.clear > clear) {
             clear = sub.clear;
-            changed ++;
+            changed = true;
         }
 
         if (sub.priv != null) {
@@ -114,30 +129,30 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
 
         if ((topic == null || topic.equals("")) && sub.topic != null && !sub.topic.equals("")) {
             topic = sub.topic;
-            changed ++;
+            changed = true;
         }
         if (sub.seq > seq) {
             seq = sub.seq;
-            changed ++;
+            changed = true;
         }
 
         if (sub.seen != null) {
             if (seen == null) {
                 seen = sub.seen;
-                changed ++;
+                changed = true;
             } else {
-                changed += seen.merge(sub.seen) ? 1 : 0;
+                changed = seen.merge(sub.seen) || changed;
             }
         }
 
-        return changed > 0;
+        return changed;
     }
 
     /**
      * Merge changes from {meta set} packet with the subscription.
      */
     public boolean merge(MetaSetSub sub) {
-        int changed = 0;
+        boolean changed = false;
 
         if (sub.mode != null && acs == null) {
             acs = new Acs();
@@ -146,20 +161,20 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
         if (sub.user != null && !sub.user.equals("")) {
             if (user == null) {
                 user = sub.user;
-                changed++;
+                changed = true;
             }
             if (sub.mode != null) {
                 acs.setGiven(sub.mode);
-                changed++;
+                changed = true;
             }
         } else {
             if (sub.mode != null) {
                 acs.setWant(sub.mode);
-                changed++;
+                changed = true;
             }
         }
 
-        return changed > 0;
+        return changed;
     }
 
     public void updateAccessMode(AccessChange ac) {

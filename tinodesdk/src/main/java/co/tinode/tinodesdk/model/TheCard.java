@@ -36,7 +36,7 @@ public class TheCard implements Serializable, Mergeable {
     public Photo photo;
     // Birthday.
     public Birthday bday;
-    // Free-form note.
+    // Free-form description.
     public String note;
 
     public TheCard() {

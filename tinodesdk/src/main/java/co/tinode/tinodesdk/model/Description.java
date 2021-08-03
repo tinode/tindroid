@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -26,6 +28,7 @@ public class Description<DP, DR> implements Serializable {
     public DP pub;
     @JsonProperty("private")
     public DR priv;
+    public Map<String,Object> trusted;
     public LastSeen seen;
 
     public Description() {
@@ -123,7 +126,13 @@ public class Description<DP, DR> implements Serializable {
             changed = mergePub(desc.pub) || changed;
         }
 
-        // FIXME: this does not take into account partial updates.
+        if (desc.trusted != null) {
+            if (trusted == null) {
+                trusted = new HashMap<>();
+            }
+            trusted.putAll(desc.trusted);
+        }
+
         if (desc.priv != null) {
             changed = mergePriv(desc.priv) || changed;
         }

@@ -19,7 +19,7 @@
             android:clickable="true"
             android:contentDescription="@string/avatar"
             android:focusable="true"
-            app:srcCompat="@drawable/ic_person_grey" />
+            app:srcCompat="@drawable/ic_group_grey" />
 
         <Button
             android:id="@+id/uploadAvatar"
@@ -56,9 +56,22 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
-                    android:inputType="textPersonName"
-                    android:hint="@string/your_name"
-                    tools:text="John Doe" />
+                    android:hint="@string/group_title"
+                    tools:text="Group about travel" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/topicPrivate"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:hint="@string/placeholder_private"
+                    tools:text="This is a very good group. I like it" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -73,13 +86,15 @@
                     android:maxLines="3"
                     android:inputType="textPersonName|textMultiLine"
                     android:hint="@string/description_optional"
-                    tools:text="I'm an all around nice guy. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+                    tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
             </com.google.android.material.textfield.TextInputLayout>
+
             <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
             <LinearLayout
+                android:id="@+id/topicAddressWrapper"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
@@ -98,10 +113,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"
+
                     android:textIsSelectable="true"
                     android:typeface="monospace"
                     tools:ignore="TouchTargetSizeCheck"
-                    tools:text="usrfv2qrUr6vAd" />
+                    tools:text="grpFv2qrUr6vAd" />
 
             </LinearLayout>
 
@@ -124,48 +140,13 @@
                 style="@style/sectionTitleStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/contacts" />
-
-            <LinearLayout
-                android:id="@+id/credList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonAddContact"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/add_contact"
-                android:drawablePadding="4sp"
-                android:text="@string/add_contact"
-                android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_add_black"
-                app:drawableTint="?android:textColorPrimary" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey" />
-
-            <androidx.legacy.widget.Space
-                android:layout_width="match_parent"
-                android:layout_height="6dp" />
-
-            <TextView
-                style="@style/sectionTitleStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="@string/tags_management" />
 
             <TextView
                 style="?android:textAppearanceSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/user_tags_description" />
+                android:text="@string/group_tags_description" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/buttonManageTags"

@@ -12,51 +12,108 @@
         android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/tagsManagerWrapper"
+            android:id="@+id/singleUserPermissions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:visibility="gone">
 
             <TextView
-                style="@style/sectionTitleStyle"
-                android:layout_width="wrap_content"
+                style="@style/textPrimary"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/tags_management"/>
+                android:layout_weight="1"
+                android:text="@string/permissions"/>
 
             <TextView
-                style="?android:textAppearanceSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/topic_tags_description" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonManageTags"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/manage"
-                android:drawablePadding="4sp"
-                android:text="@string/manage"
-                app:drawableTint="?android:textColorPrimary"
+                android:id="@+id/permissionsSingle"
+                android:textAppearance="?android:textAppearanceMedium"
                 android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_edit_black"/>
-
-            <com.google.android.flexbox.FlexboxLayout
-                android:id="@+id/tagList"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:flexWrap="wrap"
-                app:alignItems="flex_start"
-                app:alignContent="flex_start" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey"/>
-
+                android:background="@drawable/dotted_line"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="RWPD"/>
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:background="@color/grey" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonClearMessages"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            app:drawableTint="?android:textColorPrimary"
+            android:text="@string/clear_messages"
+            android:textColor="?android:textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_delete" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonLeave"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            app:drawableTint="?android:textColorPrimary"
+            android:text="@string/leave_conversation"
+            android:textColor="?android:textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_exit" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonDeleteGroup"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            app:drawableTint="@color/colorDanger"
+            android:text="@string/delete_group"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_delete_red" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonBlock"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            app:drawableTint="@color/colorDanger"
+            android:text="@string/block_contact"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_block_red" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonReportContact"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            app:drawableTint="@color/colorDanger"
+            android:text="@string/report_contact"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_report_red" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonReportGroup"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            app:drawableTint="@color/colorDanger"
+            android:text="@string/report_group"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_report_red" />
 
         <LinearLayout
             android:layout_width="match_parent"

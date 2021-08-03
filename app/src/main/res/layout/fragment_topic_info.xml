@@ -47,14 +47,10 @@
                 android:layout_alignParentTop="true"
                 android:layout_toStartOf="@id/imageAvatar"
                 android:ellipsize="end"
-                android:clickable="true"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:maxLines="2"
+                android:maxLines="1"
                 android:textIsSelectable="false"
                 android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@drawable/dotted_line"
-                tools:text="Topic title (public)" />
+                tools:text="Travel or flowers" />
 
             <TextView
                 android:id="@+id/topicSubtitle"
@@ -63,17 +59,13 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/topicTitle"
                 android:ellipsize="end"
-                android:clickable="true"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
                 android:lines="1"
                 android:singleLine="true"
                 android:textIsSelectable="false"
                 android:layout_marginBottom="@dimen/activity_padding"
                 android:layout_alignParentStart="true"
                 android:layout_toStartOf="@id/imageAvatar"
-                android:background="@drawable/dotted_line"
-                tools:text="Topic subtitle (private)" />
+                tools:text="Some private notes" />
 
             <LinearLayout
                 android:id="@+id/topicAddressWrapper"
@@ -81,10 +73,11 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/topicSubtitle"
                 android:layout_alignParentStart="true"
+                android:gravity="center_vertical"
                 android:layout_toStartOf="@id/imageAvatar">
 
                 <TextView
-                    style="@style/textSecondary"
+                    style="@style/sectionTitleStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingEnd="8dp"
@@ -102,21 +95,89 @@
                     android:singleLine="true"
                     android:textIsSelectable="true"
                     android:typeface="monospace"
-                    tools:text="p2p__fv2qrUr6vAdVURkv6q3w" />
+                    tools:text="grpAbCd345627" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/verified"
+                style="?android:textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/topicAddressWrapper"
+                android:layout_toStartOf="@id/imageAvatar"
+                android:gravity="center_vertical"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:minHeight="32dp"
+                android:text="@string/badge_verified"
+                android:textIsSelectable="false"
+                app:drawableStartCompat="@drawable/ic_verified" />
+
+            <TextView
+                android:id="@+id/staff"
+                style="?android:textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/verified"
+                android:layout_toStartOf="@id/imageAvatar"
+                android:gravity="center_vertical"
+                android:textIsSelectable="false"
+                android:text="@string/badge_staff"
+                android:ellipsize="end"
+                android:clickable="false"
+                android:focusable="false"
+                android:minHeight="32dp"
+                app:drawableStartCompat="@drawable/ic_verified_user" />
+
+            <TextView
+                android:id="@+id/danger"
+                style="?android:textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/staff"
+                android:layout_toStartOf="@id/imageAvatar"
+                android:textIsSelectable="false"
+                android:text="@string/badge_danger"
+                android:gravity="center_vertical"
+                android:ellipsize="end"
+                android:clickable="false"
+                android:focusable="false"
+                android:minHeight="32dp"
+                app:drawableStartCompat="@drawable/ic_danger" />
 
         </RelativeLayout>
 
+        <TextView
+            style="@style/sectionTitleStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/description" />
+
+        <TextView
+            android:id="@+id/topicDescription"
+            style="@style/textSecondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:textIsSelectable="false"
+            android:layout_marginBottom="@dimen/activity_padding"
+            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+
         <View
             android:layout_width="match_parent"
-            android:layout_height="0.5dp"
+            android:layout_height="1sp"
             android:layout_marginTop="@dimen/activity_padding"
             android:layout_marginBottom="@dimen/activity_padding"
-            android:background="@color/grey" />
+            android:background="@color/grey"
+            tools:ignore="SmallSp" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:minHeight="48dp">
 
             <TextView
                 style="@style/textPrimary"
@@ -136,7 +197,9 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:minHeight="48dp">
 
             <TextView
                 style="@style/textPrimary"
@@ -156,10 +219,11 @@
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="0.5dp"
+            android:layout_height="1sp"
             android:layout_marginTop="@dimen/activity_padding"
             android:layout_marginBottom="@dimen/activity_padding"
-            android:background="@color/grey" />
+            android:background="@color/grey"
+            tools:ignore="SmallSp" />
 
         <RelativeLayout
             android:id="@+id/permissions"
@@ -187,7 +251,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_toEndOf="@id/icon_security"
-                android:text="@string/permissions" />
+                android:text="@string/security" />
 
             <TextView
                 style="?android:textAppearanceMedium"
@@ -196,112 +260,8 @@
                 android:layout_below="@id/security_text"
                 android:layout_marginStart="16dp"
                 android:layout_toEndOf="@id/icon_security"
-                android:text="@string/permissions_explained" />
+                android:text="@string/group_security_explained" />
         </RelativeLayout>
-
-        <LinearLayout
-            android:id="@+id/singleUserPermissions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:visibility="gone">
-
-            <TextView
-                style="@style/textPrimary"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/permissions"/>
-
-            <TextView
-                android:id="@+id/permissionsSingle"
-                android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="?android:textColorPrimary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/dotted_line"
-                android:clickable="true"
-                android:focusable="true"
-                android:focusableInTouchMode="false"
-                android:fontFamily="monospace"
-                android:textIsSelectable="false"
-                android:typeface="monospace"
-                tools:text="RWPD"/>
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:background="@color/grey" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonClearMessages"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="?android:textColorPrimary"
-            android:text="@string/clear_messages"
-            android:textColor="?android:textColorPrimary"
-            app:drawableStartCompat="@drawable/ic_delete" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonLeave"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="?android:textColorPrimary"
-            android:text="@string/leave_conversation"
-            android:textColor="?android:textColorPrimary"
-            app:drawableStartCompat="@drawable/ic_exit" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonDeleteGroup"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/delete_group"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_delete_red" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonBlock"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/block_contact"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_block_red" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonReportContact"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/report_contact"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_report_red" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonReportGroup"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/report_group"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_report_red" />
 
         <LinearLayout
             android:id="@+id/groupMembersWrapper"
@@ -311,10 +271,11 @@
 
             <View
                 android:layout_width="match_parent"
-                android:layout_height="0.5dp"
+                android:layout_height="1sp"
                 android:layout_marginTop="@dimen/activity_padding"
                 android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey" />
+                android:background="@color/grey"
+                tools:ignore="SmallSp" />
 
             <TextView
                 android:id="@+id/membersTitle"
