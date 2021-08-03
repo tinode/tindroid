@@ -32,9 +32,9 @@ android {
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
         buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.ext.version_name}\""
         // versionCode 100
-        // versionCode gitVersionCode()
+        versionCode gitVersionCode()
         // versionName "1.0.0"
-        // versionName gitVersionName()
+        versionName gitVersionName()
     }
 
     buildTypes {
