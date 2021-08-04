@@ -80,32 +80,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:minHeight="36dp">
-
-                <TextView
-                    style="@style/sectionTitleStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/id" />
-
-                <TextView
-                    android:id="@+id/topicAddress"
-                    style="?android:textAppearanceMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="true"
-                    android:typeface="monospace"
-                    tools:ignore="TouchTargetSizeCheck"
-                    tools:text="usrfv2qrUr6vAd" />
-
-            </LinearLayout>
-
             <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />

@@ -362,7 +362,7 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
                 newTitle = titleEditor.getText().toString().trim();
             }
             String newPriv = subtitleEditor.getText().toString().trim();
-            UiUtils.updateTitle(activity, mTopic, newTitle, newPriv,
+            UiUtils.updateTopicDesc(activity, mTopic, newTitle, newPriv,
                     () -> activity.runOnUiThread(this::notifyContentChanged));
         });
         builder.setNegativeButton(android.R.string.cancel, null);

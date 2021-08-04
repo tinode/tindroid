@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -49,9 +50,6 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.account_settings);
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
-
-        fragment.findViewById(R.id.personal).setOnClickListener(v ->
-                ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_PERSONAL, null));
 
         fragment.findViewById(R.id.notifications).setOnClickListener(v ->
                 ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_NOTIFICATIONS, null));
@@ -126,5 +124,20 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_edit, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_edit) {
+            FragmentActivity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return false;
+            }
+
+            ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_PERSONAL, null);
+            return true;
+        }
+        return false;
     }
 }

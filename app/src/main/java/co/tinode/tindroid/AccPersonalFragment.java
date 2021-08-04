@@ -6,10 +6,10 @@ import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -105,8 +105,6 @@ public class AccPersonalFragment extends Fragment
 
         // Attach listeners to editable form fields.
 
-        activity.findViewById(R.id.topicTitle).setOnClickListener(v -> showEditAccountTitle());
-
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
                     Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestPermissionsLauncher);
                     if (launcher != null) {
@@ -128,9 +126,8 @@ public class AccPersonalFragment extends Fragment
             return;
         }
 
-        ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
-
         String fn = null;
+        String description = null;
         if (me != null) {
             LayoutInflater inflater = LayoutInflater.from(activity);
 
@@ -173,6 +170,7 @@ public class AccPersonalFragment extends Fragment
             VxCard pub = me.getPub();
             if (pub != null) {
                 fn = pub.fn;
+                description = pub.note;
                 final Bitmap bmp = pub.getBitmap();
                 if (bmp != null) {
                     ((AppCompatImageView) activity.findViewById(R.id.imageAvatar))
@@ -195,46 +193,8 @@ public class AccPersonalFragment extends Fragment
             tagsView.requestLayout();
         }
 
-        final TextView title = activity.findViewById(R.id.topicTitle);
-        if (!TextUtils.isEmpty(fn)) {
-            title.setText(fn);
-            title.setTypeface(null, Typeface.NORMAL);
-            title.setTextIsSelectable(true);
-        } else {
-            title.setText(R.string.placeholder_contact_title);
-            title.setTypeface(null, Typeface.ITALIC);
-            title.setTextIsSelectable(false);
-        }
-    }
-
-    // Dialog for editing pub.fn and priv
-    private void showEditAccountTitle() {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
-        VxCard pub = me.getPub();
-        final String title = pub == null ? null : pub.fn;
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_account, null);
-        builder.setView(editor).setTitle(R.string.edit_account);
-
-        final EditText titleEditor = editor.findViewById(R.id.editTitle);
-        titleEditor.setText(title);
-
-        builder
-                .setPositiveButton(android.R.string.ok, (dialog, which) ->
-                        UiUtils.updateTitle(activity, me, titleEditor.getText().toString().trim(), null,
-                                () -> activity.runOnUiThread(() -> {
-                                    final MeTopic me1 = Cache.getTinode().getMeTopic();
-                                    // noinspection unchecked
-                                    updateFormValues(activity, me1);
-                                })))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        ((TextView) activity.findViewById(R.id.topicTitle)).setText(fn);
+        ((TextView) activity.findViewById(R.id.topicDescription)).setText(description);
     }
 
     // Dialog for editing tags.
@@ -362,5 +322,23 @@ public class AccPersonalFragment extends Fragment
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_save, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_save) {
+            FragmentActivity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return false;
+            }
+            final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
+            String title = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
+            String description = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
+            UiUtils.updateTopicDesc(activity, me, title, null, description,
+                    () -> activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack()));
+            return true;
+        }
+        return false;
     }
 }

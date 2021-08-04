@@ -112,6 +112,8 @@ public class UiUtils {
 
     // Maximum length of user name or topic title.
     static final int MAX_TITLE_LENGTH = 60;
+    // Maximum length of topic description.
+    static final int MAX_DESCRIPTION_LENGTH = 360;
 
     // Maximum linear dimensions of images.
     static final int MAX_BITMAP_SIZE = 1024;
@@ -996,18 +998,31 @@ public class UiUtils {
         topic.setDescription(pub, null).thenCatch(new ToastFailureListener(activity));
     }
 
-    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTitle(final Activity activity,
-                                                                         T topic, String title, String comment,
-                                                                         final TitleUpdateCallbackInterface done) {
+    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTopicDesc(final Activity activity,
+                                                                             T topic,
+                                                                             String title, String comment, String description,
+                                                                             final TitleUpdateCallbackInterface done) {
+        VxCard oldPub = topic.getPub();
         VxCard pub = null;
         if (!TextUtils.isEmpty(title)) {
-            VxCard oldPub = topic.getPub();
             if (title.length() > MAX_TITLE_LENGTH) {
                 title = title.substring(0, MAX_TITLE_LENGTH);
             }
             if (oldPub != null && !title.equals(oldPub.fn)) {
                 pub = new VxCard();
                 pub.fn = title;
+            }
+        }
+
+        if (!TextUtils.isEmpty(description)) {
+            if (description.length() > MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, MAX_DESCRIPTION_LENGTH);
+            }
+            if (oldPub != null && !description.equals(oldPub.note)) {
+                if (pub == null) {
+                    pub = new VxCard();
+                }
+                pub.note = description;
             }
         }
 
