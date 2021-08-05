@@ -24,6 +24,9 @@ public class Description<DP, DR> implements Serializable {
     public int read;
     public int recv;
     public int clear;
+
+    public boolean chan;
+
     @JsonProperty("public")
     public DP pub;
     @JsonProperty("private")
@@ -84,6 +87,11 @@ public class Description<DP, DR> implements Serializable {
         }
         if (desc.touched != null && (touched == null || touched.before(desc.touched))) {
             touched = desc.touched;
+            changed = true;
+        }
+
+        if (chan != desc.chan) {
+            chan = desc.chan;
             changed = true;
         }
 
@@ -220,7 +228,7 @@ public class Description<DP, DR> implements Serializable {
                 defacs = desc.defacs;
                 changed = true;
             } else {
-                changed = defacs.merge(desc.defacs) || changed;
+                changed = defacs.merge(desc.defacs);
             }
         }
 
