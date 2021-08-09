@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import java.util.Map;
 
@@ -295,7 +296,11 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         int id = item.getItemId();
         if (id == R.id.action_add_contact) {
             intent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
-            startActivity(intent);
+            if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_LONG).show();
+            }
             return true;
         } else if (id == R.id.action_invite) {
             ShareActionProvider provider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
