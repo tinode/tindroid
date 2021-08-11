@@ -324,10 +324,8 @@ public class MessagesFragment extends Fragment {
                                     long msgId = failure.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
                                     if (BaseDb.getInstance().getStore().getMessageById(msgId) != null) {
                                         runMessagesLoader(mTopicName);
-                                        if (state == WorkInfo.State.FAILED) {
-                                            String error = failure.getString(AttachmentHandler.ARG_ERROR);
-                                            Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
-                                        }
+                                        String error = failure.getString(AttachmentHandler.ARG_ERROR);
+                                        Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
                                     }
                                 }
                                 break;

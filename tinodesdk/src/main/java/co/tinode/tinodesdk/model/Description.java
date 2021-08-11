@@ -200,6 +200,15 @@ public class Description<DP, DR> implements Serializable {
 
         }
 
+        if (sub.seen != null) {
+            if (seen == null) {
+                seen = sub.seen;
+                changed = true;
+            } else {
+                changed = seen.merge(sub.seen) || changed;
+            }
+        }
+
         return changed;
     }
 
@@ -211,7 +220,7 @@ public class Description<DP, DR> implements Serializable {
                 defacs = desc.defacs;
                 changed = true;
             } else {
-                changed = defacs.merge(desc.defacs) || changed;
+                changed = defacs.merge(desc.defacs);
             }
         }
 

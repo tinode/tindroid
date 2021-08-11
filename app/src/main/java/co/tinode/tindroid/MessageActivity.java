@@ -663,10 +663,6 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
-    public void submitForExecution(Runnable runnable) {
-        mMessageSender.submit(runnable);
-    }
-
     /**
      * Show progress indicator based on current status
      *
