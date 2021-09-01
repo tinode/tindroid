@@ -8,10 +8,10 @@ buildscript {
         maven { url 'https://maven.google.com/' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0'
+        classpath 'com.android.tools.build:gradle:7.0.1'
 
         // For FCM push notifications
-        classpath 'com.google.gms:google-services:4.3.9'
+        classpath 'com.google.gms:google-services:4.3.10'
 
         // Crashlytics
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.1'

@@ -217,6 +217,15 @@ public class Description<DP, DR> implements Serializable {
 
         }
 
+        if (sub.seen != null) {
+            if (seen == null) {
+                seen = sub.seen;
+                changed = true;
+            } else {
+                changed = seen.merge(sub.seen) || changed;
+            }
+        }
+
         return changed;
     }
 

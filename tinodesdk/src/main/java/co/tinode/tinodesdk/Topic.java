@@ -67,7 +67,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     // Timestamp of the last key press that the server was notified of, milliseconds
     protected long mLastKeyPress = 0;
     protected boolean mOnline = false;
-    protected LastSeen mLastSeen = null;
     // ID of the last applied delete transaction. Different from 'clear' which is the highest known.
     protected int mMaxDel = 0;
     /**
@@ -99,7 +98,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (sub.online != null) {
             mOnline = sub.online;
         }
-        mLastSeen = sub.seen;
     }
 
     protected Topic(Tinode tinode, String name, Description<DP, DR> desc) {
@@ -235,14 +233,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param sub updated topic parameters
      */
     protected boolean update(Subscription<SP, SR> sub) {
-        boolean changed;
-
-        if (mLastSeen == null) {
-            changed = true;
-            mLastSeen = sub.seen;
-        } else {
-            changed = mLastSeen.merge(sub.seen);
-        }
+        boolean changed = false;
 
         if (mDesc.merge(sub)) {
             changed = true;
@@ -804,17 +795,17 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * Update timestamp and user agent of when the topic was last online.
      */
     public void setLastSeen(Date when, String ua) {
-        mLastSeen = new LastSeen(when, ua);
+        mDesc.seen = new LastSeen(when, ua);
     }
 
     /**
      * Update timestamp of when the topic was last online.
      */
     protected void setLastSeen(Date when) {
-        if (mLastSeen != null) {
-            mLastSeen.when = when;
+        if (mDesc.seen != null) {
+            mDesc.seen.when = when;
         } else {
-            mLastSeen = new LastSeen(when);
+            mDesc.seen = new LastSeen(when);
         }
     }
 
@@ -822,14 +813,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * Get timestamp when the topic was last online, if available.
      */
     public Date getLastSeen() {
-        return mLastSeen != null ? mLastSeen.when : null;
+        return mDesc.seen != null ? mDesc.seen.when : null;
     }
 
     /**
      * Get user agent string associated with the time when the topic was last online.
      */
     public String getLastSeenUA() {
-        return mLastSeen != null ? mLastSeen.ua : null;
+        return mDesc.seen != null ? mDesc.seen.ua : null;
     }
 
     /**
