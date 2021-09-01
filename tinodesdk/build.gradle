@@ -47,5 +47,5 @@ dependencies {
     //noinspection GradleDependency: 1.5.0 requires Android API 24.
     api 'org.java-websocket:Java-WebSocket:1.4.1'
 
-    implementation 'org.jetbrains:annotations:21.0.1'
+    implementation 'org.jetbrains:annotations:22.0.0'
 }
