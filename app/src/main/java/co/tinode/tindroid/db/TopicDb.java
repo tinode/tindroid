@@ -111,6 +111,10 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_PUBLIC = "pub";
     /**
+     * Trusted values, serialized as TEXT
+     */
+    public static final String COLUMN_NAME_TRUSTED = "trusted";
+    /**
      * Private topic description, serialized as TEXT
      */
     public static final String COLUMN_NAME_PRIVATE = "priv";
@@ -136,7 +140,8 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_LAST_SEEN_UA = 19;
     static final int COLUMN_IDX_CREDS = 20;
     static final int COLUMN_IDX_PUBLIC = 21;
-    static final int COLUMN_IDX_PRIVATE = 22;
+    static final int COLUMN_IDX_TRUSTED = 22;
+    static final int COLUMN_IDX_PRIVATE = 23;
     /**
      * SQL statement to create Messages table
      */
@@ -165,6 +170,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_LAST_SEEN_UA + " TEXT," +
                     COLUMN_NAME_CREDS + " TEXT," +
                     COLUMN_NAME_PUBLIC + " TEXT," +
+                    COLUMN_NAME_TRUSTED + " TEXT," +
                     COLUMN_NAME_PRIVATE + " TEXT)";
     /**
      * Add index on account_id-topic name, in descending order
@@ -225,6 +231,7 @@ public class TopicDb implements BaseColumns {
             values.put(COLUMN_NAME_CREDS, BaseDb.serialize(((MeTopic) topic).getCreds()));
         }
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
+        values.put(COLUMN_NAME_TRUSTED, BaseDb.serialize(topic.getTrusted()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
         values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
@@ -285,6 +292,7 @@ public class TopicDb implements BaseColumns {
             values.put(COLUMN_NAME_CREDS, BaseDb.serialize(((MeTopic) topic).getCreds()));
         }
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
+        values.put(COLUMN_NAME_TRUSTED, BaseDb.serialize(topic.getTrusted()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
 
         Date lastUsed = topic.getTouched();

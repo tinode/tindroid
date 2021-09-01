@@ -34,6 +34,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.TrustedType;
 
 /**
  * Class for handling communication on a single topic
@@ -554,6 +555,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         mDesc.pub = pub;
     }
 
+    public TrustedType getTrusted() {
+        return mDesc.trusted;
+    }
+
+    public void setTrusted(TrustedType trusted) {
+        mDesc.trusted = trusted;
+    }
+
     public DR getPriv() {
         return mDesc.priv;
     }
@@ -773,10 +782,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     protected boolean isTrusted(final String key) {
         if (mDesc != null && mDesc.trusted != null) {
-            Object val = mDesc.trusted.get(key);
-            if (val instanceof Boolean) {
-                return (Boolean) val;
-            }
+            return mDesc.trusted.getBooleanValue(key);
         }
         return false;
     }

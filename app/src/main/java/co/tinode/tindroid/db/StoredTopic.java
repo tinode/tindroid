@@ -57,6 +57,7 @@ public class StoredTopic implements LocalData.Payload {
             ((MeTopic) topic).setCreds(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_CREDS)));
         }
         topic.setPub(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PUBLIC)));
+        topic.setTrusted(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_TRUSTED)));
         topic.setPriv(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_PRIVATE)));
 
         topic.setAccessMode(BaseDb.deserializeMode(c.getString(TopicDb.COLUMN_IDX_ACCESSMODE)));

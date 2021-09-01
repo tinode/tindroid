@@ -31,7 +31,7 @@ public class Description<DP, DR> implements Serializable {
     public DP pub;
     @JsonProperty("private")
     public DR priv;
-    public Map<String,Object> trusted;
+    public TrustedType trusted;
     public LastSeen seen;
 
     public Description() {
@@ -136,7 +136,7 @@ public class Description<DP, DR> implements Serializable {
 
         if (desc.trusted != null) {
             if (trusted == null) {
-                trusted = new HashMap<>();
+                trusted = new TrustedType();
             }
             trusted.putAll(desc.trusted);
         }

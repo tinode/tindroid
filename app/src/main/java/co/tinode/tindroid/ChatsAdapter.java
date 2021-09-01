@@ -208,6 +208,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         AppCompatImageView avatarView;
         ImageView online;
         ImageView channel;
+        ImageView verified;
+        ImageView staff;
+        ImageView danger;
         ImageView muted;
         ImageView blocked;
         ImageView archived;
@@ -227,6 +230,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 avatarView = item.findViewById(R.id.avatar);
                 online = item.findViewById(R.id.online);
                 channel = item.findViewById(R.id.icon_channel);
+                verified = item.findViewById(R.id.icon_verified);
+                staff = item.findViewById(R.id.icon_staff);
+                danger = item.findViewById(R.id.icon_danger);
                 muted = item.findViewById(R.id.icon_muted);
                 blocked = item.findViewById(R.id.icon_blocked);
                 archived = item.findViewById(R.id.icon_archived);
@@ -305,7 +311,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
                 channel.setVisibility(View.GONE);
             }
-
+            verified.setVisibility(topic.isTrustedVerified() ? View.VISIBLE : View.GONE);
+            staff.setVisibility(topic.isTrustedStaff() ? View.VISIBLE : View.GONE);
+            danger.setVisibility(topic.isTrustedDanger() ? View.VISIBLE : View.GONE);
             muted.setVisibility(topic.isMuted() ? View.VISIBLE : View.GONE);
             archived.setVisibility(topic.isArchived() ? View.VISIBLE : View.GONE);
             blocked.setVisibility(!topic.isJoiner() ? View.VISIBLE : View.GONE);
