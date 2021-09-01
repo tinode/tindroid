@@ -105,13 +105,14 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/topicAddressWrapper"
                 android:layout_toStartOf="@id/imageAvatar"
-                android:gravity="center_vertical"
                 android:clickable="false"
                 android:ellipsize="end"
                 android:focusable="false"
+                android:gravity="center_vertical"
                 android:minHeight="32dp"
                 android:text="@string/badge_verified"
                 android:textIsSelectable="false"
+                android:visibility="gone"
                 app:drawableStartCompat="@drawable/ic_verified" />
 
             <TextView
@@ -128,6 +129,7 @@
                 android:clickable="false"
                 android:focusable="false"
                 android:minHeight="32dp"
+                android:visibility="gone"
                 app:drawableStartCompat="@drawable/ic_verified_user" />
 
             <TextView
@@ -144,6 +146,7 @@
                 android:clickable="false"
                 android:focusable="false"
                 android:minHeight="32dp"
+                android:visibility="gone"
                 app:drawableStartCompat="@drawable/ic_danger" />
 
         </RelativeLayout>
@@ -267,6 +270,7 @@
             android:id="@+id/groupMembersWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             android:orientation="vertical">
 
             <View

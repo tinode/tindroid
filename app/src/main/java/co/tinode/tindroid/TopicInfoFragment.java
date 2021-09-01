@@ -164,14 +164,15 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
                     }
                 }));
 
+        /*
         view.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
                         UiUtils.ACTION_UPDATE_SELF_SUB, mTopic.isP2PType() ? "OASD" : "O"));
-
+        */
         view.findViewById(R.id.permissions).setOnClickListener(v ->
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_PERMISSIONS, null,
                         true));
-
+        /*
         view.findViewById(R.id.buttonClearMessages).setOnClickListener(v -> {
             int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
             showConfirmationDialog(null, null, null,
@@ -210,6 +211,7 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         view.findViewById(R.id.buttonAddMembers).setOnClickListener(v ->
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS,
                         null, true));
+         */
     }
 
     @Override
@@ -238,8 +240,13 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         final TextView address = activity.findViewById(R.id.topicAddress);
         final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
 
-        final View permissions = activity.findViewById(R.id.permissions);
-        final View permissionsSingle = activity.findViewById(R.id.singleUserPermissions);
+        // Trusted flags for all topics.
+        activity.findViewById(R.id.verified).setVisibility(mTopic.isTrustedVerified() ? View.VISIBLE : View.GONE);
+        activity.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
+        activity.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
+
+        // final View permissions = activity.findViewById(R.id.permissions);
+        // final View permissionsSingle = activity.findViewById(R.id.singleUserPermissions);
 
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
 
@@ -269,16 +276,16 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
 
             View buttonLeave = activity.findViewById(R.id.buttonLeave);
             if (mTopic.isOwner()) {
-                permissions.setVisibility(View.VISIBLE);
-                permissionsSingle.setVisibility(View.GONE);
+                // permissions.setVisibility(View.VISIBLE);
+                //permissionsSingle.setVisibility(View.GONE);
 
                 buttonLeave.setVisibility(View.GONE);
                 reportGroup.setVisibility(View.GONE);
                 blockContact.setVisibility(View.GONE);
                 deleteGroup.setVisibility(View.VISIBLE);
             } else {
-                permissions.setVisibility(View.GONE);
-                permissionsSingle.setVisibility(View.VISIBLE);
+                //permissions.setVisibility(View.GONE);
+                //permissionsSingle.setVisibility(View.VISIBLE);
 
                 buttonLeave.setVisibility(View.VISIBLE);
                 reportGroup.setVisibility(View.VISIBLE);
@@ -313,13 +320,13 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
             uploadAvatarButton.setVisibility(View.GONE);
 
             groupMembers.setVisibility(View.GONE);
-            permissions.setVisibility(View.GONE);
-            permissionsSingle.setVisibility(View.VISIBLE);
+            //permissions.setVisibility(View.GONE);
+            //permissionsSingle.setVisibility(View.VISIBLE);
 
-            deleteGroup.setVisibility(View.GONE);
-            reportGroup.setVisibility(View.GONE);
-            reportContact.setVisibility(View.VISIBLE);
-            blockContact.setVisibility(View.VISIBLE);
+            //deleteGroup.setVisibility(View.GONE);
+            //reportGroup.setVisibility(View.GONE);
+            //reportContact.setVisibility(View.VISIBLE);
+            //blockContact.setVisibility(View.VISIBLE);
         }
 
         notifyContentChanged();
@@ -362,8 +369,8 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
                 newTitle = titleEditor.getText().toString().trim();
             }
             String newPriv = subtitleEditor.getText().toString().trim();
-            UiUtils.updateTopicDesc(activity, mTopic, newTitle, newPriv,
-                    () -> activity.runOnUiThread(this::notifyContentChanged));
+            UiUtils.updateTopicDesc(activity, mTopic, newTitle, newPriv, "",
+                    () -> activity.runOnUiThread(TopicInfoFragment.this::notifyContentChanged));
         });
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.show();
@@ -599,8 +606,8 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         ((SwitchCompat) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
         ((SwitchCompat) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
 
-        Acs acs = mTopic.getAccessMode();
-        ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());
+        // Acs acs = mTopic.getAccessMode();
+        // ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());
     }
 
     @Override

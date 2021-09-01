@@ -157,7 +157,9 @@ public class UiUtils {
                 if (ComTopic.isChannel(topicName)) {
                     showOnline = null;
                     toolbar.setSubtitle(R.string.channel);
-                } else if (lastSeen != null && !online) {
+                } else if (online) {
+                    toolbar.setSubtitle(activity.getString(R.string.online_now));
+                } else if (lastSeen != null) {
                     toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
                 } else {
                     toolbar.setSubtitle(null);

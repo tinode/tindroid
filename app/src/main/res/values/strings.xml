@@ -302,7 +302,8 @@
     <string name="badge_danger">Untrustworthy</string>
     <string name="group_name">Group name</string>
     <string name="description">Description</string>
-    <string name="group_security_explained">Permissions, leave or report the group</string>
+    <string name="group_security_explained">Permissions, leave or report the chat</string>
     <string name="action_edit">Edit</string>
     <string name="action_save">Save</string>
+    <string name="online_now">online now</string>
 </resources>
