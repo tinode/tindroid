@@ -58,7 +58,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
+    public void onViewCreated(@NonNull View fragment, Bundle savedInstance) {
         final Activity activity = getActivity();
         if (activity == null) {
             return;
@@ -68,43 +68,43 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
         // Set up listeners
 
-        view.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
+        fragment.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
                         UiUtils.ACTION_UPDATE_SELF_SUB, "O"));
 
-        view.findViewById(R.id.authPermissions).setOnClickListener(v ->
+        fragment.findViewById(R.id.authPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
                         UiUtils.ACTION_UPDATE_AUTH, "O"));
 
-        view.findViewById(R.id.anonPermissions).setOnClickListener(v ->
+        fragment.findViewById(R.id.anonPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
                         UiUtils.ACTION_UPDATE_ANON, "O"));
 
-        view.findViewById(R.id.userOne).setOnClickListener(v ->
+        fragment.findViewById(R.id.userOne).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getAccessMode().getWant(), null,
                         UiUtils.ACTION_UPDATE_SELF_SUB, "ASDO"));
 
-        view.findViewById(R.id.userTwo).setOnClickListener(v ->
+        fragment.findViewById(R.id.userTwo).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getSubscription(mTopic.getName()).acs.getGiven(),
                         mTopic.getName(),
                         UiUtils.ACTION_UPDATE_SUB, "ASDO"));
 
-        view.findViewById(R.id.buttonClearMessages).setOnClickListener(v -> {
+        fragment.findViewById(R.id.buttonClearMessages).setOnClickListener(v -> {
             int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
             showConfirmationDialog(null, R.string.clear_messages, confirm, ACTION_DELMSG);
         });
 
-        view.findViewById(R.id.buttonLeave).setOnClickListener(v ->
+        fragment.findViewById(R.id.buttonLeave).setOnClickListener(v ->
                 showConfirmationDialog(null, R.string.leave_conversation,
                         R.string.confirm_leave_topic, ACTION_LEAVE));
 
-        view.findViewById(R.id.buttonDeleteGroup).setOnClickListener(v ->
+        fragment.findViewById(R.id.buttonDeleteGroup).setOnClickListener(v ->
                 showConfirmationDialog(null, R.string.delete_group,
                         R.string.confirm_delete_topic, ACTION_DELETE));
 
-        view.findViewById(R.id.buttonBlock).setOnClickListener(view12 -> {
+        fragment.findViewById(R.id.buttonBlock).setOnClickListener(view12 -> {
             VxCard pub = mTopic.getPub();
             String topicTitle = pub != null ? pub.fn : null;
             topicTitle = TextUtils.isEmpty(topicTitle) ?
@@ -113,7 +113,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
                     R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
         });
 
-        final View.OnClickListener reportListener = view1 -> {
+        final View.OnClickListener reportListener = view -> {
             VxCard pub = mTopic.getPub();
             String topicTitle = pub != null ? pub.fn : null;
             topicTitle = TextUtils.isEmpty(topicTitle) ?
@@ -123,8 +123,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
                     R.string.confirm_report, ACTION_REPORT);
         };
 
-        view.findViewById(R.id.buttonReportContact).setOnClickListener(reportListener);
-        view.findViewById(R.id.buttonReportGroup).setOnClickListener(reportListener);
+        fragment.findViewById(R.id.buttonReportContact).setOnClickListener(reportListener);
+        fragment.findViewById(R.id.buttonReportGroup).setOnClickListener(reportListener);
     }
 
     @Override
@@ -157,14 +157,12 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
         if (mTopic.isGrpType()) {
             // Group topic
+            final View buttonLeave = activity.findViewById(R.id.buttonLeave);
 
             activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
 
-            View buttonLeave = activity.findViewById(R.id.buttonLeave);
-
             if (mTopic.isOwner()) {
-
                 buttonLeave.setVisibility(View.GONE);
                 reportGroup.setVisibility(View.GONE);
                 blockContact.setVisibility(View.GONE);

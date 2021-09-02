@@ -31,7 +31,7 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
     public int clear;
     @JsonProperty("public")
     public SP pub;
-    TrustedType trusted;
+    public TrustedType trusted;
     public LastSeen seen;
 
     // Local values

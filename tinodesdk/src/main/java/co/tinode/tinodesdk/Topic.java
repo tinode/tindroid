@@ -234,11 +234,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param sub updated topic parameters
      */
     protected boolean update(Subscription<SP, SR> sub) {
-        boolean changed = false;
-
-        if (mDesc.merge(sub)) {
-            changed = true;
-        }
+        boolean changed = mDesc.merge(sub);
 
         if (changed) {
             if (mStore != null) {

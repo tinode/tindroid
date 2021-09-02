@@ -27,7 +27,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Collection;
-import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -58,8 +57,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Topic Info fragment: p2p or a group topic.
  */
-public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreviewer,
-        MessageActivity.DataSetChangeListener {
+public class TopicInfoFragment extends Fragment implements MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicInfoFragment";
 
@@ -70,27 +68,6 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
     private MembersAdapter mMembersAdapter;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
-
-    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
-            UiUtils.avatarPickerLauncher(this, this);
-
-    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String,Boolean> e : result.entrySet()) {
-                    // Check if all required permissions are granted.
-                    if (!e.getValue()) {
-                        return;
-                    }
-                }
-                FragmentActivity activity = getActivity();
-                if (activity != null) {
-                    // Try to open the image selector again.
-                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
-                    if (launcher != null) {
-                        mAvatarPickerLauncher.launch(launcher);
-                    }
-                }
-            });
 
     private final ActivityResultLauncher<String[]> mRequestContactsPermissionsLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {});
@@ -128,13 +105,6 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         rv.setNestedScrollingEnabled(false);
 
         // Set up listeners
-
-        view.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
-            if (activity.isFinishing() || activity.isDestroyed()) {
-                return;
-            }
-            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher));
-        });
 
         final SwitchCompat muted = view.findViewById(R.id.switchMuted);
         muted.setOnCheckedChangeListener((buttonView, isChecked) ->
@@ -192,34 +162,12 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
             return;
         }
 
-        final TextView title = activity.findViewById(R.id.topicTitle);
-        final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
-        final TextView address = activity.findViewById(R.id.topicAddress);
-        final View uploadAvatarButton = activity.findViewById(R.id.uploadAvatar);
-
-        // Trusted flags for all topics.
-        activity.findViewById(R.id.verified).setVisibility(mTopic.isTrustedVerified() ? View.VISIBLE : View.GONE);
-        activity.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
-        activity.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
+        ((TextView)activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
 
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
 
-        // Launch edit dialog when title or subtitle is clicked.
-        final View.OnClickListener l = v -> showEditTopicText();
-        if (mTopic.isOwner()) {
-            title.setOnClickListener(l);
-            title.setBackgroundResource(R.drawable.dotted_line);
-        } else {
-            title.setBackgroundResource(0);
-        }
-        subtitle.setOnClickListener(l);
-
-        address.setText(mTopic.getName());
-
         if (mTopic.isGrpType()) {
             // Group topic
-            uploadAvatarButton.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
-
             groupMembers.setVisibility(View.VISIBLE);
 
             Button button = activity.findViewById(R.id.buttonAddMembers);
@@ -235,56 +183,10 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
             }
         } else {
             // P2P topic
-            uploadAvatarButton.setVisibility(View.GONE);
-
             groupMembers.setVisibility(View.GONE);
         }
 
-        notifyContentChanged();
         notifyDataSetChanged();
-    }
-
-    // Dialog for editing pub.fn and priv
-    private void showEditTopicText() {
-        final FragmentActivity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
-        VxCard pub = mTopic.getPub();
-        final String title = pub == null ? null : pub.fn;
-        final PrivateType priv = mTopic.getPriv();
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = View.inflate(builder.getContext(), R.layout.dialog_edit_group, null);
-        builder.setView(editor).setTitle(R.string.edit_topic);
-
-        final EditText titleEditor = editor.findViewById(R.id.editTitle);
-        final EditText subtitleEditor = editor.findViewById(R.id.editPrivate);
-        if (mTopic.isOwner()) {
-            if (!TextUtils.isEmpty(title)) {
-                titleEditor.setText(title);
-                //noinspection ConstantConditions
-                titleEditor.setSelection(title.length());
-            }
-        } else {
-            editor.findViewById(R.id.editTitleWrapper).setVisibility(View.GONE);
-        }
-
-        if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
-            subtitleEditor.setText(priv.getComment());
-        }
-
-        builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
-            String newTitle = null;
-            if (mTopic.isOwner()) {
-                newTitle = titleEditor.getText().toString().trim();
-            }
-            String newPriv = subtitleEditor.getText().toString().trim();
-            UiUtils.updateTopicDesc(activity, mTopic, newTitle, newPriv, "",
-                    () -> activity.runOnUiThread(TopicInfoFragment.this::notifyContentChanged));
-        });
-        builder.setNegativeButton(android.R.string.cancel, null);
-        builder.show();
     }
 
     // Confirmation dialog "Do you really want to do X?"
@@ -336,7 +238,8 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
     }
 
     // Dialog-menu with actions for individual subscribers, like "send message", "change permissions", "ban", etc.
-    private void showMemberAction(final String topicTitle, final String userTitle, final String uid, final String mode) {
+    private void showMemberAction(final String topicTitle, final String userTitle, final String uid,
+                                  final String mode) {
         final FragmentActivity activity = getActivity();
         if (activity == null) {
             return;
@@ -453,17 +356,24 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
+        final TextView description = activity.findViewById(R.id.topicDescription);
 
         VxCard pub = mTopic.getPub();
         if (pub != null && !TextUtils.isEmpty(pub.fn)) {
             title.setText(pub.fn);
             title.setTypeface(null, Typeface.NORMAL);
             title.setTextIsSelectable(true);
+            description.setText(mTopic.getPub().note);
         } else {
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
             title.setTextIsSelectable(false);
         }
+
+        // Trusted flags.
+        activity.findViewById(R.id.verified).setVisibility(mTopic.isTrustedVerified() ? View.VISIBLE : View.GONE);
+        activity.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
+        activity.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
 
         final Bitmap bmp = pub != null ? pub.getBitmap() : null;
         if (bmp != null) {
@@ -482,27 +392,14 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         PrivateType priv = mTopic.getPriv();
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
             subtitle.setText(priv.getComment());
-            subtitle.setTypeface(null, Typeface.NORMAL);
-            TypedValue typedValue = new TypedValue();
-            Resources.Theme theme = getActivity().getTheme();
-            theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true);
-            TypedArray arr = activity.obtainStyledAttributes(typedValue.data,
-                    new int[]{android.R.attr.textColorSecondary});
-            subtitle.setTextColor(arr.getColor(0, -1));
-            arr.recycle();
             subtitle.setTextIsSelectable(true);
+            subtitle.setVisibility(View.VISIBLE);
         } else {
-            subtitle.setText(R.string.placeholder_private);
-            subtitle.setTypeface(null, Typeface.ITALIC);
-            subtitle.setTextColor(getResources().getColor(R.color.colorTextPlaceholder));
-            subtitle.setTextIsSelectable(false);
+            subtitle.setVisibility(View.GONE);
         }
 
         ((SwitchCompat) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
         ((SwitchCompat) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
-
-        // Acs acs = mTopic.getAccessMode();
-        // ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());
     }
 
     @Override
@@ -526,15 +423,6 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void showAvatarPreview(Bundle args) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_AVATAR_PREVIEW, args, true);
     }
 
     private static class MemberViewHolder extends RecyclerView.ViewHolder {

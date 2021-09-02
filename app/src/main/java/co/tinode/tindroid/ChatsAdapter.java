@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -314,6 +315,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             verified.setVisibility(topic.isTrustedVerified() ? View.VISIBLE : View.GONE);
             staff.setVisibility(topic.isTrustedStaff() ? View.VISIBLE : View.GONE);
             danger.setVisibility(topic.isTrustedDanger() ? View.VISIBLE : View.GONE);
+
             muted.setVisibility(topic.isMuted() ? View.VISIBLE : View.GONE);
             archived.setVisibility(topic.isArchived() ? View.VISIBLE : View.GONE);
             blocked.setVisibility(!topic.isJoiner() ? View.VISIBLE : View.GONE);

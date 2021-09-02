@@ -2,9 +2,15 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -15,23 +21,53 @@ import android.widget.TextView;
 
 import com.google.android.flexbox.FlexboxLayout;
 
+import java.util.Map;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.LetterTileDrawable;
+import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.model.Acs;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgSetMeta;
-import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.PrivateType;
 
 /**
  * Topic general info fragment: p2p or a group topic.
  */
-public class TopicGeneralFragment extends Fragment implements MessageActivity.DataSetChangeListener {
+public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPreviewer,
+        MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicGeneralFragment";
 
     private ComTopic<VxCard> mTopic;
+
+    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
+            UiUtils.avatarPickerLauncher(this, this);
+
+    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                FragmentActivity activity = getActivity();
+                if (activity != null) {
+                    // Try to open the image selector again.
+                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
+                    if (launcher != null) {
+                        mAvatarPickerLauncher.launch(launcher);
+                    }
+                }
+            });
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -51,6 +87,13 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
         if (activity == null) {
             return;
         }
+
+        view.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher));
+        });
     }
 
     @Override
@@ -74,39 +117,32 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
             return;
         }
 
+        ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
+
         final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
-
-        if (mTopic.isGrpType()) {
+        if (mTopic.isGrpType() && mTopic.isOwner()) {
             // Group topic
+            tagManager.setVisibility(View.VISIBLE);
+            tagManager.findViewById(R.id.buttonManageTags)
+                    .setOnClickListener(view -> showEditTags());
 
+            LayoutInflater inflater = LayoutInflater.from(activity);
+            FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
+            tagsView.removeAllViews();
 
-            if (mTopic.isOwner()) {
-                tagManager.setVisibility(View.VISIBLE);
-                tagManager.findViewById(R.id.buttonManageTags)
-                        .setOnClickListener(view -> showEditTags());
-
-                LayoutInflater inflater = LayoutInflater.from(activity);
-                FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
-                tagsView.removeAllViews();
-
-                String[] tags = mTopic.getTags();
-                if (tags != null) {
-                    for (String tag : tags) {
-                        TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
-                        label.setText(tag);
-                        tagsView.addView(label);
-                    }
+            String[] tags = mTopic.getTags();
+            if (tags != null) {
+                for (String tag : tags) {
+                    TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
+                    label.setText(tag);
+                    tagsView.addView(label);
                 }
-
-            } else {
-                tagManager.setVisibility(View.GONE);
             }
         } else {
             // P2P topic
             tagManager.setVisibility(View.GONE);
         }
 
-        notifyContentChanged();
         notifyDataSetChanged();
     }
 
@@ -144,14 +180,44 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-    }
 
-    // Called when topic description is changed.
-    private void notifyContentChanged() {
+        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
+        final EditText title = activity.findViewById(R.id.topicTitle);
+        final EditText subtitle = activity.findViewById(R.id.topicSubtitle);
+        final EditText description = activity.findViewById(R.id.topicDescription);
+        final View descriptionWrapper = activity.findViewById(R.id.topicDescriptionWrapper);
 
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return;
+        boolean editable = mTopic.isGrpType() && mTopic.isOwner();
+        title.setEnabled(editable);
+
+        VxCard pub = mTopic.getPub();
+        if (pub != null) {
+            title.setText(pub.fn);
+            if (!editable && TextUtils.isEmpty(pub.note)) {
+                descriptionWrapper.setVisibility(View.GONE);
+            } else {
+                description.setText(pub.note);
+                descriptionWrapper.setVisibility(View.VISIBLE);
+            }
+        }
+
+        final Bitmap bmp = pub != null ? pub.getBitmap() : null;
+        if (bmp != null) {
+            avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
+        } else {
+            avatar.setImageDrawable(
+                    new LetterTileDrawable(requireContext())
+                            .setIsCircular(true)
+                            .setContactTypeAndColor(
+                                    mTopic.getTopicType() == Topic.TopicType.P2P ?
+                                            LetterTileDrawable.ContactType.PERSON :
+                                            LetterTileDrawable.ContactType.GROUP)
+                            .setLetterAndColor(pub != null ? pub.fn : null, mTopic.getName()));
+        }
+
+        PrivateType priv = mTopic.getPriv();
+        if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
+            subtitle.setText(priv.getComment());
         }
     }
 
@@ -159,5 +225,14 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_save, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void showAvatarPreview(Bundle args) {
+        final FragmentActivity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_AVATAR_PREVIEW, args, true);
     }
 }

@@ -58,7 +58,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:hint="@string/group_title"
+                android:hint="@string/topic_title"
                 tools:text="Group about travel" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -67,7 +67,7 @@
             android:layout_height="wrap_content">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/topicPrivate"
+                android:id="@+id/topicSubtitle"
                 style="?android:textAppearanceMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -78,6 +78,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/topicDescriptionWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -88,17 +89,16 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:hint="@string/description_optional"
-                android:inputType="textPersonName|textMultiLine"
+                android:inputType="textMultiLine"
                 android:maxLines="3"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <androidx.legacy.widget.Space
+        <View
             android:layout_width="match_parent"
             android:layout_height="6dp" />
 
         <LinearLayout
-            android:id="@+id/topicAddressWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
@@ -117,7 +117,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="monospace"
-
                 android:textIsSelectable="true"
                 android:typeface="monospace"
                 tools:ignore="TouchTargetSizeCheck"
@@ -125,7 +124,7 @@
 
         </LinearLayout>
 
-        <androidx.legacy.widget.Space
+        <View
             android:layout_width="match_parent"
             android:layout_height="6dp" />
 
@@ -142,7 +141,7 @@
                 android:layout_marginBottom="@dimen/activity_padding"
                 android:background="@color/grey" />
 
-            <androidx.legacy.widget.Space
+            <View
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
@@ -170,7 +169,7 @@
                 app:drawableStartCompat="@drawable/ic_edit_black"
                 app:drawableTint="?android:textColorPrimary" />
 
-            <androidx.legacy.widget.Space
+            <View
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
 
