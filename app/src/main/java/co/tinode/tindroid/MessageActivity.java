@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
@@ -561,7 +562,7 @@ public class MessageActivity extends AppCompatActivity
                     fragment = new TopicGeneralFragment();
                     break;
                 case FRAGMENT_PERMISSIONS:
-                    fragment = new TopicPermissionsFragment();
+                    fragment = new TopicSecurityFragment();
                     break;
                 case FRAGMENT_EDIT_MEMBERS:
                     fragment = new EditMembersFragment();
@@ -699,6 +700,10 @@ public class MessageActivity extends AppCompatActivity
         UiUtils.updateAvatar(this, Cache.getTinode().getTopic(topicName), avatar);
     }
 
+    interface DataSetChangeListener {
+        void notifyDataSetChanged();
+    }
+
     // Handler which sends "read" notifications for received messages.
     private static class NoteHandler extends Handler {
         final WeakReference<MessageActivity> ref;
@@ -814,10 +819,8 @@ public class MessageActivity extends AppCompatActivity
                     runOnUiThread(() -> {
                         Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                         if (fragment != null) {
-                            if (fragment instanceof TopicInfoFragment) {
-                                ((TopicInfoFragment) fragment).notifyDataSetChanged();
-                            } else if (fragment instanceof TopicPermissionsFragment) {
-                                ((TopicPermissionsFragment) fragment).notifyDataSetChanged();
+                            if (fragment instanceof DataSetChangeListener) {
+                                ((DataSetChangeListener) fragment).notifyDataSetChanged();
                             } else if (fragment instanceof MessagesFragment) {
                                 ((MessagesFragment) fragment).notifyDataSetChanged(true);
                             }
@@ -860,8 +863,8 @@ public class MessageActivity extends AppCompatActivity
             runOnUiThread(() -> {
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                 if (fragment != null) {
-                    if (fragment instanceof TopicInfoFragment) {
-                        ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                    if (fragment instanceof DataSetChangeListener) {
+                        ((DataSetChangeListener) fragment).notifyDataSetChanged();
                     } else if (fragment instanceof MessagesFragment) {
                         ((MessagesFragment) fragment).notifyDataSetChanged(true);
                         if (mNewSubsAvailable) {
@@ -882,8 +885,8 @@ public class MessageActivity extends AppCompatActivity
                         mTopic.getOnline(), mTopic.getLastSeen());
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                 if (fragment != null) {
-                    if (fragment instanceof TopicInfoFragment) {
-                        ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                    if (fragment instanceof DataSetChangeListener) {
+                        ((DataSetChangeListener) fragment).notifyDataSetChanged();
                     } else if (fragment instanceof MessagesFragment) {
                         ((MessagesFragment) fragment).notifyDataSetChanged(true);
                     }
@@ -908,8 +911,8 @@ public class MessageActivity extends AppCompatActivity
         public void onMetaTags(String[] tags) {
             runOnUiThread(() -> {
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                if (fragment instanceof TopicInfoFragment) {
-                    ((TopicInfoFragment) fragment).notifyDataSetChanged();
+                if (fragment instanceof DataSetChangeListener) {
+                    ((DataSetChangeListener) fragment).notifyDataSetChanged();
                 }
             });
         }

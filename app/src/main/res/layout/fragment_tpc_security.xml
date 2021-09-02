@@ -1,5 +1,4 @@
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -11,36 +10,71 @@
         android:layout_margin="@dimen/activity_default_margin"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/singleUserPermissions"
-            android:layout_width="match_parent"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonClearMessages"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:visibility="gone">
+            android:drawablePadding="4dp"
+            android:text="@string/clear_messages"
+            android:textColor="?android:textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_delete"
+            app:drawableTint="?android:textColorPrimary" />
 
-            <TextView
-                style="@style/textPrimary"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/permissions"/>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonLeave"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:text="@string/leave_conversation"
+            android:textColor="?android:textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_exit"
+            app:drawableTint="?android:textColorPrimary" />
 
-            <TextView
-                android:id="@+id/permissionsSingle"
-                android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="?android:textColorPrimary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/dotted_line"
-                android:clickable="true"
-                android:focusable="true"
-                android:focusableInTouchMode="false"
-                android:fontFamily="monospace"
-                android:textIsSelectable="false"
-                android:typeface="monospace"
-                tools:text="RWPD"/>
-        </LinearLayout>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonDeleteGroup"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:text="@string/delete_group"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_delete_red"
+            app:drawableTint="@color/colorDanger" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonBlock"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:text="@string/block_contact"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_block_red"
+            app:drawableTint="@color/colorDanger" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonReportContact"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:text="@string/report_contact"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_report_red"
+            app:drawableTint="@color/colorDanger" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonReportGroup"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:text="@string/report_group"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_report_red"
+            app:drawableTint="@color/colorDanger" />
 
         <View
             android:layout_width="match_parent"
@@ -49,191 +83,114 @@
             android:layout_marginBottom="@dimen/activity_padding"
             android:background="@color/grey" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonClearMessages"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="?android:textColorPrimary"
-            android:text="@string/clear_messages"
-            android:textColor="?android:textColorPrimary"
-            app:drawableStartCompat="@drawable/ic_delete" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonLeave"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="?android:textColorPrimary"
-            android:text="@string/leave_conversation"
-            android:textColor="?android:textColorPrimary"
-            app:drawableStartCompat="@drawable/ic_exit" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonDeleteGroup"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/delete_group"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_delete_red" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonBlock"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/block_contact"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_block_red" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonReportContact"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/report_contact"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_report_red" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonReportGroup"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
-            app:drawableTint="@color/colorDanger"
-            android:text="@string/report_group"
-            android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_report_red" />
-
         <LinearLayout
+            android:id="@+id/singleUserPermissionsWrapper"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content">
 
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="6dp"/>
+            <TextView
+                style="@style/textPrimary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/permissions" />
 
-            <LinearLayout
-                android:id="@+id/singleUserPermissions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/textPrimary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/permissions"/>
-
-                <TextView
-                    android:id="@+id/permissionsSingle"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:textColor="?android:textColorPrimary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/dotted_line"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:focusableInTouchMode="false"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="false"
-                    android:typeface="monospace"
-                    tools:text="RWPD"/>
-            </LinearLayout>
-
-            <RelativeLayout
-                android:id="@+id/p2pPermissions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/sectionTitleStyle"
-                    android:id="@+id/permissionTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/permissions"
-                    tools:text="Permissions"/>
-
-                <TextView
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/permissionTitle"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/your_permissions"/>
-
-                <TextView
-                    android:id="@+id/userOne"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:textColor="?android:textColorPrimary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/permissionTitle"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/dotted_line"
-                    android:layout_marginTop="4dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:focusableInTouchMode="false"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="false"
-                    android:typeface="monospace"
-                    tools:text="RWPD"/>
-
-                <TextView
-                    android:id="@+id/userTwoLabel"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/userOne"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="4dp"
-                    android:text=""
-                    tools:text="John Doe"/>
-
-                <TextView
-                    android:id="@+id/userTwo"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:textColor="?android:textColorPrimary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/userOne"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/dotted_line"
-                    android:layout_marginTop="4dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:focusableInTouchMode="false"
-                    android:fontFamily="monospace"
-                    android:textIsSelectable="false"
-                    android:typeface="monospace"
-                    tools:text="RWPD"/>
-            </RelativeLayout>
-
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="6dp"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:background="@color/grey" />
-
+            <TextView
+                android:id="@+id/permissionsSingle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dotted_line"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:fontFamily="monospace"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="?android:textColorPrimary"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="RWPD" />
         </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/p2pPermissionsWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/permissionTitle"
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/permissions"
+                tools:text="Permissions" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/permissionTitle"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="4dp"
+                android:text="@string/your_permissions"
+                android:textAppearance="?android:textAppearanceMedium" />
+
+            <TextView
+                android:id="@+id/userOne"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/permissionTitle"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/dotted_line"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:fontFamily="monospace"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="?android:textColorPrimary"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="RWPD" />
+
+            <TextView
+                android:id="@+id/userTwoLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/userOne"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="4dp"
+                android:text=""
+                android:textAppearance="?android:textAppearanceMedium"
+                tools:text="John Doe" />
+
+            <TextView
+                android:id="@+id/userTwo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/userOne"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/dotted_line"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:fontFamily="monospace"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="?android:textColorPrimary"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="RWPD" />
+        </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="6dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:background="@color/grey" />
 
         <LinearLayout
             android:id="@+id/defaultPermissionsWrapper"
@@ -253,26 +210,24 @@
                 android:layout_height="wrap_content"
                 android:text="@string/topic_default_permissions_explained" />
 
-            <Space
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="6dp"/>
+                android:layout_height="6dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <TextView
-                    android:textAppearance="?android:textAppearanceMedium"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_weight="1"
-                    android:text="@string/auth_permissions"/>
+                    android:text="@string/auth_permissions"
+                    android:textAppearance="?android:textAppearanceMedium" />
 
                 <TextView
                     android:id="@+id/authPermissions"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:textColor="?android:textColorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/dotted_line"
@@ -280,32 +235,32 @@
                     android:focusable="true"
                     android:focusableInTouchMode="false"
                     android:fontFamily="monospace"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:textColor="?android:textColorPrimary"
                     android:textIsSelectable="false"
                     android:typeface="monospace"
-                    tools:text="RWPD"/>
+                    tools:text="RWPD" />
 
             </LinearLayout>
 
-            <Space
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="6dp"/>
+                android:layout_height="6dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <TextView
-                    android:textAppearance="?android:textAppearanceMedium"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_weight="1"
-                    android:text="@string/anon_permissions"/>
+                    android:text="@string/anon_permissions"
+                    android:textAppearance="?android:textAppearanceMedium" />
 
                 <TextView
                     android:id="@+id/anonPermissions"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:textColor="?android:textColorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/dotted_line"
@@ -313,9 +268,11 @@
                     android:focusable="true"
                     android:focusableInTouchMode="false"
                     android:fontFamily="monospace"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:textColor="?android:textColorPrimary"
                     android:textIsSelectable="false"
                     android:typeface="monospace"
-                    tools:text="RWPD"/>
+                    tools:text="RWPD" />
 
             </LinearLayout>
 

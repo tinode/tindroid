@@ -27,7 +27,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Topic general info fragment: p2p or a group topic.
  */
-public class TopicGeneralFragment extends Fragment {
+public class TopicGeneralFragment extends Fragment implements MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicGeneralFragment";
 
@@ -105,8 +105,8 @@ public class TopicGeneralFragment extends Fragment {
         if (mTopic.isGrpType()) {
             // Group topic
 
-            activity.findViewById(R.id.singleUserPermissions).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.p2pPermissions).setVisibility(View.GONE);
+            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
 
             if (mTopic.isOwner()) {
                 tagManager.setVisibility(View.VISIBLE);
@@ -136,8 +136,8 @@ public class TopicGeneralFragment extends Fragment {
             // P2P topic
             tagManager.setVisibility(View.GONE);
 
-            activity.findViewById(R.id.singleUserPermissions).setVisibility(View.GONE);
-            activity.findViewById(R.id.p2pPermissions).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
+            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.VISIBLE);
 
             VxCard two = mTopic.getPub();
             ((TextView) activity.findViewById(R.id.userTwoLabel)).setText(two != null && two.fn != null ?
@@ -179,7 +179,7 @@ public class TopicGeneralFragment extends Fragment {
                 .show();
     }
 
-    void notifyDataSetChanged() {
+    public void notifyDataSetChanged() {
         final Activity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;

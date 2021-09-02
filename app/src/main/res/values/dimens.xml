@@ -7,7 +7,7 @@
     <dimen name="fab_elevation">4dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="activity_padding">6dp</dimen>
-    <dimen name="avatar_size_large">128dp</dimen>
+    <dimen name="avatar_size_large">144dp</dimen>
     <dimen name="label_h_padding">4dp</dimen>
     <dimen name="label_margin">1.5dp</dimen>
     <dimen name="activity_default_margin">16dp</dimen>

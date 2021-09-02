@@ -13,14 +13,14 @@
         android:orientation="vertical">
 
         <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/imageAvatar"
                 android:layout_width="@dimen/avatar_size_large"
                 android:layout_height="@dimen/avatar_size_large"
-                android:layout_alignParentEnd="true"
                 android:layout_margin="4sp"
                 android:clickable="true"
                 android:contentDescription="@string/avatar"
@@ -31,142 +31,136 @@
                 android:id="@+id/uploadAvatar"
                 android:layout_width="48sp"
                 android:layout_height="48sp"
+                android:layout_alignEnd="@id/imageAvatar"
                 android:layout_alignBottom="@id/imageAvatar"
-                android:layout_alignParentEnd="true"
                 android:layout_margin="2sp"
                 android:background="@drawable/pill_counter"
                 android:gravity="center"
                 android:paddingTop="10dp"
                 app:drawableTopCompat="@drawable/ic_add_a_photo" />
-
-            <TextView
-                android:id="@+id/topicTitle"
-                style="@style/textPrimaryLarge"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_toStartOf="@id/imageAvatar"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textIsSelectable="false"
-                android:layout_marginBottom="@dimen/activity_padding"
-                tools:text="Travel or flowers" />
-
-            <TextView
-                android:id="@+id/topicSubtitle"
-                style="@style/textSecondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/topicTitle"
-                android:ellipsize="end"
-                android:lines="1"
-                android:singleLine="true"
-                android:textIsSelectable="false"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:layout_alignParentStart="true"
-                android:layout_toStartOf="@id/imageAvatar"
-                tools:text="Some private notes" />
-
-            <LinearLayout
-                android:id="@+id/topicAddressWrapper"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/topicSubtitle"
-                android:layout_alignParentStart="true"
-                android:gravity="center_vertical"
-                android:layout_toStartOf="@id/imageAvatar">
-
-                <TextView
-                    style="@style/sectionTitleStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingEnd="8dp"
-                    android:text="@string/id"
-                    tools:ignore="RtlSymmetry" />
-
-                <TextView
-                    android:id="@+id/topicAddress"
-                    style="@style/textSecondary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:fontFamily="monospace"
-                    android:lines="1"
-                    android:singleLine="true"
-                    android:textIsSelectable="true"
-                    android:typeface="monospace"
-                    tools:text="grpAbCd345627" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/verified"
-                style="?android:textAppearanceMedium"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/topicAddressWrapper"
-                android:layout_toStartOf="@id/imageAvatar"
-                android:clickable="false"
-                android:ellipsize="end"
-                android:focusable="false"
-                android:gravity="center_vertical"
-                android:minHeight="32dp"
-                android:text="@string/badge_verified"
-                android:textIsSelectable="false"
-                android:visibility="gone"
-                app:drawableStartCompat="@drawable/ic_verified" />
-
-            <TextView
-                android:id="@+id/staff"
-                style="?android:textAppearanceMedium"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/verified"
-                android:layout_toStartOf="@id/imageAvatar"
-                android:gravity="center_vertical"
-                android:textIsSelectable="false"
-                android:text="@string/badge_staff"
-                android:ellipsize="end"
-                android:clickable="false"
-                android:focusable="false"
-                android:minHeight="32dp"
-                android:visibility="gone"
-                app:drawableStartCompat="@drawable/ic_verified_user" />
-
-            <TextView
-                android:id="@+id/danger"
-                style="?android:textAppearanceMedium"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/staff"
-                android:layout_toStartOf="@id/imageAvatar"
-                android:textIsSelectable="false"
-                android:text="@string/badge_danger"
-                android:gravity="center_vertical"
-                android:ellipsize="end"
-                android:clickable="false"
-                android:focusable="false"
-                android:minHeight="32dp"
-                android:visibility="gone"
-                app:drawableStartCompat="@drawable/ic_danger" />
-
         </RelativeLayout>
 
         <TextView
-            style="@style/sectionTitleStyle"
-            android:layout_width="wrap_content"
+            android:id="@+id/topicTitle"
+            style="@style/textPrimaryLarge"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/description" />
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textIsSelectable="false"
+            tools:text="Travel or flowers" />
 
         <TextView
-            android:id="@+id/topicDescription"
+            android:id="@+id/topicSubtitle"
             style="@style/textSecondary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="3"
-            android:textIsSelectable="false"
             android:layout_marginBottom="@dimen/activity_padding"
-            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+            android:ellipsize="end"
+            android:lines="1"
+            android:singleLine="true"
+            android:textIsSelectable="false"
+            tools:text="Some private notes" />
+
+        <LinearLayout
+            android:id="@+id/topicAddressWrapper"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="8dp"
+                android:text="@string/id"
+                tools:ignore="RtlSymmetry" />
+
+            <TextView
+                android:id="@+id/topicAddress"
+                style="@style/textSecondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="monospace"
+                android:lines="1"
+                android:singleLine="true"
+                android:textIsSelectable="true"
+                android:typeface="monospace"
+                tools:text="grpAbCd345627" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/verified"
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:ellipsize="end"
+            android:focusable="false"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:text="@string/badge_verified"
+            android:textIsSelectable="false"
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_verified" />
+
+        <TextView
+            android:id="@+id/staff"
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:ellipsize="end"
+            android:focusable="false"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:text="@string/badge_staff"
+            android:textIsSelectable="false"
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_verified_user" />
+
+        <TextView
+            android:id="@+id/danger"
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:ellipsize="end"
+            android:focusable="false"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:text="@string/badge_danger"
+            android:textIsSelectable="false"
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_danger" />
+
+        <LinearLayout
+            android:id="@+id/topicDescriptionWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/description" />
+
+            <TextView
+                android:id="@+id/topicDescription"
+                style="@style/textSecondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:textIsSelectable="false"
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+        </LinearLayout>
 
         <View
             android:layout_width="match_parent"
@@ -233,9 +227,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:minHeight="?attr/listPreferredItemHeight"
-            android:focusable="true">
+            android:minHeight="?attr/listPreferredItemHeight">
 
             <ImageView
                 android:id="@+id/icon_security"
@@ -243,9 +237,9 @@
                 android:layout_height="@dimen/settings_icon_size"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
+                android:contentDescription="@string/permissions"
                 android:src="@drawable/ic_key"
-                app:tint="@color/colorAccent"
-                android:contentDescription="@string/permissions" />
+                app:tint="@color/colorAccent" />
 
             <TextView
                 android:id="@+id/security_text"
@@ -270,8 +264,8 @@
             android:id="@+id/groupMembersWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <View
                 android:layout_width="match_parent"
@@ -295,10 +289,10 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/manage_members"
                 android:drawablePadding="4sp"
-                app:drawableTint="?android:textColorPrimary"
                 android:text="@string/add_members"
                 android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_person_add" />
+                app:drawableStartCompat="@drawable/ic_person_add"
+                app:drawableTint="?android:textColorPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/groupMembers"

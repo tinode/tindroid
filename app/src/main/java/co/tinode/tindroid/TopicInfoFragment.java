@@ -26,7 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -49,10 +48,7 @@ import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.Acs;
-import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -60,17 +56,13 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Topic Info fragment: p2p or a group topic.
  */
-public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreviewer {
+public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreviewer,
+        MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicInfoFragment";
 
-    private static final int ACTION_DELETE = 1;
-    private static final int ACTION_LEAVE = 2;
-    private static final int ACTION_REPORT = 3;
-    private static final int ACTION_REMOVE = 4;
-    private static final int ACTION_BAN_TOPIC = 5;
-    private static final int ACTION_BAN_MEMBER = 6;
-    private static final int ACTION_DELMSG = 7;
+    private static final int ACTION_REMOVE = 1;
+    private static final int ACTION_BAN_MEMBER = 2;
 
     private ComTopic<VxCard> mTopic;
     private MembersAdapter mMembersAdapter;
@@ -164,54 +156,13 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
                     }
                 }));
 
-        /*
-        view.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, mTopic.isP2PType() ? "OASD" : "O"));
-        */
         view.findViewById(R.id.permissions).setOnClickListener(v ->
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_PERMISSIONS, null,
                         true));
-        /*
-        view.findViewById(R.id.buttonClearMessages).setOnClickListener(v -> {
-            int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
-            showConfirmationDialog(null, null, null,
-                    R.string.clear_messages, confirm, ACTION_DELMSG);
-        });
-
-        view.findViewById(R.id.buttonLeave).setOnClickListener(v ->
-                showConfirmationDialog(null, null, null,
-                        R.string.leave_conversation, R.string.confirm_leave_topic, ACTION_LEAVE));
-
-        view.findViewById(R.id.buttonDeleteGroup).setOnClickListener(v ->
-                showConfirmationDialog(null, null, null,
-                        R.string.delete_group, R.string.confirm_delete_topic, ACTION_DELETE));
-
-        view.findViewById(R.id.buttonBlock).setOnClickListener(view12 -> {
-            VxCard pub = mTopic.getPub();
-            String topicTitle = pub != null ? pub.fn : null;
-            topicTitle = TextUtils.isEmpty(topicTitle) ?
-                    activity.getString(R.string.placeholder_topic_title) : topicTitle;
-            showConfirmationDialog(topicTitle, null, null,
-                    R.string.block_contact, R.string.confirm_contact_ban, ACTION_BAN_TOPIC);
-        });
-
-        final View.OnClickListener reportListener = view1 -> {
-            VxCard pub = mTopic.getPub();
-            String topicTitle = pub != null ? pub.fn : null;
-            topicTitle = TextUtils.isEmpty(topicTitle) ?
-                    activity.getString(R.string.placeholder_topic_title) :
-                    topicTitle;
-            showConfirmationDialog(topicTitle, null, null,
-                    R.string.block_and_report, R.string.confirm_report, ACTION_REPORT);
-        };
-        view.findViewById(R.id.buttonReportContact).setOnClickListener(reportListener);
-        view.findViewById(R.id.buttonReportGroup).setOnClickListener(reportListener);
 
         view.findViewById(R.id.buttonAddMembers).setOnClickListener(v ->
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_EDIT_MEMBERS,
                         null, true));
-         */
     }
 
     @Override
@@ -245,15 +196,7 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         activity.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
         activity.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
 
-        // final View permissions = activity.findViewById(R.id.permissions);
-        // final View permissionsSingle = activity.findViewById(R.id.singleUserPermissions);
-
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
-
-        final View deleteGroup = activity.findViewById(R.id.buttonDeleteGroup);
-        final View blockContact = activity.findViewById(R.id.buttonBlock);
-        final View reportGroup = activity.findViewById(R.id.buttonReportGroup);
-        final View reportContact = activity.findViewById(R.id.buttonReportContact);
 
         // Launch edit dialog when title or subtitle is clicked.
         final View.OnClickListener l = v -> showEditTopicText();
@@ -272,30 +215,6 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
             uploadAvatarButton.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
             groupMembers.setVisibility(View.VISIBLE);
-            reportContact.setVisibility(View.GONE);
-
-            View buttonLeave = activity.findViewById(R.id.buttonLeave);
-            if (mTopic.isOwner()) {
-                // permissions.setVisibility(View.VISIBLE);
-                //permissionsSingle.setVisibility(View.GONE);
-
-                buttonLeave.setVisibility(View.GONE);
-                reportGroup.setVisibility(View.GONE);
-                blockContact.setVisibility(View.GONE);
-                deleteGroup.setVisibility(View.VISIBLE);
-            } else {
-                //permissions.setVisibility(View.GONE);
-                //permissionsSingle.setVisibility(View.VISIBLE);
-
-                buttonLeave.setVisibility(View.VISIBLE);
-                reportGroup.setVisibility(View.VISIBLE);
-                if (mTopic.isChannel()) {
-                    blockContact.setVisibility(View.GONE);
-                } else {
-                    blockContact.setVisibility(View.VISIBLE);
-                }
-                deleteGroup.setVisibility(View.GONE);
-            }
 
             Button button = activity.findViewById(R.id.buttonAddMembers);
             if (!mTopic.isSharer() && !mTopic.isManager()) {
@@ -308,25 +227,11 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
                 button.setEnabled(true);
                 button.setVisibility(View.VISIBLE);
             }
-
-            final View clearMessages = activity.findViewById(R.id.buttonClearMessages);
-            if (mTopic.isChannel()) {
-                clearMessages.setVisibility(View.GONE);
-            } else {
-                clearMessages.setVisibility(View.VISIBLE);
-            }
         } else {
             // P2P topic
             uploadAvatarButton.setVisibility(View.GONE);
 
             groupMembers.setVisibility(View.GONE);
-            //permissions.setVisibility(View.GONE);
-            //permissionsSingle.setVisibility(View.VISIBLE);
-
-            //deleteGroup.setVisibility(View.GONE);
-            //reportGroup.setVisibility(View.GONE);
-            //reportContact.setVisibility(View.VISIBLE);
-            //blockContact.setVisibility(View.VISIBLE);
         }
 
         notifyContentChanged();
@@ -400,28 +305,12 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         confirmBuilder.setPositiveButton(android.R.string.yes, (dialog, which) -> {
             PromisedReply<ServerMessage> response = null;
             switch (what) {
-                case ACTION_LEAVE:
-                    response = mTopic.delete(true);
-                    break;
-                case ACTION_REPORT:
-                    HashMap<String, Object> json = new HashMap<>();
-                    json.put("action", "report");
-                    json.put("target", mTopic.getName());
-                    Drafty msg = new Drafty().attachJSON(json);
-                    Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
-                    response = mTopic.updateMode(null, "-JP");
-                    break;
                 case ACTION_REMOVE:
                     response = mTopic.eject(uid, false);
-                    break;
-                case ACTION_BAN_TOPIC:
-                    response = mTopic.updateMode(null, "-JP");
                     break;
                 case ACTION_BAN_MEMBER:
                     response = mTopic.eject(uid, true);
                     break;
-                case ACTION_DELMSG:
-                    response = mTopic.delMessages(true);
             }
 
             if (response != null) {
@@ -535,7 +424,7 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         dialog.show();
     }
 
-    void notifyDataSetChanged() {
+    public void notifyDataSetChanged() {
         final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
