@@ -31,7 +31,7 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
     public int clear;
     @JsonProperty("public")
     public SP pub;
-    public Map<String,Object> trusted;
+    TrustedType trusted;
     public LastSeen seen;
 
     // Local values
@@ -74,21 +74,21 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
             if (sub.pub != null) {
                 pub = sub.pub;
             }
-
             if (sub.trusted != null) {
                 if (trusted == null) {
-                    trusted = new HashMap<>();
+                    trusted = new TrustedType();
                 }
-                trusted.putAll(sub.trusted);
+                trusted.merge(sub.trusted);
             }
-
             changed = true;
         } else {
             if (pub == null && sub.pub != null) {
                 pub = sub.pub;
+                changed = true;
             }
             if (trusted == null && sub.trusted != null) {
                 trusted = sub.trusted;
+                changed = true;
             }
         }
 

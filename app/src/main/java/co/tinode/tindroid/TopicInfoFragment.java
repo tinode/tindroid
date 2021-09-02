@@ -16,6 +16,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -34,6 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -111,6 +113,10 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
         if (activity == null) {
             return;
         }
+        Toolbar toolbar = activity.findViewById(R.id.toolbar);
+        toolbar.setTitle(R.string.topic_settings);
+        toolbar.setSubtitle(null);
+        toolbar.setLogo(null);
 
         mMembersAdapter = new MembersAdapter();
         mFailureListener = new UiUtils.ToastFailureListener(activity);
@@ -502,8 +508,24 @@ public class TopicInfoFragment extends Fragment implements UiUtils.AvatarPreview
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        // inflater.inflate(R.menu.menu_topic_info, menu);
+        inflater.inflate(R.menu.menu_edit, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_edit) {
+            FragmentActivity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return false;
+            }
+
+            ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_GENERAL,
+                    null, true);
+            return true;
+        }
+        return false;
     }
 
     @Override

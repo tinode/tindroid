@@ -137,8 +137,9 @@ public class Description<DP, DR> implements Serializable {
         if (desc.trusted != null) {
             if (trusted == null) {
                 trusted = new TrustedType();
+                changed = true;
             }
-            trusted.putAll(desc.trusted);
+            changed = trusted.merge(desc.trusted) || changed;
         }
 
         if (desc.priv != null) {
@@ -207,6 +208,14 @@ public class Description<DP, DR> implements Serializable {
             // This is intentional behavior to catch cases of wrong assignment.
             //noinspection unchecked
             changed = mergePub((DP) sub.pub) || changed;
+        }
+
+        if (sub.trusted != null) {
+            if (trusted == null) {
+                trusted = new TrustedType();
+                changed = true;
+            }
+            changed = trusted.merge(sub.trusted) || changed;
         }
 
         if (sub.priv != null) {

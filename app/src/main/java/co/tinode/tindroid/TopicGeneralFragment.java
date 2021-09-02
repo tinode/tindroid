@@ -51,31 +51,6 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
         if (activity == null) {
             return;
         }
-
-        // Set up listeners
-
-        view.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "O"));
-
-        view.findViewById(R.id.authPermissions).setOnClickListener(v ->
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_AUTH, "O"));
-
-        view.findViewById(R.id.anonPermissions).setOnClickListener(v ->
-                UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_ANON, "O"));
-
-        view.findViewById(R.id.userOne).setOnClickListener(v ->
-                UiUtils.showEditPermissions(activity, mTopic,
-                        mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "ASDO"));
-
-        view.findViewById(R.id.userTwo).setOnClickListener(v ->
-                UiUtils.showEditPermissions(activity, mTopic,
-                        mTopic.getSubscription(mTopic.getName()).acs.getGiven(),
-                        mTopic.getName(),
-                        UiUtils.ACTION_UPDATE_SUB, "ASDO"));
     }
 
     @Override
@@ -99,14 +74,11 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
             return;
         }
 
-        final View defaultPermissions = activity.findViewById(R.id.defaultPermissionsWrapper);
         final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
 
         if (mTopic.isGrpType()) {
             // Group topic
 
-            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
 
             if (mTopic.isOwner()) {
                 tagManager.setVisibility(View.VISIBLE);
@@ -129,21 +101,9 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
             } else {
                 tagManager.setVisibility(View.GONE);
             }
-
-            defaultPermissions.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
-
         } else {
             // P2P topic
             tagManager.setVisibility(View.GONE);
-
-            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
-            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.VISIBLE);
-
-            VxCard two = mTopic.getPub();
-            ((TextView) activity.findViewById(R.id.userTwoLabel)).setText(two != null && two.fn != null ?
-                    two.fn : mTopic.getName());
-
-            defaultPermissions.setVisibility(View.GONE);
         }
 
         notifyContentChanged();
@@ -184,18 +144,6 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-
-        if (!mTopic.isGrpType()) {
-            Acs acs = mTopic.getAccessMode();
-            if (acs != null) {
-                ((TextView) activity.findViewById(R.id.userOne)).setText(acs.getWant());
-            }
-            Subscription sub = mTopic.getSubscription(mTopic.getName());
-            if (sub != null && sub.acs != null) {
-                ((TextView) activity.findViewById(R.id.userTwo))
-                        .setText(sub.acs.getGiven());
-            }
-        }
     }
 
     // Called when topic description is changed.
@@ -205,12 +153,6 @@ public class TopicGeneralFragment extends Fragment implements MessageActivity.Da
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-
-        Acs acs = mTopic.getAccessMode();
-        ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());
-
-        ((TextView) activity.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
-        ((TextView) activity.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
     }
 
     @Override
