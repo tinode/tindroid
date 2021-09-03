@@ -79,7 +79,7 @@ public class Drafty implements Serializable {
     private static final String JSON_MIME_TYPE = "application/json";
 
     // Regular expressions for parsing inline formats.
-    // Name of the style, regexp start, regexp end
+    // Name of the style, regexp start, regexp end.
     private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
     private static final Pattern[] INLINE_STYLE_RE = {
             Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])",
