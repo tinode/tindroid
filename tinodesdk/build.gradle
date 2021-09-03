@@ -35,4 +35,5 @@ dependencies {
     api 'org.java-websocket:Java-WebSocket:1.4.1'
 
     implementation 'org.jetbrains:annotations:22.0.0'
+    testImplementation 'junit:junit:4.13.1'
 }

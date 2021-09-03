@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
@@ -313,7 +316,7 @@ public class Drafty implements Serializable {
             return Drafty.fromPlainText("");
         }
 
-        // Break input into individual lines. Format cannot span multiple lines.
+        // Break input into individual lines. Markdown cannot span multiple lines.
         String[] lines = content.split("\\r?\\n");
         List<Block> blks = new ArrayList<>();
         List<Entity> refs = new ArrayList<>();
@@ -442,13 +445,6 @@ public class Drafty implements Serializable {
             }
         }
         return null;
-    }
-
-    // Convert Drafty to plain text;
-    @SuppressWarnings("NullableProblems")
-    @Override
-    public String toString() {
-        return txt != null ? txt : "";
     }
 
     // Ensure Drafty has enough space to add 'count' formatting styles.
@@ -906,6 +902,24 @@ public class Drafty implements Serializable {
                 "ent: " + Arrays.toString(ent) + "}";
     }
 
+    // Convert Drafty to plain text;
+    @NotNull
+    @Override
+    public String toString() {
+        return txt != null ? txt : "";
+    }
+
+    @Override
+    public boolean equals(Object another) {
+        if (another instanceof Drafty) {
+            Drafty that = (Drafty) another;
+            return equalsNullable(this.txt, that.txt) &&
+                    Arrays.equals(this.fmt, that.fmt) &&
+                    Arrays.equals(this.ent, that.ent);
+        }
+        return false;
+    }
+
     /**
      * Shorten Drafty document and strip all entity data leaving just inline styles and entity references.
      * @param length length in characters to shorten to.
@@ -1000,14 +1014,6 @@ public class Drafty implements Serializable {
             this.key = key;
         }
 
-        @Override
-        public int compareTo(Style that) {
-            if (this.at == that.at) {
-                return that.len - this.len; // longer one comes first (<0)
-            }
-            return this.at - that.at;
-        }
-
         @JsonIgnore
         public String getType() {
             return tp;
@@ -1023,10 +1029,29 @@ public class Drafty implements Serializable {
             return len;
         }
 
-        @SuppressWarnings("NullableProblems")
+        @NotNull
         @Override
         public String toString() {
             return "{tp: '" + tp + "', at: " + at + ", len: " + len + ", key: " + key + "}";
+        }
+
+        @Override
+        public int compareTo(Style that) {
+            if (this.at == that.at) {
+                return that.len - this.len; // longer one comes first (<0)
+            }
+            return this.at - that.at;
+        }
+
+        @Override
+        public boolean equals(Object another) {
+            if (another instanceof Style) {
+                Style that = (Style) another;
+                return this.at == that.at && this.len == that.len &&
+                        equalsNullable(this.key, that.key) &&
+                        equalsNullable(this.tp, that.tp);
+            }
+            return false;
         }
     }
 
@@ -1069,10 +1094,19 @@ public class Drafty implements Serializable {
             return new Entity(tp, dc);
         }
 
-        @SuppressWarnings("NullableProblems")
+        @NotNull
         @Override
         public String toString() {
             return "{tp: '" + tp + "', data: " + (data != null ? data.toString() : "null") + "}";
+        }
+
+        @Override
+        public boolean equals(Object another) {
+            if (another instanceof Entity) {
+                Entity that = (Entity) another;
+                return equalsNullable(this.tp, that.tp) && equalsNullable(this.data, that.data);
+            }
+            return false;
         }
     }
 
@@ -1165,5 +1199,12 @@ public class Drafty implements Serializable {
         }
 
         abstract Map<String,Object> pack(Matcher m);
+    }
+
+    private static boolean equalsNullable(@Nullable Object first, @Nullable Object second) {
+        if (first == null) {
+            return second == null;
+        }
+        return first.equals(second);
     }
 }
