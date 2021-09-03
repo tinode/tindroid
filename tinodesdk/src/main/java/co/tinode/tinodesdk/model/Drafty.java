@@ -82,10 +82,14 @@ public class Drafty implements Serializable {
     // Name of the style, regexp start, regexp end
     private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
     private static final Pattern[] INLINE_STYLE_RE = {
-            Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])"),   // bold *bo*
-            Pattern.compile("(?<=^|\\W)_([^_]+[^\\s_])_(?=$|\\W)"),             // italic _it_
-            Pattern.compile("(?<=^|[\\W_])~([^~]+[^\\s~])~(?=$|[\\W_])"),       // strikethough ~st~
-            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")                     // code/monospace `mono`
+            Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])",
+                    Pattern.UNICODE_CHARACTER_CLASS),    // bold *bo*
+            Pattern.compile("(?<=^|\\W)_([^_]+[^\\s_])_(?=$|\\W)",
+                    Pattern.UNICODE_CHARACTER_CLASS),    // italic _it_
+            Pattern.compile("(?<=^|[\\W_])~([^~]+[^\\s~])~(?=$|[\\W_])",
+                    Pattern.UNICODE_CHARACTER_CLASS),    // strikethough ~st~
+            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)",
+                    Pattern.UNICODE_CHARACTER_CLASS)     // code/monospace `mono`
     };
 
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
@@ -101,7 +105,8 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc("MN", Pattern.compile("\\b@(\\w\\w+)")) {
+            new EntityProc("MN", Pattern.compile("\\b@(\\w\\w+)",
+                    Pattern.UNICODE_CHARACTER_CLASS)) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
@@ -109,7 +114,8 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc("HT", Pattern.compile("(?<=[\\s,.!]|^)#(\\w\\w+)")) {
+            new EntityProc("HT", Pattern.compile("(?<=[\\s,.!]|^)#(\\w\\w+)",
+                    Pattern.UNICODE_CHARACTER_CLASS)) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
@@ -970,7 +976,7 @@ public class Drafty implements Serializable {
             int fmt_idx = 0;
             for (Style st : fmt) {
                 if (st.at < len) {
-                    Style style = new Style(null, st.at, st.len);
+                    Style style = new Style(null, st.at, st.at + st.len > length ? length - st.at : st.len);
                     int key = st.key != null ? st.key : 0;
                     if (st.tp != null && !st.tp.equals("")) {
                         style.tp = st.tp;
