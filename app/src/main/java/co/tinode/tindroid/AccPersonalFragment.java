@@ -3,7 +3,6 @@ package co.tinode.tindroid;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -49,7 +48,7 @@ public class AccPersonalFragment extends Fragment
 
     private final ActivityResultLauncher<String[]> mRequestPermissionsLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                for (Map.Entry<String, Boolean> e : result.entrySet()) {
                     // Check if all required permissions are granted.
                     if (!e.getValue()) {
                         return;
@@ -106,11 +105,11 @@ public class AccPersonalFragment extends Fragment
         // Attach listeners to editable form fields.
 
         activity.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
-                    Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestPermissionsLauncher);
-                    if (launcher != null) {
-                        mAvatarPickerLauncher.launch(launcher);
-                    }
-                });
+            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestPermissionsLauncher);
+            if (launcher != null) {
+                mAvatarPickerLauncher.launch(launcher);
+            }
+        });
 
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
 
@@ -336,7 +335,12 @@ public class AccPersonalFragment extends Fragment
             String title = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             String description = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
             UiUtils.updateTopicDesc(activity, me, title, null, description,
-                    () -> activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack()));
+                    () -> {
+                        if (activity.isFinishing() || activity.isDestroyed()) {
+                            return;
+                        }
+                        activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack());
+                    });
             return true;
         }
         return false;
