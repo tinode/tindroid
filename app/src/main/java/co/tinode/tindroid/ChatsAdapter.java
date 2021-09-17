@@ -94,6 +94,10 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if (holder.viewType == R.layout.contact) {
+            if (mTopics.size() <= position) {
+                // Looks like there is a race condition here.
+                return;
+            }
             ComTopic<VxCard> topic = mTopics.get(position);
             Storage.Message msg = Cache.getTinode().getLastMessage(topic.getName());
             holder.bind(position, topic, msg, mSelectionTracker != null &&
