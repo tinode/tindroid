@@ -1062,7 +1062,9 @@ public class Drafty implements Serializable {
     }
 
     public static class Entity implements Serializable {
-        private static final String[] lightData = new String[] {"mime", "name", "width", "height", "size"};
+        private static final String[] lightData = new String[] {
+                "mime", "name", "width", "height", "size", "url", "ref"
+        };
         public String tp;
         public Map<String,Object> data;
 
@@ -1071,6 +1073,19 @@ public class Drafty implements Serializable {
         public Entity(String tp, Map<String,Object> data) {
             this.tp = tp;
             this.data = data;
+        }
+
+        public Entity(String tp) {
+            this.tp = tp;
+            this.data = null;
+        }
+
+        public Entity addData(String key, Object val) {
+            if (data == null) {
+                data = new HashMap<>();
+            }
+            data.put(key, val);
+            return this;
         }
 
         @JsonIgnore
