@@ -33,7 +33,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -97,9 +96,6 @@ public class Tinode {
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
-
-    // Delay in milliseconds before recv notification is sent
-    private static final long NOTE_RECV_DELAY = 300L;
 
     private static final String PROTOVERSION = "0";
     private static final String VERSION = "0.16";
@@ -288,7 +284,9 @@ public class Tinode {
     public static <T> T jsonDeserialize(String input, String canonicalName) {
         try {
             return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
-        } catch (IllegalArgumentException | IOException e) {
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to deserialize saved '" + input +
+                    "' into '" + canonicalName + "'", e);
             return null;
         }
     }
@@ -1075,39 +1073,6 @@ public class Tinode {
      * @param uname    user name
      * @param password password
      * @param login    use the new account for authentication
-     * @param desc     account parameters, such as full name etc.
-     * @return PromisedReply of the reply ctrl message
-     */
-    public <Pu, Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, MetaSetDesc<Pu, Pr> desc) {
-        return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
-                login, null, desc, null);
-    }
-
-    /**
-     * Create account using a single basic authentication scheme. A connection must be established
-     * prior to calling this method.
-     *
-     * @param uname    user name
-     * @param password password
-     * @param login    use the new account for authentication
-     * @param tags     discovery tags
-     * @param desc     account parameters, such as full name etc.
-     * @return PromisedReply of the reply ctrl message
-     */
-    public <Pu, Pr> PromisedReply<ServerMessage> createAccountBasic(
-            String uname, String password, boolean login, String[] tags, MetaSetDesc<Pu, Pr> desc) {
-        return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
-                login, tags, desc, null);
-    }
-
-    /**
-     * Create account using a single basic authentication scheme. A connection must be established
-     * prior to calling this method.
-     *
-     * @param uname    user name
-     * @param password password
-     * @param login    use the new account for authentication
      * @param tags     discovery tags
      * @param desc     account parameters, such as full name etc.
      * @param cred     account credential, such as email or phone
@@ -1335,20 +1300,6 @@ public class Tinode {
     public void setAutoLoginToken(String token) {
         if (token != null) {
             setAutoLogin(AuthScheme.LOGIN_TOKEN, token);
-        } else {
-            setAutoLogin(null, null);
-        }
-    }
-
-    /**
-     * Tell Tinode to automatically login after connecting using basic authentication scheme.
-     *
-     * @param uname    user name
-     * @param password password
-     */
-    public void setAutoLoginBasic(String uname, String password) {
-        if (uname != null && password != null) {
-            setAutoLogin(AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
         } else {
             setAutoLogin(null, null);
         }
@@ -1957,30 +1908,34 @@ public class Tinode {
                 String name = parser.getCurrentName();
                 parser.nextToken();
                 JsonNode node = mapper.readTree(parser);
-                switch (name) {
-                    case "ctrl":
-                        msg.ctrl = mapper.readValue(node.traverse(), MsgServerCtrl.class);
-                        break;
-                    case "pres":
-                        msg.pres = mapper.readValue(node.traverse(), MsgServerPres.class);
-                        break;
-                    case "info":
-                        msg.info = mapper.readValue(node.traverse(), MsgServerInfo.class);
-                        break;
-                    case "data":
-                        msg.data = mapper.readValue(node.traverse(), MsgServerData.class);
-                        break;
-                    case "meta":
-                        if (node.has("topic")) {
-                            msg.meta = mapper.readValue(node.traverse(),
-                                    getTypeOfMetaPacket(node.get("topic").asText()));
-                        } else {
-                            Log.w(TAG, "Failed to parse {meta}: missing topic name");
-                        }
-                        break;
-                    default:  // Unrecognized field, ignore
-                        Log.w(TAG, "Unknown field in packet: '" + name + "'");
-                        break;
+                try {
+                    switch (name) {
+                        case "ctrl":
+                            msg.ctrl = mapper.readValue(node.traverse(), MsgServerCtrl.class);
+                            break;
+                        case "pres":
+                            msg.pres = mapper.readValue(node.traverse(), MsgServerPres.class);
+                            break;
+                        case "info":
+                            msg.info = mapper.readValue(node.traverse(), MsgServerInfo.class);
+                            break;
+                        case "data":
+                            msg.data = mapper.readValue(node.traverse(), MsgServerData.class);
+                            break;
+                        case "meta":
+                            if (node.has("topic")) {
+                                msg.meta = mapper.readValue(node.traverse(),
+                                        getTypeOfMetaPacket(node.get("topic").asText()));
+                            } else {
+                                Log.w(TAG, "Failed to parse {meta}: missing topic name");
+                            }
+                            break;
+                        default:  // Unrecognized field, ignore
+                            Log.w(TAG, "Unknown field in packet: '" + name + "'");
+                            break;
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to deserialize network message", e);
                 }
             }
             parser.close(); // important to close both parser and underlying reader
@@ -2117,7 +2072,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings("WeakerAccess,UnusedParameters")
         public void onMessage(ServerMessage msg) {
         }
 
@@ -2128,7 +2083,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings("WeakerAccess,UnusedParameters")
         public void onRawMessage(String msg) {
         }
 
@@ -2137,7 +2092,7 @@ public class Tinode {
          *
          * @param ctrl control message to process
          */
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings("WeakerAccess,UnusedParameters")
         public void onCtrlMessage(MsgServerCtrl ctrl) {
         }
 
@@ -2146,7 +2101,7 @@ public class Tinode {
          *
          * @param data control message to process
          */
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings("WeakerAccess,UnusedParameters")
         public void onDataMessage(MsgServerData data) {
         }
 
@@ -2155,7 +2110,7 @@ public class Tinode {
          *
          * @param info info message to process
          */
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings("WeakerAccess,UnusedParameters")
         public void onInfoMessage(MsgServerInfo info) {
         }
 
@@ -2164,7 +2119,7 @@ public class Tinode {
          *
          * @param meta meta message to process
          */
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings("WeakerAccess,UnusedParameters")
         public void onMetaMessage(MsgServerMeta meta) {
         }
 
@@ -2173,7 +2128,7 @@ public class Tinode {
          *
          * @param pres control message to process
          */
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings("WeakerAccess,UnusedParameters")
         public void onPresMessage(MsgServerPres pres) {
         }
     }
@@ -2433,36 +2388,6 @@ public class Tinode {
 
         private void rejectPromises(Exception ex) throws Exception {
             completePromises(null, ex);
-        }
-    }
-
-    /**
-     * Scheduler for sending delayed recv notifications.
-     */
-    class HeartBeat extends Timer {
-        public static final String TAG = "HeartBeat";
-
-        private final ConcurrentHashMap<String, Integer> recvQueue;
-
-        public HeartBeat() {
-            super(TAG, true);
-
-            recvQueue = new ConcurrentHashMap<>();
-
-            schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    Set<String> keyset = recvQueue.keySet();
-                    for (String topic : keyset) {
-                        @SuppressWarnings("ConstantConditions") int recv = recvQueue.remove(topic);
-                        Tinode.this.noteRecv(topic, recv);
-                    }
-                }
-            }, NOTE_RECV_DELAY / 2, NOTE_RECV_DELAY);
-        }
-
-        public void post(String topic, int recv) {
-            recvQueue.put(topic, recv);
         }
     }
 }

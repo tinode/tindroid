@@ -29,6 +29,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -85,26 +86,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     public static boolean hasClickableSpans(final Drafty content) {
         if (content != null) {
-            Drafty.Entity[] entities = content.getEntities();
-            if (entities == null) {
-                return false;
-            }
-
-            for (Drafty.Entity ent : entities) {
-                if (ent == null || ent.tp == null) {
-                    continue;
-                }
-                switch (ent.tp) {
-                    case "BN":
-                    case "LN":
-                    case "MN":
-                    case "HT":
-                    case "IM":
-                    case "EX":
-                        return true;
-                    default:
-                }
-            }
+            return content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"));
         }
         return false;
     }
