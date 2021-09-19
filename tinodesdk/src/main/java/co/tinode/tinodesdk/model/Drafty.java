@@ -82,20 +82,16 @@ public class Drafty implements Serializable {
     // Name of the style, regexp start, regexp end.
     private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
     private static final Pattern[] INLINE_STYLE_RE = {
-            Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])",
-                    Pattern.UNICODE_CHARACTER_CLASS),    // bold *bo*
-            Pattern.compile("(?<=^|\\W)_([^_]+[^\\s_])_(?=$|\\W)",
-                    Pattern.UNICODE_CHARACTER_CLASS),    // italic _it_
-            Pattern.compile("(?<=^|[\\W_])~([^~]+[^\\s~])~(?=$|[\\W_])",
-                    Pattern.UNICODE_CHARACTER_CLASS),    // strikethough ~st~
-            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)",
-                    Pattern.UNICODE_CHARACTER_CLASS)     // code/monospace `mono`
+            Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])"), // bold *bo*
+            Pattern.compile("(?<=^|\\W)_([^_]+[^\\s_])_(?=$|\\W)"),    // italic _it_
+            Pattern.compile("(?<=^|[\\W_])~([^~]+[^\\s~])~(?=$|[\\W_])"), // strikethough ~st~
+            Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")     // code/monospace `mono`
     };
 
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {
             new EntityProc("LN",
-                    Pattern.compile("\\b(https?://)?(?:www\\.)?(?:[a-z0-9][-a-z0-9]*[a-z0-9]\\.){1,5}" +
+                    Pattern.compile("(?<=^|[\\W_])(https?://)?(?:www\\.)?(?:[a-z0-9][-a-z0-9]*[a-z0-9]\\.){1,5}" +
                             "[a-z]{2,6}(?:[/?#:][-a-z0-9@:%_+.~#?&/=]*)?", Pattern.CASE_INSENSITIVE)) {
 
                 @Override
@@ -105,8 +101,8 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc("MN", Pattern.compile("\\b@(\\w\\w+)",
-                    Pattern.UNICODE_CHARACTER_CLASS)) {
+            new EntityProc("MN",
+                    Pattern.compile("(?<=^|[\\W_])@([\\p{L}\\p{N}][._\\p{L}\\p{N}]*[\\p{L}\\p{N}])")) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
@@ -114,8 +110,8 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc("HT", Pattern.compile("(?<=[\\s,.!]|^)#(\\w\\w+)",
-                    Pattern.UNICODE_CHARACTER_CLASS)) {
+            new EntityProc("HT",
+                    Pattern.compile("(?<=^|[\\W_])#([\\p{L}\\p{N}][._\\p{L}\\p{N}]*[\\p{L}\\p{N}])")) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
                     Map<String, Object> data = new HashMap<>();
@@ -409,9 +405,22 @@ public class Drafty implements Serializable {
                 refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
     }
 
-    @JsonIgnore
-    public Style[] getStyles() {
-        return fmt;
+    // Check if Drafty has at least one entity of the given type.
+    public boolean hasEntities(Iterable<String> types) {
+        if (ent == null) {
+            return false;
+        }
+        for (Entity e : ent) {
+            if (e == null || e.tp == null) {
+                continue;
+            }
+            for (String type : types) {
+                if (type.equals(e.tp)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @JsonIgnore
@@ -440,17 +449,6 @@ public class Drafty implements Serializable {
             }
         }
         return result.size() > 0 ? result.toArray(new String[]{}) : null;
-    }
-
-    @JsonIgnore
-    public Entity getEntity(Style style) {
-        if (ent != null) {
-            try {
-                return ent[style.key == null ? 0 : style.key];
-            } catch (ArrayIndexOutOfBoundsException ignored) {
-            }
-        }
-        return null;
     }
 
     // Ensure Drafty has enough space to add 'count' formatting styles.
@@ -700,6 +698,33 @@ public class Drafty implements Serializable {
     }
 
     /**
+     * Create a Drafty document consisting of a single mention.
+     * @param name is location where the button is inserted.
+     * @param uid is the user ID to be mentioned.
+     * @return new Drafty object.
+     */
+    public static Drafty mention(String name, String uid) {
+        Drafty d = Drafty.fromPlainText(name);
+        d.fmt = new Style[]{
+             new Style(0, name.length(), 0)
+        };
+        d.ent = new Entity[]{
+                new Entity("MN").addData("val", uid)
+        };
+        return d;
+    }
+
+    /**
+     * Wrap contents of the document into the specified style.
+     * @param style to wrap document into.
+     * @return 'this' Drafty document.
+     */
+    public Drafty wrapInto(String style) {
+        prepareForStyle(1);
+        fmt[fmt.length - 1] = new Style(style, 0, txt.length());
+        return this;
+    }
+    /**
      * Insert button into Drafty document.
      * @param at is location where the button is inserted.
      * @param len is the length of the text to be used as button title.
@@ -826,6 +851,22 @@ public class Drafty implements Serializable {
         }
 
         return result;
+    }
+
+    /**
+     * Create a quote of a given Drafty document.
+     *
+     * @param header - Quote header (title, etc.).
+     * @param uid - UID of the author to mention.
+     * @param body - Body of the quoted message.
+     *
+     * @return a Drafty doc with the quote formatting.
+     */
+    public static Drafty quote(String header, String uid, Drafty body) {
+        return Drafty.mention(header, uid)
+                .appendLineBreak()
+                .append(body)
+                .wrapInto("QQ");
     }
 
     /**
@@ -1018,21 +1059,6 @@ public class Drafty implements Serializable {
             this.at = at;
             this.len = len;
             this.key = key;
-        }
-
-        @JsonIgnore
-        public String getType() {
-            return tp;
-        }
-
-        @JsonIgnore
-        public int getOffset() {
-            return at;
-        }
-
-        @JsonIgnore
-        public int length() {
-            return len;
         }
 
         @NotNull

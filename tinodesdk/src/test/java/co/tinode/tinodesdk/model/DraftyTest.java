@@ -7,11 +7,9 @@ import org.junit.Test;
 public class DraftyTest {
     @Test
     public void testParse() {
-        // String 1
-        String source = "this is *bold*, `code` and _italic_, ~strike~";
-        Drafty actual = Drafty.parse(source);
-        Drafty expected = new Drafty();
-        expected.txt = "this is bold, code and italic, strike";
+        // Basic formatting  1
+        Drafty actual = Drafty.parse("this is *bold*, `code` and _italic_, ~strike~");
+        Drafty expected = new Drafty("this is bold, code and italic, strike");
         expected.fmt = new Drafty.Style[]{
                 new Drafty.Style("ST", 8, 4),
                 new Drafty.Style("CO", 14, 4),
@@ -20,22 +18,29 @@ public class DraftyTest {
         };
         assertEquals("String 1 has failed", expected, actual);
 
-        // String 2
-        source = "combined *bold and _italic_*";
-        actual = Drafty.parse(source);
-        expected = new Drafty();
-        expected.txt = "combined bold and italic";
+        // Basic formatting over Unicode string 2.
+        actual = Drafty.parse("Это *жЫрный*, `код` и _наклонный_, ~зачеркнутый~");
+        expected = new Drafty("Это жЫрный, код и наклонный, зачеркнутый");
         expected.fmt = new Drafty.Style[]{
-                new Drafty.Style("EM", 18, 6),
-                new Drafty.Style("ST", 9, 15)
+                new Drafty.Style("ST", 4, 6),
+                new Drafty.Style("CO", 12, 3),
+                new Drafty.Style("EM", 18, 9),
+                new Drafty.Style("DL", 29, 11),
         };
         assertEquals("String 2 has failed", expected, actual);
 
         // String 3
-        source = "an url: https://www.example.com/abc#fragment and another _www.tinode.co_";
-        actual = Drafty.parse(source);
-        expected = new Drafty();
-        expected.txt = "an url: https://www.example.com/abc#fragment and another www.tinode.co";
+        actual = Drafty.parse("combined *bold and _italic_*");
+        expected = new Drafty("combined bold and italic");
+        expected.fmt = new Drafty.Style[]{
+                new Drafty.Style("EM", 18, 6),
+                new Drafty.Style("ST", 9, 15)
+        };
+        assertEquals("String 3 has failed", expected, actual);
+
+        // String 4
+        actual = Drafty.parse("an url: https://www.example.com/abc#fragment and another _www.tinode.co_");
+        expected = new Drafty("an url: https://www.example.com/abc#fragment and another www.tinode.co");
         expected.fmt = new Drafty.Style[]{
                 new Drafty.Style("EM", 57, 13),
                 new Drafty.Style(8, 36, 0),
@@ -47,35 +52,31 @@ public class DraftyTest {
                 new Drafty.Entity("LN")
                         .addData("url", "http://www.tinode.co")
         };
-        assertEquals("String 3 has failed", expected, actual);
-
-        // String 4
-        source = "this is a @mention and a #hashtag in a string";
-        actual = Drafty.parse(source);
-        expected = new Drafty();
-        expected.txt = "this is a @mention and a #hashtag in a string";
-        expected.fmt = new Drafty.Style[]{
-                new Drafty.Style(25, 8, 0),
-        };
-        expected.ent = new Drafty.Entity[]{
-                new Drafty.Entity("HT")
-                        .addData("val", "#hashtag"),
-        };
         assertEquals("String 4 has failed", expected, actual);
 
         // String 5
-        source = "second #юникод";
-        actual = Drafty.parse(source);
-        expected = new Drafty();
-        expected.txt = "second #юникод";
+        actual = Drafty.parse("this is a @mention and a #hashtag in a string");
+        expected = new Drafty("this is a @mention and a #hashtag in a string");
+        expected.fmt = new Drafty.Style[]{
+                new Drafty.Style(10, 8, 0),
+                new Drafty.Style(25, 8, 1),
+        };
+        expected.ent = new Drafty.Entity[]{
+                new Drafty.Entity("MN").addData("val", "@mention"),
+                new Drafty.Entity("HT").addData("val", "#hashtag"),
+        };
+        assertEquals("String 5 has failed", expected.toPlainText(), actual.toPlainText());
+
+        // String 6
+        actual = Drafty.parse("second #юникод");
+        expected = new Drafty("second #юникод");
         expected.fmt = new Drafty.Style[]{
                 new Drafty.Style(7, 7, 0),
         };
         expected.ent = new Drafty.Entity[]{
-                new Drafty.Entity("HT")
-                        .addData("val", "#юникод"),
+                new Drafty.Entity("HT").addData("val", "#юникод"),
         };
-        assertEquals("String 5 has failed", expected.toPlainText(), actual.toPlainText());
+        assertEquals("String 6 has failed", expected.toPlainText(), actual.toPlainText());
     }
 
     @Test
