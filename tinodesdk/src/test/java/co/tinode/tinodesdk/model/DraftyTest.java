@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import java.util.HashMap;
-
 public class DraftyTest {
     @Test
     public void testParse() {
@@ -93,7 +91,6 @@ public class DraftyTest {
         src.fmt = new Drafty.Style[]{
                 new Drafty.Style(-1, 0, 0),
         };
-        HashMap<String, Object> entData0 = new HashMap<>();
         src.ent = new Drafty.Entity[]{
                 new Drafty.Entity("EX")
                         .addData("mime", "image/jpeg")
