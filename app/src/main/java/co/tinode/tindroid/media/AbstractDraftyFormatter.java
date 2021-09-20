@@ -54,8 +54,11 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
     // Interactive form.
     protected abstract T handleForm(final Context ctx, final Map<String, Object> data, final Object content);
 
+    // Interactive form.
+    protected abstract T handleQuote(final Context ctx, final Map<String, Object> data, final Object content);
+
     // Unknown or unsupported element.
-    protected abstract T handleUnknown(final Context ctx, final Object content, final Map<String, Object> data);
+    protected abstract T handleUnknown(final Context ctx, final Map<String, Object> data, final Object content);
 
     // Unstyled content
     protected abstract T handlePlain(Object content);
@@ -113,9 +116,13 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
                     // Form element formatting is dependent on element content.
                     span = handleFormRow(mContext, data, content);
                     break;
+                case "QQ":
+                    // Quoted block.
+                    span = handleQuote(mContext, data, content);
+                    break;
                 default:
                     // Unknown element
-                    span = handleUnknown(mContext, content, data);
+                    span = handleUnknown(mContext, data, content);
             }
             return span;
         }

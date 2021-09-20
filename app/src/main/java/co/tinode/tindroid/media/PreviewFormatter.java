@@ -9,6 +9,7 @@ import android.text.SpannedString;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.text.style.ParagraphStyle;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -170,7 +171,13 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
     }
 
     @Override
-    protected MeasuredTreeNode handleUnknown(Context ctx, Object content, Map<String, Object> data) {
+    protected MeasuredTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+        // Not showing quoted content in preview.
+        return null;
+    }
+
+    @Override
+    protected MeasuredTreeNode handleUnknown(Context ctx, Map<String, Object> data, Object content) {
         return annotatedIcon(ctx, R.drawable.ic_unkn_type_ol, R.string.unknown);
     }
 
@@ -193,6 +200,10 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
         }
 
         MeasuredTreeNode(CharacterStyle style, Object content) {
+            super(style, content);
+        }
+
+        MeasuredTreeNode(ParagraphStyle style, Object content) {
             super(style, content);
         }
 

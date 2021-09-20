@@ -66,7 +66,7 @@ public class FontFormatter extends PreviewFormatter {
     }
 
     @Override
-    protected MeasuredTreeNode handleUnknown(Context ctx, Object content, Map<String, Object> data) {
+    protected MeasuredTreeNode handleUnknown(Context ctx, Map<String, Object> data, Object content) {
         return annotatedIcon(ctx, UNKNOWN, R.string.unknown);
     }
 }

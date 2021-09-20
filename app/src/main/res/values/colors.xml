@@ -44,7 +44,10 @@
     <color name="colorMessageBubbleMine">#FFFAFAFA</color>
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
     <color name="colorMessageBubbleMeta">#FFe3f2fd</color>
-    <color name="colorReplyPreviewBubble">#FFEEEEEE</color>
+    <color name="colorReplyBubbleMine">#FFEEEEEE</color>
+    <color name="colorReplyBubbleOther">#BACAA9</color>
+
+    <color name="colorQuoteStripe">#039be5</color>
 
     <color name="colorImageMetaPanel">#80FFFFFF</color>
 

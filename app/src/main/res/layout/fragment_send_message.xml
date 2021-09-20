@@ -34,7 +34,7 @@
             android:layout_gravity="start"
             android:layout_weight="1"
             android:background="@drawable/bubble_r_z"
-            android:backgroundTint="@color/colorReplyPreviewBubble"
+            android:backgroundTint="@color/colorReplyBubbleMine"
             android:orientation="horizontal"
             android:padding="6dp"
             android:visibility="visible">

@@ -293,8 +293,7 @@ public class LetterTileDrawable extends Drawable {
         }
 
         TypedArray colors = mContactType == ContactType.PERSON ? sColorsDark : sColorsLight;
-        final int color = mHashCode % colors.length();
-        return colors.getColor(color, sDefaultColor);
+        return colors.getColor(mHashCode % colors.length(), sDefaultColor);
     }
 
     /**

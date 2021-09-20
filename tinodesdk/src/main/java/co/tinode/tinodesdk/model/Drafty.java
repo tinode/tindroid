@@ -74,13 +74,19 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class Drafty implements Serializable {
+    public enum STYLE {
+        BN, BR, CO, DL, EM, EX, FM, HD, HL, HT, IM, LN, MN, QQ, RW, ST,
+    }
+
     public static final String MIME_TYPE = "text/x-drafty";
 
     private static final String JSON_MIME_TYPE = "application/json";
 
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end.
-    private static final String[] INLINE_STYLE_NAME = {"ST", "EM", "DL", "CO"};
+    private static final String[] INLINE_STYLE_NAME = {
+            STYLE.ST.name(), STYLE.EM.name(), STYLE.DL.name(), STYLE.CO.name()
+    };
     private static final Pattern[] INLINE_STYLE_RE = {
             Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])"), // bold *bo*
             Pattern.compile("(?<=^|\\W)_([^_]+[^\\s_])_(?=$|\\W)"),    // italic _it_
@@ -88,9 +94,9 @@ public class Drafty implements Serializable {
             Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")     // code/monospace `mono`
     };
 
-    private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
+    private static final String[] ENTITY_NAME = {STYLE.LN.name(), STYLE.MN.name(), STYLE.HT.name()};
     private static final EntityProc[] ENTITY_PROC = {
-            new EntityProc("LN",
+            new EntityProc(STYLE.LN.name(),
                     Pattern.compile("(?<=^|[\\W_])(https?://)?(?:www\\.)?(?:[a-z0-9][-a-z0-9]*[a-z0-9]\\.){1,5}" +
                             "[a-z]{2,6}(?:[/?#:][-a-z0-9@:%_+.~#?&/=]*)?", Pattern.CASE_INSENSITIVE)) {
 
@@ -101,7 +107,7 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc("MN",
+            new EntityProc(STYLE.MN.name(),
                     Pattern.compile("(?<=^|[\\W_])@([\\p{L}\\p{N}][._\\p{L}\\p{N}]*[\\p{L}\\p{N}])")) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
@@ -110,7 +116,7 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc("HT",
+            new EntityProc(STYLE.HT.name(),
                     Pattern.compile("(?<=^|[\\W_])#([\\p{L}\\p{N}][._\\p{L}\\p{N}]*[\\p{L}\\p{N}])")) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
@@ -384,7 +390,7 @@ public class Drafty implements Serializable {
 
             for (int i = 1; i<blks.size(); i++) {
                 int offset = text.length() + 1;
-                fmt.add(new Style("BR", offset - 1, 1));
+                fmt.add(new Style(STYLE.BR.name(), offset - 1, 1));
 
                 b = blks.get(i);
                 text.append(" ");
@@ -534,7 +540,7 @@ public class Drafty implements Serializable {
         if (size > 0) {
             data.put("size", size);
         }
-        ent[ent.length - 1] = new Entity("IM", data);
+        ent[ent.length - 1] = new Entity(STYLE.IM.name(), data);
 
         return this;
     }
@@ -600,7 +606,7 @@ public class Drafty implements Serializable {
         if (size > 0) {
             data.put("size", size);
         }
-        ent[ent.length - 1] = new Entity("EX", data);
+        ent[ent.length - 1] = new Entity(STYLE.EX.name(), data);
 
         return this;
     }
@@ -619,7 +625,7 @@ public class Drafty implements Serializable {
         data.put("mime", JSON_MIME_TYPE);
         data.put("val", json);
 
-        ent[ent.length - 1] = new Entity("EX", data);
+        ent[ent.length - 1] = new Entity(STYLE.EX.name(), data);
 
         return this;
     }
@@ -690,7 +696,7 @@ public class Drafty implements Serializable {
         }
 
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style("BR", txt.length(), 1);
+        fmt[fmt.length - 1] = new Style(STYLE.BR.name(), txt.length(), 1);
 
         txt += " ";
 
@@ -709,7 +715,7 @@ public class Drafty implements Serializable {
              new Style(0, name.length(), 0)
         };
         d.ent = new Entity[]{
-                new Entity("MN").addData("val", uid)
+                new Entity(STYLE.MN.name()).addData("val", uid)
         };
         return d;
     }
@@ -756,7 +762,7 @@ public class Drafty implements Serializable {
         if ("url".equals(actionType)) {
             data.put("ref", refUrl);
         }
-        ent[ent.length - 1] = new Entity("BN", data);
+        ent[ent.length - 1] = new Entity(STYLE.BN.name(), data);
         return this;
     }
 
@@ -786,7 +792,7 @@ public class Drafty implements Serializable {
         while (iter.hasNext()) {
             Span span = iter.next();
 
-            if (span.start < 0 && span.type.equals("EX")) {
+            if (span.start < 0 && span.type.equals(STYLE.EX.name())) {
                 // This is different from JS SDK. JS ignores these spans here.
                 // JS uses Drafty.attachments() to get attachments.
                 T fs = formatter.apply(span.type, span.data, null);
@@ -822,7 +828,7 @@ public class Drafty implements Serializable {
                 subspans = null;
             }
 
-            if (span.type.equals("BN")) {
+            if (span.type.equals(STYLE.BN.name())) {
                 // Make button content unstyled.
                 span.data = span.data != null ? span.data : new HashMap<>();
                 String title = line.substring(span.start, span.end);
@@ -866,7 +872,7 @@ public class Drafty implements Serializable {
         return Drafty.mention(header, uid)
                 .appendLineBreak()
                 .append(body)
-                .wrapInto("QQ");
+                .wrapInto(STYLE.QQ.name());
     }
 
     /**
@@ -936,7 +942,7 @@ public class Drafty implements Serializable {
 
             // Is type still undefined? Hide the invalid element!
             if (span.type == null || "".equals(span.type)) {
-                span.type = "HD";
+                span.type = STYLE.HD.name();
             }
         }
 

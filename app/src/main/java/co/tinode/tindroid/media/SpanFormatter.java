@@ -433,9 +433,14 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         return span;
     }
 
+    @Override
+    protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+        return null;
+    }
+
     // Unknown or unsupported element.
     @Override
-    protected StyledTreeNode handleUnknown(final Context ctx, final Object content, final Map<String, Object> data) {
+    protected StyledTreeNode handleUnknown(final Context ctx, final Map<String, Object> data, Object content) {
         if (data == null) {
             return null;
         }
