@@ -60,7 +60,9 @@ public class QuoteFormatter extends PreviewFormatter {
           border-left: 0.25rem solid #039be5;
         */
         // TODO: make clickable.
-        QuoteSpan style = new QuoteSpan(ctx.getResources().getColor(R.color.colorQuoteStripe));
+        Resources res = ctx.getResources();
+        QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubbleOther),
+                0, res.getColor(R.color.colorQuoteStripe), 2, 6);
         return new MeasuredTreeNode(style, content);
     }
 

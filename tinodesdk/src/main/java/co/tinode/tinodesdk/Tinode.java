@@ -98,7 +98,7 @@ public class Tinode {
     private static final long NOTE_KP_DELAY = 3000L;
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.16";
+    private static final String VERSION = "0.18";
     private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
 
     // Reject unresolved futures after this many milliseconds.
@@ -284,7 +284,7 @@ public class Tinode {
     public static <T> T jsonDeserialize(String input, String canonicalName) {
         try {
             return sJsonMapper.readValue(input, sTypeFactory.constructFromCanonical(canonicalName));
-        } catch (Exception e) {
+        } catch (Error | Exception e) {
             Log.w(TAG, "Failed to deserialize saved '" + input +
                     "' into '" + canonicalName + "'", e);
             return null;

@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import co.tinode.tindroid.R;
 
+// Fills background and draws a rounded border around text.
 public class LabelSpan extends ReplacementSpan {
     // All sizes are in DIPs.
     private static final float RADIUS_CORNER = 1.5f;
