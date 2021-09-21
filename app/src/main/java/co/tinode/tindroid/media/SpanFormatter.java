@@ -1,6 +1,8 @@
 package co.tinode.tindroid.media;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -52,6 +54,14 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
     // Size of Download and Error icons in DP.
     private static final int ICON_SIZE_DP = 16;
 
+    // Formatting parameters of the quoted text;
+    private static final int CORNER_RADIUS_DP = 4;
+    private static final int QUOTE_STRIPE_WIDTH_DP = 3;
+    private static final int STRIPE_GAP_DP = 6;
+
+    private static TypedArray sColorsDark;
+    private static int sDefaultColor;
+
     private final TextView mContainer;
     // Maximum width of the container TextView. Max height is maxWidth * 0.75.
     private final int mViewport;
@@ -65,6 +75,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         mViewport = container.getMaxWidth();
         mFontSize = container.getTextSize();
         mClicker = clicker;
+
+        Resources res = container.getResources();
+        if (sColorsDark == null) {
+            sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
+            sDefaultColor = res.getColor(R.color.grey);
+        }
     }
 
     public static Spanned toSpanned(final TextView container, final Drafty content,
@@ -158,7 +174,18 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     @Override
     protected StyledTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        return null;
+        int color = sDefaultColor;
+        try {
+            color = colorMention((String) data.get("val"));
+        } catch(ClassCastException ignored){}
+
+        return new StyledTreeNode(new ForegroundColorSpan(color), content);
+    }
+
+    private int colorMention(String uid) {
+        return TextUtils.isEmpty(uid) ?
+                sDefaultColor :
+                sColorsDark.getColor(Math.abs(uid.hashCode()) % sColorsDark.length(), sDefaultColor);
     }
 
     @Override
@@ -435,7 +462,14 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     @Override
     protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
-        return null;
+        Resources res = ctx.getResources();
+        DisplayMetrics metrics = res.getDisplayMetrics();
+        QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
+                CORNER_RADIUS_DP * metrics.density,
+                res.getColor(R.color.colorQuoteStripe),
+                QUOTE_STRIPE_WIDTH_DP * metrics.density,
+                STRIPE_GAP_DP * metrics.density);
+        return new PreviewFormatter.MeasuredTreeNode(style, content);
     }
 
     // Unknown or unsupported element.

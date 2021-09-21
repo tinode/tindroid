@@ -3,7 +3,6 @@ package co.tinode.tinodesdk.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,30 +74,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class Drafty implements Serializable {
-    public enum STYLE {
-        @JsonProperty("BN") BN("BN"),
-        @JsonProperty("BR") BR("BR"),
-        @JsonProperty("CO") CO("CO"),
-        @JsonProperty("DL") DL("DL"),
-        @JsonProperty("EM") EM("EM"),
-        @JsonProperty("EX") EX("EX"),
-        @JsonProperty("FM") FM("FM"),
-        @JsonProperty("HD") HD("HD"),
-        @JsonProperty("HL") HL("HL"),
-        @JsonProperty("HT") HT("HT"),
-        @JsonProperty("IM") IM("IM"),
-        @JsonProperty("LN") LN("LN"),
-        @JsonProperty("MN") MN("MN"),
-        @JsonProperty("QQ") QQ("QQ"),
-        @JsonProperty("RW") RW("RW"),
-        @JsonProperty("ST") ST("ST");
-
-        final String val;
-        STYLE(String value) {
-            val = value;
-        }
-    }
-
     public static final String MIME_TYPE = "text/x-drafty";
 
     private static final String JSON_MIME_TYPE = "application/json";
@@ -106,7 +81,7 @@ public class Drafty implements Serializable {
     // Regular expressions for parsing inline formats.
     // Name of the style, regexp start, regexp end.
     private static final String[] INLINE_STYLE_NAME = {
-            STYLE.ST.val, STYLE.EM.val, STYLE.DL.val, STYLE.CO.val
+            "ST", "EM", "DL", "CO"
     };
     private static final Pattern[] INLINE_STYLE_RE = {
             Pattern.compile("(?<=^|[\\W_])\\*([^*]+[^\\s*])\\*(?=$|[\\W_])"), // bold *bo*
@@ -115,9 +90,9 @@ public class Drafty implements Serializable {
             Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")     // code/monospace `mono`
     };
 
-    private static final String[] ENTITY_NAME = {STYLE.LN.val, STYLE.MN.val, STYLE.HT.val};
+    private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {
-            new EntityProc(STYLE.LN.val,
+            new EntityProc("LN",
                     Pattern.compile("(?<=^|[\\W_])(https?://)?(?:www\\.)?(?:[a-z0-9][-a-z0-9]*[a-z0-9]\\.){1,5}" +
                             "[a-z]{2,6}(?:[/?#:][-a-z0-9@:%_+.~#?&/=]*)?", Pattern.CASE_INSENSITIVE)) {
 
@@ -128,7 +103,7 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc(STYLE.MN.val,
+            new EntityProc("MN",
                     Pattern.compile("(?<=^|[\\W_])@([\\p{L}\\p{N}][._\\p{L}\\p{N}]*[\\p{L}\\p{N}])")) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
@@ -137,7 +112,7 @@ public class Drafty implements Serializable {
                     return data;
                 }
             },
-            new EntityProc(STYLE.HT.val,
+            new EntityProc("HT",
                     Pattern.compile("(?<=^|[\\W_])#([\\p{L}\\p{N}][._\\p{L}\\p{N}]*[\\p{L}\\p{N}])")) {
                 @Override
                 Map<String, Object> pack(Matcher m) {
@@ -411,7 +386,7 @@ public class Drafty implements Serializable {
 
             for (int i = 1; i<blks.size(); i++) {
                 int offset = text.length() + 1;
-                fmt.add(new Style(STYLE.BR.val, offset - 1, 1));
+                fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
                 text.append(" ");
@@ -561,7 +536,7 @@ public class Drafty implements Serializable {
         if (size > 0) {
             data.put("size", size);
         }
-        ent[ent.length - 1] = new Entity(STYLE.IM.val, data);
+        ent[ent.length - 1] = new Entity("IM", data);
 
         return this;
     }
@@ -627,7 +602,7 @@ public class Drafty implements Serializable {
         if (size > 0) {
             data.put("size", size);
         }
-        ent[ent.length - 1] = new Entity(STYLE.EX.val, data);
+        ent[ent.length - 1] = new Entity("EX", data);
 
         return this;
     }
@@ -646,7 +621,7 @@ public class Drafty implements Serializable {
         data.put("mime", JSON_MIME_TYPE);
         data.put("val", json);
 
-        ent[ent.length - 1] = new Entity(STYLE.EX.val, data);
+        ent[ent.length - 1] = new Entity("EX", data);
 
         return this;
     }
@@ -717,7 +692,7 @@ public class Drafty implements Serializable {
         }
 
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style(STYLE.BR.val, txt.length(), 1);
+        fmt[fmt.length - 1] = new Style("BR", txt.length(), 1);
 
         txt += " ";
 
@@ -736,7 +711,7 @@ public class Drafty implements Serializable {
              new Style(0, name.length(), 0)
         };
         d.ent = new Entity[]{
-                new Entity(STYLE.MN.val).addData("val", uid)
+                new Entity("MN").addData("val", uid)
         };
         return d;
     }
@@ -783,7 +758,7 @@ public class Drafty implements Serializable {
         if ("url".equals(actionType)) {
             data.put("ref", refUrl);
         }
-        ent[ent.length - 1] = new Entity(STYLE.BN.val, data);
+        ent[ent.length - 1] = new Entity("BN", data);
         return this;
     }
 
@@ -798,10 +773,11 @@ public class Drafty implements Serializable {
     }
 
     // Inverse of chunkify. Returns a tree of formatted spans.
-    private <T> List<T> forEach(String line, int start, int end, List<Span> spans, Formatter<T> formatter) {
+    private <T> List<T> forEach(String line, int start, int end, List<Span> spans,
+                                Formatter<T> defaultFormatter) {
         List<T> result = new LinkedList<>();
         if (spans == null) {
-            T fs = formatter.apply(null, null, line.substring(start, end));
+            T fs = defaultFormatter.apply(null, null, line.substring(start, end));
             if (fs != null) {
                 result.add(fs);
             }
@@ -813,10 +789,10 @@ public class Drafty implements Serializable {
         while (iter.hasNext()) {
             Span span = iter.next();
 
-            if (span.start < 0 && span.type.equals(STYLE.EX.val)) {
+            if (span.start < 0 && span.type.equals("EX")) {
                 // This is different from JS SDK. JS ignores these spans here.
                 // JS uses Drafty.attachments() to get attachments.
-                T fs = formatter.apply(span.type, span.data, null);
+                T fs = defaultFormatter.apply(span.type, span.data, null);
                 if (fs != null) {
                     result.add(fs);
                 }
@@ -825,7 +801,7 @@ public class Drafty implements Serializable {
 
             // Add un-styled range before the styled span starts.
             if (start < span.start) {
-                T fs = formatter.apply(null, null, line.substring(start, span.start));
+                T fs = defaultFormatter.apply(null, null, line.substring(start, span.start));
                 if (fs != null) {
                     result.add(fs);
                 }
@@ -849,18 +825,18 @@ public class Drafty implements Serializable {
                 subspans = null;
             }
 
-            if (span.type.equals(STYLE.BN.val)) {
+            if (span.type.equals("BN")) {
                 // Make button content unstyled.
                 span.data = span.data != null ? span.data : new HashMap<>();
                 String title = line.substring(span.start, span.end);
                 span.data.put("title", title);
-                T fs = formatter.apply(span.type, span.data, title);
+                T fs = defaultFormatter.apply(span.type, span.data, title);
                 if (fs != null) {
                     result.add(fs);
                 }
             } else {
-                T fs = formatter.apply(span.type, span.data,
-                        forEach(line, start, span.end, subspans, formatter));
+                T fs = defaultFormatter.apply(span.type, span.data,
+                        forEach(line, start, span.end, subspans, defaultFormatter));
                 if (fs != null) {
                     result.add(fs);
                 }
@@ -871,7 +847,7 @@ public class Drafty implements Serializable {
 
         // Add the last unformatted range.
         if (start < end) {
-            T fs = formatter.apply(null, null, line.substring(start, end));
+            T fs = defaultFormatter.apply(null, null, line.substring(start, end));
             if (fs != null) {
                 result.add(fs);
             }
@@ -893,7 +869,7 @@ public class Drafty implements Serializable {
         return Drafty.mention(header, uid)
                 .appendLineBreak()
                 .append(body)
-                .wrapInto(STYLE.QQ.val);
+                .wrapInto("QQ");
     }
 
     /**
@@ -901,11 +877,11 @@ public class Drafty implements Serializable {
      * Each node contains either a formatted element or a collection of
      * formatted elements.
      *
-     * @param formatter is an interface with an `apply` method. It's iteratively
+     * @param defaultFormatter is an interface with an `apply` method. It's iteratively
      *                  applied to every node in the tree.
      * @return a tree of components.
      */
-    public <T> T format(Formatter<T> formatter) {
+    public <T> T format(Formatter<T> defaultFormatter) {
         if (txt == null) {
             txt = "";
         }
@@ -917,7 +893,7 @@ public class Drafty implements Serializable {
                 fmt = new Style[1];
                 fmt[0] = new Style(0, 0, 0);
             } else {
-                return formatter.apply(null, null, txt);
+                return defaultFormatter.apply(null, null, txt);
             }
         }
 
@@ -963,11 +939,12 @@ public class Drafty implements Serializable {
 
             // Is type still undefined? Hide the invalid element!
             if (span.type == null || "".equals(span.type)) {
-                span.type = STYLE.HD.val;
+                span.type = "HD";
             }
         }
 
-        return formatter.apply(null, null, forEach(txt, 0, txt.length(), spans, formatter));
+        return defaultFormatter.apply(null, null,
+                forEach(txt, 0, txt.length(), spans, defaultFormatter));
     }
 
     public String toPlainText() {

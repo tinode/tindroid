@@ -5,7 +5,6 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.QuoteSpan;
 
 import java.util.Map;
 
@@ -61,7 +60,7 @@ public class QuoteFormatter extends PreviewFormatter {
         */
         // TODO: make clickable.
         Resources res = ctx.getResources();
-        QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubbleOther),
+        QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
                 0, res.getColor(R.color.colorQuoteStripe), 2, 6);
         return new MeasuredTreeNode(style, content);
     }
