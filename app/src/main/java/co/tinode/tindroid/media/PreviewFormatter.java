@@ -6,10 +6,8 @@ import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
-import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
-import android.text.style.ParagraphStyle;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -25,36 +23,33 @@ import co.tinode.tindroid.R;
 import co.tinode.tinodesdk.model.Drafty;
 
 // Drafty formatter for creating one-line message previews.
-public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.MeasuredTreeNode> {
+public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> {
     private final float mFontSize;
+    private final int mMaxLength;
 
-    PreviewFormatter(final Context context, float fontSize) {
+    public PreviewFormatter(final Context context, float fontSize, int maxLength) {
         super(context);
 
         mFontSize = fontSize;
+        mMaxLength = maxLength;
     }
 
-    public static Spanned toSpanned(final Context context, float fontSize, final Drafty content, final int maxLength) {
-        return toSpanned(new PreviewFormatter(context, fontSize), context, fontSize, content, maxLength);
-    }
-
-    protected static <T extends PreviewFormatter> Spanned toSpanned(T formatter, final Context context, float fontSize,
-                                                                    final Drafty content, final int maxLength) {
+    public Spanned toSpanned(final Drafty content) {
         if (content == null) {
             return new SpannedString("");
         }
         if (content.isPlain()) {
             String text = content.toString();
-            if (text.length() > maxLength) {
-                text = text.substring(0, maxLength) + "…";
+            if (text.length() > mMaxLength) {
+                text = text.substring(0, mMaxLength) + "…";
             }
             return new SpannedString(text);
         }
 
-        AbstractDraftyFormatter.TreeNode result = content.format(formatter);
+        AbstractDraftyFormatter.TreeNode result = content.format(this, null);
         if (result instanceof MeasuredTreeNode) {
             try {
-                return ((MeasuredTreeNode) result).toSpanned(maxLength);
+                return ((MeasuredTreeNode) result).toSpanned(mMaxLength);
             } catch (LengthExceededException ex) {
                 return new SpannableStringBuilder(ex.tail).append("…");
             }
@@ -186,69 +181,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<PreviewFormatter.M
         return new MeasuredTreeNode(content);
     }
 
-    static class MeasuredTreeNode extends StyledTreeNode {
-        MeasuredTreeNode() {
-            super();
-        }
-
-        MeasuredTreeNode(CharSequence content) {
-            super(content);
-        }
-
-        MeasuredTreeNode(Object content) {
-            super(content);
-        }
-
-        MeasuredTreeNode(CharacterStyle style, Object content) {
-            super(style, content);
-        }
-
-        MeasuredTreeNode(ParagraphStyle style, Object content) {
-            super(style, content);
-        }
-
-        protected Spanned toSpanned(final int maxLength) {
-            SpannableStringBuilder spanned = new SpannableStringBuilder();
-            boolean exceeded = false;
-
-            if (isPlain()) {
-                CharSequence text = getText();
-                if (text.length() > maxLength) {
-                    text = text.subSequence(0, maxLength);
-                    exceeded = true;
-                }
-                spanned.append(text);
-            } else if (hasChildren()) {
-                try {
-                    for (AbstractDraftyFormatter.TreeNode child : getChildren()) {
-                        if (child == null) {
-                            continue;
-                        }
-
-                        if (child instanceof MeasuredTreeNode) {
-                            spanned.append(((MeasuredTreeNode) child).toSpanned(maxLength - spanned.length()));
-                        }
-                    }
-                } catch (LengthExceededException ex) {
-                    exceeded = true;
-                    spanned.append(ex.tail);
-                }
-            }
-
-            if (spanned.length() > 0 && (cStyle != null || pStyle != null)) {
-                spanned.setSpan(cStyle != null ? cStyle : pStyle,
-                        0, spanned.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-
-            if (exceeded) {
-                throw new LengthExceededException(spanned);
-            }
-
-            return spanned;
-        }
-    }
-
-    static class LengthExceededException extends RuntimeException {
+    protected static class LengthExceededException extends RuntimeException {
         private final Spanned tail;
 
         LengthExceededException(Spanned tail) {

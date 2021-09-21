@@ -203,7 +203,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             String title = null;
             CharSequence body = null;
             Bitmap avatar = null;
-            if (TextUtils.isEmpty(what) || what.equals("msg")) {
+            if (TextUtils.isEmpty(what) || "msg".equals(what)) {
                 // Message notification.
 
                 // Check and maybe download new messages right away *before* showing the notification.
@@ -228,7 +228,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                             TypedArray ta = obtainStyledAttributes(androidx.appcompat.R.style.TextAppearance_Compat_Notification, attrs);
                             float fontSize = ta.getDimension(0, 14f);
                             ta.recycle();
-                            body = FontFormatter.toSpanned(this, fontSize, draftyBody, MAX_MESAGE_LENGTH);
+                            FontFormatter formatter = new FontFormatter(this, fontSize, MAX_MESAGE_LENGTH);
+                            body = formatter.toSpanned(draftyBody);
                         } else {
                             // The content is plain text.
                             body = richContent;

@@ -773,8 +773,11 @@ public class Drafty implements Serializable {
     }
 
     // Inverse of chunkify. Returns a tree of formatted spans.
-    private <T> List<T> forEach(String line, int start, int end, List<Span> spans,
-                                Formatter<T> defaultFormatter) {
+    private <T> List<T> forEach(@NotNull String line,
+                                int start, int end,
+                                @Nullable List<Span> spans,
+                                @NotNull Formatter<T> defaultFormatter,
+                                @Nullable Map<String, Formatter<T>> styleFormatters) {
         List<T> result = new LinkedList<>();
         if (spans == null) {
             T fs = defaultFormatter.apply(null, null, line.substring(start, end));
@@ -835,8 +838,14 @@ public class Drafty implements Serializable {
                     result.add(fs);
                 }
             } else {
+                Formatter<T> formatter;
+                if (styleFormatters != null && styleFormatters.containsKey(span.type)) {
+                    formatter = styleFormatters.get(span.type);
+                } else {
+                    formatter = defaultFormatter;
+                }
                 T fs = defaultFormatter.apply(span.type, span.data,
-                        forEach(line, start, span.end, subspans, defaultFormatter));
+                        forEach(line, start, span.end, subspans, formatter, styleFormatters));
                 if (fs != null) {
                     result.add(fs);
                 }
@@ -878,10 +887,13 @@ public class Drafty implements Serializable {
      * formatted elements.
      *
      * @param defaultFormatter is an interface with an `apply` method. It's iteratively
-     *                  applied to every node in the tree.
+     *                   applied to every node in the tree.
+     * @param styleFormatters style-dependent formatters. An appropriate formatter will
+     *                   applied to a subtree of styles.
      * @return a tree of components.
      */
-    public <T> T format(Formatter<T> defaultFormatter) {
+    public <T> T format(@NotNull Formatter<T> defaultFormatter,
+                        @Nullable Map<String, Formatter<T>> styleFormatters) {
         if (txt == null) {
             txt = "";
         }
@@ -944,7 +956,7 @@ public class Drafty implements Serializable {
         }
 
         return defaultFormatter.apply(null, null,
-                forEach(txt, 0, txt.length(), spans, defaultFormatter));
+                forEach(txt, 0, txt.length(), spans, defaultFormatter, styleFormatters));
     }
 
     public String toPlainText() {

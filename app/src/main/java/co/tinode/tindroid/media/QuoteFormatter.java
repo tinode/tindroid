@@ -13,9 +13,13 @@ import co.tinode.tindroid.R;
 public class QuoteFormatter extends PreviewFormatter {
     private static TypedArray sColorsDark;
     private static int sDefaultColor;
+    private final SpanFormatter.ClickListener mClicker;
 
-    public QuoteFormatter(final Context context, float fontSize, final SpanFormatter.ClickListener clicker) {
-        super(context, fontSize);
+    public QuoteFormatter(final Context context, float fontSize, int maxLength,
+                          final SpanFormatter.ClickListener quoteClicker) {
+        super(context, fontSize, maxLength);
+
+        mClicker = quoteClicker;
 
         Resources res = context.getResources();
         if (sColorsDark == null) {
@@ -42,12 +46,12 @@ public class QuoteFormatter extends PreviewFormatter {
     @Override
     protected MeasuredTreeNode handleImage(Context ctx, Object content, Map<String, Object> data) {
         /*
-                            attr = inlineImageAttr.call(this, attr, data);
-                    values = [React.createElement('img', attr, null), ' ', attr.alt];
-                    el = React.Fragment;
-                    // Fragment attributes.
-                    attr = {key: key};
-                    break;
+            attr = inlineImageAttr.call(this, attr, data);
+            values = [React.createElement('img', attr, null), ' ', attr.alt];
+            el = React.Fragment;
+            // Fragment attributes.
+            attr = {key: key};
+            break;
          */
         return null;
     }

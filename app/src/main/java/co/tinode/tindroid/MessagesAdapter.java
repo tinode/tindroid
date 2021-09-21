@@ -37,6 +37,7 @@ import android.widget.Toast;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +63,6 @@ import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.media.SpanFormatter;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.widgets.LetterTileDrawable;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
@@ -413,7 +412,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         mSpanFormatterClicker.setPosition(position);
         // Disable clicker while message is processed.
-        Spanned text = SpanFormatter.toSpanned(holder.mText, m.content, uploadingAttachment ? null : mSpanFormatterClicker);
+        SpanFormatter formatter = new SpanFormatter(holder.mText, uploadingAttachment ? null : mSpanFormatterClicker);
+        Spanned text = formatter.toSpanned(m.content);
         if (text.length() == 0) {
             if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
@@ -425,7 +425,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         holder.mText.setText(text);
-        if (SpanFormatter.hasClickableSpans(m.content)) {
+        if (m.content != null && m.content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"))) {
+            // Sole spans are clickable.
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
             holder.mText.setLinksClickable(true);
             holder.mText.setFocusable(true);

@@ -277,8 +277,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 } else {
                     messageStatus.setVisibility(View.GONE);
                 }
-                priv.setText(PreviewFormatter.toSpanned(priv.getContext(), priv.getTextSize(),
-                        content, MAX_MESSAGE_PREVIEW_LENGTH));
+                PreviewFormatter formatter = new PreviewFormatter(priv.getContext(), priv.getTextSize(),
+                        MAX_MESSAGE_PREVIEW_LENGTH);
+                priv.setText(formatter.toSpanned(content));
             } else {
                 messageStatus.setVisibility(View.GONE);
                 priv.setText(topic.getComment());

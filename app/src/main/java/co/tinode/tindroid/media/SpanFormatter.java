@@ -31,7 +31,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +67,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
     private final float mFontSize;
     private final ClickListener mClicker;
 
-    protected SpanFormatter(final TextView container, final ClickListener clicker) {
+    public SpanFormatter(final TextView container, final ClickListener clicker) {
         super(container.getContext());
 
         mContainer = container;
@@ -83,8 +82,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
     }
 
-    public static Spanned toSpanned(final TextView container, final Drafty content,
-                                    final ClickListener clicker) {
+    public Spanned toSpanned(final Drafty content) {
         if (content == null) {
             return new SpannedString("");
         }
@@ -92,19 +90,13 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             return new SpannedString(content.toString());
         }
 
-        AbstractDraftyFormatter.TreeNode result = content.format(new SpanFormatter(container, clicker));
+        AbstractDraftyFormatter.TreeNode result =
+                content.format(new SpanFormatter(mContainer, mClicker), null);
         if (result instanceof StyledTreeNode) {
             return ((StyledTreeNode) result).toSpanned();
         }
 
         return new SpannedString("");
-    }
-
-    public static boolean hasClickableSpans(final Drafty content) {
-        if (content != null) {
-            return content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"));
-        }
-        return false;
     }
 
     // Scale image dimensions to fit under the given viewport size.
@@ -469,7 +461,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 res.getColor(R.color.colorQuoteStripe),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
                 STRIPE_GAP_DP * metrics.density);
-        return new PreviewFormatter.MeasuredTreeNode(style, content);
+        return new MeasuredTreeNode(style, content);
     }
 
     // Unknown or unsupported element.

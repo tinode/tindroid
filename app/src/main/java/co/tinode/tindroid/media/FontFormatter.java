@@ -1,13 +1,11 @@
 package co.tinode.tindroid.media;
 
 import android.content.Context;
-import android.text.Spanned;
 
 import java.util.Map;
 
 import androidx.annotation.StringRes;
 import co.tinode.tindroid.R;
-import co.tinode.tinodesdk.model.Drafty;
 
 // Drafty formatter for creating message previews in push notifications.
 // Push notifications don't support ImageSpan or TypefaceSpan, consequently, using Unicode chars instead of icons.
@@ -22,12 +20,8 @@ public class FontFormatter extends PreviewFormatter {
     // These characters are present in Android 5 and up.
     private static final String[] UNICODE_STRINGS = new String[]{"\uD83D\uDCF7", "\uD83D\uDCCE", "\uD83D\uDCDD", "\u2753"};
 
-    FontFormatter(final Context context, float fontSize) {
-        super(context, fontSize);
-    }
-
-    public static Spanned toSpanned(final Context context, float fontSize, final Drafty content, final int maxLength) {
-        return toSpanned(new FontFormatter(context, fontSize), context, fontSize, content, maxLength);
+    public FontFormatter(final Context context, float fontSize, int maxLength) {
+        super(context, fontSize, maxLength);
     }
 
     private MeasuredTreeNode annotatedIcon(Context ctx, int charIndex, @StringRes int stringId) {
