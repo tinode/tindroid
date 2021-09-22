@@ -1,4 +1,4 @@
-package co.tinode.tindroid.media;
+package co.tinode.tindroid.format;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -31,6 +31,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -90,8 +91,10 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             return new SpannedString(content.toString());
         }
 
+        Map<String, Drafty.Formatter<? extends TreeNode>> formatters = new HashMap<>();
+        formatters.put("QQ", new PreviewFormatter(mContext, mFontSize, -1));
         AbstractDraftyFormatter.TreeNode result =
-                content.format(new SpanFormatter(mContainer, mClicker), null);
+                content.format(new SpanFormatter(mContainer, mClicker), formatters);
         if (result instanceof StyledTreeNode) {
             return ((StyledTreeNode) result).toSpanned();
         }
@@ -461,7 +464,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 res.getColor(R.color.colorQuoteStripe),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
                 STRIPE_GAP_DP * metrics.density);
-        return new MeasuredTreeNode(style, content);
+        return new StyledTreeNode(style, content);
     }
 
     // Unknown or unsupported element.

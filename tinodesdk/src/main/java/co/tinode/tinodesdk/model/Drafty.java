@@ -776,8 +776,8 @@ public class Drafty implements Serializable {
     private <T> List<T> forEach(@NotNull String line,
                                 int start, int end,
                                 @Nullable List<Span> spans,
-                                @NotNull Formatter<T> defaultFormatter,
-                                @Nullable Map<String, Formatter<T>> styleFormatters) {
+                                @NotNull Formatter<? extends T> defaultFormatter,
+                                @Nullable Map<String, Formatter<? extends T>> styleFormatters) {
         List<T> result = new LinkedList<>();
         if (spans == null) {
             T fs = defaultFormatter.apply(null, null, line.substring(start, end));
@@ -838,10 +838,11 @@ public class Drafty implements Serializable {
                     result.add(fs);
                 }
             } else {
-                Formatter<T> formatter;
+                Formatter<? extends T> formatter = defaultFormatter;
                 if (styleFormatters != null && styleFormatters.containsKey(span.type)) {
                     formatter = styleFormatters.get(span.type);
-                } else {
+                }
+                if (formatter == null) {
                     formatter = defaultFormatter;
                 }
                 T fs = defaultFormatter.apply(span.type, span.data,
@@ -893,7 +894,7 @@ public class Drafty implements Serializable {
      * @return a tree of components.
      */
     public <T> T format(@NotNull Formatter<T> defaultFormatter,
-                        @Nullable Map<String, Formatter<T>> styleFormatters) {
+                        @Nullable Map<String, Formatter<? extends T>> styleFormatters) {
         if (txt == null) {
             txt = "";
         }

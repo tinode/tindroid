@@ -28,7 +28,7 @@ import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
-import co.tinode.tindroid.media.FontFormatter;
+import co.tinode.tindroid.format.FontFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;

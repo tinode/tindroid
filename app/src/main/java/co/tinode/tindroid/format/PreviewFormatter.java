@@ -1,4 +1,4 @@
-package co.tinode.tindroid.media;
+package co.tinode.tindroid.format;
 
 import android.content.Context;
 import android.graphics.Typeface;
@@ -25,13 +25,13 @@ import co.tinode.tinodesdk.model.Drafty;
 // Drafty formatter for creating one-line message previews.
 public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> {
     private final float mFontSize;
-    private final int mMaxLength;
+    protected final int mMaxLength;
 
     public PreviewFormatter(final Context context, float fontSize, int maxLength) {
         super(context);
 
         mFontSize = fontSize;
-        mMaxLength = maxLength;
+        mMaxLength = maxLength > 0 ? maxLength : Integer.MAX_VALUE;
     }
 
     public Spanned toSpanned(final Drafty content) {
@@ -51,31 +51,31 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
             try {
                 return ((MeasuredTreeNode) result).toSpanned(mMaxLength);
             } catch (LengthExceededException ex) {
-                return new SpannableStringBuilder(ex.tail).append("…");
+                return new SpannableStringBuilder(ex.getTail()).append("…");
             }
         }
 
-        return new SpannedString("");
+        return ((StyledTreeNode)result).toSpanned();
     }
 
     @Override
     protected MeasuredTreeNode handleStrong(Object content) {
-        return new MeasuredTreeNode(new StyleSpan(Typeface.BOLD), content);
+        return new MeasuredTreeNode(new StyleSpan(Typeface.BOLD), content, mMaxLength);
     }
 
     @Override
     protected MeasuredTreeNode handleEmphasized(Object content) {
-        return new MeasuredTreeNode(new StyleSpan(Typeface.ITALIC), content);
+        return new MeasuredTreeNode(new StyleSpan(Typeface.ITALIC), content, mMaxLength);
     }
 
     @Override
     protected MeasuredTreeNode handleDeleted(Object content) {
-        return new MeasuredTreeNode(new StrikethroughSpan(), content);
+        return new MeasuredTreeNode(new StrikethroughSpan(), content, mMaxLength);
     }
 
     @Override
     protected MeasuredTreeNode handleCode(Object content) {
-        return new MeasuredTreeNode(new TypefaceSpan("monospace"), content);
+        return new MeasuredTreeNode(new TypefaceSpan("monospace"), content, mMaxLength);
     }
 
     @Override
@@ -85,22 +85,23 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
 
     @Override
     protected MeasuredTreeNode handleLineBreak() {
-        return new MeasuredTreeNode(" ");
+        return new MeasuredTreeNode(" ", mMaxLength);
     }
 
     @Override
     protected MeasuredTreeNode handleLink(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(new ForegroundColorSpan(ctx.getResources().getColor(R.color.colorAccent)), content);
+        return new MeasuredTreeNode(new ForegroundColorSpan(ctx.getResources().getColor(R.color.colorAccent)),
+                content, mMaxLength);
     }
 
     @Override
     protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(content);
+        return new MeasuredTreeNode(content, mMaxLength);
     }
 
     @Override
     protected MeasuredTreeNode handleHashtag(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(content);
+        return new MeasuredTreeNode(content, mMaxLength);
     }
 
     private MeasuredTreeNode annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
@@ -109,9 +110,9 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
         if (icon != null) {
             icon.setTint(ctx.getResources().getColor(R.color.colorDarkGray));
             icon.setBounds(0, 0, (int) (mFontSize * 1.3), (int) (mFontSize * 1.3));
-            node = new MeasuredTreeNode();
-            node.addNode(new MeasuredTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " "));
-            node.addNode(new MeasuredTreeNode(" " + ctx.getResources().getString(stringId)));
+            node = new MeasuredTreeNode(mMaxLength);
+            node.addNode(new MeasuredTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " ", mMaxLength));
+            node.addNode(new MeasuredTreeNode(" " + ctx.getResources().getString(stringId), mMaxLength));
         }
         return node;
     }
@@ -143,25 +144,25 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f,
                 ctx.getResources().getDisplayMetrics());
         // Make button font slightly smaller.
-        MeasuredTreeNode node = new MeasuredTreeNode(new RelativeSizeSpan(0.8f), null);
+        MeasuredTreeNode node = new MeasuredTreeNode(new RelativeSizeSpan(0.8f), null, mMaxLength);
         // Change background color and draw a box around text.
-        node.addNode(new MeasuredTreeNode(new LabelSpan(ctx, mFontSize, dipSize), content));
+        node.addNode(new MeasuredTreeNode(new LabelSpan(ctx, mFontSize, dipSize), content, mMaxLength));
         return node;
     }
 
     @Override
     protected MeasuredTreeNode handleFormRow(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode node = new MeasuredTreeNode();
-        node.addNode(new MeasuredTreeNode(" "));
-        node.addNode(new MeasuredTreeNode(content));
+        MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
+        node.addNode(new MeasuredTreeNode(" ", mMaxLength));
+        node.addNode(new MeasuredTreeNode(content, mMaxLength));
         return node;
     }
 
     @Override
     protected MeasuredTreeNode handleForm(Context ctx, Map<String, Object> data, Object content) {
         MeasuredTreeNode node = annotatedIcon(ctx, R.drawable.ic_form_ol, R.string.form);
-        node.addNode(new MeasuredTreeNode(": "));
-        node.addNode(new MeasuredTreeNode(content));
+        node.addNode(new MeasuredTreeNode(": ", mMaxLength));
+        node.addNode(new MeasuredTreeNode(content, mMaxLength));
         return node;
     }
 
@@ -178,14 +179,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
 
     @Override
     protected MeasuredTreeNode handlePlain(final Object content) {
-        return new MeasuredTreeNode(content);
+        return new MeasuredTreeNode(content, mMaxLength);
     }
 
-    protected static class LengthExceededException extends RuntimeException {
-        private final Spanned tail;
-
-        LengthExceededException(Spanned tail) {
-            this.tail = tail;
-        }
-    }
 }

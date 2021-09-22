@@ -1,29 +1,41 @@
-package co.tinode.tindroid.media;
+package co.tinode.tindroid.format;
 
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.CharacterStyle;
 import android.text.style.ParagraphStyle;
 
+// Node with a limited length.
 public class MeasuredTreeNode extends StyledTreeNode {
-    MeasuredTreeNode() {
+    protected final int mMaxLength;
+
+    MeasuredTreeNode(int maxLength) {
         super();
+        mMaxLength = maxLength;
     }
 
-    MeasuredTreeNode(CharSequence content) {
+    MeasuredTreeNode(CharSequence content, int maxLength) {
         super(content);
+        mMaxLength = maxLength;
     }
 
-    MeasuredTreeNode(Object content) {
+    MeasuredTreeNode(Object content, int maxLength) {
         super(content);
+        mMaxLength = maxLength;
     }
 
-    MeasuredTreeNode(CharacterStyle style, Object content) {
+    MeasuredTreeNode(CharacterStyle style, Object content, int maxLength) {
         super(style, content);
+        mMaxLength = maxLength;
     }
 
-    MeasuredTreeNode(ParagraphStyle style, Object content) {
+    MeasuredTreeNode(ParagraphStyle style, Object content, int maxLength) {
         super(style, content);
+        mMaxLength = maxLength;
+    }
+
+    public Spanned toSpanned() {
+        return toSpanned(mMaxLength);
     }
 
     protected Spanned toSpanned(final int maxLength) {
@@ -48,9 +60,9 @@ public class MeasuredTreeNode extends StyledTreeNode {
                         spanned.append(((MeasuredTreeNode) child).toSpanned(maxLength - spanned.length()));
                     }
                 }
-            } catch (PreviewFormatter.LengthExceededException ex) {
+            } catch (LengthExceededException ex) {
                 exceeded = true;
-                spanned.append(ex.tail);
+                spanned.append(ex.getTail());
             }
         }
 
@@ -60,7 +72,7 @@ public class MeasuredTreeNode extends StyledTreeNode {
         }
 
         if (exceeded) {
-            throw new PreviewFormatter.LengthExceededException(spanned);
+            throw new LengthExceededException(spanned);
         }
 
         return spanned;

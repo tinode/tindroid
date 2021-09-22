@@ -1,4 +1,4 @@
-package co.tinode.tindroid.media;
+package co.tinode.tindroid.format;
 
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;

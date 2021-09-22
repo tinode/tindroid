@@ -1,4 +1,4 @@
-package co.tinode.tindroid.media;
+package co.tinode.tindroid.format;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -30,7 +30,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
     @Override
     protected MeasuredTreeNode handleLineBreak() {
-        return new MeasuredTreeNode("\n");
+        return new MeasuredTreeNode("\n", mMaxLength);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class QuoteFormatter extends PreviewFormatter {
             color = colorMention((String) data.get("val"));
         } catch(ClassCastException ignored){}
 
-        return new MeasuredTreeNode(new ForegroundColorSpan(color), content);
+        return new MeasuredTreeNode(new ForegroundColorSpan(color), content, mMaxLength);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class QuoteFormatter extends PreviewFormatter {
         Resources res = ctx.getResources();
         QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
                 0, res.getColor(R.color.colorQuoteStripe), 2, 6);
-        return new MeasuredTreeNode(style, content);
+        return new MeasuredTreeNode(style, content, mMaxLength);
     }
 
     private int colorMention(String uid) {

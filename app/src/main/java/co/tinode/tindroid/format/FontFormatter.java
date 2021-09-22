@@ -1,4 +1,4 @@
-package co.tinode.tindroid.media;
+package co.tinode.tindroid.format;
 
 import android.content.Context;
 
@@ -25,9 +25,9 @@ public class FontFormatter extends PreviewFormatter {
     }
 
     private MeasuredTreeNode annotatedIcon(Context ctx, int charIndex, @StringRes int stringId) {
-        MeasuredTreeNode node = new MeasuredTreeNode();
-        node.addNode(new MeasuredTreeNode(UNICODE_STRINGS[charIndex]));
-        node.addNode(new MeasuredTreeNode(" " + ctx.getResources().getString(stringId)));
+        MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
+        node.addNode(new MeasuredTreeNode(UNICODE_STRINGS[charIndex], mMaxLength));
+        node.addNode(new MeasuredTreeNode(" " + ctx.getResources().getString(stringId), mMaxLength));
         return node;
     }
 
@@ -54,8 +54,8 @@ public class FontFormatter extends PreviewFormatter {
     @Override
     protected MeasuredTreeNode handleForm(Context ctx, Map<String, Object> data, Object content) {
         MeasuredTreeNode node = annotatedIcon(ctx, FORM, R.string.form);
-        node.addNode(new MeasuredTreeNode(": "));
-        node.addNode(new MeasuredTreeNode(content));
+        node.addNode(new MeasuredTreeNode(": ", mMaxLength));
+        node.addNode(new MeasuredTreeNode(content, mMaxLength));
         return node;
     }
 
