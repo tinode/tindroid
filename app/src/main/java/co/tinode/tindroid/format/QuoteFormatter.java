@@ -113,24 +113,7 @@ public class QuoteFormatter extends PreviewFormatter {
         }
 
         MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
-        node.addNode(new MeasuredTreeNode(new ImageSpan(thumbnail, ImageSpan.ALIGN_BOTTOM) {
-            // Vertical align: middle.
-            @Override
-            public void draw(@NotNull Canvas canvas, CharSequence text, int start,
-                             int end, float x, int top, int y, int bottom,
-                             @NotNull Paint paint) {
-                Drawable b = getDrawable();
-                canvas.save();
-
-                int transY = bottom - b.getBounds().bottom;
-                // this is the key
-                transY -= paint.getFontMetricsInt().descent / 2;
-
-                canvas.translate(x, transY);
-                b.draw(canvas);
-                canvas.restore();
-            }
-        }, " ", mMaxLength));
+        node.addNode(new MeasuredTreeNode(new AlignedImageSpan(thumbnail), " ", mMaxLength));
         node.addNode(new MeasuredTreeNode(" " + filename, mMaxLength));
 
         return node;
