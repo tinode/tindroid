@@ -301,7 +301,7 @@ public class AttachmentHandler extends Worker {
     // Send image in-band
     private static Drafty draftyImage(String caption, String mimeType, byte[] bits, String refUrl,
                                       int width, int height, String fname, long size) {
-        Drafty content = Drafty.fromPlainText(" ");
+        Drafty content = new Drafty();
         URI ref = null;
         if (refUrl != null) {
             try {

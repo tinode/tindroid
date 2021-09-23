@@ -42,10 +42,12 @@ public class MeasuredTreeNode extends StyledTreeNode {
         SpannableStringBuilder spanned = new SpannableStringBuilder();
         boolean exceeded = false;
 
-        if (isPlain()) {
+        if (maxLength == 0) {
+            exceeded = true;
+        } else if (isPlain()) {
             CharSequence text = getText();
             if (text.length() > maxLength) {
-                text = text.subSequence(0, maxLength);
+                text = text.subSequence(0, maxLength-1);
                 exceeded = true;
             }
             spanned.append(text);

@@ -92,7 +92,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
 
         Map<String, Drafty.Formatter<? extends TreeNode>> formatters = new HashMap<>();
-        formatters.put("QQ", new PreviewFormatter(mContext, mFontSize, -1));
+        formatters.put("QQ", new QuoteFormatter(mContext, mFontSize, -1, null));
         AbstractDraftyFormatter.TreeNode result =
                 content.format(new SpanFormatter(mContainer, mClicker), formatters);
         if (result instanceof StyledTreeNode) {

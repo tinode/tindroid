@@ -32,6 +32,9 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
 
         mFontSize = fontSize;
         mMaxLength = maxLength > 0 ? maxLength : Integer.MAX_VALUE;
+        if (mMaxLength == 1) {
+            throw new IllegalArgumentException("Max length must be greater than 1");
+        }
     }
 
     public Spanned toSpanned(final Drafty content) {
@@ -40,8 +43,8 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
         }
         if (content.isPlain()) {
             String text = content.toString();
-            if (text.length() > mMaxLength) {
-                text = text.substring(0, mMaxLength) + "…";
+            if (text.length() > mMaxLength-1) {
+                text = text.substring(0, mMaxLength-1) + "…";
             }
             return new SpannedString(text);
         }

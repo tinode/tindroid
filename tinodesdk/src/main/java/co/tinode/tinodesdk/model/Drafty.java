@@ -477,6 +477,54 @@ public class Drafty implements Serializable {
         }
         fmt[fmt.length - 1] = new Style(at, len, ent.length - 1);
     }
+
+    /**
+     * Insert a styled text at the given location.
+     * @param at insertion point
+     * @param text text to insert
+     * @param style formatting style.
+     * @param data entity data
+     * @return 'this' Drafty document with the new insertion.
+     */
+    public Drafty insert(int at, @Nullable String text, @Nullable String style, @Nullable Map<String, Object> data) {
+        if (at == 0 && txt == null) {
+            // Allow insertion into an empty document.
+            txt = "";
+        }
+
+        if (txt == null || txt.length() < at + 1 || at < 0) {
+            throw new IndexOutOfBoundsException("Invalid insertion position");
+        }
+
+        int addedLength = text != null ? text.length() : 0;
+        if (addedLength > 0) {
+            if (fmt != null) {
+                // Shift all existing styles by inserted length.
+                for (Style f : fmt) {
+                    if (f.at >= 0) {
+                        f.at += addedLength;
+                    }
+                }
+            }
+
+            // Insert the new string at the requested location.
+            txt = txt.substring(0, at) + text + txt.substring(at);
+        }
+
+        if (style != null) {
+            if (data != null) {
+                // Adding an entity
+                prepareForEntity(at, addedLength);
+                ent[ent.length - 1] = new Entity(style, data);
+            } else {
+                // Adding formatting style only.
+                prepareForStyle(1);
+                fmt[fmt.length - 1] = new Style(style, at, addedLength);
+            }
+        }
+        return this;
+    }
+
     /**
      * Insert inline image
      *
@@ -507,36 +555,30 @@ public class Drafty implements Serializable {
      *
      * @return 'this' Drafty object.
      */
-    public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname, URI refurl, long size) {
+    public Drafty insertImage(int at,
+                              @Nullable String mime,
+                              byte[] bits, int width, int height,
+                              @Nullable String fname,
+                              @Nullable URI refurl,
+                              long size) {
         if (bits == null && refurl == null) {
             throw new IllegalArgumentException("Either image bits or reference URL must not be null.");
         }
 
-        if (txt == null || txt.length() < at + 1 || at < 0) {
-            throw new IndexOutOfBoundsException("Invalid insertion position");
-        }
-
-        prepareForEntity(at, 1);
-
         Map<String,Object> data = new HashMap<>();
-        if (mime != null && !mime.equals("")) {
-            data.put("mime", mime);
-        }
-        if (bits != null) {
-            data.put("val", bits);
-        }
+        addOrSkip(data, "mime", mime);
+        addOrSkip(data, "val", bits);
         data.put("width", width);
         data.put("height", height);
-        if (fname != null && !fname.equals("")) {
-            data.put("name", fname);
-        }
+        addOrSkip(data,"name", fname);
         if (refurl != null) {
-            data.put("ref", refurl.toString());
+            addOrSkip(data, "ref", refurl.toString());
         }
         if (size > 0) {
             data.put("size", size);
         }
-        ent[ent.length - 1] = new Entity("IM", data);
+
+        insert(at, " ", "IM", data);
 
         return this;
     }
@@ -587,18 +629,10 @@ public class Drafty implements Serializable {
         prepareForEntity(-1, 1);
 
         final Map<String,Object> data = new HashMap<>();
-        if (mime != null && !mime.equals("")) {
-            data.put("mime", mime);
-        }
-        if (bits != null) {
-            data.put("val", bits);
-        }
-        if (fname != null && !fname.equals("")) {
-            data.put("name", fname);
-        }
-        if (refurl != null) {
-            data.put("ref", refurl);
-        }
+        addOrSkip(data, "mime", mime);
+        addOrSkip(data, "val", bits);
+        addOrSkip(data, "name", fname);
+        addOrSkip(data, "ref", refurl);
         if (size > 0) {
             data.put("size", size);
         }
@@ -700,6 +734,16 @@ public class Drafty implements Serializable {
     }
 
     /**
+     * Insert a line break 'BR' at the specified location.
+     *
+     * @return 'this' Drafty document.
+     */
+    public Drafty insertLineBreak(int at) {
+        insert(at, " ", "BR", null);
+        return this;
+    }
+
+    /**
      * Create a Drafty document consisting of a single mention.
      * @param name is location where the button is inserted.
      * @param uid is the user ID to be mentioned.
@@ -728,18 +772,19 @@ public class Drafty implements Serializable {
     }
     /**
      * Insert button into Drafty document.
-     * @param at is location where the button is inserted.
-     * @param len is the length of the text to be used as button title.
-     * @param name is an opaque ID of the button. Client should just return it to the server when the button is clicked.
+     * @param at is the location where the button is inserted.
+     * @param title is a button title.
+     * @param id is an opaque ID of the button. Client should just return it to the server when the button is clicked.
      * @param actionType is the type of the button, one of 'url' or 'pub'.
      * @param actionValue is the value associated with the action: 'url': URL, 'pub': optional data to add to response.
      * @param refUrl parameter required by URL buttons: url to go to on click.
      *
      * @return 'this' Drafty object.
      */
-    protected Drafty insertButton(int at, int len, String name, String actionType, String actionValue, String refUrl) {
-        prepareForEntity(at, len);
-
+    protected Drafty insertButton(int at, @Nullable String title, @Nullable String id,
+                                  @NotNull String actionType,
+                                  @Nullable String actionValue,
+                                  @Nullable String refUrl) {
         if (!"url".equals(actionType) && !"pub".equals(actionType)) {
             throw new IllegalArgumentException("Unknown action type "+actionType);
         }
@@ -749,16 +794,10 @@ public class Drafty implements Serializable {
 
         final Map<String,Object> data = new HashMap<>();
         data.put("act", actionType);
-        if (name != null && !name.equals("")) {
-            data.put("name", name);
-        }
-        if (actionValue != null && !actionValue.equals("")) {
-            data.put("val", actionValue);
-        }
-        if ("url".equals(actionType)) {
-            data.put("ref", refUrl);
-        }
-        ent[ent.length - 1] = new Entity("BN", data);
+        addOrSkip(data, "name", id);
+        addOrSkip(data, "val", actionValue);
+        addOrSkip(data, "ref", refUrl);
+        insert(at, title, "BN", data);
         return this;
     }
 
@@ -1127,7 +1166,7 @@ public class Drafty implements Serializable {
             if (data == null) {
                 data = new HashMap<>();
             }
-            data.put(key, val);
+            addOrSkip(data, key, val);
             return this;
         }
 
@@ -1171,6 +1210,20 @@ public class Drafty implements Serializable {
                 return equalsNullable(this.tp, that.tp) && equalsNullable(this.data, that.data);
             }
             return false;
+        }
+    }
+
+    // Optionally insert nullable value into entity data: null values are not inserted.
+    private static void addOrSkip(Map<String,Object> data, String key, Object value) {
+        if (value != null) {
+            data.put(key, value);
+        }
+    }
+
+    // Optionally insert nullable value into entity data: null values or empty strings are not inserted.
+    private static void addOrSkip(Map<String,Object> data, String key, String value) {
+        if (value != null && value.length() > 0) {
+            data.put(key, value);
         }
     }
 
