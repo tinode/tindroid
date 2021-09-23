@@ -1,6 +1,7 @@
 package co.tinode.tindroid.format;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
@@ -110,12 +111,13 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
     private MeasuredTreeNode annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
         MeasuredTreeNode node = null;
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
+        Resources res = ctx.getResources();
         if (icon != null) {
-            icon.setTint(ctx.getResources().getColor(R.color.colorDarkGray));
+            icon.setTint(res.getColor(R.color.colorDarkGray));
             icon.setBounds(0, 0, (int) (mFontSize * 1.3), (int) (mFontSize * 1.3));
             node = new MeasuredTreeNode(mMaxLength);
             node.addNode(new MeasuredTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " ", mMaxLength));
-            node.addNode(new MeasuredTreeNode(" " + ctx.getResources().getString(stringId), mMaxLength));
+            node.addNode(new MeasuredTreeNode(" " + res.getString(stringId), mMaxLength));
         }
         return node;
     }

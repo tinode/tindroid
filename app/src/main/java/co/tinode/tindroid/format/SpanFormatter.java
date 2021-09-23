@@ -316,6 +316,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 }
             }, null);
             result.addNode(new StyledTreeNode(span, content));
+        } else {
+            result = new StyledTreeNode(span, content);
         }
 
         return result;
