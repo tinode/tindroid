@@ -307,4 +307,5 @@
     <string name="action_save">Save</string>
     <string name="online_now">online now</string>
     <string name="topic_settings">Chat settings</string>
+    <string name="action_reply">Reply</string>
 </resources>
