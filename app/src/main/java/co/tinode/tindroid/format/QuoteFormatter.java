@@ -5,18 +5,14 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.ImageSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -27,7 +23,8 @@ import co.tinode.tindroid.UiUtils;
 public class QuoteFormatter extends PreviewFormatter {
     private static final String TAG = "QuoteFormatter";
 
-    private static final int IMAGE_THUMBNAIL_DIM = 36; // dip
+    private static final int IMAGE_THUMBNAIL_DIM = 32; // dip
+    private static final int IMAGE_PADDING = 2; //dip
     private static final int MAX_FILE_NAME_LENGTH = 16;
 
     private static TypedArray sColorsDark;
@@ -113,7 +110,12 @@ public class QuoteFormatter extends PreviewFormatter {
         }
 
         MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
-        node.addNode(new MeasuredTreeNode(new AlignedImageSpan(thumbnail), " ", mMaxLength));
+        node.addNode(new MeasuredTreeNode(new StyledImageSpan(thumbnail,
+                new RectF(IMAGE_PADDING * metrics.density,
+                        IMAGE_PADDING * metrics.density,
+                        IMAGE_PADDING * metrics.density,
+                        IMAGE_PADDING * metrics.density)),
+                " ", mMaxLength));
         node.addNode(new MeasuredTreeNode(" " + filename, mMaxLength));
 
         return node;

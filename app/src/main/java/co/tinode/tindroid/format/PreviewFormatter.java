@@ -133,8 +133,8 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
                 // Skip JSON attachments. They are not meant to be user-visible.
                 return null;
             }
-        } catch (ClassCastException ignored) {
-        }
+        } catch (ClassCastException ignored) {}
+
         return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
     }
 

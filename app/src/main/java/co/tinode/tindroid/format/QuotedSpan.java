@@ -6,11 +6,17 @@ import android.graphics.Path;
 import android.text.Layout;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.LineBackgroundSpan;
+import android.text.style.LineHeightSpan;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 // Draws a colored rounded rectangle background with a vertical stripe on the start side.
-public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
+public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHeightSpan {
+    private final static String TAG = "QuotedSpan";
+
+    private final static float LINE_SPACING = 1.5f;
+
     private final int mBackgroundColor;
     private final float mCornerRadius;
     private final int mStripeColor;
@@ -52,5 +58,17 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
         paint.setColor(mBackgroundColor);
         canvas.drawRoundRect(left, top, right, bottom, mCornerRadius, mCornerRadius, paint);
         paint.setColor(originalColor);
+    }
+
+    @Override
+    public void chooseHeight(CharSequence text, int start, int end, int spanstartv, int lineHeight, Paint.FontMetricsInt fm) {
+        final int originHeight = fm.descent - fm.ascent;
+        if (originHeight <= 0) {
+            return;
+        }
+        Log.i(TAG, text + "; origin height=" + originHeight + "; lineHeight=" + lineHeight);
+
+        fm.descent = Math.round(fm.descent * LINE_SPACING);
+        fm.ascent = fm.descent - (int) (originHeight * LINE_SPACING);
     }
 }

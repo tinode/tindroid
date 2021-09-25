@@ -155,6 +155,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             @Override
             public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+                // Don't convert to switch: Android does not like it.
                 int id = menuItem.getItemId();
                 if (id == R.id.action_delete) {
                     sendDeleteMessages(getSelectedArray());
@@ -169,6 +170,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 } else if (id == R.id.action_view_details) {
                     // FIXME: implement viewing message details.
                     Log.d(TAG, "Show message details");
+                    return true;
+                } else if (id == R.id.action_reply) {
+                    // FIXME: implement reply.
+                    Log.d(TAG, "Reply to message");
                     return true;
                 }
 
@@ -420,7 +425,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else if (m.status == BaseDb.Status.FAILED) {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.failed);
             } else {
-                text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.invalid_content);
+                text = serviceContentSpanned(mActivity, R.drawable.ic_warning_gray, R.string.invalid_content);
             }
         }
 
@@ -576,17 +581,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    private boolean updateSelectionMode() {
+    private void updateSelectionMode() {
         if (mSelectionMode != null) {
-            if (mSelectedItems.size() == 0) {
+            int selected = mSelectedItems.size();
+            if (selected == 0) {
                 mSelectionMode.finish();
                 mSelectionMode = null;
             } else {
-                mSelectionMode.setTitle(String.valueOf(mSelectedItems.size()));
+                mSelectionMode.setTitle(String.valueOf(selected));
+                mSelectionMode.getMenu().findItem(R.id.action_reply).setVisible(selected == 1);
+                mSelectionMode.getMenu().findItem(R.id.action_view_details).setVisible(selected == 1);
             }
         }
-        return mSelectionMode != null;
     }
 
     void resetContent(@Nullable final String topicName) {
