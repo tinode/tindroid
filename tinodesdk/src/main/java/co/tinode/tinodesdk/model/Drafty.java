@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk.model;
 
+import android.util.Log;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -802,6 +804,22 @@ public class Drafty implements Serializable {
     }
 
     /**
+     * Create a quote of a given Drafty document.
+     *
+     * @param header - Quote header (title, etc.).
+     * @param uid - UID of the author to mention.
+     * @param body - Body of the quoted message.
+     *
+     * @return a Drafty doc with the quote formatting.
+     */
+    public static Drafty quote(String header, String uid, Drafty body) {
+        return Drafty.mention(header, uid)
+                .appendLineBreak()
+                .append(body)
+                .wrapInto("QQ");
+    }
+
+    /**
      * Check if the given Drafty can be represented by plain text.
      *
      * @return true if this Drafty has no markup other thn line breaks.
@@ -901,24 +919,7 @@ public class Drafty implements Serializable {
                 result.add(fs);
             }
         }
-
         return result;
-    }
-
-    /**
-     * Create a quote of a given Drafty document.
-     *
-     * @param header - Quote header (title, etc.).
-     * @param uid - UID of the author to mention.
-     * @param body - Body of the quoted message.
-     *
-     * @return a Drafty doc with the quote formatting.
-     */
-    public static Drafty quote(String header, String uid, Drafty body) {
-        return Drafty.mention(header, uid)
-                .appendLineBreak()
-                .append(body)
-                .wrapInto("QQ");
     }
 
     /**
@@ -951,16 +952,24 @@ public class Drafty implements Serializable {
 
         // Sanitize spans
         List<Span> spans = new ArrayList<>();
+        List<Span> attachments = new ArrayList<>();
         int maxIndex = txt.length();
         for (Style aFmt : fmt) {
             if (aFmt.len < 0) {
                 // Invalid span length.
                 continue;
             }
-            if (aFmt.at < -1) {
+            if (aFmt.at <= -1) {
                 // Attachment
                 aFmt.at = -1;
                 aFmt.len = 1;
+                int key = aFmt.key != null ? aFmt.key : 0;
+                if (key < 0) {
+                    continue;
+                }
+                // Store attachments separately.
+                attachments.add(new Span(aFmt.at, 0, key));
+                continue;
             }  else if (aFmt.at + aFmt.len > maxIndex) {
                 // Span is out of bounds.
                 continue;
@@ -981,6 +990,17 @@ public class Drafty implements Serializable {
             return a.start - b.start;
         });
 
+        // Move attachments to the end of the list.
+        Log.i("Drafty", "before: " + debugStyles(spans).toString());
+        if (attachments.size() > 0) {
+            if (spans.size() > 0) {
+                Span last = spans.get(spans.size() - 1);
+                spans.add(new Span("BR", last.end, last.end));
+            }
+            spans.addAll(attachments);
+            Log.i("Drafty", "after: " + debugStyles(spans).toString());
+        }
+
         for (Span span : spans) {
             if (ent != null && (span.type == null || "".equals(span.type))) {
                 if (span.key >= 0 && span.key < ent.length && ent[span.key] != null) {
@@ -995,6 +1015,7 @@ public class Drafty implements Serializable {
             }
         }
 
+        Log.i("Drafty", "finally: " + debugStyles(spans).toString());
         return defaultFormatter.apply(null, null,
                 forEach(txt, 0, txt.length(), spans, defaultFormatter, styleFormatters));
     }
@@ -1003,6 +1024,15 @@ public class Drafty implements Serializable {
         return "{txt: '" + txt + "'," +
                 "fmt: " + Arrays.toString(fmt) + "," +
                 "ent: " + Arrays.toString(ent) + "}";
+    }
+
+    static List<String> debugStyles(List<Span> spans) {
+        ArrayList<String> styles = new ArrayList<>();
+        for (Span span : spans) {
+            // String tp = span.type == null ? ent[span.key].tp : span.tp;
+            styles.add(span.type);
+        }
+        return styles;
     }
 
     // Convert Drafty to plain text;

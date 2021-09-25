@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.text.Layout;
+import android.text.TextPaint;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.LineBackgroundSpan;
 import android.text.style.LineHeightSpan;
@@ -12,10 +13,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 // Draws a colored rounded rectangle background with a vertical stripe on the start side.
-public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHeightSpan {
+public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHeightSpan.WithDensity {
     private final static String TAG = "QuotedSpan";
 
-    private final static float LINE_SPACING = 1.5f;
+    private final static int LINE_HEIGHT = 18;
 
     private final int mBackgroundColor;
     private final float mCornerRadius;
@@ -30,45 +31,70 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHe
         mStripeWidth = stripeWidth;
         mGapWidth = gap;
     }
+
     @Override
     public int getLeadingMargin(boolean first) {
         return (int) (mStripeWidth + mGapWidth);
     }
+
     @Override
     public void drawLeadingMargin(Canvas canvas, Paint paint, int x, int dir, int top, int baseline, int bottom,
                                   CharSequence text, int start, int end, boolean first, Layout layout) {
-        Paint.Style originalStyle = paint.getStyle();
-        int originalColor = paint.getColor();
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(mStripeColor);
-        Path stripe = new Path();
-        stripe.addRoundRect(x, top, x + dir * mStripeWidth, bottom,
-                dir < 0 ?
-                        /* right */ new float[]{0, 0, mCornerRadius, mCornerRadius, mCornerRadius, mCornerRadius, 0, 0} :
-                        /* left */ new float[]{mCornerRadius, mCornerRadius, 0, 0, 0, 0, mCornerRadius, mCornerRadius},
-                Path.Direction.CW);
-        canvas.drawPath(stripe, paint);
-        paint.setStyle(originalStyle);
-        paint.setColor(originalColor);
+        /* do nothing here */
     }
+
     @Override
-    public void drawBackground(Canvas canvas, Paint paint, int left, int right, int top, int baseline, int bottom,
+    public void drawBackground(@NonNull Canvas canvas, Paint paint,
+                               int left, int right, int top, int baseline, int bottom,
                                @NonNull CharSequence text, int start, int end, int lineNumber) {
         int originalColor = paint.getColor();
         paint.setColor(mBackgroundColor);
-        canvas.drawRoundRect(left, top, right, bottom, mCornerRadius, mCornerRadius, paint);
+        if (lineNumber == 0) {
+            Path path = new Path();
+            path.addRoundRect(left, top, right, bottom,
+                    new float[]{mCornerRadius, mCornerRadius, mCornerRadius, mCornerRadius, 0, 0, 0, 0},
+                    Path.Direction.CW);
+            canvas.drawPath(path, paint);
+            path = new Path();
+            paint.setColor(mStripeColor);
+            path.addRoundRect(left, top, left + mStripeWidth, bottom,
+                    new float[]{mCornerRadius, mCornerRadius, 0, 0, 0, 0, 0, 0},
+                    Path.Direction.CW);
+            canvas.drawPath(path, paint);
+        } else {
+            canvas.drawRect(left, top, right, bottom, paint);
+            paint.setColor(mStripeColor);
+            canvas.drawRect(left, top, left + mStripeWidth, bottom, paint);
+        }
         paint.setColor(originalColor);
     }
 
     @Override
-    public void chooseHeight(CharSequence text, int start, int end, int spanstartv, int lineHeight, Paint.FontMetricsInt fm) {
+    public void chooseHeight(CharSequence text, int start, int end, int spanstartv,
+                             int lineHeight, Paint.FontMetricsInt fm) {
+        chooseHeight(text, start, end, spanstartv, lineHeight, fm, null);
+    }
+
+    @Override
+    public void chooseHeight(CharSequence text, int start, int end, int spanstartv,
+                             int lineHeight, Paint.FontMetricsInt fm, TextPaint paint) {
         final int originHeight = fm.descent - fm.ascent;
         if (originHeight <= 0) {
             return;
         }
-        Log.i(TAG, text + "; origin height=" + originHeight + "; lineHeight=" + lineHeight);
 
-        fm.descent = Math.round(fm.descent * LINE_SPACING);
-        fm.ascent = fm.descent - (int) (originHeight * LINE_SPACING);
+        int minHeight = LINE_HEIGHT;
+        if (paint != null) {
+            minHeight *= paint.density;
+        }
+
+        if (fm.bottom - fm.top < minHeight) {
+            fm.top = fm.bottom - minHeight;
+            fm.ascent = fm.ascent - minHeight;
+        }
+
+        Log.i(TAG, text + "; origin height=" + originHeight +
+                "; lineHeight=" + lineHeight + "; fm.height=" + (fm.bottom - fm.top) +
+                "; minHeight=" + minHeight);
     }
 }

@@ -59,6 +59,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
     private static final int QUOTE_STRIPE_WIDTH_DP = 3;
     private static final int STRIPE_GAP_DP = 6;
 
+    private static final int MAX_FILE_LENGTH = 28;
+
     private static TypedArray sColorsDark;
     private static int sDefaultColor;
 
@@ -386,8 +388,9 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
         if (TextUtils.isEmpty(fname)) {
             fname = ctx.getResources().getString(R.string.default_attachment_name);
-        } else if (fname.length() > 32) {
-            fname = fname.substring(0, 14) + "…" + fname.substring(fname.length() - 14);
+        } else if (fname.length() > MAX_FILE_LENGTH) {
+            fname = fname.substring(0, MAX_FILE_LENGTH/2 - 1) + "…" +
+                    fname.substring(fname.length() - MAX_FILE_LENGTH/2);
         }
         result.addNode(new StyledTreeNode(new TypefaceSpan("monospace"), fname));
 
