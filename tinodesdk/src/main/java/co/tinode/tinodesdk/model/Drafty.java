@@ -1,7 +1,5 @@
 package co.tinode.tinodesdk.model;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -836,6 +834,7 @@ public class Drafty implements Serializable {
                                 @NotNull Formatter<? extends T> defaultFormatter,
                                 @Nullable Map<String, Formatter<? extends T>> styleFormatters) {
         List<T> result = new LinkedList<>();
+
         if (spans == null) {
             T fs = defaultFormatter.apply(null, null, line.substring(start, end));
             if (fs != null) {
@@ -872,10 +871,10 @@ public class Drafty implements Serializable {
             List<Span> subspans = new LinkedList<>();
             while (iter.hasNext()) {
                 Span inner = iter.next();
-                if (inner.start < span.end) {
+                if (inner.start >=0 && inner.start < span.end) {
                     subspans.add(inner);
                 } else {
-                    // Move back.
+                    // Past the end, put back.
                     iter.previous();
                     break;
                 }
@@ -895,15 +894,15 @@ public class Drafty implements Serializable {
                     result.add(fs);
                 }
             } else {
-                Formatter<? extends T> formatter = defaultFormatter;
+                Formatter<? extends T> formatter = null;
                 if (styleFormatters != null && styleFormatters.containsKey(span.type)) {
                     formatter = styleFormatters.get(span.type);
                 }
                 if (formatter == null) {
                     formatter = defaultFormatter;
                 }
-                T fs = defaultFormatter.apply(span.type, span.data,
-                        forEach(line, start, span.end, subspans, formatter, styleFormatters));
+                List<T> arr = forEach(line, start, span.end, subspans, formatter, styleFormatters);
+                T fs = defaultFormatter.apply(span.type, span.data, arr);
                 if (fs != null) {
                     result.add(fs);
                 }
@@ -991,14 +990,8 @@ public class Drafty implements Serializable {
         });
 
         // Move attachments to the end of the list.
-        Log.i("Drafty", "before: " + debugStyles(spans).toString());
         if (attachments.size() > 0) {
-            if (spans.size() > 0) {
-                Span last = spans.get(spans.size() - 1);
-                spans.add(new Span("BR", last.end, last.end));
-            }
             spans.addAll(attachments);
-            Log.i("Drafty", "after: " + debugStyles(spans).toString());
         }
 
         for (Span span : spans) {
@@ -1015,7 +1008,6 @@ public class Drafty implements Serializable {
             }
         }
 
-        Log.i("Drafty", "finally: " + debugStyles(spans).toString());
         return defaultFormatter.apply(null, null,
                 forEach(txt, 0, txt.length(), spans, defaultFormatter, styleFormatters));
     }
@@ -1024,15 +1016,6 @@ public class Drafty implements Serializable {
         return "{txt: '" + txt + "'," +
                 "fmt: " + Arrays.toString(fmt) + "," +
                 "ent: " + Arrays.toString(ent) + "}";
-    }
-
-    static List<String> debugStyles(List<Span> spans) {
-        ArrayList<String> styles = new ArrayList<>();
-        for (Span span : spans) {
-            // String tp = span.type == null ? ent[span.key].tp : span.tp;
-            styles.add(span.type);
-        }
-        return styles;
     }
 
     // Convert Drafty to plain text;

@@ -123,11 +123,8 @@ public class QuoteFormatter extends PreviewFormatter {
 
     @Override
     protected MeasuredTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
-        // TODO: make clickable.
-        Resources res = ctx.getResources();
-        QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
-                0, res.getColor(R.color.colorQuoteStripe), 2, 6);
-        return new MeasuredTreeNode(style, content, mMaxLength);
+        // Quote within quote is not supported;
+        return null;
     }
 
     private static int colorMention(String uid) {

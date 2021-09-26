@@ -3,7 +3,9 @@
     <color name="colorMessageBubbleMine">#FF202020</color>
     <color name="colorMessageBubbleOther">#FF003308</color>
     <color name="colorMessageBubbleMeta">#FF001633</color>
+
     <color name="colorReplyBubble">#10FFFFFF</color>
+    <color name="colorReplyText">#CCCCCC</color>
 
     <color name="colorChipBackground">#263238</color>
     <color name="colorChipBorder">#546E7A</color>

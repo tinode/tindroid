@@ -8,15 +8,12 @@ import android.text.TextPaint;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.LineBackgroundSpan;
 import android.text.style.LineHeightSpan;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 // Draws a colored rounded rectangle background with a vertical stripe on the start side.
 public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHeightSpan.WithDensity {
-    private final static String TAG = "QuotedSpan";
-
-    private final static int LINE_HEIGHT = 18;
+    private final static int LINE_HEIGHT = 19;
 
     private final int mBackgroundColor;
     private final float mCornerRadius;
@@ -92,9 +89,12 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHe
             fm.top = fm.bottom - minHeight;
             fm.ascent = fm.ascent - minHeight;
         }
-
+/*
         Log.i(TAG, text + "; origin height=" + originHeight +
-                "; lineHeight=" + lineHeight + "; fm.height=" + (fm.bottom - fm.top) +
+                "; lineHeight=" + lineHeight + "; fm.heightBefore=" +
+                heightBefore + "; fm.heightAfter=" + (fm.bottom - fm.top) +
                 "; minHeight=" + minHeight);
+
+ */
     }
 }

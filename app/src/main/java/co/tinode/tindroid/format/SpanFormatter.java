@@ -95,13 +95,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
         Map<String, Drafty.Formatter<? extends TreeNode>> formatters = new HashMap<>();
         formatters.put("QQ", new QuoteFormatter(mContext, mFontSize, -1, null));
-        AbstractDraftyFormatter.TreeNode result =
-                content.format(new SpanFormatter(mContainer, mClicker), formatters);
-        if (result instanceof StyledTreeNode) {
-            return ((StyledTreeNode) result).toSpanned();
-        }
-
-        return new SpannedString("");
+        return content.format(new SpanFormatter(mContainer, mClicker), formatters).toSpanned();
     }
 
     // Scale image dimensions to fit under the given viewport size.
@@ -316,7 +310,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("IM", data);
                 }
-            }, null);
+            }, "");
             result.addNode(new StyledTreeNode(span, content));
         } else {
             result = new StyledTreeNode(span, content);
@@ -427,9 +421,9 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             saveLink.addNode(new StyledTreeNode(new ForegroundColorSpan(Color.GRAY),
                     " " + ctx.getResources().getString(R.string.unavailable)));
         }
+
         // Add space on the left to make the link appear under the file name.
         result.addNode(new StyledTreeNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink));
-
         return result;
     }
 
@@ -444,11 +438,11 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f, metrics);
 
         // Create BorderSpan.
-        final StyledTreeNode span = new StyledTreeNode(
+        final StyledTreeNode node = new StyledTreeNode(
                 (CharacterStyle) new ButtonSpan(ctx, mFontSize, dipSize), null);
 
         // Wrap URLSpan into BorderSpan.
-        span.addNode(new StyledTreeNode(new URLSpan("") {
+        node.addNode(new StyledTreeNode(new URLSpan("") {
             @Override
             public void onClick(View widget) {
                 if (mClicker != null) {
@@ -457,11 +451,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             }
         }, content));
 
-        return span;
+        return node;
     }
 
     @Override
     protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+        // TODO: make clickable.
         Resources res = ctx.getResources();
         DisplayMetrics metrics = res.getDisplayMetrics();
         QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
@@ -469,7 +464,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 res.getColor(R.color.colorQuoteStripe),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
                 STRIPE_GAP_DP * metrics.density);
-        return new StyledTreeNode(style, content);
+        return new StyledTreeNode(style, new StyledTreeNode(
+                new ForegroundColorSpan(res.getColor(R.color.colorReplyText)), content));
     }
 
     // Unknown or unsupported element.

@@ -1,6 +1,9 @@
 package co.tinode.tindroid.format;
 
 import android.content.Context;
+import android.text.Spanned;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -130,9 +133,7 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
     }
 
     // Structure representing Drafty as a tree of formatting nodes.
-    public static class TreeNode {
-        private static final String TAG = "TreeNode";
-
+    public static abstract class TreeNode {
         protected CharSequence text;
         protected List<TreeNode> children;
 
@@ -149,11 +150,10 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
             assignContent(content);
         }
 
+        protected abstract Spanned toSpanned();
+
         @SuppressWarnings("unchecked")
         private void assignContent(Object content) {
-            if (content == null) {
-                return;
-            }
             if (content instanceof CharSequence) {
                 text = (CharSequence) content;
             } else if (content instanceof List) {
@@ -168,11 +168,7 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
             }
         }
 
-        protected void addNode(TreeNode node) {
-            if (node == null) {
-                return;
-            }
-
+        protected void addNode(@NotNull TreeNode node) {
             if (children == null) {
                 children = new ArrayList<>();
             }
@@ -198,6 +194,11 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
 
         protected List<TreeNode> getChildren() {
             return children;
+        }
+
+        @NotNull
+        public String toString() {
+            return "{'" + text + "', " + (children != null ? children.toString() : "NULL") + "}";
         }
     }
 }

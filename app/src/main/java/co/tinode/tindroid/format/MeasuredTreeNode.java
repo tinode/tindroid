@@ -3,7 +3,6 @@ package co.tinode.tindroid.format;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.CharacterStyle;
-import android.text.style.ParagraphStyle;
 
 // Node with a limited length.
 public class MeasuredTreeNode extends StyledTreeNode {
@@ -25,11 +24,6 @@ public class MeasuredTreeNode extends StyledTreeNode {
     }
 
     MeasuredTreeNode(CharacterStyle style, Object content, int maxLength) {
-        super(style, content);
-        mMaxLength = maxLength;
-    }
-
-    MeasuredTreeNode(ParagraphStyle style, Object content, int maxLength) {
         super(style, content);
         mMaxLength = maxLength;
     }

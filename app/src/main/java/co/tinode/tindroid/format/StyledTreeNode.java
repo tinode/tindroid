@@ -6,6 +6,8 @@ import android.text.style.CharacterStyle;
 import android.text.style.ParagraphStyle;
 import android.util.Log;
 
+import org.jetbrains.annotations.NotNull;
+
 class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
     private static final String TAG = "StyledTreeNode";
 
@@ -43,11 +45,9 @@ class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
         } else if (hasChildren()) {
             for (AbstractDraftyFormatter.TreeNode child : getChildren()) {
                 if (child == null) {
-                    Log.w(TAG, "NULL child. Should not happen!!!");
-                } else if (child instanceof StyledTreeNode) {
-                    spanned.append(((StyledTreeNode) child).toSpanned());
+                    Log.e(TAG, "NULL child. Should not happen!!!");
                 } else {
-                    Log.w(TAG, "Wrong child class: " + child.getClass().getSimpleName());
+                    spanned.append(child.toSpanned());
                 }
             }
         }
@@ -57,5 +57,13 @@ class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
                     0, spanned.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         return spanned;
+    }
+
+    @NotNull
+    public String toString() {
+        CharSequence txt = text == null ? "null" : text == "\n" ? "<br>" : text;
+        return "{" + (cStyle != null ? cStyle.getClass().getSimpleName() :
+                pStyle != null ? pStyle.getClass().getSimpleName() : "PLAIN") +
+                ": '" + txt + "', " + (children != null ? children.toString() : "NULL") + "}";
     }
 }
