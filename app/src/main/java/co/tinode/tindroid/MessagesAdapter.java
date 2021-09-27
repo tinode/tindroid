@@ -129,8 +129,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mSelectionModeCallback = new ActionMode.Callback() {
             @Override
             public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
-                mSelectedItems = new SparseBooleanArray();
-                return false;
+                if (mSelectedItems == null) {
+                    mSelectedItems = new SparseBooleanArray();
+                }
+                int selected = mSelectedItems.size();
+                menu.findItem(R.id.action_reply).setVisible(selected <= 1);
+                menu.findItem(R.id.action_view_details).setVisible(selected <= 1);
+                return true;
             }
 
             @Override
@@ -589,8 +594,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 mSelectionMode = null;
             } else {
                 mSelectionMode.setTitle(String.valueOf(selected));
-                mSelectionMode.getMenu().findItem(R.id.action_reply).setVisible(selected == 1);
-                mSelectionMode.getMenu().findItem(R.id.action_view_details).setVisible(selected == 1);
             }
         }
     }
