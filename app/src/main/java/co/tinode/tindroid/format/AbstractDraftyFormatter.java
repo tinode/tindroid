@@ -163,7 +163,8 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
                     children = new ArrayList<>();
                 }
                 children.add((TreeNode) content);
-            } else {
+            } else if (content != null) {
+                // NULL is OK.
                 throw new IllegalArgumentException("Invalid content");
             }
         }

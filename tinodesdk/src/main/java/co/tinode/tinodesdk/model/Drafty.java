@@ -492,7 +492,7 @@ public class Drafty implements Serializable {
             txt = "";
         }
 
-        if (txt == null || txt.length() < at + 1 || at < 0) {
+        if (txt == null || txt.length() < at || at < 0) {
             throw new IndexOutOfBoundsException("Invalid insertion position");
         }
 

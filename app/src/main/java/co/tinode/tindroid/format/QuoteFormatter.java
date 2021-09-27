@@ -29,6 +29,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
     private static TypedArray sColorsDark;
     private static int sDefaultColor;
+    private static int sTextColor;
 
     private final SpanFormatter.ClickListener mClicker;
 
@@ -42,6 +43,7 @@ public class QuoteFormatter extends PreviewFormatter {
         if (sColorsDark == null) {
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
             sDefaultColor = res.getColor(R.color.grey);
+            sTextColor = res.getColor(R.color.colorReplyText);
         }
     }
 
@@ -125,6 +127,11 @@ public class QuoteFormatter extends PreviewFormatter {
     protected MeasuredTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
         // Quote within quote is not supported;
         return null;
+    }
+
+    @Override
+    protected MeasuredTreeNode handlePlain(Object content) {
+        return new MeasuredTreeNode(new ForegroundColorSpan(sTextColor), content, mMaxLength);
     }
 
     private static int colorMention(String uid) {

@@ -253,6 +253,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
                     }
                     oldBmp.recycle();
+                } else {
+                    Log.w(TAG, "Failed to decode preview bitmap");
                 }
 
                 if (bmpPreview != null && !isPreviewOnly) {
@@ -310,7 +312,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("IM", data);
                 }
-            }, "");
+            }, null);
             result.addNode(new StyledTreeNode(span, content));
         } else {
             result = new StyledTreeNode(span, content);
@@ -329,19 +331,16 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         StyledTreeNode span = null;
         if (content instanceof List) {
             // Add line breaks between form elements.
-            try {
-                @SuppressWarnings("unchecked")
-                List<TreeNode> children = (List<TreeNode>) content;
-                if (children.size() > 0) {
-                    span = new StyledTreeNode();
-                    for (TreeNode child : children) {
-                        span.addNode(child);
-                        span.addNode(new StyledTreeNode("\n"));
-                    }
+            @SuppressWarnings("unchecked")
+            List<TreeNode> children = (List<TreeNode>) content;
+            if (children.size() > 0) {
+                span = new StyledTreeNode();
+                for (TreeNode child : children) {
+                    span.addNode(child);
+                    span.addNode(new StyledTreeNode("\n"));
                 }
-            } catch (ClassCastException ex) {
-                Log.w(TAG, "Wrong type of content in Drafty", ex);
             }
+
 
             if (span != null && span.isEmpty()) {
                 span = null;
@@ -464,8 +463,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 res.getColor(R.color.colorQuoteStripe),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
                 STRIPE_GAP_DP * metrics.density);
-        return new StyledTreeNode(style, new StyledTreeNode(
-                new ForegroundColorSpan(res.getColor(R.color.colorReplyText)), content));
+        return new StyledTreeNode(style, content);
     }
 
     // Unknown or unsupported element.
