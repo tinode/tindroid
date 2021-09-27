@@ -134,7 +134,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
                 int selected = mSelectedItems.size();
                 menu.findItem(R.id.action_reply).setVisible(selected <= 1);
-                menu.findItem(R.id.action_view_details).setVisible(selected <= 1);
                 return true;
             }
 
@@ -171,10 +170,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 } else if (id == R.id.action_send_now) {
                     // FIXME: implement resending now.
                     Log.d(TAG, "Try re-sending selected item");
-                    return true;
-                } else if (id == R.id.action_view_details) {
-                    // FIXME: implement viewing message details.
-                    Log.d(TAG, "Show message details");
                     return true;
                 } else if (id == R.id.action_reply) {
                     // FIXME: implement reply.

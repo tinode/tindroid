@@ -4,17 +4,13 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.text.Layout;
-import android.text.TextPaint;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.LineBackgroundSpan;
-import android.text.style.LineHeightSpan;
 
 import androidx.annotation.NonNull;
 
 // Draws a colored rounded rectangle background with a vertical stripe on the start side.
-public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHeightSpan.WithDensity {
-    private final static int LINE_HEIGHT = 19;
-
+public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
     private final int mBackgroundColor;
     private final float mCornerRadius;
     private final int mStripeColor;
@@ -64,37 +60,5 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan, LineHe
             canvas.drawRect(left, top, left + mStripeWidth, bottom, paint);
         }
         paint.setColor(originalColor);
-    }
-
-    @Override
-    public void chooseHeight(CharSequence text, int start, int end, int spanstartv,
-                             int lineHeight, Paint.FontMetricsInt fm) {
-        chooseHeight(text, start, end, spanstartv, lineHeight, fm, null);
-    }
-
-    @Override
-    public void chooseHeight(CharSequence text, int start, int end, int spanstartv,
-                             int lineHeight, Paint.FontMetricsInt fm, TextPaint paint) {
-        final int originHeight = fm.descent - fm.ascent;
-        if (originHeight <= 0) {
-            return;
-        }
-
-        int minHeight = LINE_HEIGHT;
-        if (paint != null) {
-            minHeight *= paint.density;
-        }
-
-        if (fm.bottom - fm.top < minHeight) {
-            fm.top = fm.bottom - minHeight;
-            fm.ascent = fm.ascent - minHeight;
-        }
-/*
-        Log.i(TAG, text + "; origin height=" + originHeight +
-                "; lineHeight=" + lineHeight + "; fm.heightBefore=" +
-                heightBefore + "; fm.heightAfter=" + (fm.bottom - fm.top) +
-                "; minHeight=" + minHeight);
-
- */
     }
 }

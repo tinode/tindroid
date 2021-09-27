@@ -18,6 +18,7 @@ import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SubscriptSpan;
@@ -368,6 +369,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         StyledTreeNode result = new StyledTreeNode();
         // Insert document icon
         Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file);
+        //noinspection ConstantConditions
         icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
         ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
         final Rect bounds = span.getDrawable().getBounds();
@@ -381,7 +383,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
         if (TextUtils.isEmpty(fname)) {
             fname = ctx.getResources().getString(R.string.default_attachment_name);
-        } else if (fname.length() > MAX_FILE_LENGTH) {
+        } else //noinspection ConstantConditions
+            if (fname.length() > MAX_FILE_LENGTH) {
             fname = fname.substring(0, MAX_FILE_LENGTH/2 - 1) + "…" +
                     fname.substring(fname.length() - MAX_FILE_LENGTH/2);
         }
@@ -403,6 +406,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         icon = AppCompatResources.getDrawable(ctx, valid ?
                 R.drawable.ic_download_link : R.drawable.ic_error_gray);
         DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+        //noinspection ConstantConditions
         icon.setBounds(0, 0,
                 (int) (ICON_SIZE_DP * metrics.density),
                 (int) (ICON_SIZE_DP * metrics.density));
@@ -455,6 +459,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     @Override
     protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+        StyledTreeNode node = new StyledTreeNode();
         // TODO: make clickable.
         Resources res = ctx.getResources();
         DisplayMetrics metrics = res.getDisplayMetrics();
@@ -463,7 +468,10 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 res.getColor(R.color.colorQuoteStripe),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
                 STRIPE_GAP_DP * metrics.density);
-        return new StyledTreeNode(style, content);
+        node.addNode(new StyledTreeNode(style, content));
+        // Increase spacing between the quote and the subsequent text.
+        node.addNode(new StyledTreeNode(new RelativeSizeSpan(0.3f), "\n\n"));
+        return node;
     }
 
     // Unknown or unsupported element.
