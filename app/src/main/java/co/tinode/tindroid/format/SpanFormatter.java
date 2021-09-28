@@ -18,6 +18,7 @@ import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
+import android.text.style.ParagraphStyle;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -57,8 +58,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     // Formatting parameters of the quoted text;
     private static final int CORNER_RADIUS_DP = 4;
-    private static final int QUOTE_STRIPE_WIDTH_DP = 3;
-    private static final int STRIPE_GAP_DP = 6;
+    private static final int QUOTE_STRIPE_WIDTH_DP = 4;
+    private static final int STRIPE_GAP_DP = 8;
 
     private static final int MAX_FILE_LENGTH = 28;
 
@@ -459,19 +460,26 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     @Override
     protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
-        StyledTreeNode node = new StyledTreeNode();
+        StyledTreeNode outer = new StyledTreeNode();
+        StyledTreeNode inner = new StyledTreeNode();
+        inner.addNode(new StyledTreeNode(new RelativeSizeSpan(0.25f), "\n"));
         // TODO: make clickable.
+        inner.addNode(new StyledTreeNode(content));
+        // Adding a line break with some non-breaking white space around it to create extra padding.
+        inner.addNode(new StyledTreeNode(new RelativeSizeSpan(0.2f),
+                "\u00A0\u00A0\u00A0\u00A0\n\u00A0"));
         Resources res = ctx.getResources();
         DisplayMetrics metrics = res.getDisplayMetrics();
         QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
                 CORNER_RADIUS_DP * metrics.density,
-                res.getColor(R.color.colorQuoteStripe),
+                res.getColor(R.color.colorAccent),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
-                STRIPE_GAP_DP * metrics.density);
-        node.addNode(new StyledTreeNode(style, content));
+                STRIPE_GAP_DP * metrics.density,
+                inner.toSpanned().length());
+        outer.addNode(new StyledTreeNode((ParagraphStyle) style, inner));
         // Increase spacing between the quote and the subsequent text.
-        node.addNode(new StyledTreeNode(new RelativeSizeSpan(0.3f), "\n\n"));
-        return node;
+        outer.addNode(new StyledTreeNode(new RelativeSizeSpan(0.3f), "\n\n"));
+        return outer;
     }
 
     // Unknown or unsupported element.

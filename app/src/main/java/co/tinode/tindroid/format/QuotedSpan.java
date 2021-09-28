@@ -16,13 +16,16 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
     private final int mStripeColor;
     private final float mStripeWidth;
     private final float mGapWidth;
+    private final int mSpanedLength;
 
-    public QuotedSpan(int backgroundColor, float cornerRadius, int stripeColor, float stripeWidth, float gap) {
+    public QuotedSpan(int backgroundColor, float cornerRadius, int stripeColor,
+                      float stripeWidth, float gap, int spannedLength) {
         mBackgroundColor = backgroundColor;
         mCornerRadius = cornerRadius;
         mStripeColor = stripeColor;
         mStripeWidth = stripeWidth;
         mGapWidth = gap;
+        mSpanedLength = spannedLength;
     }
 
     @Override
@@ -37,27 +40,39 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
     }
 
     @Override
-    public void drawBackground(@NonNull Canvas canvas, Paint paint,
+    public void drawBackground(@NonNull Canvas canvas, @NonNull Paint paint,
                                int left, int right, int top, int baseline, int bottom,
                                @NonNull CharSequence text, int start, int end, int lineNumber) {
         int originalColor = paint.getColor();
         paint.setColor(mBackgroundColor);
-        if (lineNumber == 0) {
-            Path path = new Path();
-            path.addRoundRect(left, top, right, bottom,
-                    new float[]{mCornerRadius, mCornerRadius, mCornerRadius, mCornerRadius, 0, 0, 0, 0},
-                    Path.Direction.CW);
-            canvas.drawPath(path, paint);
-            path = new Path();
-            paint.setColor(mStripeColor);
-            path.addRoundRect(left, top, left + mStripeWidth, bottom,
-                    new float[]{mCornerRadius, mCornerRadius, 0, 0, 0, 0, 0, 0},
-                    Path.Direction.CW);
-            canvas.drawPath(path, paint);
-        } else {
+        if (lineNumber > 0 && end < mSpanedLength) {
+            // Lines in the middle.
             canvas.drawRect(left, top, right, bottom, paint);
             paint.setColor(mStripeColor);
             canvas.drawRect(left, top, left + mStripeWidth, bottom, paint);
+        } else {
+            Path background = new Path();
+            Path stripe = new Path();
+            if (lineNumber == 0) {
+                // Fist line.
+                background.addRoundRect(left, top, right, bottom,
+                        new float[]{mCornerRadius, mCornerRadius, mCornerRadius, mCornerRadius, 0, 0, 0, 0},
+                        Path.Direction.CW);
+                stripe.addRoundRect(left, top, left + mStripeWidth, bottom,
+                        new float[]{mCornerRadius, mCornerRadius, 0, 0, 0, 0, 0, 0},
+                        Path.Direction.CW);
+            } else {
+                // Last line
+                background.addRoundRect(left, top, right, bottom,
+                        new float[]{0, 0, 0, 0, mCornerRadius, mCornerRadius, mCornerRadius, mCornerRadius},
+                        Path.Direction.CW);
+                stripe.addRoundRect(left, top, left + mStripeWidth, bottom,
+                        new float[]{0, 0, 0, 0, 0, 0, mCornerRadius, mCornerRadius},
+                        Path.Direction.CW);
+            }
+            canvas.drawPath(background, paint);
+            paint.setColor(mStripeColor);
+            canvas.drawPath(stripe, paint);
         }
         paint.setColor(originalColor);
     }

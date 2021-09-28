@@ -67,9 +67,11 @@ import co.tinode.tinodesdk.model.Subscription;
  * Fragment handling message display and message sending.
  */
 public class MessagesFragment extends Fragment {
-    static final String MESSAGE_TO_SEND = "messageText";
     private static final String TAG = "MessageFragment";
     private static final int MESSAGES_TO_LOAD = 24;
+
+    static final String MESSAGE_TO_SEND = "messageText";
+    static final String REPLY_TO = "replyTo";
 
     private ComTopic<VxCard> mTopic;
 
@@ -84,6 +86,8 @@ public class MessagesFragment extends Fragment {
 
     private String mCurrentPhotoFile;
     private Uri mCurrentPhotoUri;
+
+    private int mReplySeqID = -1;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -227,13 +231,16 @@ public class MessagesFragment extends Fragment {
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
         // Send message on button click
-        view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendText());
+        view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendText(activity));
 
         // Send image button
         view.findViewById(R.id.attachImage).setOnClickListener(v -> openImageSelector(activity));
 
         // Send file button
         view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity));
+
+        // Cancel reply preview button.
+        view.findViewById(R.id.cancelReply).setOnClickListener(v -> cancelReply(activity));
 
         EditText editor = view.findViewById(R.id.editMessage);
         // Send notification on key presses
@@ -453,6 +460,7 @@ public class MessagesFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             args.putString(MESSAGE_TO_SEND, draft);
+            args.putInt(REPLY_TO, mReplySeqID);
         }
     }
 
@@ -736,8 +744,7 @@ public class MessagesFragment extends Fragment {
         return false;
     }
 
-    private void sendText() {
-        final Activity activity = getActivity();
+    private void sendText(Activity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -752,6 +759,16 @@ public class MessagesFragment extends Fragment {
                 inputField.getText().clear();
             }
         }
+    }
+
+    private void cancelReply(Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        final View replyView = activity.findViewById(R.id.replyPreview);
+        replyView.setVisibility(View.GONE);
+        mReplySeqID = -1;
     }
 
     void topicSubscribed() {

@@ -192,6 +192,7 @@ public class MessageActivity extends AppCompatActivity
     public void onResume() {
         super.onResume();
 
+        // Intent with parameters passed on start of the activity.
         final Intent intent = getIntent();
 
         final Tinode tinode = Cache.getTinode();
