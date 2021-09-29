@@ -1042,6 +1042,16 @@ public class Drafty implements Serializable {
      * @return new shortened Drafty object leaving the original intact.
      */
     public Drafty preview(final int length) {
+        return preview(length, new PreviewTransformer());
+    }
+
+    /**
+     * Shorten Drafty document and strip all entity data leaving just inline styles and entity references.
+     * @param length length in characters to shorten to.
+     * @param transformer style transformer which can be used to remove or alter styles and entities.
+     * @return new shortened Drafty object leaving the original intact.
+     */
+    public Drafty preview(final int length, Transformer transformer) {
         Drafty preview = new Drafty();
 
         int len = 0;
@@ -1087,18 +1097,31 @@ public class Drafty implements Serializable {
             for (Style st : fmt) {
                 if (st.at < len) {
                     Style style = new Style(null, st.at, st.at + st.len > length ? length - st.at : st.len);
+                    Entity entity = null;
                     int key = st.key != null ? st.key : 0;
                     if (st.tp != null && !st.tp.equals("")) {
                         style.tp = st.tp;
                     } else if (ent != null && ent.length > key && ent_refs.containsKey(key)) {
                         style.key = ent_refs.get(key);
-                        // ent_refs.containsKey(key) is checked above.
-                        //noinspection ConstantConditions
-                        preview.ent[style.key] = ent[key].copyLight();
+                        entity = ent[key];
                     } else {
                         continue;
                     }
+
+                    if (transformer != null) {
+                        Pair<Style, Entity> result = transformer.transform(style, entity);
+                        if (result == null || result.first == null) {
+                            continue;
+                        }
+                        style = result.first;
+                        entity = result.second;
+                    }
+
                     preview.fmt[fmt_idx++] = style;
+                    if (entity != null) {
+                        //noinspection ConstantConditions
+                        preview.ent[style.key] = entity;
+                    }
                 }
             }
         }
@@ -1184,30 +1207,13 @@ public class Drafty implements Serializable {
         }
 
         @JsonIgnore
-        public String getType() {
-            return tp;
-        }
-
-        public Map<String,Object> getData() {
-            return data;
+        public Object getData(String key) {
+            return data == null ? null : data.get(key);
         }
 
         @JsonIgnore
-        protected Entity copyLight() {
-            Map<String,Object> dc = null;
-            if (data != null && !data.isEmpty()) {
-                dc = new HashMap<>();
-                for (String key : lightData) {
-                    Object val = data.get(key);
-                    if (val != null) {
-                        dc.put(key, val);
-                    }
-                }
-                if (dc.isEmpty()) {
-                    dc = null;
-                }
-            }
-            return new Entity(tp, dc);
+        public String getType() {
+            return tp;
         }
 
         @NotNull
@@ -1242,6 +1248,39 @@ public class Drafty implements Serializable {
 
     public interface Formatter<T> {
         T apply(String tp, Map<String,Object> attr, Object content);
+    }
+
+    public interface Transformer {
+        @Nullable
+        Pair<Style, Entity> transform(@NotNull Style style, @Nullable Entity ent);
+    }
+
+    public static class PreviewTransformer implements Transformer {
+        private static final String[] lightData = new String[] {
+                "mime", "name", "width", "height", "size", "url", "ref"
+        };
+
+        @Override
+        public Pair<Style, Entity> transform(@NotNull Style style, @Nullable Entity ent) {
+            if (ent == null) {
+                return new Pair<>(style, null);
+            }
+
+            Map<String,Object> dc = null;
+            if (ent.data != null && !ent.data.isEmpty()) {
+                dc = new HashMap<>();
+                for (String key : lightData) {
+                    Object val = ent.data.get(key);
+                    if (val != null) {
+                        dc.put(key, val);
+                    }
+                }
+                if (dc.isEmpty()) {
+                    dc = null;
+                }
+            }
+            return new Pair<>(style, new Entity(ent.tp, dc));
+        }
     }
 
     // ================
