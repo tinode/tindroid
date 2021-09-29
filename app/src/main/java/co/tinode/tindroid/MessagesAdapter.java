@@ -96,6 +96,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int VIEWTYPE_CENTER = 6;
     private static final int VIEWTYPE_INVALID = 100;
 
+    private static final int QUOTED_REPLY_LENGTH = 30;
+
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final String[] PERMISSIONS_STORAGE = {
@@ -172,8 +174,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     Log.d(TAG, "Try re-sending selected item");
                     return true;
                 } else if (id == R.id.action_reply) {
-                    // FIXME: implement reply.
-                    Log.d(TAG, "Reply to message");
+                    int[] selected = getSelectedArray();
+                    if (selected != null) {
+                        showReplyPreview(selected[0]);
+                    }
                     return true;
                 }
 
@@ -293,6 +297,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else if (discarded > 0) {
                 runLoader(false);
                 updateSelectionMode();
+            }
+        }
+    }
+
+    private void showReplyPreview(int pos) {
+        StoredMessage msg = getMessage(pos);
+        if (msg != null) {
+            if (msg.status == BaseDb.Status.SYNCED) {
+                toggleSelectionAt(pos);
+                notifyItemChanged(pos);
+                updateSelectionMode();
+                //Drafty preview = msg.content.preview(QUOTED_REPLY_LENGTH, new ReplyTransformer());
+                //Log.i(TAG, "Reply with " + preview.toString());
             }
         }
     }
