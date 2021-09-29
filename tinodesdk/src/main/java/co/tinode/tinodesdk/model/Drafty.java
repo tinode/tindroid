@@ -755,7 +755,7 @@ public class Drafty implements Serializable {
              new Style(0, name.length(), 0)
         };
         d.ent = new Entity[]{
-                new Entity("MN").addData("val", uid)
+                new Entity("MN").putData("val", uid)
         };
         return d;
     }
@@ -1175,7 +1175,7 @@ public class Drafty implements Serializable {
             this.data = null;
         }
 
-        public Entity addData(String key, Object val) {
+        public Entity putData(String key, Object val) {
             if (data == null) {
                 data = new HashMap<>();
             }

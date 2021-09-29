@@ -48,9 +48,9 @@ public class DraftyTest {
         };
         expected.ent = new Drafty.Entity[]{
                 new Drafty.Entity("LN")
-                        .addData("url", "https://www.example.com/abc#fragment"),
+                        .putData("url", "https://www.example.com/abc#fragment"),
                 new Drafty.Entity("LN")
-                        .addData("url", "http://www.tinode.co")
+                        .putData("url", "http://www.tinode.co")
         };
         assertEquals("String 4 has failed", expected, actual);
 
@@ -62,8 +62,8 @@ public class DraftyTest {
                 new Drafty.Style(25, 8, 1),
         };
         expected.ent = new Drafty.Entity[]{
-                new Drafty.Entity("MN").addData("val", "@mention"),
-                new Drafty.Entity("HT").addData("val", "#hashtag"),
+                new Drafty.Entity("MN").putData("val", "@mention"),
+                new Drafty.Entity("HT").putData("val", "#hashtag"),
         };
         assertEquals("String 5 has failed", expected.toPlainText(), actual.toPlainText());
 
@@ -74,7 +74,7 @@ public class DraftyTest {
                 new Drafty.Style(7, 7, 0),
         };
         expected.ent = new Drafty.Entity[]{
-                new Drafty.Entity("HT").addData("val", "#юникод"),
+                new Drafty.Entity("HT").putData("val", "#юникод"),
         };
         assertEquals("String 6 has failed", expected.toPlainText(), actual.toPlainText());
     }
@@ -94,11 +94,11 @@ public class DraftyTest {
         };
         src.ent = new Drafty.Entity[]{
                 new Drafty.Entity("EX")
-                        .addData("mime", "image/jpeg")
-                        .addData("name", "hello.jpg")
-                        .addData("val", "<38992, bytes: ...>")
-                        .addData("width", 100)
-                        .addData("height", 80),
+                        .putData("mime", "image/jpeg")
+                        .putData("name", "hello.jpg")
+                        .putData("val", "<38992, bytes: ...>")
+                        .putData("width", 100)
+                        .putData("height", 80),
         };
         actual = src.preview(15);
         expected = new Drafty();
@@ -107,10 +107,10 @@ public class DraftyTest {
         };
         expected.ent = new Drafty.Entity[]{
                 new Drafty.Entity("EX")
-                        .addData("mime", "image/jpeg")
-                        .addData("name", "hello.jpg")
-                        .addData("width", 100)
-                        .addData("height", 80),
+                        .putData("mime", "image/jpeg")
+                        .putData("name", "hello.jpg")
+                        .putData("width", 100)
+                        .putData("height", 80),
         };
         assertEquals("Preview 2 has failed", expected, actual);
 
@@ -120,7 +120,7 @@ public class DraftyTest {
                 new Drafty.Style(0, 22, 0),
         };
         src.ent = new Drafty.Entity[]{
-                new Drafty.Entity("LN").addData("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+                new Drafty.Entity("LN").putData("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
         };
         actual = src.preview(15);
         expected = new Drafty("https://api.tin");
@@ -128,7 +128,7 @@ public class DraftyTest {
                 new Drafty.Style(0, 15, 0),
         };
         expected.ent = new Drafty.Entity[]{
-                new Drafty.Entity("LN").addData("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+                new Drafty.Entity("LN").putData("url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
         };
         assertEquals("Preview 3 has failed", expected, actual);
 
@@ -139,7 +139,7 @@ public class DraftyTest {
                 new Drafty.Style(4, 3, 0),
         };
         src.ent = new Drafty.Entity[]{
-                new Drafty.Entity("LN").addData("url", "http://tinode.co"),
+                new Drafty.Entity("LN").putData("url", "http://tinode.co"),
         };
         actual = src.preview(15);
         expected = new Drafty("Url one, two");
@@ -148,7 +148,7 @@ public class DraftyTest {
                 new Drafty.Style(4, 3, 0),
         };
         expected.ent = new Drafty.Entity[]{
-                new Drafty.Entity("LN").addData("url", "http://tinode.co"),
+                new Drafty.Entity("LN").putData("url", "http://tinode.co"),
         };
         assertEquals("Preview 4 has failed", expected, actual);
 
@@ -159,8 +159,8 @@ public class DraftyTest {
                 new Drafty.Style(9, 3, 1),
         };
         src.ent = new Drafty.Entity[]{
-                new Drafty.Entity("LN").addData("url", "http://tinode.co"),
-                new Drafty.Entity("LN").addData("url", "http://example.com"),
+                new Drafty.Entity("LN").putData("url", "http://tinode.co"),
+                new Drafty.Entity("LN").putData("url", "http://example.com"),
         };
         actual = src.preview(15);
         expected = new Drafty("Url one, two");
@@ -169,8 +169,8 @@ public class DraftyTest {
                 new Drafty.Style(9, 3, 1),
         };
         expected.ent = new Drafty.Entity[]{
-                new Drafty.Entity("LN").addData("url", "http://tinode.co"),
-                new Drafty.Entity("LN").addData("url", "http://example.com"),
+                new Drafty.Entity("LN").putData("url", "http://tinode.co"),
+                new Drafty.Entity("LN").putData("url", "http://example.com"),
         };
         assertEquals("Preview 5 has failed", expected.toPlainText(), actual.toPlainText());
 
@@ -181,11 +181,11 @@ public class DraftyTest {
         };
         src.ent = new Drafty.Entity[]{
                 new Drafty.Entity("IM")
-                        .addData("height", 213)
-                        .addData("width", 638)
-                        .addData("name", "roses.jpg")
-                        .addData("val", "<38992, bytes: ...>")
-                        .addData("mime", "image/jpeg"),
+                        .putData("height", 213)
+                        .putData("width", 638)
+                        .putData("name", "roses.jpg")
+                        .putData("val", "<38992, bytes: ...>")
+                        .putData("mime", "image/jpeg"),
         };
         actual = src.preview(15);
         expected = new Drafty(" ");
@@ -194,10 +194,10 @@ public class DraftyTest {
         };
         expected.ent = new Drafty.Entity[]{
                 new Drafty.Entity("IM")
-                        .addData("height", 213)
-                        .addData("width", 638)
-                        .addData("name", "roses.jpg")
-                        .addData("mime", "image/jpeg"),
+                        .putData("height", 213)
+                        .putData("width", 638)
+                        .putData("name", "roses.jpg")
+                        .putData("mime", "image/jpeg"),
         };
         assertEquals("Preview 3 has failed", expected, actual);
 
@@ -254,13 +254,13 @@ public class DraftyTest {
         };
         src.ent = new Drafty.Entity[]{
                 new Drafty.Entity("IM")
-                        .addData("mime","image/jpeg")
-                        .addData("val", "<1292, bytes: /9j/4AAQSkZJ...rehH5o6D/9k=>")
-                        .addData("width", 25)
-                        .addData("height", 14)
-                        .addData("size", 968),
+                        .putData("mime","image/jpeg")
+                        .putData("val", "<1292, bytes: /9j/4AAQSkZJ...rehH5o6D/9k=>")
+                        .putData("width", 25)
+                        .putData("height", 14)
+                        .putData("size", 968),
                 new Drafty.Entity("MN")
-                        .addData("val", "usr12345678")
+                        .putData("val", "usr12345678")
         };
         actual = src.preview(15);
         expected = new Drafty("This is a test");

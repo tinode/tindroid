@@ -118,7 +118,7 @@ public class UiUtils {
     // Maximum linear dimensions of images.
     static final int MAX_BITMAP_SIZE = 1024;
     static final int IMAGE_PREVIEW_DIM = 64;
-    static final int AVATAR_SIZE = 128;
+    public static final int AVATAR_SIZE = 128;
 
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;
@@ -503,24 +503,24 @@ public class UiUtils {
     }
 
     @NonNull
-    private static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp) {
+    static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp, int size) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
-            width = width * AVATAR_SIZE / height;
-            height = AVATAR_SIZE;
+            width = width * size / height;
+            height = size;
             // Sanity check
             width = Math.min(width, MAX_BITMAP_SIZE);
         } else {
-            height = height * AVATAR_SIZE / width;
-            width = AVATAR_SIZE;
+            height = height * size / width;
+            width = size;
             height = Math.min(height, MAX_BITMAP_SIZE);
         }
         // Scale up or down.
         bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
         // Chop the square from the middle.
-        return Bitmap.createBitmap(bmp, (width - AVATAR_SIZE) / 2, (height - AVATAR_SIZE) / 2,
-                AVATAR_SIZE, AVATAR_SIZE);
+        return Bitmap.createBitmap(bmp, (width - size) / 2, (height - size) / 2,
+                size, size);
     }
 
     /**
@@ -609,7 +609,7 @@ public class UiUtils {
         }
 
         avatarContainer.setImageDrawable(new RoundImageDrawable(avatarContainer.getResources(),
-                scaleSquareBitmap(avatar)));
+                scaleSquareBitmap(avatar, AVATAR_SIZE)));
     }
 
     // Construct avatar drawable: use bitmap if it is not null,
@@ -996,7 +996,7 @@ public class UiUtils {
         }
 
         // TODO: add support for uploading avatar out of band.
-        pub.setBitmap(scaleSquareBitmap(bmp));
+        pub.setBitmap(scaleSquareBitmap(bmp, AVATAR_SIZE));
         topic.setDescription(pub, null).thenCatch(new ToastFailureListener(activity));
     }
 

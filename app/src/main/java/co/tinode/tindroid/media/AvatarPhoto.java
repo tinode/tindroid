@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
+import co.tinode.tindroid.UiUtils;
+
 /**
  * Utility class: constructs a square 128x128 Bitmap from bytes/serializes to jpeg bytes
  */
@@ -33,7 +35,7 @@ public class AvatarPhoto implements Serializable {
         if (data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
             if (bmp != null) {
-                mImage = Bitmap.createScaledBitmap(bmp, 128, 128, false);
+                mImage = Bitmap.createScaledBitmap(bmp, UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE, false);
                 // createScaledBitmap may return the same object if scaling is not required.
                 if (bmp != mImage) {
                     bmp.recycle();
