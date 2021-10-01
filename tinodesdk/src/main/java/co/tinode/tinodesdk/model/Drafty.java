@@ -141,8 +141,14 @@ public class Drafty implements Serializable {
         this.ent = that.ent;
     }
 
-    // Used by Jackson XML to deserialize plain text received from the server as Drafty without any parsing.
-    // This is needed in order to disable secondary parsing of received plain-text messages.
+    /**
+     * Creates Drafty document with txt set to the parameter without any parsing.
+     * This is needed in order to disable secondary parsing of received plain-text messages.
+     * Used by Jackson XML to deserialize plain text received from the server.
+     *
+     * @param plainText text assigned without parsing.
+     * @return Drafty document with <code>txt</code> set to the parameter.
+     */
     @JsonCreator
     public static Drafty fromPlainText(String plainText) {
         Drafty that = new Drafty();
@@ -218,7 +224,7 @@ public class Drafty implements Serializable {
 
     // Convert linear array or spans into a tree representation.
     // Keep standalone and nested spans, throw away partially overlapping spans.
-    private static List<Span> toTree(List<Span> spans) {
+    private static List<Span> toSpanTree(List<Span> spans) {
         if (spans == null || spans.isEmpty()) {
             return null;
         }
@@ -247,7 +253,7 @@ public class Drafty implements Serializable {
 
         // Recursively rearrange the subnodes.
         for (Span s : tree) {
-            s.children = toTree(s.children);
+            s.children = toSpanTree(s.children);
         }
 
         return tree;
@@ -343,7 +349,7 @@ public class Drafty implements Serializable {
                 Collections.sort(spans);
 
                 // Rearrange linear list of styled spans into a tree, throw away invalid spans.
-                spans = toTree(spans);
+                spans = toSpanTree(spans);
 
                 // Parse the entire string into spans, styled or unstyled.
                 spans = chunkify(line, 0, line.length(), spans);
@@ -827,8 +833,8 @@ public class Drafty implements Serializable {
         return (ent == null && fmt == null);
     }
 
-    // Inverse of chunkify. Returns a tree of formatted spans.
-    private <T> List<T> forEach(@NotNull String line,
+    // Returns a tree of formatted spans.
+    private static <T> List<T> forEach(@NotNull String line,
                                 int start, int end,
                                 @Nullable List<Span> spans,
                                 @NotNull Formatter<? extends T> defaultFormatter,
@@ -1012,6 +1018,174 @@ public class Drafty implements Serializable {
                 forEach(txt, 0, txt.length(), spans, defaultFormatter, styleFormatters));
     }
 
+    // Returns a tree of nodes.
+    private static Node forEach(@NotNull CharSequence text,
+                                int start, int end,
+                                @Nullable List<Span> spans,
+                                @Nullable Transformer tr) {
+        if (spans == null) {
+            Node node = new Node(text.subSequence(start, end));
+            return tr != null ? tr.transform(node) : node;
+        }
+
+        Node result = new Node();
+        // Process ranges calling formatter for each range.
+        ListIterator<Span> iter = spans.listIterator();
+        while (iter.hasNext()) {
+            Span span = iter.next();
+
+            if (span.start < 0 && span.type.equals("EX")) {
+                // This is different from JS SDK. JS ignores these spans here.
+                // JS uses Drafty.attachments() to get attachments.
+                Node node = new Node(span.type, span.data, span.key);
+                node = tr != null ? tr.transform(node) : node;
+                if (node != null) {
+                    result.add(node);
+                }
+                continue;
+            }
+
+            // Add un-styled range before the styled span starts.
+            if (start < span.start) {
+                Node node = new Node(text.subSequence(start, span.start));
+                node = tr != null ? tr.transform(node) : node;
+                if (node != null) {
+                    result.add(node);
+                }
+                start = span.start;
+            }
+
+            // Get all spans which are within the current span.
+            List<Span> subspans = new LinkedList<>();
+            while (iter.hasNext()) {
+                Span inner = iter.next();
+                if (inner.start < 0) {
+                    // Attachments are in the end.Put back and stop.
+                    iter.previous();
+                    break;
+                } else if (inner.start < span.end) {
+                    if (inner.end <= span.end) {
+                        if (inner.start < inner.end || inner.isVoid()) {
+                            // Valid subspan: completely within the current span and
+                            // either non-zero length or zero length is acceptable.
+                            subspans.add(inner);
+                        }
+                    }
+                    // Overlapping subspans are ignored.
+                } else {
+                    // Past the end of the current span, put back and stop.
+                    iter.previous();
+                    break;
+                }
+            }
+
+            if (subspans.size() == 0) {
+                subspans = null;
+            }
+
+            Node node = forEach(text, start, span.end, subspans, tr);
+            node = node == null ?
+                    new Node(span.type, span.data, span.key) :
+                    new Node(span.type, span.data, node, span.key);
+            node = tr != null ? tr.transform(node) : node;
+            if (node != null) {
+                result.add(node);
+            }
+            start = span.end;
+        }
+
+        // Add the last unformatted range.
+        if (start < end) {
+            Node node = new Node(text.subSequence(start, end));
+            node = tr != null ? tr.transform(node) : node;
+            if (node != null) {
+                result.add(node);
+            }
+        }
+
+        return result.isBlank() ? null : result;
+    }
+
+    // Convert Drafty document to a tree of formatted nodes.
+    @Nullable
+    protected Node toTree(@Nullable Transformer tr) {
+        CharSequence text = txt == null ? "" : txt;
+
+        // Handle special case when all values in fmt are 0 and fmt therefore was
+        // skipped.
+        if (fmt == null || fmt.length == 0) {
+            if (ent != null && ent.length == 1) {
+                fmt = new Style[1];
+                fmt[0] = new Style(0, 0, 0);
+            } else {
+                Node node = new Node(text);
+                return tr != null ? tr.transform(node) : node;
+            }
+        }
+
+        // Sanitize spans
+        List<Span> spans = new ArrayList<>();
+        List<Span> attachments = new ArrayList<>();
+        int maxIndex = text.length();
+        for (Style aFmt : fmt) {
+            if (aFmt.len < 0) {
+                // Invalid span length.
+                continue;
+            }
+            if (aFmt.at <= -1) {
+                // Attachment
+                aFmt.at = -1;
+                aFmt.len = 1;
+                int key = aFmt.key != null ? aFmt.key : 0;
+                if (key < 0) {
+                    // Invalid key value.
+                    continue;
+                }
+                // Store attachments separately.
+                attachments.add(new Span(aFmt.at, 0, key));
+                continue;
+            }  else if (aFmt.at + aFmt.len > maxIndex) {
+                // Span is out of bounds.
+                continue;
+            }
+            if (aFmt.tp == null || "".equals(aFmt.tp)) {
+                spans.add(new Span(aFmt.at, aFmt.at + aFmt.len,
+                        aFmt.key != null ? aFmt.key : 0));
+            } else {
+                spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
+            }
+        }
+
+        // Sort spans first by start index (asc) then by length (desc).
+        Collections.sort(spans, (a, b) -> {
+            if (a.start - b.start == 0) {
+                return b.end - a.end; // longer one comes first (<0)
+            }
+            return a.start - b.start;
+        });
+
+        // Move attachments to the end of the list.
+        if (attachments.size() > 0) {
+            spans.addAll(attachments);
+        }
+
+        for (Span span : spans) {
+            if (ent != null && (span.type == null || "".equals(span.type))) {
+                if (span.key >= 0 && span.key < ent.length && ent[span.key] != null) {
+                    span.type = ent[span.key].tp;
+                    span.data = ent[span.key].data;
+                }
+            }
+
+            // Is type still undefined? Hide the invalid element!
+            if (span.type == null || "".equals(span.type)) {
+                span.type = "HD";
+            }
+        }
+
+        return forEach(text, 0, text.length(), spans, tr);
+    }
+
     public String toPlainText() {
         return "{txt: '" + txt + "'," +
                 "fmt: " + Arrays.toString(fmt) + "," +
@@ -1048,84 +1222,17 @@ public class Drafty implements Serializable {
     /**
      * Shorten Drafty document and strip all entity data leaving just inline styles and entity references.
      * @param length length in characters to shorten to.
-     * @param transformer style transformer which can be used to remove or alter styles and entities.
+     * @param tr style transformer which can be used to remove or alter styles and entities.
      * @return new shortened Drafty object leaving the original intact.
      */
-    public Drafty preview(final int length, Transformer transformer) {
-        Drafty preview = new Drafty();
-
-        int len = 0;
-        if (txt != null) {
-            if (txt.length() > length) {
-                preview.txt = txt.substring(0, length);
-            } else {
-                preview.txt = txt;
-            }
-            len = preview.txt.length();
+    public Drafty preview(final int length, @Nullable Transformer tr) {
+        Node tree = toTree(tr);
+        if (tree == null) {
+            return null;
         }
-
-        if (fmt != null && fmt.length > 0) {
-            // Old key to new key entity mapping.
-            HashMap<Integer, Integer> ent_refs = new HashMap<>();
-            // Count styles which start within the new length of the text and save entity keys as set.
-            int fmt_count = 0;
-            for (Style st : fmt) {
-                if (st.at < len) {
-                    fmt_count ++;
-                    if (st.tp == null || st.tp.equals("")) {
-                        Integer key = st.key != null ? st.key : 0;
-                        if (!ent_refs.containsKey(key)) {
-                            ent_refs.put(key, ent_refs.size());
-                        }
-                    }
-                }
-            }
-
-            // Check if there are any styles in the preview fragment.
-            if (fmt_count == 0) {
-                return preview;
-            }
-
-            // Allocate space for copying styles and entities.
-            preview.fmt = new Style[fmt_count];
-            if (ent != null && !ent_refs.isEmpty()) {
-                preview.ent = new Entity[ent_refs.size()];
-            }
-
-            // Insertion point for styles.
-            int fmt_idx = 0;
-            for (Style st : fmt) {
-                if (st.at < len) {
-                    Style style = new Style(null, st.at, st.at + st.len > length ? length - st.at : st.len);
-                    Entity entity = null;
-                    int key = st.key != null ? st.key : 0;
-                    if (st.tp != null && !st.tp.equals("")) {
-                        style.tp = st.tp;
-                    } else if (ent != null && ent.length > key && ent_refs.containsKey(key)) {
-                        style.key = ent_refs.get(key);
-                        entity = ent[key];
-                    } else {
-                        continue;
-                    }
-
-                    if (transformer != null) {
-                        Pair<Style, Entity> result = transformer.transform(style, entity);
-                        if (result == null || result.first == null) {
-                            continue;
-                        }
-                        style = result.first;
-                        entity = result.second;
-                    }
-
-                    preview.fmt[fmt_idx++] = style;
-                    if (entity != null) {
-                        //noinspection ConstantConditions
-                        preview.ent[style.key] = entity;
-                    }
-                }
-            }
-        }
-        return preview;
+        tree.clip(length);
+        tree.lTrim();
+        return tree.toDrafty();
     }
 
     public static class Style implements Serializable, Comparable<Style> {
@@ -1180,9 +1287,6 @@ public class Drafty implements Serializable {
     }
 
     public static class Entity implements Serializable {
-        private static final String[] lightData = new String[] {
-                "mime", "name", "width", "height", "size", "url", "ref"
-        };
         public String tp;
         public Map<String,Object> data;
 
@@ -1233,14 +1337,14 @@ public class Drafty implements Serializable {
     }
 
     // Optionally insert nullable value into entity data: null values are not inserted.
-    private static void addOrSkip(Map<String,Object> data, String key, Object value) {
+    private static void addOrSkip(@NotNull Map<String,Object> data, @NotNull String key, @Nullable Object value) {
         if (value != null) {
             data.put(key, value);
         }
     }
 
     // Optionally insert nullable value into entity data: null values or empty strings are not inserted.
-    private static void addOrSkip(Map<String,Object> data, String key, String value) {
+    private static void addOrSkip(@NotNull Map<String,Object> data, @NotNull String key, @Nullable String value) {
         if (value != null && value.length() > 0) {
             data.put(key, value);
         }
@@ -1252,7 +1356,7 @@ public class Drafty implements Serializable {
 
     public interface Transformer {
         @Nullable
-        Pair<Style, Entity> transform(@NotNull Style style, @Nullable Entity ent);
+        <T extends Node> Node transform(@NotNull T node);
     }
 
     public static class PreviewTransformer implements Transformer {
@@ -1260,26 +1364,246 @@ public class Drafty implements Serializable {
                 "mime", "name", "width", "height", "size", "url", "ref"
         };
 
+        @Nullable
         @Override
-        public Pair<Style, Entity> transform(@NotNull Style style, @Nullable Entity ent) {
-            if (ent == null) {
-                return new Pair<>(style, null);
+        public Node transform(@NotNull Node node) {
+            if ("QQ".equals(node.tp)) {
+                return null;
             }
 
-            Map<String,Object> dc = null;
-            if (ent.data != null && !ent.data.isEmpty()) {
-                dc = new HashMap<>();
-                for (String key : lightData) {
-                    Object val = ent.data.get(key);
-                    if (val != null) {
-                        dc.put(key, val);
-                    }
+            if (node.data == null || node.data.isEmpty()) {
+                return node;
+            }
+
+            Map<String,Object> dc = new HashMap<>();
+            for (String key : lightData) {
+                addOrSkip(dc, key, node.data.get(key));
+            }
+            if (dc.isEmpty()) {
+                dc = null;
+            }
+
+            Node result = new Node(node);
+            result.data = dc;
+            return result;
+        }
+    }
+
+    public static class Node {
+        String tp;
+        Integer key;
+        Map<String,Object> data;
+        CharSequence text;
+        List<Node> children;
+
+        public Node() {
+            tp = null;
+            data = null;
+            text = null;
+            children = null;
+        }
+
+        public Node(@NotNull CharSequence content) {
+            this.tp = null;
+            this.data = null;
+            text = content;
+            children = null;
+        }
+
+        public Node(@NotNull String tp, @Nullable Map<String,Object> data, int key) {
+            this.tp = tp;
+            this.key = key;
+            this.data = data;
+            text = null;
+            children = null;
+        }
+
+        public Node(@NotNull String tp, @Nullable Map<String,Object> data,
+             @NotNull CharSequence content, int key) {
+            this.tp = tp;
+            this.key = key;
+            this.data = data;
+            text = content;
+            children = null;
+        }
+
+        public Node(@NotNull Node node) {
+            tp = node.tp;
+            key = node.key;
+            data = node.data;
+            text = node.text;
+            children = node.children;
+        }
+
+        public Node(@NotNull String tp, @Nullable Map<String,Object> data, @NotNull Node node, int key) {
+            this.tp = tp;
+            this.key = key;
+            this.data = data;
+            text = null;
+            add(node);
+        }
+
+        public void setStyle(@NotNull String style) {
+            tp = style;
+        }
+
+        public void add(@NotNull Node n) {
+            if (text != null) {
+                throw new IllegalStateException("A node cannot have content and children");
+            }
+            if (children == null) {
+                children = new LinkedList<>();
+            }
+            children.add(n);
+        }
+
+        public boolean isBlank() {
+            return tp == null && text == null &&
+                    (data == null || data.isEmpty()) &&
+                    (children == null || children.size() == 0);
+        }
+
+        public boolean isStyle(@NotNull String style) {
+            return style.equals(tp);
+        }
+
+        public Object getData(String key) {
+            return data == null ? null : data.get(key);
+        }
+
+        public void putData(String key, Object val) {
+            if (key == null || val == null) {
+                return;
+            }
+
+            if (data == null) {
+                data = new HashMap<>();
+            }
+            data.put(key, val);
+        }
+
+        public int length() {
+            if (text != null) {
+                return text.length();
+            }
+            if (children == null) {
+                return 0;
+            }
+            int len = 0;
+            for (Node c : children) {
+                len += c.length();
+            }
+            return len;
+        }
+
+        // Returns new length. If length is unchanged then it's returned
+        // as a non-negative number. If changed then it's a negative number.
+        public int clip(int limit) {
+            if (text != null) {
+                int len = text.length();
+                if (len > limit) {
+                    text = text.subSequence(0, limit);
+                    // Negative value.
+                    return limit - len;
                 }
-                if (dc.isEmpty()) {
-                    dc = null;
+                return len;
+            }
+
+            if (children == null) {
+                return 0;
+            }
+
+            int len = 0;
+            int i = 0;
+            for (Node c : children) {
+                i++;
+                int clen = c.clip(limit - len);
+                if (clen < 0) {
+                    // Node clipped. Discard remaining children.
+                    children = children.subList(0, i);
+                    // Return new length as a negative number (clen + (-len)).
+                    return clen - len;
+                }
+                // Node was not clipped.
+                len += clen;
+            }
+            return len;
+        }
+
+        // Remove spaces and breaks on the left.
+        public void lTrim() {
+            if ("BR".equals(tp)) {
+                text = null;
+                tp = null;
+                children = null;
+            } else if (text != null) {
+                if (tp == null) {
+                    text = ltrim(text);
+                }
+            } else if (children != null && children.size() > 0) {
+                children.get(0).lTrim();
+            }
+        }
+
+        public Drafty toDrafty() {
+            MutableDrafty doc = new MutableDrafty();
+            appendToDrafty(doc);
+            return doc.toDrafty();
+        }
+
+        private void appendToDrafty(@NotNull MutableDrafty doc) {
+            int start = doc.length();
+
+            if (text != null) {
+                doc.append(text);
+            } else if (children != null) {
+                for (Node c : children) {
+                    c.appendToDrafty(doc);
                 }
             }
-            return new Pair<>(style, new Entity(ent.tp, dc));
+
+            if (tp != null) {
+                int len = doc.length() - start;
+                if (len == 0 && !Span.isVoid(tp)) {
+                    // Skip the blank element.
+                    return;
+                }
+                if (data != null && !data.isEmpty()) {
+                    int newKey = doc.append(new Entity(tp, data), key);
+                    if (tp.equals("EX")) {
+                        // Attachment.
+                        doc.append(new Style(-1, 0, newKey));
+                    } else {
+                        doc.append(new Style(start, len, newKey));
+                    }
+                } else {
+                    doc.append(new Style(tp, start, len));
+                }
+            }
+        }
+
+        @NotNull
+        private static CharSequence ltrim(@NotNull CharSequence str) {
+            int len = str.length();
+            if (len == 0) {
+                return str;
+            }
+            int start = 0;
+            int end = len - 1;
+            while (Character.isWhitespace(str.charAt(start)) && start < end) {
+                start++;
+            }
+            return str.subSequence(start, end + 1);
+        }
+
+        @NotNull
+        @Override
+        public String toString() {
+            return "{'" + tp + "'" +
+                    (data != null  ? ", data: " + data.toString() : "") +
+                    (text != null ? "; '" + text + "'" :
+                            (children != null ? ("; [" + children.toString() + "]") : "; NULL")) +
+                    "}";
         }
     }
 
@@ -1303,6 +1627,9 @@ public class Drafty implements Serializable {
     }
 
     private static class Span implements Comparable<Span> {
+        // Sorted in ascending order.
+        private static final String[] VOID_STYLES = new String[]{"BR", "EX"};
+
         int start;
         int end;
         int key;
@@ -1331,6 +1658,14 @@ public class Drafty implements Serializable {
             this.start = start;
             this.end = end;
             this.key = index;
+        }
+
+        static boolean isVoid(final String tp) {
+            return Arrays.binarySearch(VOID_STYLES, tp) >= 0;
+        }
+
+        boolean isVoid() {
+            return isVoid(type);
         }
 
         @Override
@@ -1375,5 +1710,56 @@ public class Drafty implements Serializable {
             return second == null;
         }
         return first.equals(second);
+    }
+
+    private static class MutableDrafty {
+        private StringBuilder txt = null;
+        private List<Style> fmt = null;
+        private List<Entity> ent = null;
+        private Map<Integer,Integer> keymap;
+
+        Drafty toDrafty() {
+            Drafty doc = txt != null ?
+                    Drafty.fromPlainText(txt.toString()) : new Drafty();
+            if (fmt != null && fmt.size() > 0) {
+                doc.fmt = fmt.toArray(new Style[]{});
+                if (ent != null && ent.size() > 0) {
+                    doc.ent = ent.toArray(new Entity[]{});
+                }
+            }
+            return doc;
+        }
+
+        int length() {
+            return txt != null ? txt.length() : 0;
+        }
+
+        void append(CharSequence text) {
+            if (txt == null) {
+                txt = new StringBuilder();
+            }
+            txt.append(text);
+        }
+
+        void append(Style style) {
+            if (fmt == null) {
+                fmt = new LinkedList<>();
+            }
+            fmt.add(style);
+        }
+
+        int append(Entity entity, int oldKey) {
+            if (ent == null) {
+                ent = new LinkedList<>();
+                keymap = new HashMap<>();
+            }
+            Integer key = keymap.get(oldKey);
+            if (key == null) {
+                ent.add(entity);
+                key = ent.size() - 1;
+                keymap.put(oldKey, key);
+            }
+            return key;
+        }
     }
 }

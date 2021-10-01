@@ -144,8 +144,8 @@ public class DraftyTest {
         actual = src.preview(15);
         expected = new Drafty("Url one, two");
         expected.fmt = new Drafty.Style[]{
-                new Drafty.Style(9, 3, 0),
                 new Drafty.Style(4, 3, 0),
+                new Drafty.Style(9, 3, 0),
         };
         expected.ent = new Drafty.Entity[]{
                 new Drafty.Entity("LN").putData("url", "http://tinode.co"),
@@ -172,7 +172,7 @@ public class DraftyTest {
                 new Drafty.Entity("LN").putData("url", "http://tinode.co"),
                 new Drafty.Entity("LN").putData("url", "http://example.com"),
         };
-        assertEquals("Preview 5 has failed", expected.toPlainText(), actual.toPlainText());
+        assertEquals("Preview 5 has failed", expected, actual);
 
         // ------- Preview 6 (inline image)
         src = new Drafty(" ");
@@ -199,7 +199,7 @@ public class DraftyTest {
                         .putData("name", "roses.jpg")
                         .putData("mime", "image/jpeg"),
         };
-        assertEquals("Preview 3 has failed", expected, actual);
+        assertEquals("Preview 6 has failed", expected, actual);
 
         // ------- Preview 7 (staggered formats)
         src = new Drafty("This text has staggered formats");
@@ -212,6 +212,7 @@ public class DraftyTest {
         expected.fmt = new Drafty.Style[]{
                 new Drafty.Style("EM", 5, 8),
         };
+        assertEquals("Preview 7 has failed", expected, actual);
 
         // ------- Preview 8 (multiple formatting)
         src = new Drafty("This text is formatted and deleted too");
