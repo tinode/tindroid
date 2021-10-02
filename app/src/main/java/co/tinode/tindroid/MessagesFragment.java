@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -22,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -50,6 +52,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
+import co.tinode.tindroid.format.SpanFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -88,6 +91,7 @@ public class MessagesFragment extends Fragment {
     private Uri mCurrentPhotoUri;
 
     private int mReplySeqID = -1;
+    private Drafty mReply = null;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -769,6 +773,15 @@ public class MessagesFragment extends Fragment {
         final View replyView = activity.findViewById(R.id.replyPreview);
         replyView.setVisibility(View.GONE);
         mReplySeqID = -1;
+        mReply = null;
+    }
+
+    void showReply(Activity activity, Drafty reply, int seq) {
+        mReply = reply;
+        activity.findViewById(R.id.replyPreview).setVisibility(View.VISIBLE);
+        TextView replyHolder = activity.findViewById(R.id.replyContent);
+        SpanFormatter formatter = new SpanFormatter(replyHolder, null);
+        replyHolder.setText(formatter.toSpanned(reply));
     }
 
     void topicSubscribed() {

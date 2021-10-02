@@ -655,7 +655,16 @@ public class MessageActivity extends AppCompatActivity
         return false;
     }
 
-    public void sendKeyPress() {
+    void showReply(Drafty reply, int seq) {
+        if (isFragmentVisible(FRAGMENT_MESSAGES)) {
+            MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
+            if (mf != null) {
+                mf.showReply(this, reply, seq);
+            }
+        }
+    }
+
+    void sendKeyPress() {
         if (mTopic != null && mSendTypingNotifications) {
             mTopic.noteKeyPress();
         }

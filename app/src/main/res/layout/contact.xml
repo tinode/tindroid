@@ -61,7 +61,7 @@
                 android:alpha="0.75"
                 android:baseline="-4dp"
                 android:contentDescription="@string/channel"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:srcCompat="@drawable/ic_channel"
                 app:tint="?android:attr/textColorSecondary" />
 
@@ -100,13 +100,13 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="end|center_vertical"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="6dp"
                 android:background="@drawable/pill_counter"
                 android:gravity="center"
-                android:padding="3dp"
                 android:textColor="@color/white"
                 android:textSize="10sp"
                 android:textStyle="bold"
+                android:layout_marginTop="1dp"
                 tools:ignore="SmallSp"
                 tools:text="9+" />
 

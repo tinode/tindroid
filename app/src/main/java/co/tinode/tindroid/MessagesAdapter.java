@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -305,11 +306,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         StoredMessage msg = getMessage(pos);
         if (msg != null) {
             if (msg.status == BaseDb.Status.SYNCED) {
+                @SuppressWarnings("unchecked")
+                final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+                final Subscription<VxCard, ?> sub = topic != null ? topic.getSubscription(msg.from) : null;
+                String uname = (sub != null && sub.pub != null) ? sub.pub.fn : null;
+                if (TextUtils.isEmpty(uname)) {
+                    uname = mActivity.getString(R.string.unknown);
+                }
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
                 updateSelectionMode();
-                //Drafty preview = msg.content.preview(QUOTED_REPLY_LENGTH, new ReplyTransformer());
-                //Log.i(TAG, "Reply with " + preview.toString());
+
+                Drafty reply = Drafty.quote(uname, msg.from,
+                        msg.content.preview(QUOTED_REPLY_LENGTH, new ReplyTransformer()));
+                mActivity.showReply(reply, msg.seq);
             }
         }
     }
@@ -411,7 +421,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @SuppressWarnings("unchecked")
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
-
         final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
         final StoredMessage m = getMessage(position);
 
@@ -963,6 +972,36 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                     break;
             }
+        }
+    }
+
+    // Convert Drafty into short previews with images converted into thumbnails for use in replies.
+    private static class ReplyTransformer extends Drafty.PreviewTransformer {
+        @Nullable
+        @Override
+        public Drafty.Node transform(@NonNull Drafty.Node node) {
+            if (!node.isStyle("IM")) {
+                return super.transform(node);
+            }
+
+            // Create an image thumbnail.
+            Drafty.Node conv = new Drafty.Node();
+            conv.setStyle("IM");
+            conv.putData("name", node.getData("name"));
+            Object val = node.getData("val");
+            if (val instanceof byte[]) {
+                Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) val, 0, ((byte[]) val).length);
+                if (bmp != null) {
+                    bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_SIZE);
+                    byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                    conv.putData("val", bits);
+                    conv.putData("mime", "image/jpeg");
+                    conv.putData("width", UiUtils.REPLY_THUMBNAIL_SIZE);
+                    conv.putData("height", UiUtils.REPLY_THUMBNAIL_SIZE);
+                    conv.putData("size", bits.length);
+                }
+            }
+            return conv;
         }
     }
 }
