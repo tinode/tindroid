@@ -316,9 +316,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
                 updateSelectionMode();
-
-                Drafty reply = Drafty.quote(uname, msg.from,
-                        msg.content.preview(QUOTED_REPLY_LENGTH, new ReplyTransformer()));
+                Drafty transformed = msg.content.preview(QUOTED_REPLY_LENGTH, new ReplyTransformer());
+                Log.i(TAG, "Reply: " + transformed.toPlainText());
+                Drafty reply = Drafty.quote(uname, msg.from, transformed);
                 mActivity.showReply(reply, msg.seq);
             }
         }
@@ -985,8 +985,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             // Create an image thumbnail.
-            Drafty.Node conv = new Drafty.Node();
-            conv.setStyle("IM");
+            Drafty.Node conv = new Drafty.Node(node);
+            conv.resetData();
             conv.putData("name", node.getData("name"));
             Object val = node.getData("val");
             if (val instanceof byte[]) {

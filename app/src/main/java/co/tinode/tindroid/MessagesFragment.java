@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.Editable;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -52,6 +51,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
+import co.tinode.tindroid.format.ReplyFormatter;
 import co.tinode.tindroid.format.SpanFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
@@ -780,7 +780,7 @@ public class MessagesFragment extends Fragment {
         mReply = reply;
         activity.findViewById(R.id.replyPreview).setVisibility(View.VISIBLE);
         TextView replyHolder = activity.findViewById(R.id.replyContent);
-        SpanFormatter formatter = new SpanFormatter(replyHolder, null);
+        SpanFormatter formatter = new ReplyFormatter(replyHolder, null);
         replyHolder.setText(formatter.toSpanned(reply));
     }
 

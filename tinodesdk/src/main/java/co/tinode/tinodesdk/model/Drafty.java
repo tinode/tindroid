@@ -1371,6 +1371,10 @@ public class Drafty implements Serializable {
                 return null;
             }
 
+            if ("BR".equals(node.tp)) {
+                return new Node(" ");
+            }
+
             if (node.data == null || node.data.isEmpty()) {
                 return node;
             }
@@ -1480,6 +1484,10 @@ public class Drafty implements Serializable {
                 data = new HashMap<>();
             }
             data.put(key, val);
+        }
+
+        public void resetData() {
+            data = null;
         }
 
         public int length() {

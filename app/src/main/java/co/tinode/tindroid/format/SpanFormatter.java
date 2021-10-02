@@ -97,7 +97,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
         Map<String, Drafty.Formatter<? extends TreeNode>> formatters = new HashMap<>();
         formatters.put("QQ", new QuoteFormatter(mContext, mFontSize, -1, null));
-        return content.format(new SpanFormatter(mContainer, mClicker), formatters).toSpanned();
+        return content.format(this, formatters).toSpanned();
     }
 
     // Scale image dimensions to fit under the given viewport size.
@@ -458,8 +458,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         return node;
     }
 
-    @Override
-    protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+    protected StyledTreeNode handleQuote_Impl(Context ctx, Map<String, Object> data, Object content) {
         StyledTreeNode outer = new StyledTreeNode();
         StyledTreeNode inner = new StyledTreeNode();
         inner.addNode(new StyledTreeNode(new RelativeSizeSpan(0.25f), "\n"));
@@ -477,6 +476,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 STRIPE_GAP_DP * metrics.density,
                 inner.toSpanned().length());
         outer.addNode(new StyledTreeNode((ParagraphStyle) style, inner));
+        return outer;
+    }
+
+    @Override
+    protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+        StyledTreeNode outer = handleQuote_Impl(ctx, data, content);
         // Increase spacing between the quote and the subsequent text.
         outer.addNode(new StyledTreeNode(new RelativeSizeSpan(0.3f), "\n\n"));
         return outer;
