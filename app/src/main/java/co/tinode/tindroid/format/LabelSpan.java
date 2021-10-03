@@ -61,16 +61,15 @@ public class LabelSpan extends ReplacementSpan {
     @Override
     public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
         RectF outline = new RectF(x, top + PADDING_TOP * mDipSize, x + mWidth * mDipSize - 1, bottom - 1);
-
         // Draw background.
         canvas.drawRoundRect(outline, RADIUS_CORNER * mDipSize, RADIUS_CORNER * mDipSize, mPaintBackground);
         // Draw frame.
         canvas.drawRoundRect(outline, RADIUS_CORNER * mDipSize, RADIUS_CORNER * mDipSize, mPaintFrame);
-
-        // paint.setColor(mTextColor);
+        // Vertical padding between the button boundary and text.
+        float padding = (outline.height() - paint.descent() + paint.ascent()) / 2f;
         canvas.drawText(text, start, end,
                 x + (mWidth - mWidthActual - 1) * mDipSize * 0.5f,
-                top + PADDING_TOP * mDipSize * 0.5f + (bottom - paint.ascent() - paint.descent()) * 0.5f,
+                top + PADDING_TOP * mDipSize + padding - paint.ascent(),
                 paint);
     }
 }
