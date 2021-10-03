@@ -144,14 +144,18 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
 
     @Override
     protected MeasuredTreeNode handleButton(Context ctx, Map<String, Object> data, Object content) {
+        MeasuredTreeNode outer = new MeasuredTreeNode(mMaxLength);
+        // Non-breaking space as padding in front of the button.
+        outer.addNode(new MeasuredTreeNode("\u00A0", mMaxLength));
         // Size of a DIP pixel.
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f,
                 ctx.getResources().getDisplayMetrics());
         // Make button font slightly smaller.
-        MeasuredTreeNode node = new MeasuredTreeNode(new RelativeSizeSpan(0.8f), null, mMaxLength);
+        MeasuredTreeNode inner = new MeasuredTreeNode(new RelativeSizeSpan(0.8f), null, mMaxLength);
         // Change background color and draw a box around text.
-        node.addNode(new MeasuredTreeNode(new LabelSpan(ctx, mFontSize, dipSize), content, mMaxLength));
-        return node;
+        inner.addNode(new MeasuredTreeNode(new LabelSpan(ctx, mFontSize, dipSize), content, mMaxLength));
+        outer.addNode(inner);
+        return outer;
     }
 
     @Override
