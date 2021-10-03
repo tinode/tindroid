@@ -58,8 +58,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
                 return new SpannableStringBuilder(ex.getTail()).append("…");
             }
         }
-
-        return ((StyledTreeNode)result).toSpanned();
+        return result.toSpanned();
     }
 
     @Override
@@ -124,6 +123,11 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
 
     @Override
     protected MeasuredTreeNode handleImage(Context ctx, Object content, Map<String, Object> data) {
+        return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
+    }
+
+    @Override
+    protected MeasuredTreeNode handleAttachment(Context ctx, Map<String, Object> data) {
         if (data == null) {
             return null;
         }
@@ -135,11 +139,6 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
             }
         } catch (ClassCastException ignored) {}
 
-        return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
-    }
-
-    @Override
-    protected MeasuredTreeNode handleAttachment(Context ctx, Map<String, Object> data) {
         return annotatedIcon(ctx, R.drawable.ic_attach_ol, R.string.attachment);
     }
 

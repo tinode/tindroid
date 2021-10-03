@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
@@ -28,7 +27,6 @@ public class QuoteFormatter extends PreviewFormatter {
     private static final int MAX_FILE_NAME_LENGTH = 16;
 
     private static TypedArray sColorsDark;
-    private static int sDefaultColor;
     private static int sTextColor;
 
     private final SpanFormatter.ClickListener mClicker;
@@ -42,7 +40,6 @@ public class QuoteFormatter extends PreviewFormatter {
         Resources res = context.getResources();
         if (sColorsDark == null) {
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
-            sDefaultColor = res.getColor(R.color.grey);
             sTextColor = res.getColor(R.color.colorReplyText);
         }
     }
@@ -54,14 +51,8 @@ public class QuoteFormatter extends PreviewFormatter {
 
     @Override
     protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        int color = sDefaultColor;
-        try {
-            if (data != null) {
-                color = colorMention((String) data.get("val"));
-            }
-        } catch(ClassCastException ignored){}
-
-        return new MeasuredTreeNode(new ForegroundColorSpan(color), content, mMaxLength);
+        StyledTreeNode node = SpanFormatter.handleMention_Impl(content, data);
+        return new MeasuredTreeNode(node, mMaxLength);
     }
 
     @Override
@@ -131,13 +122,10 @@ public class QuoteFormatter extends PreviewFormatter {
 
     @Override
     protected MeasuredTreeNode handlePlain(Object content) {
-        return new MeasuredTreeNode(new ForegroundColorSpan(sTextColor), content, mMaxLength);
-    }
-
-    private static int colorMention(String uid) {
-        return TextUtils.isEmpty(uid) ?
-                sDefaultColor :
-                sColorsDark.getColor(Math.abs(uid.hashCode()) % sColorsDark.length(), sDefaultColor);
+        if (content instanceof CharSequence) {
+            return new MeasuredTreeNode(new ForegroundColorSpan(sTextColor), content, mMaxLength);
+        }
+        return new MeasuredTreeNode(content, mMaxLength);
     }
 
     private static String shortenFileName(String filename) {

@@ -97,8 +97,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int VIEWTYPE_CENTER = 6;
     private static final int VIEWTYPE_INVALID = 100;
 
-    private static final int QUOTED_REPLY_LENGTH = 30;
-
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final String[] PERMISSIONS_STORAGE = {
@@ -316,8 +314,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
                 updateSelectionMode();
-                Drafty transformed = msg.content.preview(QUOTED_REPLY_LENGTH, new ReplyTransformer());
-                Log.i(TAG, "Reply: " + transformed.toPlainText());
+                Drafty transformed = msg.content.preview(UiUtils.QUOTED_REPLY_LENGTH, new ReplyTransformer());
                 Drafty reply = Drafty.quote(uname, msg.from, transformed);
                 mActivity.showReply(reply, msg.seq);
             }
@@ -989,11 +986,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             conv.resetData();
             conv.putData("name", node.getData("name"));
             Object val = node.getData("val");
+            byte[] bits = null;
             if (val instanceof byte[]) {
-                Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) val, 0, ((byte[]) val).length);
+                bits = (byte[]) val;
+            } else if (val instanceof String) {
+                try {
+                    bits = Base64.decode((String) val, Base64.DEFAULT);
+                } catch (IllegalArgumentException ignored) {}
+            }
+            if (bits != null) {
+                Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                 if (bmp != null) {
                     bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_SIZE);
-                    byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                    bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
                     conv.putData("val", bits);
                     conv.putData("mime", "image/jpeg");
                     conv.putData("width", UiUtils.REPLY_THUMBNAIL_SIZE);

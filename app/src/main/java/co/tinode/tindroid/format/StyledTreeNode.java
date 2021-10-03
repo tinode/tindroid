@@ -20,6 +20,13 @@ class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
         pStyle = null;
     }
 
+    // Copy constructor.
+    StyledTreeNode(StyledTreeNode s) {
+        super(s);
+        cStyle = s.cStyle;
+        pStyle = s.pStyle;
+    }
+
     StyledTreeNode(CharSequence content) {
         super(content);
     }
@@ -38,7 +45,7 @@ class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
         this.pStyle = style;
     }
 
-    protected Spanned toSpanned() {
+    public Spanned toSpanned() {
         SpannableStringBuilder spanned = new SpannableStringBuilder();
         if (isPlain()) {
             spanned.append(getText());

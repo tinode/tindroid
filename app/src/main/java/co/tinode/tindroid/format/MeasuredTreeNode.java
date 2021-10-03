@@ -3,6 +3,7 @@ package co.tinode.tindroid.format;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.CharacterStyle;
+import android.util.Log;
 
 // Node with a limited length.
 public class MeasuredTreeNode extends StyledTreeNode {
@@ -25,6 +26,11 @@ public class MeasuredTreeNode extends StyledTreeNode {
 
     MeasuredTreeNode(CharacterStyle style, Object content, int maxLength) {
         super(style, content);
+        mMaxLength = maxLength;
+    }
+
+    MeasuredTreeNode(StyledTreeNode s, int maxLength) {
+        super(s);
         mMaxLength = maxLength;
     }
 
@@ -54,6 +60,8 @@ public class MeasuredTreeNode extends StyledTreeNode {
 
                     if (child instanceof MeasuredTreeNode) {
                         spanned.append(((MeasuredTreeNode) child).toSpanned(maxLength - spanned.length()));
+                    } else {
+                        spanned.append(child.toSpanned());
                     }
                 }
             } catch (LengthExceededException ex) {
@@ -70,7 +78,6 @@ public class MeasuredTreeNode extends StyledTreeNode {
         if (exceeded) {
             throw new LengthExceededException(spanned);
         }
-
         return spanned;
     }
 }

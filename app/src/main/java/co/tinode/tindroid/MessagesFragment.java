@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -778,9 +779,10 @@ public class MessagesFragment extends Fragment {
 
     void showReply(Activity activity, Drafty reply, int seq) {
         mReply = reply;
+        mReplySeqID = seq;
         activity.findViewById(R.id.replyPreview).setVisibility(View.VISIBLE);
         TextView replyHolder = activity.findViewById(R.id.replyContent);
-        SpanFormatter formatter = new ReplyFormatter(replyHolder, null);
+        ReplyFormatter formatter = new ReplyFormatter(replyHolder, null);
         replyHolder.setText(formatter.toSpanned(reply));
     }
 

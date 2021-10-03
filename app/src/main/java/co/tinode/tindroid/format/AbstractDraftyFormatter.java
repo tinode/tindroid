@@ -142,6 +142,11 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
             children = null;
         }
 
+        protected TreeNode(TreeNode t) {
+            text = t.text;
+            children = t.children;
+        }
+
         protected TreeNode(CharSequence content) {
             this.text = content;
         }
@@ -150,7 +155,7 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
             assignContent(content);
         }
 
-        protected abstract Spanned toSpanned();
+        public abstract Spanned toSpanned();
 
         @SuppressWarnings("unchecked")
         private void assignContent(Object content) {

@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/cancelReply"
@@ -23,17 +23,15 @@
             android:layout_height="match_parent"
             android:paddingLeft="4dp"
             android:paddingRight="4dp"
-            android:layout_weight="0.1"
             android:background="?attr/selectableItemBackgroundBorderless"
             app:srcCompat="@drawable/ic_close"
             app:tint="?android:textColorPrimary"/>
 
         <TextView
             android:id="@+id/replyContent"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="start"
-            android:layout_weight="1"
             android:maxWidth="280dp"
             android:minWidth="140dp"
             android:padding="6dp"

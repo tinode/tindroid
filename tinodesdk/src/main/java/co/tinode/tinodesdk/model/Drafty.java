@@ -1232,7 +1232,7 @@ public class Drafty implements Serializable {
         }
         tree.clip(length);
         tree.lTrim();
-        return tree.toDrafty();
+        return tree.toDrafty(true);
     }
 
     public static class Style implements Serializable, Comparable<Style> {
@@ -1553,8 +1553,8 @@ public class Drafty implements Serializable {
             }
         }
 
-        public Drafty toDrafty() {
-            MutableDrafty doc = new MutableDrafty();
+        public Drafty toDrafty(boolean trailingAttachments) {
+            MutableDrafty doc = new MutableDrafty(trailingAttachments);
             appendToDrafty(doc);
             return doc.toDrafty();
         }
@@ -1721,20 +1721,43 @@ public class Drafty implements Serializable {
     }
 
     private static class MutableDrafty {
+        private boolean ta = false;
         private StringBuilder txt = null;
         private List<Style> fmt = null;
         private List<Entity> ent = null;
-        private Map<Integer,Integer> keymap;
+        private Map<Integer,Integer> keymap = null;
+
+        MutableDrafty() {
+        }
+
+        MutableDrafty(boolean trailingAttachments) {
+            ta = trailingAttachments;
+        }
 
         Drafty toDrafty() {
+            if (fmt != null && ta) {
+                for (Style style : fmt) {
+                    if (style.at < 0) {
+                        if (txt == null) {
+                            txt = new StringBuilder();
+                        }
+                        style.at = txt.length();
+                        style.len = 1;
+                        txt.append(' ');
+                    }
+                }
+            }
+
             Drafty doc = txt != null ?
-                    Drafty.fromPlainText(txt.toString()) : new Drafty();
+                    Drafty.fromPlainText(txt.toString()) : new Drafty();;
+
             if (fmt != null && fmt.size() > 0) {
                 doc.fmt = fmt.toArray(new Style[]{});
                 if (ent != null && ent.size() > 0) {
                     doc.ent = ent.toArray(new Entity[]{});
                 }
             }
+
             return doc;
         }
 

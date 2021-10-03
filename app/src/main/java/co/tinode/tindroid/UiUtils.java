@@ -120,6 +120,7 @@ public class UiUtils {
     static final int IMAGE_PREVIEW_DIM = 64;
     public static final int AVATAR_SIZE = 128;
     static final int REPLY_THUMBNAIL_SIZE = 36;
+    public static final int QUOTED_REPLY_LENGTH = 30;
 
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;

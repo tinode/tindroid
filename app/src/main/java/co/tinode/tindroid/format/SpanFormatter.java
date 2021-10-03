@@ -165,8 +165,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         return null;
     }
 
-    @Override
-    protected StyledTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
+    static StyledTreeNode handleMention_Impl(Object content, Map<String, Object> data) {
         int color = sDefaultColor;
         try {
             color = colorMention((String) data.get("val"));
@@ -175,7 +174,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         return new StyledTreeNode(new ForegroundColorSpan(color), content);
     }
 
-    private int colorMention(String uid) {
+    @Override
+    protected StyledTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
+        return handleMention_Impl(content, data);
+    }
+
+    private static int colorMention(String uid) {
         return TextUtils.isEmpty(uid) ?
                 sDefaultColor :
                 sColorsDark.getColor(Math.abs(uid.hashCode()) % sColorsDark.length(), sDefaultColor);
@@ -458,7 +462,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         return node;
     }
 
-    protected StyledTreeNode handleQuote_Impl(Context ctx, Map<String, Object> data, Object content) {
+    static StyledTreeNode handleQuote_Impl(Context ctx, Object content) {
         StyledTreeNode outer = new StyledTreeNode();
         StyledTreeNode inner = new StyledTreeNode();
         inner.addNode(new StyledTreeNode(new RelativeSizeSpan(0.25f), "\n"));
@@ -481,7 +485,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     @Override
     protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
-        StyledTreeNode outer = handleQuote_Impl(ctx, data, content);
+        StyledTreeNode outer = handleQuote_Impl(ctx, content);
         // Increase spacing between the quote and the subsequent text.
         outer.addNode(new StyledTreeNode(new RelativeSizeSpan(0.3f), "\n\n"));
         return outer;
