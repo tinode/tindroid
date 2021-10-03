@@ -237,14 +237,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         // The list is inverted, so iterating messages in inverse order as well.
         for (int i = positions.length - 1; i >= 0; i--) {
-            StoredMessage msg = getMessage(positions[i]);
+            int pos = positions[i];
+            StoredMessage msg = getMessage(pos);
             if (msg != null) {
                 Subscription<VxCard, ?> sub = (Subscription<VxCard, ?>) topic.getSubscription(msg.from);
                 String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
                 sb.append("\n[").append(name).append("]: ").append(msg.content).append("; ")
                         .append(UiUtils.shortDate(msg.ts));
             }
+            toggleSelectionAt(pos);
+            notifyItemChanged(pos);
         }
+
+        updateSelectionMode();
 
         if (sb.length() > 1) {
             // Delete unnecessary CR in the beginning.

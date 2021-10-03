@@ -45,7 +45,7 @@
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
     <color name="colorMessageBubbleMeta">#FFe3f2fd</color>
 
-    <color name="colorReplyBubble">#10000000</color>
+    <color name="colorReplyBubble">#10333333</color>
     <color name="colorReplyText">#666666</color>
 
     <color name="colorQuoteStripe">#039be5</color>
