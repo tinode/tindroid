@@ -1846,10 +1846,12 @@ public class Tinode {
      * Create blank user in cache: in memory and in persistent storage.
      *
      * @param uid ID of the user to create.
+     * @param desc description of the new user.
      * @return {@link User} created user.
      */
-    <SP> User<SP> addUser(String uid) {
-        User<SP> user = new User<>(uid);
+    @SuppressWarnings("unchecked")
+    User addUser(String uid, Description desc) {
+        User user = new User(uid, desc);
         mUsers.put(uid, user);
         if (mStore != null) {
             mStore.userAdd(user);

@@ -766,9 +766,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (on) {
                 if (!isPersisted()) {
                     mStore.topicAdd(this);
-                    if (isP2PType()) {
-                        mTinode.updateUser(getName(), mDesc);
-                    }
                 }
             } else {
                 mStore.topicDelete(this);
@@ -1550,7 +1547,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     @SuppressWarnings("WeakerAccess, UnusedReturnValue, unchecked")
     protected int loadSubs() {
         Collection<Subscription> subs = mStore != null ? mStore.getSubscriptions(this) : null;
-        if (subs == null) {
+        if (subs == null || subs.isEmpty()) {
             return 0;
         }
 

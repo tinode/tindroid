@@ -21,8 +21,8 @@
             android:id="@+id/cancelReply"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             app:srcCompat="@drawable/ic_close"
             app:tint="?android:textColorPrimary"/>

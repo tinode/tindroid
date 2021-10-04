@@ -255,6 +255,7 @@ public class SubscriberDb implements BaseColumns {
     /**
      * Delete all subscription records for the given topic
      */
+    @SuppressWarnings("UnusedReturnValue")
     static boolean deleteForTopic(SQLiteDatabase db, long topicId) {
         return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId, null) > 0;
     }

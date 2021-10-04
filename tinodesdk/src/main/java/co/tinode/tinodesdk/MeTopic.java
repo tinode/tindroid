@@ -221,6 +221,22 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             routeMetaCred(meta.cred);
         }
 
+        if (meta.desc != null) {
+            // Create or update 'me' user in storage.
+            User me = mTinode.getUser(mTinode.getMyId());
+            boolean changed;
+            if (me == null) {
+                me = mTinode.addUser(mTinode.getMyId(), meta.desc);
+                changed = true;
+            } else {
+                //noinspection unchecked
+                changed = me.merge(meta.desc);
+            }
+            if (changed) {
+                mStore.userUpdate(me);
+            }
+        }
+
         super.routeMeta(meta);
     }
 
@@ -263,13 +279,17 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
 
         // Use p2p topic to update user's record.
-        if (topic !=  null && topic.getTopicType() == TopicType.P2P && mStore != null) {
+        if (topic != null && topic.getTopicType() == TopicType.P2P && mStore != null) {
             // Use P2P description to generate and update user
             User user = mTinode.getUser(topic.getName());
+            boolean changed;
             if (user == null) {
-                user = mTinode.addUser(topic.getName());
+                user = mTinode.addUser(topic.getName(), topic.mDesc);
+                changed = true;
+            } else {
+                changed = user.merge(topic.mDesc);
             }
-            if (user.merge(topic.mDesc)) {
+            if (changed) {
                 mStore.userUpdate(user);
             }
         }
@@ -474,7 +494,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             return;
         }
         if (info.src == null) {
-            Log.d(TAG, "Source not found in me.routeInfo");
             return;
         }
 

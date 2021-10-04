@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import androidx.annotation.NonNull;
 import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.TheCard;
 
@@ -76,5 +77,12 @@ public class VxCard extends TheCard {
             changed = true;
         }
         return changed;
+    }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return "{fn:'" + fn + "'; photo:" +
+                (photo != null ? ("'" + photo.type + "'") : "null") + "}";
     }
 }

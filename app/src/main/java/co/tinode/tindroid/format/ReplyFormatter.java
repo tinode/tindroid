@@ -1,7 +1,6 @@
 package co.tinode.tindroid.format;
 
 import android.content.Context;
-import android.util.Log;
 import android.widget.TextView;
 
 import java.util.Map;
@@ -15,9 +14,7 @@ public class ReplyFormatter extends QuoteFormatter {
 
     @Override
     protected MeasuredTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode quote = new MeasuredTreeNode(SpanFormatter.handleQuote_Impl(ctx, content), UiUtils.QUOTED_REPLY_LENGTH);
-        Log.i("ReplyFormatter", "Quote: " + quote.toString());
-        return quote;
+        return new MeasuredTreeNode(SpanFormatter.handleQuote_Impl(ctx, content), UiUtils.QUOTED_REPLY_LENGTH);
     }
 }
 
