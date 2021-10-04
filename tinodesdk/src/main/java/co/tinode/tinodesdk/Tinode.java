@@ -350,6 +350,17 @@ public class Tinode {
     }
 
     /**
+     * Headers for a reply message.
+     *
+     * @param seq message ID being replied to.
+     * @return headers in as map "header key : header value"
+     */
+    public static Map<String, Object> headersForReply(final int seq) {
+        Map<String, Object> head = new HashMap<>();
+        head.put("reply", "" + seq);
+        return head;
+    }
+    /**
      * Add listener which will receive event notifications.
      *
      * @param listener event listener to be notified. Should not be null.

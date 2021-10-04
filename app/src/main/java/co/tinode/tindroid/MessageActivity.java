@@ -26,6 +26,7 @@ import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -627,12 +628,13 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
-    boolean sendMessage(Drafty content) {
+    boolean sendMessage(Drafty content, int seq) {
         if (mTopic != null) {
-            PromisedReply<ServerMessage> reply = mTopic.publish(content);
+            Map<String,Object> head = seq > 0 ? Tinode.headersForReply(seq) : null;
+            PromisedReply<ServerMessage> done = mTopic.publish(content, head);
             BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
             runMessagesLoader(); // Refreshes the messages: hides removed, shows pending.
-            reply
+            done
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {

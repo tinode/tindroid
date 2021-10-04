@@ -948,7 +948,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 if (!json.isEmpty()) {
                                     newMsg.attachJSON(json);
                                 }
-                                mActivity.sendMessage(newMsg);
+                                mActivity.sendMessage(newMsg, -1);
 
                             } else if ("url".equals(actionType)) {
                                 URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));

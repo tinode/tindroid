@@ -1016,7 +1016,28 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param content payload
      */
     public PromisedReply<ServerMessage> publish(final Drafty content) {
-        final Map<String, Object> head = !content.isPlain() ? Tinode.draftyHeadersFor(content) : null;
+        return publish(content, null);
+    }
+    /**
+     * Publish message to a topic. It will attempt to publish regardless of subscription status.
+     *
+     * @param content payload
+     * @param extraHeaders additional message headers.
+     */
+    public PromisedReply<ServerMessage> publish(final Drafty content, final Map<String, Object> extraHeaders) {
+        final Map<String, Object> head;
+        if (extraHeaders != null || !content.isPlain()) {
+            head = new HashMap<>();
+            if (extraHeaders != null) {
+                head.putAll(extraHeaders);
+            }
+            if (!content.isPlain()) {
+                head.putAll(Tinode.draftyHeadersFor(content));
+            }
+        } else {
+            head = null;
+        }
+
         final Storage.Message msg;
         if (mStore != null) {
             msg = mStore.msgSend(this, content, head);

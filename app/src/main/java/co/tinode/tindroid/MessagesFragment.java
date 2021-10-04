@@ -737,10 +737,10 @@ public class MessagesFragment extends Fragment {
         return imageFile;
     }
 
-    private boolean sendMessage(Drafty content) {
+    private boolean sendMessage(Drafty content, int replyTo) {
         MessageActivity activity = (MessageActivity) getActivity();
         if (activity != null) {
-            boolean done = activity.sendMessage(content);
+            boolean done = activity.sendMessage(content, replyTo);
             if (done) {
                 scrollToBottom();
             }
@@ -759,9 +759,18 @@ public class MessagesFragment extends Fragment {
         }
         String message = inputField.getText().toString().trim();
         if (!message.equals("")) {
-            if (sendMessage(Drafty.parse(message))) {
+            Drafty msg = Drafty.parse(message);
+            if (mReply != null) {
+                msg = mReply.append(msg);
+            }
+            if (sendMessage(msg, mReplySeqID)) {
                 // Message is successfully queued, clear text from the input field and redraw the list.
                 inputField.getText().clear();
+                if (mReplySeqID > 0) {
+                    mReplySeqID = -1;
+                    mReply = null;
+                    activity.findViewById(R.id.replyPreview).setVisibility(View.GONE);
+                }
             }
         }
     }
