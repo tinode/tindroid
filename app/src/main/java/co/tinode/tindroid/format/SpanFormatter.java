@@ -167,9 +167,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     static StyledTreeNode handleMention_Impl(Object content, Map<String, Object> data) {
         int color = sDefaultColor;
-        try {
-            color = colorMention((String) data.get("val"));
-        } catch(ClassCastException ignored){}
+
+        if (data != null) {
+            try {
+                color = colorMention((String) data.get("val"));
+            } catch (ClassCastException ignored) {}
+        }
 
         return new StyledTreeNode(new ForegroundColorSpan(color), content);
     }

@@ -10,15 +10,15 @@ import co.tinode.tindroid.R;
 // Drafty formatter for creating message previews in push notifications.
 // Push notifications don't support ImageSpan or TypefaceSpan, consequently, using Unicode chars instead of icons.
 public class FontFormatter extends PreviewFormatter {
+    // Emoji characters from the stock font: Camera 📷, Paperclip 📎, Memo 📝, Question-Mark ❓.
+    // These characters are present in Android 5 and up.
+    private static final String[] UNICODE_STRINGS = new String[]{"\uD83D\uDCF7", "\uD83D\uDCCE", "\uD83D\uDCDD", "\u2753"};
+
     // Index into character sets.
     private static final int IMAGE = 0;
     private static final int ATTACHMENT = 1;
     private static final int FORM = 2;
     private static final int UNKNOWN = 3;
-
-    // Emoji characters from the stock font: Camera, Paperclip, Memo, Question-Mark.
-    // These characters are present in Android 5 and up.
-    private static final String[] UNICODE_STRINGS = new String[]{"\uD83D\uDCF7", "\uD83D\uDCCE", "\uD83D\uDCDD", "\u2753"};
 
     public FontFormatter(final Context context, float fontSize, int maxLength) {
         super(context, fontSize, maxLength);
