@@ -62,6 +62,7 @@ import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tindroid.format.CopyFormatter;
 import co.tinode.tindroid.format.SpanFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
@@ -240,10 +241,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             int pos = positions[i];
             StoredMessage msg = getMessage(pos);
             if (msg != null) {
-                Subscription<VxCard, ?> sub = (Subscription<VxCard, ?>) topic.getSubscription(msg.from);
-                String name = (sub != null && sub.pub != null) ? sub.pub.fn : msg.from;
-                sb.append("\n[").append(name).append("]: ").append(msg.content).append("; ")
-                        .append(UiUtils.shortDate(msg.ts));
+                if (msg.from != null) {
+                    Subscription<VxCard, ?> sub = (Subscription<VxCard, ?>) topic.getSubscription(msg.from);
+                    sb.append("\n[");
+                    sb.append((sub != null && sub.pub != null) ? sub.pub.fn : msg.from);
+                    sb.append("]: ");
+                }
+                if (msg.content != null) {
+                    sb.append(msg.content.format(new CopyFormatter(mActivity), null).toSpanned());
+                }
+                sb.append("; ").append(UiUtils.shortDate(msg.ts));
             }
             toggleSelectionAt(pos);
             notifyItemChanged(pos);

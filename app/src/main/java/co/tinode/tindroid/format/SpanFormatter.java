@@ -350,7 +350,6 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 }
             }
 
-
             if (span != null && span.isEmpty()) {
                 span = null;
             } else {
