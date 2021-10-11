@@ -7,13 +7,14 @@
     android:orientation="vertical"
     tools:context=".AccountInfoFragment">
 
-    <androidx.appcompat.widget.AppCompatImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imageAvatar"
         android:layout_width="@dimen/avatar_size_large"
         android:layout_height="@dimen/avatar_size_large"
         android:layout_gravity="center"
         android:layout_margin="4sp"
         android:contentDescription="@string/avatar"
+        app:shapeAppearanceOverlay="@style/roundImageView"
         app:srcCompat="@drawable/ic_person_grey" />
 
     <TextView

@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/activity_default_margin">
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imageAvatar"
             android:layout_width="@dimen/avatar_size_large"
             android:layout_height="@dimen/avatar_size_large"
@@ -20,6 +20,7 @@
             android:clickable="true"
             android:contentDescription="@string/avatar"
             android:focusable="true"
+            app:shapeAppearanceOverlay="@style/roundImageView"
             app:srcCompat="@drawable/ic_person_grey" />
 
         <Button

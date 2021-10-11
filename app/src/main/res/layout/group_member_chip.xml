@@ -11,13 +11,14 @@
     android:layout_margin="2dp"
     android:gravity="center_vertical">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@android:id/icon"
         android:layout_width="24sp"
         android:layout_height="24sp"
         android:layout_marginEnd="6dp"
-        app:srcCompat="@drawable/ic_person_circle"
-        android:contentDescription="@string/avatar" />
+        android:contentDescription="@string/avatar"
+        app:shapeAppearanceOverlay="@style/roundImageView"
+        app:srcCompat="@drawable/ic_person_circle" />
 
     <TextView
         android:id="@android:id/text1"

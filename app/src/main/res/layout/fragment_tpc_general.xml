@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imageAvatar"
                 android:layout_width="@dimen/avatar_size_large"
                 android:layout_height="@dimen/avatar_size_large"
@@ -25,6 +25,7 @@
                 android:clickable="true"
                 android:contentDescription="@string/avatar"
                 android:focusable="true"
+                app:shapeAppearanceOverlay="@style/roundImageView"
                 app:srcCompat="@drawable/ic_group_grey" />
 
             <Button

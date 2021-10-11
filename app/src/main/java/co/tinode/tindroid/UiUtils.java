@@ -1004,7 +1004,7 @@ public class UiUtils {
 
     static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTopicDesc(final Activity activity,
                                                                              T topic,
-                                                                             String title, String comment, String description,
+                                                                             String title, String description,
                                                                              final TitleUpdateCallbackInterface done) {
         VxCard oldPub = topic.getPub();
         VxCard pub = null;
@@ -1030,24 +1030,8 @@ public class UiUtils {
             }
         }
 
-        if (!TextUtils.isEmpty(comment)) {
-            if (comment.length() > MAX_TITLE_LENGTH) {
-                comment = comment.substring(0, MAX_TITLE_LENGTH);
-            }
-            PrivateType priv = topic.getPriv();
-            String oldComment = priv != null ? priv.getComment() : null;
-            if (comment.equals(oldComment)) {
-                comment = null;
-            }
-        }
-
-        if (pub != null || comment != null) {
-            PrivateType priv = null;
-            if (comment != null) {
-                priv = new PrivateType();
-                priv.setComment(comment);
-            }
-            topic.setDescription(pub, priv).thenApply(
+        if (pub != null) {
+            topic.setDescription(pub, null).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {

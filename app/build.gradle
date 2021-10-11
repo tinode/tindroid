@@ -26,7 +26,7 @@ android {
         targetSdkVersion 30
         vectorDrawables.useSupportLibrary = true
 
-        // If you are getting errors due to git not being set up comment out lines gitVersion*()
+        // If you are getting errors due to git not being setup comment out lines gitVersion*()
         // and uncomment lines with static assignments.
 
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
@@ -66,7 +66,7 @@ dependencies {
     
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
     implementation 'androidx.fragment:fragment:1.3.6'
     implementation 'androidx.exifinterface:exifinterface:1.3.3'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -82,8 +82,8 @@ dependencies {
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.material:material:1.4.0'
-    implementation 'com.google.firebase:firebase-core:19.0.1'
-    implementation 'com.google.firebase:firebase-crashlytics:18.2.1'
+    implementation 'com.google.firebase:firebase-core:19.0.2'
+    implementation 'com.google.firebase:firebase-crashlytics:18.2.3'
     implementation 'com.google.firebase:firebase-messaging:22.0.0'
 
     // Don't change to 2.7182... The 2.8 is the latest.

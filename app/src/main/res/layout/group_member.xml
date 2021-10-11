@@ -12,7 +12,7 @@
     android:paddingLeft="4dp"
     android:paddingRight="4dp" >
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@android:id/icon"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -20,6 +20,7 @@
         android:contentDescription="@string/avatar"
         android:layout_marginEnd="5dp"
         android:layout_centerVertical="true"
+        app:shapeAppearanceOverlay="@style/roundImageView"
         app:srcCompat="@drawable/ic_person_circle" />
 
     <androidx.appcompat.widget.AppCompatImageButton

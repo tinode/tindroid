@@ -17,9 +17,11 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_marginEnd="8dp">
-        <ImageView
+
+        <com.google.android.material.imageview.ShapeableImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
+            app:shapeAppearanceOverlay="@style/roundImageView"
             app:srcCompat="@drawable/ic_person_circle"
             tools:ignore="ContentDescription" />
 

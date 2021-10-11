@@ -399,8 +399,11 @@ public class MessagesFragment extends Fragment {
             activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
             activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+            UiUtils.setupToolbar(activity, null, mTopicName, false, null);
             return;
         }
+
+        UiUtils.setupToolbar(activity, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
 
         Acs acs = mTopic.getAccessMode();
         if (acs == null || !acs.isModeDefined()) {

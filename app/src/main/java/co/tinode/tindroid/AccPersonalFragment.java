@@ -334,7 +334,7 @@ public class AccPersonalFragment extends Fragment
             final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
             String title = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             String description = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
-            UiUtils.updateTopicDesc(activity, me, title, null, description,
+            UiUtils.updateTopicDesc(activity, me, title, description,
                     () -> {
                         if (activity.isFinishing() || activity.isDestroyed()) {
                             return;

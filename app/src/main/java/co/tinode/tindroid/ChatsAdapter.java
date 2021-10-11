@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -293,17 +295,23 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             }
 
             Bitmap avatar = null;
-            String ref = null;
+            URL ref = null;
             String fullName = null;
             if (pub != null) {
                 avatar = pub.getBitmap();
                 fullName = pub.fn;
-                ref = pub.getPhotoRef();
+                ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
             }
 
             Drawable local = UiUtils.avatarDrawable(context, avatar, fullName, topicName);
             if (ref != null) {
-                Picasso.get().load(ref).resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE).error(local).fit().into(avatarView);
+                Log.i("ChatsAdapter", "Picasso loading " + ref.toString());
+                Picasso
+                        .get()
+                        .load(ref.toString())
+                        .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE)
+                        .error(local)
+                        .into(avatarView);
             } else {
                 avatarView.setImageDrawable(local);
             }
