@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -27,12 +26,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -167,14 +164,10 @@ public class AccPersonalFragment extends Fragment
             credList.requestLayout();
 
             VxCard pub = me.getPub();
+            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, Cache.getTinode().getMyId());
             if (pub != null) {
                 fn = pub.fn;
                 description = pub.note;
-                final Bitmap bmp = pub.getBitmap();
-                if (bmp != null) {
-                    ((AppCompatImageView) activity.findViewById(R.id.imageAvatar))
-                            .setImageDrawable(new RoundImageDrawable(getResources(), bmp));
-                }
             }
 
             FlexboxLayout tagsView = activity.findViewById(R.id.tagList);

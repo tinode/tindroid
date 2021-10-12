@@ -44,11 +44,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.squareup.picasso.Picasso;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -612,6 +615,30 @@ public class UiUtils {
 
         avatarContainer.setImageDrawable(new RoundImageDrawable(avatarContainer.getResources(),
                 scaleSquareBitmap(avatar, AVATAR_SIZE)));
+    }
+
+    // Construct avatar from VxCard and set it to the provided ImageView.
+    static void setAvatar(ImageView avatarView, VxCard pub, String address) {
+        Bitmap avatar = null;
+        URL ref = null;
+        String fullName = null;
+        if (pub != null) {
+            avatar = pub.getBitmap();
+            fullName = pub.fn;
+            ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
+        }
+
+        Drawable local = UiUtils.avatarDrawable(avatarView.getContext(), avatar, fullName, address);
+        if (ref != null) {
+            Picasso
+                    .get()
+                    .load(ref.toString())
+                    .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE)
+                    .error(local)
+                    .into(avatarView);
+        } else {
+            avatarView.setImageDrawable(local);
+        }
     }
 
     // Construct avatar drawable: use bitmap if it is not null,

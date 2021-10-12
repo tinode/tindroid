@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -31,9 +30,9 @@
             android:layout_alignBottom="@id/imageAvatar"
             android:layout_margin="2sp"
             android:background="@drawable/pill_counter"
+            android:contentDescription="@string/change_avatar"
             android:gravity="center"
             android:paddingTop="10dp"
-            android:contentDescription="@string/change_avatar"
             app:drawableTopCompat="@drawable/ic_add_a_photo" />
 
         <LinearLayout
@@ -52,31 +51,34 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/topicTitle"
                     style="?android:textAppearanceLarge"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
-                    android:inputType="textPersonName"
                     android:hint="@string/your_name"
+                    android:inputType="textPersonName"
                     tools:text="John Doe" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/topicDescription"
                     style="?android:textAppearanceMedium"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
-                    android:maxLines="3"
-                    android:inputType="textPersonName|textMultiLine"
                     android:hint="@string/description_optional"
+                    android:inputType="textPersonName|textMultiLine"
+                    android:maxLines="3"
                     tools:text="I'm an all around nice guy. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
             </com.google.android.material.textfield.TextInputLayout>
+
             <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />
@@ -152,8 +154,8 @@
                 android:drawablePadding="4sp"
                 android:text="@string/manage"
                 android:textColor="?android:textColorPrimary"
-                app:drawableTint="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_edit_black" />
+                app:drawableStartCompat="@drawable/ic_edit_black"
+                app:drawableTint="?android:textColorPrimary" />
 
             <androidx.legacy.widget.Space
                 android:layout_width="match_parent"

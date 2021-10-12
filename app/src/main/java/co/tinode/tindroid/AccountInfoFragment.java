@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -15,12 +14,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.MeTopic;
 
 /**
@@ -81,21 +78,17 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
             return;
         }
 
-        ((TextView) activity.findViewById(R.id.topicAddress)).setText(Cache.getTinode().getMyId());
+        String myID = Cache.getTinode().getMyId();
+        ((TextView) activity.findViewById(R.id.topicAddress)).setText(myID);
 
         String fn = null;
         String note = null;
         if (me != null) {
             VxCard pub = me.getPub();
             if (pub != null) {
-                fn = pub.fn;
-                final Bitmap bmp = pub.getBitmap();
-                if (bmp != null) {
-                    ((AppCompatImageView) activity.findViewById(R.id.imageAvatar))
-                            .setImageDrawable(new RoundImageDrawable(getResources(), bmp));
-                }
                 note = pub.note;
             }
+            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, myID);
 
             activity.findViewById(R.id.verified).setVisibility(me.isTrustedVerified() ? View.VISIBLE : View.GONE);
             activity.findViewById(R.id.staff).setVisibility(me.isTrustedStaff() ? View.VISIBLE : View.GONE);

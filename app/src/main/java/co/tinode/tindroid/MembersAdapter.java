@@ -82,8 +82,8 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         return mCurrentMembers.get(pos).unique.hashCode();
     }
 
-    void append(String unique, String name, Drawable icon) {
-        append(new Member(unique, name, icon, true));
+    void append(String unique, String name, Drawable avatar) {
+        append(new Member(unique, name, avatar, true));
     }
 
     private void append(Member user) {
@@ -157,20 +157,20 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     static class Member {
         final String unique;
         final String name;
-        final Drawable icon;
+        final Drawable avatar;
         final Boolean removable;
 
-        Member(String unique, String name, Drawable icon, boolean removable) {
+        Member(String unique, String name, Drawable avatar, boolean removable) {
             this.unique = unique;
             this.name = name != null ? name : unique;
-            this.icon = icon;
+            this.avatar = avatar;
             this.removable = removable;
         }
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
         final int viewType;
-        ImageView icon;
+        ImageView avatar;
         TextView title;
         AppCompatImageButton close;
 
@@ -179,7 +179,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
             this.viewType = viewType;
             if (viewType == R.layout.group_member_chip) {
-                icon = itemView.findViewById(android.R.id.icon);
+                avatar = itemView.findViewById(android.R.id.icon);
                 title = itemView.findViewById(android.R.id.text1);
                 close = itemView.findViewById(android.R.id.closeButton);
             }
@@ -187,8 +187,8 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
         void bind(int pos) {
             Member user = mCurrentMembers.get(pos);
-            if (user.icon != null) {
-                icon.setImageDrawable(user.icon);
+            if (user.avatar != null) {
+                avatar.setImageDrawable(user.avatar);
             }
             title.setText(user.name);
 

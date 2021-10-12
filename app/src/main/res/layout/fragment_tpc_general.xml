@@ -142,10 +142,6 @@
                 android:layout_marginBottom="@dimen/activity_padding"
                 android:background="@color/grey" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="6dp" />
-
             <TextView
                 style="@style/sectionTitleStyle"
                 android:layout_width="wrap_content"
