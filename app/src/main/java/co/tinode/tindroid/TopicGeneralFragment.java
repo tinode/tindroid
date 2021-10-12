@@ -92,7 +92,10 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             if (activity.isFinishing() || activity.isDestroyed()) {
                 return;
             }
-            mAvatarPickerLauncher.launch(UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher));
+            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher);
+            if (launcher != null) {
+                mAvatarPickerLauncher.launch(launcher);
+            }
         });
     }
 
@@ -201,19 +204,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             }
         }
 
-        final Bitmap bmp = pub != null ? pub.getBitmap() : null;
-        if (bmp != null) {
-            avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
-        } else {
-            avatar.setImageDrawable(
-                    new LetterTileDrawable(requireContext())
-                            .setIsCircular(true)
-                            .setContactTypeAndColor(
-                                    mTopic.getTopicType() == Topic.TopicType.P2P ?
-                                            LetterTileDrawable.ContactType.PERSON :
-                                            LetterTileDrawable.ContactType.GROUP)
-                            .setLetterAndColor(pub != null ? pub.fn : null, mTopic.getName()));
-        }
+        UiUtils.setAvatar(avatar, pub, mTopic.getName());
 
         PrivateType priv = mTopic.getPriv();
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {

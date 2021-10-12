@@ -160,6 +160,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(false);
         rv.addItemDecoration(new HorizontalListDivider(activity));
+        rv.setNestedScrollingEnabled(false);
 
         mContactsAdapter = new ContactsAdapter(activity, mImageLoader, (unique, holder) -> {
             if (!mContactsAdapter.isSelected(unique)) {
@@ -205,8 +206,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                 bmp = ((BitmapDrawable) ((ImageView) activity.findViewById(R.id.imageAvatar))
                         .getDrawable()).getBitmap();
             } catch (ClassCastException ignored) {
-                // If image is not loaded, the drawable is a vector.
-                // Ignore it.
+                // If image is not loaded, the drawable is a vector. Ignore it.
             }
 
             createTopic(activity, topicTitle, bmp, subtitle,

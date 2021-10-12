@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -353,7 +354,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             return;
         }
 
-        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
+        final ImageView avatar = activity.findViewById(R.id.imageAvatar);
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
         final TextView description = activity.findViewById(R.id.topicDescription);
@@ -375,19 +376,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         activity.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
         activity.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
 
-        final Bitmap bmp = pub != null ? pub.getBitmap() : null;
-        if (bmp != null) {
-            avatar.setImageDrawable(new RoundImageDrawable(getResources(), bmp));
-        } else {
-            avatar.setImageDrawable(
-                    new LetterTileDrawable(requireContext())
-                            .setIsCircular(true)
-                            .setContactTypeAndColor(
-                                    mTopic.getTopicType() == Topic.TopicType.P2P ?
-                                            LetterTileDrawable.ContactType.PERSON :
-                                            LetterTileDrawable.ContactType.GROUP)
-                            .setLetterAndColor(pub != null ? pub.fn : null, mTopic.getName()));
-        }
+        UiUtils.setAvatar(avatar, pub, mTopic.getName());
 
         PrivateType priv = mTopic.getPriv();
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
@@ -431,7 +420,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         final LinearLayout statusContainer;
         final TextView[] status;
         final ImageButton more;
-        final AppCompatImageView icon;
+        final ImageView avatar;
 
 
         MemberViewHolder(View item) {
@@ -445,7 +434,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 status[i] = (TextView) statusContainer.getChildAt(i);
             }
             more = item.findViewById(R.id.optionsMenu);
-            icon = item.findViewById(android.R.id.icon);
+            avatar = item.findViewById(android.R.id.icon);
         }
     }
 
@@ -534,8 +523,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 holder.status[i].setVisibility(View.GONE);
             }
 
-            holder.icon.setImageDrawable(UiUtils.avatarDrawable(activity, bmp,
-                    sub.pub != null ? sub.pub.fn : null, sub.user));
+            UiUtils.setAvatar(holder.avatar, sub.pub, sub.user);
 
             final View.OnClickListener action = v -> {
                 int position1 = holder.getBindingAdapterPosition();

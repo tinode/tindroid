@@ -515,13 +515,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         if (holder.mAvatar != null || holder.mUserName != null) {
             Subscription<VxCard, ?> sub = topic.getSubscription(m.from);
-            if (sub != null && sub.pub != null) {
-                Bitmap avatar = sub.pub.getBitmap();
+            if (sub != null) {
                 if (holder.mAvatar != null) {
-                    holder.mAvatar.setImageDrawable(UiUtils.avatarDrawable(mActivity, avatar, sub.pub.fn, sub.user));
+                    UiUtils.setAvatar(holder.mAvatar, sub.pub, sub.user);
                 }
 
-                if (holder.mUserName != null) {
+                if (holder.mUserName != null && sub.pub != null) {
                     holder.mUserName.setText(sub.pub.fn);
                 }
             } else {

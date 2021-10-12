@@ -188,6 +188,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         void bind(int pos) {
             Member user = mCurrentMembers.get(pos);
             if (user.avatar != null) {
+                // UiUtils.setAvatar(user.avatar, user., user.name);
                 avatar.setImageDrawable(user.avatar);
             }
             title.setText(user.name);
