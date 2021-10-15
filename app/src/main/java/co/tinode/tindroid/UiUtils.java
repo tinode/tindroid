@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -45,6 +46,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -87,6 +89,7 @@ import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
 
+import co.tinode.tindroid.widgets.UrlLayerDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -209,15 +212,22 @@ public class UiUtils {
             return;
         }
 
+        Resources res = activity.getResources();
         ArrayList<Drawable> drawables = new ArrayList<>();
         AnimationDrawable typing = null;
-        drawables.add(avatarDrawable(activity, pub != null ? pub.getBitmap() : null,
-                pub != null ? pub.fn : null, uid));
+        Bitmap bmp = null;
+        String title = null;
+        String ref = null;
+        if (pub != null) {
+            bmp = pub.getBitmap();
+            title = pub.fn;
+            ref = pub.getPhotoRef();
+        }
+        drawables.add(avatarDrawable(activity, bmp, title, uid));
         if (online != null) {
             drawables.add(new OnlineDrawable(online));
 
-            typing = (AnimationDrawable) ResourcesCompat.getDrawable(activity.getResources(),
-                    R.drawable.typing_indicator, null);
+            typing = (AnimationDrawable) ResourcesCompat.getDrawable(res, R.drawable.typing_indicator, null);
             if (typing != null) {
                 typing.setOneShot(false);
                 typing.setVisible(false, true);
@@ -225,14 +235,17 @@ public class UiUtils {
                 drawables.add(typing);
             }
         }
-        LayerDrawable layers = new LayerDrawable(drawables.toArray(new Drawable[]{}));
+        UrlLayerDrawable layers = new UrlLayerDrawable(drawables.toArray(new Drawable[]{}));
         layers.setId(0, LOGO_LAYER_AVATAR);
+        layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, ref);
+
         if (online != null) {
             layers.setId(1, LOGO_LAYER_ONLINE);
             if (typing != null) {
                 layers.setId(2, LOGO_LAYER_TYPING);
             }
         }
+
         toolbar.setLogo(layers);
         Rect b = toolbar.getLogo().getBounds();
         if (!b.isEmpty() && typing != null) {
@@ -439,7 +452,7 @@ public class UiUtils {
             }
             return DateFormat.getInstance().format(then.getTime());
         }
-        return "null date";
+        return "unknown";
     }
 
     static Intent avatarSelectorIntent(@NonNull final Activity activity,
@@ -697,7 +710,7 @@ public class UiUtils {
      * no thumbnail exists, returns null.
      */
     private static Bitmap loadContactPhotoThumbnail(Fragment fragment, String photoData, int imageSize) {
-
+        /*
         // Ensures the Fragment is still added to an activity. As this method is called in a
         // background thread, there's the possibility the Fragment is no longer attached and
         // added to an activity. If so, no need to spend resources loading the contact photo.
@@ -742,6 +755,7 @@ public class UiUtils {
         // If an AssetFileDescriptor was returned, try to close it
         // Closing a file descriptor might cause an IOException if the file is
         // already closed. Nothing extra is needed to handle this.
+        */
 
         // If the decoding failed, returns null
         return null;
@@ -753,7 +767,7 @@ public class UiUtils {
     }
 
     @NonNull
-    static byte[] bitmapToBytes(@NonNull Bitmap bmp, String mimeType) {
+    public static byte[] bitmapToBytes(@NonNull Bitmap bmp, String mimeType) {
         Bitmap.CompressFormat fmt;
         if ("image/jpeg".equals(mimeType)) {
             fmt = Bitmap.CompressFormat.JPEG;

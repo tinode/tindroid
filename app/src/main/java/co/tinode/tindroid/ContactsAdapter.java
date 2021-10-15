@@ -295,7 +295,8 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                     } else {
                         Context context = itemView.getContext();
                         mImageLoader.loadImage(context, photoUri, (ImageView) ViewHolder.this.switcher.getNextView());
-                        ViewHolder.this.switcher.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
+                        ViewHolder.this.switcher.setImageDrawable(
+                                UiUtils.avatarDrawable(context, null, displayName, unique));
                     }
                 });
             }

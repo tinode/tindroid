@@ -10,6 +10,7 @@ import android.text.style.TextAppearanceSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.Collection;
@@ -292,7 +293,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     class ViewHolderItem extends ViewHolder {
         final TextView name;
         final TextView contactPriv;
-        final AppCompatImageView icon;
+        final ImageView avatar;
 
         final ClickListener clickListener;
 
@@ -301,7 +302,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
             name = item.findViewById(R.id.contactName);
             contactPriv = item.findViewById(R.id.contactPriv);
-            icon = item.findViewById(R.id.avatar);
+            avatar = item.findViewById(R.id.avatar);
 
             item.findViewById(R.id.online).setVisibility(View.GONE);
             item.findViewById(R.id.unreadCount).setVisibility(View.GONE);
@@ -365,35 +366,29 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
             // Clear the icon then load the thumbnail from photoUri in a background worker thread
             Context context = itemView.getContext();
-            icon.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
-            mImageLoader.loadImage(context, photoUri, icon);
+            avatar.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
+            mImageLoader.loadImage(context, photoUri, avatar);
 
             itemView.setOnClickListener(view -> clickListener.onClick(unique));
         }
 
         private void bind(final Subscription<VxCard, String[]> sub) {
-            final Context context = itemView.getContext();
             final String unique = sub.getUnique();
 
-            VxCard pub = sub.pub;
-            if (pub != null) {
-                name.setText(pub.fn);
+            UiUtils.setAvatar(avatar, sub.pub, unique);
+            if (sub.pub != null) {
+                name.setText(sub.pub.fn);
                 name.setTypeface(null, Typeface.NORMAL);
             } else {
                 name.setText(R.string.placeholder_contact_title);
                 name.setTypeface(null, Typeface.ITALIC);
             }
+
             if (sub.priv != null) {
                 contactPriv.setText(TextUtils.join(", ", sub.priv));
             } else {
                 contactPriv.setText("");
             }
-
-            icon.setImageDrawable(
-                    UiUtils.avatarDrawable(context,
-                            pub != null ? pub.getBitmap() : null,
-                            pub != null ? pub.fn : null,
-                            unique));
 
             itemView.setOnClickListener(view -> clickListener.onClick(unique));
         }

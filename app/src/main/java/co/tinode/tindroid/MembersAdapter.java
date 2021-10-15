@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.recyclerview.widget.RecyclerView;
+import co.tinode.tindroid.media.VxCard;
 
 public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHolder> {
     private final ArrayList<String> mInitialMembers;
@@ -82,8 +83,8 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         return mCurrentMembers.get(pos).unique.hashCode();
     }
 
-    void append(String unique, String name, Drawable avatar) {
-        append(new Member(unique, name, avatar, true));
+    void append(String unique, VxCard pub) {
+        append(new Member(unique, pub, true));
     }
 
     private void append(Member user) {
@@ -156,14 +157,12 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
     static class Member {
         final String unique;
-        final String name;
-        final Drawable avatar;
+        final VxCard pub;
         final Boolean removable;
 
-        Member(String unique, String name, Drawable avatar, boolean removable) {
+        Member(String unique, VxCard pub, boolean removable) {
             this.unique = unique;
-            this.name = name != null ? name : unique;
-            this.avatar = avatar;
+            this.pub = pub;
             this.removable = removable;
         }
     }
@@ -187,11 +186,10 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
         void bind(int pos) {
             Member user = mCurrentMembers.get(pos);
-            if (user.avatar != null) {
-                // UiUtils.setAvatar(user.avatar, user., user.name);
-                avatar.setImageDrawable(user.avatar);
+            if (user.pub != null) {
+                UiUtils.setAvatar(avatar, user.pub, user.unique);
+                title.setText(user.pub.fn);
             }
-            title.setText(user.name);
 
             if (user.removable && (mCancelable || !mInitialMembers.contains(user.unique))) {
                 close.setVisibility(View.VISIBLE);

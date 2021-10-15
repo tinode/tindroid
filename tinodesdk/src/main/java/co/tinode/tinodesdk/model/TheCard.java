@@ -146,8 +146,8 @@ public class TheCard implements Serializable, Mergeable {
         return photo == null ? null : photo.ref;
     }
     @JsonIgnore
-    public String getPhotoType() {
-        return photo == null ? null : photo.type;
+    public String getPhotoMimeType() {
+        return photo == null ? null : ("image/" + photo.type);
     }
     @JsonIgnore
     public void setPhotoBits(byte[] bits, String type) {

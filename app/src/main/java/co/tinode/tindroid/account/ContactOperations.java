@@ -3,6 +3,7 @@ package co.tinode.tindroid.account;
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -13,8 +14,14 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.text.TextUtils;
+import android.util.Log;
+
+import com.squareup.picasso.Picasso;
+
+import java.io.IOException;
 
 import co.tinode.tindroid.R;
+import co.tinode.tindroid.UiUtils;
 
 /**
  * Helper class for storing data in the platform content providers.
@@ -211,8 +218,19 @@ class ContactOperations {
      * @param avatar avatar image serialized into byte array
      * @return instance of ContactOperations
      */
-    ContactOperations addAvatar(final byte[] avatar) {
+    ContactOperations addAvatar(byte[] avatar, final String ref, final String mimeType) {
         mValues.clear();
+        if (ref != null) {
+            try {
+                avatar = UiUtils.bitmapToBytes(Picasso.get()
+                        .load(Uri.decode(ref))
+                        .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE).centerCrop()
+                        .get(), mimeType);
+            } catch (IOException ex) {
+                Log.w(TAG, "Failed to download avatar", ex);
+            }
+        }
+
         if (avatar != null) {
             mValues.put(Photo.PHOTO, avatar);
             mValues.put(Photo.MIMETYPE, Photo.CONTENT_ITEM_TYPE);

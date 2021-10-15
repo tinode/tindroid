@@ -184,12 +184,12 @@ public class ContactsManager {
         // Initiate adding data to contacts provider.
 
         // Create new RAW_CONTACTS record.
-        final ContactOperations contactOp = ContactOperations.createNewContact(
-                context, unique, account.name, batchOperation, isSyncContext);
+        final ContactOperations contactOp =
+                ContactOperations.createNewContact(context, unique, account.name, batchOperation, isSyncContext);
 
         contactOp.addName(pub.fn, pub.n != null ? pub.n.given : null,
                 pub.n != null ? pub.n.surname : null)
-                .addAvatar(pub.photo != null ? pub.photo.data : null);
+                .addAvatar(pub.getPhotoBits(), pub.getPhotoRef(), pub.getPhotoMimeType());
 
         if (pub.email != null) {
             for (TheCard.Contact email : pub.email) {
@@ -316,7 +316,7 @@ public class ContactsManager {
         }
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
-            contactOp.addAvatar(pub.photo != null ? pub.photo.data : null);
+            contactOp.addAvatar(pub.getPhotoBits(), pub.getPhotoRef(), pub.getPhotoMimeType());
         }
 
         // If we don't have a status profile, then create one.  This could

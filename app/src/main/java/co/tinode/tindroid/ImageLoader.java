@@ -110,7 +110,7 @@ public abstract class ImageLoader {
      * @return A bitmap sampled down from the original with the same aspect ratio and dimensions
      * that are equal to or greater than the requested width and height
      */
-    static Bitmap decodeSampledBitmapFromStream(
+    static Bitmap decodeSampledBitmapFromStream0(
             InputStream is, int reqWidth, int reqHeight) throws IOException {
 
         // First decode with inJustDecodeBounds=true to check dimensions.
