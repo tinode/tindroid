@@ -21,16 +21,17 @@
         <com.google.android.material.imageview.ShapeableImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:contentDescription="@string/avatar"
             app:shapeAppearanceOverlay="@style/roundImageView"
-            app:srcCompat="@drawable/ic_person_circle"
-            tools:ignore="ContentDescription" />
+            app:srcCompat="@drawable/ic_person_circle" />
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/selected"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            app:srcCompat="@drawable/ic_selected"
-            tools:ignore="ContentDescription" />
+            android:contentDescription="@string/avatar"
+            app:shapeAppearanceOverlay="@style/roundImageView"
+            app:srcCompat="@drawable/ic_selected" />
     </ImageSwitcher>
 
     <TextView

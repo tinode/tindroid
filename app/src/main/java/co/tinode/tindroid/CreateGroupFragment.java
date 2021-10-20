@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -47,11 +48,11 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
     private static final String TAG = "CreateGroupFragment";
     private static final int LOADER_ID = 102;
 
-    private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
-
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
+    // Contacts selected as group members.
     private MembersAdapter mSelectedAdapter;
+    // All contacts.
     private ContactsAdapter mContactsAdapter;
 
     // Callback which receives notifications of contacts loading status;
@@ -86,16 +87,9 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                         return;
                     }
                 }
-                mContactsAdapter.setContactsPermission(true);
+                mContactsAdapter.setContactsPermissionGranted();
                 restartLoader((StartChatActivity) getActivity());
             });
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        mImageLoader = UiUtils.getImageLoaderInstance(this);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -152,7 +146,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         rv.setHasFixedSize(false);
 
         mSelectedAdapter = new MembersAdapter(null,
-                unique -> mContactsAdapter.toggleSelected(unique), true);
+                (unique, pos) -> mContactsAdapter.toggleSelected(unique, pos), true);
         rv.setAdapter(mSelectedAdapter);
 
         // Recycler view with all available Tinode contacts.
@@ -162,14 +156,13 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         rv.addItemDecoration(new HorizontalListDivider(activity));
         rv.setNestedScrollingEnabled(false);
 
-        mContactsAdapter = new ContactsAdapter(activity, mImageLoader, (unique, holder) -> {
+        mContactsAdapter = new ContactsAdapter(activity, (position, unique, displayName, photoUri) -> {
             if (!mContactsAdapter.isSelected(unique)) {
-                mSelectedAdapter.append(unique, (String) holder.text1.getText(),
-                        holder.getIconDrawable());
+                mSelectedAdapter.append(position, unique, displayName, Uri.parse(photoUri));
             } else {
                 mSelectedAdapter.remove(unique);
             }
-            mContactsAdapter.toggleSelected(unique);
+            mContactsAdapter.toggleSelected(unique, position);
         });
         rv.setAdapter(mContactsAdapter);
 
@@ -221,15 +214,6 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         super.onResume();
 
         restartLoader((StartChatActivity) getActivity());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        // In the case onPause() is called during a fling the image loader is
-        // un-paused to let any remaining background work complete.
-        mImageLoader.setPauseWork(false);
     }
 
     private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle,

@@ -1,9 +1,9 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
@@ -16,8 +16,9 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.HashMap;
-import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,17 +35,15 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
     private final AlphabetIndexer mAlphabetIndexer; // Stores the AlphabetIndexer instance
     private final TextAppearanceSpan mHighlightTextSpan; // Stores the highlight text appearance style
     private final ClickListener mClickListener;
-    private final ImageLoader mImageLoader;
     // Selected items
     private final HashMap<String, Integer> mSelected;
     private String mSearchTerm;
     private Cursor mCursor;
     private boolean mPermissionGranted = false;
 
-    ContactsAdapter(Context context, ImageLoader imageLoader, ClickListener clickListener) {
+    ContactsAdapter(Context context, ClickListener clickListener) {
 
         mClickListener = clickListener;
-        mImageLoader = imageLoader;
         mSelected = new HashMap<>();
 
         setHasStableIds(true);
@@ -86,10 +85,11 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
         }
     }
 
-    void setContactsPermission(boolean granted) {
-        mPermissionGranted = granted;
+    void setContactsPermissionGranted() {
+        mPermissionGranted = true;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void swapCursor(Cursor newCursor, String newSearchTerm) {
         mSearchTerm = newSearchTerm;
@@ -184,22 +184,26 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
         return mSelected.containsKey(unique);
     }
 
-    void toggleSelected(String unique) {
+    void toggleSelected(String unique, int pos) {
         if (isSelected(unique)) {
             mSelected.remove(unique);
         } else {
-            mSelected.put(unique, 0);
+            mSelected.put(unique, null);
         }
-        notifyDataSetChanged();
+        if (pos >= 0) {
+            notifyItemChanged(pos);
+        }
     }
 
     interface ClickListener {
-        void onClick(String topicName, ViewHolder holder);
+        void onClick(int position, String unique, String displayName, String photoUri);
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
         final int viewType;
         String unique;
+        String photoUri;
+        String displayName;
         TextView text1;
         TextView text2;
         ImageSwitcher switcher;
@@ -218,14 +222,14 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
             }
         }
 
-        void bind(Cursor cursor, int position) {
+        void bind(Cursor cursor, final int position) {
             if (!cursor.moveToPosition(position)) {
                 throw new IllegalArgumentException("Invalid cursor position " + position);
             }
 
             // Get the thumbnail image Uri from the current Cursor row.
-            final String photoUri = cursor.getString(ContactsLoaderCallback.ContactsQuery.PHOTO_THUMBNAIL_DATA);
-            final String displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
+            photoUri = cursor.getString(ContactsLoaderCallback.ContactsQuery.PHOTO_THUMBNAIL_DATA);
+            displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
             unique = cursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
 
             final int startIndex = UiUtils.indexOfSearchQuery(displayName, mSearchTerm);
@@ -275,9 +279,9 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
             } else {
                 Context context = itemView.getContext();
                 ImageView icon = (ImageView) switcher.getCurrentView();
-                // Clear the icon then load the thumbnail from photoUri in a background worker thread.
+                // Clear the icon then load the thumbnail from photoUri background.
                 icon.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
-                mImageLoader.loadImage(context, photoUri, icon);
+                Picasso.get().load(photoUri).fit().into(icon);
 
                 TypedArray typedArray = itemView.getContext().obtainStyledAttributes(
                         new int[]{android.R.attr.selectableItemBackground});
@@ -289,21 +293,17 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
 
             if (mClickListener != null) {
                 itemView.setOnClickListener(view -> {
-                    mClickListener.onClick(unique, ViewHolder.this);
+                    mClickListener.onClick(position, unique, displayName, photoUri);
                     if (isSelected(unique)) {
                         ViewHolder.this.switcher.setImageResource(R.drawable.ic_selected);
                     } else {
                         Context context = itemView.getContext();
-                        mImageLoader.loadImage(context, photoUri, (ImageView) ViewHolder.this.switcher.getNextView());
+                        Picasso.get().load(photoUri).fit().into((ImageView) ViewHolder.this.switcher.getNextView());
                         ViewHolder.this.switcher.setImageDrawable(
                                 UiUtils.avatarDrawable(context, null, displayName, unique));
                     }
                 });
             }
-        }
-
-        Drawable getIconDrawable() {
-            return ((ImageView) switcher.getCurrentView()).getDrawable();
         }
     }
 }

@@ -152,7 +152,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param name name to get type from.
      * @return type of the topic name.
      */
-    public static TopicType getTopicTypeByName(String name) {
+    public static TopicType getTopicTypeByName(final String name) {
         if (name != null) {
             if (name.equals(Tinode.TOPIC_ME)) {
                 return TopicType.ME;
@@ -168,6 +168,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             }
         }
         return TopicType.UNKNOWN;
+    }
+
+    /**
+     * Check if the type of the given topic name is P2P.
+     * @param name name of the topic to check.
+     * @return <code>true</code> if the given name is P2P, <code>false</code> otherwise.
+     */
+    public static boolean isP2PType(final String name) {
+        return getTopicTypeByName(name) == TopicType.P2P;
     }
 
     /**

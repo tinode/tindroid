@@ -31,6 +31,10 @@ public class AvatarPhoto implements Serializable {
         serializeBitmap();
     }
 
+    public AvatarPhoto(String uri) {
+        this.uri = uri;
+    }
+
     public void constructBitmap() {
         if (data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);

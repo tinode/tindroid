@@ -10,7 +10,6 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -31,10 +30,8 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Patterns;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -46,12 +43,9 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.text.DateFormat;
@@ -70,6 +64,7 @@ import java.util.TimerTask;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -78,7 +73,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 
 import co.tinode.tindroid.account.ContactsManager;
@@ -223,7 +217,12 @@ public class UiUtils {
             title = pub.fn;
             ref = pub.getPhotoRef();
         }
-        drawables.add(avatarDrawable(activity, bmp, title, uid));
+        @DrawableRes int placeholder = Topic.isP2PType(uid) ? R.drawable.ic_person_circle : R.drawable.ic_group_grey;
+        if (ref == null) {
+            drawables.add(avatarDrawable(activity, bmp, title, uid));
+        } else {
+            drawables.add(ResourcesCompat.getDrawable(res, placeholder, null));
+        }
         if (online != null) {
             drawables.add(new OnlineDrawable(online));
 
@@ -237,8 +236,9 @@ public class UiUtils {
         }
         UrlLayerDrawable layers = new UrlLayerDrawable(drawables.toArray(new Drawable[]{}));
         layers.setId(0, LOGO_LAYER_AVATAR);
-        layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, ref);
-
+        if (ref != null) {
+            layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, ref, placeholder, R.drawable.ic_broken_image_round);
+        }
         if (online != null) {
             layers.setId(1, LOGO_LAYER_ONLINE);
             if (typing != null) {
@@ -641,15 +641,17 @@ public class UiUtils {
             ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
         }
 
-        Drawable local = UiUtils.avatarDrawable(avatarView.getContext(), avatar, fullName, address);
         if (ref != null) {
             Picasso
                     .get()
                     .load(ref.toString())
                     .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE)
-                    .error(local)
+                    .placeholder(Topic.isP2PType(address) ?
+                            R.drawable.ic_person_circle : R.drawable.ic_group_grey)
+                    .error(R.drawable.ic_broken_image_round)
                     .into(avatarView);
         } else {
+            Drawable local = UiUtils.avatarDrawable(avatarView.getContext(), avatar, fullName, address);
             avatarView.setImageDrawable(local);
         }
     }
@@ -662,103 +664,13 @@ public class UiUtils {
         } else {
             LetterTileDrawable drawable = new LetterTileDrawable(context);
             drawable.setContactTypeAndColor(
-                    Topic.getTopicTypeByName(address) == Topic.TopicType.P2P ?
-                            LetterTileDrawable.ContactType.PERSON : LetterTileDrawable.ContactType.GROUP)
+                    Topic.isP2PType(address) ?
+                            LetterTileDrawable.ContactType.PERSON :
+                            LetterTileDrawable.ContactType.GROUP)
                     .setLetterAndColor(name, address)
                     .setIsCircular(true);
             return drawable;
         }
-    }
-
-    /*
-     * An ImageLoader object loads and resizes an image in the background and binds it to the
-     * each item layout of the ListView. ImageLoader implements memory caching for each image,
-     * which substantially improves refreshes of the ListView as the user scrolls through it.
-     *
-     * http://developer.android.com/training/displaying-bitmaps/
-     */
-    static ImageLoader getImageLoaderInstance(final Fragment parent) {
-        FragmentActivity activity = parent.getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return null;
-        }
-
-        ImageLoader il = new ImageLoader(getListPreferredItemHeight(parent), activity) {
-            @Override
-            protected Bitmap processBitmap(Object data) {
-                // This gets called in a background thread and passed the data from
-                // ImageLoader.loadImage().
-                return UiUtils.loadContactPhotoThumbnail(parent,
-                        (String) data, getImageSize());
-            }
-        };
-        // Set a placeholder loading image for the image loader
-        il.setLoadingImage(activity, R.drawable.ic_person_circle);
-
-        return il;
-    }
-
-    /**
-     * Decodes and scales a contact's image from a file pointed to by a Uri in the contact's data,
-     * and returns the result as a Bitmap. The column that contains the Uri varies according to the
-     * platform version.
-     *
-     * @param photoData For platforms prior to Android 3.0, provide the Contact._ID column value.
-     *                  For Android 3.0 and later, provide the Contact.PHOTO_THUMBNAIL_URI value.
-     * @param imageSize The desired target width and height of the output image in pixels.
-     * @return A Bitmap containing the contact's image, resized to fit the provided image size. If
-     * no thumbnail exists, returns null.
-     */
-    private static Bitmap loadContactPhotoThumbnail(Fragment fragment, String photoData, int imageSize) {
-        /*
-        // Ensures the Fragment is still added to an activity. As this method is called in a
-        // background thread, there's the possibility the Fragment is no longer attached and
-        // added to an activity. If so, no need to spend resources loading the contact photo.
-        if (!fragment.isAdded()) {
-            return null;
-        }
-
-        Activity activity = fragment.getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return null;
-        }
-
-        // Instantiates an AssetFileDescriptor. Given a content Uri pointing to an image file, the
-        // ContentResolver can return an AssetFileDescriptor for the file.
-
-        // This "try" block catches an Exception if the file descriptor returned from the Contacts
-        // Provider doesn't point to an existing file.
-        Uri thumbUri = Uri.parse(photoData);
-        try (AssetFileDescriptor afd = activity.getContentResolver().openAssetFileDescriptor(thumbUri, "r")) {
-
-            // Retrieves a file descriptor from the Contacts Provider. To learn more about this
-            // feature, read the reference documentation for
-            // ContentResolver#openAssetFileDescriptor.
-
-            // Gets a FileDescriptor from the AssetFileDescriptor. A BitmapFactory object can
-            // decode the contents of a file pointed to by a FileDescriptor into a Bitmap.
-            if (afd != null) {
-                // Decodes a Bitmap from the image pointed to by the FileDescriptor, and scales it
-                // to the specified width and height
-                return ImageLoader.decodeSampledBitmapFromStream(
-                        new BufferedInputStream(new FileInputStream(afd.getFileDescriptor())), imageSize, imageSize);
-            }
-        } catch (IOException e) {
-            // If the file pointed to by the thumbnail URI doesn't exist, or the file can't be
-            // opened in "read" mode, ContentResolver.openAssetFileDescriptor throws a
-            // FileNotFoundException.
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Contact photo thumbnail not found for contact " + photoData
-                        + ": " + e.toString());
-            }
-        }
-        // If an AssetFileDescriptor was returned, try to close it
-        // Closing a file descriptor might cause an IOException if the file is
-        // already closed. Nothing extra is needed to handle this.
-        */
-
-        // If the decoding failed, returns null
-        return null;
     }
 
     @NonNull
@@ -806,7 +718,7 @@ public class UiUtils {
     }
 
     // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
-    // Used to generate placeholder and error images for Picasso.
+    // Used in chat bubbled to generate placeholder and error images for Picasso.
     public static Drawable getPlaceholder(Context ctx, Drawable fg, Drawable bkg, int width, int height) {
         Drawable filter;
         if (bkg == null) {
@@ -863,35 +775,6 @@ public class UiUtils {
         }
 
         return -1;
-    }
-
-    /**
-     * Gets the preferred height for each item in the ListView, in pixels, after accounting for
-     * screen density. ImageLoader uses this value to resize thumbnail images to match the ListView
-     * item height.
-     *
-     * @return The preferred height in pixels, based on the current theme.
-     */
-    private static int getListPreferredItemHeight(Fragment fragment) {
-        final TypedValue typedValue = new TypedValue();
-
-        final Activity activity = fragment.getActivity();
-        if (activity == null) {
-            return -1;
-        }
-
-        // Resolve list item preferred height theme attribute into typedValue
-        activity.getTheme().resolveAttribute(
-                android.R.attr.listPreferredItemHeight, typedValue, true);
-
-        // Create a new DisplayMetrics object
-        final DisplayMetrics metrics = new android.util.DisplayMetrics();
-
-        // Populate the DisplayMetrics
-        activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-
-        // Return theme value based on DisplayMetrics
-        return (int) typedValue.getDimension(metrics);
     }
 
     static AccessModeLabel[] accessModeLabels(final Acs acs, final BaseDb.Status status) {

@@ -2,8 +2,6 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -12,7 +10,6 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -33,6 +29,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
@@ -44,9 +41,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.db.StoredSubscription;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.HorizontalListDivider;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -335,6 +330,11 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     }
 
     public void notifyDataSetChanged() {
+        if (mTopic == null) {
+            Log.w(TAG, "notifyDataSetChanged called with null topic");
+            return;
+        }
+
         final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
@@ -353,8 +353,10 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-
+        String topicName = mTopic.getName();
         final ImageView avatar = activity.findViewById(R.id.imageAvatar);
+        avatar.setImageDrawable(AppCompatResources.getDrawable(activity,
+                Topic.isP2PType(topicName) ? R.drawable.ic_person_circle : R.drawable.ic_group_grey));
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
         final TextView description = activity.findViewById(R.id.topicDescription);
@@ -364,7 +366,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             title.setText(pub.fn);
             title.setTypeface(null, Typeface.NORMAL);
             title.setTextIsSelectable(true);
-            description.setText(mTopic.getPub().note);
+            description.setText(pub.note);
         } else {
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
@@ -528,7 +530,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             final View.OnClickListener action = v -> {
                 int position1 = holder.getBindingAdapterPosition();
                 final Subscription<VxCard, PrivateType> sub1 = mItems[position1];
-                VxCard pub = mTopic.getPub();
+                VxCard pub = mTopic != null ? mTopic.getPub() : null;
                 showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub1.user,
                         sub1.acs.getGiven());
             };

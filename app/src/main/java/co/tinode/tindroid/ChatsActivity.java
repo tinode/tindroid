@@ -271,7 +271,7 @@ public class ChatsActivity extends AppCompatActivity
                     mAccount = Utils.getSavedAccount(AccountManager.get(ChatsActivity.this),
                             Cache.getTinode().getMyId());
                 }
-                if (Topic.getTopicTypeByName(sub.topic) == Topic.TopicType.P2P) {
+                if (Topic.isP2PType(sub.topic)) {
                     ContactsManager.processContact(ChatsActivity.this,
                             ChatsActivity.this.getContentResolver(),
                             mAccount, sub.pub, null, sub.getUnique(), sub.deleted != null,

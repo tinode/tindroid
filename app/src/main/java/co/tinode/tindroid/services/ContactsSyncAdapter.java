@@ -285,7 +285,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                         // Fetch the list of updated contacts.
                         Collection<Subscription<VxCard, ?>> updated = new ArrayList<>();
                         for (Subscription<VxCard, ?> sub : pkt.meta.sub) {
-                            if (Topic.getTopicTypeByName(sub.user) == Topic.TopicType.P2P) {
+                            if (Topic.isP2PType(sub.user)) {
                                 updated.add(sub);
                             }
                         }

@@ -49,7 +49,7 @@ SDK contains no Android-specific dependencies.
 * [Google-Services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
 * [Crashlytics](https://firebase.google.com/docs/android/setup) for crash reporting.
 * [Picasso](https://square.github.io/picasso/) for image downloading and caching.
-* [OSS Licenses Gradle Plugin](https://github.com/google/play-services-plugins/tree/master/oss-licenses-plugin) for legal compliance with OSS licenses.
+* [OSS Licenses Plugin](https://github.com/google/play-services-plugins/tree/master/oss-licenses-plugin) for legal compliance with OSS licenses.
 * Standard Android dependencies.
 
 ## Other

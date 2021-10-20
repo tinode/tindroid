@@ -13,12 +13,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
@@ -30,7 +31,6 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         implements ContactsLoaderCallback.CursorSwapper {
 
     private final TextAppearanceSpan mHighlightTextSpan;
-    private final ImageLoader mImageLoader;
     private final ClickListener mClickListener;
     private List<Subscription<VxCard, String[]>> mFound;
     private Cursor mCursor;
@@ -38,10 +38,9 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     // TRUE is user granted access to contacts, FALSE otherwise.
     private boolean mPermissionGranted = false;
 
-    FindAdapter(Context context, ImageLoader imageLoader, @NonNull ClickListener clickListener) {
+    FindAdapter(Context context, @NonNull ClickListener clickListener) {
         super();
 
-        mImageLoader = imageLoader;
         mCursor = null;
 
         mClickListener = clickListener;
@@ -367,7 +366,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             // Clear the icon then load the thumbnail from photoUri in a background worker thread
             Context context = itemView.getContext();
             avatar.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
-            mImageLoader.loadImage(context, photoUri, avatar);
+            Picasso.get().load(photoUri).fit().into(avatar);
 
             itemView.setOnClickListener(view -> clickListener.onClick(unique));
         }

@@ -63,7 +63,6 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     private FndListener mFndListener;
 
     private String mSearchTerm; // Stores the current search query term
-    private ImageLoader mImageLoader; // Handles loading the contact image in a background thread
     private FindAdapter mAdapter = null;
 
     // Callback which receives notifications of contacts loading status;
@@ -96,8 +95,6 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         if (savedInstanceState != null) {
             mSearchTerm = savedInstanceState.getString(SearchManager.QUERY);
         }
-
-        mImageLoader = UiUtils.getImageLoaderInstance(this);
     }
 
     @Override
@@ -119,21 +116,13 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new HorizontalListDivider(activity));
-        mAdapter = new FindAdapter(activity, mImageLoader, new ContactClickListener());
+        mAdapter = new FindAdapter(activity, new ContactClickListener());
 
         mContactsLoaderCallback = new ContactsLoaderCallback(LOADER_ID, activity, mAdapter);
 
         mAdapter.swapCursor(null, mSearchTerm);
         mAdapter.setContactsPermission(UiUtils.isPermissionGranted(activity, Manifest.permission.READ_CONTACTS));
         rv.setAdapter(mAdapter);
-
-        rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView rv, int scrollState) {
-                // Pause image loader to ensure smoother scrolling when flinging
-                mImageLoader.setPauseWork(scrollState == RecyclerView.SCROLL_STATE_DRAGGING);
-            }
-        });
 
         mProgress = fragment.findViewById(R.id.progressCircle);
     }
@@ -168,9 +157,6 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     @Override
     public void onPause() {
         super.onPause();
-
-        // Let it finish.
-        mImageLoader.setPauseWork(false);
 
         if (mFndTopic != null) {
             mFndTopic.setListener(null);

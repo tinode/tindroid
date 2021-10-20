@@ -32,6 +32,13 @@ public class VxCard extends TheCard {
         }
     }
 
+    public VxCard(String fullName, String avatarRef) {
+        fn = fullName;
+        if (avatarRef != null) {
+            avatar = new AvatarPhoto(avatarRef);
+            photo = new Photo(avatar.data, avatar.type);
+        }
+    }
     @Override
     public VxCard copy() {
         VxCard dst = copy(new VxCard(), this);

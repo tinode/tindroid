@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -48,10 +49,10 @@ public class EditMembersFragment extends Fragment {
 
     private ComTopic<VxCard> mTopic;
 
+    // Members of the group.
     private MembersAdapter mSelectedAdapter;
+    // All contacts.
     private ContactsAdapter mContactsAdapter;
-
-    private ImageLoader mImageLoader;
 
     private ContactsLoaderCallback mContactsLoaderCallback;
 
@@ -71,7 +72,7 @@ public class EditMembersFragment extends Fragment {
                 // Permissions are granted.
                 FragmentActivity activity = getActivity();
                 UiUtils.onContactsPermissionsGranted(activity);
-                mContactsAdapter.setContactsPermission(true);
+                mContactsAdapter.setContactsPermissionGranted();
                 // Try to open the image selector again.
                 restartLoader(activity);
             });
@@ -80,8 +81,6 @@ public class EditMembersFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstance) {
         setHasOptionsMenu(true);
-
-        mImageLoader = UiUtils.getImageLoaderInstance(this);
 
         return inflater.inflate(R.layout.fragment_edit_members, container, false);
     }
@@ -101,14 +100,13 @@ public class EditMembersFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(false);
         rv.addItemDecoration(new HorizontalListDivider(activity));
-        mContactsAdapter = new ContactsAdapter(activity, mImageLoader, (unique, holder) -> {
+        mContactsAdapter = new ContactsAdapter(activity, (position, unique, displayName, photoUri) -> {
             if (!mContactsAdapter.isSelected(unique)) {
-                mSelectedAdapter.append(unique, (String) holder.text1.getText(),
-                        holder.getIconDrawable());
-                mContactsAdapter.toggleSelected(unique);
+                mSelectedAdapter.append(position, unique, displayName, Uri.parse(photoUri));
+                mContactsAdapter.toggleSelected(unique, position);
             } else {
                 if (mSelectedAdapter.remove(unique)) {
-                    mContactsAdapter.toggleSelected(unique);
+                    mContactsAdapter.toggleSelected(unique, position);
                 }
             }
         });
@@ -137,15 +135,16 @@ public class EditMembersFragment extends Fragment {
             if (subs != null) {
                 boolean manager = mTopic.isManager();
                 for (Subscription<VxCard, PrivateType> sub : subs) {
-                    mContactsAdapter.toggleSelected(sub.user);
-                    members.add(new MembersAdapter.Member(sub.user, sub.pub, !tinode.isMe(sub.user) && manager));
+                    mContactsAdapter.toggleSelected(sub.user, -1);
+                    members.add(new MembersAdapter.Member(-1, sub.user, sub.pub,
+                            !tinode.isMe(sub.user) && manager));
                 }
             }
         }
 
-        mSelectedAdapter = new MembersAdapter(members, unique -> {
+        mSelectedAdapter = new MembersAdapter(members, (unique, pos) -> {
             // onClick is called after removing the item.
-            mContactsAdapter.toggleSelected(unique);
+            mContactsAdapter.toggleSelected(unique, pos);
         }, cancelable);
         rv.setAdapter(mSelectedAdapter);
 
@@ -158,13 +157,6 @@ public class EditMembersFragment extends Fragment {
         super.onResume();
 
         restartLoader(getActivity());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        mImageLoader.setPauseWork(false);
     }
 
     // Restarts the loader. This triggers onCreateLoader(), which builds the

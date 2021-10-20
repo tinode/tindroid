@@ -1,12 +1,18 @@
 package co.tinode.tindroid;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,13 +22,21 @@ import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
 
+/**
+ * In-memory adapter keeps selected members of the group: initial members before the editing,
+ * current members after editing. Some member could be non-removable.
+ */
 public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHolder> {
-    private final ArrayList<String> mInitialMembers;
+    // List of initial group members.
+    // Key: unique ID of the user.
+    private final HashMap<String, Void> mInitialMembers;
+    // List of current group members.
     private final ArrayList<Member> mCurrentMembers;
 
     // mCancelable means initial items can be removed too.
     // Newly added members can always be removed.
     private final boolean mCancelable;
+    // Callback notify parent of the member removed.
     private final ClickListener mOnCancel;
 
     MembersAdapter(@Nullable ArrayList<Member> users, @Nullable ClickListener onCancel,
@@ -32,12 +46,12 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         mCancelable = cancelable;
         mOnCancel = onCancel;
 
-        mInitialMembers = new ArrayList<>();
+        mInitialMembers = new HashMap<>();
         mCurrentMembers = new ArrayList<>();
 
         if (users != null) {
             for (Member user : users) {
-                mInitialMembers.add(user.unique);
+                mInitialMembers.put(user.unique, null);
                 mCurrentMembers.add(user);
             }
         }
@@ -83,8 +97,8 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         return mCurrentMembers.get(pos).unique.hashCode();
     }
 
-    void append(String unique, VxCard pub) {
-        append(new Member(unique, pub, true));
+    void append(int pos, String unique, String displayName, Uri avatar) {
+        append(new Member(pos, unique, displayName, avatar, true));
     }
 
     private void append(Member user) {
@@ -97,17 +111,12 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
         mCurrentMembers.add(user);
         notifyItemInserted(getItemCount() - 1);
-
     }
 
     boolean remove(@NonNull String unique) {
-        if (!mCancelable) {
-            // Check if the member is allowed to be removed.
-            for (int i = 0; i < mInitialMembers.size(); i++) {
-                if (unique.equals(mInitialMembers.get(i))) {
-                    return false;
-                }
-            }
+        // Check if the member is allowed to be removed.
+        if (!mCancelable && mInitialMembers.containsKey(unique)) {
+            return false;
         }
 
         for (int i = 0; i < mCurrentMembers.size(); i++) {
@@ -123,12 +132,8 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
     String[] getAdded() {
         ArrayList<String> added = new ArrayList<>();
-        HashMap<String, Object> initial = new HashMap<>();
-        for (String unique : mInitialMembers) {
-            initial.put(unique, "");
-        }
         for (Member user : mCurrentMembers) {
-            if (!initial.containsKey(user.unique)) {
+            if (!mInitialMembers.containsKey(user.unique)) {
                 added.add(user.unique);
             }
         }
@@ -143,7 +148,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             current.put(user.unique, "");
         }
 
-        for (String unique : mInitialMembers) {
+        for (String unique : mInitialMembers.keySet()) {
             if (!current.containsKey(unique)) {
                 removed.add(unique);
             }
@@ -152,25 +157,53 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     }
 
     interface ClickListener {
-        void onClick(String unique);
+        void onClick(String unique, int pos);
     }
 
     static class Member {
+        // Member position within the parent contacts adapter.
+        int position;
         final String unique;
-        final VxCard pub;
+        final String displayName;
+        Bitmap avatarBitmap;
+        final Uri avatarUri;
         final Boolean removable;
 
-        Member(String unique, VxCard pub, boolean removable) {
+        Member(int position, String unique, String displayName, Uri avatar, boolean removable) {
+            this.position = position;
             this.unique = unique;
-            this.pub = pub;
+            this.displayName = displayName;
+            this.avatarBitmap = null;
+            this.avatarUri = avatar;
             this.removable = removable;
+        }
+
+        Member(int position, String unique, VxCard pub, boolean removable) {
+            this.position = position;
+            this.unique = unique;
+            this.removable = removable;
+            if (pub != null) {
+                this.displayName = pub.fn;
+                String ref = pub.getPhotoRef();
+                if (ref != null) {
+                    this.avatarUri = Uri.parse(ref);
+                    this.avatarBitmap = null;
+                } else {
+                    this.avatarUri = null;
+                    this.avatarBitmap = pub.getBitmap();
+                }
+            } else {
+                this.displayName = null;
+                this.avatarUri = null;
+                this.avatarBitmap = null;
+            }
         }
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
         final int viewType;
         ImageView avatar;
-        TextView title;
+        TextView displayName;
         AppCompatImageButton close;
 
         ViewHolder(@NonNull View itemView, int viewType) {
@@ -179,25 +212,40 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             this.viewType = viewType;
             if (viewType == R.layout.group_member_chip) {
                 avatar = itemView.findViewById(android.R.id.icon);
-                title = itemView.findViewById(android.R.id.text1);
+                displayName = itemView.findViewById(android.R.id.text1);
                 close = itemView.findViewById(android.R.id.closeButton);
             }
         }
 
         void bind(int pos) {
             Member user = mCurrentMembers.get(pos);
-            if (user.pub != null) {
-                UiUtils.setAvatar(avatar, user.pub, user.unique);
-                title.setText(user.pub.fn);
+            if (user.avatarBitmap != null) {
+                avatar.setImageBitmap(user.avatarBitmap);
+            } else if (user.avatarUri != null) {
+                Picasso.get()
+                        .load(user.avatarUri)
+                        .placeholder(R.drawable.ic_person_circle)
+                        .error(R.drawable.ic_broken_image_round)
+                        .centerCrop()
+                        .into(avatar);
+            } else {
+                avatar.setImageDrawable(
+                        UiUtils.avatarDrawable(avatar.getContext(), null, user.displayName, user.unique));
             }
 
-            if (user.removable && (mCancelable || !mInitialMembers.contains(user.unique))) {
+            displayName.setText(user.displayName);
+            if (user.removable && (mCancelable || !mInitialMembers.containsKey(user.unique))) {
                 close.setVisibility(View.VISIBLE);
                 close.setOnClickListener(view -> {
-                    int pos1 = getBindingAdapterPosition();
-                    Member user1 = mCurrentMembers.remove(pos1);
-                    mOnCancel.onClick(user1.unique);
-                    notifyItemRemoved(pos1);
+                    // Position within the member adapter. Getting it here again (instead of reusing 'pos') because it
+                    // may have changed since binding.
+                    int position = getBindingAdapterPosition();
+                    Member foundUser = mCurrentMembers.remove(position);
+                    if (mOnCancel != null) {
+                        // Notify parent ContactsAdapter that the user was removed.
+                        mOnCancel.onClick(foundUser.unique, foundUser.position);
+                    }
+                    notifyItemRemoved(position);
                 });
             } else {
                 close.setVisibility(View.GONE);
