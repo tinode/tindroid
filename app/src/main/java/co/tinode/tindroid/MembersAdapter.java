@@ -226,7 +226,6 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
                         .load(user.avatarUri)
                         .placeholder(R.drawable.ic_person_circle)
                         .error(R.drawable.ic_broken_image_round)
-                        .centerCrop()
                         .into(avatar);
             } else {
                 avatar.setImageDrawable(

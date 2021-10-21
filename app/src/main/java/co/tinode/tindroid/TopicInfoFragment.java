@@ -141,8 +141,6 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onResume() {
-        super.onResume();
-
         final FragmentActivity activity = getActivity();
         final Bundle args = getArguments();
 
@@ -183,6 +181,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         }
 
         notifyDataSetChanged();
+        super.onResume();
     }
 
     // Confirmation dialog "Do you really want to do X?"
@@ -355,8 +354,8 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         }
         String topicName = mTopic.getName();
         final ImageView avatar = activity.findViewById(R.id.imageAvatar);
-        avatar.setImageDrawable(AppCompatResources.getDrawable(activity,
-                Topic.isP2PType(topicName) ? R.drawable.ic_person_circle : R.drawable.ic_group_grey));
+        avatar.setImageResource(Topic.isP2PType(topicName) ?
+                R.drawable.ic_person_circle : R.drawable.ic_group_grey);
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
         final TextView description = activity.findViewById(R.id.topicDescription);

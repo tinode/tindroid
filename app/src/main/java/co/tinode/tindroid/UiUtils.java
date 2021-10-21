@@ -237,7 +237,10 @@ public class UiUtils {
         UrlLayerDrawable layers = new UrlLayerDrawable(drawables.toArray(new Drawable[]{}));
         layers.setId(0, LOGO_LAYER_AVATAR);
         if (ref != null) {
-            layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, ref, placeholder, R.drawable.ic_broken_image_round);
+            layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR,
+                    Cache.getTinode().toAbsoluteURL(ref).toString(),
+                    placeholder,
+                    R.drawable.ic_broken_image_round);
         }
         if (online != null) {
             layers.setId(1, LOGO_LAYER_ONLINE);
@@ -703,7 +706,7 @@ public class UiUtils {
      * @param drawable vector drawable to convert to bitmap
      * @return bitmap extracted from the drawable.
      */
-    static Bitmap bitmapFromDrawable(Drawable drawable) {
+    public static Bitmap bitmapFromDrawable(Drawable drawable) {
         if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
         }
@@ -715,6 +718,19 @@ public class UiUtils {
         drawable.draw(canvas);
 
         return bitmap;
+    }
+
+    /**
+     * Convert drawable to bitmap.
+     *
+     * @param drawable vector drawable to convert to bitmap
+     * @return bitmap extracted from the drawable.
+     */
+    public static BitmapDrawable toBitmapDrawable(Resources res, Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            return (BitmapDrawable) drawable;
+        }
+        return new BitmapDrawable(res, bitmapFromDrawable(drawable));
     }
 
     // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.

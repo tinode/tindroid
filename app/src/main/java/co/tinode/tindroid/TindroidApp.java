@@ -151,7 +151,13 @@ public class TindroidApp extends Application implements LifecycleObserver {
         try {
             PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
             sAppVersion = pi.versionName;
+            if (TextUtils.isEmpty(sAppVersion)) {
+                sAppVersion = BuildConfig.VERSION_NAME;
+            }
             sAppBuild = pi.versionCode;
+            if (sAppBuild <= 0) {
+                sAppBuild = BuildConfig.VERSION_CODE;
+            }
         } catch (PackageManager.NameNotFoundException e) {
             Log.w(TAG, "Failed to retrieve app version", e);
         }

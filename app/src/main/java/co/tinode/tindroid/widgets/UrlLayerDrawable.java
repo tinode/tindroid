@@ -2,7 +2,6 @@ package co.tinode.tindroid.widgets;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
@@ -16,11 +15,10 @@ import java.util.HashMap;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
-import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 
 /**
- * LayerDrawable with some of the layer set by Picasso.
+ * LayerDrawable with some of the layers set by Picasso.
  */
 public class UrlLayerDrawable extends LayerDrawable {
     private static final String TAG = "UrlLayerDrawable";
@@ -58,13 +56,18 @@ public class UrlLayerDrawable extends LayerDrawable {
 
             @Override
             public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                Log.e(TAG, "Error loading avatar", e);
-                setDrawableByLayerId(mLayerId, errorDrawable);
+                if (errorDrawable != null) {
+                    setDrawableByLayerId(mLayerId, errorDrawable);
+                    invalidateSelf();
+                }
+                Log.w(TAG, "Error loading avatar", e);
             }
 
             @Override
             public void onPrepareLoad(Drawable placeHolderDrawable) {
-                setDrawableByLayerId(mLayerId, placeHolderDrawable);
+                if (placeHolderDrawable != null) {
+                    setDrawableByLayerId(mLayerId, placeHolderDrawable);
+                }
             }
         };
         RequestCreator c = Picasso.get()
