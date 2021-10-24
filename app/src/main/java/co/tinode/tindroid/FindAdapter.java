@@ -366,7 +366,12 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             // Clear the icon then load the thumbnail from photoUri in a background worker thread
             Context context = itemView.getContext();
             avatar.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
-            Picasso.get().load(photoUri).fit().into(avatar);
+            Picasso.get()
+                    .load(photoUri)
+                    .placeholder(R.drawable.disk)
+                    .error(R.drawable.ic_broken_image_round)
+                    .fit()
+                    .into(avatar);
 
             itemView.setOnClickListener(view -> clickListener.onClick(unique));
         }

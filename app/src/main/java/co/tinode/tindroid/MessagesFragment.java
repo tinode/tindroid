@@ -165,9 +165,6 @@ public class MessagesFragment extends Fragment {
                 activity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
             });
 
-    public MessagesFragment() {
-    }
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {

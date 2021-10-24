@@ -26,9 +26,16 @@
         app:showAsAction="ifRoom"/>
 
     <item
+        android:id="@+id/action_forward"
+        android:icon="@drawable/ic_forward"
+        android:orderInCategory="103"
+        android:title="@string/action_forward"
+        app:showAsAction="ifRoom"/>
+
+    <item
         android:id="@+id/action_copy"
         android:icon="@drawable/ic_copy"
-        android:orderInCategory="103"
+        android:orderInCategory="104"
         android:title="@string/action_copy"
         app:showAsAction="ifRoom"/>
 

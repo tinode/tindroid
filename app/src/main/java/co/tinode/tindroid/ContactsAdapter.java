@@ -277,11 +277,13 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
 
                 itemView.setActivated(true);
             } else {
-                Context context = itemView.getContext();
                 ImageView icon = (ImageView) switcher.getCurrentView();
                 // Clear the icon then load the thumbnail from photoUri background.
-                icon.setImageDrawable(UiUtils.avatarDrawable(context, null, displayName, unique));
-                Picasso.get().load(photoUri).fit().into(icon);
+                Picasso.get()
+                        .load(photoUri)
+                        .placeholder(R.drawable.disk)
+                        .error(R.drawable.ic_broken_image_round)
+                        .fit().into(icon);
 
                 TypedArray typedArray = itemView.getContext().obtainStyledAttributes(
                         new int[]{android.R.attr.selectableItemBackground});
@@ -298,7 +300,12 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                         ViewHolder.this.switcher.setImageResource(R.drawable.ic_selected);
                     } else {
                         Context context = itemView.getContext();
-                        Picasso.get().load(photoUri).fit().into((ImageView) ViewHolder.this.switcher.getNextView());
+                        Picasso.get()
+                                .load(photoUri)
+                                .placeholder(R.drawable.disk)
+                                .error(R.drawable.ic_broken_image_round)
+                                .fit()
+                                .into((ImageView) ViewHolder.this.switcher.getNextView());
                         ViewHolder.this.switcher.setImageDrawable(
                                 UiUtils.avatarDrawable(context, null, displayName, unique));
                     }

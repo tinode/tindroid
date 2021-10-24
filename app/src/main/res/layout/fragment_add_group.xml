@@ -158,6 +158,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="10dp" />
 
+                <TextView
+                    style="@style/sectionTitleStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginStart="@dimen/label_h_padding"
+                    android:text="@string/add_group_members"
+                    />
+
                 <include layout="@layout/edit_members" />
             </LinearLayout>
         </RelativeLayout>

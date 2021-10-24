@@ -26,7 +26,7 @@
                 android:contentDescription="@string/avatar"
                 android:focusable="true"
                 app:shapeAppearanceOverlay="@style/roundImageView"
-                app:srcCompat="@drawable/ic_group_grey" />
+                app:srcCompat="@drawable/disk" />
 
             <Button
                 android:id="@+id/uploadAvatar"

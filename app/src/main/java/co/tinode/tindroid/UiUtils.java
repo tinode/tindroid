@@ -61,6 +61,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -239,8 +241,7 @@ public class UiUtils {
         if (ref != null) {
             layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR,
                     Cache.getTinode().toAbsoluteURL(ref).toString(),
-                    placeholder,
-                    R.drawable.ic_broken_image_round);
+                    R.drawable.disk, R.drawable.ic_broken_image_round);
         }
         if (online != null) {
             layers.setId(1, LOGO_LAYER_ONLINE);
@@ -384,15 +385,16 @@ public class UiUtils {
     }
 
     static void onContactsPermissionsGranted(Activity activity) {
-        Account acc = Utils.getSavedAccount(AccountManager.get(activity), Cache.getTinode().getMyId());
-        if (acc == null) {
-            return;
-        }
-
-        Collection<ComTopic<VxCard>> topics = Cache.getTinode().getFilteredTopics(Topic::isP2PType);
-        ContactsManager.updateContacts(activity, acc, topics);
-
-        TindroidApp.startWatchingContacts(activity, acc);
+        // Run in background.
+        Executors.newSingleThreadExecutor().execute(() -> {
+            Account acc = Utils.getSavedAccount(AccountManager.get(activity), Cache.getTinode().getMyId());
+            if (acc == null) {
+                return;
+            }
+            Collection<ComTopic<VxCard>> topics = Cache.getTinode().getFilteredTopics(Topic::isP2PType);
+            ContactsManager.updateContacts(activity, acc, topics);
+            TindroidApp.startWatchingContacts(activity, acc);
+        });
     }
 
     // Creates or updates the Android account associated with the given UID.
@@ -649,8 +651,7 @@ public class UiUtils {
                     .get()
                     .load(ref.toString())
                     .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE)
-                    .placeholder(Topic.isP2PType(address) ?
-                            R.drawable.ic_person_circle : R.drawable.ic_group_grey)
+                    .placeholder(R.drawable.disk)
                     .error(R.drawable.ic_broken_image_round)
                     .into(avatarView);
         } else {

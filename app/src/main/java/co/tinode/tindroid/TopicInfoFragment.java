@@ -273,6 +273,9 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                                 Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey));
                         if (intent.resolveActivity(activity.getPackageManager()) != null) {
                             startActivity(intent);
+                        } else {
+                            Toast.makeText(activity, R.string.unable_to_complete_action, Toast.LENGTH_SHORT).show();
+                            Log.i(TAG, "Unable to find contact manager");
                         }
                     } else {
                         mRequestContactsPermissionsLauncher.launch(new String[]{Manifest.permission.READ_CONTACTS,
@@ -280,10 +283,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                         Toast.makeText(activity, R.string.some_permissions_missing, Toast.LENGTH_SHORT).show();
                     }
                 } else if (id == R.id.buttonSendMessage) {
-                    intent = new Intent(activity, MessageActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    intent.putExtra("topic", uid);
-                    startActivity(intent);
+                    ((MessageActivity) activity).changeTopic(uid, true);
 
                 } else if (id == R.id.buttonPermissions) {
                     UiUtils.showEditPermissions(activity, mTopic, mode, uid,
@@ -334,11 +334,6 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             return;
         }
 
-        final FragmentActivity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
         notifyContentChanged();
 
         if (mTopic.isGrpType()) {
@@ -352,10 +347,9 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
+
         String topicName = mTopic.getName();
         final ImageView avatar = activity.findViewById(R.id.imageAvatar);
-        avatar.setImageResource(Topic.isP2PType(topicName) ?
-                R.drawable.ic_person_circle : R.drawable.ic_group_grey);
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
         final TextView description = activity.findViewById(R.id.topicDescription);
@@ -370,6 +364,8 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
             title.setTextIsSelectable(false);
+            avatar.setImageResource(Topic.isP2PType(topicName) ?
+                    R.drawable.ic_person_circle : R.drawable.ic_group_grey);
         }
 
         // Trusted flags.
@@ -496,14 +492,12 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             final StoredSubscription ss = (StoredSubscription) sub.getLocal();
             final boolean isMe = Cache.getTinode().isMe(sub.user);
 
-            Bitmap bmp = null;
             String title = isMe ? activity.getString(R.string.current_user) : null;
             if (sub.pub != null) {
                 if (title == null) {
                     title = !TextUtils.isEmpty(sub.pub.fn) ? sub.pub.fn :
                             activity.getString(R.string.placeholder_contact_title);
                 }
-                bmp = sub.pub.getBitmap();
             } else {
                 Log.w(TAG, "Pub is null for " + sub.user);
             }
@@ -527,8 +521,8 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             UiUtils.setAvatar(holder.avatar, sub.pub, sub.user);
 
             final View.OnClickListener action = v -> {
-                int position1 = holder.getBindingAdapterPosition();
-                final Subscription<VxCard, PrivateType> sub1 = mItems[position1];
+                int pos = holder.getBindingAdapterPosition();
+                final Subscription<VxCard, PrivateType> sub1 = mItems[pos];
                 VxCard pub = mTopic != null ? mTopic.getPub() : null;
                 showMemberAction(pub != null ? pub.fn : null, holder.name.getText().toString(), sub1.user,
                         sub1.acs.getGiven());

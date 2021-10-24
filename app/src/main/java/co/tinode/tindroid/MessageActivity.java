@@ -1,5 +1,8 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
@@ -13,8 +16,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
@@ -44,6 +47,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
+import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -201,8 +205,7 @@ public class MessageActivity extends AppCompatActivity
         tinode.addListener(mTinodeListener);
 
         // Get the topic name from intent, internal or external.
-        String topicName = readTopicNameFromIntent(intent);
-        if (!changeTopic(topicName)) {
+        if (!changeTopic(readTopicNameFromIntent(intent), false)) {
             finish();
             return;
         }
@@ -239,9 +242,9 @@ public class MessageActivity extends AppCompatActivity
     }
 
     // Topic has changed. Update all the views with the new data.
-    private boolean changeTopic(String topicName) {
+    boolean changeTopic(String topicName, boolean forceReset) {
         if (TextUtils.isEmpty(topicName)) {
-            Log.w(TAG, "Activity resumed with an empty topic name");
+            Log.w(TAG, "Failed to switch topics: empty topic name");
             return false;
         }
 
@@ -251,7 +254,7 @@ public class MessageActivity extends AppCompatActivity
             //noinspection unchecked
             topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
         } catch (ClassCastException ex) {
-            Log.w(TAG, "Activity resumed with non-comm topic");
+            Log.w(TAG, "Failed to switch topics: non-comm topic");
             return false;
         }
 
@@ -280,13 +283,14 @@ public class MessageActivity extends AppCompatActivity
             } else {
                 UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
                 // Check if another fragment is already visible. If so, don't change it.
-                if (UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
-                    // No fragment is visible. Show default and clear back stack.
+                if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+                    // Reset requested or no fragment is visible. Show default and clear back stack.
                     getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     showFragment(FRAGMENT_MESSAGES, null, false);
                 }
             }
         }
+
         mNewSubsAvailable = false;
         mKnownSubs = new HashSet<>();
         if (mTopic != null && mTopic.isGrpType()) {
@@ -394,7 +398,7 @@ public class MessageActivity extends AppCompatActivity
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         if (result.ctrl.code == 303) {
                             // Redirect.
-                            changeTopic(result.ctrl.getStringParam("topic", null));
+                            changeTopic(result.ctrl.getStringParam("topic", null), false);
                             return null;
                         }
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
@@ -721,6 +725,7 @@ public class MessageActivity extends AppCompatActivity
         final WeakReference<MessageActivity> ref;
 
         NoteHandler(MessageActivity activity) {
+            super(Looper.getMainLooper());
             ref = new WeakReference<>(activity);
         }
 
@@ -872,6 +877,15 @@ public class MessageActivity extends AppCompatActivity
 
         @Override
         public void onSubsUpdated() {
+            Context context = getApplicationContext();
+            if (UiUtils.isPermissionGranted(context, Manifest.permission.WRITE_CONTACTS)) {
+                Account acc = Utils.getSavedAccount(AccountManager.get(context), Cache.getTinode().getMyId());
+                if (acc != null) {
+                    ContactsManager.updateContacts(context, acc, mTopic.getSubscriptions(),
+                            null, false);
+                }
+            }
+
             runOnUiThread(() -> {
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                 if (fragment != null) {

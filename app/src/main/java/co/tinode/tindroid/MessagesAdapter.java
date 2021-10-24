@@ -136,6 +136,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
                 int selected = mSelectedItems.size();
                 menu.findItem(R.id.action_reply).setVisible(selected <= 1);
+                menu.findItem(R.id.action_forward).setVisible(selected <= 1);
                 return true;
             }
 
@@ -177,6 +178,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     int[] selected = getSelectedArray();
                     if (selected != null) {
                         showReplyPreview(selected[0]);
+                    }
+                    return true;
+                } else if (id == R.id.action_forward) {
+                    int[] selected = getSelectedArray();
+                    if (selected != null) {
+                        // showMessageForwardSelector(selected[0]);
                     }
                     return true;
                 }

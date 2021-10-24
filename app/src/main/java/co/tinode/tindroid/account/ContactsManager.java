@@ -45,8 +45,8 @@ public class ContactsManager {
      * @return the server syncState that should be used in our next
      * sync request.
      */
-    public static synchronized Date updateContacts(Context context, Account account,
-                                                   Collection<Subscription<VxCard, ?>> subscriptions,
+    public static synchronized <K> Date updateContacts(Context context, Account account,
+                                                   Collection<Subscription<VxCard, K>> subscriptions,
                                                    Date lastSyncMarker,
                                                    // It's a false positive.
                                                    @SuppressWarnings("SameParameterValue") boolean isSyncContext) {
@@ -61,7 +61,7 @@ public class ContactsManager {
 
                 // Send updated contact to database.
                 processContact(context, resolver, account,
-                        sub.pub, sub.priv, sub.getUnique(), sub.deleted != null,
+                        sub.pub, sub.priv, sub.user, sub.deleted != null,
                         batchOperation, isSyncContext);
 
                 // A sync adapter should batch operations on multiple contacts,
@@ -116,7 +116,7 @@ public class ContactsManager {
      * @param account        The username for the account.
      * @param pub            Contact details.
      * @param priv           Optional content of priv field in fnd results.
-     * @param unique         Server-side unique ID.
+     * @param userId         Server-side unique user ID.
      * @param deleted        indicator that the contact was deleted
      * @param batchOperation Optional batch to add operation to.
      */
@@ -124,7 +124,7 @@ public class ContactsManager {
                                                    ContentResolver resolver,
                                                    Account account,
                                                    VxCard pub, Object priv,
-                                                   String unique, boolean deleted,
+                                                   String userId, boolean deleted,
                                                    BatchOperation batchOperation,
                                                    boolean isSyncContext) {
         boolean noBatching = false;
@@ -133,7 +133,7 @@ public class ContactsManager {
             noBatching = true;
         }
         // Check if we have this contact in the database.
-        long rawContactId = lookupRawContact(resolver, unique);
+        long rawContactId = lookupRawContact(resolver, userId);
         if (deleted) {
             if (rawContactId > 0) {
                 deleteContact(rawContactId, batchOperation, isSyncContext);
@@ -145,17 +145,17 @@ public class ContactsManager {
             if (rawContactId > 0) {
                 // Contact already exists
                 if (pub != null) {
-                    updateContact(context, resolver, pub, unique, rawContactId,
+                    updateContact(context, resolver, pub, userId, rawContactId,
                             batchOperation, isSyncContext);
                 }
             } else {
                 // New contact. Don't allow new contacts without a name.
                 if (pub == null) {
                     pub = new VxCard();
-                    pub.fn = context.getString(R.string.default_contact_name, unique);
+                    pub.fn = context.getString(R.string.default_contact_name, userId);
                 }
 
-                addContact(context, account, pub, unique, batchOperation, isSyncContext);
+                addContact(context, account, pub, userId, batchOperation, isSyncContext);
             }
         }
 
@@ -173,19 +173,19 @@ public class ContactsManager {
      * @param context        the Authenticator Activity context.
      * @param account        Android account the contact belongs to.
      * @param pub            information about the contact.
-     * @param unique         unique contact ID.
+     * @param userId         unique contact ID.
      * @param batchOperation allow us to batch together multiple operations.
      *                       into a single provider call
      */
     private static void addContact(Context context, Account account,
-                                   VxCard pub, String unique,
+                                   VxCard pub, String userId,
                                    BatchOperation batchOperation, boolean isSyncContext) {
 
         // Initiate adding data to contacts provider.
 
         // Create new RAW_CONTACTS record.
         final ContactOperations contactOp =
-                ContactOperations.createNewContact(context, unique, account.name, batchOperation, isSyncContext);
+                ContactOperations.createNewContact(context, userId, account.name, batchOperation, isSyncContext);
 
         contactOp.addName(pub.fn, pub.n != null ? pub.n.given : null,
                 pub.n != null ? pub.n.surname : null)
@@ -203,7 +203,7 @@ public class ContactsManager {
         }
 
         // Actually create the profile.
-        contactOp.addProfileAction(unique);
+        contactOp.addProfileAction(userId);
     }
 
     /**
@@ -444,28 +444,31 @@ public class ContactsManager {
 
     // Process Private field, add emails and phones to Public.
     private static void dedupe(VxCard pub, Object priv) {
-        if (priv instanceof String[]) {
-            for (String match : (String[]) priv) {
-                // 'email:value' or 'tel:value'
-                String[] parts = TextUtils.split(match, ":");
-                if (parts.length < 2) {
-                    continue;
+        if (!(priv instanceof String[])) {
+            return;
+        }
+
+        for (String match : (String[]) priv) {
+            // 'email:value' or 'tel:value'
+            String[] parts = TextUtils.split(match, ":");
+            if (parts.length < 2) {
+                continue;
+            }
+            String value = parts[1].trim();
+            if (value.length() == 0) {
+                continue;
+            }
+
+            if ("email".equals(parts[0])) {
+                if (pub == null) {
+                    pub = new VxCard();
                 }
-                String value = parts[1].trim();
-                if (value.length() == 0) {
-                    continue;
+                pub.addEmail(value, TheCard.TYPE_OTHER);
+            } else if ("tel".equals(parts[0])) {
+                if (pub == null) {
+                    pub = new VxCard();
                 }
-                if ("email".equals(parts[0])) {
-                    if (pub == null) {
-                        pub = new VxCard();
-                    }
-                    pub.addEmail(value, TheCard.TYPE_OTHER);
-                } else if ("tel".equals(parts[0])) {
-                    if (pub == null) {
-                        pub = new VxCard();
-                    }
-                    pub.addPhone(value, TheCard.TYPE_OTHER);
-                }
+                pub.addPhone(value, TheCard.TYPE_OTHER);
             }
         }
     }

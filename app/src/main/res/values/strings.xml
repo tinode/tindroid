@@ -308,4 +308,7 @@
     <string name="online_now">online now</string>
     <string name="topic_settings">Chat settings</string>
     <string name="action_reply">Reply</string>
+    <string name="unable_to_complete_action">Unable to complete action</string>
+    <string name="add_group_members">Add members</string>
+    <string name="action_forward">Forward</string>
 </resources>

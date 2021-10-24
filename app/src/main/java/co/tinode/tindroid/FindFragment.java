@@ -371,11 +371,6 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         });
     }
 
-    // TODO: Add onBackPressed handing to parent Activity.
-    // public boolean onBackPressed() {
-    //    return false;
-    //}
-
     // Restarts the loader. This triggers onCreateLoader(), which builds the
     // necessary content Uri from mSearchTerm.
     private void restartLoader(final FragmentActivity activity, final String searchTerm) {

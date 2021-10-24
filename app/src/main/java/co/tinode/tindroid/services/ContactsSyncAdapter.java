@@ -283,8 +283,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                     ServerMessage<?, ?, VxCard, PrivateType> pkt = future.getResult();
                     if (pkt.meta != null && pkt.meta.sub != null) {
                         // Fetch the list of updated contacts.
-                        Collection<Subscription<VxCard, ?>> updated = new ArrayList<>();
-                        for (Subscription<VxCard, ?> sub : pkt.meta.sub) {
+                        Collection<Subscription<VxCard, PrivateType>> updated = new ArrayList<>();
+                        for (Subscription<VxCard, PrivateType> sub : pkt.meta.sub) {
                             if (Topic.isP2PType(sub.user)) {
                                 updated.add(sub);
                             }

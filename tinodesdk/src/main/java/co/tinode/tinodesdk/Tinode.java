@@ -647,6 +647,11 @@ public class Tinode {
                 }
             }
         } else if (pkt.meta != null) {
+            FutureHolder fh = mFutures.remove(pkt.meta.id);
+            if (fh != null) {
+                fh.future.resolve(pkt);
+            }
+
             Topic topic = getTopic(pkt.meta.topic);
             if (topic == null) {
                 topic = maybeCreateTopic(pkt.meta);

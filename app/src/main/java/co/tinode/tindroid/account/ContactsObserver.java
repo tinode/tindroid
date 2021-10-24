@@ -22,6 +22,10 @@ public class ContactsObserver extends ContentObserver {
 
     @Override
     public void onChange(boolean selfChange, Uri uri) {
+        if (selfChange) {
+            return;
+        }
+
         if (mAcc != null) {
             Bundle bundle = new Bundle();
             bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);

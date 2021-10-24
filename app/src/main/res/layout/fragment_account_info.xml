@@ -15,7 +15,7 @@
         android:layout_margin="4sp"
         android:contentDescription="@string/avatar"
         app:shapeAppearanceOverlay="@style/roundImageView"
-        app:srcCompat="@drawable/ic_person_grey" />
+        app:srcCompat="@drawable/disk" />
 
     <TextView
         android:id="@+id/topicTitle"
