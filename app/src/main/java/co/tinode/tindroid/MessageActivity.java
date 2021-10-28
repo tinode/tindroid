@@ -82,6 +82,7 @@ public class MessageActivity extends AppCompatActivity
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
+    static final String FRAGMENT_FORWARD_TO = "forward_to";
 
     static final String TOPIC_NAME = "topicName";
 
@@ -588,6 +589,9 @@ public class MessageActivity extends AppCompatActivity
                         args = new Bundle();
                     }
                     args.putBoolean(AttachmentHandler.ARG_AVATAR, true);
+                    break;
+                case FRAGMENT_FORWARD_TO:
+                    fragment = new ForwardToFragment();
                     break;
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);

@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
@@ -32,7 +33,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
     private final TextAppearanceSpan mHighlightTextSpan;
     private final ClickListener mClickListener;
-    private List<Subscription<VxCard, String[]>> mFound;
+    private List<FoundMember> mFound;
     private Cursor mCursor;
     private String mSearchTerm;
     // TRUE is user granted access to contacts, FALSE otherwise.
@@ -51,12 +52,12 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     }
 
     void resetFound(Activity activity, String searchTerm) {
-        Collection c = Cache.getTinode().getFndTopic().getSubscriptions();
-        if (c == null) {
-            mFound = new LinkedList<>();
-        } else {
-            // noinspection unchecked
-            mFound = new LinkedList<>(c);
+        mFound = new LinkedList<>();
+        Collection<Subscription<Object,String[]>> subs = Cache.getTinode().getFndTopic().getSubscriptions();
+        if (subs != null) {
+            for (Subscription<Object,String[]> s: subs) {
+                mFound.add(new FoundMember(s.user, (VxCard) s.pub, s.priv));
+            }
         }
 
         mSearchTerm = searchTerm;
@@ -69,6 +70,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         mPermissionGranted = granted;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void swapCursor(Cursor newCursor, String searchTerm) {
         mSearchTerm = searchTerm;
@@ -187,7 +189,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             return ("empty_two" + TextUtils.isEmpty(mSearchTerm)).hashCode();
         }
 
-        return ("found:" + mFound.get(position).getUnique()).hashCode();
+        return ("found:" + mFound.get(position).id).hashCode();
     }
 
     private int getCursorItemCount() {
@@ -311,9 +313,8 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
         @Override
         public void bind(int position, final Object data) {
-            if (data instanceof Subscription) {
-                // noinspection unchecked
-                bind((Subscription<VxCard, String[]>) data);
+            if (data instanceof FoundMember) {
+                bind((FoundMember) data);
             } else {
                 bind((Cursor) data);
             }
@@ -352,7 +353,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
                 final SpannableString highlightedName = new SpannableString(displayName);
 
                 // Sets the span to start at the starting point of the match and end at "length"
-                // characters beyond the starting point
+                // characters beyond the starting point.
                 highlightedName.setSpan(mHighlightTextSpan, startIndex,
                         startIndex + mSearchTerm.length(), 0);
 
@@ -376,25 +377,44 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             itemView.setOnClickListener(view -> clickListener.onClick(unique));
         }
 
-        private void bind(final Subscription<VxCard, String[]> sub) {
-            final String unique = sub.getUnique();
+        private void bind(final FoundMember member) {
+            final String userId = member.id;
 
-            UiUtils.setAvatar(avatar, sub.pub, unique);
-            if (sub.pub != null) {
-                name.setText(sub.pub.fn);
+            UiUtils.setAvatar(avatar, member.pub, userId);
+            if (member.pub != null) {
+                name.setText(member.pub.fn);
                 name.setTypeface(null, Typeface.NORMAL);
             } else {
                 name.setText(R.string.placeholder_contact_title);
                 name.setTypeface(null, Typeface.ITALIC);
             }
 
-            if (sub.priv != null) {
-                contactPriv.setText(TextUtils.join(", ", sub.priv));
+            if (member.priv != null) {
+                String matched = TextUtils.join(", ", member.priv);
+                final SpannableString highlightedName = new SpannableString(matched);
+                final int startIndex = UiUtils.indexOfSearchQuery(matched, mSearchTerm);
+                if (startIndex >= 0) {
+                    highlightedName.setSpan(mHighlightTextSpan, startIndex,
+                            startIndex + mSearchTerm.length(), 0);
+                }
+                contactPriv.setText(highlightedName);
             } else {
                 contactPriv.setText("");
             }
 
-            itemView.setOnClickListener(view -> clickListener.onClick(unique));
+            itemView.setOnClickListener(view -> clickListener.onClick(userId));
+        }
+    }
+
+    private static class FoundMember {
+        String id;
+        VxCard pub;
+        String[] priv;
+
+        FoundMember(String id, VxCard pub, String[] priv) {
+            this.id = id;
+            this.pub = pub;
+            this.priv = priv;
         }
     }
 }

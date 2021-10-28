@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -199,8 +198,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         final SearchView searchView = (SearchView) searchItem.getActionView();
         searchView.setQueryHint(getResources().getString(R.string.hint_search_tags));
         // Assign searchable info to SearchView
-        searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(activity.getComponentName()));
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
         searchView.setFocusable(true);
         searchView.setFocusableInTouchMode(true);
 
@@ -210,8 +208,6 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
             @Override
             public boolean onQueryTextSubmit(String queryText) {
-                Log.i(TAG, "onQueryTextSubmit='" + queryText + "'");
-
                 if (mHandler != null) {
                     mHandler.removeCallbacksAndMessages(null);
                 }

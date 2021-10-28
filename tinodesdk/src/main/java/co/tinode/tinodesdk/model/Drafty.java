@@ -654,7 +654,7 @@ public class Drafty implements Serializable {
      * @return 'this' Drafty document.
      */
     @SuppressWarnings("UnusedReturnValue")
-    public Drafty attachJSON(Map<String,Object> json) {
+    public Drafty attachJSON(@NotNull Map<String,Object> json) {
         prepareForEntity(-1, 1);
 
         Map<String, Object> data = new HashMap<>();
@@ -672,7 +672,7 @@ public class Drafty implements Serializable {
      * @param that Drafty document to append to the current document.
      * @return 'this' Drafty document.
      */
-    public Drafty append(Drafty that) {
+    public Drafty append(@Nullable Drafty that) {
         if (that == null) {
             return this;
         }
@@ -755,7 +755,7 @@ public class Drafty implements Serializable {
      * @param uid is the user ID to be mentioned.
      * @return new Drafty object.
      */
-    public static Drafty mention(String name, String uid) {
+    public static Drafty mention(@NotNull String name, @NotNull String uid) {
         Drafty d = Drafty.fromPlainText(name);
         d.fmt = new Style[]{
              new Style(0, name.length(), 0)
@@ -771,7 +771,7 @@ public class Drafty implements Serializable {
      * @param style to wrap document into.
      * @return 'this' Drafty document.
      */
-    public Drafty wrapInto(String style) {
+    public Drafty wrapInto(@NotNull String style) {
         prepareForStyle(1);
         fmt[fmt.length - 1] = new Style(style, 0, txt.length());
         return this;
@@ -1216,7 +1216,7 @@ public class Drafty implements Serializable {
      * @return new shortened Drafty object leaving the original intact.
      */
     public Drafty preview(final int length) {
-        return preview(length, new PreviewTransformer());
+        return preview(length, new PreviewTransformer(false));
     }
 
     /**
@@ -1233,6 +1233,20 @@ public class Drafty implements Serializable {
         tree.clip(length);
         tree.lTrim();
         return tree.toDrafty(true);
+    }
+
+    /**
+     * Remove leading @mention from Drafty document and any leading line breaks making document
+     * suitable for forwarding.
+     * @return Drafty document suitable for forwarding.
+     */
+    public Drafty contentToForward() {
+        Node tree = toTree(new ForwardingTransformer());
+        if (tree == null) {
+            return null;
+        }
+        tree.lTrim();
+        return tree.toDrafty(false);
     }
 
     public static class Style implements Serializable, Comparable<Style> {
@@ -1361,14 +1375,28 @@ public class Drafty implements Serializable {
 
     public static class PreviewTransformer implements Transformer {
         private static final String[] lightData = new String[] {
-                "mime", "name", "width", "height", "size", "url", "ref"
+            "mime", "name", "width", "height", "size", "url", "ref"
         };
+
+        private final boolean mStripFirstMention;
+        private boolean mMentionStripped = false;
+
+        public PreviewTransformer(boolean stripFirstMention) {
+            mStripFirstMention = stripFirstMention;
+        }
 
         @Nullable
         @Override
         public Node transform(@NotNull Node node) {
             if ("QQ".equals(node.tp)) {
                 return null;
+            }
+
+            if ("MN".equals(node.tp)) {
+                if (mStripFirstMention && !mMentionStripped) {
+                    mMentionStripped = true;
+                    return null;
+                }
             }
 
             if ("BR".equals(node.tp)) {
@@ -1390,6 +1418,22 @@ public class Drafty implements Serializable {
             Node result = new Node(node);
             result.data = dc;
             return result;
+        }
+    }
+
+    public static class ForwardingTransformer implements Transformer {
+        private boolean mMentionStripped = false;
+
+        @Nullable
+        @Override
+        public Node transform(@NotNull Node node) {
+            if ("MN".equals(node.tp)) {
+                if (!mMentionStripped) {
+                    mMentionStripped = true;
+                    return null;
+                }
+            }
+            return node;
         }
     }
 

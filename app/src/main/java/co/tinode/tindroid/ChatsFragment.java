@@ -104,7 +104,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             intent.putExtra("topic", topicName);
             activity.startActivity(intent);
-        });
+        }, t -> (t.isArchived() == mIsArchive) && (t.isJoiner() != mIsBanned));
         rv.setAdapter(mAdapter);
 
         // Progress indicator.
@@ -173,7 +173,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             return;
         }
 
-        mAdapter.resetContent(activity, mIsArchive, mIsBanned);
+        mAdapter.resetContent(activity);
     }
 
     @Override
@@ -306,7 +306,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            mAdapter.resetContent(activity, mIsArchive, mIsBanned);
+                            mAdapter.resetContent(activity);
                             return null;
                         }
                     })
@@ -329,7 +329,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    mAdapter.resetContent(activity, mIsArchive, mIsBanned);
+                    mAdapter.resetContent(activity);
                     return null;
                 }
             }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
@@ -401,7 +401,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
     void datasetChanged() {
         toggleProgressIndicator(false);
-        mAdapter.resetContent(getActivity(), mIsArchive, mIsBanned);
+        mAdapter.resetContent(getActivity());
     }
 
     // TODO: Add onBackPressed handing to parent Activity.

@@ -311,4 +311,6 @@
     <string name="unable_to_complete_action">Unable to complete action</string>
     <string name="add_group_members">Add members</string>
     <string name="action_forward">Forward</string>
+    <string name="forward_to">Forward to</string>
+    <string name="hint_search_contacts">Search contacts</string>
 </resources>

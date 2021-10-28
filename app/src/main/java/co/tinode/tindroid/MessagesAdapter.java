@@ -183,7 +183,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 } else if (id == R.id.action_forward) {
                     int[] selected = getSelectedArray();
                     if (selected != null) {
-                        // showMessageForwardSelector(selected[0]);
+                        showMessageForwardSelector(selected[0]);
                     }
                     return true;
                 }
@@ -319,24 +319,50 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
+    private String messageFrom(StoredMessage msg) {
+        @SuppressWarnings("unchecked")
+        final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+        String uname = null;
+        if (topic != null) {
+            if (!topic.isChannel()) {
+                final Subscription<VxCard, ?> sub = topic.getSubscription(msg.from);
+                uname = (sub != null && sub.pub != null) ? sub.pub.fn : null;
+            } else {
+                VxCard pub = topic.getPub();
+                uname = pub != null ? pub.fn : null;
+            }
+        }
+        if (TextUtils.isEmpty(uname)) {
+            uname = mActivity.getString(R.string.unknown);
+        }
+        return uname;
+    }
+
     private void showReplyPreview(int pos) {
         StoredMessage msg = getMessage(pos);
-        if (msg != null) {
-            if (msg.status == BaseDb.Status.SYNCED) {
-                @SuppressWarnings("unchecked")
-                final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
-                final Subscription<VxCard, ?> sub = topic != null ? topic.getSubscription(msg.from) : null;
-                String uname = (sub != null && sub.pub != null) ? sub.pub.fn : null;
-                if (TextUtils.isEmpty(uname)) {
-                    uname = mActivity.getString(R.string.unknown);
-                }
-                toggleSelectionAt(pos);
-                notifyItemChanged(pos);
-                updateSelectionMode();
-                Drafty transformed = msg.content.preview(UiUtils.QUOTED_REPLY_LENGTH, new ReplyTransformer());
-                Drafty reply = Drafty.quote(uname, msg.from, transformed);
-                mActivity.showReply(reply, msg.seq);
-            }
+        if (msg != null && msg.status == BaseDb.Status.SYNCED) {
+            toggleSelectionAt(pos);
+            notifyItemChanged(pos);
+            updateSelectionMode();
+            Drafty transformed = msg.content.preview(UiUtils.QUOTED_REPLY_LENGTH, new ReplyTransformer());
+            Drafty reply = Drafty.quote(messageFrom(msg), msg.from, transformed);
+            mActivity.showReply(reply, msg.seq);
+        }
+    }
+
+    private void showMessageForwardSelector(int pos) {
+        StoredMessage msg = getMessage(pos);
+        if (msg != null) { // No need to check message status, OK to forward failed message.
+            toggleSelectionAt(pos);
+            notifyItemChanged(pos);
+            updateSelectionMode();
+
+            Bundle args = new Bundle();
+            String uname = "➦ " + messageFrom(msg);
+            Drafty content = Drafty.mention(uname, msg.from != null ? msg.from : mTopicName)
+                    .appendLineBreak().append(msg.content);
+            args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, content);
+            mActivity.showFragment(MessageActivity.FRAGMENT_FORWARD_TO, args, true);
         }
     }
 
@@ -990,8 +1016,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    // Convert Drafty into short previews with images converted into thumbnails for use in replies.
+    // Convert Drafty into short preview with images converted into thumbnails for use in replies.
     private static class ReplyTransformer extends Drafty.PreviewTransformer {
+        public ReplyTransformer() {
+            super(false);
+        }
+
         @Nullable
         @Override
         public Drafty.Node transform(@NonNull Drafty.Node node) {

@@ -29,7 +29,6 @@ import co.tinode.tindroid.format.PreviewFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Storage;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 
 /**
@@ -44,11 +43,13 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     private List<ComTopic<VxCard>> mTopics;
     private HashMap<String, Integer> mTopicIndex;
     private SelectionTracker<String> mSelectionTracker;
+    private final Filter mTopicFilter;
 
-    ChatsAdapter(Context context, ClickListener clickListener) {
+    ChatsAdapter(Context context, ClickListener clickListener, Filter filter) {
         super();
 
         mClickListener = clickListener;
+        mTopicFilter = filter;
 
         setHasStableIds(true);
 
@@ -58,17 +59,16 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 R.color.online, context.getTheme());
     }
 
-    void resetContent(Activity activity, final boolean archive, final boolean banned) {
+    void resetContent(Activity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
         final Collection<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(t ->
-                t.getTopicType().match(Topic.TopicType.USER) &&
-                        (t.isArchived() == archive) && (t.isJoiner() != banned));
+                t.getTopicType().match(ComTopic.TopicType.USER) && mTopicFilter.filter((ComTopic) t));
 
         final HashMap<String, Integer> newTopicIndex = new HashMap<>(newTopics.size());
-        for (Topic t : newTopics) {
+        for (ComTopic t : newTopics) {
             newTopicIndex.put(t.getName(), newTopicIndex.size());
         }
 
@@ -142,6 +142,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
 
     interface ClickListener {
         void onClick(String topicName);
+    }
+
+    interface Filter {
+        // Returns true to keep topic, false to ignore.
+        boolean filter(ComTopic topic);
     }
 
     static class ContactDetailsLookup extends ItemDetailsLookup<String> {

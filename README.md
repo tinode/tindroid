@@ -20,19 +20,20 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 * Push notifications.
 * Message status notifications: message delivery to server; received and read notifications; typing notifications.
 * Markdown-style formatting of text, e.g. \*styled\* &rarr; **styled**. Implemented as spannable.
+* Replying and forwarding messages.
+* Form messages suitable for chatbots.
 * Attachments and inline images.
 * Muting/un-muting conversations and other granular permission management.
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
 * Transport Level Security - https/wss.
-* Offline mode is mostly functional.
+* Offline mode.
 
 ## Not done yet:
 
 * End-to-end encryption.
 * No support for switching between multiple backends.
 * Mentions, hashtags.
-* Replying or forwarding messages.
 * Previews not generated for videos, audio, links or docs.
 
 ## Dependencies
