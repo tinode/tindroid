@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
@@ -17,10 +18,11 @@ import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.media.VxCard;
@@ -28,16 +30,18 @@ import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.model.Drafty;
 
-public class ForwardToFragment extends Fragment {
+public class ForwardToFragment extends Fragment implements MessageActivity.DataSetChangeListener {
     private static final String TAG = "ForwardToFragment";
 
     public static final String CONTENT_TO_FORWARD = "content_to_forward";
+    public static final String FORWARDING_FROM = "forwarding_from";
     private static final int SEARCH_REQUEST_DELAY = 300; // 300 ms;
     private static final int MIN_TERM_LENGTH = 3;
 
     private ChatsAdapter mAdapter = null;
-    private Drafty mContent;
+    private Drafty mContent = null;
     private String mSearchTerm = null;
+    private String mForwardingFrom = null;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -52,22 +56,22 @@ public class ForwardToFragment extends Fragment {
             return;
         }
 
-        final ActionBar bar = activity.getSupportActionBar();
-        if (bar != null) {
-            bar.setDisplayHomeAsUpEnabled(false);
-            bar.setTitle(R.string.forward_to);
-        }
+        Toolbar toolbar = activity.findViewById(R.id.toolbar);
+        toolbar.setTitle(R.string.forward_to);
+        toolbar.setSubtitle(null);
+        toolbar.setLogo(null);
 
         RecyclerView rv = view.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new HorizontalListDivider(activity));
         mAdapter = new ChatsAdapter(activity, topicName -> {
-            Intent intent = new Intent(activity, MessageActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("topic", topicName);
-            intent.putExtra("forward", mContent);
-            activity.startActivity(intent);
+            activity.getSupportFragmentManager()
+                    .popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            Bundle args = new Bundle();
+            args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContent);
+            ((MessageActivity) activity).changeTopic(topicName, true);
+            ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_MESSAGES, args, true);
         }, t -> doSearch((ComTopic) t));
         rv.setAdapter(mAdapter);
     }
@@ -86,6 +90,7 @@ public class ForwardToFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             mContent = (Drafty) args.getSerializable(CONTENT_TO_FORWARD);
+            mForwardingFrom = args.getString(FORWARDING_FROM);
         }
 
         mAdapter.resetContent(activity);
@@ -189,8 +194,19 @@ public class ForwardToFragment extends Fragment {
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    @Override
+    public void notifyDataSetChanged() {
+        mAdapter.notifyDataSetChanged();
+    }
+
     private boolean doSearch(ComTopic t) {
         if (t.isBlocked()) {
+            return false;
+        }
+
+        String name = t.getName();
+        if (name.equals(mForwardingFrom)) {
             return false;
         }
 
@@ -209,6 +225,6 @@ public class ForwardToFragment extends Fragment {
             return true;
         }
 
-        return t.getName().startsWith(query);
+        return name.startsWith(query);
     }
 }
