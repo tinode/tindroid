@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.Editable;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -53,7 +52,6 @@ import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.ReplyFormatter;
-import co.tinode.tindroid.format.SpanFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -75,7 +73,8 @@ public class MessagesFragment extends Fragment {
     private static final int MESSAGES_TO_LOAD = 24;
 
     static final String MESSAGE_TO_SEND = "messageText";
-    static final String REPLY_TO = "replyTo";
+    static final String MESSAGE_REPLY = "reply";
+    static final String MESSAGE_REPLY_ID = "replyID";
 
     private ComTopic<VxCard> mTopic;
 
@@ -93,6 +92,7 @@ public class MessagesFragment extends Fragment {
 
     private int mReplySeqID = -1;
     private Drafty mReply = null;
+    private Drafty mContentToForward = null;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -234,6 +234,7 @@ public class MessagesFragment extends Fragment {
 
         // Send message on button click
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendText(activity));
+        view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
 
         // Send image button
         view.findViewById(R.id.attachImage).setOnClickListener(v -> openImageSelector(activity));
@@ -242,7 +243,8 @@ public class MessagesFragment extends Fragment {
         view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity));
 
         // Cancel reply preview button.
-        view.findViewById(R.id.cancelReply).setOnClickListener(v -> cancelReply(activity));
+        view.findViewById(R.id.cancelPreview).setOnClickListener(v -> cancelPreview(activity));
+        view.findViewById(R.id.cancelForwardingPreview).setOnClickListener(v -> cancelPreview(activity));
 
         EditText editor = view.findViewById(R.id.editMessage);
         // Send notification on key presses
@@ -360,6 +362,14 @@ public class MessagesFragment extends Fragment {
         if (args != null) {
             mTopicName = args.getString("topic");
             mMessageToSend = args.getString(MESSAGE_TO_SEND);
+            mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
+            mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
+            mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
+            // Clear used arguments.
+            args.remove(MESSAGE_TO_SEND);
+            args.remove(MESSAGE_REPLY_ID);
+            args.remove(MESSAGE_REPLY);
+            args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
         }
 
         if (mTopicName != null) {
@@ -415,7 +425,9 @@ public class MessagesFragment extends Fragment {
                     acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
         }
 
-        if (mTopic.isWriter() && !mTopic.isBlocked()) {
+        if (mContentToForward != null) {
+            showForwardedContent(activity, mContentToForward);
+        } else if (mTopic.isWriter() && !mTopic.isBlocked()) {
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
@@ -465,7 +477,9 @@ public class MessagesFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             args.putString(MESSAGE_TO_SEND, draft);
-            args.putInt(REPLY_TO, mReplySeqID);
+            args.putInt(MESSAGE_REPLY_ID, mReplySeqID);
+            args.putSerializable(MESSAGE_REPLY, mReply);
+            args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContentToForward);
         }
     }
 
@@ -757,6 +771,16 @@ public class MessagesFragment extends Fragment {
         if (inputField == null) {
             return;
         }
+
+        if (mContentToForward != null) {
+            if (sendMessage(mContentToForward, -1)) {
+                mContentToForward = null;
+            }
+            activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
+            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            return;
+        }
+
         String message = inputField.getText().toString().trim();
         if (!message.equals("")) {
             Drafty msg = Drafty.parse(message);
@@ -769,30 +793,43 @@ public class MessagesFragment extends Fragment {
                 if (mReplySeqID > 0) {
                     mReplySeqID = -1;
                     mReply = null;
-                    activity.findViewById(R.id.replyPreview).setVisibility(View.GONE);
+                    activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
                 }
             }
         }
     }
 
-    private void cancelReply(Activity activity) {
+    private void cancelPreview(Activity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        final View replyView = activity.findViewById(R.id.replyPreview);
-        replyView.setVisibility(View.GONE);
         mReplySeqID = -1;
         mReply = null;
+        mContentToForward = null;
+
+        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
+        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
+        activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
     }
 
     void showReply(Activity activity, Drafty reply, int seq) {
         mReply = reply;
         mReplySeqID = seq;
-        activity.findViewById(R.id.replyPreview).setVisibility(View.VISIBLE);
-        TextView replyHolder = activity.findViewById(R.id.replyContent);
+        activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.VISIBLE);
+        TextView replyHolder = activity.findViewById(R.id.contentPreview);
         ReplyFormatter formatter = new ReplyFormatter(replyHolder, null);
         replyHolder.setText(formatter.toSpanned(reply));
+    }
+
+    private void showForwardedContent(Activity activity, Drafty content) {
+        activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+        TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
+        ReplyFormatter formatter = new ReplyFormatter(previewHolder, null);
+        Log.i(TAG, "showForwardedContent " + formatter.toSpanned(content));
+        previewHolder.setText(formatter.toSpanned(content));
+        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
 
     void topicSubscribed() {

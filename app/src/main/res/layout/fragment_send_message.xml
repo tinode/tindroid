@@ -11,14 +11,14 @@
     tools:ignore="RtlSymmetry">
 
     <LinearLayout
-        android:id="@+id/replyPreview"
+        android:id="@+id/replyPreviewWrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:visibility="gone">
 
         <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/cancelReply"
+            android:id="@+id/cancelPreview"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:paddingStart="2dp"
@@ -28,7 +28,7 @@
             app:tint="?android:textColorPrimary"/>
 
         <TextView
-            android:id="@+id/replyContent"
+            android:id="@+id/contentPreview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="start"

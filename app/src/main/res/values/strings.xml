@@ -265,7 +265,7 @@
     <string name="user_tags_description">Others can find you by these tags</string>
     <string name="help_explained">Support, legal, about</string>
     <string name="security_explained">Password, permissions, deleting account</string>
-    <string name="topic_tags_description">Others can find topic by these tags</string>
+    <string name="topic_tags_description">Others can find group by these tags</string>
     <string name="permissions_explained">Access permissions, search tags</string>
     <string name="delete_group">Delete group</string>
 
@@ -311,6 +311,6 @@
     <string name="unable_to_complete_action">Unable to complete action</string>
     <string name="add_group_members">Add members</string>
     <string name="action_forward">Forward</string>
-    <string name="forward_to">Forward to</string>
+    <string name="forward_to">Forward to…</string>
     <string name="hint_search_contacts">Search contacts</string>
 </resources>

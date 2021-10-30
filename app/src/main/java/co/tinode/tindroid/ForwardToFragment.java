@@ -3,7 +3,6 @@ package co.tinode.tindroid;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.SearchManager;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -15,6 +14,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
+
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -114,7 +115,12 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
         }
 
         // Setting up SearchView
-
+        searchManager.setOnDismissListener(new SearchManager.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                Log.i(TAG, "OnDismissListener");
+            }
+        });
         // Locate the search item
         MenuItem searchItem = menu.findItem(R.id.action_search);
 
@@ -125,6 +131,7 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
         searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
         searchView.setFocusable(true);
         searchView.setFocusableInTouchMode(true);
+        searchView.setIconifiedByDefault(false);
 
         // Set listeners for SearchView
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -132,29 +139,23 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
 
             @Override
             public boolean onQueryTextSubmit(String queryText) {
-                Log.i(TAG, "onQueryTextSubmit='" + queryText + "'");
-
-                if (mHandler != null) {
-                    mHandler.removeCallbacksAndMessages(null);
-                }
-
                 mSearchTerm = queryText;
-
+                mAdapter.resetContent(activity);
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(final String queryText) {
-
+                // Delay search in case of more input
                 if (mHandler == null) {
                     mHandler = new Handler();
                 } else {
                     mHandler.removeCallbacksAndMessages(null);
                 }
 
-                // Delay search in case of more input
-                mHandler.removeCallbacksAndMessages(null);
+                mSearchTerm = queryText;
                 mHandler.postDelayed(() -> mAdapter.resetContent(activity), SEARCH_REQUEST_DELAY);
+
                 return true;
             }
         });
@@ -172,6 +173,7 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
             public boolean onMenuItemActionCollapse(MenuItem menuItem) {
                 searchView.clearFocus();
                 mSearchTerm = null;
+                mAdapter.resetContent(activity);
                 return true;
             }
         });
@@ -197,6 +199,7 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void notifyDataSetChanged() {
+        Log.i(TAG, "notifyDataSetChanged called");
         mAdapter.notifyDataSetChanged();
     }
 
@@ -215,16 +218,17 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
             return true;
         }
 
+        query = query.toLowerCase(Locale.ROOT);
         VxCard pub = (VxCard) t.getPub();
-        if (pub.fn != null && pub.fn.contains(query)) {
+        if (pub.fn != null && pub.fn.toLowerCase(Locale.ROOT).contains(query)) {
             return true;
         }
 
         String comment = t.getComment();
-        if (comment != null && comment.contains(query)) {
+        if (comment != null && comment.toLowerCase(Locale.ROOT).contains(query)) {
             return true;
         }
 
-        return name.startsWith(query);
+        return name.toLowerCase(Locale.ROOT).startsWith(query);
     }
 }

@@ -56,9 +56,14 @@
         card_view:cardElevation="@dimen/cardview_elevation"
         tools:layout="@layout/fragment_send_message">
 
-        <include layout="@layout/fragment_send_message" />
-        <include layout="@layout/fragment_messaging_disabled" />
-        <include layout="@layout/fragment_enable_peer" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <include layout="@layout/fragment_send_message" />
+            <include layout="@layout/fragment_messaging_disabled" />
+            <include layout="@layout/fragment_enable_peer" />
+            <include layout="@layout/fragment_forward_message" />
+        </FrameLayout>
 
     </androidx.cardview.widget.CardView>
 

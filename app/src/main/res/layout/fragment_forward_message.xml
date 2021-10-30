@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/forwardMessagePanel"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="6sp"
+    android:visibility="gone">
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/cancelForwardingPreview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:paddingStart="2dp"
+        android:paddingEnd="2dp"
+        android:layout_centerVertical="true"
+        app:srcCompat="@drawable/ic_close"
+        app:tint="?android:textColorPrimary" />
+
+    <TextView
+        android:id="@+id/forwardedContentPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/cancelForwardingPreview"
+        android:layout_toStartOf="@id/chatForwardButton"
+        android:maxWidth="280dp"
+        android:minWidth="140dp"
+        android:padding="6dp"
+        android:paddingStart="8dp"
+        android:textColor="?android:textColorPrimary"
+        android:background="@drawable/bubble"
+        tools:ignore="RtlSymmetry"
+        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/chatForwardButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/send_message_button_hint"
+        android:paddingStart="4sp"
+        android:paddingEnd="8sp"
+        android:layout_centerVertical="true"
+        app:srcCompat="@drawable/ic_send"
+        app:tint="?attr/colorAccent" />
+</RelativeLayout>
