@@ -5,33 +5,39 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.SearchView;
+
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.model.Drafty;
 
-public class ForwardToFragment extends Fragment implements MessageActivity.DataSetChangeListener {
+public class ForwardToFragment extends BottomSheetDialogFragment implements MessageActivity.DataSetChangeListener {
     private static final String TAG = "ForwardToFragment";
 
     public static final String CONTENT_TO_FORWARD = "content_to_forward";
@@ -43,6 +49,9 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
     private Drafty mContent = null;
     private String mSearchTerm = null;
     private String mForwardingFrom = null;
+
+    // Delayed search action.
+    private Handler mHandler = null;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -57,18 +66,57 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
             return;
         }
 
-        Toolbar toolbar = activity.findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.forward_to);
-        toolbar.setSubtitle(null);
-        toolbar.setLogo(null);
+        EditText search = view.findViewById(R.id.searchContacts);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Do nothing (auto-stub).
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Do nothing (auto-stub).
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (mHandler == null) {
+                    mHandler = new Handler();
+                } else {
+                    mHandler.removeCallbacksAndMessages(null);
+                }
+
+                mSearchTerm = s.toString();
+                mHandler.postDelayed(() -> mAdapter.resetContent(activity), SEARCH_REQUEST_DELAY);
+            }
+        });
+        search.setOnKeyListener((v, keyCode, event) -> {
+            // ENTER key pressed: perform search immediately.
+            if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                if (mHandler != null) {
+                    mHandler.removeCallbacksAndMessages(null);
+                }
+
+                mSearchTerm = ((EditText) v).getText().toString();
+                mAdapter.resetContent(activity);
+                return true;
+            }
+            return false;
+        });
+        view.findViewById(R.id.cancel).setOnClickListener(v -> {
+            if (mHandler != null) {
+                mHandler.removeCallbacksAndMessages(null);
+            }
+            mSearchTerm = null;
+            dismiss();
+        });
 
         RecyclerView rv = view.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new HorizontalListDivider(activity));
         mAdapter = new ChatsAdapter(activity, topicName -> {
-            activity.getSupportFragmentManager()
-                    .popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            dismiss();
             Bundle args = new Bundle();
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContent);
             ((MessageActivity) activity).changeTopic(topicName, true);
@@ -97,105 +145,6 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
         mAdapter.resetContent(activity);
     }
 
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        menu.clear();
-        inflater.inflate(R.menu.menu_forward_to, menu);
-
-        final FragmentActivity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
-        final SearchManager searchManager =
-                (SearchManager) activity.getSystemService(Activity.SEARCH_SERVICE);
-
-        if (searchManager == null) {
-            return;
-        }
-
-        // Setting up SearchView
-        searchManager.setOnDismissListener(new SearchManager.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                Log.i(TAG, "OnDismissListener");
-            }
-        });
-        // Locate the search item
-        MenuItem searchItem = menu.findItem(R.id.action_search);
-
-        // Retrieves the SearchView from the search menu item
-        final SearchView searchView = (SearchView) searchItem.getActionView();
-        searchView.setQueryHint(getResources().getString(R.string.hint_search_contacts));
-        // Assign searchable info to SearchView
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
-        searchView.setFocusable(true);
-        searchView.setFocusableInTouchMode(true);
-        searchView.setIconifiedByDefault(false);
-
-        // Set listeners for SearchView
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            private Handler mHandler;
-
-            @Override
-            public boolean onQueryTextSubmit(String queryText) {
-                mSearchTerm = queryText;
-                mAdapter.resetContent(activity);
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(final String queryText) {
-                // Delay search in case of more input
-                if (mHandler == null) {
-                    mHandler = new Handler();
-                } else {
-                    mHandler.removeCallbacksAndMessages(null);
-                }
-
-                mSearchTerm = queryText;
-                mHandler.postDelayed(() -> mAdapter.resetContent(activity), SEARCH_REQUEST_DELAY);
-
-                return true;
-            }
-        });
-
-        searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
-            @Override
-            public boolean onMenuItemActionExpand(MenuItem menuItem) {
-                searchView.setIconified(false);
-                searchView.requestFocus();
-                searchView.requestFocusFromTouch();
-                return true;
-            }
-
-            @Override
-            public boolean onMenuItemActionCollapse(MenuItem menuItem) {
-                searchView.clearFocus();
-                mSearchTerm = null;
-                mAdapter.resetContent(activity);
-                return true;
-            }
-        });
-
-
-        if (mSearchTerm != null) {
-            // If search term is already set here then this fragment is
-            // being restored from a saved state and the search menu item
-            // needs to be expanded and populated again.
-
-            // Stores the search term (as it will be wiped out by
-            // onQueryTextChange() when the menu item is expanded).
-            final String savedSearchTerm = mSearchTerm;
-
-            // Expands the search menu item
-            searchItem.expandActionView();
-
-            // Sets the SearchView to the previous search string
-            searchView.setQuery(savedSearchTerm, false);
-        }
-    }
-
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void notifyDataSetChanged() {
@@ -214,6 +163,7 @@ public class ForwardToFragment extends Fragment implements MessageActivity.DataS
         }
 
         String query = mSearchTerm != null ? mSearchTerm.trim() : null;
+        //noinspection ConstantConditions
         if (TextUtils.isEmpty(query) || query.length() < MIN_TERM_LENGTH) {
             return true;
         }

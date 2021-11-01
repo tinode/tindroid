@@ -106,6 +106,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     };
 
     private final MessageActivity mActivity;
+    private ActionMode mSelectionMode;
     private final ActionMode.Callback mSelectionModeCallback;
     private final SwipeRefreshLayout mRefresher;
     private final MessageLoaderCallbacks mMessageLoaderCallback;
@@ -113,7 +114,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private RecyclerView mRecyclerView;
     private Cursor mCursor;
     private String mTopicName = null;
-    private ActionMode mSelectionMode;
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
 
@@ -364,7 +364,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     .appendLineBreak().append(msg.content);
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, content);
             args.putString(ForwardToFragment.FORWARDING_FROM, from);
-            mActivity.showFragment(MessageActivity.FRAGMENT_FORWARD_TO, args, true);
+            ForwardToFragment fragment = new ForwardToFragment();
+            fragment.setArguments(args);
+            fragment.show(mActivity.getSupportFragmentManager(), MessageActivity.FRAGMENT_FORWARD_TO);
         }
     }
 
@@ -658,6 +660,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 mSelectionMode = null;
             } else {
                 mSelectionMode.setTitle(String.valueOf(selected));
+                Menu menu = mSelectionMode.getMenu();
+                menu.findItem(R.id.action_reply).setVisible(selected == 1);
+                menu.findItem(R.id.action_forward).setVisible(selected == 1);
             }
         }
     }
