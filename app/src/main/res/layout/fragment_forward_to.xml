@@ -10,7 +10,7 @@
         android:id="@+id/handle"
         android:layout_width="96dp"
         android:layout_height="4dp"
-        android:layout_marginTop="4dp"
+        android:layout_margin="4dp"
         android:layout_centerHorizontal="true"
         app:cardBackgroundColor="@color/grey"
         app:cardCornerRadius="2dp"
