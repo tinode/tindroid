@@ -363,7 +363,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Drafty content = Drafty.mention(uname, from)
                     .appendLineBreak().append(msg.content);
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, content);
-            args.putString(ForwardToFragment.FORWARDING_FROM, from);
+            args.putString(ForwardToFragment.FORWARDING_FROM_TOPIC, mTopicName);
             ForwardToFragment fragment = new ForwardToFragment();
             fragment.setArguments(args);
             fragment.show(mActivity.getSupportFragmentManager(), MessageActivity.FRAGMENT_FORWARD_TO);

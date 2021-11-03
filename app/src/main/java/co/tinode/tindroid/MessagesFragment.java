@@ -360,15 +360,6 @@ public class MessagesFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             mTopicName = args.getString("topic");
-            mMessageToSend = args.getString(MESSAGE_TO_SEND);
-            mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
-            mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
-            mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
-            // Clear used arguments.
-            args.remove(MESSAGE_TO_SEND);
-            args.remove(MESSAGE_REPLY_ID);
-            args.remove(MESSAGE_REPLY);
-            args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
         }
 
         if (mTopicName != null) {
@@ -380,7 +371,7 @@ public class MessagesFragment extends Fragment {
 
         mRefresher.setRefreshing(false);
 
-        updateFormValues();
+        updateFormValues(args);
         activity.sendNoteRead(0);
     }
 
@@ -388,7 +379,7 @@ public class MessagesFragment extends Fragment {
         mMessagesAdapter.resetContent(topicName);
     }
 
-    private void updateFormValues() {
+    private void updateFormValues(Bundle args) {
         if (!isAdded()) {
             return;
         }
@@ -422,6 +413,18 @@ public class MessagesFragment extends Fragment {
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(
                     acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
+        }
+
+        if (args != null) {
+            mMessageToSend = args.getString(MESSAGE_TO_SEND);
+            mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
+            mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
+            mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
+            // Clear used arguments.
+            args.remove(MESSAGE_TO_SEND);
+            args.remove(MESSAGE_REPLY_ID);
+            args.remove(MESSAGE_REPLY);
+            args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
         }
 
         if (mContentToForward != null) {
@@ -638,7 +641,7 @@ public class MessagesFragment extends Fragment {
                         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                         startActivity(intent);
                     } else {
-                        activity.runOnUiThread(() -> updateFormValues());
+                        activity.runOnUiThread(() -> updateFormValues(null));
                     }
                     return null;
                 }
@@ -652,9 +655,10 @@ public class MessagesFragment extends Fragment {
         invitation.show();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     void notifyDataSetChanged(boolean meta) {
         if (meta) {
-            updateFormValues();
+            updateFormValues(null);
         } else {
             mMessagesAdapter.notifyDataSetChanged();
         }
@@ -826,13 +830,19 @@ public class MessagesFragment extends Fragment {
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
         TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
         ReplyFormatter formatter = new ReplyFormatter(previewHolder, null);
-        Log.i(TAG, "showForwardedContent " + formatter.toSpanned(content));
         previewHolder.setText(formatter.toSpanned(content));
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
 
-    void topicSubscribed() {
-        updateFormValues();
+    void topicSubscribed(String topicName) {
+        mTopicName = topicName;
+        if (mTopicName != null) {
+            //noinspection unchecked
+            mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+        } else {
+            mTopic = null;
+        }
+        updateFormValues(getArguments());
     }
 
     private int findItemPositionById(long id) {

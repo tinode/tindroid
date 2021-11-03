@@ -91,4 +91,13 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
+    <style name="forwardToSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/forwardToBottomSheet</item>
+    </style>
+
+    <style name="forwardToBottomSheet" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="background">@drawable/bottom_sheet_dialog_bg</item>
+        <item name="backgroundTint">@null</item>
+    </style>
 </resources>

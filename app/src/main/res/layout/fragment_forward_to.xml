@@ -1,14 +1,26 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/activity_padding"
-    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+    app:layout_behavior="@string/bottom_sheet_behavior">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/handle"
+        android:layout_width="96dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_centerHorizontal="true"
+        app:cardBackgroundColor="@color/grey"
+        app:cardCornerRadius="2dp"
+        app:cardElevation="0dp" />
 
     <LinearLayout
         android:id="@+id/searchBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/handle"
         android:orientation="horizontal">
 
         <com.google.android.material.textfield.TextInputLayout
@@ -45,5 +57,6 @@
         android:id="@+id/chat_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/searchBox" />
+        android:layout_below="@id/searchBox"/>
+
 </RelativeLayout>

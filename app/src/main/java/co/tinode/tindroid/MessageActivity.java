@@ -169,13 +169,11 @@ public class MessageActivity extends AppCompatActivity
             ab.setDisplayShowHomeEnabled(true);
         }
         toolbar.setNavigationOnClickListener(v -> {
-            Log.i(TAG, "<- Clicked");
             if (isFragmentVisible(FRAGMENT_MESSAGES) || isFragmentVisible(FRAGMENT_INVALID)) {
                 Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             } else if (isFragmentVisible(FRAGMENT_FORWARD_TO)) {
-                Log.i(TAG, "<- FRAGMENT_FORWARD_TO");
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 showFragment(FRAGMENT_MESSAGES, null, false);
             } else {
@@ -202,8 +200,6 @@ public class MessageActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
-
-        Log.i(TAG, "MessageActivity.onResume");
 
         // Intent with parameters passed on start of the activity.
         final Intent intent = getIntent();
@@ -325,7 +321,7 @@ public class MessageActivity extends AppCompatActivity
             MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                     .findFragmentByTag(FRAGMENT_MESSAGES);
             if (fragmsg != null) {
-                fragmsg.topicSubscribed();
+                fragmsg.topicSubscribed(topicName);
             }
         }
 
@@ -421,7 +417,7 @@ public class MessageActivity extends AppCompatActivity
                             } else {
                                 MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
                                 if (fragmsg != null) {
-                                    fragmsg.topicSubscribed();
+                                    fragmsg.topicSubscribed(mTopicName);
                                 }
                             }
                         });
@@ -613,6 +609,7 @@ public class MessageActivity extends AppCompatActivity
 
         if (tag.equals(FRAGMENT_MESSAGES)) {
             args.putString(MessagesFragment.MESSAGE_TO_SEND, mMessageText);
+            mMessageText = null;
         }
 
         if (fragment.getArguments() != null) {

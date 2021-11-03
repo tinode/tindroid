@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.SearchManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -11,14 +10,9 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.SearchView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -27,8 +21,6 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -41,14 +33,14 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
     private static final String TAG = "ForwardToFragment";
 
     public static final String CONTENT_TO_FORWARD = "content_to_forward";
-    public static final String FORWARDING_FROM = "forwarding_from";
+    public static final String FORWARDING_FROM_TOPIC = "forwarding_from_topic";
     private static final int SEARCH_REQUEST_DELAY = 300; // 300 ms;
     private static final int MIN_TERM_LENGTH = 3;
 
     private ChatsAdapter mAdapter = null;
     private Drafty mContent = null;
     private String mSearchTerm = null;
-    private String mForwardingFrom = null;
+    private String mForwardingFromTopic = null;
 
     // Delayed search action.
     private Handler mHandler = null;
@@ -119,8 +111,8 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
             dismiss();
             Bundle args = new Bundle();
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContent);
-            ((MessageActivity) activity).changeTopic(topicName, true);
             ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_MESSAGES, args, true);
+            ((MessageActivity) activity).changeTopic(topicName, true);
         }, t -> doSearch((ComTopic) t));
         rv.setAdapter(mAdapter);
     }
@@ -139,10 +131,15 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
         Bundle args = getArguments();
         if (args != null) {
             mContent = (Drafty) args.getSerializable(CONTENT_TO_FORWARD);
-            mForwardingFrom = args.getString(FORWARDING_FROM);
+            mForwardingFromTopic = args.getString(FORWARDING_FROM_TOPIC);
         }
 
         mAdapter.resetContent(activity);
+    }
+
+    @Override
+    public int getTheme() {
+        return R.style.forwardToSheetDialog;
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -153,12 +150,12 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
     }
 
     private boolean doSearch(ComTopic t) {
-        if (t.isBlocked()) {
+        if (t.isBlocked() || !t.isWriter()) {
             return false;
         }
 
         String name = t.getName();
-        if (name.equals(mForwardingFrom)) {
+        if (name.equals(mForwardingFromTopic)) {
             return false;
         }
 

@@ -174,6 +174,7 @@ public class UiUtils {
                 toolbar.setSubtitle(null);
                 toolbar.setLogo(null);
             }
+            toolbar.invalidate();
         });
     }
 
