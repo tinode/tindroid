@@ -97,7 +97,15 @@
     </style>
 
     <style name="forwardToBottomSheet" parent="Widget.MaterialComponents.BottomSheet.Modal">
-        <item name="background">@drawable/bottom_sheet_dialog_bg</item>
         <item name="backgroundTint">@null</item>
+        <item name="shapeAppearanceOverlay">@style/forwardToAppearanceBottomSheetDialog</item>
+    </style>
+
+    <style name="forwardToAppearanceBottomSheetDialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">16dp</item>
+        <item name="cornerSizeTopLeft">16dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
     </style>
 </resources>

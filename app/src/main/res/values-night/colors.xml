@@ -26,6 +26,4 @@
     <color name="circularProgressFg">#FFCCCCCC</color>
 
     <color name="colorImageMetaPanel">#80000000</color>
-
-    <color name="bottomSheetBackground">#000000</color>
 </resources>
