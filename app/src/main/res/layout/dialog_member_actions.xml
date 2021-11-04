@@ -1,90 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:orientation="vertical"
-              android:paddingEnd="@dimen/dialog_padding_right"
-              android:paddingStart="@dimen/dialog_padding_left">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/dialog_padding_left"
+    android:paddingEnd="@dimen/dialog_padding_right"
+    app:layout_behavior="@string/bottom_sheet_behavior">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/title"
+        style="@style/TextAppearance.AppCompat.Large"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/listPreferredItemHeight"
+        android:gravity="center_vertical"
+        tools:text="User Title" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonViewProfile"
         style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:drawablePadding="4sp"
-        app:drawableStartCompat="@drawable/ic_person"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:text="@string/view_profile"/>
+        android:text="@string/view_profile"
+        app:drawableStartCompat="@drawable/ic_person" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonSendMessage"
         style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:drawablePadding="4sp"
-        app:drawableStartCompat="@drawable/ic_chat_grey"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:text="@string/send_message"/>
+        android:text="@string/send_message"
+        app:drawableStartCompat="@drawable/ic_chat_grey" />
 
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonPermissions"
         style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:drawablePadding="4sp"
-        app:drawableStartCompat="@drawable/ic_checklist_grey"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:text="@string/change_permissions"/>
+        android:text="@string/change_permissions"
+        app:drawableStartCompat="@drawable/ic_checklist_grey" />
 
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonMakeOwner"
         style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:drawablePadding="4sp"
-        app:drawableStartCompat="@drawable/ic_flag"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:text="@string/make_owner"/>
+        android:text="@string/make_owner"
+        app:drawableStartCompat="@drawable/ic_flag" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonRemove"
         style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:drawablePadding="4sp"
-        app:drawableStartCompat="@drawable/ic_exit_gray"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:text="@string/remove_from_group"/>
+        android:text="@string/remove_from_group"
+        app:drawableStartCompat="@drawable/ic_exit_gray" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonBlock"
         style="@style/textSecondary"
-        android:background="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:drawablePadding="4sp"
-        app:drawableStartCompat="@drawable/ic_block_gray"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:text="@string/block"/>
+        android:text="@string/block"
+        app:drawableStartCompat="@drawable/ic_block_gray" />
 
 </LinearLayout>

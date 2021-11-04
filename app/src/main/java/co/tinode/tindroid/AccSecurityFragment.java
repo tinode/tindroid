@@ -61,7 +61,6 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
     @Override
     public void onResume() {
-        super.onResume();
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
 
@@ -142,6 +141,8 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
         // Assign initial form values.
         updateFormValues(activity, me);
+
+        super.onResume();
     }
 
     @Override

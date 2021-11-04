@@ -3,17 +3,13 @@ package co.tinode.tindroid;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -59,7 +55,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
                         return;
                     }
                 }
-                FragmentActivity activity = getActivity();
+                final FragmentActivity activity = getActivity();
                 if (activity != null) {
                     // Try to open the image selector again.
                     Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
@@ -103,8 +99,6 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onResume() {
-        super.onResume();
-
         final Activity activity = getActivity();
         final Bundle args = getArguments();
 
@@ -147,12 +141,13 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         }
 
         notifyDataSetChanged();
+        super.onResume();
     }
 
     // Dialog for editing tags.
     private void showEditTags() {
         final Activity activity = getActivity();
-        if (activity == null) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -178,6 +173,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
                 .show();
     }
 
+    @Override
     public void notifyDataSetChanged() {
         final Activity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
@@ -185,13 +181,16 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         }
 
         final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
-        final EditText title = activity.findViewById(R.id.topicTitle);
-        final EditText subtitle = activity.findViewById(R.id.topicSubtitle);
-        final EditText description = activity.findViewById(R.id.topicDescription);
+        final View uploadAvatar = activity.findViewById(R.id.uploadAvatar);
+        final TextView title = activity.findViewById(R.id.topicTitle);
+        final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
+        final TextView description = activity.findViewById(R.id.topicDescription);
         final View descriptionWrapper = activity.findViewById(R.id.topicDescriptionWrapper);
+        ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
 
         boolean editable = mTopic.isGrpType() && mTopic.isOwner();
         title.setEnabled(editable);
+        uploadAvatar.setVisibility(editable ? View.VISIBLE : View.GONE);
 
         VxCard pub = mTopic.getPub();
         if (pub != null) {
@@ -216,6 +215,31 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_save, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_save) {
+            final FragmentActivity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return false;
+            }
+
+            final String newTitle = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
+            final String newSubtitle = ((TextView) activity.findViewById(R.id.topicSubtitle)).getText().toString().trim();
+            final String newDescription = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
+
+            UiUtils.updateTopicDesc(activity, mTopic, newTitle, newSubtitle, newDescription,
+                    () -> {
+                        if (activity.isFinishing() || activity.isDestroyed()) {
+                            return;
+                        }
+                        activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack());
+                    });
+            return true;
+        }
+        return false;
     }
 
     @Override

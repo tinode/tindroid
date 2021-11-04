@@ -33,16 +33,17 @@
 
         </RelativeLayout>
 
-        <TextView
+        <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/topicTitle"
             style="@style/textPrimaryLarge"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/activity_padding"
             android:ellipsize="end"
             android:maxLines="1"
             android:singleLine="true"
             android:textIsSelectable="false"
+            android:drawablePadding="@dimen/activity_padding"
             tools:text="Travel or flowers" />
 
         <TextView

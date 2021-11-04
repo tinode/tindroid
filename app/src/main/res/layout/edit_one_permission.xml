@@ -9,6 +9,7 @@
     android:gravity="center_vertical"
     android:paddingStart="@dimen/dialog_padding_left"
     android:paddingEnd="@dimen/dialog_padding_right"
+    android:layout_margin="4dp"
     android:checkMark="?android:attr/listChoiceIndicatorMultiple"
     android:ellipsize="marquee"
     tools:text="@string/permission_owner"/>

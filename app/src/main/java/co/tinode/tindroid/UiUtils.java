@@ -61,7 +61,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -843,7 +842,8 @@ public class UiUtils {
         };
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
-        @SuppressLint("InflateParams") final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
+        @SuppressLint("InflateParams")
+        final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
         builder
                 .setView(editor)
                 .setTitle(R.string.edit_permissions);
@@ -946,7 +946,9 @@ public class UiUtils {
 
     static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTopicDesc(final Activity activity,
                                                                              T topic,
-                                                                             String title, String description,
+                                                                             String title,
+                                                                             String subtitle,
+                                                                             String description,
                                                                              final TitleUpdateCallbackInterface done) {
         VxCard oldPub = topic.getPub();
         VxCard pub = null;
@@ -954,26 +956,40 @@ public class UiUtils {
             if (title.length() > MAX_TITLE_LENGTH) {
                 title = title.substring(0, MAX_TITLE_LENGTH);
             }
-            if (oldPub != null && !title.equals(oldPub.fn)) {
+            if (oldPub != null && !stringsEqual(title, oldPub.fn)) {
                 pub = new VxCard();
                 pub.fn = title;
             }
         }
 
-        if (!TextUtils.isEmpty(description)) {
+        if (description != null) {
             if (description.length() > MAX_DESCRIPTION_LENGTH) {
                 description = description.substring(0, MAX_DESCRIPTION_LENGTH);
             }
-            if (oldPub != null && !description.equals(oldPub.note)) {
+            String oldNote = oldPub != null ? oldPub.note : null;
+            if (!stringsEqual(description, oldNote)) {
                 if (pub == null) {
                     pub = new VxCard();
                 }
-                pub.note = description;
+                pub.note = description.equals("") ? Tinode.NULL_VALUE : description;
             }
         }
 
-        if (pub != null) {
-            topic.setDescription(pub, null).thenApply(
+        PrivateType priv = null;
+        if (subtitle != null) {
+            if (subtitle.length() > MAX_TITLE_LENGTH) {
+                subtitle = subtitle.substring(0, MAX_TITLE_LENGTH);
+            }
+            PrivateType oldPriv = topic.getPriv();
+            String oldComment = oldPriv != null ? oldPriv.getComment() : null;
+            if (!stringsEqual(subtitle, oldComment)) {
+                priv = new PrivateType();
+                priv.setComment(subtitle);
+            }
+        }
+
+        if (pub != null || priv != null) {
+            topic.setDescription(pub, priv).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -982,6 +998,8 @@ public class UiUtils {
                         }
                     },
                     new ToastFailureListener(activity));
+        } else {
+            done.onTitleUpdated();
         }
     }
 
@@ -1221,6 +1239,34 @@ public class UiUtils {
         }
 
         return null;
+    }
+
+    // The same as TextUtils.equals except null == "".
+    static boolean stringsEqual(CharSequence a, CharSequence b) {
+        if (a == b) {
+            return true;
+        }
+
+        if (a != null && b != null) {
+            int length = a.length();
+            if (length != b.length()) {
+                return false;
+            }
+            if (a instanceof String && b instanceof String) {
+                return a.equals(b);
+            }
+            for (int i = 0; i < length; i++) {
+                if (a.charAt(i) != b.charAt(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (a == null) {
+            return b.length() == 0;
+        }
+        return a.length() == 0;
     }
 
     // Provides callback for when title/subtitle get successfully updated.

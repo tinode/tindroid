@@ -783,7 +783,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected boolean isTrusted(final String key) {
-        if (mDesc != null && mDesc.trusted != null) {
+        if (mDesc.trusted != null) {
             return mDesc.trusted.getBooleanValue(key);
         }
         return false;

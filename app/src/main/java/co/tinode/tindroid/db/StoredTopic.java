@@ -4,6 +4,7 @@ import android.database.Cursor;
 
 import java.util.Date;
 
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.LocalData;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Topic;
@@ -37,6 +38,9 @@ public class StoredTopic implements LocalData.Payload {
 
         topic.setUpdated(new Date(c.getLong(TopicDb.COLUMN_IDX_UPDATED)));
         topic.setTouched(st.lastUsed);
+        if (topic instanceof ComTopic) {
+            ((ComTopic) topic).setHasChannelAccess(c.getInt(TopicDb.COLUMN_IDX_CHANNEL_ACCESS) != 0);
+        }
 
         topic.setRead(c.getInt(TopicDb.COLUMN_IDX_READ));
         topic.setRecv(c.getInt(TopicDb.COLUMN_IDX_RECV));

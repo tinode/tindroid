@@ -60,7 +60,6 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
 
     @Override
     public void onResume() {
-        super.onResume();
         final FragmentActivity activity = getActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
         if (activity == null || me == null) {
@@ -102,6 +101,8 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
         ctrl.setChecked(pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true));
 
         updateFormValues(activity, me);
+
+        super.onResume();
     }
 
     @Override

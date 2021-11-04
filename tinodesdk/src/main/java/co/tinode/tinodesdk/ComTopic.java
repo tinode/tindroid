@@ -77,6 +77,22 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     /**
+     * Checks if the topic can be accessed as channel.
+     * @return true if the topic is accessible as a channel.
+     */
+    public boolean hasChannelAccess() {
+        return mDesc.chan;
+    }
+
+    /**
+     * Sets flag that the topic is accessible as a channel.
+     * @param access <code>true</code> to indicate that the topic is accessible as a channel.
+     */
+    public void setHasChannelAccess(boolean access) {
+        mDesc.chan = access;
+    }
+
+    /**
      * In P2P topics get peer's subscription.
      *
      * @return peer's subscription.

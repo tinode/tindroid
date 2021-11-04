@@ -91,7 +91,6 @@ public class AccPersonalFragment extends Fragment
 
     @Override
     public void onResume() {
-        super.onResume();
         final FragmentActivity activity = getActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
 
@@ -114,6 +113,8 @@ public class AccPersonalFragment extends Fragment
 
         // Assign initial form values.
         updateFormValues(activity, me);
+
+        super.onResume();
     }
 
     @Override
@@ -327,7 +328,7 @@ public class AccPersonalFragment extends Fragment
             final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
             String title = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             String description = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
-            UiUtils.updateTopicDesc(activity, me, title, description,
+            UiUtils.updateTopicDesc(activity, me, title, null, description,
                     () -> {
                         if (activity.isFinishing() || activity.isDestroyed()) {
                             return;

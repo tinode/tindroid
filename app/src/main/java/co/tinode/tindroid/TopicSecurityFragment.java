@@ -12,8 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.google.android.flexbox.FlexboxLayout;
-
 import java.util.HashMap;
 
 import androidx.annotation.NonNull;
@@ -130,9 +128,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     @Override
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
-    public void onResume() {
-        super.onResume();
-
+    public void onStart() {
         final Activity activity = getActivity();
         final Bundle args = getArguments();
 
@@ -153,6 +149,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
         final View deleteGroup = activity.findViewById(R.id.buttonDeleteGroup);
         final View blockContact = activity.findViewById(R.id.buttonBlock);
         final View reportGroup = activity.findViewById(R.id.buttonReportGroup);
+        final View reportChannel = activity.findViewById(R.id.buttonReportChannel);
         final View reportContact = activity.findViewById(R.id.buttonReportContact);
 
         if (mTopic.isGrpType()) {
@@ -161,34 +158,24 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
             activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
+            blockContact.setVisibility(View.GONE);
+            reportContact.setVisibility(View.GONE);
 
             if (mTopic.isOwner()) {
                 buttonLeave.setVisibility(View.GONE);
                 reportGroup.setVisibility(View.GONE);
-                blockContact.setVisibility(View.GONE);
+                reportChannel.setVisibility(View.GONE);
                 deleteGroup.setVisibility(View.VISIBLE);
-
-                LayoutInflater inflater = LayoutInflater.from(activity);
-                FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
-                tagsView.removeAllViews();
-
-                String[] tags = mTopic.getTags();
-                if (tags != null) {
-                    for (String tag : tags) {
-                        TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
-                        label.setText(tag);
-                        tagsView.addView(label);
-                    }
-                }
             } else {
                 buttonLeave.setVisibility(View.VISIBLE);
-                reportGroup.setVisibility(View.VISIBLE);
-                if (mTopic.isChannel()) {
-                    blockContact.setVisibility(View.GONE);
-                } else {
-                    blockContact.setVisibility(View.VISIBLE);
-                }
                 deleteGroup.setVisibility(View.GONE);
+                if (mTopic.isChannel()) {
+                    reportGroup.setVisibility(View.GONE);
+                    reportChannel.setVisibility(View.VISIBLE);
+                } else {
+                    reportGroup.setVisibility(View.VISIBLE);
+                    reportChannel.setVisibility(View.GONE);
+                }
             }
             defaultPermissions.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
@@ -205,12 +192,15 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
             deleteGroup.setVisibility(View.GONE);
             reportGroup.setVisibility(View.GONE);
+            reportChannel.setVisibility(View.GONE);
             reportContact.setVisibility(View.VISIBLE);
             blockContact.setVisibility(View.VISIBLE);
         }
 
         notifyContentChanged();
         notifyDataSetChanged();
+
+        super.onStart();
     }
 
     public void notifyDataSetChanged() {

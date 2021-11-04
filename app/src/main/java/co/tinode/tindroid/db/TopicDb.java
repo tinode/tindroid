@@ -9,6 +9,7 @@ import android.util.Log;
 
 import java.util.Date;
 
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -46,6 +47,10 @@ public class TopicDb implements BaseColumns {
      * When the topic was last updated
      */
     public static final String COLUMN_NAME_UPDATED = "updated";
+    /**
+     * When the topic was last updated
+     */
+    public static final String COLUMN_NAME_CHANNEL_ACCESS = "channel_access";
     /**
      * Sequence ID marked as read by the current user, integer
      */
@@ -119,29 +124,30 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_PRIVATE = "priv";
     static final int COLUMN_IDX_ID = 0;
-    static final int COLUMN_IDX_ACCOUNT_ID = 1;
+    // static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_STATUS = 2;
     static final int COLUMN_IDX_TOPIC = 3;
-    static final int COLUMN_IDX_CREATED = 4;
+    // static final int COLUMN_IDX_CREATED = 4;
     static final int COLUMN_IDX_UPDATED = 5;
-    static final int COLUMN_IDX_READ = 6;
-    static final int COLUMN_IDX_RECV = 7;
-    static final int COLUMN_IDX_SEQ = 8;
-    static final int COLUMN_IDX_CLEAR = 9;
-    static final int COLUMN_IDX_MAX_DEL = 10;
-    static final int COLUMN_IDX_ACCESSMODE = 11;
-    static final int COLUMN_IDX_DEFACS = 12;
-    static final int COLUMN_IDX_LASTUSED = 13;
-    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 14;
-    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 15;
-    static final int COLUMN_IDX_NEXT_UNSENT_SEQ = 16;
-    static final int COLUMN_IDX_TAGS = 17;
-    static final int COLUMN_IDX_LAST_SEEN = 18;
-    static final int COLUMN_IDX_LAST_SEEN_UA = 19;
-    static final int COLUMN_IDX_CREDS = 20;
-    static final int COLUMN_IDX_PUBLIC = 21;
-    static final int COLUMN_IDX_TRUSTED = 22;
-    static final int COLUMN_IDX_PRIVATE = 23;
+    static final int COLUMN_IDX_CHANNEL_ACCESS = 6;
+    static final int COLUMN_IDX_READ = 7;
+    static final int COLUMN_IDX_RECV = 8;
+    static final int COLUMN_IDX_SEQ = 9;
+    static final int COLUMN_IDX_CLEAR = 10;
+    static final int COLUMN_IDX_MAX_DEL = 11;
+    static final int COLUMN_IDX_ACCESSMODE = 12;
+    static final int COLUMN_IDX_DEFACS = 13;
+    static final int COLUMN_IDX_LASTUSED = 14;
+    static final int COLUMN_IDX_MIN_LOCAL_SEQ = 15;
+    static final int COLUMN_IDX_MAX_LOCAL_SEQ = 16;
+    static final int COLUMN_IDX_NEXT_UNSENT_SEQ = 17;
+    static final int COLUMN_IDX_TAGS = 18;
+    static final int COLUMN_IDX_LAST_SEEN = 19;
+    static final int COLUMN_IDX_LAST_SEEN_UA = 20;
+    static final int COLUMN_IDX_CREDS = 21;
+    static final int COLUMN_IDX_PUBLIC = 22;
+    static final int COLUMN_IDX_TRUSTED = 23;
+    static final int COLUMN_IDX_PRIVATE = 24;
     /**
      * SQL statement to create Messages table
      */
@@ -154,6 +160,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_TOPIC + " TEXT," +
                     COLUMN_NAME_CREATED + " INT," +
                     COLUMN_NAME_UPDATED + " INT," +
+                    COLUMN_NAME_CHANNEL_ACCESS + " INT," +
                     COLUMN_NAME_READ + " INT," +
                     COLUMN_NAME_RECV + " INT," +
                     COLUMN_NAME_SEQ + " INT," +
@@ -212,6 +219,9 @@ public class TopicDb implements BaseColumns {
         if (topic.getUpdated() != null) {
             // Updated is null at the topic creation time
             values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
+        }
+        if (topic instanceof ComTopic) {
+            values.put(COLUMN_NAME_CHANNEL_ACCESS, ((ComTopic) topic).hasChannelAccess());
         }
         values.put(COLUMN_NAME_READ, topic.getRead());
         values.put(COLUMN_NAME_RECV, topic.getRecv());
@@ -274,6 +284,9 @@ public class TopicDb implements BaseColumns {
         }
         if (topic.getUpdated() != null) {
             values.put(COLUMN_NAME_UPDATED, topic.getUpdated().getTime());
+        }
+        if (topic instanceof ComTopic) {
+            values.put(COLUMN_NAME_CHANNEL_ACCESS, ((ComTopic) topic).hasChannelAccess());
         }
         values.put(COLUMN_NAME_READ, topic.getRead());
         values.put(COLUMN_NAME_RECV, topic.getRecv());

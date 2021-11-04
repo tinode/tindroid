@@ -76,17 +76,30 @@
             app:drawableStartCompat="@drawable/ic_report_red"
             app:drawableTint="@color/colorDanger" />
 
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonReportChannel"
+            style="?attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="4dp"
+            android:text="@string/report_channel"
+            android:textColor="@color/colorDanger"
+            app:drawableStartCompat="@drawable/ic_report_red"
+            app:drawableTint="@color/colorDanger" />
+
         <View
             android:layout_width="match_parent"
-            android:layout_height="0.5dp"
+            android:layout_height="0.6dp"
             android:layout_marginTop="@dimen/activity_padding"
             android:layout_marginBottom="@dimen/activity_padding"
             android:background="@color/grey" />
 
         <LinearLayout
             android:id="@+id/singleUserPermissionsWrapper"
+            android:layout_marginTop="@dimen/activity_padding"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:visibility="gone">
 
             <TextView
                 style="@style/textPrimary"
@@ -114,7 +127,9 @@
         <RelativeLayout
             android:id="@+id/p2pPermissionsWrapper"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/permissionTitle"
@@ -181,22 +196,20 @@
                 tools:text="RWPD" />
         </RelativeLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="6dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginTop="@dimen/activity_padding"
-            android:layout_marginBottom="@dimen/activity_padding"
-            android:background="@color/grey" />
-
         <LinearLayout
             android:id="@+id/defaultPermissionsWrapper"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_marginTop="@dimen/activity_padding"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.6dp"
+                android:layout_marginTop="@dimen/activity_padding"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:background="@color/grey" />
 
             <TextView
                 style="@style/sectionTitleStyle"

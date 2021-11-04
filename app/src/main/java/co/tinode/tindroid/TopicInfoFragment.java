@@ -2,8 +2,8 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,6 +23,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
 import java.util.Collection;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -30,7 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.AppCompatTextView;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
@@ -156,7 +158,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             return;
         }
 
-        ((TextView)activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
+        ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
 
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
 
@@ -251,16 +253,12 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 activity.getString(R.string.placeholder_topic_title) :
                 topicTitle;
 
-        AlertDialog.Builder actionBuilder = new AlertDialog.Builder(activity);
         final LinearLayout actions = (LinearLayout) View.inflate(activity, R.layout.dialog_member_actions, null);
-        actionBuilder
-                .setTitle(TextUtils.isEmpty(userTitle) ?
-                        activity.getString(R.string.placeholder_contact_title) :
-                        userTitle)
-                .setView(actions)
-                .setCancelable(true)
-                .setNegativeButton(android.R.string.cancel, null);
-        final AlertDialog dialog = actionBuilder.create();
+        final BottomSheetDialog dialog = new BottomSheetDialog(activity);
+        ((TextView) actions.findViewById(R.id.title)).setText(TextUtils.isEmpty(userTitle) ?
+                activity.getString(R.string.placeholder_contact_title) :
+                userTitle);
+        dialog.setContentView(actions);
         View.OnClickListener ocl = v -> {
             try {
                 Intent intent;
@@ -366,6 +364,16 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             title.setTextIsSelectable(false);
             avatar.setImageResource(Topic.isP2PType(topicName) ?
                     R.drawable.ic_person_circle : R.drawable.ic_group_grey);
+        }
+
+        if (mTopic.hasChannelAccess()) {
+            Drawable icon = AppCompatResources.getDrawable(activity, R.drawable.ic_channel);
+            if (icon != null) {
+                icon.setBounds(0, 0, 64, 64);
+                ((AppCompatTextView) title).setCompoundDrawables(null, null, icon, null);
+            }
+        } else {
+            ((AppCompatTextView) title).setCompoundDrawables(null, null, null, null);
         }
 
         // Trusted flags.
