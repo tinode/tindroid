@@ -44,6 +44,7 @@
             android:singleLine="true"
             android:textIsSelectable="false"
             android:drawablePadding="@dimen/activity_padding"
+            app:drawableTint="@color/grey"
             tools:text="Travel or flowers" />
 
         <TextView

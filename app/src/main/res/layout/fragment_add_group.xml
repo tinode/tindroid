@@ -64,7 +64,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:hint="@string/topic_title">
+                    android:hint="@string/hint_topic_title">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editTitle"
@@ -164,7 +164,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/activity_vertical_margin"
                     android:layout_marginStart="@dimen/label_h_padding"
-                    android:text="@string/add_group_members"
+                    android:text="@string/add_members"
                     />
 
                 <include layout="@layout/edit_members" />

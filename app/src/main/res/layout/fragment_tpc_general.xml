@@ -59,7 +59,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:hint="@string/topic_title"
+                android:hint="@string/hint_topic_title"
                 tools:text="Group about travel" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -152,7 +152,7 @@
                 style="?android:textAppearanceSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/group_tags_description" />
+                android:text="@string/topic_tags_description" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/buttonManageTags"

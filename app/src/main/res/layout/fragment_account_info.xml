@@ -187,7 +187,7 @@
             android:layout_below="@id/security_text"
             android:layout_marginStart="16dp"
             android:layout_toEndOf="@id/icon_security"
-            android:text="@string/security_explained" />
+            android:text="@string/account_security_explained" />
     </RelativeLayout>
 
     <RelativeLayout

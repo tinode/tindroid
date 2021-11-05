@@ -272,7 +272,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                         if (intent.resolveActivity(activity.getPackageManager()) != null) {
                             startActivity(intent);
                         } else {
-                            Toast.makeText(activity, R.string.unable_to_complete_action, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                             Log.i(TAG, "Unable to find contact manager");
                         }
                     } else {

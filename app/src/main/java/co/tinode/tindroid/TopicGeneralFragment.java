@@ -27,10 +27,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.widgets.LetterTileDrawable;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 
@@ -191,6 +188,8 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         boolean editable = mTopic.isGrpType() && mTopic.isOwner();
         title.setEnabled(editable);
         uploadAvatar.setVisibility(editable ? View.VISIBLE : View.GONE);
+
+        title.setHint(mTopic.isGrpType() ? R.string.hint_topic_title : R.string.hint_contact_name);
 
         VxCard pub = mTopic.getPub();
         if (pub != null) {

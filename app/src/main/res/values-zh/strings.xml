@@ -73,7 +73,7 @@
     <string name="profile_action">Tinode介绍</string>
     <string name="view_profile">查看介绍</string>
     <string name="tinode_message">发送Tinode消息</string>
-    <string name="topic_title">编组名称</string>
+    <string name="hint_topic_title">编组名称</string>
     <string name="group_members">编组成员</string>
     <string name="name_required">需要编组名称</string>
     <string name="no_members">编组成员不存在</string>
@@ -251,10 +251,9 @@
     <string name="notifications">通知</string>
     <string name="user_tags_description">其他人可以通过这些标签找到您</string>
     <string name="help_explained">支援，法律，关于</string>
-    <string name="security_explained">密码，权限，删除帐户</string>
+    <string name="account_security_explained">密码，权限，删除帐户</string>
 
     <string name="topic_tags_description">搜索标签以查找组</string>
-    <string name="permissions_explained">访问权限，搜索标签</string>
     <string name="delete_group">删除会话</string>
     <string name="id">地址:</string>
     <string name="topic_default_permissions_explained">新成员会自动获得这些权限</string>
@@ -280,4 +279,16 @@
     <string name="form">表格</string>
     <string name="accept_avatar_button_hint">接受头像</string>
     <string name="next_button_hint">往下走</string>
+    <string name="your_name">你的姓名</string>
+    <string name="description_optional">说明（可选）</string>
+    <string name="description">说明</string>
+    <string name="badge_verified">值得信赖</string>
+    <string name="badge_staff">在员工管理下</string>
+    <string name="badge_danger">可疑的</string>
+    <string name="action_edit">编辑</string>
+    <string name="action_save">保存</string>
+    <string name="online_now">在线</string>
+    <string name="action_reply">回复</string>
+    <string name="action_forward">重定向</string>
+    <string name="forward_to">重定向消息</string>
 </resources>

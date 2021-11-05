@@ -73,7 +73,7 @@
     <string name="profile_action">Tinode Profil</string>
     <string name="view_profile">Profil ansehen</string>
     <string name="tinode_message">Eine Nachricht mit tinode senden</string>
-    <string name="topic_title">Name der Gruppe</string>
+    <string name="hint_topic_title">Name der Gruppe</string>
     <string name="group_members">Mitglieder der Gruppe</string>
     <string name="name_required">Sie müssen den Namen der Gruppe eingeben </string>
     <string name="no_members">Keine Mitglieder in der Gruppe</string>
@@ -252,9 +252,8 @@
     <string name="notifications">Benachrichtigungen</string>
     <string name="user_tags_description">Benutzer können Sie über diese Schlagworte finden</string>
     <string name="help_explained">Support, Rechtliche Informationen, Über</string>
-    <string name="security_explained">Passwort, Berechtigungen, Konto löschen</string>
+    <string name="account_security_explained">Passwort, Berechtigungen, Konto löschen</string>
     <string name="topic_tags_description">Benutzer können das Thema über diese Schlagworte finden</string>
-    <string name="permissions_explained">Zugriffsberechtigungen, Such-Schlagwörter</string>
     <string name="delete_group">Gruppe löschen</string>
 
     <string name="topic_default_permissions_explained">Neue Mitglieder erhalten diese Berechtigungen automatisch</string>
@@ -280,4 +279,16 @@
     <string name="form">Bilden</string>
     <string name="accept_avatar_button_hint">Akzeptiere den Avatar</string>
     <string name="next_button_hint">Weiter</string>
+    <string name="your_name">Ihr Name</string>
+    <string name="description_optional">Beschreibung (optional)</string>
+    <string name="description">Beschreibung</string>
+    <string name="badge_verified">Verifiziert</string>
+    <string name="badge_staff">Verwaltung</string>
+    <string name="badge_danger">Verdächtig</string>
+    <string name="action_edit">Bearbeiten</string>
+    <string name="action_save">Speichern</string>
+    <string name="online_now">jetzt online</string>
+    <string name="action_reply">Antwort</string>
+    <string name="action_forward">Nach vorne</string>
+    <string name="forward_to">Weiterleiten</string>
 </resources>

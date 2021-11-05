@@ -60,7 +60,6 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
 
     @Override
     public void onResume() {
-        super.onResume();
         final AppCompatActivity activity = (AppCompatActivity) getActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
 
@@ -70,6 +69,8 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
 
         // Assign initial form values.
         updateFormValues(activity, me);
+
+        super.onResume();
     }
 
     @Override
@@ -86,6 +87,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         if (me != null) {
             VxCard pub = me.getPub();
             if (pub != null) {
+                fn = pub.fn;
                 note = pub.note;
             }
             UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, myID);

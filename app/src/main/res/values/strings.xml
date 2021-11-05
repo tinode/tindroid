@@ -83,9 +83,9 @@
     <string name="profile_action">Tinode profile</string>
     <string name="view_profile">View Profile</string>
     <string name="tinode_message">Send Tinode message</string>
-    <string name="topic_title">Name of the group</string>
+    <string name="hint_topic_title">Name of the group</string>
     <string name="group_members">Group Members</string>
-    <string name="name_required">Topic name required</string>
+    <string name="name_required">Group name required</string>
     <string name="no_members">No group members</string>
     <string name="add_one_member">Add at least one group member</string>
     <string name="add_members">Add members</string>
@@ -108,7 +108,7 @@
     <string name="auth_permissions">Authenticated users</string>
     <string name="anon_permissions">Anonymous users</string>
     <string name="topic_private">Additional info (visible to you only)</string>
-    <string name="edit_topic">Edit Topic</string>
+    <string name="edit_topic">Edit group</string>
     <string name="edit_permissions">Edit Permissions</string>
 
     <string name="permission_owner">Full control (owner)</string>
@@ -154,7 +154,7 @@
     <string name="failed_to_open_file">No application can view the file of this type</string>
     <string name="failed_empty_password">Not changed: empty password</string>
     <string name="failed_credential_confirmation">Incorrect confirmation code</string>
-    <string name="failed_to_create_topic">Failed to create topic</string>
+    <string name="failed_to_create_topic">Failed to create conversation</string>
 
     <string name="contacts_section_contacts">Phone Contacts</string>
     <string name="contacts_section_directory">Directory</string>
@@ -166,9 +166,9 @@
     <string name="confirm">Confirm</string>
     <string name="validation_example">Numbers only</string>
     <string name="enter_confirmation_code">Enter confirmation code</string>
-    <string name="hint_add_by_id">Enter topic or user ID</string>
+    <string name="hint_add_by_id">Enter ID of a group or user</string>
     <string name="hint_search_tags">Search by tags</string>
-    <string name="topic_not_found_or_invalid">Topic not found or invalid</string>
+    <string name="topic_not_found_or_invalid">Conversation not found or invalid</string>
     <string name="sending_disabled">Not available</string>
     <string name="download_title">Tinode download</string>
     <string name="some_permissions_missing">Please grant all requested permissions.</string>
@@ -264,9 +264,8 @@
     <string name="notifications">Notifications</string>
     <string name="user_tags_description">Others can find you by these tags</string>
     <string name="help_explained">Support, legal, about</string>
-    <string name="security_explained">Password, permissions, deleting account</string>
+    <string name="account_security_explained">Password, permissions, deleting account</string>
     <string name="topic_tags_description">Others can find group by these tags</string>
-    <string name="permissions_explained">Access permissions, search tags</string>
     <string name="delete_group">Delete group</string>
 
     <string name="topic_default_permissions_explained">New members automatically receive these permissions</string>
@@ -295,23 +294,19 @@
     <string name="your_name">Your name</string>
     <string name="description_optional">Description (optional)</string>
     <string name="change_avatar">Change avatar</string>
-    <string name="group_title">Group title</string>
-    <string name="group_tags_description">Group can be found by these tags</string>
     <string name="badge_verified">Verified/official</string>
     <string name="badge_staff">Staff-managed</string>
     <string name="badge_danger">Untrustworthy</string>
-    <string name="group_name">Group name</string>
     <string name="description">Description</string>
     <string name="group_security_explained">Permissions, leave or report the chat</string>
     <string name="action_edit">Edit</string>
     <string name="action_save">Save</string>
     <string name="online_now">online now</string>
-    <string name="topic_settings">Chat settings</string>
+    <string name="topic_settings">Conversation settings</string>
     <string name="action_reply">Reply</string>
-    <string name="unable_to_complete_action">Unable to complete action</string>
-    <string name="add_group_members">Add members</string>
     <string name="action_forward">Forward</string>
     <string name="forward_to">Forward to…</string>
     <string name="hint_search_contacts">Search contacts</string>
     <string name="report_channel">Report channel</string>
+    <string name="hint_contact_name">Contact name</string>
 </resources>

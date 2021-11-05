@@ -73,7 +73,7 @@
     <string name="profile_action">Tinode perfil</string>
     <string name="view_profile">Ver perfil</string>
     <string name="tinode_message">Enviar un mensaje de Tinode</string>
-    <string name="topic_title">Nombre del grupo</string>
+    <string name="hint_topic_title">Nombre del grupo</string>
     <string name="group_members">Miembros del grupo</string>
     <string name="name_required">Debes intruducir nombre del grupo </string>
     <string name="no_members">No hay miembros en el grupo</string>
@@ -252,9 +252,8 @@
     <string name="notifications">Notificaciones</string>
     <string name="user_tags_description">Los usuarios pueden encontrarte por estas etiquetas</string>
     <string name="help_explained">Soporte, info legal, acerca</string>
-    <string name="security_explained">Contraseña, permisos, eliminación de la cuenta</string>
+    <string name="account_security_explained">Contraseña, permisos, eliminación de la cuenta</string>
     <string name="topic_tags_description">Los usuarios pueden encontrar el tema por estas etiquetas</string>
-    <string name="permissions_explained">Permisos de acceso, etiquetas de búsqueda</string>
     <string name="delete_group">Eliminar grupo</string>
 
     <string name="topic_default_permissions_explained">Los nuevos miembros reciben automáticamente estos permisos</string>
@@ -279,4 +278,16 @@
     <string name="form">Formulario</string>
     <string name="accept_avatar_button_hint">Aceptar avatar</string>
     <string name="next_button_hint">Siguiente</string>
+    <string name="your_name">Tu nombre</string>
+    <string name="description">Descripción</string>
+    <string name="description_optional">Descripción (opcional)</string>
+    <string name="badge_verified">Verificado</string>
+    <string name="badge_staff">Administración</string>
+    <string name="badge_danger">Suspicaz</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_save">Guardar</string>
+    <string name="online_now">en línea</string>
+    <string name="action_reply">Respuesta</string>
+    <string name="action_forward">Reenviar</string>
+    <string name="forward_to">Reenviar a…</string>
 </resources>

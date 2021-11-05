@@ -73,7 +73,7 @@
     <string name="profile_action">Tinode 個人檔案</string>
     <string name="view_profile">查看個人檔案</string>
     <string name="tinode_message">傳送 Tinode 訊息</string>
-    <string name="topic_title">群組名稱</string>
+    <string name="hint_topic_title">群組名稱</string>
     <string name="group_members">群組成員</string>
     <string name="name_required">需要主題名稱</string>
     <string name="no_members">無群組成員</string>
@@ -252,9 +252,8 @@
     <string name="notifications">通知</string>
     <string name="user_tags_description">其他人可以透過這些標籤找到您</string>
     <string name="help_explained">支援、法律聲明、關於</string>
-    <string name="security_explained">密碼、權限、刪除帳號</string>
+    <string name="account_security_explained">密碼、權限、刪除帳號</string>
     <string name="topic_tags_description">其他人可以透過這些標籤找到主題</string>
-    <string name="permissions_explained">存取權限、搜尋標籤</string>
     <string name="delete_group">刪除群組</string>
 
     <string name="topic_default_permissions_explained">新成員將自動獲得這些權限</string>
@@ -279,4 +278,16 @@
     <string name="form">表單</string>
     <string name="accept_avatar_button_hint">接受大頭貼</string>
     <string name="next_button_hint">下一步</string>
+    <string name="action_reply">回答</string>
+    <string name="action_forward">重定向</string>
+    <string name="forward_to">重定向消息</string>
+    <string name="online_now">上線中</string>
+    <string name="action_save">儲存</string>
+    <string name="action_edit">編輯</string>
+    <string name="badge_verified">已驗證/官方</string>
+    <string name="badge_staff">員工管理</string>
+    <string name="badge_danger">不可信</string>
+    <string name="description_optional">說明（可選）</string>
+    <string name="description">說明</string>
+    <string name="your_name">您的名字</string>
 </resources>

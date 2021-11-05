@@ -78,7 +78,7 @@
     <string name="validate_cred">Введите код, полученный вами по %1$s:</string>
     <string name="validate_cred_title">Подтвердите контакт</string>
     <string name="typing_notifications_enabled">Показывать когда печатают</string>
-    <string name="topic_title">Название группы</string>
+    <string name="hint_topic_title">Название группы</string>
     <string name="topic_private">Дополнительная информация</string>
     <string name="topic_not_found_or_invalid">Чат не найден</string>
     <string name="topic_muted">Уведомления отключены</string>
@@ -235,9 +235,8 @@
     <string name="notifications">Уведомления</string>
     <string name="user_tags_description">Поисковые тэги, по которым вас смогут найти</string>
     <string name="help_explained">Поддержка, про приложение</string>
-    <string name="security_explained">Пароль, настройки доступа, удаление аккаунта</string>
+    <string name="account_security_explained">Пароль, настройки доступа, удаление аккаунта</string>
     <string name="topic_tags_description">Поисковые тэги, по которым можно найти группу</string>
-    <string name="permissions_explained">Права доступа, поисковые тэги</string>
     <string name="delete_group">Удалить группу</string>
     <string name="topic_default_permissions_explained">Новые участники автоматически получают эти права доступа</string>
     <string name="user_default_permissions_explained">Новые чаты получат эти права доступа</string>
@@ -259,4 +258,22 @@
     <string name="form">Форма</string>
     <string name="accept_avatar_button_hint">Принять аватарку</string>
     <string name="next_button_hint">Дальше</string>
+    <string name="your_name">Ваше имя</string>
+    <string name="description_optional">Описание (не обязательно)</string>
+    <string name="change_avatar">Изменить аватарку</string>
+    <string name="action_edit">Редактировать</string>
+    <string name="action_save">Сохранить</string>
+    <string name="online_now">онлайн</string>
+    <string name="topic_settings">Настройки чата</string>
+    <string name="action_reply">Ответить</string>
+    <string name="action_forward">Переслать</string>
+    <string name="hint_search_contacts">Поиск контактов</string>
+    <string name="report_channel">Пожаловаться на канал</string>
+    <string name="hint_contact_name">Имя контакта</string>
+    <string name="forward_to">Переслать …</string>
+    <string name="description">Описание</string>
+    <string name="group_security_explained">Настройки безопасности, выйти из чата или пожаловаться</string>
+    <string name="badge_staff">Администрация</string>
+    <string name="badge_verified">Верифицированный</string>
+    <string name="badge_danger">Подозрительный</string>
 </resources>
