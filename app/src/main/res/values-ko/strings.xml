@@ -289,4 +289,10 @@
     <string name="action_reply">회신하다</string>
     <string name="action_forward">리디렉션</string>
     <string name="forward_to">메시지를 리디렉션</string>
+    <string name="change_avatar">아바타 변경</string>
+    <string name="topic_settings">채팅 설정</string>
+    <string name="group_security_explained">권한, 채팅 나가기 또는 신고</string>
+    <string name="hint_search_contacts">연락처 검색</string>
+    <string name="hint_contact_name">담당자 이름</string>
+    <string name="report_channel">채널에 대한 불만</string>
 </resources>

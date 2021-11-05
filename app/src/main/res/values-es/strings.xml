@@ -290,4 +290,10 @@
     <string name="action_reply">Respuesta</string>
     <string name="action_forward">Reenviar</string>
     <string name="forward_to">Reenviar a…</string>
+    <string name="change_avatar">Cambiar avatar</string>
+    <string name="topic_settings">Configuraciones de chat</string>
+    <string name="group_security_explained">Permisos, salir o denunciar el chat</string>
+    <string name="hint_search_contacts">Búsqueda de contacto</string>
+    <string name="hint_contact_name">Nombre de contacto</string>
+    <string name="report_channel">Quejarse del canal</string>
 </resources>

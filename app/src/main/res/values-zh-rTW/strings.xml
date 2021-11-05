@@ -270,7 +270,7 @@
     <string name="image_too_small">圖片過小</string>
     <string name="this_is_channel">這是頻道</string>
     <string name="channel_explained">頻道能夠容納無限多個的唯讀訂閱者。此選擇無法改變。</string>
-    <string name="channel">頻道</string>
+    <string name="channel">播送</string>
     <string name="unavailable">不可用</string>
     <string name="picture">圖片</string>
     <string name="attachment">附加檔案</string>
@@ -290,4 +290,10 @@
     <string name="description_optional">說明（可選）</string>
     <string name="description">說明</string>
     <string name="your_name">您的名字</string>
+    <string name="change_avatar">更改頭像</string>
+    <string name="topic_settings">聊天設置</string>
+    <string name="group_security_explained">權限、離開或報告聊天</string>
+    <string name="hint_search_contacts">聯繫人搜索</string>
+    <string name="hint_contact_name">聯繫人姓名</string>
+    <string name="report_channel">廣播投訴</string>
 </resources>

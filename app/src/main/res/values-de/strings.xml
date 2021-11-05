@@ -291,4 +291,10 @@
     <string name="action_reply">Antwort</string>
     <string name="action_forward">Nach vorne</string>
     <string name="forward_to">Weiterleiten</string>
+    <string name="change_avatar">Avatar ändern</string>
+    <string name="topic_settings">Chat Einstellungen</string>
+    <string name="group_security_explained">Berechtigungen, Chat verlassen oder melden</string>
+    <string name="hint_search_contacts">Kontakte durchsuchen</string>
+    <string name="hint_contact_name">Name des Kontakts</string>
+    <string name="report_channel">Beschweren Sie sich über den Sender</string>
 </resources>

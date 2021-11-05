@@ -271,7 +271,7 @@
 
     <string name="this_is_channel">这是一个频道</string>
     <string name="channel_explained">该通道允许无限的订户以最小的访问控制。 此选择是永久的。</string>
-    <string name="channel">频道</string>
+    <string name="channel">播送</string>
     <string name="unavailable">不可用</string>
     <string name="picture">图片</string>
     <string name="attachment">附属</string>
@@ -291,4 +291,10 @@
     <string name="action_reply">回复</string>
     <string name="action_forward">重定向</string>
     <string name="forward_to">重定向消息</string>
+    <string name="change_avatar">更改头像</string>
+    <string name="topic_settings">聊天设置</string>
+    <string name="group_security_explained">权限、离开或报告聊天</string>
+    <string name="hint_search_contacts">联系人搜索</string>
+    <string name="hint_contact_name">联系人姓名</string>
+    <string name="report_channel">广播投诉</string>
 </resources>
