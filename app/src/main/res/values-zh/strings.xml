@@ -226,7 +226,6 @@
     <string name="confirm_contact_ban">屏蔽 %1$s?</string>
     <string name="confirm_report">屏蔽并举报 %1$s?</string>
     <string name="confirm_delete_account">您确定要永久删除您的帐户吗？此动作是不可逆的。</string>
-    <string name="legal">法律</string>
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">使用条款</a>]]></string>
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">联系我们</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">隐私政策</a>]]></string>

@@ -227,7 +227,6 @@
     <string name="block_and_report">封鎖並檢舉</string>
     <string name="confirm_contact_ban">要封鎖 %1$s 嗎？</string>
     <string name="confirm_report">要封鎖並檢舉 %1$s 嗎？</string>
-    <string name="legal">法律聲明</string>
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Terms of Use</a>]]></string>
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contact Us</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Privacy Policy</a>]]></string>

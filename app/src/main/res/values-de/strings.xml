@@ -227,7 +227,6 @@
     <string name="block_and_report">Blockieren und melden</string>
     <string name="confirm_contact_ban">%1$s blockieren?</string>
     <string name="confirm_report">%1$s blockieren und melden?</string>
-    <string name="legal">Rechtliche Informationen</string>
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Nutzungsbedingungen</a>]]></string>
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Kontakt</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Datenschutzerklärung</a>]]></string>
