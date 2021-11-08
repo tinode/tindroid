@@ -832,7 +832,9 @@ public class MessageActivity extends AppCompatActivity
             if (data != null && !Cache.getTinode().isMe(data.from)) {
                 sendNoteRead(data.seq);
             }
-
+            // Cancel typing animation.
+            mTypingAnimationTimer =
+                    UiUtils.toolbarTypingIndicator(MessageActivity.this, mTypingAnimationTimer, -1);
             runMessagesLoader();
         }
 

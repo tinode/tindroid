@@ -257,7 +257,7 @@ public class UiUtils {
         }
     }
 
-    @SuppressWarnings("SameParameterValue")
+    // Run (duration>0) or stop (duration<=0) typing... animation.
     static Timer toolbarTypingIndicator(final Activity activity, Timer timer, int duration) {
         if (timer != null) {
             timer.cancel();
@@ -279,6 +279,13 @@ public class UiUtils {
 
         final AnimationDrawable typing = (AnimationDrawable) ((LayerDrawable) logo)
                 .findDrawableByLayerId(LOGO_LAYER_TYPING);
+        if (duration <= 0) {
+            // Stop the animation and return.
+            typing.setVisible(false, true);
+            typing.setAlpha(0);
+            return null;
+        }
+
         typing.setBounds(b.right - b.width() / 4, b.bottom - b.height() / 4, b.right, b.bottom);
         typing.setVisible(true, false);
         typing.setAlpha(255);
