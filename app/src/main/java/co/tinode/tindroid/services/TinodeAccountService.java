@@ -25,13 +25,11 @@ public class TinodeAccountService extends Service {
 
     @Override
     public void onCreate() {
-        Log.i(TAG, "TinodeAccountService created");
         mAuthenticator = new Authenticator(this);
     }
 
     @Override
     public void onDestroy() {
-        Log.i(TAG, "TinodeAccountService destroyed");
     }
 
     @Override

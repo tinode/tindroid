@@ -158,7 +158,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
 
         mContactsAdapter = new ContactsAdapter(activity, (position, unique, displayName, photoUri) -> {
             if (!mContactsAdapter.isSelected(unique)) {
-                mSelectedAdapter.append(position, unique, displayName, Uri.parse(photoUri));
+                mSelectedAdapter.append(position, unique, displayName, photoUri);
             } else {
                 mSelectedAdapter.remove(unique);
             }

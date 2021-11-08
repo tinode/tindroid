@@ -145,7 +145,6 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void notifyDataSetChanged() {
-        Log.i(TAG, "notifyDataSetChanged called");
         mAdapter.notifyDataSetChanged();
     }
 

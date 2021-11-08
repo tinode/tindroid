@@ -102,7 +102,7 @@ public class EditMembersFragment extends Fragment {
         rv.addItemDecoration(new HorizontalListDivider(activity));
         mContactsAdapter = new ContactsAdapter(activity, (position, unique, displayName, photoUri) -> {
             if (!mContactsAdapter.isSelected(unique)) {
-                mSelectedAdapter.append(position, unique, displayName, Uri.parse(photoUri));
+                mSelectedAdapter.append(position, unique, displayName, photoUri);
                 mContactsAdapter.toggleSelected(unique, position);
             } else {
                 if (mSelectedAdapter.remove(unique)) {

@@ -215,10 +215,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
             return;
         }
 
-        // Log.i(TAG, "Beginning network synchronization");
         boolean success = false;
         final Tinode tinode = Cache.getTinode();
-        Log.i(TAG, "Starting sync for account " + account.name);
 
         // See if we already have a sync-state attached to this account.
         Date lastSyncMarker = getServerSyncMarker(account);

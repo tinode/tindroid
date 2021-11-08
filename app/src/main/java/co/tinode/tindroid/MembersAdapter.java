@@ -94,7 +94,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         return mCurrentMembers.get(pos).unique.hashCode();
     }
 
-    void append(int pos, String unique, String displayName, Uri avatar) {
+    void append(int pos, String unique, String displayName, String avatar) {
         append(new Member(pos, unique, displayName, avatar, true));
     }
 
@@ -166,12 +166,12 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         final Uri avatarUri;
         final Boolean removable;
 
-        Member(int position, String unique, String displayName, Uri avatar, boolean removable) {
+        Member(int position, String unique, String displayName, String avatar, boolean removable) {
             this.position = position;
             this.unique = unique;
             this.displayName = displayName;
             this.avatarBitmap = null;
-            this.avatarUri = avatar;
+            this.avatarUri = avatar != null ? Uri.parse(avatar) : null;
             this.removable = removable;
         }
 
