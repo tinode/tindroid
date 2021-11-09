@@ -1937,6 +1937,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 topicLeft(false, 500, "term");
                 break;
 
+            case UPD:
+                // A topic subscriber has updated his description.
+                if (pres.src != null && mTinode.getTopic(pres.src) == null) {
+                    // Issue {get sub} only if the current user has no relationship with the updated user.
+                    // Otherwise 'me' will issue a {get desc} request.
+                    getMeta(getMetaGetBuilder().withSub(pres.src).build());
+                }
+                break;
             case ACS:
                 String userId = pres.src != null ? pres.src : mTinode.getMyId();
                 sub = getSubscription(userId);
