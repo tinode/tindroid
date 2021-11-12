@@ -42,7 +42,9 @@
 
     <!-- Background of message bubbles-->
     <color name="colorMessageBubbleMine">#FFFAFAFA</color>
+    <color name="colorMessageBubbleMineFlashing">#FCCC</color>
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
+    <color name="colorMessageBubbleOtherFlashing">#FF85A165</color>
     <color name="colorMessageBubbleMeta">#FFe3f2fd</color>
 
     <color name="colorReplyBubble">#10333333</color>

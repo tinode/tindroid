@@ -46,9 +46,11 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         msg.high = c.isNull(MessageDb.COLUMN_IDX_HIGH) ? 0 : c.getInt(MessageDb.COLUMN_IDX_HIGH);
         msg.delId = c.isNull(MessageDb.COLUMN_IDX_DEL_ID) ? 0 : c.getInt(MessageDb.COLUMN_IDX_DEL_ID);
         msg.head = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_HEAD));
-        msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
-        if (previewLength > 0 && msg.content != null) {
-            msg.content = msg.content.preview(previewLength);
+        if (previewLength != 0) {
+            msg.content = BaseDb.deserialize(c.getString(MessageDb.COLUMN_IDX_CONTENT));
+            if (previewLength > 0 && msg.content != null) {
+                msg.content = msg.content.preview(previewLength);
+            }
         }
         if (c.getColumnCount() > MessageDb.COLUMN_IDX_TOPIC_NAME) {
             msg.topic = c.getString(MessageDb.COLUMN_IDX_TOPIC_NAME);

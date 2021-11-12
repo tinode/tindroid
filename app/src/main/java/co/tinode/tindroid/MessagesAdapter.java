@@ -1,11 +1,13 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -140,6 +142,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return true;
             }
 
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onDestroyActionMode(ActionMode actionMode) {
                 SparseBooleanArray arr = mSelectedItems;
@@ -603,14 +606,72 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
                 updateSelectionMode();
+            } else {
+                try {
+                    int replySeq = Integer.parseInt(m.getStringHeader("reply"));
+                    if (replySeq != -1) {
+                        final int pos = findInCursor(mCursor, replySeq);
+                        if (pos >= 0) {
+                            LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+                            StoredMessage mm = getMessage(pos);
+                            if (lm != null &&
+                                    pos >= lm.findFirstCompletelyVisibleItemPosition() &&
+                                    pos <= lm.findLastCompletelyVisibleItemPosition()) {
+                                // Completely visible, animate now.
+                                animateMessageBubble(
+                                        (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
+                                        mm.isMine());
+                            } else {
+                                // Scroll then animate.
+                                mRecyclerView.clearOnScrollListeners();
+                                mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                                    @Override
+                                    public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                                        super.onScrollStateChanged(recyclerView, newState);
+                                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                                            recyclerView.removeOnScrollListener(this);
+                                            animateMessageBubble(
+                                                    (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
+                                                    mm.isMine());
+                                        }
+                                    }
+                                });
+                                mRecyclerView.smoothScrollToPosition(pos);
+                            }
+                        }
+                    }
+                } catch (NumberFormatException ignored) {}
             }
         });
     }
 
+    private void animateMessageBubble(final ViewHolder vh, boolean isMine) {
+        if (vh == null) {
+            return;
+        }
+        int from = vh.mMessageBubble.getResources().getColor(isMine ?
+                R.color.colorMessageBubbleMine : R.color.colorMessageBubbleOther);
+        int to = vh.mMessageBubble.getResources().getColor(isMine ?
+                R.color.colorMessageBubbleMineFlashing : R.color.colorMessageBubbleOtherFlashing);
+        ValueAnimator colorAnimation = ValueAnimator.ofArgb(from, to, from);
+        colorAnimation.setDuration(600); // milliseconds
+        colorAnimation.addUpdateListener(animator ->
+            vh.mMessageBubble.setBackgroundTintList(ColorStateList.valueOf((int) animator.getAnimatedValue()))
+        );
+        colorAnimation.start();
+    }
+
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
-        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
-            return StoredMessage.readMessage(mCursor, -1);
+        if (mCursor != null && !mCursor.isClosed()) {
+            return getMessage(mCursor, position, -1);
+        }
+        return null;
+    }
+
+    private static StoredMessage getMessage(Cursor cur, int position, int previewLength) {
+        if (cur.moveToPosition(position)) {
+            return StoredMessage.readMessage(cur, previewLength);
         }
         return null;
     }
@@ -679,6 +740,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void swapCursor(final Cursor cursor, final int refresh) {
         if (mCursor != null && mCursor == cursor) {
             return;
@@ -786,6 +848,29 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (state == null || !state.isFinished()) {
             wm.cancelUniqueWork(uniqueID);
         }
+    }
+
+    private static int findInCursor(Cursor cur, int seq) {
+        int low = 0;
+        int high = cur.getCount() - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            StoredMessage m = getMessage(cur, mid, 0); // previewLength == 0 means no content is needed.
+            if (m == null) {
+                return -mid;
+            }
+
+            // Messages are sorted in descending order by seq.
+            int cmp = - m.seq + seq;
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
