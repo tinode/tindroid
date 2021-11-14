@@ -269,7 +269,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     }
                 }
 
-            } else if (what.equals("sub")) {
+            } else if ("sub".equals(what)) {
                 // Subscription notification.
 
                 // Check if this is a known topic.
