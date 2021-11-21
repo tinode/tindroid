@@ -481,17 +481,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * Set new seq value and if it's greater than the current value make a network call to fetch new messages.
      * @param seq sequential ID to assign.
      */
-    protected void setSeqAndFetch(int seq) {
+    protected void setSeqAndFetch(final int seq) {
         if (seq > mDesc.seq) {
-            int limit = seq - mDesc.seq;
-            mDesc.seq = seq;
             // Fetch only if not attached. If it's attached it will be fetched elsewhere.
             if (!isAttached()) {
                 try {
-                    subscribe(null, getMetaGetBuilder().withLaterData(limit).build()).thenApply(
+                    subscribe(null, getMetaGetBuilder().withLaterData().build()).thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                mDesc.seq = seq;
                                 leave();
                                 return null;
                             }
@@ -2170,6 +2169,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         public MetaGetBuilder withData(Integer since, Integer before, Integer limit) {
             meta.setData(since, before, limit);
             return this;
+        }
+
+        /**
+         * Add query parameters to fetch messages newer than the latest saved message.
+         */
+        public MetaGetBuilder withLaterData() {
+            return withLaterData(null);
         }
 
         /**

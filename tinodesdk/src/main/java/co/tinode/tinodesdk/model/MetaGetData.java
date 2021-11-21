@@ -13,7 +13,9 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
  */
 @JsonInclude(NON_DEFAULT)
 public class MetaGetData implements Serializable {
+    // Inclusive (closed): ID >= since.
     public Integer since;
+    // Exclusive (open): ID < before.
     public Integer before;
     public Integer limit;
 

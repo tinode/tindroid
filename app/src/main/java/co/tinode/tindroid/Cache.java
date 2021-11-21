@@ -21,7 +21,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class Cache {
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
 
-    private static Tinode sTinode;
+    private static Tinode sTinode = null;
 
     public static Tinode getTinode() {
         if (sTinode == null) {
