@@ -29,13 +29,9 @@ public class QuoteFormatter extends PreviewFormatter {
     private static TypedArray sColorsDark;
     private static int sTextColor;
 
-    private final SpanFormatter.ClickListener mClicker;
 
-    public QuoteFormatter(final Context context, float fontSize, int maxLength,
-                          final SpanFormatter.ClickListener quoteClicker) {
+    public QuoteFormatter(final Context context, float fontSize, int maxLength ) {
         super(context, fontSize, maxLength);
-
-        mClicker = quoteClicker;
 
         Resources res = context.getResources();
         if (sColorsDark == null) {

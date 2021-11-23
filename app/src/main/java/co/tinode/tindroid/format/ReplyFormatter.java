@@ -8,8 +8,8 @@ import java.util.Map;
 import co.tinode.tindroid.UiUtils;
 
 public class ReplyFormatter extends QuoteFormatter {
-    public ReplyFormatter(TextView container, SpanFormatter.ClickListener clicker) {
-        super(container.getContext(), container.getTextSize(), UiUtils.QUOTED_REPLY_LENGTH, clicker);
+    public ReplyFormatter(TextView container) {
+        super(container.getContext(), container.getTextSize(), UiUtils.QUOTED_REPLY_LENGTH);
     }
 
     @Override

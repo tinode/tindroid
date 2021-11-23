@@ -21,10 +21,12 @@ class StyledTreeNode extends AbstractDraftyFormatter.TreeNode {
     }
 
     // Copy constructor.
-    StyledTreeNode(StyledTreeNode s) {
+    StyledTreeNode(AbstractDraftyFormatter.TreeNode s) {
         super(s);
-        cStyle = s.cStyle;
-        pStyle = s.pStyle;
+        if (s instanceof StyledTreeNode) {
+            cStyle = ((StyledTreeNode) s).cStyle;
+            pStyle = ((StyledTreeNode) s).pStyle;
+        }
     }
 
     StyledTreeNode(CharSequence content) {
