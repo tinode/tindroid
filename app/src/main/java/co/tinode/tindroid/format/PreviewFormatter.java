@@ -15,6 +15,7 @@ import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.util.TypedValue;
 
+import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.DrawableRes;
@@ -97,9 +98,24 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
                 content, mMaxLength);
     }
 
+    // Return '➦' if the mention starts with it, otherwise return the whole mention.
+    private Object extractMentionSymbol(Object content) {
+        if (content instanceof CharSequence) {
+            CharSequence text = (CharSequence) content;
+            if (text.length() > 0 && text.charAt(0) == '➦') {
+                content = "➦";
+            }
+        } else if (content instanceof List) {
+            content = extractMentionSymbol(((List) content).get(0));
+        } else if (content instanceof TreeNode) {
+            TreeNode node = (TreeNode) content;
+            content = extractMentionSymbol(node.hasChildren() ? node.getChildren() : node.getText());
+        }
+        return content;
+    }
     @Override
     protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(content, mMaxLength);
+        return new MeasuredTreeNode(extractMentionSymbol(content), mMaxLength);
     }
 
     @Override
