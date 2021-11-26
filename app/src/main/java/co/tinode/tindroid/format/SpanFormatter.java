@@ -479,8 +479,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 CORNER_RADIUS_DP * metrics.density,
                 res.getColor(R.color.colorAccent),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
-                STRIPE_GAP_DP * metrics.density,
-                inner.toSpanned().length());
+                STRIPE_GAP_DP * metrics.density);
         outer.addNode(new StyledTreeNode((ParagraphStyle) style, inner));
         return outer;
     }

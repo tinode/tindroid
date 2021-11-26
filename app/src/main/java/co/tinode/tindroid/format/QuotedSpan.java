@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.text.Layout;
+import android.text.Spanned;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.LineBackgroundSpan;
 
@@ -16,16 +17,14 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
     private final int mStripeColor;
     private final float mStripeWidth;
     private final float mGapWidth;
-    private final int mSpanedLength;
 
     public QuotedSpan(int backgroundColor, float cornerRadius, int stripeColor,
-                      float stripeWidth, float gap, int spannedLength) {
+                      float stripeWidth, float gap) {
         mBackgroundColor = backgroundColor;
         mCornerRadius = cornerRadius;
         mStripeColor = stripeColor;
         mStripeWidth = stripeWidth;
         mGapWidth = gap;
-        mSpanedLength = spannedLength;
     }
 
     @Override
@@ -43,9 +42,16 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
     public void drawBackground(@NonNull Canvas canvas, @NonNull Paint paint,
                                int left, int right, int top, int baseline, int bottom,
                                @NonNull CharSequence text, int start, int end, int lineNumber) {
+        // Start and end of the current span withint the text string.
+        int myStart = -1, myEnd = -1;
+        if (text instanceof Spanned) {
+            myStart = ((Spanned) text).getSpanStart(this);
+            myEnd = ((Spanned) text).getSpanEnd(this);
+        }
+
         int originalColor = paint.getColor();
         paint.setColor(mBackgroundColor);
-        if (lineNumber > 0 && end < mSpanedLength) {
+        if (start > myStart && end < myEnd) {
             // Lines in the middle.
             canvas.drawRect(left, top, right, bottom, paint);
             paint.setColor(mStripeColor);
@@ -53,7 +59,7 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
         } else {
             Path background = new Path();
             Path stripe = new Path();
-            if (lineNumber == 0) {
+            if (start == myStart) {
                 // Fist line.
                 background.addRoundRect(left, top, right, bottom,
                         new float[]{mCornerRadius, mCornerRadius, mCornerRadius, mCornerRadius, 0, 0, 0, 0},

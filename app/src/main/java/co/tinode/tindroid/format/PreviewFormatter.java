@@ -113,6 +113,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
         }
         return content;
     }
+
     @Override
     protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
         return new MeasuredTreeNode(extractMentionSymbol(content), mMaxLength);
