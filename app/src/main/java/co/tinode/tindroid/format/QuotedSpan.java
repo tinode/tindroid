@@ -42,7 +42,7 @@ public class QuotedSpan implements LeadingMarginSpan, LineBackgroundSpan {
     public void drawBackground(@NonNull Canvas canvas, @NonNull Paint paint,
                                int left, int right, int top, int baseline, int bottom,
                                @NonNull CharSequence text, int start, int end, int lineNumber) {
-        // Start and end of the current span withint the text string.
+        // Start and end of the current span within the text string.
         int myStart = -1, myEnd = -1;
         if (text instanceof Spanned) {
             myStart = ((Spanned) text).getSpanStart(this);
