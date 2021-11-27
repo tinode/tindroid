@@ -47,7 +47,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
     @Override
     protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        StyledTreeNode node = SpanFormatter.handleMention_Impl(content, data);
+        StyledTreeNode node = SpanFormatter.handleMention_Impl(extractMentionSymbol(content), data);
         return new MeasuredTreeNode(node, mMaxLength);
     }
 

@@ -1019,16 +1019,19 @@ public class Drafty implements Serializable {
     }
 
     // Returns a tree of nodes.
-    private static Node forEach(@NotNull CharSequence text,
+    private static Node forEach(@Nullable Node parent,
+                                @NotNull CharSequence text,
                                 int start, int end,
                                 @Nullable List<Span> spans,
                                 @Nullable Transformer tr) {
         if (spans == null) {
             Node node = new Node(text.subSequence(start, end));
+            node.parent = parent;
             return tr != null ? tr.transform(node) : node;
         }
 
         Node result = new Node();
+        result.parent = parent;
         // Process ranges calling formatter for each range.
         ListIterator<Span> iter = spans.listIterator();
         while (iter.hasNext()) {
@@ -1038,6 +1041,7 @@ public class Drafty implements Serializable {
                 // This is different from JS SDK. JS ignores these spans here.
                 // JS uses Drafty.attachments() to get attachments.
                 Node node = new Node(span.type, span.data, span.key);
+                node.parent = result;
                 node = tr != null ? tr.transform(node) : node;
                 if (node != null) {
                     result.add(node);
@@ -1048,6 +1052,7 @@ public class Drafty implements Serializable {
             // Add un-styled range before the styled span starts.
             if (start < span.start) {
                 Node node = new Node(text.subSequence(start, span.start));
+                node.parent = result;
                 node = tr != null ? tr.transform(node) : node;
                 if (node != null) {
                     result.add(node);
@@ -1083,10 +1088,11 @@ public class Drafty implements Serializable {
                 subspans = null;
             }
 
-            Node node = forEach(text, start, span.end, subspans, tr);
+            Node node = forEach(result, text, start, span.end, subspans, tr);
             node = node == null ?
                     new Node(span.type, span.data, span.key) :
                     new Node(span.type, span.data, node, span.key);
+            node.parent = result;
             node = tr != null ? tr.transform(node) : node;
             if (node != null) {
                 result.add(node);
@@ -1097,13 +1103,24 @@ public class Drafty implements Serializable {
         // Add the last unformatted range.
         if (start < end) {
             Node node = new Node(text.subSequence(start, end));
+            node.parent = result;
             node = tr != null ? tr.transform(node) : node;
             if (node != null) {
                 result.add(node);
             }
         }
 
-        return result.isBlank() ? null : result;
+        if (result.isBlank()) {
+            return null;
+        }
+
+        if (result.children.size() == 1) {
+            // Flatten a node with a single child.
+            result = result.children.get(0);
+            result.parent = parent;
+        }
+
+        return result;
     }
 
     // Convert Drafty document to a tree of formatted nodes.
@@ -1183,7 +1200,7 @@ public class Drafty implements Serializable {
             }
         }
 
-        return forEach(text, 0, text.length(), spans, tr);
+        return forEach(null, text, 0, text.length(), spans, tr);
     }
 
     public String toPlainText() {
@@ -1427,7 +1444,7 @@ public class Drafty implements Serializable {
         @Nullable
         @Override
         public Node transform(@NotNull Node node) {
-            if ("MN".equals(node.tp)) {
+            if ("MN".equals(node.tp) && !node.inContext("QQ")) {
                 if (!mMentionStripped) {
                     mMentionStripped = true;
                     return null;
@@ -1438,6 +1455,7 @@ public class Drafty implements Serializable {
     }
 
     public static class Node {
+        Node parent;
         String tp;
         Integer key;
         Map<String,Object> data;
@@ -1445,6 +1463,7 @@ public class Drafty implements Serializable {
         List<Node> children;
 
         public Node() {
+            parent = null;
             tp = null;
             data = null;
             text = null;
@@ -1452,13 +1471,15 @@ public class Drafty implements Serializable {
         }
 
         public Node(@NotNull CharSequence content) {
-            this.tp = null;
-            this.data = null;
+            parent = null;
+            tp = null;
+            data = null;
             text = content;
             children = null;
         }
 
         public Node(@NotNull String tp, @Nullable Map<String,Object> data, int key) {
+            parent = null;
             this.tp = tp;
             this.key = key;
             this.data = data;
@@ -1468,6 +1489,7 @@ public class Drafty implements Serializable {
 
         public Node(@NotNull String tp, @Nullable Map<String,Object> data,
              @NotNull CharSequence content, int key) {
+            parent = null;
             this.tp = tp;
             this.key = key;
             this.data = data;
@@ -1475,20 +1497,22 @@ public class Drafty implements Serializable {
             children = null;
         }
 
-        public Node(@NotNull Node node) {
-            tp = node.tp;
-            key = node.key;
-            data = node.data;
-            text = node.text;
-            children = node.children;
-        }
-
         public Node(@NotNull String tp, @Nullable Map<String,Object> data, @NotNull Node node, int key) {
+            parent = null;
             this.tp = tp;
             this.key = key;
             this.data = data;
             text = null;
             add(node);
+        }
+
+        public Node(@NotNull Node node) {
+            parent = node.parent;
+            tp = node.tp;
+            key = node.key;
+            data = node.data;
+            text = node.text;
+            children = node.children;
         }
 
         public void setStyle(@NotNull String style) {
@@ -1588,6 +1612,7 @@ public class Drafty implements Serializable {
                 text = null;
                 tp = null;
                 children = null;
+                data = null;
             } else if (text != null) {
                 if (tp == null) {
                     text = ltrim(text);
@@ -1601,6 +1626,16 @@ public class Drafty implements Serializable {
             MutableDrafty doc = new MutableDrafty(trailingAttachments);
             appendToDrafty(doc);
             return doc.toDrafty();
+        }
+
+        protected boolean inContext(@NotNull String tp) {
+            if (parent == null) {
+                return false;
+            }
+            if (tp.equals(parent.tp)) {
+                return true;
+            }
+            return parent.inContext(tp);
         }
 
         private void appendToDrafty(@NotNull MutableDrafty doc) {
@@ -1654,7 +1689,7 @@ public class Drafty implements Serializable {
             return "{'" + tp + "'" +
                     (data != null  ? ", data: " + data.toString() : "") +
                     (text != null ? "; '" + text + "'" :
-                            (children != null ? ("; [" + children.toString() + "]") : "; NULL")) +
+                            (children != null ? ("; " + children.toString()) : "; NULL")) +
                     "}";
         }
     }
