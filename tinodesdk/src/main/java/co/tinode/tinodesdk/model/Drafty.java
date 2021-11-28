@@ -1019,19 +1019,16 @@ public class Drafty implements Serializable {
     }
 
     // Returns a tree of nodes.
-    private static Node forEach(@Nullable Node parent,
+    @NotNull
+    private static Node forEach(@NotNull Node parent,
                                 @NotNull CharSequence text,
                                 int start, int end,
-                                @Nullable List<Span> spans,
-                                @Nullable Transformer tr) {
+                                @Nullable List<Span> spans) {
         if (spans == null) {
-            Node node = new Node(text.subSequence(start, end));
-            node.parent = parent;
-            return tr != null ? tr.transform(node) : node;
+            parent.add(new Node(text.subSequence(start, end)));
+            return parent;
         }
 
-        Node result = new Node();
-        result.parent = parent;
         // Process ranges calling formatter for each range.
         ListIterator<Span> iter = spans.listIterator();
         while (iter.hasNext()) {
@@ -1040,23 +1037,13 @@ public class Drafty implements Serializable {
             if (span.start < 0 && span.type.equals("EX")) {
                 // This is different from JS SDK. JS ignores these spans here.
                 // JS uses Drafty.attachments() to get attachments.
-                Node node = new Node(span.type, span.data, span.key);
-                node.parent = result;
-                node = tr != null ? tr.transform(node) : node;
-                if (node != null) {
-                    result.add(node);
-                }
+                parent.add(new Node(span.type, span.data, span.key));
                 continue;
             }
 
             // Add un-styled range before the styled span starts.
             if (start < span.start) {
-                Node node = new Node(text.subSequence(start, span.start));
-                node.parent = result;
-                node = tr != null ? tr.transform(node) : node;
-                if (node != null) {
-                    result.add(node);
-                }
+                parent.add(new Node(text.subSequence(start, span.start)));
                 start = span.start;
             }
 
@@ -1088,44 +1075,45 @@ public class Drafty implements Serializable {
                 subspans = null;
             }
 
-            Node node = forEach(result, text, start, span.end, subspans, tr);
-            node = node == null ?
-                    new Node(span.type, span.data, span.key) :
-                    new Node(span.type, span.data, node, span.key);
-            node.parent = result;
-            node = tr != null ? tr.transform(node) : node;
-            if (node != null) {
-                result.add(node);
-            }
+            parent.add(forEach(new Node(span.type, span.data, span.key), text, start, span.end, subspans));
+
             start = span.end;
         }
 
         // Add the last unformatted range.
         if (start < end) {
-            Node node = new Node(text.subSequence(start, end));
-            node.parent = result;
-            node = tr != null ? tr.transform(node) : node;
-            if (node != null) {
-                result.add(node);
+            parent.add(new Node(text.subSequence(start, end)));
+        }
+
+        return parent;
+    }
+
+    @Nullable
+    protected static Node transformTree(@NotNull Node node, @NotNull Transformer tr) {
+        node = tr.transform(node);
+        if (node == null || node.children == null) {
+            return node;
+        }
+
+        LinkedList<Node> children = new LinkedList<>();
+        for (Node n : node.children) {
+            n = transformTree(n, tr);
+            if (n != null) {
+                children.add(n);
             }
         }
 
-        if (result.isBlank()) {
-            return null;
+        if (children.isEmpty()) {
+            node.children = null;
+        } else {
+            node.children = children;
         }
-
-        if (result.children.size() == 1) {
-            // Flatten a node with a single child.
-            result = result.children.get(0);
-            result.parent = parent;
-        }
-
-        return result;
+        return node;
     }
 
     // Convert Drafty document to a tree of formatted nodes.
-    @Nullable
-    protected Node toTree(@Nullable Transformer tr) {
+    @NotNull
+    protected Node toTree() {
         CharSequence text = txt == null ? "" : txt;
 
         // Handle special case when all values in fmt are 0 and fmt therefore was
@@ -1135,8 +1123,7 @@ public class Drafty implements Serializable {
                 fmt = new Style[1];
                 fmt[0] = new Style(0, 0, 0);
             } else {
-                Node node = new Node(text);
-                return tr != null ? tr.transform(node) : node;
+                return new Node(text);
             }
         }
 
@@ -1200,7 +1187,7 @@ public class Drafty implements Serializable {
             }
         }
 
-        return forEach(null, text, 0, text.length(), spans, tr);
+        return forEach(new Node(), text, 0, text.length(), spans);
     }
 
     public String toPlainText() {
@@ -1242,10 +1229,14 @@ public class Drafty implements Serializable {
      * @param tr style transformer which can be used to remove or alter styles and entities.
      * @return new shortened Drafty object leaving the original intact.
      */
+    @Nullable
     public Drafty preview(final int length, @Nullable Transformer tr) {
-        Node tree = toTree(tr);
-        if (tree == null) {
-            return null;
+        Node tree = toTree();
+        if (tr != null) {
+            tree = transformTree(tree, tr);
+            if (tree == null) {
+                return null;
+            }
         }
         tree.clip(length);
         tree.lTrim();
@@ -1257,8 +1248,9 @@ public class Drafty implements Serializable {
      * suitable for forwarding.
      * @return Drafty document suitable for forwarding.
      */
+    @Nullable
     public Drafty contentToForward() {
-        Node tree = toTree(new ForwardingTransformer());
+        Node tree = transformTree(toTree(), new ForwardingTransformer());
         if (tree == null) {
             return null;
         }
@@ -1439,14 +1431,14 @@ public class Drafty implements Serializable {
     }
 
     public static class ForwardingTransformer implements Transformer {
-        private boolean mMentionStripped = false;
+        private boolean mStripMention = true;
 
         @Nullable
         @Override
         public Node transform(@NotNull Node node) {
-            if ("MN".equals(node.tp) && !node.inContext("QQ")) {
-                if (!mMentionStripped) {
-                    mMentionStripped = true;
+            if ("MN".equals(node.tp)) {
+                if (!node.inContext("QQ") && mStripMention) {
+                    mStripMention = false;
                     return null;
                 }
             }
@@ -1519,20 +1511,24 @@ public class Drafty implements Serializable {
             tp = style;
         }
 
-        public void add(@NotNull Node n) {
-            if (text != null) {
-                throw new IllegalStateException("A node cannot have content and children");
+        protected void add(@Nullable Node n) {
+            if (n == null) {
+                return;
             }
+
             if (children == null) {
                 children = new LinkedList<>();
             }
-            children.add(n);
-        }
 
-        public boolean isBlank() {
-            return tp == null && text == null &&
-                    (data == null || data.isEmpty()) &&
-                    (children == null || children.size() == 0);
+            // If text is present, move it to a subnode.
+            if (text != null) {
+                Node nn = new Node(text);
+                nn.parent = this;
+                children.add(nn);
+            }
+
+            n.parent = this;
+            children.add(n);
         }
 
         public boolean isStyle(@NotNull String style) {

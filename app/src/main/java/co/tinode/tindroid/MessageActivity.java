@@ -321,7 +321,7 @@ public class MessageActivity extends AppCompatActivity
             MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
                     .findFragmentByTag(FRAGMENT_MESSAGES);
             if (fragmsg != null) {
-                fragmsg.topicSubscribed(topicName);
+                fragmsg.topicSubscribed(topicName, forceReset);
             }
         }
 
@@ -417,7 +417,7 @@ public class MessageActivity extends AppCompatActivity
                             } else {
                                 MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
                                 if (fragmsg != null) {
-                                    fragmsg.topicSubscribed(mTopicName);
+                                    fragmsg.topicSubscribed(mTopicName, true);
                                 }
                             }
                         });

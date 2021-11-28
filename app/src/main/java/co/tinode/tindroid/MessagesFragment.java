@@ -819,22 +819,25 @@ public class MessagesFragment extends Fragment {
     void showReply(Activity activity, Drafty reply, int seq) {
         mReply = reply;
         mReplySeqID = seq;
+        mContentToForward = null;
+
+        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.VISIBLE);
         TextView replyHolder = activity.findViewById(R.id.contentPreview);
-        ReplyFormatter formatter = new ReplyFormatter(replyHolder);
+        ReplyFormatter formatter = new ReplyFormatter(replyHolder, false);
         replyHolder.setText(formatter.toSpanned(reply));
     }
 
     private void showForwardedContent(Activity activity, Drafty content) {
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
         TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
-        ReplyFormatter formatter = new ReplyFormatter(previewHolder);
+        ReplyFormatter formatter = new ReplyFormatter(previewHolder, true);
         previewHolder.setText(formatter.toSpanned(content));
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
 
-    void topicSubscribed(String topicName) {
+    void topicSubscribed(String topicName, boolean reset) {
         mTopicName = topicName;
         if (mTopicName != null) {
             //noinspection unchecked
@@ -843,6 +846,9 @@ public class MessagesFragment extends Fragment {
             mTopic = null;
         }
         updateFormValues(getArguments());
+        if (reset) {
+            runMessagesLoader(mTopicName);
+        }
     }
 
     private int findItemPositionById(long id) {

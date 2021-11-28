@@ -29,8 +29,7 @@ public class QuoteFormatter extends PreviewFormatter {
     private static TypedArray sColorsDark;
     private static int sTextColor;
 
-
-    public QuoteFormatter(final Context context, float fontSize, int maxLength ) {
+    public QuoteFormatter(final Context context, float fontSize, int maxLength) {
         super(context, fontSize, maxLength);
 
         Resources res = context.getResources();
@@ -47,7 +46,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
     @Override
     protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        StyledTreeNode node = SpanFormatter.handleMention_Impl(extractMentionSymbol(content), data);
+        StyledTreeNode node = SpanFormatter.handleMention_Impl(shortenForwardedMention(content), data);
         return new MeasuredTreeNode(node, mMaxLength);
     }
 

@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,7 +29,6 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.model.Drafty;
 
 public class ForwardToFragment extends BottomSheetDialogFragment implements MessageActivity.DataSetChangeListener {
-    private static final String TAG = "ForwardToFragment";
 
     public static final String CONTENT_TO_FORWARD = "content_to_forward";
     public static final String FORWARDING_FROM_TOPIC = "forwarding_from_topic";

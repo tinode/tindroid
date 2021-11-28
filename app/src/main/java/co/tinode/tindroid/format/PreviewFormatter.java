@@ -15,7 +15,6 @@ import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.util.TypedValue;
 
-import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.DrawableRes;
@@ -100,7 +99,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
 
     @Override
     protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(extractMentionSymbol(content), mMaxLength);
+        return new MeasuredTreeNode(shortenForwardedMention(content), mMaxLength);
     }
 
     @Override

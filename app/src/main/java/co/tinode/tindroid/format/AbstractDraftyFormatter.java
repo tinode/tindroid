@@ -133,17 +133,17 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
     }
 
     // Return '➦' if the mention starts with it, otherwise return the whole mention.
-    static Object extractMentionSymbol(Object content) {
+    static Object shortenForwardedMention(Object content) {
         if (content instanceof CharSequence) {
             CharSequence text = (CharSequence) content;
             if (text.length() > 0 && text.charAt(0) == '➦') {
                 content = "➦";
             }
         } else if (content instanceof List) {
-            content = extractMentionSymbol(((List) content).get(0));
+            content = shortenForwardedMention(((List) content).get(0));
         } else if (content instanceof TreeNode) {
             TreeNode node = (TreeNode) content;
-            content = extractMentionSymbol(node.hasChildren() ? node.getChildren() : node.getText());
+            content = shortenForwardedMention(node.hasChildren() ? node.getChildren() : node.getText());
         }
         return content;
     }
