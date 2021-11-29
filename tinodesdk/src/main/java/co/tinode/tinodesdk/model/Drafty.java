@@ -1437,9 +1437,15 @@ public class Drafty implements Serializable {
         @Override
         public Node transform(@NotNull Node node) {
             if ("MN".equals(node.tp)) {
-                if (!node.inContext("QQ") && mStripMention) {
-                    mStripMention = false;
-                    return null;
+                if (node.inContext("QQ")) {
+                    // Replace the full mention with a single char.
+                    node.text = "➦";
+                    node.children = null;
+                } else {
+                    if (mStripMention) {
+                        mStripMention = false;
+                        return null;
+                    }
                 }
             }
             return node;

@@ -8,14 +8,20 @@ import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Bundle;
 import android.text.style.ForegroundColorSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
 
+import java.net.URL;
 import java.util.Map;
 
 import androidx.appcompat.content.res.AppCompatResources;
+import co.tinode.tindroid.AttachmentHandler;
+import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 
@@ -29,10 +35,13 @@ public class QuoteFormatter extends PreviewFormatter {
     private static TypedArray sColorsDark;
     private static int sTextColor;
 
-    public QuoteFormatter(final Context context, float fontSize, int maxLength) {
-        super(context, fontSize, maxLength);
+    private final View mParent;
 
-        Resources res = context.getResources();
+    public QuoteFormatter(final View parent, float fontSize, int maxLength) {
+        super(parent.getContext(), fontSize, maxLength);
+
+        mParent = parent;
+        Resources res = parent.getResources();
         if (sColorsDark == null) {
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
             sTextColor = res.getColor(R.color.colorReplyText);
@@ -60,8 +69,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
         // Using fixed dimensions for the image.
         DisplayMetrics metrics = res.getDisplayMetrics();
-        int width = (int) (IMAGE_THUMBNAIL_DIM * metrics.density);
-        int height = (int) (IMAGE_THUMBNAIL_DIM * metrics.density);
+        int size = (int) (IMAGE_THUMBNAIL_DIM * metrics.density);
 
         Object filename = data.get("name");
         if (filename instanceof String) {
@@ -70,11 +78,20 @@ public class QuoteFormatter extends PreviewFormatter {
             filename = res.getString(R.string.picture);
         }
 
-        Drawable thumbnail = null;
+        // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
+        Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+        //noinspection ConstantConditions
+        broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
+        broken = UiUtils.getPlaceholder(ctx, broken, null, size, size);
 
-        // Inline image only.
-        Object val = data.get("val");
-        if (val != null) {
+        MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
+
+        Object val;
+
+        // Trying to use in-band image first: we don't need the full image at "ref" to generate a tiny preview.
+        if ((val = data.get("val")) != null) {
+            // Inline image.
+            Drawable thumbnail = broken;
             try {
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
@@ -82,28 +99,30 @@ public class QuoteFormatter extends PreviewFormatter {
                         Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
                 Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                 if (bmp != null) {
-                    thumbnail = new BitmapDrawable(res, bmp);
-                    thumbnail.setBounds(0, 0, width, height);
+                    thumbnail = new BitmapDrawable(res, UiUtils.scaleSquareBitmap(bmp, size));
+                    thumbnail.setBounds(0, 0, size, size);
                 }
             } catch (Exception ex) {
                 Log.w(TAG, "Broken image preview", ex);
             }
+
+            node.addNode(new MeasuredTreeNode(new StyledImageSpan(thumbnail,
+                    new RectF(IMAGE_PADDING * metrics.density,
+                            IMAGE_PADDING * metrics.density,
+                            IMAGE_PADDING * metrics.density,
+                            IMAGE_PADDING * metrics.density)),
+                    " ", mMaxLength));
+
+        } else if ((val = data.get("ref")) instanceof String) {
+            // If small in-band image is not available, get the large one and shrink.
+            Log.i(TAG, "Out-of-band " + val);
+
+            UrlImageSpan span = new UrlImageSpan(mParent, size, size, true,
+                    AppCompatResources.getDrawable(ctx, R.drawable.ic_image), broken);
+            span.load(Cache.getTinode().toAbsoluteURL((String) val));
+            node.addNode(new MeasuredTreeNode(span, " ", mMaxLength));
         }
 
-        if (thumbnail == null) {
-            // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-            Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
-            broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-            thumbnail = UiUtils.getPlaceholder(ctx, broken, null, width, height);
-        }
-
-        MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
-        node.addNode(new MeasuredTreeNode(new StyledImageSpan(thumbnail,
-                new RectF(IMAGE_PADDING * metrics.density,
-                        IMAGE_PADDING * metrics.density,
-                        IMAGE_PADDING * metrics.density,
-                        IMAGE_PADDING * metrics.density)),
-                " ", mMaxLength));
         node.addNode(new MeasuredTreeNode(" " + filename, mMaxLength));
 
         return node;

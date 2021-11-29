@@ -533,7 +533,7 @@ public class UiUtils {
     }
 
     @NonNull
-    static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp, int size) {
+    public static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp, int size) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         if (width > height) {
@@ -562,7 +562,7 @@ public class UiUtils {
      * @return scaled bitmap or original, it it does not need ot be scaled.
      */
     @NonNull
-    static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight) {
+    public static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         float factor = 1.0f;

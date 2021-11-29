@@ -13,7 +13,7 @@ public class ReplyFormatter extends QuoteFormatter {
     private final boolean mIsForwarded;
 
     public ReplyFormatter(TextView container, boolean isForwarded) {
-        super(container.getContext(), container.getTextSize(), UiUtils.QUOTED_REPLY_LENGTH);
+        super(container, container.getTextSize(), UiUtils.QUOTED_REPLY_LENGTH);
         mIsForwarded = isForwarded;
     }
 

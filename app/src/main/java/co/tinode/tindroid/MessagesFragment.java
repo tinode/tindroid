@@ -817,6 +817,7 @@ public class MessagesFragment extends Fragment {
     }
 
     void showReply(Activity activity, Drafty reply, int seq) {
+        Log.i(TAG, "Show reply: " + reply.toPlainText());
         mReply = reply;
         mReplySeqID = seq;
         mContentToForward = null;

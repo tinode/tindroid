@@ -3,6 +3,7 @@ package co.tinode.tindroid.format;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 import com.squareup.picasso.Target;
 
 import java.lang.ref.WeakReference;
@@ -27,20 +29,26 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     private final Drawable mOnError;
     private final int mWidth;
     private final int mHeight;
+    private final boolean mCropCenter;
     private URL mSource = null;
     private Drawable mDrawable;
 
-    public UrlImageSpan(View parent, int width, int height, Drawable placeholder, Drawable onError) {
+    public UrlImageSpan(View parent, int width, int height, boolean cropCenter, Drawable placeholder, Drawable onError) {
         mParentRef = new WeakReference<>(parent);
         mWidth = width;
         mHeight = height;
+        mCropCenter = cropCenter;
         mOnError = onError;
         mDrawable = placeholder;
     }
 
     public void load(URL from) {
         mSource = from;
-        Picasso.get().load(Uri.parse(from.toString())).resize(mWidth, mHeight).into(this);
+        RequestCreator req = Picasso.get().load(Uri.parse(from.toString())).resize(mWidth, mHeight);
+        if (mCropCenter) {
+            req = req.centerCrop();
+        }
+        req.into(this);
     }
 
     @Override
@@ -76,10 +84,11 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     public int getSize(@NonNull Paint paint, CharSequence text,
                        int start, int end, Paint.FontMetricsInt fm) {
         if (fm != null) {
-            fm.ascent = -mHeight;
-            fm.descent = 0;
+            fm.descent = mHeight / 3;
+            fm.ascent = - fm.descent * 2;
+
             fm.top = fm.ascent;
-            fm.bottom = 0;
+            fm.bottom = fm.descent;
         }
         return mWidth;
     }

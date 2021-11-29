@@ -96,7 +96,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
 
         Map<String, Drafty.Formatter<? extends TreeNode>> formatters = new HashMap<>();
-        formatters.put("QQ", new QuoteFormatter(mContext, mFontSize, -1));
+        formatters.put("QQ", new QuoteFormatter(mContainer, mFontSize, -1));
         return content.format(this, formatters).toSpanned();
     }
 
@@ -301,7 +301,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 }
                 Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, scaledWidth, scaledHeight);
 
-                span = new UrlImageSpan(mContainer, scaledWidth, scaledHeight, placeholder, onError);
+                span = new UrlImageSpan(mContainer, scaledWidth, scaledHeight, false, placeholder, onError);
                 ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL(ref));
             }
         }

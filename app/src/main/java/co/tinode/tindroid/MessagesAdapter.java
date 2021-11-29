@@ -1125,6 +1125,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Drafty.Node conv = new Drafty.Node(node);
             conv.resetData();
             conv.putData("name", node.getData("name"));
+            conv.putData("width", UiUtils.REPLY_THUMBNAIL_SIZE);
+            conv.putData("height", UiUtils.REPLY_THUMBNAIL_SIZE);
+
             Object val = node.getData("val");
             byte[] bits = null;
             if (val instanceof byte[]) {
@@ -1141,11 +1144,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
                     conv.putData("val", bits);
                     conv.putData("mime", "image/jpeg");
-                    conv.putData("width", UiUtils.REPLY_THUMBNAIL_SIZE);
-                    conv.putData("height", UiUtils.REPLY_THUMBNAIL_SIZE);
                     conv.putData("size", bits.length);
                 }
+            } else {
+                conv.putData("ref", node.getData("ref"));
+                conv.putData("mime", node.getData("mime"));
+                conv.putData("size", node.getData("size"));
             }
+
             return conv;
         }
     }
