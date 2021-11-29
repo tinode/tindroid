@@ -34,6 +34,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
@@ -59,6 +60,9 @@ import okhttp3.Request;
  */
 public class TindroidApp extends Application implements LifecycleObserver {
     private static final String TAG = "TindroidApp";
+
+    // 32 MB.
+    private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 32;
 
     private static TindroidApp sContext;
 
@@ -217,6 +221,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
 
         // Setting up Picasso with auth headers.
         OkHttpClient client = new OkHttpClient.Builder()
+                .cache(new okhttp3.Cache(createDefaultCacheDir(this), PICASSO_CACHE_SIZE))
                 .addInterceptor(chain -> {
                     Request picassoReq = chain.request();
                     Map<String, String> headers;
@@ -235,6 +240,15 @@ public class TindroidApp extends Application implements LifecycleObserver {
         Picasso.setSingletonInstance(new Picasso.Builder(this)
                 .downloader(new OkHttp3Downloader(client))
                 .build());
+    }
+
+    static File createDefaultCacheDir(Context context) {
+        File cache = new File(context.getApplicationContext().getCacheDir(), "picasso-cache");
+        if (!cache.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            cache.mkdirs();
+        }
+        return cache;
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
@@ -272,6 +286,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
     // Suppressed lint warning because TindroidApp won't leak: it must exist for the entire lifetime of the app.
     @SuppressLint("StaticFieldLeak")
     private class LoginWithSavedAccount extends AsyncTask<String, Void, Void> {
+
         @Override
         protected Void doInBackground(String... uidWrapper) {
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
