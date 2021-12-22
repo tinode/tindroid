@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,6 +90,9 @@ public class Drafty implements Serializable {
             Pattern.compile("(?<=^|[\\W_])~([^~]+[^\\s~])~(?=$|[\\W_])"), // strikethough ~st~
             Pattern.compile("(?<=^|\\W)`([^`]+)`(?=$|\\W)")     // code/monospace `mono`
     };
+
+    // Relative weights of formatting spans. Greater index in array means greater weight.
+    private static final List<String> FMT_WEIGHTS = Collections.singletonList("QQ");
 
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {
@@ -834,11 +838,10 @@ public class Drafty implements Serializable {
     }
 
     // Returns a tree of formatted spans.
-    private static <T> List<T> forEach(@NotNull String line,
-                                int start, int end,
-                                @Nullable List<Span> spans,
-                                @NotNull Formatter<? extends T> defaultFormatter,
-                                @Nullable Map<String, Formatter<? extends T>> styleFormatters) {
+    private static <T> List<T> spansToTree(@NotNull String line,
+                                           int start, int end,
+                                           @Nullable List<Span> spans,
+                                           @NotNull Formatter<? extends T> defaultFormatter) {
         List<T> result = new LinkedList<>();
 
         if (spans == null) {
@@ -849,7 +852,7 @@ public class Drafty implements Serializable {
             return result;
         }
 
-        // Process ranges calling formatter for each range.
+        // Process subspans.
         ListIterator<Span> iter = spans.listIterator();
         while (iter.hasNext()) {
             Span span = iter.next();
@@ -907,7 +910,7 @@ public class Drafty implements Serializable {
                 if (formatter == null) {
                     formatter = defaultFormatter;
                 }
-                List<T> arr = forEach(line, start, span.end, subspans, formatter, styleFormatters);
+                List<T> arr = spansToTree(line, start, span.end, subspans, formatter);
                 T fs = defaultFormatter.apply(span.type, span.data, arr);
                 if (fs != null) {
                     result.add(fs);
@@ -934,12 +937,9 @@ public class Drafty implements Serializable {
      *
      * @param defaultFormatter is an interface with an `apply` method. It's iteratively
      *                   applied to every node in the tree.
-     * @param styleFormatters style-dependent formatters. An appropriate formatter will
-     *                   applied to a subtree of styles.
      * @return a tree of components.
      */
-    public <T> T format(@NotNull Formatter<T> defaultFormatter,
-                        @Nullable Map<String, Formatter<? extends T>> styleFormatters) {
+    public <T> T format(@NotNull Formatter<T> defaultFormatter) {
         if (txt == null) {
             txt = "";
         }
@@ -947,7 +947,7 @@ public class Drafty implements Serializable {
         // Handle special case when all values in fmt are 0 and fmt is therefore was
         // skipped.
         if (fmt == null || fmt.length == 0) {
-            if (ent != null && ent.length == 1) {
+            if (ent != null && ent.length > 0) {
                 fmt = new Style[1];
                 fmt[0] = new Style(0, 0, 0);
             } else {
@@ -966,20 +966,18 @@ public class Drafty implements Serializable {
             }
             if (aFmt.at <= -1) {
                 // Attachment
-                aFmt.at = -1;
-                aFmt.len = 1;
                 int key = aFmt.key != null ? aFmt.key : 0;
                 if (key < 0) {
                     continue;
                 }
                 // Store attachments separately.
-                attachments.add(new Span(aFmt.at, 0, key));
+                attachments.add(new Span(-1, 0, key));
                 continue;
             }  else if (aFmt.at + aFmt.len > maxIndex) {
                 // Span is out of bounds.
                 continue;
             }
-            if (aFmt.tp == null || "".equals(aFmt.tp)) {
+            if (aFmt.isUnstyled()) {
                 spans.add(new Span(aFmt.at, aFmt.at + aFmt.len,
                         aFmt.key != null ? aFmt.key : 0));
             } else {
@@ -1001,7 +999,7 @@ public class Drafty implements Serializable {
         }
 
         for (Span span : spans) {
-            if (ent != null && (span.type == null || "".equals(span.type))) {
+            if (ent != null && span.isUnstyled()) {
                 if (span.key >= 0 && span.key < ent.length && ent[span.key] != null) {
                     span.type = ent[span.key].tp;
                     span.data = ent[span.key].data;
@@ -1009,35 +1007,35 @@ public class Drafty implements Serializable {
             }
 
             // Is type still undefined? Hide the invalid element!
-            if (span.type == null || "".equals(span.type)) {
+            if (span.isUnstyled()) {
                 span.type = "HD";
             }
         }
 
         return defaultFormatter.apply(null, null,
-                forEach(txt, 0, txt.length(), spans, defaultFormatter, styleFormatters));
+                spansToTree(txt, 0, txt.length(), spans, defaultFormatter), new Stack<>());
     }
 
     // Returns a tree of nodes.
     @NotNull
-    private static Node forEach(@NotNull Node parent,
-                                @NotNull CharSequence text,
-                                int start, int end,
-                                @Nullable List<Span> spans) {
+    private static Node spansToTree(@NotNull Node parent,
+                                    @NotNull CharSequence text,
+                                    int start, int end,
+                                    @Nullable List<Span> spans) {
         if (spans == null) {
-            parent.add(new Node(text.subSequence(start, end)));
+            if (start < end) {
+                parent.add(new Node(text.subSequence(start, end)));
+            }
             return parent;
         }
 
-        // Process ranges calling formatter for each range.
+        // Process subspans.
         ListIterator<Span> iter = spans.listIterator();
         while (iter.hasNext()) {
             Span span = iter.next();
 
             if (span.start < 0 && span.type.equals("EX")) {
-                // This is different from JS SDK. JS ignores these spans here.
-                // JS uses Drafty.attachments() to get attachments.
-                parent.add(new Node(span.type, span.data, span.key));
+                parent.add(new Node(span.type, span.data, span.key, true));
                 continue;
             }
 
@@ -1052,7 +1050,7 @@ public class Drafty implements Serializable {
             while (iter.hasNext()) {
                 Span inner = iter.next();
                 if (inner.start < 0) {
-                    // Attachments are in the end.Put back and stop.
+                    // Attachments are in the end. Put back and stop.
                     iter.previous();
                     break;
                 } else if (inner.start < span.end) {
@@ -1075,7 +1073,7 @@ public class Drafty implements Serializable {
                 subspans = null;
             }
 
-            parent.add(forEach(new Node(span.type, span.data, span.key), text, start, span.end, subspans));
+            parent.add(spansToTree(new Node(span.type, span.data, span.key), text, start, span.end, subspans));
 
             start = span.end;
         }
@@ -1089,7 +1087,8 @@ public class Drafty implements Serializable {
     }
 
     @Nullable
-    protected static Node transformTree(@NotNull Node node, @NotNull Transformer tr) {
+    // Traverse tree top down.
+    protected static Node treeTopDown(@NotNull Node node, @NotNull Transformer tr) {
         node = tr.transform(node);
         if (node == null || node.children == null) {
             return node;
@@ -1097,7 +1096,7 @@ public class Drafty implements Serializable {
 
         LinkedList<Node> children = new LinkedList<>();
         for (Node n : node.children) {
-            n = transformTree(n, tr);
+            n = treeTopDown(n, tr);
             if (n != null) {
                 children.add(n);
             }
@@ -1111,15 +1110,45 @@ public class Drafty implements Serializable {
         return node;
     }
 
+    // Traverse the tree bottom-up: apply formatter to every node.
+    protected static <T> T treeBottomUp(Node src, Formatter<T> formatter, Stack<String> stack) {
+        if (src == null) {
+            return null;
+        }
+
+        if (stack != null && src.tp != null) {
+            stack.push(src.tp);
+        }
+
+        LinkedList<T> values = new LinkedList<>();
+        for (Node node : src.children) {
+            T val = treeBottomUp(node, formatter, stack);
+            if (val != null) {
+                values.add(val);
+            }
+        }
+
+        if (values.isEmpty()) {
+            values = null;
+        }
+
+        if (stack != null && src.tp != null) {
+            stack.pop();
+        }
+
+        return formatter.apply(src.tp, src.data, values != null ? values : src.text, stack);
+    }
+
     // Convert Drafty document to a tree of formatted nodes.
-    @NotNull
     protected Node toTree() {
         CharSequence text = txt == null ? "" : txt;
+
+        int entCount = ent != null ? ent.length : 0;
 
         // Handle special case when all values in fmt are 0 and fmt therefore was
         // skipped.
         if (fmt == null || fmt.length == 0) {
-            if (ent != null && ent.length == 1) {
+            if (entCount == 1) {
                 fmt = new Style[1];
                 fmt[0] = new Style(0, 0, 0);
             } else {
@@ -1136,36 +1165,43 @@ public class Drafty implements Serializable {
                 // Invalid span length.
                 continue;
             }
-            if (aFmt.at <= -1) {
-                // Attachment
-                aFmt.at = -1;
-                aFmt.len = 1;
-                int key = aFmt.key != null ? aFmt.key : 0;
-                if (key < 0) {
-                    // Invalid key value.
-                    continue;
-                }
-                // Store attachments separately.
-                attachments.add(new Span(aFmt.at, 0, key));
+            int key = aFmt.key != null ? aFmt.key : 0;
+            if (ent != null && (key < 0 || key >= entCount || ent[key] == null)) {
+                // Invalid key or entity.
                 continue;
-            }  else if (aFmt.at + aFmt.len > maxIndex) {
+            }
+
+            if (aFmt.at <= -1) {
+                // Attachment. Store attachments separately.
+                attachments.add(new Span(-1, 0, key));
+                continue;
+            } else if (aFmt.at + aFmt.len > maxIndex) {
                 // Span is out of bounds.
                 continue;
             }
-            if (aFmt.tp == null || "".equals(aFmt.tp)) {
-                spans.add(new Span(aFmt.at, aFmt.at + aFmt.len,
-                        aFmt.key != null ? aFmt.key : 0));
+
+            if (aFmt.isUnstyled()) {
+                if (ent != null && ent[key] != null) {
+                    // No type, entity reference.
+                    spans.add(new Span(aFmt.at, aFmt.at + aFmt.len, key));
+                }
             } else {
+                // Has type: normal format.
                 spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
             }
         }
 
         // Sort spans first by start index (asc) then by length (desc).
         Collections.sort(spans, (a, b) -> {
-            if (a.start - b.start == 0) {
-                return b.end - a.end; // longer one comes first (<0)
+            int diff = a.start - b.start;
+            if (diff != 0) {
+                return diff;
             }
-            return a.start - b.start;
+            diff = b.end - a.end; // longer one comes first (<0)
+            if (diff != 0) {
+                return diff;
+            }
+            return FMT_WEIGHTS.indexOf(b.type) - FMT_WEIGHTS.indexOf(a.type);
         });
 
         // Move attachments to the end of the list.
@@ -1174,20 +1210,120 @@ public class Drafty implements Serializable {
         }
 
         for (Span span : spans) {
-            if (ent != null && (span.type == null || "".equals(span.type))) {
-                if (span.key >= 0 && span.key < ent.length && ent[span.key] != null) {
-                    span.type = ent[span.key].tp;
-                    span.data = ent[span.key].data;
-                }
+            if (ent != null && span.isUnstyled()) {
+                span.type = ent[span.key].tp;
+                span.data = ent[span.key].data;
             }
 
             // Is type still undefined? Hide the invalid element!
-            if (span.type == null || "".equals(span.type)) {
+            if (span.isUnstyled()) {
                 span.type = "HD";
             }
         }
 
-        return forEach(new Node(), text, 0, text.length(), spans);
+        Node tree = spansToTree(new Node(), text, 0, text.length(), spans);
+
+        // Flatten tree nodes.
+        return treeTopDown(tree, new Transformer() {
+            @Override
+            public Node transform(Node node) {
+                if (node.children != null && node.children.size() == 1) {
+                    // Unwrap.
+                    Node child = node.children.get(0);
+                    if (node.isUnstyled()) {
+                        Node parent = node.parent;
+                        node = child;
+                        node.parent = parent;
+                    } else if (child.isUnstyled() && child.children == null) {
+                        node.text = child.text;
+                        node.children = null;
+                    }
+                }
+                return node;
+            }
+        });
+    }
+
+    // Clip tree to the provided limit.
+    // If the tree is shortened, prepend tail.
+    protected static Node shortenTree(Node tree, int length, String tail) {
+        if (tail != null) {
+            length -= tail.length();
+        }
+
+        return treeTopDown(tree, new Transformer() {
+            private int limit;
+
+            Transformer init(int limit) {
+                this.limit = limit;
+                return this;
+            }
+
+            @Override
+            public @Nullable Node transform(Node node) {
+                if (limit <= -1) {
+                    // Limit -1 means the doc was already clipped.
+                    return null;
+                }
+
+                if (node.attachment) {
+                    // Attachments are unchanged.
+                    return node;
+                }
+                if (limit == 0) {
+                    node.text = tail;
+                    limit = -1;
+                } else if (node.text != null) {
+                    int len = node.text.length();
+                    if (len > limit) {
+                        node.text = node.text.subSequence(0, limit) + tail;
+                        limit = -1;
+                    } else {
+                        limit -= len;
+                    }
+                }
+                return node;
+            }
+        }.init(length));
+    }
+
+    // Move attachments to the end. Attachments must be at the top level, no need to traverse the tree.
+    protected static void attachmentsToEnd(Node tree, int maxAttachments) {
+        if (tree == null) {
+            return;
+        }
+
+        if (tree.attachment) {
+            tree.text = " ";
+            tree.attachment = false;
+            tree.children = null;
+        } else if (tree.children != null) {
+            List<Node> children = new ArrayList<>();
+            List<Node> attachments = new ArrayList<>();
+            for (Node c : tree.children) {
+                if (c.attachment) {
+                    if (attachments.size() == maxAttachments) {
+                        // Too many attachments to preview;
+                        continue;
+                    }
+
+                    if (JSON_MIME_TYPE.equals(c.getData("mime"))) {
+                        // JSON attachments are not shown in preview.
+                        continue;
+                    }
+
+                    c.attachment = false;
+                    c.children = null;
+                    c.text = " ";
+                    attachments.add(c);
+                } else {
+                    children.add(c);
+                }
+            }
+
+            children.addAll(attachments);
+            tree.children = children;
+        }
     }
 
     public String toPlainText() {
@@ -1233,14 +1369,14 @@ public class Drafty implements Serializable {
     public Drafty preview(final int length, @Nullable Transformer tr) {
         Node tree = toTree();
         if (tr != null) {
-            tree = transformTree(tree, tr);
+            tree = treeTopDown(tree, tr);
             if (tree == null) {
                 return null;
             }
         }
         tree.clip(length);
         tree.lTrim();
-        return tree.toDrafty(true);
+        return tree.toDrafty();
     }
 
     /**
@@ -1249,13 +1385,72 @@ public class Drafty implements Serializable {
      * @return Drafty document suitable for forwarding.
      */
     @Nullable
-    public Drafty contentToForward() {
-        Node tree = transformTree(toTree(), new ForwardingTransformer());
+    public Drafty forwardedContent() {
+        Node tree = toTree();
+        // Strip leading mention.
+        tree = treeTopDown(tree, new Transformer() {
+            @Override
+            public Node transform(Node node) {
+                if (node.isStyle("MN")) {
+                    if (node.parent == null || node.parent.tp == null) {
+                        return null;
+                    }
+                }
+                return node;
+            }
+        });
+
         if (tree == null) {
             return null;
         }
+
+        // Remove leading whitespace.
         tree.lTrim();
-        return tree.toDrafty(false);
+        // Convert back to Drafty.
+        return tree.toDrafty();
+    }
+
+    /**
+     * Prepare Drafty doc for wrapping into QQ as a reply:
+     *  - Replace forwarding mention with symbol '➦' and remove data (UID).
+     *  - Remove quoted text completely.
+     *  - Replace line breaks with spaces.
+     *  - Strip entities of heavy content.
+     *  - Move attachments to the end of the document.
+     *
+     * @param length- length in characters to shorten to.
+     * @param maxAttachments - maximum number of attachments to keep.
+     * @return converted Drafty object leaving the original intact.
+     */
+    public Drafty replyContent(int length, int maxAttachments) {
+        Node tree = toTree();
+        // Strip leading mention.
+        tree = treeTopDown(tree, new Transformer() {
+            @Override
+            public @Nullable Node transform(Node node) {
+                if (node.isStyle("QQ")) {
+                    return null;
+                } else if (node.isStyle("MN")) {
+                    if ((!node.parent || node.parent.isUnstyled()) && (node.text || '').startsWith('➦')) {
+                        node.text = "➦";
+                        node.children = null;
+                        node.data = null;
+                    }
+                } else if (node.isStyle("BR")) {
+                    node.text = " ";
+                    node.tp = null;
+                    node.children = null;
+                }
+                return node;
+            }
+        });
+        // Move attachments to the end of the doc.
+        attachmentsToEnd(tree, maxAttachments);
+        // Shorten the doc.
+        tree = shortenTree(tree, length, "…");
+        tree = lightEntity(tree);
+        // Convert back to Drafty.
+        return tree.toDrafty();
     }
 
     public static class Style implements Serializable, Comparable<Style> {
@@ -1283,6 +1478,9 @@ public class Drafty implements Serializable {
             this.key = key;
         }
 
+        boolean isUnstyled() {
+            return tp == null || "".equals(tp);
+        }
         @NotNull
         @Override
         public String toString() {
@@ -1374,12 +1572,12 @@ public class Drafty implements Serializable {
     }
 
     public interface Formatter<T> {
-        T apply(String tp, Map<String,Object> attr, Object content);
+        T apply(String tp, Map<String,Object> attr, Object content, Stack<String> context);
     }
 
     public interface Transformer {
         @Nullable
-        <T extends Node> Node transform(@NotNull T node);
+        <T extends Node> Node transform(T node);
     }
 
     public static class PreviewTransformer implements Transformer {
@@ -1397,18 +1595,18 @@ public class Drafty implements Serializable {
         @Nullable
         @Override
         public Node transform(@NotNull Node node) {
-            if ("QQ".equals(node.tp)) {
+            if (node.isStyle("QQ")) {
                 return null;
             }
 
-            if ("MN".equals(node.tp)) {
+            if (node.isStyle("MN")) {
                 if (mStripFirstMention && !mMentionStripped) {
                     mMentionStripped = true;
                     return null;
                 }
             }
 
-            if ("BR".equals(node.tp)) {
+            if (node.isStyle("BR")) {
                 return new Node(" ");
             }
 
@@ -1436,8 +1634,8 @@ public class Drafty implements Serializable {
         @Nullable
         @Override
         public Node transform(@NotNull Node node) {
-            if ("MN".equals(node.tp)) {
-                if (node.inContext("QQ")) {
+            if (node.isStyle("MN")) {
+                if (node.isInContext("QQ")) {
                     // Replace the full mention with a single char.
                     node.text = "➦";
                     node.children = null;
@@ -1459,6 +1657,7 @@ public class Drafty implements Serializable {
         Map<String,Object> data;
         CharSequence text;
         List<Node> children;
+        boolean attachment;
 
         public Node() {
             parent = null;
@@ -1466,6 +1665,7 @@ public class Drafty implements Serializable {
             data = null;
             text = null;
             children = null;
+            attachment = false;
         }
 
         public Node(@NotNull CharSequence content) {
@@ -1474,15 +1674,21 @@ public class Drafty implements Serializable {
             data = null;
             text = content;
             children = null;
+            attachment = false;
         }
 
-        public Node(@NotNull String tp, @Nullable Map<String,Object> data, int key) {
+        public Node(@NotNull String tp, @Nullable Map<String,Object> data, int key, boolean attachment) {
             parent = null;
             this.tp = tp;
             this.key = key;
             this.data = data;
             text = null;
             children = null;
+            this.attachment = attachment;
+        }
+
+        public Node(@NotNull String tp, @Nullable Map<String,Object> data, int key) {
+            this(tp, data, key, false);
         }
 
         public Node(@NotNull String tp, @Nullable Map<String,Object> data,
@@ -1493,6 +1699,7 @@ public class Drafty implements Serializable {
             this.data = data;
             text = content;
             children = null;
+            attachment = false;
         }
 
         public Node(@NotNull String tp, @Nullable Map<String,Object> data, @NotNull Node node, int key) {
@@ -1501,6 +1708,7 @@ public class Drafty implements Serializable {
             this.key = key;
             this.data = data;
             text = null;
+            attachment = false;
             add(node);
         }
 
@@ -1511,6 +1719,7 @@ public class Drafty implements Serializable {
             data = node.data;
             text = node.text;
             children = node.children;
+            attachment = node.attachment;
         }
 
         public void setStyle(@NotNull String style) {
@@ -1531,6 +1740,7 @@ public class Drafty implements Serializable {
                 Node nn = new Node(text);
                 nn.parent = this;
                 children.add(nn);
+                text = null;
             }
 
             n.parent = this;
@@ -1539,6 +1749,18 @@ public class Drafty implements Serializable {
 
         public boolean isStyle(@NotNull String style) {
             return style.equals(tp);
+        }
+
+        public boolean isUnstyled() {
+            return tp == null || "".equals(tp);
+        }
+
+        public CharSequence getText() {
+            return text;
+        }
+
+        public void setText(CharSequence text) {
+            this.text = text;
         }
 
         public Object getData(String key) {
@@ -1554,6 +1776,12 @@ public class Drafty implements Serializable {
                 data = new HashMap<>();
             }
             data.put(key, val);
+        }
+
+        public void clearData(String key) {
+            if (data != null) {
+                data.remove(key);
+            }
         }
 
         public void resetData() {
@@ -1624,20 +1852,20 @@ public class Drafty implements Serializable {
             }
         }
 
-        public Drafty toDrafty(boolean trailingAttachments) {
-            MutableDrafty doc = new MutableDrafty(trailingAttachments);
+        public Drafty toDrafty() {
+            MutableDrafty doc = new MutableDrafty();
             appendToDrafty(doc);
             return doc.toDrafty();
         }
 
-        protected boolean inContext(@NotNull String tp) {
+        protected boolean isInContext(@NotNull String tp) {
             if (parent == null) {
                 return false;
             }
             if (tp.equals(parent.tp)) {
                 return true;
             }
-            return parent.inContext(tp);
+            return parent.isInContext(tp);
         }
 
         private void appendToDrafty(@NotNull MutableDrafty doc) {
@@ -1653,13 +1881,9 @@ public class Drafty implements Serializable {
 
             if (tp != null) {
                 int len = doc.length() - start;
-                if (len == 0 && !Span.isVoid(tp)) {
-                    // Skip the blank element.
-                    return;
-                }
                 if (data != null && !data.isEmpty()) {
                     int newKey = doc.append(new Entity(tp, data), key);
-                    if (tp.equals("EX")) {
+                    if (attachment) {
                         // Attachment.
                         doc.append(new Style(-1, 0, newKey));
                     } else {
@@ -1749,6 +1973,9 @@ public class Drafty implements Serializable {
             this.key = index;
         }
 
+        boolean isUnstyled() {
+            return type == null || "".equals(type);
+        }
         static boolean isVoid(final String tp) {
             return Arrays.binarySearch(VOID_STYLES, tp) >= 0;
         }
@@ -1802,17 +2029,13 @@ public class Drafty implements Serializable {
     }
 
     private static class MutableDrafty {
-        private boolean ta = false;
+        //private boolean ta = false;
         private StringBuilder txt = null;
         private List<Style> fmt = null;
         private List<Entity> ent = null;
         private Map<Integer,Integer> keymap = null;
 
         MutableDrafty() {
-        }
-
-        MutableDrafty(boolean trailingAttachments) {
-            ta = trailingAttachments;
         }
 
         Drafty toDrafty() {

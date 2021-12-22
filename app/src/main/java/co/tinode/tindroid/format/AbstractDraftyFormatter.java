@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import co.tinode.tinodesdk.model.Drafty;
 
@@ -67,7 +68,7 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
     protected abstract T handlePlain(Object content);
 
     @Override
-    public TreeNode apply(final String tp, final Map<String, Object> data, final Object content) {
+    public TreeNode apply(final String tp, final Map<String, Object> data, final Object content, Stack<String> context) {
         if (tp != null) {
             T span;
             switch (tp) {
