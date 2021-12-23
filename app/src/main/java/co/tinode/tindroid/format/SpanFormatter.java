@@ -95,9 +95,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             return new SpannedString(content.toString());
         }
 
-        Map<String, Drafty.Formatter<? extends TreeNode>> formatters = new HashMap<>();
-        formatters.put("QQ", new QuoteFormatter(mContainer, mFontSize, -1));
-        return content.format(this, formatters).toSpanned();
+        return content.format(this).toSpanned();
     }
 
     // Scale image dimensions to fit under the given viewport size.

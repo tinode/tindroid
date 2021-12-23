@@ -258,7 +258,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     sb.append("]: ");
                 }
                 if (msg.content != null) {
-                    sb.append(msg.content.format(new CopyFormatter(mActivity), null).toSpanned());
+                    sb.append(msg.content.format(new CopyFormatter(mActivity)).toSpanned());
                 }
                 sb.append("; ").append(UiUtils.shortDate(msg.ts));
             }

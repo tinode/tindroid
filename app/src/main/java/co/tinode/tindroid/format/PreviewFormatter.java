@@ -50,7 +50,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
             return new SpannedString(text);
         }
 
-        AbstractDraftyFormatter.TreeNode result = content.format(this, null);
+        AbstractDraftyFormatter.TreeNode result = content.format(this);
         if (result instanceof MeasuredTreeNode) {
             try {
                 return ((MeasuredTreeNode) result).toSpanned(mMaxLength);

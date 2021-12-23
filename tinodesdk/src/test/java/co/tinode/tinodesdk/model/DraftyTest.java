@@ -84,7 +84,7 @@ public class DraftyTest {
         // ------- Preview 1
         Drafty src = new Drafty("This is a plain text string.");
         Drafty actual = src.preview(15);
-        Drafty expected = new Drafty("This is a plain");
+        Drafty expected = new Drafty("This is a plai…");
         assertEquals("Preview 1 has failed", expected, actual);
 
         // ------- Preview 2
