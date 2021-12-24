@@ -68,7 +68,7 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
     protected abstract T handlePlain(Object content);
 
     @Override
-    public TreeNode apply(final String tp, final Map<String, Object> data, final Object content, Stack<String> context) {
+    public TreeNode apply(final String tp, final Map<String, Object> data, final List<TreeNode> content, Stack<String> context) {
         if (tp != null) {
             T span;
             switch (tp) {
@@ -131,22 +131,6 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
             return span;
         }
         return handlePlain(content);
-    }
-
-    // Return '➦' if the mention starts with it, otherwise return the whole mention.
-    static Object shortenForwardedMention(Object content) {
-        if (content instanceof CharSequence) {
-            CharSequence text = (CharSequence) content;
-            if (text.length() > 0 && text.charAt(0) == '➦') {
-                content = "➦";
-            }
-        } else if (content instanceof List) {
-            content = shortenForwardedMention(((List) content).get(0));
-        } else if (content instanceof TreeNode) {
-            TreeNode node = (TreeNode) content;
-            content = shortenForwardedMention(node.hasChildren() ? node.getChildren() : node.getText());
-        }
-        return content;
     }
 
     // Structure representing Drafty as a tree of formatting nodes.

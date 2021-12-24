@@ -861,60 +861,60 @@ public class Drafty implements Serializable {
      Mostly for testing: convert Drafty to a markdown string.
      */
     public String toMarkdown() {
-        StringBuilder md = format((tp, attr, content, context) -> {
-            StringBuilder res;
-
-            if (content == null) {
-                res = new StringBuilder();
-            } else if (content instanceof StringBuilder) {
-                res = (StringBuilder) content;
-            } else if (content instanceof CharSequence) {
-                res = new StringBuilder((CharSequence) content);
-            } else if (content instanceof List) {
-                res = new StringBuilder();
-                for (Object o : (List) content) {
-                    res.append((StringBuilder) o);
-                }
-            } else {
-                throw new IllegalArgumentException("Wrong type of content " + content);
+        return format(new Formatter<String>() {
+            @Override
+            public String wrapText(CharSequence text) {
+                return text.toString();
             }
 
+            @Override
+            public String apply(String tp, Map<String, Object> attr, List<String> content, Stack<String> context) {
+                String res;
 
-            if (tp == null) {
+                if (content == null) {
+                    res = null;
+                } else {
+                    StringBuilder joined = new StringBuilder();
+                    for (String s : content) {
+                        joined.append(s);
+                    }
+                    res = joined.toString();
+                }
+
+                if (tp == null) {
+                    return res;
+                }
+
+                switch (tp) {
+                    case "BR":
+                        res = "\n";
+                        break;
+                    case "HT":
+                        res = "#" + res;
+                        break;
+                    case "MN":
+                        res = "@" + res;
+                        break;
+                    case "ST":
+                        res = "*" + res + "*";
+                        break;
+                    case "EM":
+                        res = "_" + res + "_";
+                        break;
+                    case "DL":
+                        res = "~" + res + "~";
+                        break;
+                    case "CO":
+                        res = "`" + res + "`";
+                        break;
+                    case "LN":
+                        res = "[" + res + "](" + attr.get("url") + ")";
+                        break;
+                }
+
                 return res;
             }
-
-            switch (tp)  {
-                case "BR":
-                    res = new StringBuilder("\n");
-                    break;
-                case "HT":
-                    res = new StringBuilder("#").append(res);
-                    break;
-                case "MN":
-                    res = new StringBuilder("@").append(res);
-                    break;
-                case "ST":
-                    res = new StringBuilder("*").append(res).append("*");
-                    break;
-                case "EM":
-                    res = new StringBuilder("_").append(res).append("_");
-                    break;
-                case "DL":
-                    res = new StringBuilder("~").append(res).append("~");
-                    break;
-                case "CO":
-                    res = new StringBuilder("`").append(res).append("`");
-                    break;
-                case "LN":
-                    res = new StringBuilder("[").append(res).append("]")
-                            .append("(").append(attr.get("url")).append(")");
-                    break;
-            }
-
-            return res;
         });
-        return md.toString();
     }
 
     // Returns a tree of nodes.
@@ -1021,27 +1021,27 @@ public class Drafty implements Serializable {
             stack.push(src.tp);
         }
 
-        LinkedList<T> values = new LinkedList<>();
+        LinkedList<T> content = new LinkedList<>();
         if (src.children != null) {
-
             for (Node node : src.children) {
                 T val = treeBottomUp(node, formatter, stack);
                 if (val != null) {
-                    values.add(val);
+                    content.add(val);
                 }
             }
-
+        } else if (src.text != null) {
+            content.add(formatter.wrapText(src.text));
         }
 
-        if (values.isEmpty()) {
-            values = null;
+        if (content.isEmpty()) {
+            content = null;
         }
 
         if (stack != null && src.tp != null) {
             stack.pop();
         }
 
-        return formatter.apply(src.tp, src.data, values != null ? values : src.text, stack);
+        return formatter.apply(src.tp, src.data, content, stack);
     }
 
     // Convert Drafty document to a tree of formatted nodes.
@@ -1553,7 +1553,14 @@ public class Drafty implements Serializable {
          * @param context styles of parent elements.
          * @return formatted span.
          */
-        T apply(String tp, Map<String,Object> attr, Object content, Stack<String> context);
+        T apply(String tp, Map<String,Object> attr, List<T> content, Stack<String> context);
+
+        /**
+         * Takes CharSequence and wraps it into the type used by formatter.
+         * @param text text to wrap.
+         * @return wrapped text.
+         */
+        T wrapText(CharSequence text);
     }
 
     public interface Transformer {
