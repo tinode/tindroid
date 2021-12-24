@@ -761,16 +761,6 @@ public class Drafty implements Serializable {
     }
 
     /**
-     * Insert a line break 'BR' at the specified location.
-     *
-     * @return 'this' Drafty document.
-     */
-    public Drafty insertLineBreak(int at) {
-        insert(at, " ", "BR", null);
-        return this;
-    }
-
-    /**
      * Create a Drafty document consisting of a single mention.
      * @param name is location where the button is inserted.
      * @param uid is the user ID to be mentioned.
@@ -865,6 +855,66 @@ public class Drafty implements Serializable {
      */
     public <T> T format(@NotNull Formatter<T> formatter) {
         return treeBottomUp(toTree(), formatter, new Stack<>());
+    }
+
+    /**
+     Mostly for testing: convert Drafty to a markdown string.
+     */
+    public String toMarkdown() {
+        StringBuilder md = format((tp, attr, content, context) -> {
+            StringBuilder res;
+
+            if (content == null) {
+                res = new StringBuilder();
+            } else if (content instanceof StringBuilder) {
+                res = (StringBuilder) content;
+            } else if (content instanceof CharSequence) {
+                res = new StringBuilder((CharSequence) content);
+            } else if (content instanceof List) {
+                res = new StringBuilder();
+                for (Object o : (List) content) {
+                    res.append((StringBuilder) o);
+                }
+            } else {
+                throw new IllegalArgumentException("Wrong type of content " + content);
+            }
+
+
+            if (tp == null) {
+                return res;
+            }
+
+            switch (tp)  {
+                case "BR":
+                    res = new StringBuilder("\n");
+                    break;
+                case "HT":
+                    res = new StringBuilder("#").append(res);
+                    break;
+                case "MN":
+                    res = new StringBuilder("@").append(res);
+                    break;
+                case "ST":
+                    res = new StringBuilder("*").append(res).append("*");
+                    break;
+                case "EM":
+                    res = new StringBuilder("_").append(res).append("_");
+                    break;
+                case "DL":
+                    res = new StringBuilder("~").append(res).append("~");
+                    break;
+                case "CO":
+                    res = new StringBuilder("`").append(res).append("`");
+                    break;
+                case "LN":
+                    res = new StringBuilder("[").append(res).append("]")
+                            .append("(").append(attr.get("url")).append(")");
+                    break;
+            }
+
+            return res;
+        });
+        return md.toString();
     }
 
     // Returns a tree of nodes.
@@ -972,11 +1022,15 @@ public class Drafty implements Serializable {
         }
 
         LinkedList<T> values = new LinkedList<>();
-        for (Node node : src.children) {
-            T val = treeBottomUp(node, formatter, stack);
-            if (val != null) {
-                values.add(val);
+        if (src.children != null) {
+
+            for (Node node : src.children) {
+                T val = treeBottomUp(node, formatter, stack);
+                if (val != null) {
+                    values.add(val);
+                }
             }
+
         }
 
         if (values.isEmpty()) {
@@ -1210,6 +1264,20 @@ public class Drafty implements Serializable {
                     Arrays.equals(this.ent, that.ent);
         }
         return false;
+    }
+
+    /**
+     * Shorten Drafty document.
+     * @param length length in characters to shorten to.
+     * @return new shortened Drafty object leaving the original intact.
+     */
+    public Drafty shorten(final int length, final boolean light) {
+        Node tree = toTree();
+        tree = shortenTree(tree, length, "…");
+        if (light) {
+            tree = lightEntity(tree);
+        }
+        return tree.toDrafty();
     }
 
     /**
@@ -1476,6 +1544,15 @@ public class Drafty implements Serializable {
     }
 
     public interface Formatter<T> {
+        /**
+         * Format one span.
+         *
+         * @param tp span style such as "EM", "LN", etc.
+         * @param attr attributes of the format, for example URL for "LN" or image for "IM".
+         * @param content span content: null, CharSequence, or List<T>.
+         * @param context styles of parent elements.
+         * @return formatted span.
+         */
         T apply(String tp, Map<String,Object> attr, Object content, Stack<String> context);
     }
 

@@ -347,7 +347,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             toggleSelectionAt(pos);
             notifyItemChanged(pos);
             updateSelectionMode();
-            Drafty transformed = msg.content.preview(UiUtils.QUOTED_REPLY_LENGTH, new ReplyTransformer());
+            Drafty transformed = msg.content.preview(UiUtils.QUOTED_REPLY_LENGTH);
             Drafty reply = Drafty.quote(messageFrom(msg), msg.from, transformed);
             mActivity.showReply(reply, msg.seq);
         }
