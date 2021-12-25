@@ -1285,7 +1285,6 @@ public class Drafty implements Serializable {
      * @param length length in characters to shorten to.
      * @return new shortened Drafty object leaving the original intact.
      */
-    @Nullable
     public Drafty preview(final int length) {
         Node tree = toTree();
         // Move attachments to the end.
