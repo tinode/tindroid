@@ -258,7 +258,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     sb.append("]: ");
                 }
                 if (msg.content != null) {
-                    sb.append(msg.content.format(new CopyFormatter(mActivity)).toSpanned());
+                    sb.append(msg.content.format(new CopyFormatter(mActivity)));
                 }
                 sb.append("; ").append(UiUtils.shortDate(msg.ts));
             }
@@ -493,7 +493,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mSpanFormatterClicker.setPosition(position);
         // Disable clicker while message is processed.
         SpanFormatter formatter = new SpanFormatter(holder.mText, uploadingAttachment ? null : mSpanFormatterClicker);
-        Spanned text = formatter.toSpanned(m.content);
+        Spanned text = m.content.format(formatter);
         if (text.length() == 0) {
             if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);

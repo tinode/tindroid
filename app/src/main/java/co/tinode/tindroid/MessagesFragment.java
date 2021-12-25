@@ -826,15 +826,13 @@ public class MessagesFragment extends Fragment {
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.VISIBLE);
         TextView replyHolder = activity.findViewById(R.id.contentPreview);
-        SendPreviewFormatter formatter = new SendPreviewFormatter(replyHolder, false);
-        replyHolder.setText(formatter.toSpanned(reply));
+        replyHolder.setText(reply.format(new SendPreviewFormatter(replyHolder, false)));
     }
 
     private void showForwardedContent(Activity activity, Drafty content) {
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
         TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
-        SendPreviewFormatter formatter = new SendPreviewFormatter(previewHolder, true);
-        previewHolder.setText(formatter.toSpanned(content));
+        previewHolder.setText(content.format(new SendPreviewFormatter(previewHolder, true)));
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
 

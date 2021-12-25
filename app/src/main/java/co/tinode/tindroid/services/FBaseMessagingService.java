@@ -228,8 +228,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                             TypedArray ta = obtainStyledAttributes(androidx.appcompat.R.style.TextAppearance_Compat_Notification, attrs);
                             float fontSize = ta.getDimension(0, 14f);
                             ta.recycle();
-                            FontFormatter formatter = new FontFormatter(this, fontSize, MAX_MESAGE_LENGTH);
-                            body = formatter.toSpanned(draftyBody);
+                            body = draftyBody.shorten(MAX_MESAGE_LENGTH, true)
+                                    .format(new FontFormatter(this, fontSize));
                         } else {
                             // The content is plain text.
                             body = richContent;
