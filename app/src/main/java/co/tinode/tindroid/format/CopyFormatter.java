@@ -1,25 +1,26 @@
 package co.tinode.tindroid.format;
 
 import android.content.Context;
+import android.text.SpannableStringBuilder;
 
+import java.util.List;
 import java.util.Map;
 
 // Formatter used for copying text to clipboard.
 public class CopyFormatter extends FontFormatter {
-    private static final int MAX_LENGTH = Integer.MAX_VALUE - 1024;
-
     public CopyFormatter(final Context context) {
-        super(context, 0f, MAX_LENGTH);
+        super(context, 0f);
     }
 
     // Button as '[ content ]'.
     @Override
-    protected MeasuredTreeNode handleButton(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
+    protected SpannableStringBuilder handleButton(Context ctx, List<SpannableStringBuilder> content,
+                                                  Map<String, Object> data) {
+        SpannableStringBuilder node = new SpannableStringBuilder();
         // Non-breaking space as padding in front of the button.
-        node.addNode(new MeasuredTreeNode("\u00A0[\u00A0", mMaxLength));
-        node.addNode(new MeasuredTreeNode(content, mMaxLength));
-        node.addNode(new MeasuredTreeNode("\u00A0]", mMaxLength));
+        node.append("\u00A0[\u00A0");
+        node.append(join(content));
+        node.append("\u00A0]");
         return node;
     }
 }

@@ -8,19 +8,18 @@ import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 
-import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import androidx.appcompat.content.res.AppCompatResources;
-import co.tinode.tindroid.AttachmentHandler;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
@@ -37,8 +36,8 @@ public class QuoteFormatter extends PreviewFormatter {
 
     private final View mParent;
 
-    public QuoteFormatter(final View parent, float fontSize, int maxLength) {
-        super(parent.getContext(), fontSize, maxLength);
+    public QuoteFormatter(final View parent, float fontSize) {
+        super(parent.getContext(), fontSize);
 
         mParent = parent;
         Resources res = parent.getResources();
@@ -49,18 +48,19 @@ public class QuoteFormatter extends PreviewFormatter {
     }
 
     @Override
-    protected MeasuredTreeNode handleLineBreak() {
-        return new MeasuredTreeNode("\n", mMaxLength);
+    protected SpannableStringBuilder handleLineBreak() {
+        return new SpannableStringBuilder("\n");
     }
 
     @Override
-    protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        StyledTreeNode node = SpanFormatter.handleMention_Impl(shortenForwardedMention(content), data);
-        return new MeasuredTreeNode(node, mMaxLength);
+    protected SpannableStringBuilder handleMention(Context ctx, List<SpannableStringBuilder> content,
+                                                   Map<String, Object> data) {
+        return SpanFormatter.handleMention_Impl(content, data);
     }
 
     @Override
-    protected MeasuredTreeNode handleImage(Context ctx, Object content, Map<String, Object> data) {
+    protected SpannableStringBuilder handleImage(Context ctx, List<SpannableStringBuilder> content,
+                                                 Map<String, Object> data) {
         if (data == null) {
             return null;
         }
@@ -84,7 +84,7 @@ public class QuoteFormatter extends PreviewFormatter {
         broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
         broken = UiUtils.getPlaceholder(ctx, broken, null, size, size);
 
-        MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
+        SpannableStringBuilder node = new SpannableStringBuilder();
 
         Object val;
 
@@ -106,12 +106,12 @@ public class QuoteFormatter extends PreviewFormatter {
                 Log.w(TAG, "Broken image preview", ex);
             }
 
-            node.addNode(new MeasuredTreeNode(new StyledImageSpan(thumbnail,
+            node.append(" ", new StyledImageSpan(thumbnail,
                     new RectF(IMAGE_PADDING * metrics.density,
                             IMAGE_PADDING * metrics.density,
                             IMAGE_PADDING * metrics.density,
                             IMAGE_PADDING * metrics.density)),
-                    " ", mMaxLength));
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         } else if ((val = data.get("ref")) instanceof String) {
             // If small in-band image is not available, get the large one and shrink.
@@ -120,26 +120,30 @@ public class QuoteFormatter extends PreviewFormatter {
             UrlImageSpan span = new UrlImageSpan(mParent, size, size, true,
                     AppCompatResources.getDrawable(ctx, R.drawable.ic_image), broken);
             span.load(Cache.getTinode().toAbsoluteURL((String) val));
-            node.addNode(new MeasuredTreeNode(span, " ", mMaxLength));
+            node.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-        node.addNode(new MeasuredTreeNode(" " + filename, mMaxLength));
+        node.append(" ").append((String) filename);
 
         return node;
     }
 
     @Override
-    protected MeasuredTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+    protected SpannableStringBuilder handleQuote(Context ctx, List<SpannableStringBuilder> content,
+                                                 Map<String, Object> data) {
         // Quote within quote is not supported;
         return null;
     }
 
     @Override
-    protected MeasuredTreeNode handlePlain(Object content) {
-        if (content instanceof CharSequence) {
-            return new MeasuredTreeNode(new ForegroundColorSpan(sTextColor), content, mMaxLength);
+    protected SpannableStringBuilder handlePlain(List<SpannableStringBuilder> content) {
+        SpannableStringBuilder node = join(content);
+        if (node != null && node.getSpans(0, node.length(), Object.class).length == 0) {
+            // Use default text color for plain text strings.
+            node.setSpan(new ForegroundColorSpan(sTextColor), 0, node.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        return new MeasuredTreeNode(content, mMaxLength);
+        return node;
     }
 
     private static String shortenFileName(String filename) {

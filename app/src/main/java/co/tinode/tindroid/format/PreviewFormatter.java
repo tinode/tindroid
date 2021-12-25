@@ -6,7 +6,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.SpannedString;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.RelativeSizeSpan;
@@ -15,119 +14,96 @@ import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.util.TypedValue;
 
+import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.R;
-import co.tinode.tinodesdk.model.Drafty;
 
 // Drafty formatter for creating one-line message previews.
-public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> {
+public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
     private final float mFontSize;
-    protected final int mMaxLength;
 
-    public PreviewFormatter(final Context context, float fontSize, int maxLength) {
+    public PreviewFormatter(final Context context, float fontSize) {
         super(context);
 
         mFontSize = fontSize;
-        mMaxLength = maxLength > 0 ? maxLength : Integer.MAX_VALUE;
-        if (mMaxLength == 1) {
-            throw new IllegalArgumentException("Max length must be greater than 1");
-        }
-    }
-
-    public Spanned toSpanned(final Drafty content) {
-        if (content == null) {
-            return new SpannedString("");
-        }
-        if (content.isPlain()) {
-            String text = content.toString();
-            if (text.length() > mMaxLength-1) {
-                text = text.substring(0, mMaxLength-1) + "…";
-            }
-            return new SpannedString(text);
-        }
-
-        AbstractDraftyFormatter.TreeNode result = content.format(this);
-        if (result instanceof MeasuredTreeNode) {
-            try {
-                return ((MeasuredTreeNode) result).toSpanned(mMaxLength);
-            } catch (LengthExceededException ex) {
-                return new SpannableStringBuilder(ex.getTail()).append("…");
-            }
-        }
-        return result.toSpanned();
     }
 
     @Override
-    protected MeasuredTreeNode handleStrong(Object content) {
-        return new MeasuredTreeNode(new StyleSpan(Typeface.BOLD), content, mMaxLength);
+    public SpannableStringBuilder wrapText(CharSequence text) {
+        return text != null ? new SpannableStringBuilder(text) : null;
     }
 
     @Override
-    protected MeasuredTreeNode handleEmphasized(Object content) {
-        return new MeasuredTreeNode(new StyleSpan(Typeface.ITALIC), content, mMaxLength);
+    protected SpannableStringBuilder handleStrong(List<SpannableStringBuilder> content) {
+        return assignStyle(new StyleSpan(Typeface.BOLD), content);
     }
 
     @Override
-    protected MeasuredTreeNode handleDeleted(Object content) {
-        return new MeasuredTreeNode(new StrikethroughSpan(), content, mMaxLength);
+    protected SpannableStringBuilder handleEmphasized(List<SpannableStringBuilder> content) {
+        return assignStyle(new StyleSpan(Typeface.ITALIC), content);
     }
 
     @Override
-    protected MeasuredTreeNode handleCode(Object content) {
-        return new MeasuredTreeNode(new TypefaceSpan("monospace"), content, mMaxLength);
+    protected SpannableStringBuilder handleDeleted(List<SpannableStringBuilder> content) {
+        return assignStyle(new StrikethroughSpan(), content);
     }
 
     @Override
-    protected MeasuredTreeNode handleHidden(Object content) {
+    protected SpannableStringBuilder handleCode(List<SpannableStringBuilder> content) {
+        return assignStyle(new TypefaceSpan("monospace"), content);
+    }
+
+    @Override
+    protected SpannableStringBuilder handleHidden(List<SpannableStringBuilder> content) {
         return null;
     }
 
     @Override
-    protected MeasuredTreeNode handleLineBreak() {
-        return new MeasuredTreeNode(" ", mMaxLength);
+    protected SpannableStringBuilder handleLineBreak() {
+        return new SpannableStringBuilder(" ");
     }
 
     @Override
-    protected MeasuredTreeNode handleLink(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(new ForegroundColorSpan(ctx.getResources().getColor(R.color.colorAccent)),
-                content, mMaxLength);
+    protected SpannableStringBuilder handleLink(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        return assignStyle(new ForegroundColorSpan(ctx.getResources().getColor(R.color.colorAccent)), content);
     }
 
     @Override
-    protected MeasuredTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(shortenForwardedMention(content), mMaxLength);
+    protected SpannableStringBuilder handleMention(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        return join(content);
     }
 
     @Override
-    protected MeasuredTreeNode handleHashtag(Context ctx, Object content, Map<String, Object> data) {
-        return new MeasuredTreeNode(content, mMaxLength);
+    protected SpannableStringBuilder handleHashtag(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        return join(content);
     }
 
-    private MeasuredTreeNode annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
-        MeasuredTreeNode node = null;
+    private SpannableStringBuilder annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
+        SpannableStringBuilder node = null;
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
-        Resources res = ctx.getResources();
         if (icon != null) {
+            Resources res = ctx.getResources();
             icon.setTint(res.getColor(R.color.colorDarkGray));
             icon.setBounds(0, 0, (int) (mFontSize * 1.3), (int) (mFontSize * 1.3));
-            node = new MeasuredTreeNode(mMaxLength);
-            node.addNode(new MeasuredTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " ", mMaxLength));
-            node.addNode(new MeasuredTreeNode(" " + res.getString(stringId), mMaxLength));
+            node = new SpannableStringBuilder(" ");
+            node.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, node.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            node.append(" ").append(res.getString(stringId));
         }
         return node;
     }
 
     @Override
-    protected MeasuredTreeNode handleImage(Context ctx, Object content, Map<String, Object> data) {
+    protected SpannableStringBuilder handleImage(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
     }
 
     @Override
-    protected MeasuredTreeNode handleAttachment(Context ctx, Map<String, Object> data) {
+    protected SpannableStringBuilder handleAttachment(Context ctx, Map<String, Object> data) {
         if (data == null) {
             return null;
         }
@@ -143,51 +119,46 @@ public class PreviewFormatter extends AbstractDraftyFormatter<MeasuredTreeNode> 
     }
 
     @Override
-    protected MeasuredTreeNode handleButton(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode outer = new MeasuredTreeNode(mMaxLength);
+    protected SpannableStringBuilder handleButton(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        SpannableStringBuilder outer = new SpannableStringBuilder();
         // Non-breaking space as padding in front of the button.
-        outer.addNode(new MeasuredTreeNode("\u00A0", mMaxLength));
+        outer.append("\u00A0");
         // Size of a DIP pixel.
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f,
                 ctx.getResources().getDisplayMetrics());
+
+        SpannableStringBuilder inner = join(content);
         // Make button font slightly smaller.
-        MeasuredTreeNode inner = new MeasuredTreeNode(new RelativeSizeSpan(0.8f), null, mMaxLength);
+        inner.setSpan(new RelativeSizeSpan(0.8f), 0, inner.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // Change background color and draw a box around text.
-        inner.addNode(new MeasuredTreeNode(new LabelSpan(ctx, mFontSize, dipSize), content, mMaxLength));
-        outer.addNode(inner);
-        return outer;
+        inner.setSpan(new LabelSpan(ctx, mFontSize, dipSize), 0, inner.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return outer.append(inner);
     }
 
     @Override
-    protected MeasuredTreeNode handleFormRow(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode node = new MeasuredTreeNode(mMaxLength);
-        node.addNode(new MeasuredTreeNode(" ", mMaxLength));
-        node.addNode(new MeasuredTreeNode(content, mMaxLength));
-        return node;
+    protected SpannableStringBuilder handleFormRow(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        return new SpannableStringBuilder(" ").append(join(content));
     }
 
     @Override
-    protected MeasuredTreeNode handleForm(Context ctx, Map<String, Object> data, Object content) {
-        MeasuredTreeNode node = annotatedIcon(ctx, R.drawable.ic_form_ol, R.string.form);
-        node.addNode(new MeasuredTreeNode(": ", mMaxLength));
-        node.addNode(new MeasuredTreeNode(content, mMaxLength));
-        return node;
+    protected SpannableStringBuilder handleForm(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_form_ol, R.string.form);
+        return node.append(": ").append(join(content));
     }
 
     @Override
-    protected MeasuredTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
+    protected SpannableStringBuilder handleQuote(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         // Not showing quoted content in preview.
         return null;
     }
 
     @Override
-    protected MeasuredTreeNode handleUnknown(Context ctx, Map<String, Object> data, Object content) {
+    protected SpannableStringBuilder handleUnknown(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         return annotatedIcon(ctx, R.drawable.ic_unkn_type_ol, R.string.unknown);
     }
 
     @Override
-    protected MeasuredTreeNode handlePlain(final Object content) {
-        return new MeasuredTreeNode(content, mMaxLength);
+    protected SpannableStringBuilder handlePlain(final List<SpannableStringBuilder> content) {
+        return join(content);
     }
-
 }

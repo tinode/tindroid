@@ -10,15 +10,14 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
-import android.text.style.ParagraphStyle;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -33,7 +32,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,12 +40,11 @@ import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
-import co.tinode.tinodesdk.model.Drafty;
 
 /**
  * Convert Drafty object into a Spanned object with full support for all features.
  */
-public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
+public class SpanFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
     private static final String TAG = "SpanFormatter";
 
     private static final float FORM_LINE_SPACING = 1.2f;
@@ -87,15 +84,9 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         }
     }
 
-    public Spanned toSpanned(final Drafty content) {
-        if (content == null) {
-            return new SpannedString("");
-        }
-        if (content.isPlain()) {
-            return new SpannedString(content.toString());
-        }
-
-        return content.format(this).toSpanned();
+    @Override
+    public SpannableStringBuilder wrapText(CharSequence text) {
+        return text != null ? new SpannableStringBuilder(text) : null;
     }
 
     // Scale image dimensions to fit under the given viewport size.
@@ -116,54 +107,57 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
     }
 
     @Override
-    protected StyledTreeNode handleStrong(Object content) {
-        return new StyledTreeNode(new StyleSpan(Typeface.BOLD), content);
+    protected SpannableStringBuilder handleStrong(List<SpannableStringBuilder> content) {
+        return assignStyle(new StyleSpan(Typeface.BOLD), content);
     }
 
     @Override
-    protected StyledTreeNode handleEmphasized(Object content) {
-        return new StyledTreeNode(new StyleSpan(Typeface.ITALIC), content);
+    protected SpannableStringBuilder handleEmphasized(List<SpannableStringBuilder> content) {
+        return assignStyle(new StyleSpan(Typeface.ITALIC), content);
     }
 
     @Override
-    protected StyledTreeNode handleDeleted(Object content) {
-        return new StyledTreeNode(new StrikethroughSpan(), content);
+    protected SpannableStringBuilder handleDeleted(List<SpannableStringBuilder> content) {
+        return assignStyle(new StrikethroughSpan(), content);
     }
 
     @Override
-    protected StyledTreeNode handleCode(Object content) {
-        return new StyledTreeNode(new TypefaceSpan("monospace"), content);
+    protected SpannableStringBuilder handleCode(List<SpannableStringBuilder> content) {
+        return assignStyle(new TypefaceSpan("monospace"), content);
     }
 
     @Override
-    protected StyledTreeNode handleHidden(Object content) {
+    protected SpannableStringBuilder handleHidden(List<SpannableStringBuilder> content) {
         return null;
     }
 
     @Override
-    protected StyledTreeNode handleLineBreak() {
-        return new StyledTreeNode("\n");
+    protected SpannableStringBuilder handleLineBreak() {
+        return new SpannableStringBuilder("\n");
     }
 
     @Override
-    protected StyledTreeNode handleLink(Context ctx, Object content, Map<String, Object> data) {
+    protected SpannableStringBuilder handleLink(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         try {
             // We don't need to specify an URL for URLSpan
             // as it's not going to be used.
-            return new StyledTreeNode(new URLSpan("") {
+            SpannableStringBuilder span = new SpannableStringBuilder(join(content));
+            span.setSpan(new URLSpan("") {
                 @Override
                 public void onClick(View widget) {
                     if (mClicker != null) {
                         mClicker.onClick("LN", data);
                     }
                 }
-            }, content);
+            }, 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            return span;
         } catch (ClassCastException | NullPointerException ignored) {
         }
         return null;
     }
 
-    static StyledTreeNode handleMention_Impl(Object content, Map<String, Object> data) {
+    static SpannableStringBuilder handleMention_Impl(List<SpannableStringBuilder> content, Map<String, Object> data) {
         int color = sDefaultColor;
 
         if (data != null) {
@@ -172,11 +166,11 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             } catch (ClassCastException ignored) {}
         }
 
-        return new StyledTreeNode(new ForegroundColorSpan(color), content);
+        return assignStyle(new ForegroundColorSpan(color), content);
     }
 
     @Override
-    protected StyledTreeNode handleMention(Context ctx, Object content, Map<String, Object> data) {
+    protected SpannableStringBuilder handleMention(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         return handleMention_Impl(content, data);
     }
 
@@ -187,17 +181,19 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
     }
 
     @Override
-    protected StyledTreeNode handleHashtag(Context ctx, Object content, Map<String, Object> data) {
+    protected SpannableStringBuilder handleHashtag(Context ctx, List<SpannableStringBuilder> content,
+                                                   Map<String, Object> data) {
         return null;
     }
 
     @Override
-    protected StyledTreeNode handleImage(final Context ctx, Object content, final Map<String, Object> data) {
+    protected SpannableStringBuilder handleImage(final Context ctx, List<SpannableStringBuilder> content,
+                                                 final Map<String, Object> data) {
         if (data == null) {
             return null;
         }
 
-        StyledTreeNode result = null;
+        SpannableStringBuilder result = null;
         // Bitmap dimensions specified by the sender.
         int width = 0, height = 0;
         Object tmp;
@@ -310,55 +306,48 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             if (broken != null) {
                 broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
                 span = new ImageSpan(UiUtils.getPlaceholder(ctx, broken, null, scaledWidth, scaledHeight));
-                result = new StyledTreeNode(span, content);
+                result = assignStyle(span, content);
             }
         } else if (mClicker != null) {
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
-            result = new StyledTreeNode(new ClickableSpan() {
+            result = assignStyle(span, content);
+            result.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("IM", data);
                 }
-            }, null);
-            result.addNode(new StyledTreeNode(span, content));
+            }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
         } else {
-            result = new StyledTreeNode(span, content);
+            result = assignStyle(span, content);
         }
 
         return result;
     }
 
     @Override
-    protected StyledTreeNode handleFormRow(Context ctx, Map<String, Object> data, Object content) {
-        return new StyledTreeNode(content);
+    protected SpannableStringBuilder handleFormRow(Context ctx, List<SpannableStringBuilder> content,
+                                                   Map<String, Object> data) {
+        return join(content);
     }
 
     @Override
-    protected StyledTreeNode handleForm(Context ctx, Map<String, Object> data, Object content) {
-        StyledTreeNode span = null;
-        if (content instanceof List) {
-            // Add line breaks between form elements.
-            @SuppressWarnings("unchecked")
-            List<TreeNode> children = (List<TreeNode>) content;
-            if (children.size() > 0) {
-                span = new StyledTreeNode();
-                for (TreeNode child : children) {
-                    span.addNode(child);
-                    span.addNode(new StyledTreeNode("\n"));
-                }
-            }
-
-            if (span != null && span.isEmpty()) {
-                span = null;
-            } else {
-                mContainer.setLineSpacing(0, FORM_LINE_SPACING);
-            }
+    protected SpannableStringBuilder handleForm(Context ctx, List<SpannableStringBuilder> content,
+                                                Map<String, Object> data) {
+        if (content == null || content.size() == 0) {
+            return null;
         }
+
+        // Add line breaks between form elements.
+        SpannableStringBuilder span = new SpannableStringBuilder();
+        for (SpannableStringBuilder ssb : content) {
+            span.append(ssb).append("\n");
+        }
+        mContainer.setLineSpacing(0, FORM_LINE_SPACING);
         return span;
     }
 
     @Override
-    protected StyledTreeNode handleAttachment(final Context ctx, final Map<String, Object> data) {
+    protected SpannableStringBuilder handleAttachment(final Context ctx, final Map<String, Object> data) {
         if (data == null) {
             return null;
         }
@@ -371,14 +360,15 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         } catch (ClassCastException ignored) {
         }
 
-        StyledTreeNode result = new StyledTreeNode();
+        SpannableStringBuilder result = new SpannableStringBuilder();
         // Insert document icon
         Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file);
         //noinspection ConstantConditions
         icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
         ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
         final Rect bounds = span.getDrawable().getBounds();
-        result.addNode(new StyledTreeNode(new SubscriptSpan(), new StyledTreeNode(span, " ")));
+        result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        result.setSpan(new SubscriptSpan(), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         // Insert document's file name
         String fname = null;
@@ -393,7 +383,7 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             fname = fname.substring(0, MAX_FILE_LENGTH/2 - 1) + "…" +
                     fname.substring(fname.length() - MAX_FILE_LENGTH/2);
         }
-        result.addNode(new StyledTreeNode(new TypefaceSpan("monospace"), fname));
+        result.append(fname, new TypefaceSpan("monospace"), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         if (mClicker == null) {
             return result;
@@ -405,8 +395,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         boolean valid = (data.get("ref") instanceof String) || (data.get("val") != null);
 
         // Insert linebreak then a clickable [↓ save] or [(!) unavailable] line.
-        result.addNode(new StyledTreeNode("\n"));
-        StyledTreeNode saveLink = new StyledTreeNode();
+        result.append("\n");
+        SpannableStringBuilder saveLink = new SpannableStringBuilder();
         // Add 'download file' icon
         icon = AppCompatResources.getDrawable(ctx, valid ?
                 R.drawable.ic_download_link : R.drawable.ic_error_gray);
@@ -415,29 +405,31 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         icon.setBounds(0, 0,
                 (int) (ICON_SIZE_DP * metrics.density),
                 (int) (ICON_SIZE_DP * metrics.density));
-        saveLink.addNode(new StyledTreeNode(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), " "));
+        saveLink.append(" ", new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (valid) {
             // Clickable "save".
-            saveLink.addNode(new StyledTreeNode(new ClickableSpan() {
+            saveLink.append(ctx.getResources().getString(R.string.download_attachment),
+                    new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("EX", data);
                 }
-            }, ctx.getResources().getString(R.string.download_attachment)));
+            }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
             // Grayed-out "unavailable".
-            saveLink.addNode(new StyledTreeNode(new ForegroundColorSpan(Color.GRAY),
-                    " " + ctx.getResources().getString(R.string.unavailable)));
+            saveLink.append(" " + ctx.getResources().getString(R.string.unavailable),
+                    new ForegroundColorSpan(Color.GRAY), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         // Add space on the left to make the link appear under the file name.
-        result.addNode(new StyledTreeNode(new LeadingMarginSpan.Standard(bounds.width()), saveLink));
+        result.append(saveLink, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return result;
     }
 
     // Button: URLSpan wrapped into LineHeightSpan and then BorderedSpan.
     @Override
-    protected StyledTreeNode handleButton(final Context ctx, final Map<String, Object> data, final Object content) {
+    protected SpannableStringBuilder handleButton(final Context ctx, List<SpannableStringBuilder> content,
+                                                  final Map<String, Object> data) {
         // This is needed for button shadows.
         mContainer.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
@@ -446,31 +438,29 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f, metrics);
 
         // Create BorderSpan.
-        final StyledTreeNode node = new StyledTreeNode(
-                (CharacterStyle) new ButtonSpan(ctx, mFontSize, dipSize), null);
-
-        // Wrap URLSpan into BorderSpan.
-        node.addNode(new StyledTreeNode(new URLSpan("") {
+        final SpannableStringBuilder node = new SpannableStringBuilder();
+        node.append(join(content), new URLSpan("") {
             @Override
             public void onClick(View widget) {
                 if (mClicker != null) {
                     mClicker.onClick("BN", data);
                 }
             }
-        }, content));
-
+        }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        node.setSpan(new ButtonSpan(ctx, mFontSize, dipSize), 0, node.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return node;
     }
 
-    static StyledTreeNode handleQuote_Impl(Context ctx, Object content) {
-        StyledTreeNode outer = new StyledTreeNode();
-        StyledTreeNode inner = new StyledTreeNode();
-        inner.addNode(new StyledTreeNode(new RelativeSizeSpan(0.25f), "\n"));
+    static SpannableStringBuilder handleQuote_Impl(Context ctx, List<SpannableStringBuilder> content) {
+        SpannableStringBuilder outer = new SpannableStringBuilder();
+        SpannableStringBuilder inner = new SpannableStringBuilder();
+        inner.append("\n", new RelativeSizeSpan(0.25f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // TODO: make clickable.
-        inner.addNode(new StyledTreeNode(content));
+        inner.append(join(content));
         // Adding a line break with some non-breaking white space around it to create extra padding.
-        inner.addNode(new StyledTreeNode(new RelativeSizeSpan(0.2f),
-                "\u00A0\u00A0\u00A0\u00A0\n\u00A0"));
+        inner.append("\u00A0\u00A0\u00A0\u00A0\n\u00A0", new RelativeSizeSpan(0.2f),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         Resources res = ctx.getResources();
         DisplayMetrics metrics = res.getDisplayMetrics();
         QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
@@ -478,21 +468,21 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
                 res.getColor(R.color.colorAccent),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
                 STRIPE_GAP_DP * metrics.density);
-        outer.addNode(new StyledTreeNode((ParagraphStyle) style, inner));
-        return outer;
+        return outer.append(inner, style, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     @Override
-    protected StyledTreeNode handleQuote(Context ctx, Map<String, Object> data, Object content) {
-        StyledTreeNode outer = handleQuote_Impl(ctx, content);
+    protected SpannableStringBuilder handleQuote(Context ctx, List<SpannableStringBuilder> content,
+                                                 Map<String, Object> data) {
+        SpannableStringBuilder node = handleQuote_Impl(ctx, content);
         // Increase spacing between the quote and the subsequent text.
-        outer.addNode(new StyledTreeNode(new RelativeSizeSpan(0.3f), "\n\n"));
-        return outer;
+        return node.append("\n\n", new RelativeSizeSpan(0.3f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     // Unknown or unsupported element.
     @Override
-    protected StyledTreeNode handleUnknown(final Context ctx, final Map<String, Object> data, Object content) {
+    protected SpannableStringBuilder handleUnknown(final Context ctx, List<SpannableStringBuilder> content,
+                                                   final Map<String, Object> data) {
         if (data == null) {
             return null;
         }
@@ -521,12 +511,12 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
             scaledHeight = (int) (height * scale * metrics.density);
         }
 
-        StyledTreeNode result = null;
+        SpannableStringBuilder result = null;
         Drawable unkn = AppCompatResources.getDrawable(ctx, R.drawable.ic_unkn_type);
         if (unkn != null) {
             unkn.setBounds(0, 0, unkn.getIntrinsicWidth(), unkn.getIntrinsicHeight());
             CharacterStyle span = new ImageSpan(UiUtils.getPlaceholder(ctx, unkn, null, scaledWidth, scaledHeight));
-            result = new StyledTreeNode(span, content);
+            result = assignStyle(span, content);
         }
 
         return result;
@@ -534,8 +524,8 @@ public class SpanFormatter extends AbstractDraftyFormatter<StyledTreeNode> {
 
     // Plain (unstyled) content.
     @Override
-    protected StyledTreeNode handlePlain(final Object content) {
-        return new StyledTreeNode(content);
+    protected SpannableStringBuilder handlePlain(final List<SpannableStringBuilder> content) {
+        return join(content);
     }
 
     public interface ClickListener {

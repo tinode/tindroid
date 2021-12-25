@@ -1,74 +1,77 @@
 package co.tinode.tindroid.format;
 
 import android.content.Context;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
 import co.tinode.tinodesdk.model.Drafty;
 
-public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.TreeNode>
-        implements Drafty.Formatter<AbstractDraftyFormatter.TreeNode> {
+public abstract class AbstractDraftyFormatter<T extends Spanned> implements Drafty.Formatter<T> {
 
     protected final Context mContext;
-    // Maximum width of the container TextView. Max height is maxWidth * 0.75.
 
     protected AbstractDraftyFormatter(final Context context) {
         mContext = context;
     }
 
-    protected abstract T handleStrong(Object content);
+    protected abstract T handleStrong(List<T> content);
 
-    protected abstract T handleEmphasized(Object content);
+    protected abstract T handleEmphasized(List<T> content);
 
-    protected abstract T handleDeleted(Object content);
+    protected abstract T handleDeleted(List<T> content);
 
-    protected abstract T handleCode(Object content);
+    protected abstract T handleCode(List<T> content);
 
-    protected abstract T handleHidden(Object content);
+    protected abstract T handleHidden(List<T> content);
 
     protected abstract T handleLineBreak();
 
     // URL.
-    protected abstract T handleLink(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleLink(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Mention @user.
-    protected abstract T handleMention(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleMention(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Hashtag #searchterm.
-    protected abstract T handleHashtag(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleHashtag(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Embedded image.
-    protected abstract T handleImage(final Context ctx, Object content, final Map<String, Object> data);
+    protected abstract T handleImage(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // File attachment.
     protected abstract T handleAttachment(final Context ctx, final Map<String, Object> data);
 
     // Button: clickable form element.
-    protected abstract T handleButton(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleButton(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Grouping of form elements.
-    protected abstract T handleFormRow(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleFormRow(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Interactive form.
-    protected abstract T handleForm(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleForm(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Interactive form.
-    protected abstract T handleQuote(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleQuote(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Unknown or unsupported element.
-    protected abstract T handleUnknown(final Context ctx, final Map<String, Object> data, final Object content);
+    protected abstract T handleUnknown(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Unstyled content
-    protected abstract T handlePlain(Object content);
+    protected abstract T handlePlain(List<T> content);
 
     @Override
-    public TreeNode apply(final String tp, final Map<String, Object> data, final List<TreeNode> content, Stack<String> context) {
+    public abstract T wrapText(CharSequence text);
+
+    @Override
+    public T apply(final String tp, final Map<String, Object> data, final List<T> content, Stack<String> context) {
         if (tp != null) {
             T span;
             switch (tp) {
@@ -110,102 +113,46 @@ public abstract class AbstractDraftyFormatter<T extends AbstractDraftyFormatter.
                     break;
                 case "BN":
                     // Button
-                    span = handleButton(mContext, data, content);
+                    span = handleButton(mContext, content, data);
                     break;
                 case "FM":
                     // Form
-                    span = handleForm(mContext, data, content);
+                    span = handleForm(mContext, content, data);
                     break;
                 case "RW":
                     // Form element formatting is dependent on element content.
-                    span = handleFormRow(mContext, data, content);
+                    span = handleFormRow(mContext, content, data);
                     break;
                 case "QQ":
                     // Quoted block.
-                    span = handleQuote(mContext, data, content);
+                    span = handleQuote(mContext, content, data);
                     break;
                 default:
                     // Unknown element
-                    span = handleUnknown(mContext, data, content);
+                    span = handleUnknown(mContext, content, data);
             }
             return span;
         }
         return handlePlain(content);
     }
 
-    // Structure representing Drafty as a tree of formatting nodes.
-    public static abstract class TreeNode {
-        protected CharSequence text;
-        protected List<TreeNode> children;
-
-        protected TreeNode() {
-            text = null;
-            children = null;
-        }
-
-        protected TreeNode(TreeNode t) {
-            text = t.text;
-            children = t.children;
-        }
-
-        protected TreeNode(CharSequence content) {
-            this.text = content;
-        }
-
-        protected TreeNode(Object content) {
-            assignContent(content);
-        }
-
-        public abstract Spanned toSpanned();
-
-        @SuppressWarnings("unchecked")
-        private void assignContent(Object content) {
-            if (content instanceof CharSequence) {
-                text = (CharSequence) content;
-            } else if (content instanceof List) {
-                children = (List<TreeNode>) content;
-            } else if (content instanceof TreeNode) {
-                if (children == null) {
-                    children = new ArrayList<>();
-                }
-                children.add((TreeNode) content);
-            } else if (content != null) {
-                // NULL is OK.
-                throw new IllegalArgumentException("Invalid content");
+    protected static SpannableStringBuilder join(List<SpannableStringBuilder> content) {
+        SpannableStringBuilder ssb = null;
+        if (content != null) {
+            Iterator<SpannableStringBuilder> it = content.iterator();
+            ssb = it.next();
+            while (it.hasNext()) {
+                ssb.append(it.next());
             }
         }
+        return ssb;
+    }
 
-        protected void addNode(@NotNull TreeNode node) {
-            if (children == null) {
-                children = new ArrayList<>();
-            }
-            children.add(node);
+    protected static SpannableStringBuilder assignStyle(@NotNull Object style, List<SpannableStringBuilder> content) {
+        SpannableStringBuilder ssb = join(content);
+        if (ssb != null) {
+            ssb.setSpan(style, 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-
-        protected boolean isPlain() {
-            return text != null;
-        }
-
-        protected boolean hasChildren() {
-            return children != null;
-        }
-
-        protected boolean isEmpty() {
-            return (text == null || text.equals("")) &&
-                    (children == null || children.size() == 0);
-        }
-
-        protected CharSequence getText() {
-            return text;
-        }
-
-        protected List<TreeNode> getChildren() {
-            return children;
-        }
-
-        @NotNull
-        public String toString() {
-            return "{'" + text + "', " + (children != null ? children.toString() : "NULL") + "}";
-        }
+        return ssb;
     }
 }
