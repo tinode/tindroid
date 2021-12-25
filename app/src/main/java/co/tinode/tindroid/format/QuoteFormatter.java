@@ -55,7 +55,7 @@ public class QuoteFormatter extends PreviewFormatter {
     @Override
     protected SpannableStringBuilder handleMention(Context ctx, List<SpannableStringBuilder> content,
                                                    Map<String, Object> data) {
-        return SpanFormatter.handleMention_Impl(content, data);
+        return FullFormatter.handleMention_Impl(content, data);
     }
 
     @Override

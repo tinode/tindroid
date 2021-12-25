@@ -65,7 +65,8 @@ import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.format.CopyFormatter;
-import co.tinode.tindroid.format.SpanFormatter;
+import co.tinode.tindroid.format.FullFormatter;
+import co.tinode.tindroid.format.QuoteFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -492,7 +493,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         mSpanFormatterClicker.setPosition(position);
         // Disable clicker while message is processed.
-        SpanFormatter formatter = new SpanFormatter(holder.mText, uploadingAttachment ? null : mSpanFormatterClicker);
+        FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : mSpanFormatterClicker);
+        formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
         Spanned text = m.content.format(formatter);
         if (text.length() == 0) {
             if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
@@ -943,7 +945,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    class SpanClicker implements SpanFormatter.ClickListener {
+    class SpanClicker implements FullFormatter.ClickListener {
         private int mPosition = -1;
 
         void setPosition(int pos) {

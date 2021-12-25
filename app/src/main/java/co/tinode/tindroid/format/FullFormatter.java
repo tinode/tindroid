@@ -34,6 +34,7 @@ import android.widget.TextView;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -44,7 +45,7 @@ import co.tinode.tindroid.UiUtils;
 /**
  * Convert Drafty object into a Spanned object with full support for all features.
  */
-public class SpanFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
+public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
     private static final String TAG = "SpanFormatter";
 
     private static final float FORM_LINE_SPACING = 1.2f;
@@ -68,14 +69,16 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     private final int mViewport;
     private final float mFontSize;
     private final ClickListener mClicker;
+    private QuoteFormatter mQuoteFormatter;
 
-    public SpanFormatter(final TextView container, final ClickListener clicker) {
+    public FullFormatter(final TextView container, final ClickListener clicker) {
         super(container.getContext());
 
         mContainer = container;
         mViewport = container.getMaxWidth();
         mFontSize = container.getTextSize();
         mClicker = clicker;
+        mQuoteFormatter = null;
 
         Resources res = container.getResources();
         if (sColorsDark == null) {
@@ -85,8 +88,22 @@ public class SpanFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     @Override
+    public SpannableStringBuilder apply(final String tp, final Map<String, Object> data,
+                                        final List<SpannableStringBuilder> content, Stack<String> context) {
+        if (context != null && context.contains("QQ") && mQuoteFormatter != null) {
+            return mQuoteFormatter.apply(tp, data, content, context);
+        }
+
+        return super.apply(tp, data, content, context);
+    }
+
+    @Override
     public SpannableStringBuilder wrapText(CharSequence text) {
         return text != null ? new SpannableStringBuilder(text) : null;
+    }
+
+    public void setQuoteFormatter(QuoteFormatter quoteFormatter) {
+        mQuoteFormatter = quoteFormatter;
     }
 
     // Scale image dimensions to fit under the given viewport size.

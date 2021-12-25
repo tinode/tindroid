@@ -23,7 +23,7 @@ public class SendPreviewFormatter extends QuoteFormatter {
         if (mIsForwarded && mMentionCount == 0) {
             mMentionCount ++;
             // No shortening of the mention here.
-            return SpanFormatter.handleMention_Impl(content, data);
+            return FullFormatter.handleMention_Impl(content, data);
         } else {
             return super.handleMention(ctx, content, data);
         }
@@ -38,7 +38,7 @@ public class SendPreviewFormatter extends QuoteFormatter {
             return quote.append(" ");
         }
 
-        return SpanFormatter.handleQuote_Impl(ctx, content);
+        return FullFormatter.handleQuote_Impl(ctx, content);
     }
 }
 
