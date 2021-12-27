@@ -83,7 +83,7 @@ public class Drafty implements Serializable {
     private static final int MAX_PREVIEW_ATTACHMENTS = 3;
 
     private static final String[] DATA_FIELDS =
-            new String[]{"act", "height", "mime", "name", "ref", "size", "url", "val", "width"};
+            new String[]{"act", "height", "mime", "name", "ref", "size", "title", "url", "val", "width"};
 
     private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP;
     static {
@@ -1128,7 +1128,7 @@ public class Drafty implements Serializable {
 
         Node tree = spansToTree(new Node(), text, 0, text.length(), spans);
 
-        // Flatten tree nodes.
+        // Flatten tree nodes, remove styling from buttons, copy button text to 'title' data.
         return treeTopDown(tree, new Transformer() {
             @Override
             public Node transform(Node node) {
@@ -1143,6 +1143,10 @@ public class Drafty implements Serializable {
                         node.text = child.text;
                         node.children = null;
                     }
+                }
+
+                if (node.isStyle("BN")) {
+                    node.putData("title", node.text != null ? node.text.toString() : "null");
                 }
                 return node;
             }

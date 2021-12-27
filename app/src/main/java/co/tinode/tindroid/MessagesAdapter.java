@@ -348,7 +348,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             toggleSelectionAt(pos);
             notifyItemChanged(pos);
             updateSelectionMode();
-            Drafty transformed = msg.content.preview(UiUtils.QUOTED_REPLY_LENGTH);
+            Drafty transformed = msg.content.replyContent(UiUtils.QUOTED_REPLY_LENGTH, 1);
             Drafty reply = Drafty.quote(messageFrom(msg), msg.from, transformed);
             mActivity.showReply(reply, msg.seq);
         }
@@ -496,7 +496,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : mSpanFormatterClicker);
         formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
         Spanned text = m.content.format(formatter);
-        if (text.length() == 0) {
+        if (text == null || text.length() == 0) {
             if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
             } else if (m.status == BaseDb.Status.FAILED) {
@@ -508,16 +508,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         holder.mText.setText(text);
         if (m.content != null && m.content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"))) {
-            // Sole spans are clickable.
+            // Some spans are clickable.
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
             holder.mText.setLinksClickable(true);
             holder.mText.setFocusable(true);
             holder.mText.setClickable(true);
         } else {
-            holder.mText.setMovementMethod(null);
+            // holder.mText.setMovementMethod(null);
             holder.mText.setLinksClickable(false);
             holder.mText.setFocusable(false);
-            holder.mText.setClickable(false);
+            holder.mText.setClickable(true);
             holder.mText.setAutoLinkMask(0);
         }
 
@@ -603,19 +603,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return true;
         });
         holder.itemView.setOnClickListener(v -> {
+            Log.i(TAG, "Click!");
             if (mSelectedItems != null) {
+                Log.i(TAG, "Click with selection");
                 int pos = holder.getBindingAdapterPosition();
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
                 updateSelectionMode();
             } else {
+                int replySeq = -1;
                 try {
-                    int replySeq = Integer.parseInt(m.getStringHeader("reply"));
-                    if (replySeq != -1) {
-                        final int pos = findInCursor(mCursor, replySeq);
-                        if (pos >= 0) {
+                    replySeq = Integer.parseInt(m.getStringHeader("reply"));
+                } catch (NumberFormatException ignored) {}
+                Log.i(TAG, "Click on seq=" + replySeq);
+                if (replySeq != -1) {
+                    // A reply message was clicked. Scroll original into view and animate.
+                    final int pos = findInCursor(mCursor, replySeq);
+                    Log.i(TAG, "Item found at " + pos);
+                    if (pos >= 0) {
+                        StoredMessage mm = getMessage(pos);
+                        if (mm != null) {
                             LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-                            StoredMessage mm = getMessage(pos);
                             if (lm != null &&
                                     pos >= lm.findFirstCompletelyVisibleItemPosition() &&
                                     pos <= lm.findLastCompletelyVisibleItemPosition()) {
@@ -642,7 +650,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             }
                         }
                     }
-                } catch (NumberFormatException ignored) {}
+                }
             }
         });
     }
@@ -954,6 +962,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         @Override
         public void onClick(String type, Map<String, Object> data) {
+            Log.i(TAG, "Formatter:Click!");
+
             if (mSelectedItems != null) {
                 toggleSelectionAt(mPosition);
                 notifyItemChanged(mPosition);
@@ -1107,54 +1117,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                     break;
             }
-        }
-    }
-
-    // Convert Drafty into short preview with images converted into thumbnails for use in replies.
-    private static class ReplyTransformer extends Drafty.PreviewTransformer {
-        public ReplyTransformer() {
-            super(false);
-        }
-
-        @Nullable
-        @Override
-        public Drafty.Node transform(@NonNull Drafty.Node node) {
-            if (!node.isStyle("IM")) {
-                return super.transform(node);
-            }
-
-            // Create an image thumbnail.
-            Drafty.Node conv = new Drafty.Node(node);
-            conv.resetData();
-            conv.putData("name", node.getData("name"));
-            conv.putData("width", UiUtils.REPLY_THUMBNAIL_SIZE);
-            conv.putData("height", UiUtils.REPLY_THUMBNAIL_SIZE);
-
-            Object val = node.getData("val");
-            byte[] bits = null;
-            if (val instanceof byte[]) {
-                bits = (byte[]) val;
-            } else if (val instanceof String) {
-                try {
-                    bits = Base64.decode((String) val, Base64.DEFAULT);
-                } catch (IllegalArgumentException ignored) {}
-            }
-            if (bits != null) {
-                Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                if (bmp != null) {
-                    bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_SIZE);
-                    bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
-                    conv.putData("val", bits);
-                    conv.putData("mime", "image/jpeg");
-                    conv.putData("size", bits.length);
-                }
-            } else {
-                conv.putData("ref", node.getData("ref"));
-                conv.putData("mime", node.getData("mime"));
-                conv.putData("size", node.getData("size"));
-            }
-
-            return conv;
         }
     }
 }

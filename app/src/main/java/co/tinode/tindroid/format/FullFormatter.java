@@ -473,7 +473,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         SpannableStringBuilder outer = new SpannableStringBuilder();
         SpannableStringBuilder inner = new SpannableStringBuilder();
         inner.append("\n", new RelativeSizeSpan(0.25f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        // TODO: make clickable.
         inner.append(join(content));
         // Adding a line break with some non-breaking white space around it to create extra padding.
         inner.append("\u00A0\u00A0\u00A0\u00A0\n\u00A0", new RelativeSizeSpan(0.2f),

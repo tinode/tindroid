@@ -21,6 +21,7 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -128,6 +129,8 @@ public class MessageActivity extends AppCompatActivity
                 } else if (DownloadManager.STATUS_FAILED == status) {
                     int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
                     Log.w(TAG, "Download failed. Reason: " + reason);
+                    Toast.makeText(MessageActivity.this,
+                            R.string.failed_to_download, Toast.LENGTH_SHORT).show();
                 }
             }
             c.close();
