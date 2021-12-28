@@ -9,8 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -30,6 +28,7 @@ import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -509,15 +508,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         holder.mText.setText(text);
         if (m.content != null && m.content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"))) {
             // Some spans are clickable.
+            holder.mText.setOnTouchListener((v, ev) -> {
+                if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+                    holder.mRippleOverlay.setPressed(true);
+                    holder.mRippleOverlay.setPressed(false);
+                }
+                return false;
+            });
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
             holder.mText.setLinksClickable(true);
             holder.mText.setFocusable(true);
             holder.mText.setClickable(true);
         } else {
-            // holder.mText.setMovementMethod(null);
+            holder.mText.setOnTouchListener(null);
+            holder.mText.setMovementMethod(null);
             holder.mText.setLinksClickable(false);
             holder.mText.setFocusable(false);
-            holder.mText.setClickable(true);
+            holder.mText.setClickable(false);
             holder.mText.setAutoLinkMask(0);
         }
 
@@ -603,9 +610,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return true;
         });
         holder.itemView.setOnClickListener(v -> {
-            Log.i(TAG, "Click!");
             if (mSelectedItems != null) {
-                Log.i(TAG, "Click with selection");
                 int pos = holder.getBindingAdapterPosition();
                 toggleSelectionAt(pos);
                 notifyItemChanged(pos);
@@ -615,11 +620,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 try {
                     replySeq = Integer.parseInt(m.getStringHeader("reply"));
                 } catch (NumberFormatException ignored) {}
-                Log.i(TAG, "Click on seq=" + replySeq);
                 if (replySeq != -1) {
                     // A reply message was clicked. Scroll original into view and animate.
                     final int pos = findInCursor(mCursor, replySeq);
-                    Log.i(TAG, "Item found at " + pos);
                     if (pos >= 0) {
                         StoredMessage mm = getMessage(pos);
                         if (mm != null) {
@@ -893,7 +896,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final TextView mMeta;
         final TextView mUserName;
         final View mSelected;
-        final View mOverlay;
+        final View mRippleOverlay;
         final View mProgressContainer;
         final ProgressBar mProgressBar;
         final AppCompatImageButton mCancelProgress;
@@ -912,7 +915,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mMeta = itemView.findViewById(R.id.messageMeta);
             mUserName = itemView.findViewById(R.id.userName);
             mSelected = itemView.findViewById(R.id.selected);
-            mOverlay = itemView.findViewById(R.id.overlay);
+            mRippleOverlay = itemView.findViewById(R.id.overlay);
             mProgressContainer = itemView.findViewById(R.id.progressContainer);
             mProgress = itemView.findViewById(R.id.progressPanel);
             mProgressBar = itemView.findViewById(R.id.attachmentProgressBar);
@@ -962,8 +965,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         @Override
         public void onClick(String type, Map<String, Object> data) {
-            Log.i(TAG, "Formatter:Click!");
-
             if (mSelectedItems != null) {
                 toggleSelectionAt(mPosition);
                 notifyItemChanged(mPosition);

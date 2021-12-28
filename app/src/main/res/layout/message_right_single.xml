@@ -1,4 +1,5 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<co.tinode.tindroid.widgets.RippleFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
@@ -87,4 +88,4 @@
         android:focusable="false"
         />
 
-</FrameLayout>
+</co.tinode.tindroid.widgets.RippleFrameLayout>

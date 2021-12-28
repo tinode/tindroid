@@ -454,7 +454,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         // Size of a DIP pixel.
         float dipSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.0f, metrics);
 
-        // Create BorderSpan.
+        // Make button clickable.
         final SpannableStringBuilder node = new SpannableStringBuilder();
         node.append(join(content), new URLSpan("") {
             @Override
@@ -464,6 +464,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 }
             }
         }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // URLSpan into ButtonSpan.
         node.setSpan(new ButtonSpan(ctx, mFontSize, dipSize), 0, node.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return node;
