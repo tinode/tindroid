@@ -11,6 +11,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import co.tinode.tindroid.R;
 
+// This is the top-level layout of a message. It's used to intercept click coordinates
+// to pass them to the ripple layer. These coordinates are different from coordinates in
+// the TextView with message content.
 public class RippleFrameLayout extends FrameLayout {
     View mOverlay;
 
