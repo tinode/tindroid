@@ -82,7 +82,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         return join(content);
     }
 
-    private SpannableStringBuilder annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
+    protected SpannableStringBuilder annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
         SpannableStringBuilder node = null;
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
         if (icon != null) {
@@ -92,7 +92,9 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
             node = new SpannableStringBuilder(" ");
             node.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, node.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            node.append(" ").append(res.getString(stringId));
+            if (stringId != -1) {
+                node.append(" ").append(res.getString(stringId));
+            }
         }
         return node;
     }

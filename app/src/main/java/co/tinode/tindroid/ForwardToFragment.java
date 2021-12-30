@@ -32,11 +32,14 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
 
     public static final String CONTENT_TO_FORWARD = "content_to_forward";
     public static final String FORWARDING_FROM_TOPIC = "forwarding_from_topic";
+    public static final String FORWARDING_FROM_USER = "forwarding_from_user";
+
     private static final int SEARCH_REQUEST_DELAY = 300; // 300 ms;
     private static final int MIN_TERM_LENGTH = 3;
 
     private ChatsAdapter mAdapter = null;
     private Drafty mContent = null;
+    private Drafty mForwardSender = null;
     private String mSearchTerm = null;
     private String mForwardingFromTopic = null;
 
@@ -109,9 +112,10 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
             dismiss();
             Bundle args = new Bundle();
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContent);
+            args.putSerializable(ForwardToFragment.FORWARDING_FROM_USER, mForwardSender);
             ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_MESSAGES, args, true);
             ((MessageActivity) activity).changeTopic(topicName, true);
-        }, t -> doSearch((ComTopic) t));
+        }, this::doSearch);
         rv.setAdapter(mAdapter);
     }
 
@@ -129,6 +133,7 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
         Bundle args = getArguments();
         if (args != null) {
             mContent = (Drafty) args.getSerializable(CONTENT_TO_FORWARD);
+            mForwardSender = (Drafty) args.getSerializable(FORWARDING_FROM_USER);
             mForwardingFromTopic = args.getString(FORWARDING_FROM_TOPIC);
         }
 

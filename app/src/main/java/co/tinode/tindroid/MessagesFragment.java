@@ -51,7 +51,8 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
-import co.tinode.tindroid.format.SendPreviewFormatter;
+import co.tinode.tindroid.format.SendForwardedFormatter;
+import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -93,6 +94,7 @@ public class MessagesFragment extends Fragment {
     private int mReplySeqID = -1;
     private Drafty mReply = null;
     private Drafty mContentToForward = null;
+    private Drafty mForwardSender = null;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -420,15 +422,17 @@ public class MessagesFragment extends Fragment {
             mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
             mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
             mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
+            mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
             // Clear used arguments.
             args.remove(MESSAGE_TO_SEND);
             args.remove(MESSAGE_REPLY_ID);
             args.remove(MESSAGE_REPLY);
             args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
+            args.remove(ForwardToFragment.FORWARDING_FROM_USER);
         }
 
         if (mContentToForward != null) {
-            showForwardedContent(activity, mContentToForward);
+            showContentToForward(activity, mForwardSender, mContentToForward);
         } else if (mTopic.isWriter() && !mTopic.isBlocked()) {
             activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
@@ -482,6 +486,7 @@ public class MessagesFragment extends Fragment {
             args.putInt(MESSAGE_REPLY_ID, mReplySeqID);
             args.putSerializable(MESSAGE_REPLY, mReply);
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContentToForward);
+            args.putSerializable(ForwardToFragment.FORWARDING_FROM_USER, mForwardSender);
         }
     }
 
@@ -776,7 +781,8 @@ public class MessagesFragment extends Fragment {
         }
 
         if (mContentToForward != null) {
-            if (sendMessage(mContentToForward, -1)) {
+            if (sendMessage(mForwardSender.appendLineBreak().append(mContentToForward), -1)) {
+                mForwardSender = null;
                 mContentToForward = null;
             }
             activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
@@ -810,6 +816,7 @@ public class MessagesFragment extends Fragment {
         mReplySeqID = -1;
         mReply = null;
         mContentToForward = null;
+        mForwardSender = null;
 
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
@@ -817,22 +824,25 @@ public class MessagesFragment extends Fragment {
     }
 
     void showReply(Activity activity, Drafty reply, int seq) {
-        Log.i(TAG, "Show reply: " + reply.toPlainText());
         mReply = reply;
         mReplySeqID = seq;
         mContentToForward = null;
+        mForwardSender = null;
 
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.VISIBLE);
         TextView replyHolder = activity.findViewById(R.id.contentPreview);
-        replyHolder.setText(reply.format(new SendPreviewFormatter(replyHolder, false)));
+        replyHolder.setText(reply.format(new SendReplyFormatter(replyHolder)));
     }
 
-    private void showForwardedContent(Activity activity, Drafty content) {
+    private void showContentToForward(Activity activity, Drafty sender, Drafty content) {
+        mReply = null;
+
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
         TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
-        previewHolder.setText(content.format(new SendPreviewFormatter(previewHolder, true)));
+        content = new Drafty().append(sender).appendLineBreak().append(content.preview(UiUtils.QUOTED_REPLY_LENGTH));
+        previewHolder.setText(content.format(new SendForwardedFormatter(previewHolder)));
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
 

@@ -27,7 +27,7 @@ public class FontFormatter extends PreviewFormatter {
         super(context, fontSize);
     }
 
-    private SpannableStringBuilder annotatedIcon(Context ctx, int charIndex, @StringRes int stringId) {
+    protected SpannableStringBuilder annotatedIcon(Context ctx, int charIndex, @StringRes int stringId) {
         SpannableStringBuilder node = new SpannableStringBuilder(UNICODE_STRINGS[charIndex]);
         return node.append(" ").append(ctx.getResources().getString(stringId));
     }

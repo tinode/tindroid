@@ -363,9 +363,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Bundle args = new Bundle();
             String uname = "➦ " + messageFrom(msg);
             String from = msg.from != null ? msg.from : mTopicName;
-            Drafty content = Drafty.mention(uname, from)
-                    .appendLineBreak().append(msg.content.forwardedContent());
-            args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, content);
+            args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, msg.content.forwardedContent());
+            args.putSerializable(ForwardToFragment.FORWARDING_FROM_USER, Drafty.mention(uname, from));
             args.putString(ForwardToFragment.FORWARDING_FROM_TOPIC, mTopicName);
             ForwardToFragment fragment = new ForwardToFragment();
             fragment.setArguments(args);

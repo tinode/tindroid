@@ -24,6 +24,7 @@ import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 
+// Display quoted content.
 public class QuoteFormatter extends PreviewFormatter {
     private static final String TAG = "QuoteFormatter";
 
@@ -131,7 +132,7 @@ public class QuoteFormatter extends PreviewFormatter {
     @Override
     protected SpannableStringBuilder handleQuote(Context ctx, List<SpannableStringBuilder> content,
                                                  Map<String, Object> data) {
-        // Quote within quote is not supported;
+        // Quote within quote is not displayed;
         return null;
     }
 
