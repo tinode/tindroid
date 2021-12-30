@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="6sp"
-    android:visibility="gone">
+    android:visibility="visible">
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/cancelForwardingPreview"
@@ -27,12 +27,12 @@
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/cancelForwardingPreview"
         android:layout_toStartOf="@id/chatForwardButton"
-        android:maxWidth="280dp"
         android:minWidth="140dp"
         android:padding="6dp"
-        android:paddingStart="8dp"
+        android:paddingStart="18dp"
         android:textColor="?android:textColorPrimary"
         android:background="@drawable/bubble"
+        android:backgroundTint="@color/colorReplyBubble"
         tools:ignore="RtlSymmetry"
         tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
 

@@ -837,6 +837,7 @@ public class MessagesFragment extends Fragment {
     }
 
     private void showContentToForward(Activity activity, Drafty sender, Drafty content) {
+        mReplySeqID = -1;
         mReply = null;
 
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
