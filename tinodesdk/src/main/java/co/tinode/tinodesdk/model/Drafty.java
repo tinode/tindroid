@@ -725,7 +725,8 @@ public class Drafty implements Serializable {
             }
 
             for (Style thatst : that.fmt) {
-                Style style = new Style(null, thatst.at + len, thatst.len);
+                int at = thatst.at >= 0 ? thatst.at + len : -1;
+                Style style = new Style(null, at, thatst.len);
                 int key = thatst.key != null ? thatst.key : 0;
                 if (thatst.tp != null && !thatst.tp.equals("")) {
                     style.tp = thatst.tp;
@@ -1569,54 +1570,6 @@ public class Drafty implements Serializable {
     public interface Transformer {
         @Nullable
         <T extends Node> Node transform(T node);
-    }
-
-    public static class PreviewTransformer implements Transformer {
-        private static final String[] lightData = new String[] {
-            "mime", "name", "width", "height", "size", "url", "ref"
-        };
-
-        private final boolean mStripFirstMention;
-        private boolean mMentionStripped = false;
-
-        public PreviewTransformer(boolean stripFirstMention) {
-            mStripFirstMention = stripFirstMention;
-        }
-
-        @Nullable
-        @Override
-        public Node transform(@NotNull Node node) {
-            if (node.isStyle("QQ")) {
-                return null;
-            }
-
-            if (node.isStyle("MN")) {
-                if (mStripFirstMention && !mMentionStripped) {
-                    mMentionStripped = true;
-                    return null;
-                }
-            }
-
-            if (node.isStyle("BR")) {
-                return new Node(" ");
-            }
-
-            if (node.data == null || node.data.isEmpty()) {
-                return node;
-            }
-
-            Map<String,Object> dc = new HashMap<>();
-            for (String key : lightData) {
-                addOrSkip(dc, key, node.data.get(key));
-            }
-            if (dc.isEmpty()) {
-                dc = null;
-            }
-
-            Node result = new Node(node);
-            result.data = dc;
-            return result;
-        }
     }
 
     public static class Node {
