@@ -25,6 +25,7 @@ import android.text.style.StyleSpan;
 import android.util.Base64;
 import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -508,9 +509,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (m.content != null && m.content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
+                holder.mGestureDetector.onTouchEvent(ev);
                 if (ev.getAction() == MotionEvent.ACTION_DOWN) {
                     holder.mRippleOverlay.setPressed(true);
-                    holder.mRippleOverlay.setPressed(false);
+                    holder.mRippleOverlay.postDelayed(() -> holder.mRippleOverlay.setPressed(false), 250);
+
                 }
                 return false;
             });
@@ -901,6 +904,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final AppCompatImageButton mCancelProgress;
         final View mProgress;
         final View mProgressResult;
+        final GestureDetector mGestureDetector;
 
         ViewHolder(View itemView, int viewType) {
             super(itemView);
@@ -920,6 +924,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mProgressBar = itemView.findViewById(R.id.attachmentProgressBar);
             mCancelProgress = itemView.findViewById(R.id.attachmentProgressCancel);
             mProgressResult = itemView.findViewById(R.id.progressResult);
+            mGestureDetector = new GestureDetector(itemView.getContext(),
+                    new GestureDetector.SimpleOnGestureListener() {
+                        @Override
+                        public void onLongPress(MotionEvent ev) {
+                            Log.i(TAG, "Long Press Detected");
+                        }
+
+                        @Override
+                        public void onShowPress(MotionEvent ev) {
+                            Log.i(TAG, "Show Press Detected");
+                        }
+                    });
         }
     }
 
