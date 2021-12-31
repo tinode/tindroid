@@ -391,6 +391,9 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
+        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
+        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
+
         if (mTopic == null) {
             // Default view when the topic is not available.
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
