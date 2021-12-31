@@ -927,6 +927,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         }
 
                         @Override
+                        public boolean onSingleTapConfirmed(MotionEvent ev) {
+                            itemView.performClick();
+                            return super.onSingleTapConfirmed(ev);
+                        }
+
+                        @Override
                         public void onShowPress(MotionEvent ev) {
                             mRippleOverlay.setPressed(true);
                             mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
