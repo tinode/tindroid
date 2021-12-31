@@ -312,8 +312,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 }
                 Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, scaledWidth, scaledHeight);
 
-                span = new UrlImageSpan(mContainer, scaledWidth, scaledHeight, false, placeholder, onError);
-                ((UrlImageSpan) span).load(Cache.getTinode().toAbsoluteURL(ref));
+                span = new RemoteImageSpan(mContainer, scaledWidth, scaledHeight, false, placeholder, onError);
+                ((RemoteImageSpan) span).load(Cache.getTinode().toAbsoluteURL(ref));
             }
         }
 
@@ -440,6 +440,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         // Add space on the left to make the link appear under the file name.
         result.append(saveLink, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // Append thin space after the link, otherwise the whole line to the right is clickable.
+        result.append('\u2009');
         return result;
     }
 
@@ -467,7 +469,9 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         // URLSpan into ButtonSpan.
         node.setSpan(new ButtonSpan(ctx, mFontSize, dipSize), 0, node.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return node;
+        // Append a thin space after a button, otherwise the whole line after the button
+        // becomes clickable if the button is the last element in a line.
+        return node.append('\u2009');
     }
 
     static SpannableStringBuilder handleQuote_Impl(Context ctx, List<SpannableStringBuilder> content) {

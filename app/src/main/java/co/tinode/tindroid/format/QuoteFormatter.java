@@ -118,7 +118,7 @@ public class QuoteFormatter extends PreviewFormatter {
             // If small in-band image is not available, get the large one and shrink.
             Log.i(TAG, "Out-of-band " + val);
 
-            UrlImageSpan span = new UrlImageSpan(mParent, size, size, true,
+            RemoteImageSpan span = new RemoteImageSpan(mParent, size, size, true,
                     AppCompatResources.getDrawable(ctx, R.drawable.ic_image), broken);
             span.load(Cache.getTinode().toAbsoluteURL((String) val));
             node.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

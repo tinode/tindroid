@@ -3,7 +3,6 @@ package co.tinode.tindroid.format;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -22,7 +21,7 @@ import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
 /* Spannable which updates associated image as it's loaded from the given URL */
-public class UrlImageSpan extends DynamicDrawableSpan implements Target {
+public class RemoteImageSpan extends DynamicDrawableSpan implements Target {
     private static final String TAG = "UrlImageSpan";
 
     private final WeakReference<View> mParentRef;
@@ -33,7 +32,7 @@ public class UrlImageSpan extends DynamicDrawableSpan implements Target {
     private URL mSource = null;
     private Drawable mDrawable;
 
-    public UrlImageSpan(View parent, int width, int height, boolean cropCenter, Drawable placeholder, Drawable onError) {
+    public RemoteImageSpan(View parent, int width, int height, boolean cropCenter, Drawable placeholder, Drawable onError) {
         mParentRef = new WeakReference<>(parent);
         mWidth = width;
         mHeight = height;

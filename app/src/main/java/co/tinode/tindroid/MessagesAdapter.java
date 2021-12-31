@@ -510,11 +510,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
-                if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-                    holder.mRippleOverlay.setPressed(true);
-                    holder.mRippleOverlay.postDelayed(() -> holder.mRippleOverlay.setPressed(false), 250);
-
-                }
                 return false;
             });
             holder.mText.setMovementMethod(LinkMovementMethod.getInstance());
@@ -928,12 +923,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     new GestureDetector.SimpleOnGestureListener() {
                         @Override
                         public void onLongPress(MotionEvent ev) {
-                            Log.i(TAG, "Long Press Detected");
+                            itemView.performLongClick();
                         }
 
                         @Override
                         public void onShowPress(MotionEvent ev) {
-                            Log.i(TAG, "Show Press Detected");
+                            mRippleOverlay.setPressed(true);
+                            mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
                         }
                     });
         }
