@@ -201,6 +201,20 @@ public class MessagesFragment extends Fragment {
 
         mRecyclerView = view.findViewById(R.id.messages_container);
         mRecyclerView.setLayoutManager(mMessageViewLayoutManager);
+        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                RecyclerView.Adapter adapter = mRecyclerView.getAdapter();
+                if (adapter == null) {
+                    return;
+                }
+                int itemCount = adapter.getItemCount();
+                int pos = mMessageViewLayoutManager.findLastVisibleItemPosition();
+                if (itemCount - pos < 4) {
+                    ((MessagesAdapter) adapter).loadNextPage();
+                }
+            }
+        });
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
