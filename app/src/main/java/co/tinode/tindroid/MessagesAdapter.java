@@ -351,6 +351,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Drafty transformed = msg.content.replyContent(UiUtils.QUOTED_REPLY_LENGTH, 1);
             Drafty reply = Drafty.quote(messageFrom(msg), msg.from, transformed);
             mActivity.showReply(reply, msg.seq);
+        } else {
+            Toast.makeText(mActivity, R.string.cannot_reply, Toast.LENGTH_SHORT).show();
         }
     }
 

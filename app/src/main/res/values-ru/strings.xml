@@ -275,4 +275,5 @@
     <string name="badge_staff">Администрация</string>
     <string name="badge_verified">Верифицированный</string>
     <string name="badge_danger">Подозрительный</string>
+    <string name="cannot_reply">Невозможно ответить на это сообщение</string>
 </resources>

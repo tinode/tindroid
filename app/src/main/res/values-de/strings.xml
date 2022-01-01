@@ -296,4 +296,5 @@
     <string name="hint_search_contacts">Kontakte durchsuchen</string>
     <string name="hint_contact_name">Name des Kontakts</string>
     <string name="report_channel">Beschweren Sie sich über den Sender</string>
+    <string name="cannot_reply">Diese Nachricht kann nicht beantwortet werden</string>
 </resources>

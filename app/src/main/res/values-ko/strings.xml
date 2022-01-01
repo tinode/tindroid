@@ -294,4 +294,5 @@
     <string name="hint_search_contacts">연락처 검색</string>
     <string name="hint_contact_name">담당자 이름</string>
     <string name="report_channel">채널에 대한 불만</string>
+    <string name="cannot_reply">이 메시지에 회신할 수 없습니다</string>
 </resources>

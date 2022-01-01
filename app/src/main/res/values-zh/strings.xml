@@ -296,4 +296,5 @@
     <string name="hint_search_contacts">联系人搜索</string>
     <string name="hint_contact_name">联系人姓名</string>
     <string name="report_channel">广播投诉</string>
+    <string name="cannot_reply">无法回复此消息</string>
 </resources>

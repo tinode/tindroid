@@ -295,4 +295,5 @@
     <string name="hint_search_contacts">聯繫人搜索</string>
     <string name="hint_contact_name">聯繫人姓名</string>
     <string name="report_channel">廣播投訴</string>
+    <string name="cannot_reply">無法回复此消息</string>
 </resources>

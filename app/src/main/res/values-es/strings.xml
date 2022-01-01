@@ -295,4 +295,5 @@
     <string name="hint_search_contacts">Búsqueda de contacto</string>
     <string name="hint_contact_name">Nombre de contacto</string>
     <string name="report_channel">Quejarse del canal</string>
+    <string name="cannot_reply">No se puede responder a este mensaje</string>
 </resources>
