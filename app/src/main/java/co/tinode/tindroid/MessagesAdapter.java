@@ -985,9 +985,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         @Override
         public void onClick(String type, Map<String, Object> data) {
             if (mSelectedItems != null) {
-                toggleSelectionAt(mPosition);
-                notifyItemChanged(mPosition);
-                updateSelectionMode();
                 return;
             }
 
