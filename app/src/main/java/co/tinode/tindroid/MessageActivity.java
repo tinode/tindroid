@@ -255,6 +255,12 @@ public class MessageActivity extends AppCompatActivity
             return false;
         }
 
+        // Cancel all pending notifications addressed to the current topic.
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(topicName, 0);
+        }
+
         final Tinode tinode = Cache.getTinode();
         ComTopic<VxCard> topic;
         try {
@@ -266,15 +272,8 @@ public class MessageActivity extends AppCompatActivity
         }
 
         mTopic = topic;
-
         if (mTopicName == null || !mTopicName.equals(topicName)) {
             mTopicName = topicName;
-
-            // Cancel all pending notifications addressed to the current topic.
-            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            if (nm != null) {
-                nm.cancel(mTopicName, 0);
-            }
 
             if (mTopic == null) {
                 UiUtils.setupToolbar(this, null, mTopicName, false, null);
