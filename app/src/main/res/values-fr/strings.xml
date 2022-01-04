@@ -292,4 +292,22 @@
     <string name="form">Formulaire</string>
     <string name="accept_avatar_button_hint">Accepter l\'avatar</string>
     <string name="next_button_hint">Suivant</string>
+    <string name="your_name">Votre nom</string>
+    <string name="description_optional">Description (optionnel)</string>
+    <string name="change_avatar">Changer l\'avatar</string>
+    <string name="badge_verified">Verifié/officiel</string>
+    <string name="badge_staff">Staff</string>
+    <string name="badge_danger">Douteux</string>
+    <string name="description">Description</string>
+    <string name="group_security_explained">Autorisations, quitter ou signaler le chat</string>
+    <string name="action_edit">Éditer</string>
+    <string name="action_save">Sauvegarder</string>
+    <string name="online_now">En ligne</string>
+    <string name="topic_settings">Paramètres de conversation</string>
+    <string name="action_reply">Répondre</string>
+    <string name="action_forward">Transférer</string>
+    <string name="forward_to">Transférer à…</string>
+    <string name="hint_search_contacts">Rechercher des contacts</string>
+    <string name="report_channel">Dénoncer la chaîne</string>
+    <string name="hint_contact_name">Nom du contact</string>
 </resources>
