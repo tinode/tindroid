@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
-    <string name="tinode_url" translatable="false">https://tinode.co</string>
-    <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
-
-    <string name="app_name" translatable="false">Tinode</string>
-    <string name="app_name_full" translatable="false">Tinode Chat</string>
     <string name="app_version">Version</string>
-    <string name="copyright" translatable="false">© 2014 – 2021 Tinode</string>
-    <string name="tinode" translatable="false">Tinode</string>
 
     <string name="login_hint">Connexion</string>
     <string name="password_hint">Mot de passe</string>
@@ -18,13 +10,11 @@
     <string name="send_file_button_hint">Envoyer un fichier</string>
 
     <string name="sign_in">Se connecter</string>
-    <string name="app_description" translatable="false">Tinode Chat</string>
     <string name="action_signup">S\'inscrire</string>
     <string name="sign_up">S\'inscrire</string>
     <string name="login_new">Identifiant</string>
     <string name="password_new">Mot de passe</string>
     <string name="full_name">Nom complet, ex. Jean Dupont</string>
-    <string name="tinode_logo" translatable="false">Tinode Logo</string>
     <string name="action_cancel">Annuler</string>
     <string name="settings_host_name">Adresse du serveur</string>
     <string name="settings_use_tls">Utiliser une connxion sécurisée</string>
@@ -83,7 +73,6 @@
     <string name="profile_action">Profil Tinode</string>
     <string name="view_profile">Voir le Profil</string>
     <string name="tinode_message">Envoyer message Tinode</string>
-    <string name="topic_title">Nom du groupe</string>
     <string name="group_members">Membres du groupe</string>
     <string name="name_required">Nom du groupe requis</string>
     <string name="no_members">Pas de membres du groupe</string>
@@ -143,7 +132,6 @@
     <string name="edit_account">Modifier le nom du compte</string>
     <string name="invalid_login">Nom d\'utilisateur invalide</string>
 
-    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
     <string name="download_attachment">Enregistrer</string>
     <string name="broken_image">Format de l\'image inconnu ou invalide</string>
     <string name="file_manager_not_found">Gestionnaire de fichier introuvable</string>
@@ -238,7 +226,6 @@
     <string name="block_and_report">Bloquer et dénoncer</string>
     <string name="confirm_contact_ban">Bloquer %1$s?</string>
     <string name="confirm_report">Bloquer et dénoncer %1$s?</string>
-    <string name="legal">Aspects juridiques</string>
     <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Contition d\'utilisation</a>]]></string>
     <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contactez-nous</a>]]></string>
     <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Politique de confidentialité</a>]]></string>
@@ -251,7 +238,6 @@
     <string name="enter_search_query">Saisir la requête de recherche</string>
     <string name="image_caption_hint">Légende</string>
     <string name="action_download">Télécharger</string>
-    <string name="tinode_image" translatable="false">tinode_image</string>
     <string name="invalid_content">Contenu invalide</string>
     <string name="failed">Echoué</string>
     <string name="processing">En cours de traitement…</string>
@@ -264,9 +250,7 @@
     <string name="notifications">Notifications</string>
     <string name="user_tags_description">Les autres peuvent vous trouver grâce à ces balises</string>
     <string name="help_explained">Assistance, aspects juridiques, à propos</string>
-    <string name="security_explained">Mot de passe, autorisations, suppression de compte</string>
     <string name="topic_tags_description">Les autres peuvent trouver le sujet grâce à ces balises</string>
-    <string name="permissions_explained">Autorisations d\'accès, balises de recherche</string>
     <string name="delete_group">Supprimer le groupe</string>
 
     <string name="topic_default_permissions_explained">Les nouveaux membres reçoivent automatiquement ces autorisations</string>
@@ -274,7 +258,6 @@
     <string name="confirm_delmsg_for_all">Voulez-vous vraiment supprimer tous les messages de tous les participants?</string>
     <string name="confirm_delmsg_for_self">Voulez-vous vraiment supprimer tous les messages? Vous ne les supprimez que pour vous-même.</string>
     <string name="licenses">Licences</string>
-    <string name="invalid_file" translatable="false">invalid</string>
     <string name="blocked_contacts">Contacts bloqués</string>
     <string name="action_restore">Débloquer</string>
     <string name="send_to">Envoyer à…</string>
@@ -310,4 +293,7 @@
     <string name="hint_search_contacts">Rechercher des contacts</string>
     <string name="report_channel">Dénoncer la chaîne</string>
     <string name="hint_contact_name">Nom du contact</string>
+    <string name="account_security_explained">Mot de passe, autorisations, suppression de compte</string>
+    <string name="hint_topic_title">Nom du groupe</string>
+    <string name="cannot_reply">Impossible de répondre à ce message</string>
 </resources>
