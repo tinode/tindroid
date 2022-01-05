@@ -65,9 +65,9 @@ public class DraftyTest {
                 new Drafty.Entity("MN").putData("val", "@mention"),
                 new Drafty.Entity("HT").putData("val", "#hashtag"),
         };
-        assertEquals("String 5 has failed", expected.toPlainText(), actual.toPlainText());
+        assertEquals("String 5 has failed", expected, actual);
 
-        // String 6
+        // String 6: Unicode UTF16
         actual = Drafty.parse("second #юникод");
         expected = new Drafty("second #юникод");
         expected.fmt = new Drafty.Style[]{
@@ -76,7 +76,15 @@ public class DraftyTest {
         expected.ent = new Drafty.Entity[]{
                 new Drafty.Entity("HT").putData("val", "#юникод"),
         };
-        assertEquals("String 6 has failed", expected.toPlainText(), actual.toPlainText());
+        assertEquals("String 6 has failed", expected, actual);
+
+        // String 7: Unicode emoji UTF32
+        actual = Drafty.parse("😀 *b1👩🏽‍✈️b2* smile");
+        expected = new Drafty("😀 b1👩🏽‍✈️b2 smile");
+        expected.fmt = new Drafty.Style[]{
+                new Drafty.Style("ST", 2, 5),
+        };
+        assertEquals("String 7 - Unicode UTF32 emoji failed", expected, actual);
     }
 
     @Test
@@ -278,6 +286,22 @@ public class DraftyTest {
                     .putData("val", "usr123abcDE")
         };
         assertEquals("Shorten 10 has failed", expected, actual);
+
+        // Emoji 1
+        src = Drafty.fromPlainText("a😀c😀d😀e😀f");
+        actual = src.shorten(5, false);
+        expected = Drafty.fromPlainText("a😀c😀…");
+        assertEquals("Shorten Emoji 1 has failed", expected, actual);
+
+        // Emoji 2. It's a medium-dark-skinned female pilot, 4 code points: 👩🏽‍✈
+        src = Drafty.fromPlainText("😀 b1👩🏽‍✈️b2 smile");
+        actual = src.shorten(8, false);
+        expected = Drafty.fromPlainText("😀 b1👩🏽‍✈️b…");
+        expected.fmt = new Drafty.Style[]{
+                new Drafty.Style("ST", 2, 5),
+                new Drafty.Style("EM", 0, 6)
+        };
+        assertEquals("Shorten Emoji 2 has failed", expected, actual);
     }
 
     @Test
