@@ -951,24 +951,18 @@ public class Drafty implements Serializable {
             List<Span> subspans = new LinkedList<>();
             while (iter.hasNext()) {
                 Span inner = iter.next();
-                if (inner.start < 0) {
-                    // Attachments are in the end. Put back and stop.
+                if (inner.start < 0 || inner.start >= span.end) {
+                    // Either an attachment or past the end of the current span, put back and stop.
                     iter.previous();
                     break;
-                } else if (inner.start < span.end) {
-                    if (inner.end <= span.end) {
-                        if (inner.start < inner.end || inner.isVoid()) {
-                            // Valid subspan: completely within the current span and
-                            // either non-zero length or zero length is acceptable.
-                            subspans.add(inner);
-                        }
+                } else if (inner.end <= span.end) {
+                    if (inner.start < inner.end || inner.isVoid()) {
+                        // Valid subspan: completely within the current span and
+                        // either non-zero length or zero length is acceptable.
+                        subspans.add(inner);
                     }
-                    // Overlapping subspans are ignored.
-                } else {
-                    // Past the end of the current span, put back and stop.
-                    iter.previous();
-                    break;
                 }
+                // else: overlapping subspan, ignore it.
             }
 
             if (subspans.size() == 0) {
@@ -1298,7 +1292,9 @@ public class Drafty implements Serializable {
             @Override
             public Node transform(Node node) {
                 if (node.isStyle("MN")) {
-                    if (node.text != null && node.text.charAt(0) == '➦' &&
+                    if (node.text != null &&
+                            node.text.length() > 0 &&
+                            node.text.charAt(0) == '➦' &&
                             (node.parent == null || node.parent.isUnstyled())) {
                         node.text = "➦";
                         node.children = null;
@@ -1366,7 +1362,7 @@ public class Drafty implements Serializable {
      */
     public Drafty replyContent(int length, int maxAttachments) {
         Node tree = toTree();
-        // Strip leading mention.
+        // Strip quote blocks, shorten leading mention, convert line breaks to spaces.
         tree = treeTopDown(tree, new Transformer() {
             @Override
             public @Nullable Node transform(Node node) {
@@ -1391,7 +1387,14 @@ public class Drafty implements Serializable {
         attachmentsToEnd(tree, maxAttachments);
         // Shorten the doc.
         tree = shortenTree(tree, length, "…");
-        tree = lightEntity(tree);
+        String[] allow = new String[]{"val"};
+        tree = treeTopDown(tree, new Transformer() {
+            @Override
+            public Node transform(Node node) {
+                node.data = copyEntData(node.data, MAX_PREVIEW_DATA_SIZE, node.isStyle("IM") ? allow : null);
+                return node;
+            }
+        });
         // Convert back to Drafty.
         return tree.toDrafty();
     }
@@ -1510,12 +1513,13 @@ public class Drafty implements Serializable {
     }
 
     // Create a copy of entity data with (light=false) or without (light=true) the large payload.
-    private static Map<String,Object> copyEntData(Map<String,Object> data, int maxLength) {
+    private static Map<String,Object> copyEntData(Map<String,Object> data, int maxLength, String[] allow) {
         if (data != null && !data.isEmpty()) {
             Map<String,Object> dc = new HashMap<>();
+            List<String> allowedFields = allow != null ? Arrays.asList(allow) : null;
             for (String key : DATA_FIELDS) {
                 Object value = data.get(key);
-                if (maxLength <= 0) {
+                if (maxLength <= 0 || (allowedFields != null && allowedFields.contains(key))) {
                     addOrSkip(dc, key, value);
                     continue;
                 }
@@ -1545,6 +1549,10 @@ public class Drafty implements Serializable {
             }
         }
         return null;
+    }
+    // Create a copy of entity data with (light=false) or without (light=true) the large payload.
+    private static Map<String,Object> copyEntData(Map<String,Object> data, int maxLength) {
+        return copyEntData(data, maxLength, null);
     }
 
     public interface Formatter<T> {
@@ -1700,16 +1708,6 @@ public class Drafty implements Serializable {
             data.put(key, val);
         }
 
-        public void clearData(String key) {
-            if (data != null) {
-                data.remove(key);
-            }
-        }
-
-        public void resetData() {
-            data = null;
-        }
-
         public int length() {
             if (text != null) {
                 return text.length();
@@ -1731,12 +1729,12 @@ public class Drafty implements Serializable {
                 tp = null;
                 children = null;
                 data = null;
-            } else if (text != null) {
-                if (tp == null) {
+            } else if (isUnstyled()) {
+                if (text != null) {
                     text = ltrim(text);
+                } else if (children != null && children.size() > 0) {
+                    children.get(0).lTrim();
                 }
-            } else if (children != null && children.size() > 0) {
-                children.get(0).lTrim();
             }
         }
 
@@ -1829,7 +1827,7 @@ public class Drafty implements Serializable {
 
     private static class Span implements Comparable<Span> {
         // Sorted in ascending order.
-        private static final String[] VOID_STYLES = new String[]{"BR", "EX"};
+        private static final String[] VOID_STYLES = new String[]{"BR", "EX", "HD"};
 
         int start;
         int end;
