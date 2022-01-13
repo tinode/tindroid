@@ -72,7 +72,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
-    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    // noinspection GradleDependency
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
     // Don't change to 1.4.0 (requires API 31).
     // noinspection GradleDependency
     implementation 'androidx.fragment:fragment:1.3.1'
@@ -88,10 +89,6 @@ dependencies {
     // Don't change to 2.7.0 (requires API 31).
     // noinspection GradleDependency
     implementation 'androidx.work:work-runtime:2.6.0'
-    // Emoji support
-    implementation "androidx.emoji2:emoji2:1.0.1"
-    implementation "androidx.emoji2:emoji2-views:1.0.1"
-    implementation "androidx.emoji2:emoji2-views-helper:1.0.1"
 
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
