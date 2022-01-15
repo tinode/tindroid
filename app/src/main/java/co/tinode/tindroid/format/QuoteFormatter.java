@@ -10,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.Base64;
 import android.util.DisplayMetrics;
@@ -85,13 +86,14 @@ public class QuoteFormatter extends PreviewFormatter {
         broken = UiUtils.getPlaceholder(ctx, broken, null, size, size);
 
         SpannableStringBuilder node = new SpannableStringBuilder();
+        CharacterStyle span = null;
 
         Object val;
 
         // Trying to use in-band image first: we don't need the full image at "ref" to generate a tiny preview.
         if ((val = data.get("val")) != null) {
             // Inline image.
-            Drawable thumbnail = broken;
+            Drawable thumbnail = null;
             try {
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
@@ -101,28 +103,33 @@ public class QuoteFormatter extends PreviewFormatter {
                 if (bmp != null) {
                     thumbnail = new BitmapDrawable(res, UiUtils.scaleSquareBitmap(bmp, size));
                     thumbnail.setBounds(0, 0, size, size);
+                    span = new StyledImageSpan(thumbnail,
+                            new RectF(IMAGE_PADDING * metrics.density,
+                                    IMAGE_PADDING * metrics.density,
+                                    IMAGE_PADDING * metrics.density,
+                                    IMAGE_PADDING * metrics.density));
                 }
             } catch (Exception ex) {
                 Log.w(TAG, "Broken image preview", ex);
             }
-
-            node.append(" ", new StyledImageSpan(thumbnail,
-                    new RectF(IMAGE_PADDING * metrics.density,
-                            IMAGE_PADDING * metrics.density,
-                            IMAGE_PADDING * metrics.density,
-                            IMAGE_PADDING * metrics.density)),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
         } else if ((val = data.get("ref")) instanceof String) {
             // If small in-band image is not available, get the large one and shrink.
             Log.i(TAG, "Out-of-band " + val);
 
-            RemoteImageSpan span = new RemoteImageSpan(mParent, size, size, true,
+            span = new RemoteImageSpan(mParent, size, size, true,
                     AppCompatResources.getDrawable(ctx, R.drawable.ic_image), broken);
-            span.load(Cache.getTinode().toAbsoluteURL((String) val));
-            node.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ((RemoteImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) val));
         }
 
+        if (span == null) {
+            span = new StyledImageSpan(broken,
+                    new RectF(IMAGE_PADDING * metrics.density,
+                            IMAGE_PADDING * metrics.density,
+                            IMAGE_PADDING * metrics.density,
+                            IMAGE_PADDING * metrics.density));
+        }
+
+        node.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         node.append(" ").append((String) filename);
 
         return node;

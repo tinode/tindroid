@@ -67,6 +67,7 @@ import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.format.CopyFormatter;
 import co.tinode.tindroid.format.FullFormatter;
 import co.tinode.tindroid.format.QuoteFormatter;
+import co.tinode.tindroid.format.ThumbnailTransformer;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -348,9 +349,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             toggleSelectionAt(pos);
             notifyItemChanged(pos);
             updateSelectionMode();
-            Drafty transformed = msg.content.replyContent(UiUtils.QUOTED_REPLY_LENGTH, 1);
-            Drafty reply = Drafty.quote(messageFrom(msg), msg.from, transformed);
-            mActivity.showReply(reply, msg.seq);
+            ThumbnailTransformer tr = new ThumbnailTransformer();
+            Drafty replyContent = msg.content.replyContent(UiUtils.QUOTED_REPLY_LENGTH, 1).transform(tr);
+            tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void>() {
+                @Override
+                public PromisedReply<Void> onSuccess(Void result) {
+                    mActivity.runOnUiThread(() -> {
+                        Drafty reply = Drafty.quote(messageFrom(msg), msg.from, replyContent);
+                        Log.i(TAG, "thumbnails generated " + reply.toPlainText());
+                        mActivity.showReply(reply, msg.seq);
+                    });
+                    return null;
+                }
+            });
         } else {
             Toast.makeText(mActivity, R.string.cannot_reply, Toast.LENGTH_SHORT).show();
         }

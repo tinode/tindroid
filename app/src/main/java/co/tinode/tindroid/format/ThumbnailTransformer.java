@@ -3,22 +3,29 @@ package co.tinode.tindroid.format;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
-import android.text.Spanned;
 import android.util.Base64;
 
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
-import androidx.appcompat.content.res.AppCompatResources;
+import java.util.LinkedList;
+import java.util.List;
+
 import co.tinode.tindroid.Cache;
-import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Drafty;
 
 // Convert images to thumbnails.
 public class ThumbnailTransformer implements Drafty.Transformer {
-    public PromisedReply<Drafty> completion = null;
+    public List<PromisedReply<Void>> components = null;
+
+    public PromisedReply<Void> completionPromise() {
+        if (components == null) {
+            return new PromisedReply<>((Void) null);
+        }
+        return PromisedReply.allOf(components.toArray(new PromisedReply[]{}));
+    }
 
     @Override
     public Drafty.Node transform(Drafty.Node node) {
@@ -28,6 +35,9 @@ public class ThumbnailTransformer implements Drafty.Transformer {
 
         Object val;
 
+        node.putData("width", UiUtils.IMAGE_THUMBNAIL_DIM);
+        node.putData("height", UiUtils.IMAGE_THUMBNAIL_DIM);
+
         // Trying to use in-band image first: we don't need the full image at "ref" to generate a tiny thumbnail.
         if ((val = node.getData("val")) != null) {
             // Inline image.
@@ -36,32 +46,40 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                 Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                 bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM);
                 bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
-                node.putData("val", Base64.encode(bits, Base64.DEFAULT));
+                node.putData("val", Base64.encodeToString(bits, Base64.DEFAULT));
                 node.putData("size", bits.length);
                 node.putData("mime", "image/jpeg");
             } catch (Exception ex) {
                 node.clearData("val");
                 node.clearData("size");
             }
-            node.putData("width", UiUtils.IMAGE_THUMBNAIL_DIM);
-            node.putData("height", UiUtils.IMAGE_THUMBNAIL_DIM);
         } else if ((val = node.getData("ref")) instanceof String) {
             node.clearData("ref");
-            node.putData("width", UiUtils.IMAGE_THUMBNAIL_DIM);
-            node.putData("height", UiUtils.IMAGE_THUMBNAIL_DIM);
+            final PromisedReply<Void> done = new PromisedReply<>();
+            if (components == null) {
+                components = new LinkedList<>();
+            }
+            components.add(done);
             Picasso.get().load(Cache.getTinode().toAbsoluteURL((String) val).toString()).into(new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bmp, Picasso.LoadedFrom from) {
                     bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM);
                     byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
-                    node.putData("val", Base64.encode(bits, Base64.DEFAULT));
+                    node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                     node.putData("size", bits.length);
                     node.putData("mime", "image/jpeg");
+                    try {
+                        done.resolve((Void) null);
+                    } catch (Exception ignored) {}
                 }
 
                 @Override
                 public void onBitmapFailed(Exception e, Drawable errorDrawable) {
                     node.clearData("size");
+                    node.clearData("mime");
+                    try {
+                        done.resolve((Void) null);
+                    } catch (Exception ignored) {}
                 }
 
                 @Override

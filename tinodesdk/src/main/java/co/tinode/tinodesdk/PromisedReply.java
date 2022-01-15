@@ -102,7 +102,7 @@ public class PromisedReply<T> {
      * @param waitFor promises to wait for.
      * @return new PromisedReply that is completed when all of the given PromisedReply complete.
      */
-    public static PromisedReply allOf(PromisedReply[] waitFor) {
+    public static PromisedReply<Void> allOf(PromisedReply[] waitFor) {
         final PromisedReply<Void> done = new PromisedReply<>();
         // Create a separate thread and wait for all promises to resolve.
         new Thread(() -> {
