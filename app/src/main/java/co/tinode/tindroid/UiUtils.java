@@ -118,9 +118,9 @@ public class UiUtils {
 
     // Maximum linear dimensions of images.
     static final int MAX_BITMAP_SIZE = 1024;
+    public static final int IMAGE_THUMBNAIL_DIM = 32; // dip
     public static final int IMAGE_PREVIEW_DIM = 64;
     public static final int AVATAR_SIZE = 128;
-    static final int REPLY_THUMBNAIL_SIZE = 36;
     public static final int QUOTED_REPLY_LENGTH = 64;
 
     // Default tag parameters

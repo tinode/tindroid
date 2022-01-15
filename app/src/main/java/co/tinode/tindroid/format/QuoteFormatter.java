@@ -28,7 +28,6 @@ import co.tinode.tindroid.UiUtils;
 public class QuoteFormatter extends PreviewFormatter {
     private static final String TAG = "QuoteFormatter";
 
-    private static final int IMAGE_THUMBNAIL_DIM = 32; // dip
     private static final int IMAGE_PADDING = 2; //dip
     private static final int MAX_FILE_NAME_LENGTH = 16;
 
@@ -70,7 +69,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
         // Using fixed dimensions for the image.
         DisplayMetrics metrics = res.getDisplayMetrics();
-        int size = (int) (IMAGE_THUMBNAIL_DIM * metrics.density);
+        int size = (int) (UiUtils.IMAGE_THUMBNAIL_DIM * metrics.density);
 
         Object filename = data.get("name");
         if (filename instanceof String) {

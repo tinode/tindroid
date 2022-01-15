@@ -98,6 +98,29 @@ public class PromisedReply<T> {
     }
 
     /**
+     * Returns a new PromisedReply that is completed when all of the given PromisedReply complete.
+     * @param waitFor promises to wait for.
+     * @return new PromisedReply that is completed when all of the given PromisedReply complete.
+     */
+    public static PromisedReply allOf(PromisedReply[] waitFor) {
+        final PromisedReply<Void> done = new PromisedReply<>();
+        // Create a separate thread and wait for all promises to resolve.
+        new Thread(() -> {
+            for (PromisedReply p : waitFor) {
+                try {
+                    p.mDoneSignal.await();
+                } catch (InterruptedException ignored) {}
+            }
+
+            try {
+                // If it throws then nothing we can do about it.
+                done.resolve(null);
+            } catch (Exception ignored) {};
+        }).start();
+        return done;
+    }
+
+    /**
      * Call SuccessListener.onSuccess or FailureListener.onFailure when the
      * promise is resolved or rejected. The call will happen on the thread which
      * called resolve() or reject().
@@ -179,60 +202,6 @@ public class PromisedReply<T> {
                 return null;
             }
         });
-    }
-
-    private void callOnSuccess(final T result) throws Exception {
-        PromisedReply<T> ret;
-        try {
-            ret = (mSuccess != null ? mSuccess.onSuccess(result) : null);
-        } catch (Exception e) {
-            handleFailure(e);
-            return;
-        }
-        // If it throws, let it fly.
-        handleSuccess(ret);
-    }
-
-    private void callOnFailure(final Exception err) throws Exception {
-        if (mFailure != null) {
-            // Try to recover
-            try {
-                handleSuccess(mFailure.onFailure(err));
-            } catch (Exception ex) {
-                handleFailure(ex);
-            }
-        } else {
-            // Pass to the next handler
-            handleFailure(err);
-        }
-    }
-
-    private void handleSuccess(PromisedReply<T> ret) throws Exception {
-        if (mNextPromise == null) {
-            if (ret != null && ret.mState == State.REJECTED) {
-                throw ret.mException;
-            }
-            return;
-        }
-
-        if (ret == null) {
-            mNextPromise.resolve(mResult);
-        } else if (ret.mState == State.RESOLVED) {
-            mNextPromise.resolve(ret.mResult);
-        } else if (ret.mState == State.REJECTED) {
-            mNextPromise.reject(ret.mException);
-        } else {
-            // Next promise will be called when ret is completed
-            ret.insertNextPromise(mNextPromise);
-        }
-    }
-
-    private void handleFailure(Exception e) throws Exception {
-        if (mNextPromise != null) {
-            mNextPromise.reject(e);
-        } else {
-            throw e;
-        }
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -333,6 +302,60 @@ public class PromisedReply<T> {
         }
 
         throw new IllegalStateException("Promise cannot be in WAITING state");
+    }
+
+    private void callOnSuccess(final T result) throws Exception {
+        PromisedReply<T> ret;
+        try {
+            ret = (mSuccess != null ? mSuccess.onSuccess(result) : null);
+        } catch (Exception e) {
+            handleFailure(e);
+            return;
+        }
+        // If it throws, let it fly.
+        handleSuccess(ret);
+    }
+
+    private void callOnFailure(final Exception err) throws Exception {
+        if (mFailure != null) {
+            // Try to recover
+            try {
+                handleSuccess(mFailure.onFailure(err));
+            } catch (Exception ex) {
+                handleFailure(ex);
+            }
+        } else {
+            // Pass to the next handler
+            handleFailure(err);
+        }
+    }
+
+    private void handleSuccess(PromisedReply<T> ret) throws Exception {
+        if (mNextPromise == null) {
+            if (ret != null && ret.mState == State.REJECTED) {
+                throw ret.mException;
+            }
+            return;
+        }
+
+        if (ret == null) {
+            mNextPromise.resolve(mResult);
+        } else if (ret.mState == State.RESOLVED) {
+            mNextPromise.resolve(ret.mResult);
+        } else if (ret.mState == State.REJECTED) {
+            mNextPromise.reject(ret.mException);
+        } else {
+            // Next promise will be called when ret is completed
+            ret.insertNextPromise(mNextPromise);
+        }
+    }
+
+    private void handleFailure(Exception e) throws Exception {
+        if (mNextPromise != null) {
+            mNextPromise.reject(e);
+        } else {
+            throw e;
+        }
     }
 
     private void insertNextPromise(PromisedReply<T> next) {

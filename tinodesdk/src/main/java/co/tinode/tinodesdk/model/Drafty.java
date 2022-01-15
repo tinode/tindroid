@@ -1360,6 +1360,7 @@ public class Drafty implements Serializable {
      * @param maxAttachments - maximum number of attachments to keep.
      * @return converted Drafty object leaving the original intact.
      */
+    @Nullable
     public Drafty replyContent(int length, int maxAttachments) {
         Node tree = toTree();
         // Strip quote blocks, shorten leading mention, convert line breaks to spaces.
@@ -1396,7 +1397,19 @@ public class Drafty implements Serializable {
             }
         });
         // Convert back to Drafty.
-        return tree.toDrafty();
+        return tree == null ? null : tree.toDrafty();
+    }
+
+    /**
+     * Apply custom transformer to Drafty.
+     * @param transformer transformer to apply.
+     * @return transformed document.
+     */
+    @Nullable
+    public Drafty transform(Transformer transformer) {
+        // Apply provided transformer.
+        Node tree = treeTopDown(toTree(), transformer);
+        return tree == null ? null : tree.toDrafty();
     }
 
     public static class Style implements Serializable, Comparable<Style> {
@@ -1706,6 +1719,13 @@ public class Drafty implements Serializable {
                 data = new HashMap<>();
             }
             data.put(key, val);
+        }
+
+        public void clearData(String key) {
+            if (key == null || data == null) {
+                return;
+            }
+            data.remove(key);
         }
 
         public int length() {
