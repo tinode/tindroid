@@ -356,7 +356,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 public PromisedReply<Void> onSuccess(Void result) {
                     mActivity.runOnUiThread(() -> {
                         Drafty reply = Drafty.quote(messageFrom(msg), msg.from, replyContent);
-                        Log.i(TAG, "thumbnails generated " + reply.toPlainText());
                         mActivity.showReply(reply, msg.seq);
                     });
                     return null;

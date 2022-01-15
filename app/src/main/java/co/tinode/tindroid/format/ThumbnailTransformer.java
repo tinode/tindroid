@@ -18,7 +18,7 @@ import co.tinode.tinodesdk.model.Drafty;
 
 // Convert images to thumbnails.
 public class ThumbnailTransformer implements Drafty.Transformer {
-    public List<PromisedReply<Void>> components = null;
+    protected List<PromisedReply<Void>> components = null;
 
     public PromisedReply<Void> completionPromise() {
         if (components == null) {
@@ -46,7 +46,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                 Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                 bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM);
                 bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
-                node.putData("val", Base64.encodeToString(bits, Base64.DEFAULT));
+                node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                 node.putData("size", bits.length);
                 node.putData("mime", "image/jpeg");
             } catch (Exception ex) {
