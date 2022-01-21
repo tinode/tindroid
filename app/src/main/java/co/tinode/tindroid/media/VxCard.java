@@ -1,10 +1,14 @@
 package co.tinode.tindroid.media;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.ByteArrayOutputStream;
+
 import androidx.annotation.NonNull;
+import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.TheCard;
 
@@ -14,7 +18,7 @@ import co.tinode.tinodesdk.model.TheCard;
  */
 public class VxCard extends TheCard {
     @JsonIgnore
-    public AvatarPhoto avatar;
+    protected transient Bitmap mImage = null;
 
     public VxCard() {
     }
@@ -27,49 +31,30 @@ public class VxCard extends TheCard {
     public VxCard(String fullName, Bitmap bmp) {
         fn = fullName;
         if (bmp != null) {
-            avatar = new AvatarPhoto(bmp);
-            photo = new Photo(avatar.data, avatar.type);
+            mImage = bmp;
+            photo = serializeBitmap(bmp);
         }
     }
 
-    public VxCard(String fullName, String avatarRef) {
-        fn = fullName;
-        if (avatarRef != null) {
-            avatar = new AvatarPhoto(avatarRef);
-            photo = new Photo(avatar.data, avatar.type);
-        }
-    }
     @Override
     public VxCard copy() {
         VxCard dst = copy(new VxCard(), this);
-        dst.avatar = avatar;
+        dst.mImage = mImage;
         return dst;
     }
 
     @JsonIgnore
     public Bitmap getBitmap() {
-        if (avatar == null) {
+        if (mImage == null) {
             constructBitmap();
         }
-        return (avatar != null) ? avatar.getBitmap() : null;
+        return mImage;
     }
 
     @JsonIgnore
     public void setBitmap(Bitmap bmp) {
-        avatar = new AvatarPhoto(bmp);
-        photo = new Photo(avatar.data, avatar.type);
-    }
-
-    @JsonIgnore
-    public void setAvatar(AvatarPhoto bmp) {
-        avatar = bmp;
-        photo = new Photo(avatar.data, avatar.type);
-    }
-
-    public void constructBitmap() {
-        if (photo != null) {
-            avatar = new AvatarPhoto(photo.data);
-        }
+        mImage = bmp;
+        photo = serializeBitmap(bmp);
     }
 
     @Override
@@ -79,11 +64,33 @@ public class VxCard extends TheCard {
         }
         boolean changed = super.merge(another);
         VxCard avc = (VxCard) another;
-        if (avc.avatar != null) {
-            avatar = avc.avatar;
+        if (avc.mImage != null) {
+            mImage = avc.mImage;
             changed = true;
         }
         return changed;
+    }
+
+    public void constructBitmap() {
+        if (photo != null && photo.data != null) {
+            Bitmap bmp = BitmapFactory.decodeByteArray(photo.data, 0, photo.data.length);
+            if (bmp != null) {
+                mImage = Bitmap.createScaledBitmap(bmp, UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE, false);
+                // createScaledBitmap may return the same object if scaling is not required.
+                if (bmp != mImage) {
+                    bmp.recycle();
+                }
+            }
+        }
+    }
+
+    private static Photo serializeBitmap(Bitmap bmp) {
+        if (bmp != null) {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
+            return new Photo(byteArrayOutputStream.toByteArray(), "jpeg");
+        }
+        return null;
     }
 
     @Override
