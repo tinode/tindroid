@@ -47,8 +47,6 @@ import co.tinode.tindroid.widgets.OverlaidImageView;
  */
 public class ImageViewFragment extends Fragment {
     private static final String TAG = "ImageViewFragment";
-    // Minimum size of the avatar image after cropping.
-    private static final int MIN_AVATAR_SIZE = 8;
 
     // Maximum count of pixels in a zoomed image: width * height * scale^2.
     private static final int MAX_SCALED_PIXELS = 1024 * 1024 * 16;
@@ -210,7 +208,7 @@ public class ImageViewFragment extends Fragment {
 
         if (bmp == null) {
             // Preview large image before sending.
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
+            Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
             if (uri != null) {
                 final ContentResolver resolver = activity.getContentResolver();
                 // Resize image to ensure it's under the maximum in-band size.
@@ -235,7 +233,7 @@ public class ImageViewFragment extends Fragment {
                     Log.i(TAG, "Failed to read image from " + uri, ex);
                 }
             } else {
-                final Uri ref = args.getParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI);
+                final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
                 if (ref != null) {
                     final String fn = fileName;
                     mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -438,7 +436,7 @@ public class ImageViewFragment extends Fragment {
             }
         }
 
-        AttachmentHandler.enqueueUploadRequest(activity, AttachmentHandler.ARG_OPERATION_IMAGE, args);
+        AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_IMAGE, args);
 
         activity.getSupportFragmentManager().popBackStack();
     }
@@ -462,7 +460,7 @@ public class ImageViewFragment extends Fragment {
         RectF cutOut = new RectF(mCutOutRect);
         inverse.mapRect(cutOut);
 
-        if (cutOut.width() < MIN_AVATAR_SIZE || cutOut.height() < MIN_AVATAR_SIZE) {
+        if (cutOut.width() < UiUtils.MIN_AVATAR_SIZE || cutOut.height() < UiUtils.MIN_AVATAR_SIZE) {
             // Avatar is too small.
             Toast.makeText(activity, R.string.image_too_small, Toast.LENGTH_SHORT).show();
             return;

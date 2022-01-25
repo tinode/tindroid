@@ -115,13 +115,17 @@ public class UiUtils {
     static final int MAX_TITLE_LENGTH = 60;
     // Maximum length of topic description.
     static final int MAX_DESCRIPTION_LENGTH = 360;
+    // Length of quoted text.
+    public static final int QUOTED_REPLY_LENGTH = 64;
 
     // Maximum linear dimensions of images.
     static final int MAX_BITMAP_SIZE = 1024;
     public static final int IMAGE_THUMBNAIL_DIM = 32; // dip
     public static final int IMAGE_PREVIEW_DIM = 64;
-    public static final int AVATAR_SIZE = 128;
-    public static final int QUOTED_REPLY_LENGTH = 64;
+    public static final int MIN_AVATAR_SIZE = 8;
+    public static final int MAX_AVATAR_SIZE = 384;
+    // Maximum byte size of avatar sent in-band.
+    public static final int MAX_INBAND_AVATAR_SIZE = 4096;
 
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;
@@ -518,7 +522,7 @@ public class UiUtils {
                 args.putParcelable(AttachmentHandler.ARG_SRC_BITMAP, photo);
             } else if (uri != null){
                 // Image from the gallery.
-                args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
+                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, data.getData());
             }
 
             // Show avatar preview.
@@ -532,25 +536,48 @@ public class UiUtils {
         void showAvatarPreview(Bundle args);
     }
 
+    /**
+     * Ensure that the bitmap is square and no larger than the given max size.
+     * @param bmp       bitmap to scale
+     * @param size   maximum linear size of the bitmap.
+     * @return scaled bitmap or original, it it does not need ot be cropped or scaled.
+     */
     @NonNull
     public static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp, int size) {
+        // Sanity check
+        size = Math.min(size, MAX_BITMAP_SIZE);
+
         int width = bmp.getWidth();
         int height = bmp.getHeight();
+        boolean needsScaling = false;
+        // Scale down.
         if (width > height) {
-            width = width * size / height;
-            height = size;
-            // Sanity check
-            width = Math.min(width, MAX_BITMAP_SIZE);
+            if (height > size) {
+                width = width * size / height;
+                height = size;
+                needsScaling = true;
+            }
         } else {
-            height = height * size / width;
-            width = size;
-            height = Math.min(height, MAX_BITMAP_SIZE);
+            if (width > size) {
+                height = height * size / width;
+                width = size;
+                needsScaling = true;
+            }
         }
-        // Scale up or down.
-        bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
-        // Chop the square from the middle.
-        return Bitmap.createBitmap(bmp, (width - size) / 2, (height - size) / 2,
-                size, size);
+
+        if (needsScaling) {
+            // Scale down.
+            bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
+            size = Math.min(width, height);
+        }
+
+        if (width != height) {
+            // Bitmap is not square. Chop the square from the middle.
+            bmp = Bitmap.createBitmap(bmp, (width - size) / 2, (height - size) / 2,
+                    size, size);
+        }
+
+        return bmp;
     }
 
     /**
@@ -639,7 +666,7 @@ public class UiUtils {
         }
 
         avatarContainer.setImageDrawable(new RoundImageDrawable(avatarContainer.getResources(),
-                scaleSquareBitmap(avatar, AVATAR_SIZE)));
+                scaleSquareBitmap(avatar, MAX_AVATAR_SIZE)));
     }
 
     // Construct avatar from VxCard and set it to the provided ImageView.
@@ -657,7 +684,7 @@ public class UiUtils {
             Picasso
                     .get()
                     .load(ref.toString())
-                    .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE)
+                    .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
                     .placeholder(R.drawable.disk)
                     .error(R.drawable.ic_broken_image_round)
                     .into(avatarView);
@@ -947,8 +974,13 @@ public class UiUtils {
         }
 
         // TODO: add support for uploading avatar out of band.
-        pub.setBitmap(scaleSquareBitmap(bmp, AVATAR_SIZE));
-        topic.setDescription(pub, null).thenCatch(new ToastFailureListener(activity));
+        pub.setBitmap(scaleSquareBitmap(bmp, MAX_AVATAR_SIZE));
+
+        String[] attachments = null;
+        if (pub.getPhotoRef() != null) {
+            attachments = new String[]{pub.getPhotoRef()};
+        }
+        topic.setDescription(pub, null, attachments).thenCatch(new ToastFailureListener(activity));
     }
 
     static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTopicDesc(final Activity activity,
@@ -996,7 +1028,7 @@ public class UiUtils {
         }
 
         if (pub != null || priv != null) {
-            topic.setDescription(pub, priv).thenApply(
+            topic.setDescription(pub, priv, null).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -1249,6 +1281,7 @@ public class UiUtils {
     }
 
     // The same as TextUtils.equals except null == "".
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     static boolean stringsEqual(CharSequence a, CharSequence b) {
         if (a == b) {
             return true;

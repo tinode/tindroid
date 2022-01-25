@@ -101,7 +101,7 @@ public class FilePreviewFragment extends Fragment {
             accessGranted = true;
         }
 
-        Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
+        Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
         if (uri != null) {
             updateFormValues(activity, args, uri, accessGranted);
         } else {
@@ -120,7 +120,7 @@ public class FilePreviewFragment extends Fragment {
         }
 
         if (uri == null) {
-            uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
+            uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
         }
 
         if (uri == null) {
@@ -131,11 +131,11 @@ public class FilePreviewFragment extends Fragment {
         String fileName = args.getString(AttachmentHandler.ARG_FILE_NAME);
         long fileSize = args.getLong(AttachmentHandler.ARG_FILE_SIZE);
         if ((mimeType == null || fileName == null || fileSize == 0) && accessGranted) {
-            AttachmentHandler.FileDetails fileDetails = AttachmentHandler.getFileDetails(activity,
+            AttachmentHandler.UploadDetails uploadDetails = AttachmentHandler.getFileDetails(activity,
                     uri, args.getString(AttachmentHandler.ARG_FILE_PATH));
-            fileName = fileName == null ? fileDetails.fileName : fileName;
-            mimeType = mimeType == null ? fileDetails.mimeType : mimeType;
-            fileSize = fileSize == 0 ? fileDetails.fileSize : fileSize;
+            fileName = fileName == null ? uploadDetails.fileName : fileName;
+            mimeType = mimeType == null ? uploadDetails.mimeType : mimeType;
+            fileSize = fileSize == 0 ? uploadDetails.fileSize : fileSize;
         }
         if (TextUtils.isEmpty(fileName)) {
             fileName = getString(R.string.default_attachment_name);
@@ -166,7 +166,7 @@ public class FilePreviewFragment extends Fragment {
             return;
         }
 
-        AttachmentHandler.enqueueUploadRequest(activity, AttachmentHandler.ARG_OPERATION_FILE, args);
+        AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_FILE, args);
 
         activity.getSupportFragmentManager().popBackStack();
     }

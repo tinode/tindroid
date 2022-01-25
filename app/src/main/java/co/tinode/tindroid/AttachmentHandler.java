@@ -44,6 +44,7 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.Operation;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -61,8 +62,8 @@ public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION_FILE = "file";
     // Bundle argument names.
     final static String ARG_TOPIC_NAME = "topic";
-    final static String ARG_SRC_LOCAL_URI = "local_uri";
-    final static String ARG_SRC_REMOTE_URI = "remote_url";
+    final static String ARG_LOCAL_URI = "local_uri";
+    final static String ARG_REMOTE_URI = "remote_uri";
     final static String ARG_SRC_BYTES = "bytes";
     final static String ARG_SRC_BITMAP = "bitmap";
 
@@ -88,13 +89,15 @@ public class AttachmentHandler extends Worker {
     }
 
     @NonNull
-    static FileDetails getFileDetails(@NonNull final Context context, @NonNull Uri uri, @Nullable String filePath) {
+    static UploadDetails getFileDetails(@NonNull final Context context, @NonNull Uri uri, @Nullable String filePath) {
         final ContentResolver resolver = context.getContentResolver();
         String fname = null;
         long fsize = 0L;
         int orientation = -1;
 
-        FileDetails result = new FileDetails();
+        UploadDetails result = new UploadDetails();
+        result.imageWidth = 0;
+        result.imageHeight = 0;
 
         String mimeType = resolver.getType(uri);
         if (mimeType == null) {
@@ -154,20 +157,19 @@ public class AttachmentHandler extends Worker {
         return result;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    static void enqueueUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
+    static void enqueueMsgAttachmentUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
         String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
         // Create a new message which will be updated with upload progress.
         Drafty content = new Drafty();
         Storage.Message msg = BaseDb.getInstance().getStore()
                 .msgDraft(Cache.getTinode().getTopic(topicName), content, Tinode.draftyHeadersFor(content));
         if (msg != null) {
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI);
+            Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
             assert uri != null;
 
             Data.Builder data = new Data.Builder()
                     .putString(ARG_OPERATION, operation)
-                    .putString(ARG_SRC_LOCAL_URI, uri.toString())
+                    .putString(ARG_LOCAL_URI, uri.toString())
                     .putLong(ARG_MSG_ID, msg.getDbId())
                     .putString(ARG_TOPIC_NAME, topicName)
                     .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
@@ -181,9 +183,30 @@ public class AttachmentHandler extends Worker {
                     .addTag(TAG_UPLOAD_WORK)
                     .build();
 
-            // If send or upload is retried,
             WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()), ExistingWorkPolicy.REPLACE, upload);
         }
+    }
+
+    static Operation enqueueAvatarUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
+        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
+            Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
+            assert uri != null;
+            Data.Builder data = new Data.Builder()
+                    .putString(ARG_OPERATION, operation)
+                    .putString(ARG_LOCAL_URI, uri.toString())
+                    .putString(ARG_TOPIC_NAME, topicName)
+                    .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
+                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
+            Constraints constraints = new Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build();
+            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentHandler.class)
+                    .setInputData(data.build())
+                    .setConstraints(constraints)
+                    .addTag(TAG_UPLOAD_WORK)
+                    .build();
+
+        return WorkManager.getInstance(activity).enqueueUniqueWork("avatar-"+topicName, ExistingWorkPolicy.REPLACE, upload);
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -337,10 +360,12 @@ public class AttachmentHandler extends Worker {
     @NonNull
     @Override
     public ListenableWorker.Result doWork() {
-        return doUpload(getApplicationContext(), getInputData());
+        Data args = getInputData();
+        if (args.hasKeyWithValueOfType(ARG_MSG_ID, Long.class)) {
+            return uploadMessageAttachment(getApplicationContext(), args);
+        }
+        return uploadAvatar(getApplicationContext(), args);
     }
-
-    // Wrap content into Drafty.
 
     @Override
     public void onStopped() {
@@ -350,14 +375,14 @@ public class AttachmentHandler extends Worker {
         }
     }
 
-    private ListenableWorker.Result doUpload(final Context context, final Data args) {
+    private ListenableWorker.Result uploadMessageAttachment(final Context context, final Data args) {
         Storage store = BaseDb.getInstance().getStore();
 
         // File upload "file" or "image".
         final String operation = args.getString(ARG_OPERATION);
         final String topicName = args.getString(ARG_TOPIC_NAME);
         // URI must exist.
-        final Uri uri = Uri.parse(args.getString(ARG_SRC_LOCAL_URI));
+        final Uri uri = Uri.parse(args.getString(ARG_LOCAL_URI));
         // filePath is optional
         final String filePath = args.getString(ARG_FILE_PATH);
         final long msgId = args.getLong(ARG_MSG_ID, 0);
@@ -381,12 +406,10 @@ public class AttachmentHandler extends Worker {
         ByteArrayOutputStream baos = null;
         Bitmap bmp = null;
         try {
-            int imageWidth = 0, imageHeight = 0;
+            UploadDetails uploadDetails = getFileDetails(context, uri, filePath);
+            String fname = uploadDetails.fileName;
 
-            FileDetails fileDetails = getFileDetails(context, uri, filePath);
-            String fname = fileDetails.fileName;
-
-            if (fileDetails.fileSize == 0) {
+            if (uploadDetails.fileSize == 0) {
                 Log.w(TAG, "File size is zero; uri=" + uri + "; file=" + filePath);
                 store.msgDiscard(topic, msgId);
                 return ListenableWorker.Result.failure(
@@ -402,93 +425,38 @@ public class AttachmentHandler extends Worker {
             // Image is being attached. Ensure the image has correct orientation and size.
             if ("image".equals(operation)) {
                 // Make sure the image is not too large in byte-size and in linear dimensions.
-                is = resolver.openInputStream(uri);
-                if (is == null) {
-                    throw new IOException("Failed to open " + uri.toString());
-                }
-                bmp = BitmapFactory.decodeStream(is, null, null);
-                is.close();
-                if (bmp == null) {
-                    throw new IOException("Failed to decode bitmap");
-                }
-
-                // Make sure the image dimensions are not too large.
-                if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
-                    bmp = UiUtils.scaleBitmap(bmp, UiUtils.MAX_BITMAP_SIZE, UiUtils.MAX_BITMAP_SIZE);
-
-                    byte[] bits = UiUtils.bitmapToBytes(bmp, fileDetails.mimeType);
-                    fileDetails.fileSize = bits.length;
-                }
-
-                // Also ensure the image has correct orientation.
-                int orientation = ExifInterface.ORIENTATION_UNDEFINED;
-                try {
-                    // Opening original image, not a scaled copy.
-                    if (fileDetails.imageOrientation == -1) {
-                        is = resolver.openInputStream(uri);
-                        ExifInterface exif = new ExifInterface(is);
-                        orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                                ExifInterface.ORIENTATION_UNDEFINED);
-                        is.close();
-                    } else {
-                        switch (fileDetails.imageOrientation) {
-                            case 0:
-                                orientation = ExifInterface.ORIENTATION_NORMAL;
-                                break;
-                            case 90:
-                                orientation = ExifInterface.ORIENTATION_ROTATE_90;
-                                break;
-                            case 180:
-                                orientation = ExifInterface.ORIENTATION_ROTATE_180;
-                                break;
-                            case 270:
-                                orientation = ExifInterface.ORIENTATION_ROTATE_270;
-                                break;
-                            default:
-                        }
-                    }
-
-                    switch (orientation) {
-                        default:
-                            // Rotate image to ensure correct orientation.
-                            bmp = UiUtils.rotateBitmap(bmp, orientation);
-                            break;
-                        case ExifInterface.ORIENTATION_NORMAL:
-                            break;
-                        case ExifInterface.ORIENTATION_UNDEFINED:
-                            Log.d(TAG, "Unable to obtain image orientation");
-                    }
-                } catch (IOException ex) {
-                    Log.w(TAG, "Failed to obtain image orientation", ex);
-                }
-
-                imageWidth = bmp.getWidth();
-                imageHeight = bmp.getHeight();
-                is = UiUtils.bitmapToStream(bmp, fileDetails.mimeType);
-                fileDetails.fileSize = is.available();
+                bmp = prepareImage(resolver, uri, uploadDetails);
+                is = UiUtils.bitmapToStream(bmp, uploadDetails.mimeType);
+                uploadDetails.fileSize = is.available();
             }
 
-            if (fileDetails.fileSize > maxFileUploadSize) {
+            if (uploadDetails.fileSize > maxFileUploadSize) {
+                if (is != null) {
+                    is.close();
+                }
                 // File is too big to be send in-band or out of band.
-                Log.w(TAG, "Unable to process attachment: too big, size=" + fileDetails.fileSize);
+                Log.w(TAG, "Unable to process attachment: too big, size=" + uploadDetails.fileSize);
                 return ListenableWorker.Result.failure(
                         result.putString(ARG_ERROR,
                                 context.getString(
                                         R.string.attachment_too_large,
-                                        UiUtils.bytesToHumanSize(fileDetails.fileSize),
+                                        UiUtils.bytesToHumanSize(uploadDetails.fileSize),
                                         UiUtils.bytesToHumanSize(maxFileUploadSize)))
                                 .build());
             } else {
                 if (is == null) {
                     is = resolver.openInputStream(uri);
                 }
+                if (is == null) {
+                    throw new IOException("Failed to open file at " + uri.toString());
+                }
 
-                if (fileDetails.fileSize > maxInbandAttachmentSize) {
+                if (uploadDetails.fileSize > maxInbandAttachmentSize) {
                     byte[] previewBits = null;
                     // Update draft with file or image data.
                     String ref = "mid:uploading-" + msgId;
                     if ("file".equals(operation)) {
-                        store.msgDraftUpdate(topic, msgId, draftyAttachment(fileDetails.mimeType,
+                        store.msgDraftUpdate(topic, msgId, draftyAttachment(uploadDetails.mimeType,
                                 fname, ref, -1));
                     } else {
                         // Create a tiny preview bitmap.
@@ -500,18 +468,18 @@ public class AttachmentHandler extends Worker {
                         }
                         store.msgDraftUpdate(topic, msgId,
                                 draftyImage(args.getString(ARG_IMAGE_CAPTION),
-                                        fileDetails.mimeType, previewBits, ref, imageWidth, imageHeight,
+                                        uploadDetails.mimeType, previewBits, ref, uploadDetails.imageWidth, uploadDetails.imageHeight,
                                         fname, -1));
                     }
 
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
                             .putLong(ARG_PROGRESS, 0)
-                            .putLong(ARG_FILE_SIZE, fileDetails.fileSize).build());
+                            .putLong(ARG_FILE_SIZE, uploadDetails.fileSize).build());
 
                     // Upload then send message with a link. This is a long-running blocking call.
                     mUploader = Cache.getTinode().getFileUploader();
-                    MsgServerCtrl ctrl = mUploader.upload(is, fname, fileDetails.mimeType, fileDetails.fileSize,
+                    MsgServerCtrl ctrl = mUploader.upload(is, fname, uploadDetails.mimeType, uploadDetails.fileSize,
                             (progress, size) -> setProgressAsync(new Data.Builder()
                                     .putAll(result.build())
                                     .putLong(ARG_PROGRESS, progress)
@@ -522,13 +490,14 @@ public class AttachmentHandler extends Worker {
                     }
                     success = ctrl != null && ctrl.code == 200;
                     if (success) {
+                        String url = ctrl.getStringParam("url", null);
+                        result.putString(ARG_REMOTE_URI, url);
                         if ("file".equals(operation)) {
-                            content = draftyAttachment(fileDetails.mimeType, fname,
-                                    ctrl.getStringParam("url", null), fileDetails.fileSize);
+                            content = draftyAttachment(uploadDetails.mimeType, fname, url, uploadDetails.fileSize);
                         } else {
-                            content = draftyImage(args.getString(ARG_IMAGE_CAPTION), fileDetails.mimeType,
-                                    previewBits, ctrl.getStringParam("url", null),
-                                    imageWidth, imageHeight, fname, fileDetails.fileSize);
+                            content = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType,
+                                    previewBits, url, uploadDetails.imageWidth, uploadDetails.imageHeight,
+                                    fname, uploadDetails.fileSize);
                         }
                     }
                 } else {
@@ -541,9 +510,9 @@ public class AttachmentHandler extends Worker {
 
                     byte[] bits = baos.toByteArray();
                     if ("file".equals(operation)) {
-                        store.msgDraftUpdate(topic, msgId, draftyFile(fileDetails.mimeType, bits, fname));
+                        store.msgDraftUpdate(topic, msgId, draftyFile(uploadDetails.mimeType, bits, fname));
                     } else {
-                        if (imageWidth == 0) {
+                        if (uploadDetails.imageWidth == 0) {
                             BitmapFactory.Options options = new BitmapFactory.Options();
                             options.inJustDecodeBounds = true;
                             InputStream bais = new ByteArrayInputStream(bits);
@@ -551,23 +520,23 @@ public class AttachmentHandler extends Worker {
                             BitmapFactory.decodeStream(bais, null, options);
                             bais.close();
 
-                            imageWidth = options.outWidth;
-                            imageHeight = options.outHeight;
+                            uploadDetails.imageWidth = options.outWidth;
+                            uploadDetails.imageHeight = options.outHeight;
                         }
                         store.msgDraftUpdate(topic, msgId,
                                 draftyImage(args.getString(ARG_IMAGE_CAPTION),
-                                        fileDetails.mimeType, bits, null, imageWidth, imageHeight, fname, len));
+                                        uploadDetails.mimeType, bits, null, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, len));
                     }
                     success = true;
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
                             .putLong(ARG_PROGRESS, 0)
-                            .putLong(ARG_FILE_SIZE, fileDetails.fileSize)
+                            .putLong(ARG_FILE_SIZE, uploadDetails.fileSize)
                             .build());
                 }
             }
         } catch (CancellationException ignored) {
-        } catch (IOException | NullPointerException | SecurityException ex) {
+        } catch (IOException | SecurityException ex) {
             result.putString(ARG_ERROR, ex.getMessage());
             Log.w(TAG, "Failed to upload file", ex);
         } finally {
@@ -599,11 +568,146 @@ public class AttachmentHandler extends Worker {
         }
     }
 
-    static class FileDetails {
+    private ListenableWorker.Result uploadAvatar(final Context context, final Data args) {
+        final String topicName = args.getString(ARG_TOPIC_NAME);
+
+        final Data.Builder result = new Data.Builder()
+                .putString(ARG_TOPIC_NAME, topicName);
+
+        // Operation "file" or "image", only "image" is valid here.
+        final String operation = args.getString(ARG_OPERATION);
+        if ("image".equals(operation)) {
+            // This is an internal error, it should not happen. OK to leave untranslated.
+            result.putString(ARG_ERROR, "Invalid operation when uploading avatar: " + operation);
+            return ListenableWorker.Result.failure(result.build());
+        }
+
+        // URI must exist.
+        final Uri uri = Uri.parse(args.getString(ARG_LOCAL_URI));
+        UploadDetails uploadDetails = getFileDetails(context, uri, null);
+
+        if (uploadDetails.fileSize == 0) {
+            Log.w(TAG, "Avatar size is zero; uri=" + uri);
+            return ListenableWorker.Result.failure(
+                    result.putString(ARG_ERROR, context.getString(R.string.unable_to_use_image)).build());
+        }
+
+        final ContentResolver resolver = context.getContentResolver();
+
+        try {
+            Bitmap bmp = prepareImage(resolver, uri, uploadDetails);
+            InputStream is = UiUtils.bitmapToStream(bmp, uploadDetails.mimeType);
+            uploadDetails.fileSize = is.available();
+
+            if (uploadDetails.fileSize < UiUtils.MAX_INBAND_AVATAR_SIZE) {
+                // This code is for sending out of band only. In-band requests rejected.
+                throw new IllegalArgumentException("Avatar is too small to upload out-of-band");
+            }
+
+            // Upload then return result with a link. This is a long-running blocking call.
+            mUploader = Cache.getTinode().getFileUploader();
+            MsgServerCtrl ctrl = mUploader.upload(is, null, uploadDetails.mimeType, uploadDetails.fileSize,
+                    (progress, size) -> setProgressAsync(new Data.Builder()
+                            .putAll(result.build())
+                            .putLong(ARG_PROGRESS, progress)
+                            .putLong(ARG_FILE_SIZE, size)
+                            .build()));
+
+            if (mUploader.isCanceled()) {
+                throw new CancellationException();
+            }
+
+            if (ctrl != null && ctrl.code == 200) {
+                result.putString(ARG_REMOTE_URI, ctrl.getStringParam("url", null));
+                return ListenableWorker.Result.success(result.build());
+            }
+
+        } catch (IOException|IllegalArgumentException|CancellationException ex) {
+            result.putString(ARG_ERROR, ex.getMessage());
+            Log.w(TAG, "Failed to upload avatar", ex);
+        }
+
+        return ListenableWorker.Result.failure(result.build());
+    }
+
+        // Make sure the image is not too large in byte-size and in linear dimensions, has correct orientation.
+    private static Bitmap prepareImage(ContentResolver r, Uri src, UploadDetails uploadDetails) throws IOException {
+        InputStream is = r.openInputStream(src);
+        if (is == null) {
+            throw new IOException("Decoding bitmap: source not available");
+        }
+        Bitmap bmp = BitmapFactory.decodeStream(is, null, null);
+        is.close();
+
+        if (bmp == null) {
+            throw new IOException("Failed to decode bitmap");
+        }
+
+        // Make sure the image dimensions are not too large.
+        if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
+            bmp = UiUtils.scaleBitmap(bmp, UiUtils.MAX_BITMAP_SIZE, UiUtils.MAX_BITMAP_SIZE);
+
+            byte[] bits = UiUtils.bitmapToBytes(bmp, uploadDetails.mimeType);
+            uploadDetails.fileSize = bits.length;
+        }
+
+        // Also ensure the image has correct orientation.
+        int orientation = ExifInterface.ORIENTATION_UNDEFINED;
+        try {
+            // Opening original image, not a scaled copy.
+            if (uploadDetails.imageOrientation == -1) {
+                is = r.openInputStream(src);
+                if (is != null) {
+                    ExifInterface exif = new ExifInterface(is);
+                    orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                            ExifInterface.ORIENTATION_UNDEFINED);
+                    is.close();
+                }
+            } else {
+                switch (uploadDetails.imageOrientation) {
+                    case 0:
+                        orientation = ExifInterface.ORIENTATION_NORMAL;
+                        break;
+                    case 90:
+                        orientation = ExifInterface.ORIENTATION_ROTATE_90;
+                        break;
+                    case 180:
+                        orientation = ExifInterface.ORIENTATION_ROTATE_180;
+                        break;
+                    case 270:
+                        orientation = ExifInterface.ORIENTATION_ROTATE_270;
+                        break;
+                    default:
+                }
+            }
+
+            switch (orientation) {
+                default:
+                    // Rotate image to ensure correct orientation.
+                    bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    break;
+                case ExifInterface.ORIENTATION_NORMAL:
+                    break;
+                case ExifInterface.ORIENTATION_UNDEFINED:
+                    Log.d(TAG, "Unable to obtain image orientation");
+            }
+        } catch (IOException ex) {
+            Log.w(TAG, "Failed to obtain image orientation", ex);
+        }
+
+        uploadDetails.imageWidth = bmp.getWidth();
+        uploadDetails.imageHeight = bmp.getHeight();
+
+        return bmp;
+    }
+
+    static class UploadDetails {
         String mimeType;
         int imageOrientation;
         String filePath;
         String fileName;
         long fileSize;
+        int imageWidth;
+        int imageHeight;
     }
 }

@@ -32,6 +32,8 @@ public class ClientMessage<Pu,Pr> implements Serializable {
     public MsgClientSet set;
     public MsgClientDel del;
     public MsgClientNote note;
+    // Optional data.
+    public MsgClientExtra extra;
 
     public ClientMessage() {
     }

@@ -223,7 +223,7 @@ public class MessageActivity extends AppCompatActivity
         if (attachment != null && type != null) {
             // Need to retain access right to the given Uri.
             Bundle args = new Bundle();
-            args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, attachment);
+            args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, attachment);
             args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
             if (type.startsWith("image/")) {
                 args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);

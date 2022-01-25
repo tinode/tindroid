@@ -130,7 +130,7 @@ public class MessagesFragment extends Fragment {
                 }
 
                 final Bundle args = new Bundle();
-                args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, content);
+                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, content);
                 args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
                 args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
                 // Show attachment preview.
@@ -153,12 +153,12 @@ public class MessagesFragment extends Fragment {
                 if (data.getData() == null) {
                     // Image from the camera.
                     args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
-                    args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, mCurrentPhotoUri);
+                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, mCurrentPhotoUri);
                     mCurrentPhotoFile = null;
                     mCurrentPhotoUri = null;
                 } else {
                     // Image from the gallery.
-                    args.putParcelable(AttachmentHandler.ARG_SRC_LOCAL_URI, data.getData());
+                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, data.getData());
                 }
 
                 args.putString(AttachmentHandler.ARG_OPERATION,AttachmentHandler.ARG_OPERATION_IMAGE);
@@ -201,7 +201,7 @@ public class MessagesFragment extends Fragment {
 
         mRecyclerView = view.findViewById(R.id.messages_container);
         mRecyclerView.setLayoutManager(mMessageViewLayoutManager);
-        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 RecyclerView.Adapter adapter = mRecyclerView.getAdapter();
@@ -643,7 +643,9 @@ public class MessagesFragment extends Fragment {
                 json.put("action", "report");
                 json.put("target", mTopic.getName());
                 Drafty msg = new Drafty().attachJSON(json);
-                Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
+                HashMap<String,Object> head = new HashMap<>();
+                head.put("mime", Drafty.MIME_TYPE);
+                Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, head, null);
             } else {
                 throw new IllegalArgumentException("Unexpected action in showChatInvitationDialog");
             }

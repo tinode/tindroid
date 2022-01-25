@@ -39,7 +39,6 @@ public class RoundImageDrawable extends BitmapDrawable {
     public Bitmap getRoundedBitmap() {
         Bitmap bmp = Bitmap.createBitmap(mBitmapWidth, mBitmapHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
-        setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         draw(canvas);
         return bmp;
     }

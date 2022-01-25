@@ -224,7 +224,7 @@ class ContactOperations {
             try {
                 avatar = UiUtils.bitmapToBytes(Picasso.get()
                         .load(Uri.decode(ref))
-                        .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE).centerCrop()
+                        .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE).centerCrop()
                         .get(), mimeType);
             } catch (IOException ex) {
                 Log.w(TAG, "Failed to download avatar", ex);

@@ -994,11 +994,18 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected PromisedReply<ServerMessage> publish(final Drafty content, Map<String, Object> head, final long msgId) {
-        if (content.isPlain() && head != null) {
+        String[] attachments = null;
+        if (!content.isPlain()) {
+            if (head == null) {
+                head = new HashMap<>();
+            }
+            head.put("mime", Drafty.MIME_TYPE);
+            attachments = content.getEntReferences();
+        } else if (head != null) {
             // Plain text content should not have "mime" header. Clear it.
             head.remove("mime");
         }
-        return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head).thenApply(
+        return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head, attachments).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -1026,6 +1033,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     public PromisedReply<ServerMessage> publish(final Drafty content) {
         return publish(content, null);
     }
+
     /**
      * Publish message to a topic. It will attempt to publish regardless of subscription status.
      *
@@ -1034,13 +1042,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     public PromisedReply<ServerMessage> publish(final Drafty content, final Map<String, Object> extraHeaders) {
         final Map<String, Object> head;
-        if (extraHeaders != null || !content.isPlain()) {
+        if (!content.isPlain() || (extraHeaders != null && !extraHeaders.isEmpty())) {
             head = new HashMap<>();
             if (extraHeaders != null) {
                 head.putAll(extraHeaders);
             }
             if (!content.isPlain()) {
-                head.putAll(Tinode.draftyHeadersFor(content));
+                head.put("mime", Drafty.MIME_TYPE);
             }
         } else {
             head = null;
@@ -1078,7 +1086,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                             if (mStore != null) {
                                 mStore.msgSyncing(Topic.this, msgId, false);
                             }
-
                             throw err;
                         }
                     });
@@ -1209,10 +1216,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      *
      * @param pub  new public info
      * @param priv new private info
+     * @param attachments URLs of out-of-band attachments contained in the values of pub (or priv).
      * @throws NotSubscribedException if the client is not subscribed to the topic
      * @throws NotConnectedException  if there is no connection to the server
      */
-    public PromisedReply<ServerMessage> setDescription(final DP pub, final DR priv) {
+    public PromisedReply<ServerMessage> setDescription(final DP pub, final DR priv, String[] attachments) {
         return setDescription(new MetaSetDesc<>(pub, priv));
     }
 

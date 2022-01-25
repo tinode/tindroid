@@ -1025,7 +1025,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             // URL is null when the image is not sent yet.
                             if (url != null) {
                                 args = new Bundle();
-                                args.putParcelable(AttachmentHandler.ARG_SRC_REMOTE_URI, Uri.parse(url.toString()));
+                                args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
                             }
                         }
 

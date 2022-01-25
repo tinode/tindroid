@@ -72,7 +72,7 @@ public class UrlLayerDrawable extends LayerDrawable {
         };
         RequestCreator c = Picasso.get()
                 .load(Uri.decode(url))
-                .resize(UiUtils.AVATAR_SIZE, UiUtils.AVATAR_SIZE)
+                .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
                 .centerCrop();
         if (error != 0) {
             c = c.error(error);

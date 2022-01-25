@@ -47,6 +47,7 @@ import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientDel;
+import co.tinode.tinodesdk.model.MsgClientExtra;
 import co.tinode.tinodesdk.model.MsgClientGet;
 import co.tinode.tinodesdk.model.MsgClientHi;
 import co.tinode.tinodesdk.model.MsgClientLeave;
@@ -333,22 +334,6 @@ public class Tinode {
     }
 
     /**
-     * Headers to be sent with an outgoing message.
-     *
-     * @param content message content
-     * @return headers in as map "header key : header value"
-     */
-    public static Map<String, Object> draftyHeadersFor(final Drafty content) {
-        Map<String, Object> head = new HashMap<>();
-        head.put("mime", Drafty.MIME_TYPE);
-        String[] refs = content.getEntReferences();
-        if (refs != null) {
-            head.put("attachments", refs);
-        }
-        return head;
-    }
-
-    /**
      * Headers for a reply message.
      *
      * @param seq message ID being replied to.
@@ -359,7 +344,6 @@ public class Tinode {
         head.put("reply", "" + seq);
         return head;
     }
-
 
     /**
      * Add listener which will receive event notifications.
@@ -1054,6 +1038,10 @@ public class Tinode {
                                                             Credential[] cred) {
         ClientMessage msg = new ClientMessage<>(
                 new MsgClientAcc<>(getNextId(), uid, scheme, secret, loginNow, desc));
+        if (desc != null && desc.attachments != null && desc.attachments.length > 0) {
+            msg.extra = new MsgClientExtra(desc.attachments);
+        }
+
         // Add tags and credentials
         if (tags != null) {
             for (String tag : tags) {
@@ -1353,6 +1341,9 @@ public class Tinode {
      */
     public <Pu, Pr> PromisedReply<ServerMessage> subscribe(String topicName, MsgSetMeta<Pu, Pr> set, MsgGetMeta get) {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
+        if (set != null && set.desc!=null && set.desc.attachments != null && set.desc.attachments.length > 0) {
+            msg.extra = new MsgClientExtra(set.desc.attachments);
+        }
         return sendWithPromise(msg, msg.sub.id);
     }
 
@@ -1373,12 +1364,17 @@ public class Tinode {
      * Low-level request to publish data. A {@link Topic#publish} should be normally
      * used instead.
      *
-     * @param topicName name of the topic to publish to
-     * @param data      payload to publish to topic
+     * @param topicName     name of the topic to publish to
+     * @param data          payload to publish to topic
+     * @param head          message header
+     * @param attachments   URLs of out-of-band attachments contained in the message.
      * @return PromisedReply of the reply ctrl message
      */
-    public PromisedReply<ServerMessage> publish(String topicName, Object data, Map<String, Object> head) {
+    public PromisedReply<ServerMessage> publish(String topicName, Object data, Map<String, Object> head, String[] attachments) {
         ClientMessage msg = new ClientMessage(new MsgClientPub(getNextId(), topicName, true, data, head));
+        if (attachments != null && attachments.length > 0) {
+            msg.extra = new MsgClientExtra(attachments);
+        }
         return sendWithPromise(msg, msg.pub.id);
     }
 
@@ -1406,6 +1402,9 @@ public class Tinode {
     public <Pu, Pr> PromisedReply<ServerMessage> setMeta(final String topicName,
                                                          final MsgSetMeta<Pu, Pr> meta) {
         ClientMessage msg = new ClientMessage(new MsgClientSet<>(getNextId(), topicName, meta));
+        if (meta.desc != null && meta.desc.attachments != null && meta.desc.attachments.length > 0) {
+            msg.extra = new MsgClientExtra(meta.desc.attachments);
+        }
         return sendWithPromise(msg, msg.set.id);
     }
 

@@ -6,6 +6,9 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -43,8 +46,8 @@ public class LargeFileHelper {
     }
 
     // Upload file out of band. This should not be called on the UI thread.
-    public MsgServerCtrl upload(InputStream in, String filename, String mimetype, long size,
-                                FileHelperProgress progress) throws IOException, CancellationException {
+    public MsgServerCtrl upload(@NotNull InputStream in, @Nullable String filename, @NotNull String mimetype, long size,
+                                @Nullable FileHelperProgress progress) throws IOException, CancellationException {
         mCancel = false;
         HttpURLConnection conn = null;
         MsgServerCtrl ctrl;
@@ -62,7 +65,9 @@ public class LargeFileHelper {
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
             out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
             // Content-Disposition: form-data; name="file"; filename="1519014549699.pdf"
-            out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"" + LINE_END);
+            out.writeBytes("Content-Disposition: form-data; name=\"file\"" +
+                    (filename != null ? "; filename=\"" + filename + "\"" : "") + LINE_END);
+
             // Content-Type: application/pdf
             out.writeBytes("Content-Type: " + mimetype + LINE_END);
             out.writeBytes("Content-Transfer-Encoding: binary" + LINE_END);
@@ -165,7 +170,7 @@ public class LargeFileHelper {
         return mCancel;
     }
 
-    private int copyStream(InputStream in, OutputStream out, long size, FileHelperProgress p)
+    private int copyStream(@NotNull InputStream in, @NotNull OutputStream out, long size, @Nullable FileHelperProgress p)
             throws IOException, CancellationException {
         byte[] buffer = new byte[BUFFER_SIZE];
         int len, sent = 0;

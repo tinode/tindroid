@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

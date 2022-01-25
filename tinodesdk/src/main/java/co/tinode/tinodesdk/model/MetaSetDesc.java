@@ -1,5 +1,6 @@
 package co.tinode.tinodesdk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -17,6 +18,9 @@ public class MetaSetDesc<P,R> implements Serializable {
     public P pub;
     @JsonProperty("private")
     public R priv;
+
+    @JsonIgnore
+    public String[] attachments;
 
     public MetaSetDesc() {}
 
