@@ -47,6 +47,7 @@ import com.squareup.picasso.Picasso;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -86,6 +87,7 @@ import co.tinode.tindroid.widgets.RoundImageDrawable;
 
 import co.tinode.tindroid.widgets.UrlLayerDrawable;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -94,8 +96,10 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
+import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * Static utilities for UI support.
@@ -755,19 +759,6 @@ public class UiUtils {
         return bitmap;
     }
 
-    /**
-     * Convert drawable to bitmap.
-     *
-     * @param drawable vector drawable to convert to bitmap
-     * @return bitmap extracted from the drawable.
-     */
-    public static BitmapDrawable toBitmapDrawable(Resources res, Drawable drawable) {
-        if (drawable instanceof BitmapDrawable) {
-            return (BitmapDrawable) drawable;
-        }
-        return new BitmapDrawable(res, bitmapFromDrawable(drawable));
-    }
-
     // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
     // Used in chat bubbled to generate placeholder and error images for Picasso.
     public static Drawable getPlaceholder(Context ctx, Drawable fg, Drawable bkg, int width, int height) {
@@ -964,31 +955,79 @@ public class UiUtils {
         builder.show();
     }
 
-    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateAvatar(final Activity activity,
-                                                                          final T topic, final Bitmap bmp) {
-        VxCard pub = topic.getPub();
-        if (pub != null) {
-            pub = pub.copy();
+    static <T extends Topic<VxCard, PrivateType, ?, ?>>
+    PromisedReply<ServerMessage> updateAvatar(final T topic, Bitmap bmp, LargeFileHelper.FileHelperProgress progress) {
+        final String mimeType= "image/png";
+
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        if (width < MIN_AVATAR_SIZE || height < MIN_AVATAR_SIZE) {
+            // FAIL.
+            return new PromisedReply<>(new Exception("Image is too small"));
+        }
+
+        if (width != height || width > MAX_AVATAR_SIZE) {
+            bmp = scaleSquareBitmap(bmp, MAX_AVATAR_SIZE);
+            width = bmp.getWidth();
+            height = bmp.getHeight();
+        }
+
+        final VxCard pub;
+        if (topic.getPub() != null) {
+            pub = topic.getPub().copy();
         } else {
             pub = new VxCard();
         }
-
-        // TODO: add support for uploading avatar out of band.
-        pub.setBitmap(scaleSquareBitmap(bmp, MAX_AVATAR_SIZE));
-
-        String[] attachments = null;
-        if (pub.getPhotoRef() != null) {
-            attachments = new String[]{pub.getPhotoRef()};
+        if (pub.photo == null) {
+            pub.photo = new TheCard.Photo();
         }
-        topic.setDescription(pub, null, attachments).thenCatch(new ToastFailureListener(activity));
+        pub.photo.width = width;
+        pub.photo.height = height;
+
+        PromisedReply<ServerMessage> result;
+        try (InputStream is = UiUtils.bitmapToStream(bmp, mimeType)) {
+            long fileSize = is.available();
+            if (fileSize > MAX_INBAND_AVATAR_SIZE) {
+                // Sending avatar out of band.
+
+                // Generate small avatar preview.
+                pub.photo.data = bitmapToBytes(scaleSquareBitmap(bmp, IMAGE_THUMBNAIL_DIM), mimeType);
+                // Upload then return result with a link. This is a long-running blocking call.
+                LargeFileHelper uploader = Cache.getTinode().getFileUploader();
+                result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize, progress)
+                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                if (msg != null && msg.ctrl != null && msg.ctrl.code == 200) {
+                                    pub.photo.ref = msg.ctrl.getStringParam("url", null);
+                                }
+                                return null;
+                            }
+                });
+            } else {
+                // Can send a small avatar in-band.
+                pub.photo.data = bitmapToBytes(scaleSquareBitmap(bmp, IMAGE_THUMBNAIL_DIM), mimeType);
+                result = new PromisedReply<>((ServerMessage) null);
+            }
+        } catch (IOException | IllegalArgumentException ex) {
+            Log.w(TAG, "Failed to upload avatar", ex);
+            result = new PromisedReply<>(ex);
+        }
+
+        return result.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                String[] attachments = null;
+                if (pub.getPhotoRef() != null) {
+                    attachments = new String[]{pub.getPhotoRef()};
+                }
+                return topic.setDescription(pub, null, attachments);
+            }
+        });
     }
 
-    static <T extends Topic<VxCard, PrivateType, ?, ?>> void updateTopicDesc(final Activity activity,
-                                                                             T topic,
-                                                                             String title,
-                                                                             String subtitle,
-                                                                             String description,
-                                                                             final TitleUpdateCallbackInterface done) {
+    static <T extends Topic<VxCard, PrivateType, ?, ?>>
+    PromisedReply<ServerMessage> updateTopicDesc(T topic, String title, String subtitle, String description) {
         VxCard oldPub = topic.getPub();
         VxCard pub = null;
         if (!TextUtils.isEmpty(title)) {
@@ -1028,18 +1067,9 @@ public class UiUtils {
         }
 
         if (pub != null || priv != null) {
-            topic.setDescription(pub, priv, null).thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
-                        @Override
-                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            done.onTitleUpdated();
-                            return null;
-                        }
-                    },
-                    new ToastFailureListener(activity));
-        } else {
-            done.onTitleUpdated();
+            return topic.setDescription(pub, priv, null);
         }
+        return new PromisedReply<>((ServerMessage) null);
     }
 
     static boolean attachMeTopic(final Activity activity, final MeEventListener l) {
@@ -1307,11 +1337,6 @@ public class UiUtils {
             return b.length() == 0;
         }
         return a.length() == 0;
-    }
-
-    // Provides callback for when title/subtitle get successfully updated.
-    interface TitleUpdateCallbackInterface {
-        void onTitleUpdated();
     }
 
     interface ProgressIndicator {

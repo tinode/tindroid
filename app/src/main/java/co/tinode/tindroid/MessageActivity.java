@@ -722,8 +722,12 @@ public class MessageActivity extends AppCompatActivity
 
     @Override
     public void onAcceptAvatar(String topicName, Bitmap avatar) {
+        if (isDestroyed() || isFinishing()) {
+            return;
+        }
+
         //noinspection unchecked
-        UiUtils.updateAvatar(this, Cache.getTinode().getTopic(topicName), avatar);
+        UiUtils.updateAvatar(Cache.getTinode().getTopic(topicName), avatar, null);
     }
 
     interface DataSetChangeListener {

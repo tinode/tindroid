@@ -28,8 +28,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * Topic general info fragment: p2p or a group topic.
@@ -229,13 +231,18 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             final String newSubtitle = ((TextView) activity.findViewById(R.id.topicSubtitle)).getText().toString().trim();
             final String newDescription = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
 
-            UiUtils.updateTopicDesc(activity, mTopic, newTitle, newSubtitle, newDescription,
-                    () -> {
-                        if (activity.isFinishing() || activity.isDestroyed()) {
-                            return;
+            UiUtils.updateTopicDesc(mTopic, newTitle, newSubtitle, newDescription)
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
+                            if (!activity.isFinishing() && !activity.isDestroyed()) {
+                                activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack());
+                            }
+                            return null;
                         }
-                        activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack());
-                    });
+                    })
+                    .thenCatch(new UiUtils.ToastFailureListener(activity));
+
             return true;
         }
         return false;

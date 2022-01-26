@@ -89,7 +89,7 @@ public class PromisedReply<T> {
     /**
      * Create a promise in a REJECTED state
      *
-     * @param err Exception used for rejection of the promise.
+     * @param err Exception used for rejecting the promise.
      */
     public <E extends Exception> PromisedReply(E err) {
         mException = err;
@@ -368,9 +368,24 @@ public class PromisedReply<T> {
     }
 
     public static abstract class SuccessListener<U> {
+        /**
+         * Callback to execute when the promise is successfully resolved.
+         *
+         * @param result result of the call.
+         * @return new promise to pass to the next handler in the chain or null to use the same result.
+         * @throws Exception thrown if handler want to call the next failure handler in chain.
+         */
         public abstract PromisedReply<U> onSuccess(U result) throws Exception;
     }
+
     public static abstract class FailureListener<U> {
+        /**
+         * Callback to execute when the promise is rejected.
+         *
+         * @param err Exception which caused promise to fail.
+         * @return new promise to pass to the next success handler in the chain.
+         * @throws Exception thrown if handler want to call the next failure handler in chain.
+         */
         public abstract <E extends Exception> PromisedReply<U> onFailure(E err) throws Exception;
     }
 

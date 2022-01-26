@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 
 import co.tinode.tinodesdk.model.MsgServerCtrl;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 public class LargeFileHelper {
     private static final int BUFFER_SIZE = 65536;
@@ -35,7 +36,7 @@ public class LargeFileHelper {
     private final String mAuthToken;
     private final String mUserAgent;
 
-    private boolean mCancel = false;
+    private boolean mCanceled = false;
 
     public LargeFileHelper(URL urlUpload, String apikey, String authToken, String userAgent) {
         mUrlUpload = urlUpload;
@@ -46,11 +47,11 @@ public class LargeFileHelper {
     }
 
     // Upload file out of band. This should not be called on the UI thread.
-    public MsgServerCtrl upload(@NotNull InputStream in, @Nullable String filename, @NotNull String mimetype, long size,
+    public ServerMessage upload(@NotNull InputStream in, @NotNull String filename, @NotNull String mimetype, long size,
                                 @Nullable FileHelperProgress progress) throws IOException, CancellationException {
-        mCancel = false;
+        mCanceled = false;
         HttpURLConnection conn = null;
-        MsgServerCtrl ctrl;
+        ServerMessage msg;
         try {
             conn = (HttpURLConnection) mUrlUpload.openConnection();
             conn.setDoOutput(true);
@@ -65,8 +66,7 @@ public class LargeFileHelper {
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
             out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
             // Content-Disposition: form-data; name="file"; filename="1519014549699.pdf"
-            out.writeBytes("Content-Disposition: form-data; name=\"file\"" +
-                    (filename != null ? "; filename=\"" + filename + "\"" : "") + LINE_END);
+            out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"" + LINE_END);
 
             // Content-Type: application/pdf
             out.writeBytes("Content-Type: " + mimetype + LINE_END);
@@ -86,26 +86,30 @@ public class LargeFileHelper {
             }
 
             InputStream resp = new BufferedInputStream(conn.getInputStream());
-            ctrl = readServerResponse(resp);
+            msg = readServerResponse(resp);
             resp.close();
         } finally {
             if (conn != null) {
                 conn.disconnect();
             }
         }
-        return ctrl;
+        return msg;
     }
 
     // Uploads the file using Runnable, returns PromisedReply. Safe to call on UI thread.
-    public PromisedReply<MsgServerCtrl> uploadFuture(final InputStream in,
+    public PromisedReply<ServerMessage> uploadFuture(final InputStream in,
                                                      final String filename,
                                                      final String mimetype,
                                                      final long size,
                                                      final FileHelperProgress progress) {
-        final PromisedReply<MsgServerCtrl> result = new PromisedReply<>();
+        final PromisedReply<ServerMessage> result = new PromisedReply<>();
         new Thread(() -> {
             try {
-                result.resolve(upload(in, filename, mimetype, size, progress));
+                ServerMessage msg = upload(in, filename, mimetype, size, progress);
+                if (mCanceled) {
+                    throw new CancellationException("Cancelled");
+                }
+                result.resolve(msg);
             } catch (Exception ex) {
                 try {
                     result.reject(ex);
@@ -150,7 +154,11 @@ public class LargeFileHelper {
         final PromisedReply<Long> result = new PromisedReply<>();
         new Thread(() -> {
             try {
-                result.resolve(download(downloadFrom, out, progress));
+                Long size = download(downloadFrom, out, progress);
+                if (mCanceled) {
+                    throw new CancellationException("Cancelled");
+                }
+                result.resolve(size);
             } catch (Exception ex) {
                 try {
                     result.reject(ex);
@@ -163,11 +171,11 @@ public class LargeFileHelper {
 
     // Try to cancel an ongoing upload or download.
     public void cancel() {
-        mCancel = true;
+        mCanceled = true;
     }
 
     public boolean isCanceled() {
-        return mCancel;
+        return mCanceled;
     }
 
     private int copyStream(@NotNull InputStream in, @NotNull OutputStream out, long size, @Nullable FileHelperProgress p)
@@ -175,15 +183,15 @@ public class LargeFileHelper {
         byte[] buffer = new byte[BUFFER_SIZE];
         int len, sent = 0;
         while ((len = in.read(buffer)) != -1) {
-            if (mCancel) {
-                throw new CancellationException();
+            if (mCanceled) {
+                throw new CancellationException("Cancelled");
             }
 
             sent += len;
             out.write(buffer, 0, len);
 
-            if (mCancel) {
-                throw new CancellationException();
+            if (mCanceled) {
+                throw new CancellationException("Cancelled");
             }
 
             if (p != null) {
@@ -193,7 +201,7 @@ public class LargeFileHelper {
         return sent;
     }
 
-    private MsgServerCtrl readServerResponse(InputStream in) throws IOException {
+    private ServerMessage readServerResponse(InputStream in) throws IOException {
         MsgServerCtrl ctrl = null;
         ObjectMapper mapper = Tinode.getJsonMapper();
         JsonParser parser = mapper.getFactory().createParser(in);
@@ -212,7 +220,7 @@ public class LargeFileHelper {
                         parser.getCurrentLocation());
             }
         }
-        return ctrl;
+        return new ServerMessage(ctrl);
     }
 
     public interface FileHelperProgress {

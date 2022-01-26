@@ -29,6 +29,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -44,7 +45,6 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.Operation;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -54,7 +54,7 @@ import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.MsgServerCtrl;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION = "operation";
@@ -161,8 +161,10 @@ public class AttachmentHandler extends Worker {
         String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
         // Create a new message which will be updated with upload progress.
         Drafty content = new Drafty();
+        HashMap<String, Object> head = new HashMap<>();
+        head.put("mime", Drafty.MIME_TYPE);
         Storage.Message msg = BaseDb.getInstance().getStore()
-                .msgDraft(Cache.getTinode().getTopic(topicName), content, Tinode.draftyHeadersFor(content));
+                .msgDraft(Cache.getTinode().getTopic(topicName), content, head);
         if (msg != null) {
             Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
             assert uri != null;
@@ -185,28 +187,6 @@ public class AttachmentHandler extends Worker {
 
             WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()), ExistingWorkPolicy.REPLACE, upload);
         }
-    }
-
-    static Operation enqueueAvatarUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
-        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
-            assert uri != null;
-            Data.Builder data = new Data.Builder()
-                    .putString(ARG_OPERATION, operation)
-                    .putString(ARG_LOCAL_URI, uri.toString())
-                    .putString(ARG_TOPIC_NAME, topicName)
-                    .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
-                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
-            Constraints constraints = new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build();
-            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentHandler.class)
-                    .setInputData(data.build())
-                    .setConstraints(constraints)
-                    .addTag(TAG_UPLOAD_WORK)
-                    .build();
-
-        return WorkManager.getInstance(activity).enqueueUniqueWork("avatar-"+topicName, ExistingWorkPolicy.REPLACE, upload);
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -360,11 +340,7 @@ public class AttachmentHandler extends Worker {
     @NonNull
     @Override
     public ListenableWorker.Result doWork() {
-        Data args = getInputData();
-        if (args.hasKeyWithValueOfType(ARG_MSG_ID, Long.class)) {
-            return uploadMessageAttachment(getApplicationContext(), args);
-        }
-        return uploadAvatar(getApplicationContext(), args);
+        return uploadMessageAttachment(getApplicationContext(), getInputData());
     }
 
     @Override
@@ -479,7 +455,7 @@ public class AttachmentHandler extends Worker {
 
                     // Upload then send message with a link. This is a long-running blocking call.
                     mUploader = Cache.getTinode().getFileUploader();
-                    MsgServerCtrl ctrl = mUploader.upload(is, fname, uploadDetails.mimeType, uploadDetails.fileSize,
+                    ServerMessage msg = mUploader.upload(is, fname, uploadDetails.mimeType, uploadDetails.fileSize,
                             (progress, size) -> setProgressAsync(new Data.Builder()
                                     .putAll(result.build())
                                     .putLong(ARG_PROGRESS, progress)
@@ -488,9 +464,9 @@ public class AttachmentHandler extends Worker {
                     if (mUploader.isCanceled()) {
                         throw new CancellationException();
                     }
-                    success = ctrl != null && ctrl.code == 200;
+                    success = msg != null && msg.ctrl != null && msg.ctrl.code == 200;
                     if (success) {
-                        String url = ctrl.getStringParam("url", null);
+                        String url = msg.ctrl.getStringParam("url", null);
                         result.putString(ARG_REMOTE_URI, url);
                         if ("file".equals(operation)) {
                             content = draftyAttachment(uploadDetails.mimeType, fname, url, uploadDetails.fileSize);
@@ -566,68 +542,6 @@ public class AttachmentHandler extends Worker {
             // copyStream cannot be interrupted.
             return ListenableWorker.Result.failure(result.build());
         }
-    }
-
-    private ListenableWorker.Result uploadAvatar(final Context context, final Data args) {
-        final String topicName = args.getString(ARG_TOPIC_NAME);
-
-        final Data.Builder result = new Data.Builder()
-                .putString(ARG_TOPIC_NAME, topicName);
-
-        // Operation "file" or "image", only "image" is valid here.
-        final String operation = args.getString(ARG_OPERATION);
-        if ("image".equals(operation)) {
-            // This is an internal error, it should not happen. OK to leave untranslated.
-            result.putString(ARG_ERROR, "Invalid operation when uploading avatar: " + operation);
-            return ListenableWorker.Result.failure(result.build());
-        }
-
-        // URI must exist.
-        final Uri uri = Uri.parse(args.getString(ARG_LOCAL_URI));
-        UploadDetails uploadDetails = getFileDetails(context, uri, null);
-
-        if (uploadDetails.fileSize == 0) {
-            Log.w(TAG, "Avatar size is zero; uri=" + uri);
-            return ListenableWorker.Result.failure(
-                    result.putString(ARG_ERROR, context.getString(R.string.unable_to_use_image)).build());
-        }
-
-        final ContentResolver resolver = context.getContentResolver();
-
-        try {
-            Bitmap bmp = prepareImage(resolver, uri, uploadDetails);
-            InputStream is = UiUtils.bitmapToStream(bmp, uploadDetails.mimeType);
-            uploadDetails.fileSize = is.available();
-
-            if (uploadDetails.fileSize < UiUtils.MAX_INBAND_AVATAR_SIZE) {
-                // This code is for sending out of band only. In-band requests rejected.
-                throw new IllegalArgumentException("Avatar is too small to upload out-of-band");
-            }
-
-            // Upload then return result with a link. This is a long-running blocking call.
-            mUploader = Cache.getTinode().getFileUploader();
-            MsgServerCtrl ctrl = mUploader.upload(is, null, uploadDetails.mimeType, uploadDetails.fileSize,
-                    (progress, size) -> setProgressAsync(new Data.Builder()
-                            .putAll(result.build())
-                            .putLong(ARG_PROGRESS, progress)
-                            .putLong(ARG_FILE_SIZE, size)
-                            .build()));
-
-            if (mUploader.isCanceled()) {
-                throw new CancellationException();
-            }
-
-            if (ctrl != null && ctrl.code == 200) {
-                result.putString(ARG_REMOTE_URI, ctrl.getStringParam("url", null));
-                return ListenableWorker.Result.success(result.build());
-            }
-
-        } catch (IOException|IllegalArgumentException|CancellationException ex) {
-            result.putString(ARG_ERROR, ex.getMessage());
-            Log.w(TAG, "Failed to upload avatar", ex);
-        }
-
-        return ListenableWorker.Result.failure(result.build());
     }
 
         // Make sure the image is not too large in byte-size and in linear dimensions, has correct orientation.

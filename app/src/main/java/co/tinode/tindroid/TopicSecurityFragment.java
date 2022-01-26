@@ -275,7 +275,9 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
                     json.put("action", "report");
                     json.put("target", mTopic.getName());
                     Drafty msg = new Drafty().attachJSON(json);
-                    Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, Tinode.draftyHeadersFor(msg));
+                    HashMap<String,Object> head = new HashMap<>();
+                    head.put("mime", Drafty.MIME_TYPE);
+                    Cache.getTinode().publish(Tinode.TOPIC_SYS, msg, head, null);
                     response = mTopic.updateMode(null, "-JP");
                     break;
                 case ACTION_BAN_TOPIC:

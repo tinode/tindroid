@@ -220,8 +220,11 @@ public class ChatsActivity extends AppCompatActivity
 
     @Override
     public void onAcceptAvatar(String topicName, Bitmap avatar) {
-        // TODO: add support for uploading avatar out of band.
-        UiUtils.updateAvatar(this, Cache.getTinode().getMeTopic(), avatar);
+        if (isDestroyed() || isFinishing()) {
+            return;
+        }
+
+        UiUtils.updateAvatar(Cache.getTinode().getMeTopic(), avatar, null);
     }
 
     interface FormUpdatable {

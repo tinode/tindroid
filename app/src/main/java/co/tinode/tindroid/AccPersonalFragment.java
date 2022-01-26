@@ -31,8 +31,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * Fragment for editing current user details.
@@ -328,13 +330,17 @@ public class AccPersonalFragment extends Fragment
             final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
             String title = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             String description = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
-            UiUtils.updateTopicDesc(activity, me, title, null, description,
-                    () -> {
-                        if (activity.isFinishing() || activity.isDestroyed()) {
-                            return;
+            UiUtils.updateTopicDesc(me, title, null, description)
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
+                            if (!activity.isFinishing() && !activity.isDestroyed()) {
+                                activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack());
+                            }
+                            return null;
                         }
-                        activity.runOnUiThread(() -> activity.getSupportFragmentManager().popBackStack());
-                    });
+                    })
+            .thenCatch(new UiUtils.ToastFailureListener(activity));
             return true;
         }
         return false;

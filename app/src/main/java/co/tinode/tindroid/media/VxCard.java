@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.ByteArrayOutputStream;
 
 import androidx.annotation.NonNull;
-import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.TheCard;
 
@@ -75,6 +74,7 @@ public class VxCard extends TheCard {
         if (photo != null && photo.data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(photo.data, 0, photo.data.length);
             if (bmp != null) {
+                // FIXME: use UiUtils.MAX_AVATAR_SIZE instead of 128.
                 mImage = Bitmap.createScaledBitmap(bmp, 128, 128, false); //UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE, false);
                 // createScaledBitmap may return the same object if scaling is not required.
                 if (bmp != mImage) {
