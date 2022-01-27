@@ -102,13 +102,13 @@
                 android:layout_height="20dp"
                 android:layout_gravity="end|center_vertical"
                 android:layout_marginStart="6dp"
+                android:layout_marginTop="1dp"
                 android:background="@drawable/pill_counter"
                 android:gravity="center"
                 android:textColor="@color/white"
                 android:textSize="10sp"
                 android:textStyle="bold"
-                android:layout_marginTop="1dp"
-                tools:ignore="SmallSp"
+                tools:ignore="SmallSp,TextContrastCheck"
                 tools:text="9+" />
 
             <ImageView
