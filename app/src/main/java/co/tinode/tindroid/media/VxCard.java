@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.ByteArrayOutputStream;
 
 import androidx.annotation.NonNull;
+import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.TheCard;
 
@@ -16,6 +17,7 @@ import co.tinode.tinodesdk.model.TheCard;
  * Adds avatar conversion from bits to Android bitmap and back.
  */
 public class VxCard extends TheCard {
+    // Cached copy of the image data (photo.data).
     @JsonIgnore
     protected transient Bitmap mImage = null;
 
@@ -33,6 +35,10 @@ public class VxCard extends TheCard {
             mImage = bmp;
             photo = serializeBitmap(bmp);
         }
+    }
+
+    public VxCard(String fullName) {
+        fn = fullName;
     }
 
     @Override
@@ -74,14 +80,26 @@ public class VxCard extends TheCard {
         if (photo != null && photo.data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(photo.data, 0, photo.data.length);
             if (bmp != null) {
-                // FIXME: use UiUtils.MAX_AVATAR_SIZE instead of 128.
-                mImage = Bitmap.createScaledBitmap(bmp, 128, 128, false); //UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE, false);
+                mImage = UiUtils.scaleSquareBitmap(bmp, UiUtils.MAX_AVATAR_SIZE);
                 // createScaledBitmap may return the same object if scaling is not required.
                 if (bmp != mImage) {
                     bmp.recycle();
                 }
+            } else {
+                mImage = null;
             }
         }
+    }
+
+    /**
+     * If Photo is an external reference, return it as a string array with one element.
+     * @return photo URL or null of photo does not exist or is not a reference.
+     */
+    public String[] getPhotoAttachment() {
+       if (photo != null && photo.ref != null) {
+           return new String[] { photo.ref };
+       }
+       return null;
     }
 
     private static Photo serializeBitmap(Bitmap bmp) {

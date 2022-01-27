@@ -343,11 +343,15 @@ public class TheCard implements Serializable, Mergeable {
      * Generic container for image data.
      */
     public static class Photo implements Serializable, Mergeable {
+        // Image bits (preview or full image).
         public byte[] data;
+        // Second component of image mime type, i.e. 'png' for 'image/png'.
         public String type;
+        // URL of the image.
         public String ref;
-        public Integer width;
-        public Integer height;
+        // Intended dimensions of the full image
+        public Integer width, height;
+        // Size of the full image in bytes.
         public Integer size;
 
         public Photo() {}

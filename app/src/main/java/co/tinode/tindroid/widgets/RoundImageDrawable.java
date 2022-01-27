@@ -16,17 +16,13 @@ import android.graphics.drawable.BitmapDrawable;
  * Helper class to make avatars round
  */
 public class RoundImageDrawable extends BitmapDrawable {
-    private Paint mPaint;
-    private RectF mRectF;
-    private int mBitmapWidth;
-    private int mBitmapHeight;
+    private final Paint mPaint;
+    private final RectF mRectF;
+    private final int mBitmapWidth;
+    private final int mBitmapHeight;
 
     public RoundImageDrawable(Resources res, Bitmap bmp) {
         super(res, bmp);
-        init(bmp);
-    }
-
-    private void init(Bitmap bmp) {
         mRectF = new RectF();
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
