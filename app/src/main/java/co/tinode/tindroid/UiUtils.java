@@ -551,27 +551,21 @@ public class UiUtils {
 
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        boolean needsScaling = false;
-        // Scale down.
-        if (width > height) {
-            if (height > size) {
+
+        // Does it need to be scaled down?
+        if (width > size && height > size) {
+            // Scale down.
+            if (width > height) /* landscape */ {
                 width = width * size / height;
                 height = size;
-                needsScaling = true;
-            }
-        } else {
-            if (width > size) {
+            } else /* portrait or square */ {
                 height = height * size / width;
                 width = size;
-                needsScaling = true;
             }
-        }
-
-        if (needsScaling) {
             // Scale down.
             bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
-            size = Math.min(width, height);
         }
+        size = Math.min(width, height);
 
         if (width != height) {
             // Bitmap is not square. Chop the square from the middle.
