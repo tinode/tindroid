@@ -47,7 +47,6 @@ import com.squareup.picasso.Picasso;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -87,7 +86,6 @@ import co.tinode.tindroid.widgets.RoundImageDrawable;
 
 import co.tinode.tindroid.widgets.UrlLayerDrawable;
 import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.LargeFileHelper;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -96,10 +94,8 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
-import co.tinode.tinodesdk.model.MsgServerCtrl;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
-import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * Static utilities for UI support.
@@ -229,8 +225,10 @@ public class UiUtils {
         }
         @DrawableRes int placeholder = Topic.isP2PType(uid) ? R.drawable.ic_person_circle : R.drawable.ic_group_grey;
         if (ref == null) {
+            // Local resource.
             drawables.add(avatarDrawable(activity, bmp, title, uid));
         } else {
+            // Remote resource, check if preview is available.
             drawables.add(ResourcesCompat.getDrawable(res, placeholder, null));
         }
         if (online != null) {
@@ -955,66 +953,23 @@ public class UiUtils {
         builder.show();
     }
 
-    static <T extends Topic<VxCard, PrivateType, ?, ?>>
-    PromisedReply<ServerMessage> updateAvatar(final T topic, Bitmap bmp, LargeFileHelper.FileHelperProgress progress) {
-        final String mimeType= "image/png";
-
-        int width = bmp.getWidth();
-        int height = bmp.getHeight();
-        if (width < MIN_AVATAR_SIZE || height < MIN_AVATAR_SIZE) {
-            // FAIL.
-            return new PromisedReply<>(new Exception("Image is too small"));
-        }
-
-        if (width != height || width > MAX_AVATAR_SIZE) {
-            bmp = scaleSquareBitmap(bmp, MAX_AVATAR_SIZE);
-            width = bmp.getWidth();
-            height = bmp.getHeight();
-        }
-
+    /**
+     * Send request to server with a new avatar after optionally uploading the avatar if required.
+     * @param topic topic to update
+     * @param bmp new avatar
+     * @param <T> type of the topic
+     * @return result of the request to the server.
+     */
+    static <T extends Topic<VxCard, ?, ?, ?>>
+    PromisedReply<ServerMessage> updateAvatar(final T topic, Bitmap bmp) {
         final VxCard pub;
         if (topic.getPub() != null) {
             pub = topic.getPub().copy();
         } else {
             pub = new VxCard();
         }
-        if (pub.photo == null) {
-            pub.photo = new TheCard.Photo();
-        }
-        pub.photo.width = width;
-        pub.photo.height = height;
 
-        PromisedReply<ServerMessage> result;
-        try (InputStream is = UiUtils.bitmapToStream(bmp, mimeType)) {
-            long fileSize = is.available();
-            if (fileSize > MAX_INBAND_AVATAR_SIZE) {
-                // Sending avatar out of band.
-
-                // Generate small avatar preview.
-                pub.photo.data = bitmapToBytes(scaleSquareBitmap(bmp, IMAGE_THUMBNAIL_DIM), mimeType);
-                // Upload then return result with a link. This is a long-running blocking call.
-                LargeFileHelper uploader = Cache.getTinode().getFileUploader();
-                result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize, progress)
-                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
-                                if (msg != null && msg.ctrl != null && msg.ctrl.code == 200) {
-                                    pub.photo.ref = msg.ctrl.getStringParam("url", null);
-                                }
-                                return null;
-                            }
-                });
-            } else {
-                // Can send a small avatar in-band.
-                pub.photo.data = bitmapToBytes(scaleSquareBitmap(bmp, IMAGE_THUMBNAIL_DIM), mimeType);
-                result = new PromisedReply<>((ServerMessage) null);
-            }
-        } catch (IOException | IllegalArgumentException ex) {
-            Log.w(TAG, "Failed to upload avatar", ex);
-            result = new PromisedReply<>(ex);
-        }
-
-        return result.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        return AttachmentHandler.uploadAvatar(pub, bmp).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 String[] attachments = null;

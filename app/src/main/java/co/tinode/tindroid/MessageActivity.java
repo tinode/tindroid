@@ -727,7 +727,7 @@ public class MessageActivity extends AppCompatActivity
         }
 
         //noinspection unchecked
-        UiUtils.updateAvatar(Cache.getTinode().getTopic(topicName), avatar, null);
+        UiUtils.updateAvatar(Cache.getTinode().getTopic(topicName), avatar);
     }
 
     interface DataSetChangeListener {

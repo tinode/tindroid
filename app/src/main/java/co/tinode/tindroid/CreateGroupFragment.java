@@ -219,32 +219,31 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
     private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle,
                              final boolean isChannel, final String[] tags, final String[] members) {
         final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), null, isChannel);
-        topic.setPub(new VxCard(title, avatar));
         topic.setComment(subtitle);
         topic.setTags(tags);
-        try {
-            topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    for (String user : members) {
-                        topic.invite(user, null /* use default */);
+        topic.setPub(new VxCard(title));
+        AttachmentHandler.uploadAvatar(topic.getPub(), avatar)
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        return topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                for (String user : members) {
+                                    topic.invite(user, null /* use default */);
+                                }
+
+                                Intent intent = new Intent(activity, MessageActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                                intent.putExtra("topic", topic.getName());
+                                startActivity(intent);
+
+                                return null;
+                            }
+                        });
                     }
-
-                    Intent intent = new Intent(activity, MessageActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    intent.putExtra("topic", topic.getName());
-                    startActivity(intent);
-
-                    return null;
-                }
-            }, mFailureListener);
-        } catch (NotConnectedException ignored) {
-            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-            // Go back to contacts
-        } catch (Exception ex) {
-            Toast.makeText(activity, R.string.failed_to_create_topic, Toast.LENGTH_SHORT).show();
-            Log.w(TAG, "Failed to create topic", ex);
-        }
+                })
+                .thenCatch(mFailureListener);
 
         startActivity(new Intent(activity, ChatsActivity.class));
     }

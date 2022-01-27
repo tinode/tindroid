@@ -224,7 +224,7 @@ public class ChatsActivity extends AppCompatActivity
             return;
         }
 
-        UiUtils.updateAvatar(Cache.getTinode().getMeTopic(), avatar, null);
+        UiUtils.updateAvatar(Cache.getTinode().getMeTopic(), avatar);
     }
 
     interface FormUpdatable {

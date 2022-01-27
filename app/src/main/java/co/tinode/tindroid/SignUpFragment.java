@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -158,29 +159,34 @@ public class SignUpFragment extends Fragment
 
         final ImageView avatar = parent.findViewById(R.id.imageAvatar);
         final Tinode tinode = Cache.getTinode();
+        final VxCard theCard = new VxCard(fullName);
+        Drawable dr = avatar.getDrawable();
+        final Bitmap bmp;
+        if (dr instanceof BitmapDrawable) {
+            bmp = ((BitmapDrawable) dr).getBitmap();
+        } else {
+            bmp = null;
+        }
         // This is called on the websocket thread.
         tinode.connect(hostName, tls, false)
-                .thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
+                                return AttachmentHandler.uploadAvatar(theCard, bmp);
+                            }
+                        })
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
                                 // Try to create a new account.
-                                Bitmap bmp = null;
-                                try {
-                                    bmp = ((BitmapDrawable) avatar.getDrawable()).getBitmap();
-                                } catch (ClassCastException ignored) {
-                                    // If image is not loaded, the drawable is a vector.
-                                    // Ignore it.
-                                }
-                                VxCard vcard = new VxCard(fullName, bmp);
+                                MetaSetDesc<VxCard, String> meta = new MetaSetDesc<>(theCard, null);
+                                meta.attachments = theCard.getPhotoAttachment();
                                 return tinode.createAccountBasic(
-                                        login, password, true, null,
-                                        new MetaSetDesc<VxCard, String>(vcard, null),
+                                        login, password, true, null, meta,
                                         Credential.append(null, new Credential("email", email)));
                             }
                         })
-                .thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
                                 UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
@@ -205,8 +211,7 @@ public class SignUpFragment extends Fragment
                                 return null;
                             }
                         })
-                .thenCatch(
-                        new PromisedReply.FailureListener<ServerMessage>() {
+                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
                                 if (!SignUpFragment.this.isVisible()) {

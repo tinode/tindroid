@@ -19,6 +19,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -49,12 +51,15 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.LargeFileHelper;
+import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.TheCard;
 
 public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION = "operation";
@@ -544,7 +549,73 @@ public class AttachmentHandler extends Worker {
         }
     }
 
-        // Make sure the image is not too large in byte-size and in linear dimensions, has correct orientation.
+    /**
+     * Scale the avatar to appropriate size and upload it to the server of necessary.
+     * @param pub VxCard to save avatar to.
+     * @param bmp new avatar; no action is taken if avatar is null.
+     * @return result of the operation.
+     */
+    static PromisedReply<ServerMessage> uploadAvatar(@NotNull final VxCard pub, @Nullable Bitmap bmp) {
+        if (bmp == null) {
+            // No action needed.
+            return new PromisedReply<>((ServerMessage) null);
+        }
+
+        final String mimeType= "image/png";
+
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        if (width < UiUtils.MIN_AVATAR_SIZE || height < UiUtils.MIN_AVATAR_SIZE) {
+            // FAIL.
+            return new PromisedReply<>(new Exception("Image is too small"));
+        }
+
+        if (width != height || width > UiUtils.MAX_AVATAR_SIZE) {
+            bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.MAX_AVATAR_SIZE);
+            width = bmp.getWidth();
+            height = bmp.getHeight();
+        }
+
+        if (pub.photo == null) {
+            pub.photo = new TheCard.Photo();
+        }
+        pub.photo.width = width;
+        pub.photo.height = height;
+
+        PromisedReply<ServerMessage> result;
+        try (InputStream is = UiUtils.bitmapToStream(bmp, mimeType)) {
+            long fileSize = is.available();
+            if (fileSize > UiUtils.MAX_INBAND_AVATAR_SIZE) {
+                // Sending avatar out of band.
+
+                // Generate small avatar preview.
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM), mimeType);
+                // Upload then return result with a link. This is a long-running blocking call.
+                LargeFileHelper uploader = Cache.getTinode().getFileUploader();
+                result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize, null)
+                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                if (msg != null && msg.ctrl != null && msg.ctrl.code == 200) {
+                                    pub.photo.ref = msg.ctrl.getStringParam("url", null);
+                                }
+                                return null;
+                            }
+                        });
+            } else {
+                // Can send a small avatar in-band.
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM), mimeType);
+                result = new PromisedReply<>((ServerMessage) null);
+            }
+        } catch (IOException | IllegalArgumentException ex) {
+            Log.w(TAG, "Failed to upload avatar", ex);
+            result = new PromisedReply<>(ex);
+        }
+
+        return result;
+    }
+
+    // Make sure the image is not too large in byte-size and in linear dimensions, has correct orientation.
     private static Bitmap prepareImage(ContentResolver r, Uri src, UploadDetails uploadDetails) throws IOException {
         InputStream is = r.openInputStream(src);
         if (is == null) {
