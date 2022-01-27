@@ -15,6 +15,7 @@ import java.util.HashMap;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.core.content.res.ResourcesCompat;
 import co.tinode.tindroid.UiUtils;
 
 /**
@@ -41,7 +42,7 @@ public class UrlLayerDrawable extends LayerDrawable {
     }
 
     public void setUrlByLayerId(Resources res, int layerId, String url,
-                                @DrawableRes int placeholder, @DrawableRes int error) {
+                                Drawable placeholder, @DrawableRes int error) {
         if (mTargets == null) {
             mTargets = new HashMap<>(getNumberOfLayers());
         }
@@ -77,7 +78,7 @@ public class UrlLayerDrawable extends LayerDrawable {
         if (error != 0) {
             c = c.error(error);
         }
-        if (placeholder != 0) {
+        if (placeholder != null) {
             c = c.placeholder(placeholder);
         }
         c.into(target);

@@ -1221,7 +1221,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     public PromisedReply<ServerMessage> setDescription(final DP pub, final DR priv, String[] attachments) {
-        return setDescription(new MetaSetDesc<>(pub, priv));
+        MetaSetDesc<DP,DR> meta = new MetaSetDesc<>(pub, priv);
+        meta.attachments = attachments;
+        return setDescription(meta);
     }
 
     /**

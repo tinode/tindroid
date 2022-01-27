@@ -60,7 +60,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:alpha="0.75"
-                android:baseline="-4dp"
+                android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_channel"
@@ -68,30 +68,30 @@
 
             <ImageView
                 android:id="@+id/icon_verified"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:alpha="0.75"
-                android:baseline="-4dp"
+                android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_verified" />
 
             <ImageView
                 android:id="@+id/icon_staff"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:alpha="0.75"
-                android:baseline="-4dp"
+                android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_verified_user" />
 
             <ImageView
                 android:id="@+id/icon_danger"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:alpha="0.75"
-                android:baseline="-4dp"
+                android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_danger" />

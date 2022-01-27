@@ -65,7 +65,6 @@ import java.util.concurrent.Executors;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -205,8 +204,7 @@ public class UiUtils {
     // 0. [Avatar or LetterTileDrawable]
     // 1. [Online indicator]
     // 2. [Typing indicator]
-    private static void constructToolbarLogo(final Activity activity, final VxCard pub,
-                                             String uid, Boolean online) {
+    private static void constructToolbarLogo(final Activity activity, final VxCard pub, String uid, Boolean online) {
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
@@ -223,14 +221,14 @@ public class UiUtils {
             title = pub.fn;
             ref = pub.getPhotoRef();
         }
-        @DrawableRes int placeholder = Topic.isP2PType(uid) ? R.drawable.ic_person_circle : R.drawable.ic_group_grey;
         if (ref == null) {
             // Local resource.
             drawables.add(avatarDrawable(activity, bmp, title, uid));
         } else {
-            // Remote resource, check if preview is available.
-            drawables.add(ResourcesCompat.getDrawable(res, placeholder, null));
+            // Remote resource. Create a transparent placeholder layer.
+            drawables.add(new ColorDrawable(0x00000000));
         }
+
         if (online != null) {
             drawables.add(new OnlineDrawable(online));
 
@@ -242,13 +240,19 @@ public class UiUtils {
                 drawables.add(typing);
             }
         }
+
         UrlLayerDrawable layers = new UrlLayerDrawable(drawables.toArray(new Drawable[]{}));
         layers.setId(0, LOGO_LAYER_AVATAR);
+
         if (ref != null) {
-            layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR,
-                    Cache.getTinode().toAbsoluteURL(ref).toString(),
-                    R.drawable.disk, R.drawable.ic_broken_image_round);
+            // Use thumbnail preview if available, otherwise use default gray disk.
+            Drawable placeholder = bmp != null ?
+                    (new RoundImageDrawable(res, bmp)) :
+                    ResourcesCompat.getDrawable(res, R.drawable.disk, null);
+            layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, Cache.getTinode().toAbsoluteURL(ref).toString(),
+                placeholder, R.drawable.ic_broken_image_round);
         }
+
         if (online != null) {
             layers.setId(1, LOGO_LAYER_ONLINE);
             if (typing != null) {
