@@ -971,8 +971,8 @@ public class UiUtils {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 String[] attachments = null;
-                if (pub.getPhotoRef() != null) {
-                    attachments = new String[]{pub.getPhotoRef()};
+                if (pub.isPhotoRef()) {
+                    attachments = pub.getPhotoRefs();
                 }
                 return topic.setDescription(pub, null, attachments);
             }

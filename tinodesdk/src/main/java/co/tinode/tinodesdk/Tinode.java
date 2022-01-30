@@ -1341,7 +1341,7 @@ public class Tinode {
      */
     public <Pu, Pr> PromisedReply<ServerMessage> subscribe(String topicName, MsgSetMeta<Pu, Pr> set, MsgGetMeta get) {
         ClientMessage msg = new ClientMessage(new MsgClientSub<>(getNextId(), topicName, set, get));
-        if (set != null && set.desc!=null && set.desc.attachments != null && set.desc.attachments.length > 0) {
+        if (set != null && set.desc != null && set.desc.attachments != null) {
             msg.extra = new MsgClientExtra(set.desc.attachments);
         }
         return sendWithPromise(msg, msg.sub.id);

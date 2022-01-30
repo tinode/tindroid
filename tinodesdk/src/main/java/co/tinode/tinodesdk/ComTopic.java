@@ -2,16 +2,18 @@ package co.tinode.tinodesdk;
 
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * Communication topic: a P2P or Group.
  */
-public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
+public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     public ComTopic(Tinode tinode, Subscription<DP,PrivateType> sub) {
         super(tinode, sub);
@@ -28,6 +30,20 @@ public class ComTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public ComTopic(Tinode tinode, Listener l, boolean isChannel) {
         //noinspection unchecked
         super(tinode, l, isChannel);
+    }
+
+    /**
+     * Subscribe to topic.
+     */
+    public PromisedReply<ServerMessage> subscribe() {
+        if (isNew()) {
+            MetaSetDesc<DP, PrivateType> desc = new MetaSetDesc<>(mDesc.pub, mDesc.priv);
+            if (mDesc.pub != null && mDesc.pub.isPhotoRef()) {
+                desc.attachments = mDesc.pub.getPhotoRefs();
+            }
+            return subscribe(new MsgSetMeta<>(desc, null, mTags, null), null);
+        }
+        return subscribe();
     }
 
     public void setComment(String comment) {

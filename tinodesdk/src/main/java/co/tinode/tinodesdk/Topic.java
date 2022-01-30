@@ -833,22 +833,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     /**
      * Subscribe to topic.
      */
-    public PromisedReply<ServerMessage> subscribe() {
+    protected PromisedReply<ServerMessage> subscribe() {
         MsgSetMeta<DP, DR> mset = null;
-        MsgGetMeta mget;
-        if (isNew()) {
-            mset = new MsgSetMeta<>(new MetaSetDesc<>(mDesc.pub, mDesc.priv), null, mTags, null);
-            mget = null;
-        } else {
-            MetaGetBuilder mgb = getMetaGetBuilder()
-                    .withDesc().withData().withSub();
-            if (isMeType() || (isGrpType() && isOwner())) {
-                // Ask for tags only if it's a 'me' topic or the user is the owner of a 'grp' topic.
-                mgb = mgb.withTags();
-            }
-            mget = mgb.build();
+        MetaGetBuilder mgb = getMetaGetBuilder().withDesc().withData().withSub();
+        if (isMeType() || (isGrpType() && isOwner())) {
+            // Ask for tags only if it's a 'me' topic or the user is the owner of a 'grp' topic.
+            mgb = mgb.withTags();
         }
-        return subscribe(mset, mget);
+
+        return subscribe(mset, mgb.build());
     }
 
     /**

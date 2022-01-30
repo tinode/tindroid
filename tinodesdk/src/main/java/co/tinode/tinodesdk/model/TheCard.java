@@ -142,20 +142,23 @@ public class TheCard implements Serializable, Mergeable {
         return photo == null ? null : photo.data;
     }
     @JsonIgnore
+    public boolean isPhotoRef() {
+        return photo != null && photo.ref != null;
+    }
+    @JsonIgnore
     public String getPhotoRef() {
-        return photo == null ? null : photo.ref;
+        return photo != null ? photo.ref : null;
+    }
+    @JsonIgnore
+    public String[] getPhotoRefs() {
+        if (isPhotoRef()) {
+            return new String[] { photo.ref };
+        }
+        return null;
     }
     @JsonIgnore
     public String getPhotoMimeType() {
         return photo == null ? null : ("image/" + photo.type);
-    }
-    @JsonIgnore
-    public void setPhotoBits(byte[] bits, String type) {
-        photo = new Photo(bits, type);
-    }
-    @JsonIgnore
-    public void setPhotoRef(String ref, String type) {
-        photo = new Photo(ref, type);
     }
 
     public void addPhone(String phone, String type) {
