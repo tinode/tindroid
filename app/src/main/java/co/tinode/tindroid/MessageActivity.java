@@ -172,15 +172,11 @@ public class MessageActivity extends AppCompatActivity
             ab.setDisplayShowHomeEnabled(true);
         }
         toolbar.setNavigationOnClickListener(v -> {
-            if (isFragmentVisible(FRAGMENT_MESSAGES) || isFragmentVisible(FRAGMENT_INVALID)) {
-                Intent intent = new Intent(MessageActivity.this, ChatsActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-            } else if (isFragmentVisible(FRAGMENT_FORWARD_TO)) {
+            if (isFragmentVisible(FRAGMENT_FORWARD_TO)) {
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 showFragment(FRAGMENT_MESSAGES, null, false);
             } else {
-                getSupportFragmentManager().popBackStack();
+                onBackPressed();
             }
         });
 
