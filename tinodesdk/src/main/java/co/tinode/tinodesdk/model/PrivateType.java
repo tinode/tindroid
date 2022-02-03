@@ -21,7 +21,7 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
         super();
         String[] splitted = text.split(":");
         int counter = 0;
-        while (splitted.length % 2 == 0 && counter < splitted.length) {
+        while (splitted.length % 2 == 0 && counter < splitted.length - 1) {
             put(splitted[counter], splitted[counter + 1]);
             counter = counter + 2;
         }
