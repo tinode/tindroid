@@ -35,8 +35,8 @@ public class ThumbnailTransformer implements Drafty.Transformer {
 
         Object val;
 
-        node.putData("width", UiUtils.IMAGE_THUMBNAIL_DIM);
-        node.putData("height", UiUtils.IMAGE_THUMBNAIL_DIM);
+        node.putData("width", UiUtils.REPLY_THUMBNAIL_DIM);
+        node.putData("height", UiUtils.REPLY_THUMBNAIL_DIM);
 
         // Trying to use in-band image first: we don't need the full image at "ref" to generate a tiny thumbnail.
         if ((val = node.getData("val")) != null) {
@@ -44,7 +44,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
             try {
                 byte[] bits = Base64.decode((String) val, Base64.DEFAULT);
                 Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM);
+                bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_DIM);
                 bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
                 node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                 node.putData("size", bits.length);
@@ -63,7 +63,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
             Picasso.get().load(Cache.getTinode().toAbsoluteURL((String) val).toString()).into(new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bmp, Picasso.LoadedFrom from) {
-                    bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM);
+                    bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_DIM);
                     byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
                     node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                     node.putData("size", bits.length);

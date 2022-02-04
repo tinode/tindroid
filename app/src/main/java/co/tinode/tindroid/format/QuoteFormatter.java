@@ -70,7 +70,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
         // Using fixed dimensions for the image.
         DisplayMetrics metrics = res.getDisplayMetrics();
-        int size = (int) (UiUtils.IMAGE_THUMBNAIL_DIM * metrics.density);
+        int size = (int) (UiUtils.REPLY_THUMBNAIL_DIM * metrics.density);
 
         Object filename = data.get("name");
         if (filename instanceof String) {

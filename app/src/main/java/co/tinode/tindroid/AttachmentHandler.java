@@ -589,7 +589,7 @@ public class AttachmentHandler extends Worker {
                 // Sending avatar out of band.
 
                 // Generate small avatar preview.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
                 // Upload then return result with a link. This is a long-running blocking call.
                 LargeFileHelper uploader = Cache.getTinode().getFileUploader();
                 result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize, null)
@@ -604,7 +604,7 @@ public class AttachmentHandler extends Worker {
                         });
             } else {
                 // Can send a small avatar in-band.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.IMAGE_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
                 result = new PromisedReply<>((ServerMessage) null);
             }
         } catch (IOException | IllegalArgumentException ex) {
