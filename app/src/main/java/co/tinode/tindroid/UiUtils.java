@@ -683,16 +683,16 @@ public class UiUtils {
             ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
         }
 
+        Drawable local = UiUtils.avatarDrawable(avatarView.getContext(), avatar, fullName, address);
         if (ref != null) {
             Picasso
                     .get()
                     .load(ref.toString())
                     .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
-                    .placeholder(R.drawable.disk)
+                    .placeholder(local)
                     .error(R.drawable.ic_broken_image_round)
                     .into(avatarView);
         } else {
-            Drawable local = UiUtils.avatarDrawable(avatarView.getContext(), avatar, fullName, address);
             avatarView.setImageDrawable(local);
         }
     }

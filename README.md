@@ -16,12 +16,12 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 
 * One-on-one conversations and group chats.
 * Channels with unlimited number of read-only subscribers.
-* In-app presence notifications.
 * Unread message counters.
-* Push notifications.
+* Push notifications and in-app presence notifications.
 * Message status notifications: message delivery to server; received and read notifications; typing notifications.
 * Markdown-style formatting of text, e.g. \*styled\* &rarr; **styled**. Implemented as spannable.
 * Replying and forwarding messages.
+* Trusted account badges: verified account, staff, etc.
 * Form messages suitable for chatbots.
 * Attachments and inline images.
 * Muting/un-muting conversations and other granular permission management.
@@ -33,6 +33,7 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 ## Not done yet:
 
 * End-to-end encryption.
+* No voice or video messages. No video or audio calling.
 * No support for switching between multiple backends.
 * Mentions, hashtags.
 * Previews not generated for videos, audio, links or docs.
