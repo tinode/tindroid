@@ -1820,9 +1820,9 @@ public class Drafty implements Serializable {
         @Override
         public String toString() {
             return "{'" + tp + "'" +
-                    (data != null  ? ", data: " + data.toString() : "") +
+                    (data != null  ? ", data: " + data : "") +
                     (text != null ? "; '" + text + "'" :
-                            (children != null ? ("; " + children.toString()) : "; NULL")) +
+                            (children != null ? ("; " + children) : "; NULL")) +
                     "}";
         }
     }

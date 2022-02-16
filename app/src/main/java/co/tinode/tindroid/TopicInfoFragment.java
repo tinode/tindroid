@@ -370,10 +370,10 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             Drawable icon = AppCompatResources.getDrawable(activity, R.drawable.ic_channel);
             if (icon != null) {
                 icon.setBounds(0, 0, 64, 64);
-                ((AppCompatTextView) title).setCompoundDrawables(null, null, icon, null);
+                title.setCompoundDrawables(null, null, icon, null);
             }
         } else {
-            ((AppCompatTextView) title).setCompoundDrawables(null, null, null, null);
+            title.setCompoundDrawables(null, null, null, null);
         }
 
         // Trusted flags.

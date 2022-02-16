@@ -429,7 +429,7 @@ public class AttachmentHandler extends Worker {
                     is = resolver.openInputStream(uri);
                 }
                 if (is == null) {
-                    throw new IOException("Failed to open file at " + uri.toString());
+                    throw new IOException("Failed to open file at " + uri);
                 }
 
                 if (uploadDetails.fileSize > maxInbandAttachmentSize) {

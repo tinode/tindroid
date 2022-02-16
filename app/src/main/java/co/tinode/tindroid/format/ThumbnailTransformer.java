@@ -69,7 +69,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                     node.putData("size", bits.length);
                     node.putData("mime", "image/jpeg");
                     try {
-                        done.resolve((Void) null);
+                        done.resolve(null);
                     } catch (Exception ignored) {}
                 }
 
@@ -78,7 +78,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                     node.clearData("size");
                     node.clearData("mime");
                     try {
-                        done.resolve((Void) null);
+                        done.resolve(null);
                     } catch (Exception ignored) {}
                 }
 

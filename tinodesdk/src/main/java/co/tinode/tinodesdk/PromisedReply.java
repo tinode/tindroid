@@ -115,7 +115,7 @@ public class PromisedReply<T> {
             try {
                 // If it throws then nothing we can do about it.
                 done.resolve(null);
-            } catch (Exception ignored) {};
+            } catch (Exception ignored) {}
         }).start();
         return done;
     }

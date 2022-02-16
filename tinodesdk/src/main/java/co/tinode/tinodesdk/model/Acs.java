@@ -373,8 +373,8 @@ public class Acs implements Serializable {
     @NotNull
     @Override
     public String toString() {
-        return "{\"given\":" + (given != null ? " \"" + given.toString() + "\"" : " null") +
-                ", \"want\":" + (want != null ? " \"" + want.toString() + "\"" : " null") +
-                ", \"mode\":" + (mode != null ? " \"" + mode.toString() + "\"}" : " null}");
+        return "{\"given\":" + (given != null ? " \"" + given + "\"" : " null") +
+                ", \"want\":" + (want != null ? " \"" + want + "\"" : " null") +
+                ", \"mode\":" + (mode != null ? " \"" + mode + "\"}" : " null}");
     }
 }

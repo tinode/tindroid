@@ -912,7 +912,7 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     protected String makeUserAgent() {
         return mAppName + " (Android " + mOsVersion + "; "
-                + Locale.getDefault().toString() + "); " + LIBRARY;
+                + Locale.getDefault() + "); " + LIBRARY;
     }
 
     /**
