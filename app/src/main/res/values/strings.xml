@@ -309,5 +309,4 @@
     <string name="report_channel">Report channel</string>
     <string name="hint_contact_name">Contact name</string>
     <string name="cannot_reply">Unable to reply to this message</string>
-    <string name="unable_to_use_image">Unable to use this image</string>
 </resources>
