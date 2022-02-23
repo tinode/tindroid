@@ -43,7 +43,7 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
             }
             return subscribe(new MsgSetMeta<>(desc, null, mTags, null), null);
         }
-        return subscribe();
+        return super.subscribe();
     }
 
     public void setComment(String comment) {
