@@ -586,5 +586,20 @@ public class DraftyTest {
         actual = src.toMarkdown();
         expected = "Missing entity";
         assertEquals("Invalid 2 has failed", expected, actual);
+
+        // --------- Invalid 3
+        src = new Drafty("Missing entity in the middle");
+        src.fmt = new Drafty.Style[]{
+                new Drafty.Style(8,4, 0),
+                new Drafty.Style(15,2, 1)
+        };
+        src.ent = new Drafty.Entity[]{
+                null,
+                new Drafty.Entity("LN")
+                        .putData("url", "http://www.tinode.co")
+        };
+        actual = src.toMarkdown();
+        expected = "Missing entity [in](http://www.tinode.co) the middle";
+        assertEquals("Invalid 3 has failed", expected, actual);
     }
 }
