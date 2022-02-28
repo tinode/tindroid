@@ -1062,8 +1062,8 @@ public class Drafty implements Serializable {
         List<Span> attachments = new ArrayList<>();
         int maxIndex = text.length();
         for (Style aFmt : fmt) {
-            if (aFmt.len < 0) {
-                // Invalid span length.
+            if (aFmt == null || aFmt.len < 0) {
+                // Invalid span.
                 continue;
             }
             int key = aFmt.key != null ? aFmt.key : 0;

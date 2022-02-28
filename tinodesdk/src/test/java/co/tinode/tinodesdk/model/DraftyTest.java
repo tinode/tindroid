@@ -565,4 +565,26 @@ public class DraftyTest {
                 "and another _[www.tinode.co](http://www.tinode.co)_";
         assertEquals("Format 2 has failed", expected, actual);
     }
+
+    @Test
+    public void testInvalid() {
+        // --------- Invalid 1
+        Drafty src = new Drafty("Null style element");
+        src.fmt = new Drafty.Style[]{
+                new Drafty.Style(8, 36, 0),
+                new Drafty.Style("EM", 5,5)
+        };
+        String actual = src.toMarkdown();
+        String expected = "Null _style_ element";
+        assertEquals("Invalid 1 has failed", expected, actual);
+
+        // --------- Invalid 2
+        src = new Drafty("Missing entity");
+        src.fmt = new Drafty.Style[]{
+                new Drafty.Style(8,4, 0)
+        };
+        actual = src.toMarkdown();
+        expected = "Missing entity";
+        assertEquals("Invalid 2 has failed", expected, actual);
+    }
 }
