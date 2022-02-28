@@ -571,7 +571,7 @@ public class DraftyTest {
         // --------- Invalid 1
         Drafty src = new Drafty("Null style element");
         src.fmt = new Drafty.Style[]{
-                new Drafty.Style(8, 36, 0),
+                null,
                 new Drafty.Style("EM", 5,5)
         };
         String actual = src.toMarkdown();
