@@ -1,0 +1,71 @@
+<co.tinode.android.ui.widgets.RippleFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="4dp"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp">
+
+        <LinearLayout
+            android:id="@+id/messageBubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bubble_l"
+            android:backgroundTint="@color/colorMessageBubbleOther"
+            android:clickable="false"
+            android:focusable="false"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/messageText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="280dp"
+                android:minWidth="140dp"
+                android:paddingStart="8dp"
+                android:textColor="?android:textColorPrimary"
+                tools:ignore="RtlSymmetry"
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
+
+            <TextView
+                android:id="@+id/messageMeta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:textColor="?android:textColorSecondary"
+                android:textSize="11sp"
+                tools:ignore="SmallSp"
+                tools:text="Jun 11 22:17"/>
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/selected"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorMessageSelected"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone"
+        />
+
+    <View
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?android:selectableItemBackground"
+        android:clickable="false"
+        android:focusable="false"
+        />
+
+</co.tinode.android.ui.widgets.RippleFrameLayout>
