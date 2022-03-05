@@ -35,7 +35,7 @@
 
             <include
                 android:id="@+id/progressContainer"
-                layout="@layout/progress_bar"
+                layout="@layout/tinui_progress_bar"
                 android:visibility="gone" />
 
             <LinearLayout

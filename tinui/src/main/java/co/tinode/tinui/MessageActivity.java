@@ -176,7 +176,7 @@ public class MessageActivity extends AppCompatActivity
             mTopicName = savedInstanceState.getString(TOPIC_NAME);
         }
 
-        setContentView(R.layout.activity_messages);
+        setContentView(R.layout.tinui_activity_messages);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

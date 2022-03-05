@@ -49,7 +49,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             bar.setTitle(R.string.app_name);
         }
 
-        View fragment = inflater.inflate(R.layout.fragment_login, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_login, container, false);
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);

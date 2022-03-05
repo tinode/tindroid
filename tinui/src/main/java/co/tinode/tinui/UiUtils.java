@@ -866,7 +866,7 @@ public class UiUtils {
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final LayoutInflater inflater = LayoutInflater.from(builder.getContext());
         @SuppressLint("InflateParams")
-        final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.dialog_edit_permissions, null);
+        final LinearLayout editor = (LinearLayout) inflater.inflate(R.layout.tinui_dialog_edit_permissions, null);
         builder
                 .setView(editor)
                 .setTitle(R.string.edit_permissions);
@@ -882,7 +882,7 @@ public class UiUtils {
                 continue;
             }
 
-            CheckedTextView check = (CheckedTextView) inflater.inflate(R.layout.edit_one_permission,
+            CheckedTextView check = (CheckedTextView) inflater.inflate(R.layout.tinui_edit_one_permission,
                     editor, false);
             check.setChecked(mode.indexOf(c) >= 0);
             check.setText(permissionsMap[i]);

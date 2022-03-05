@@ -39,7 +39,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
             return null;
         }
         // Inflate the fragment layout
-        View fragment = inflater.inflate(R.layout.fragment_account_info, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_account_info, container, false);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);

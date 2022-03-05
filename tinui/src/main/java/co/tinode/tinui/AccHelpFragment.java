@@ -41,7 +41,7 @@ public class AccHelpFragment extends Fragment {
             return null;
         }
         // Inflate the fragment layout
-        View fragment = inflater.inflate(R.layout.fragment_acc_help, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_acc_help, container, false);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);

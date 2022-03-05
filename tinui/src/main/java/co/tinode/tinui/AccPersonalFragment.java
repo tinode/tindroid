@@ -79,7 +79,7 @@ public class AccPersonalFragment extends Fragment
             return null;
         }
         // Inflate the fragment layout
-        View fragment = inflater.inflate(R.layout.fragment_acc_personal, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_acc_personal, container, false);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
@@ -141,7 +141,7 @@ public class AccPersonalFragment extends Fragment
             Credential[] creds = me.getCreds();
             if (creds != null) {
                 for (Credential cred : creds) {
-                    View container = inflater.inflate(R.layout.credential, credList, false);
+                    View container = inflater.inflate(R.layout.tinui_credential, credList, false);
                     ((TextView) container.findViewById(R.id.method)).setText(cred.meth);
                     ((TextView) container.findViewById(R.id.value)).setText(cred.val);
                     Button btn = container.findViewById(R.id.buttonConfirm);
@@ -180,7 +180,7 @@ public class AccPersonalFragment extends Fragment
             String[] tags = me.getTags();
             if (tags != null) {
                 for (String tag : tags) {
-                    TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
+                    TextView label = (TextView) inflater.inflate(R.layout.tinui_tag, tagsView, false);
                     label.setText(tag);
                     tagsView.addView(label);
                     label.requestLayout();
@@ -205,7 +205,7 @@ public class AccPersonalFragment extends Fragment
         String tags = tagArray != null ? TextUtils.join(", ", tagArray) : "";
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
+        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.tinui_dialog_edit_tags, null);
         builder.setView(editor).setTitle(R.string.tags_management);
 
         final EditText tagsEditor = editor.findViewById(R.id.editTags);
@@ -229,7 +229,7 @@ public class AccPersonalFragment extends Fragment
         }
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_validate, null);
+        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.tinui_dialog_validate, null);
         builder.setView(editor).setTitle(R.string.validate_cred_title)
                 .setMessage(getString(R.string.validate_cred, meth))
                 // FIXME: check for empty input and refuse to dismiss the dialog.
@@ -274,7 +274,7 @@ public class AccPersonalFragment extends Fragment
             return;
         }
 
-        final View editor = LayoutInflater.from(activity).inflate(R.layout.dialog_add_credential, null);
+        final View editor = LayoutInflater.from(activity).inflate(R.layout.tinui_dialog_add_credential, null);
         final AlertDialog dialog = new AlertDialog.Builder(activity)
                 .setView(editor).setTitle(R.string.add_credential_title)
                 .setPositiveButton(android.R.string.ok, null)

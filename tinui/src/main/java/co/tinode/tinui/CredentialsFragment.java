@@ -45,7 +45,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
             bar.setDisplayHomeAsUpEnabled(true);
         }
 
-        View fragment = inflater.inflate(R.layout.fragment_validate, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_validate, container, false);
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
         fragment.findViewById(R.id.cancel).setOnClickListener(v ->
                 parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null));

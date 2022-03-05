@@ -102,7 +102,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                              @Nullable Bundle savedInstanceState) {
         setHasOptionsMenu(true);
 
-        return inflater.inflate(R.layout.fragment_contacts, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_contacts, container, false);
     }
 
     @Override

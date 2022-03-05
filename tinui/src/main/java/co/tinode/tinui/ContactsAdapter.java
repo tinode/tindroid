@@ -80,7 +80,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
      */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (holder.viewType == R.layout.contact_basic) {
+        if (holder.viewType == R.layout.tinui_contact_basic) {
             holder.bind(mCursor, position);
         }
     }
@@ -128,10 +128,10 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
 
     public int getItemViewType(int position) {
         if (getActualItemCount() == 0) {
-            return mPermissionGranted ? R.layout.contact_empty : R.layout.no_permission;
+            return mPermissionGranted ? R.layout.tinui_contact_empty : R.layout.tinui_no_permission;
         }
 
-        return R.layout.contact_basic;
+        return R.layout.tinui_contact_basic;
     }
 
     @Override
@@ -212,7 +212,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
             super(view);
 
             this.viewType = viewType;
-            if (viewType == R.layout.contact_basic) {
+            if (viewType == R.layout.tinui_contact_basic) {
                 Context context = view.getContext();
                 text1 = view.findViewById(android.R.id.text1);
                 text2 = view.findViewById(android.R.id.text2);

@@ -72,7 +72,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_topic_info, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_topic_info, container, false);
     }
 
     @Override
@@ -252,7 +252,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 activity.getString(R.string.placeholder_topic_title) :
                 topicTitle;
 
-        final LinearLayout actions = (LinearLayout) View.inflate(activity, R.layout.dialog_member_actions, null);
+        final LinearLayout actions = (LinearLayout) View.inflate(activity, R.layout.tinui_dialog_member_actions, null);
         final BottomSheetDialog dialog = new BottomSheetDialog(activity);
         ((TextView) actions.findViewById(R.id.title)).setText(TextUtils.isEmpty(userTitle) ?
                 activity.getString(R.string.placeholder_contact_title) :
@@ -484,7 +484,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         @Override
         public MemberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             // create a new view
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.group_member, parent, false);
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_group_member, parent, false);
             return new MemberViewHolder(v);
         }
 

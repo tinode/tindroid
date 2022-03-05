@@ -89,7 +89,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (holder.viewType == R.layout.contact) {
+        if (holder.viewType == R.layout.tinui_contact) {
             if (mTopics.size() <= position) {
                 // Looks like there is a race condition here.
                 return;
@@ -132,9 +132,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     @Override
     public int getItemViewType(int position) {
         if (getActualItemCount() == 0) {
-            return R.layout.contact_empty;
+            return R.layout.tinui_contact_empty;
         }
-        return R.layout.contact;
+        return R.layout.tinui_contact;
     }
 
     void setSelectionTracker(SelectionTracker<String> selectionTracker) {
@@ -228,7 +228,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             super(item);
             this.viewType = viewType;
 
-            if (viewType == R.layout.contact) {
+            if (viewType == R.layout.tinui_contact) {
                 name = item.findViewById(R.id.contactName);
                 unreadCount = item.findViewById(R.id.unreadCount);
                 priv = item.findViewById(R.id.contactPriv);

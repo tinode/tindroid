@@ -72,7 +72,7 @@ public class FilePreviewFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_file_preview, container, false);
+        View view = inflater.inflate(R.layout.tinui_fragment_file_preview, container, false);
         mImageView = view.findViewById(R.id.image);
 
         // Send message on button click.

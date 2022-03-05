@@ -47,7 +47,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
             return null;
         }
         // Inflate the fragment layout
-        View fragment = inflater.inflate(R.layout.fragment_acc_security, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_acc_security, container, false);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
@@ -97,7 +97,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
             AlertDialog.Builder builder = new AlertDialog.Builder(activity);
             builder
                     .setTitle(R.string.change_password)
-                    .setView(R.layout.dialog_password)
+                    .setView(R.layout.tinui_dialog_password)
                     .setCancelable(true)
                     .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                         TextView editor = ((AlertDialog) dialog).findViewById(R.id.enterPassword);

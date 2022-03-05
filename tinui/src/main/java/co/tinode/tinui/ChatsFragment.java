@@ -63,7 +63,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
         setHasOptionsMenu(!mIsBanned);
 
-        return inflater.inflate(mIsArchive ? R.layout.fragment_archive : R.layout.fragment_chats,
+        return inflater.inflate(mIsArchive ? R.layout.tinui_fragment_archive : R.layout.tinui_fragment_chats,
                 container, false);
     }
 

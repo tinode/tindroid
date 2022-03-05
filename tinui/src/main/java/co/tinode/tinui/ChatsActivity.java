@@ -61,7 +61,7 @@ public class ChatsActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_contacts);
+        setContentView(R.layout.tinui_activity_contacts);
 
         setSupportActionBar(findViewById(R.id.toolbar));
 

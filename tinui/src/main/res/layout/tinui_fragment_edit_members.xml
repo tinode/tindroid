@@ -16,7 +16,7 @@
         android:text="@string/group_members" />
 
     <include
-        layout="@layout/edit_members"
+        layout="@layout/tinui_edit_members"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/sectionTitle"/>

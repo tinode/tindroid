@@ -49,7 +49,7 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_forward_to, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_forward_to, container, false);
     }
 
     @Override

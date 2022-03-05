@@ -64,7 +64,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (holder.viewType == R.layout.group_member_chip) {
+        if (holder.viewType == R.layout.tinui_group_member_chip) {
             holder.bind(position);
         }
     }
@@ -76,9 +76,9 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
     @Override
     public int getItemViewType(int position) {
         if (getActualItemCount() == 0) {
-            return R.layout.group_member_chip_empty;
+            return R.layout.tinui_group_member_chip_empty;
         }
-        return R.layout.group_member_chip;
+        return R.layout.tinui_group_member_chip;
     }
 
     @Override
@@ -208,7 +208,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             super(itemView);
 
             this.viewType = viewType;
-            if (viewType == R.layout.group_member_chip) {
+            if (viewType == R.layout.tinui_group_member_chip) {
                 avatar = itemView.findViewById(android.R.id.icon);
                 displayName = itemView.findViewById(android.R.id.text1);
                 close = itemView.findViewById(android.R.id.closeButton);

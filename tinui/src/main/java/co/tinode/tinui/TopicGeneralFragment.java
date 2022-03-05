@@ -68,7 +68,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_tpc_general, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_tpc_general, container, false);
     }
 
     @Override
@@ -130,7 +130,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             String[] tags = mTopic.getTags();
             if (tags != null) {
                 for (String tag : tags) {
-                    TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
+                    TextView label = (TextView) inflater.inflate(R.layout.tinui_tag, tagsView, false);
                     label.setText(tag);
                     tagsView.addView(label);
                 }
@@ -156,7 +156,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         @SuppressLint("InflateParams") final View editor =
-                LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
+                LayoutInflater.from(builder.getContext()).inflate(R.layout.tinui_dialog_edit_tags, null);
         builder.setView(editor).setTitle(R.string.tags_management);
 
         final EditText tagsEditor = editor.findViewById(R.id.editTags);

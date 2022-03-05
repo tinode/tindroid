@@ -172,7 +172,7 @@ public class MessagesFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
-        return inflater.inflate(R.layout.fragment_messages, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_messages, container, false);
     }
 
     @Override
@@ -612,7 +612,7 @@ public class MessagesFragment extends Fragment {
 
         final BottomSheetDialog invitation = new BottomSheetDialog(activity);
         final LayoutInflater inflater = LayoutInflater.from(invitation.getContext());
-        @SuppressLint("InflateParams") final View view = inflater.inflate(R.layout.dialog_accept_chat, null);
+        @SuppressLint("InflateParams") final View view = inflater.inflate(R.layout.tinui_dialog_accept_chat, null);
         invitation.setContentView(view);
         invitation.setCancelable(false);
         invitation.setCanceledOnTouchOutside(false);

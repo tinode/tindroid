@@ -167,7 +167,7 @@
                     android:text="@string/add_members"
                     />
 
-                <include layout="@layout/edit_members" />
+                <include layout="@layout/tinui_edit_members" />
             </LinearLayout>
         </RelativeLayout>
 

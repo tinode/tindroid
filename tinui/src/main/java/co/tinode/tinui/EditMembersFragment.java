@@ -82,7 +82,7 @@ public class EditMembersFragment extends Fragment {
                              Bundle savedInstance) {
         setHasOptionsMenu(true);
 
-        return inflater.inflate(R.layout.fragment_edit_members, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_edit_members, container, false);
     }
 
     @Override

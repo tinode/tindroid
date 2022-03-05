@@ -97,11 +97,11 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(viewType, parent, false);
-        if (viewType == R.layout.not_found ||
-                viewType == R.layout.no_permission ||
-                viewType == R.layout.no_search_query) {
+        if (viewType == R.layout.tinui_not_found ||
+                viewType == R.layout.tinui_no_permission ||
+                viewType == R.layout.tinui_no_search_query) {
             return new ViewHolderEmpty(view);
-        } else if (viewType == R.layout.contact_section) {
+        } else if (viewType == R.layout.tinui_contact_section) {
             return new ViewHolderSection(view);
         }
 
@@ -116,7 +116,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     @Override
     public int getItemViewType(int position) {
         if (position == 0) {
-            return R.layout.contact_section;
+            return R.layout.tinui_contact_section;
         }
 
         position--;
@@ -125,28 +125,28 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         if (count == 0) {
             if (position == 0) {
                 // The 'empty' element in the 'PHONE CONTACTS' section.
-                return mPermissionGranted ? R.layout.not_found : R.layout.no_permission;
+                return mPermissionGranted ? R.layout.tinui_not_found : R.layout.tinui_no_permission;
             }
             // One 'empty' element
             count = 1;
         } else if (position < count) {
-            return R.layout.contact;
+            return R.layout.tinui_contact;
         }
 
         position -= count;
 
         if (position == 0) {
-            return R.layout.contact_section;
+            return R.layout.tinui_contact_section;
         }
 
         position--;
 
         count = getFoundItemCount();
         if (count == 0 && position == 0) {
-            return TextUtils.isEmpty(mSearchTerm) ? R.layout.no_search_query : R.layout.not_found;
+            return TextUtils.isEmpty(mSearchTerm) ? R.layout.tinui_no_search_query : R.layout.tinui_not_found;
         }
 
-        return R.layout.contact;
+        return R.layout.tinui_contact;
     }
 
     @Override

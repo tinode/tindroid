@@ -78,7 +78,7 @@ public class SignUpFragment extends Fragment
             bar.setTitle(R.string.sign_up);
         }
 
-        View fragment = inflater.inflate(R.layout.fragment_signup, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_signup, container, false);
 
         // Get avatar from the gallery or photo camera.
         fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {

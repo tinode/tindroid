@@ -30,7 +30,7 @@ public class SendToActivity extends AppCompatActivity
             finish();
         }
 
-        setContentView(R.layout.activity_send_to);
+        setContentView(R.layout.tinui_activity_send_to);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

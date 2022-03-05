@@ -7,12 +7,12 @@
     android:orientation="vertical"
     tools:context=".LoginActivity">
 
-    <include layout="@layout/toolbar" />
+    <include layout="@layout/tinui_toolbar" />
 
     <FrameLayout
         android:id="@+id/contentFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout="@layout/fragment_login" />
+        tools:layout="@layout/tinui_fragment_login" />
 
 </LinearLayout>

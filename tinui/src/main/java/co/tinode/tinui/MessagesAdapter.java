@@ -433,31 +433,31 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         switch (viewType) {
             case VIEWTYPE_CENTER:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_meta_message,
                         parent, false);
                 break;
             case VIEWTYPE_FULL_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single,
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_message_left_single,
                         parent, false);
                 break;
             case VIEWTYPE_FULL_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar,
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_message_left_single_avatar,
                         parent, false);
                 break;
             case VIEWTYPE_FULL_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single,
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_message_right_single,
                         parent, false);
                 break;
             case VIEWTYPE_SIMPLE_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left,
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_message_left,
                         parent, false);
                 break;
             case VIEWTYPE_SIMPLE_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar,
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_message_left_avatar,
                         parent, false);
                 break;
             case VIEWTYPE_SIMPLE_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right,
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.tinui_message_right,
                         parent, false);
                 break;
             default:

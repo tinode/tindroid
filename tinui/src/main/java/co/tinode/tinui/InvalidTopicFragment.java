@@ -16,6 +16,6 @@ public class InvalidTopicFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(false);
-        return inflater.inflate(R.layout.fragment_invalid_topic, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_invalid_topic, container, false);
     }
 }

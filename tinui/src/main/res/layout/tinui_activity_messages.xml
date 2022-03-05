@@ -8,12 +8,12 @@
 
     <include
         android:id="@+id/messages_toolbar"
-        layout="@layout/toolbar" />
+        layout="@layout/tinui_toolbar" />
 
     <FrameLayout
         android:id="@+id/contentFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/messages_toolbar"
-        tools:layout="@layout/fragment_messages" />
+        tools:layout="@layout/tinui_fragment_messages" />
 </RelativeLayout>

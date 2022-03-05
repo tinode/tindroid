@@ -46,7 +46,7 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
             return null;
         }
         // Inflate the fragment layout
-        View fragment = inflater.inflate(R.layout.fragment_acc_notifications, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_acc_notifications, container, false);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);

@@ -47,7 +47,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_tpc_security, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_tpc_security, container, false);
     }
 
     @Override

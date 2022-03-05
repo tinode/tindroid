@@ -80,7 +80,7 @@ public class ImageViewFragment extends Fragment {
                              Bundle savedInstanceState) {
         final Activity activity = getActivity();
 
-        View view = inflater.inflate(R.layout.fragment_view_image, container, false);
+        View view = inflater.inflate(R.layout.tinui_fragment_view_image, container, false);
         mMatrix = new Matrix();
         mImageView = view.findViewById(R.id.image);
         mImageView.setImageMatrix(mMatrix);

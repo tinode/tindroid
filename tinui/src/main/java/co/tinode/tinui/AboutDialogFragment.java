@@ -26,7 +26,7 @@ public class AboutDialogFragment extends DialogFragment {
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        View dialog = View.inflate(activity, R.layout.dialog_about, null);
+        View dialog = View.inflate(activity, R.layout.tinui_dialog_about, null);
         ((TextView) dialog.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
         ((TextView) dialog.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
                 TindroidApp.getAppBuild()));

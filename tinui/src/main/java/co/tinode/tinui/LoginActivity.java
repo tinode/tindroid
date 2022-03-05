@@ -68,7 +68,7 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.tinui_activity_login);
 
         PreferenceManager.setDefaultValues(this, R.xml.login_preferences, false);
 

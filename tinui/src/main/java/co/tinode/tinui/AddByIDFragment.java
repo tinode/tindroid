@@ -17,7 +17,7 @@ public class AddByIDFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_add_by_id, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_add_by_id, container, false);
     }
 
     @Override

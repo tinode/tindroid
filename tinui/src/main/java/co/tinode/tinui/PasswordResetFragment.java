@@ -48,7 +48,7 @@ public class PasswordResetFragment extends Fragment implements View.OnClickListe
             bar.setTitle(R.string.request_pass_reset_title);
         }
 
-        View fragment = inflater.inflate(R.layout.fragment_pass_reset, container, false);
+        View fragment = inflater.inflate(R.layout.tinui_fragment_pass_reset, container, false);
         fragment.findViewById(R.id.confirm).setOnClickListener(this);
         fragment.findViewById(R.id.cancel).setOnClickListener(v ->
                 parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null));

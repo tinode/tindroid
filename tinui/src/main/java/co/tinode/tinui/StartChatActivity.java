@@ -31,7 +31,7 @@ public class StartChatActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create);
+        setContentView(R.layout.tinui_activity_create);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
 

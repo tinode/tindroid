@@ -94,7 +94,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
 
-        return inflater.inflate(R.layout.fragment_add_group, container, false);
+        return inflater.inflate(R.layout.tinui_fragment_add_group, container, false);
     }
 
     @Override
