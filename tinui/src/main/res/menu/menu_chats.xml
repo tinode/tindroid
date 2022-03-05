@@ -9,7 +9,7 @@
             android:id="@+id/action_offline"
             android:orderInCategory="10"
             android:title="@string/action_offline"
-            android:icon="@drawable/ic_offline"
+            android:icon="@drawable/tinui_ic_offline"
             app:showAsAction="always" />
     </group>
 
@@ -18,7 +18,7 @@
             android:id="@+id/action_show_archive"
             android:orderInCategory="101"
             android:title="@string/action_show_archive"
-            android:icon="@drawable/ic_filecab"
+            android:icon="@drawable/tinui_ic_filecab"
             app:showAsAction="never" />
 
 
@@ -26,7 +26,7 @@
             android:id="@+id/action_settings"
             android:orderInCategory="102"
             android:title="@string/action_settings"
-            android:icon="@drawable/ic_settings"
+            android:icon="@drawable/tinui_ic_settings"
             app:showAsAction="never" />
     </group>
 

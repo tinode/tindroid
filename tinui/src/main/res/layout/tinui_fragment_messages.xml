@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/message_view_bkg"
+    android:background="@drawable/tinui_message_view_bkg"
     tools:context=".MessagesFragment">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -28,7 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_horizontal|center_vertical"
-        android:background="@drawable/disabled_bkg"
+        android:background="@drawable/tinui_disabled_bkg"
         android:visibility="gone">
 
         <TextView

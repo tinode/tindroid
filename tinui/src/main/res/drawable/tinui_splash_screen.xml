@@ -6,7 +6,7 @@
 
     <item>
         <bitmap
-            android:src="@drawable/logo_src"
+            android:src="@drawable/tinui_logo_src"
             android:width="128dp"
             android:height="128dp"
             android:gravity="center"/>

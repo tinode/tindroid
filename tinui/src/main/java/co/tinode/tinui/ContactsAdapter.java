@@ -272,8 +272,8 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
             }
 
             if (isSelected(unique)) {
-                ((ImageView) switcher.getCurrentView()).setImageResource(R.drawable.ic_selected);
-                itemView.setBackgroundResource(R.drawable.contact_background);
+                ((ImageView) switcher.getCurrentView()).setImageResource(R.drawable.tinui_ic_selected);
+                itemView.setBackgroundResource(R.drawable.tinui_contact_background);
 
                 itemView.setActivated(true);
             } else {
@@ -282,8 +282,8 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                     // Clear the icon then load the thumbnail from photoUri background.
                     Picasso.get()
                             .load(photoUri)
-                            .placeholder(R.drawable.disk)
-                            .error(R.drawable.ic_broken_image_round)
+                            .placeholder(R.drawable.tinui_disk)
+                            .error(R.drawable.tinui_ic_broken_image_round)
                             .fit().into(icon);
                 } else {
                     icon.setImageDrawable(
@@ -302,12 +302,12 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                 itemView.setOnClickListener(view -> {
                     mClickListener.onClick(position, unique, displayName, photoUri);
                     if (isSelected(unique)) {
-                        ViewHolder.this.switcher.setImageResource(R.drawable.ic_selected);
+                        ViewHolder.this.switcher.setImageResource(R.drawable.tinui_ic_selected);
                     } else if (photoUri != null) {
                         Picasso.get()
                             .load(photoUri)
-                            .placeholder(R.drawable.disk)
-                            .error(R.drawable.ic_broken_image_round)
+                            .placeholder(R.drawable.tinui_disk)
+                            .error(R.drawable.tinui_ic_broken_image_round)
                             .fit()
                             .into((ImageView) switcher.getNextView());
                     } else {

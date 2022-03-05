@@ -312,7 +312,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             blocked.setVisibility(!topic.isJoiner() ? View.VISIBLE : View.GONE);
 
             if (selected) {
-                itemView.setBackgroundResource(R.drawable.contact_background);
+                itemView.setBackgroundResource(R.drawable.tinui_contact_background);
                 itemView.setOnClickListener(null);
 
                 itemView.setActivated(true);

@@ -81,7 +81,7 @@ public class QuoteFormatter extends PreviewFormatter {
         }
 
         // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-        Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+        Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_broken_image);
         //noinspection ConstantConditions
         broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
         broken = UiUtils.getPlaceholder(ctx, broken, null, size, size);
@@ -118,7 +118,7 @@ public class QuoteFormatter extends PreviewFormatter {
             Log.i(TAG, "Out-of-band " + val);
 
             span = new RemoteImageSpan(mParent, size, size, true,
-                    AppCompatResources.getDrawable(ctx, R.drawable.ic_image), broken);
+                    AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_image), broken);
             ((RemoteImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) val));
         }
 

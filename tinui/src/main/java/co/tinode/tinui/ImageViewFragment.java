@@ -239,8 +239,8 @@ public class ImageViewFragment extends Fragment {
                     final String fn = fileName;
                     mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     Picasso.get().load(ref)
-                            .placeholder(R.drawable.ic_image)
-                            .error(R.drawable.ic_broken_image)
+                            .placeholder(R.drawable.tinui_ic_image)
+                            .error(R.drawable.tinui_ic_broken_image)
                             .centerInside().fit().into(mImageView, new Callback() {
                         @Override
                         public void onSuccess() {
@@ -300,7 +300,7 @@ public class ImageViewFragment extends Fragment {
             // Show broken image.
             mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(),
-                    R.drawable.ic_broken_image, null));
+                    R.drawable.tinui_ic_broken_image, null));
             activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
 
             setHasOptionsMenu(false);

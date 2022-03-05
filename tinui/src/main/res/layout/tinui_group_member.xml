@@ -21,7 +21,7 @@
         android:layout_marginEnd="5dp"
         android:layout_centerVertical="true"
         app:shapeAppearanceOverlay="@style/roundImageView"
-        app:srcCompat="@drawable/ic_person_circle" />
+        app:srcCompat="@drawable/tinui_ic_person_circle" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/optionsMenu"
@@ -32,7 +32,7 @@
         android:layout_centerVertical="true"
         android:contentDescription="@string/options_menu"
         android:background="?attr/selectableItemBackgroundBorderless"
-        app:srcCompat="@drawable/ic_more_vert"
+        app:srcCompat="@drawable/tinui_ic_more_vert"
         app:tint="?android:attr/textColorSecondary" />
 
     <LinearLayout
@@ -51,7 +51,7 @@
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
             android:paddingBottom="1.3dp"
-            android:background="@drawable/border_green"
+            android:background="@drawable/tinui_border_green"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
             android:textSize="12sp"
@@ -63,7 +63,7 @@
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
             android:paddingBottom="1.3dp"
-            android:background="@drawable/border_green"
+            android:background="@drawable/tinui_border_green"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"
             android:textSize="12sp"
@@ -75,7 +75,7 @@
             android:paddingLeft="@dimen/label_h_padding"
             android:paddingRight="@dimen/label_h_padding"
             android:paddingBottom="1.3dp"
-            android:background="@drawable/border_green"
+            android:background="@drawable/tinui_border_green"
             android:textSize="12sp"
             android:layout_marginLeft="@dimen/label_margin"
             android:layout_marginRight="@dimen/label_margin"

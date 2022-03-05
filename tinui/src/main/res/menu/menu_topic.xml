@@ -9,7 +9,7 @@
             android:id="@+id/action_offline"
             android:orderInCategory="10"
             android:title="@string/action_offline"
-            android:icon="@drawable/ic_offline"
+            android:icon="@drawable/tinui_ic_offline"
             app:showAsAction="always" />
     </group>
     
@@ -17,21 +17,21 @@
         android:id="@+id/action_view_contact"
         android:orderInCategory="101"
         android:title="@string/action_view_details"
-        android:icon="@drawable/ic_info"
+        android:icon="@drawable/tinui_ic_info"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_mute"
         android:orderInCategory="102"
         android:title="@string/action_mute"
-        android:icon="@drawable/ic_notifications_off"
+        android:icon="@drawable/tinui_ic_notifications_off"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_unmute"
         android:orderInCategory="102"
         android:title="@string/action_unmute"
-        android:icon="@drawable/ic_notifications"
+        android:icon="@drawable/tinui_ic_notifications"
         android:visible="false"
         app:showAsAction="never" />
 
@@ -39,14 +39,14 @@
         android:id="@+id/action_archive"
         android:orderInCategory="103"
         android:title="@string/action_archive"
-        android:icon="@drawable/ic_archive"
+        android:icon="@drawable/tinui_ic_archive"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_unarchive"
         android:orderInCategory="103"
         android:title="@string/action_unarchive"
-        android:icon="@drawable/ic_unarchive"
+        android:icon="@drawable/tinui_ic_unarchive"
         android:visible="false"
         app:showAsAction="never" />
 
@@ -54,20 +54,20 @@
         android:id="@+id/action_clear"
         android:orderInCategory="104"
         android:title="@string/action_clear_messages"
-        android:icon="@drawable/ic_close"
+        android:icon="@drawable/tinui_ic_close"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_leave"
         android:orderInCategory="105"
         android:title="@string/action_leave_topic"
-        android:icon="@drawable/ic_exit"
+        android:icon="@drawable/tinui_ic_exit"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_delete"
         android:orderInCategory="107"
         android:title="@string/action_delete_group"
-        android:icon="@drawable/ic_delete"
+        android:icon="@drawable/tinui_ic_delete"
         app:showAsAction="never" />
 </menu>

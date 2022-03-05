@@ -368,8 +368,8 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             if (photoUri != null) {
                 Picasso.get()
                         .load(photoUri)
-                        .placeholder(R.drawable.disk)
-                        .error(R.drawable.ic_broken_image_round)
+                        .placeholder(R.drawable.tinui_disk)
+                        .error(R.drawable.tinui_ic_broken_image_round)
                         .fit()
                         .into(avatar);
             } else {

@@ -362,11 +362,11 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             title.setTypeface(null, Typeface.ITALIC);
             title.setTextIsSelectable(false);
             avatar.setImageResource(Topic.isP2PType(topicName) ?
-                    R.drawable.ic_person_circle : R.drawable.ic_group_grey);
+                    R.drawable.tinui_ic_person_circle : R.drawable.tinui_ic_group_grey);
         }
 
         if (mTopic.hasChannelAccess()) {
-            Drawable icon = AppCompatResources.getDrawable(activity, R.drawable.ic_channel);
+            Drawable icon = AppCompatResources.getDrawable(activity, R.drawable.tinui_ic_channel);
             if (icon != null) {
                 icon.setBounds(0, 0, 64, 64);
                 title.setCompoundDrawables(null, null, icon, null);

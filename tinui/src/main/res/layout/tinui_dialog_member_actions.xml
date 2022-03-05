@@ -28,7 +28,7 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/view_profile"
-        app:drawableStartCompat="@drawable/ic_person" />
+        app:drawableStartCompat="@drawable/tinui_ic_person" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonSendMessage"
@@ -41,7 +41,7 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/send_message"
-        app:drawableStartCompat="@drawable/ic_chat_grey" />
+        app:drawableStartCompat="@drawable/tinui_ic_chat_grey" />
 
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -55,7 +55,7 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/change_permissions"
-        app:drawableStartCompat="@drawable/ic_checklist_grey" />
+        app:drawableStartCompat="@drawable/tinui_ic_checklist_grey" />
 
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -69,7 +69,7 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/make_owner"
-        app:drawableStartCompat="@drawable/ic_flag" />
+        app:drawableStartCompat="@drawable/tinui_ic_flag" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonRemove"
@@ -82,7 +82,7 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/remove_from_group"
-        app:drawableStartCompat="@drawable/ic_exit_gray" />
+        app:drawableStartCompat="@drawable/tinui_ic_exit_gray" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/buttonBlock"
@@ -95,6 +95,6 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="@string/block"
-        app:drawableStartCompat="@drawable/ic_block_gray" />
+        app:drawableStartCompat="@drawable/tinui_ic_block_gray" />
 
 </LinearLayout>

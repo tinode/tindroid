@@ -103,7 +103,7 @@
             android:layout_height="128sp"
             android:layout_gravity="center"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/logo_src" />
+            android:src="@drawable/tinui_logo_src" />
 
         <TextView
             android:layout_width="wrap_content"

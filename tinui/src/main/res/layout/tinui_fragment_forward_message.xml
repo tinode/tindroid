@@ -18,7 +18,7 @@
         android:paddingStart="2dp"
         android:paddingEnd="2dp"
         android:layout_centerVertical="true"
-        app:srcCompat="@drawable/ic_close"
+        app:srcCompat="@drawable/tinui_ic_close"
         app:tint="?android:textColorPrimary" />
 
     <TextView
@@ -46,6 +46,6 @@
         android:paddingStart="4sp"
         android:paddingEnd="8sp"
         android:layout_centerVertical="true"
-        app:srcCompat="@drawable/ic_send"
+        app:srcCompat="@drawable/tinui_ic_send"
         app:tint="?attr/colorAccent" />
 </RelativeLayout>

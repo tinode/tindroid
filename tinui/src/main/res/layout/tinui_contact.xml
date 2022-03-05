@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="?attr/listPreferredItemHeight"
-    android:background="@drawable/contact_background"
+    android:background="@drawable/tinui_contact_background"
     android:gravity="center_vertical"
     android:paddingStart="@dimen/activity_padding"
     android:paddingEnd="@dimen/activity_padding">
@@ -19,7 +19,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             app:shapeAppearanceOverlay="@style/roundImageView"
-            app:srcCompat="@drawable/ic_person_circle" />
+            app:srcCompat="@drawable/tinui_ic_person_circle" />
 
         <ImageView
             android:id="@+id/online"
@@ -28,7 +28,7 @@
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
             android:contentDescription="@string/avatar"
-            app:srcCompat="@drawable/ic_circle" />
+            app:srcCompat="@drawable/tinui_ic_circle" />
 
     </RelativeLayout>
 
@@ -63,7 +63,7 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
-                app:srcCompat="@drawable/ic_channel"
+                app:srcCompat="@drawable/tinui_ic_channel"
                 app:tint="?android:attr/textColorSecondary" />
 
             <ImageView
@@ -103,7 +103,7 @@
                 android:layout_gravity="end|center_vertical"
                 android:layout_marginStart="6dp"
                 android:layout_marginTop="1dp"
-                android:background="@drawable/pill_counter"
+                android:background="@drawable/tinui_pill_counter"
                 android:gravity="center"
                 android:textColor="@color/white"
                 android:textSize="10sp"
@@ -119,7 +119,7 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/topic_muted"
                 android:visibility="gone"
-                app:srcCompat="@drawable/ic_notifications_off"
+                app:srcCompat="@drawable/tinui_ic_notifications_off"
                 app:tint="@color/colorGray" />
 
             <ImageView
@@ -130,7 +130,7 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/topic_blocked"
                 android:visibility="gone"
-                app:srcCompat="@drawable/ic_block"
+                app:srcCompat="@drawable/tinui_ic_block"
                 app:tint="@color/colorGray" />
 
             <ImageView
@@ -141,7 +141,7 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/topic_archived"
                 android:visibility="gone"
-                app:srcCompat="@drawable/ic_filecab"
+                app:srcCompat="@drawable/tinui_ic_filecab"
                 app:tint="@color/colorGray" />
 
         </LinearLayout>
@@ -161,7 +161,7 @@
                 android:paddingTop="2dp"
                 android:visibility="gone"
                 tools:ignore="ContentDescription,RtlSymmetry,SmallSp"
-                tools:src="@drawable/ic_done_all" />
+                tools:src="@drawable/tinui_ic_done_all" />
 
             <TextView
                 android:id="@+id/contactPriv"

@@ -18,7 +18,7 @@
         android:drawablePadding="10dp"
         android:text="@string/contact_us"
         tools:text="Contact Us"
-        app:drawableStartCompat="@drawable/ic_contact_support"
+        app:drawableStartCompat="@drawable/tinui_ic_contact_support"
         app:drawableTint="@color/colorAccent" />
 
     <TextView
@@ -32,7 +32,7 @@
         android:drawablePadding="10dp"
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/terms_of_use"
-        app:drawableStartCompat="@drawable/ic_document"
+        app:drawableStartCompat="@drawable/tinui_ic_document"
         app:drawableTint="@color/colorAccent" />
 
     <TextView
@@ -46,7 +46,7 @@
         android:drawablePadding="10dp"
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/privacy_policy"
-        app:drawableStartCompat="@drawable/ic_privacy"
+        app:drawableStartCompat="@drawable/tinui_ic_privacy"
         app:drawableTint="@color/colorAccent" />
 
     <TextView
@@ -60,7 +60,7 @@
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/licenses"
         android:drawablePadding="10dp"
-        app:drawableStartCompat="@drawable/ic_license"
+        app:drawableStartCompat="@drawable/tinui_ic_license"
         app:drawableTint="@color/colorAccent" />
 
     <TextView

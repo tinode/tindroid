@@ -27,14 +27,14 @@ public class FilePreviewFragment extends Fragment {
 
     // Icon ID for mime type. Add more mime type to icon mappings here.
     private static final Map<String, Integer> sMime2Icon;
-    private static final int DEFAULT_ICON_ID = R.drawable.ic_file;
-    private static final int INVALID_ICON_ID = R.drawable.ic_file_alert;
+    private static final int DEFAULT_ICON_ID = R.drawable.tinui_ic_file;
+    private static final int INVALID_ICON_ID = R.drawable.tinui_ic_file_alert;
 
     static {
         sMime2Icon = new HashMap<>();
-        sMime2Icon.put("image", R.drawable.ic_image);
-        sMime2Icon.put("text", R.drawable.ic_text_file);
-        sMime2Icon.put("video", R.drawable.ic_movie);
+        sMime2Icon.put("image", R.drawable.tinui_ic_image);
+        sMime2Icon.put("text", R.drawable.tinui_ic_text_file);
+        sMime2Icon.put("video", R.drawable.tinui_ic_movie);
     }
 
     private ImageView mImageView;

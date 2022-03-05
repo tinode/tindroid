@@ -18,7 +18,7 @@
             android:drawablePadding="4dp"
             android:text="@string/clear_messages"
             android:textColor="?android:textColorPrimary"
-            app:drawableStartCompat="@drawable/ic_delete"
+            app:drawableStartCompat="@drawable/tinui_ic_delete"
             app:drawableTint="?android:textColorPrimary" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -29,7 +29,7 @@
             android:drawablePadding="4dp"
             android:text="@string/leave_conversation"
             android:textColor="?android:textColorPrimary"
-            app:drawableStartCompat="@drawable/ic_exit"
+            app:drawableStartCompat="@drawable/tinui_ic_exit"
             app:drawableTint="?android:textColorPrimary" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -40,7 +40,7 @@
             android:drawablePadding="4dp"
             android:text="@string/delete_group"
             android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_delete_red"
+            app:drawableStartCompat="@drawable/tinui_ic_delete_red"
             app:drawableTint="@color/colorDanger" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -51,7 +51,7 @@
             android:drawablePadding="4dp"
             android:text="@string/block_contact"
             android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_block_red"
+            app:drawableStartCompat="@drawable/tinui_ic_block_red"
             app:drawableTint="@color/colorDanger" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -62,7 +62,7 @@
             android:drawablePadding="4dp"
             android:text="@string/report_contact"
             android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_report_red"
+            app:drawableStartCompat="@drawable/tinui_ic_report_red"
             app:drawableTint="@color/colorDanger" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -73,7 +73,7 @@
             android:drawablePadding="4dp"
             android:text="@string/report_group"
             android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_report_red"
+            app:drawableStartCompat="@drawable/tinui_ic_report_red"
             app:drawableTint="@color/colorDanger" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -84,7 +84,7 @@
             android:drawablePadding="4dp"
             android:text="@string/report_channel"
             android:textColor="@color/colorDanger"
-            app:drawableStartCompat="@drawable/ic_report_red"
+            app:drawableStartCompat="@drawable/tinui_ic_report_red"
             app:drawableTint="@color/colorDanger" />
 
         <View
@@ -112,7 +112,7 @@
                 android:id="@+id/permissionsSingle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/dotted_line"
+                android:background="@drawable/tinui_dotted_line"
                 android:clickable="true"
                 android:focusable="true"
                 android:focusableInTouchMode="false"
@@ -155,7 +155,7 @@
                 android:layout_below="@id/permissionTitle"
                 android:layout_alignParentEnd="true"
                 android:layout_marginTop="4dp"
-                android:background="@drawable/dotted_line"
+                android:background="@drawable/tinui_dotted_line"
                 android:clickable="true"
                 android:focusable="true"
                 android:focusableInTouchMode="false"
@@ -184,7 +184,7 @@
                 android:layout_below="@id/userOne"
                 android:layout_alignParentEnd="true"
                 android:layout_marginTop="4dp"
-                android:background="@drawable/dotted_line"
+                android:background="@drawable/tinui_dotted_line"
                 android:clickable="true"
                 android:focusable="true"
                 android:focusableInTouchMode="false"
@@ -243,7 +243,7 @@
                     android:id="@+id/authPermissions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/dotted_line"
+                    android:background="@drawable/tinui_dotted_line"
                     android:clickable="true"
                     android:focusable="true"
                     android:focusableInTouchMode="false"
@@ -276,7 +276,7 @@
                     android:id="@+id/anonPermissions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/dotted_line"
+                    android:background="@drawable/tinui_dotted_line"
                     android:clickable="true"
                     android:focusable="true"
                     android:focusableInTouchMode="false"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/disk_selected" />
-    <item android:drawable="@drawable/ic_check"
+    <item android:drawable="@drawable/tinui_disk_selected" />
+    <item android:drawable="@drawable/tinui_ic_check"
           android:left="20dp"
           android:right="20dp"
           android:bottom="20dp"

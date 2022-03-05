@@ -25,7 +25,7 @@
             android:layout_height="18dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
-            app:srcCompat="@drawable/ic_block_gray"
+            app:srcCompat="@drawable/tinui_ic_block_gray"
             tools:ignore="ContentDescription" />
 
         <TextView

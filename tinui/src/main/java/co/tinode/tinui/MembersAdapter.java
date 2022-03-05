@@ -222,8 +222,8 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
             } else if (user.avatarUri != null) {
                 Picasso.get()
                         .load(user.avatarUri)
-                        .placeholder(R.drawable.disk)
-                        .error(R.drawable.ic_broken_image_round)
+                        .placeholder(R.drawable.tinui_disk)
+                        .error(R.drawable.tinui_ic_broken_image_round)
                         .into(avatar);
             } else {
                 avatar.setImageDrawable(

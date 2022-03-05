@@ -510,11 +510,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         Spanned text = m.content.format(formatter);
         if (text == null || text.length() == 0) {
             if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
-                text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
+                text = serviceContentSpanned(mActivity, R.drawable.tinui_ic_schedule_gray, R.string.processing);
             } else if (m.status == BaseDb.Status.FAILED) {
-                text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.failed);
+                text = serviceContentSpanned(mActivity, R.drawable.tinui_ic_error_gray, R.string.failed);
             } else {
-                text = serviceContentSpanned(mActivity, R.drawable.ic_warning_gray, R.string.invalid_content);
+                text = serviceContentSpanned(mActivity, R.drawable.tinui_ic_warning_gray, R.string.invalid_content);
             }
         }
 
@@ -584,7 +584,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             } else {
                 if (holder.mAvatar != null) {
-                    holder.mAvatar.setImageResource(R.drawable.ic_person_circle);
+                    holder.mAvatar.setImageResource(R.drawable.tinui_ic_person_circle);
                 }
                 if (holder.mUserName != null) {
                     Spannable span = new SpannableString(mActivity.getString(R.string.user_not_found));

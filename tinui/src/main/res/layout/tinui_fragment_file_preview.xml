@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/message_view_bkg"
+    android:background="@drawable/tinui_message_view_bkg"
     android:orientation="vertical">
 
     <androidx.cardview.widget.CardView
@@ -34,7 +34,7 @@
                 android:scaleType="fitCenter"
                 app:tint="?android:textColorSecondary"
                 tools:ignore="ContentDescription"
-                tools:src="@drawable/ic_file" />
+                tools:src="@drawable/tinui_ic_file" />
 
             <LinearLayout
                 android:id="@+id/annotation"
@@ -175,7 +175,7 @@
                 android:paddingStart="4sp"
                 android:paddingEnd="8sp"
                 app:tint="?attr/colorAccent"
-                app:srcCompat="@drawable/ic_send" />
+                app:srcCompat="@drawable/tinui_ic_send" />
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>

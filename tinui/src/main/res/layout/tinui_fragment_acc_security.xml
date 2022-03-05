@@ -17,7 +17,7 @@
         android:text="@string/change_password"
         android:textColor="?android:textColorPrimary"
         app:drawableTint="?android:textColorPrimary"
-        app:drawableStartCompat="@drawable/ic_lock_outline" />
+        app:drawableStartCompat="@drawable/tinui_ic_lock_outline" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/buttonLogout"
@@ -29,7 +29,7 @@
         android:text="@string/logout"
         android:textColor="@color/colorDanger"
         app:drawableTint="@color/colorDanger"
-        app:drawableStartCompat="@drawable/ic_exit_red" />
+        app:drawableStartCompat="@drawable/tinui_ic_exit_red" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/buttonDeleteAccount"
@@ -41,7 +41,7 @@
         android:text="@string/delete_account"
         android:textColor="@color/colorDanger"
         app:drawableTint="@color/colorDanger"
-        app:drawableStartCompat="@drawable/ic_delete_red" />
+        app:drawableStartCompat="@drawable/tinui_ic_delete_red" />
 
     <View
         android:layout_width="match_parent"
@@ -88,7 +88,7 @@
             android:textColor="?android:textColorPrimary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/dotted_line"
+            android:background="@drawable/tinui_dotted_line"
             android:clickable="true"
             android:focusable="true"
             android:focusableInTouchMode="false"
@@ -121,7 +121,7 @@
             android:textColor="?android:textColorPrimary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/dotted_line"
+            android:background="@drawable/tinui_dotted_line"
             android:clickable="true"
             android:focusable="true"
             android:focusableInTouchMode="false"
@@ -159,7 +159,7 @@
             android:textColor="?android:textColorPrimary"
             android:visibility="invisible"
             app:drawableTint="?android:textColorPrimary"
-            app:drawableStartCompat="@drawable/ic_block" />
+            app:drawableStartCompat="@drawable/tinui_ic_block" />
 
     </LinearLayout>
 

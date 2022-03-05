@@ -5,7 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/rounded_corners"
+    android:background="@drawable/tinui_rounded_corners"
     android:orientation="horizontal"
     android:maxWidth="144dp"
     android:layout_margin="2dp"
@@ -18,7 +18,7 @@
         android:layout_marginEnd="6dp"
         android:contentDescription="@string/avatar"
         app:shapeAppearanceOverlay="@style/roundImageView"
-        app:srcCompat="@drawable/ic_person_circle" />
+        app:srcCompat="@drawable/tinui_ic_person_circle" />
 
     <TextView
         android:id="@android:id/text1"
@@ -36,7 +36,7 @@
         android:layout_width="24sp"
         android:layout_height="24sp"
         android:visibility="visible"
-        app:srcCompat="@drawable/ic_cancel_grey"
+        app:srcCompat="@drawable/tinui_ic_cancel_grey"
         android:contentDescription="@android:string/cancel"/>
 
 </LinearLayout>

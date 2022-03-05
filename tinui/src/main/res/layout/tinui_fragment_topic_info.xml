@@ -29,7 +29,7 @@
                 android:contentDescription="@string/avatar"
                 android:focusable="true"
                 app:shapeAppearanceOverlay="@style/roundImageView"
-                app:srcCompat="@drawable/disk" />
+                app:srcCompat="@drawable/tinui_disk" />
 
         </RelativeLayout>
 
@@ -233,7 +233,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:contentDescription="@string/permissions"
-                android:src="@drawable/ic_key"
+                android:src="@drawable/tinui_ic_key"
                 app:tint="@color/colorAccent" />
 
             <TextView
@@ -286,7 +286,7 @@
                 android:drawablePadding="4sp"
                 android:text="@string/add_members"
                 android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_person_add"
+                app:drawableStartCompat="@drawable/tinui_ic_person_add"
                 app:drawableTint="?android:textColorPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView

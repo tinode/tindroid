@@ -15,7 +15,7 @@
         android:layout_margin="4sp"
         android:contentDescription="@string/avatar"
         app:shapeAppearanceOverlay="@style/roundImageView"
-        app:srcCompat="@drawable/disk" />
+        app:srcCompat="@drawable/tinui_disk" />
 
     <TextView
         android:id="@+id/topicTitle"
@@ -139,7 +139,7 @@
         <ImageView
             android:layout_width="@dimen/settings_icon_size"
             android:layout_height="@dimen/settings_icon_size"
-            android:src="@drawable/ic_notifications"
+            android:src="@drawable/tinui_ic_notifications"
             app:tint="@color/colorAccent"
             tools:ignore="ContentDescription" />
 
@@ -167,7 +167,7 @@
             android:layout_height="@dimen/settings_icon_size"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:src="@drawable/ic_security"
+            android:src="@drawable/tinui_ic_security"
             app:tint="@color/colorAccent"
             tools:ignore="ContentDescription" />
 
@@ -205,7 +205,7 @@
             android:layout_height="@dimen/settings_icon_size"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:src="@drawable/ic_contact_support"
+            android:src="@drawable/tinui_ic_contact_support"
             app:tint="@color/colorAccent"
             tools:ignore="ContentDescription" />
 

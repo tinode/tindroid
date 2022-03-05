@@ -102,7 +102,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
 
     @Override
     protected SpannableStringBuilder handleImage(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
-        return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
+        return annotatedIcon(ctx, R.drawable.tinui_ic_image_ol, R.string.picture);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
             }
         } catch (ClassCastException ignored) {}
 
-        return annotatedIcon(ctx, R.drawable.ic_attach_ol, R.string.attachment);
+        return annotatedIcon(ctx, R.drawable.tinui_ic_attach_ol, R.string.attachment);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
 
     @Override
     protected SpannableStringBuilder handleForm(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
-        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_form_ol, R.string.form);
+        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.tinui_ic_form_ol, R.string.form);
         return node.append(": ").append(join(content));
     }
 
@@ -157,7 +157,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
 
     @Override
     protected SpannableStringBuilder handleUnknown(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
-        return annotatedIcon(ctx, R.drawable.ic_unkn_type_ol, R.string.unknown);
+        return annotatedIcon(ctx, R.drawable.tinui_ic_unkn_type_ol, R.string.unknown);
     }
 
     @Override

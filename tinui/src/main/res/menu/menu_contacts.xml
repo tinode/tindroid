@@ -8,7 +8,7 @@
         android:visible="false">
         <item
             android:id="@+id/action_offline"
-            android:icon="@drawable/ic_offline"
+            android:icon="@drawable/tinui_ic_offline"
             android:orderInCategory="10"
             android:title="@string/action_offline"
             app:showAsAction="always"/>
@@ -16,7 +16,7 @@
 
     <item
         android:id="@+id/action_search"
-        android:icon="@drawable/ic_search"
+        android:icon="@drawable/tinui_ic_search"
         android:orderInCategory="100"
         android:title="@string/action_search"
         app:actionViewClass="android.widget.SearchView"
@@ -24,14 +24,14 @@
 
     <item
         android:id="@+id/action_add_contact"
-        android:icon="@drawable/ic_person_add"
+        android:icon="@drawable/tinui_ic_person_add"
         android:orderInCategory="101"
         android:title="@string/action_add_contact"
         app:showAsAction="never"/>
 
     <item
         android:id="@+id/action_invite"
-        android:icon="@drawable/ic_share"
+        android:icon="@drawable/tinui_ic_share"
         android:orderInCategory="102"
         android:title="@string/action_invite"
         app:actionProviderClass="androidx.appcompat.widget.ShareActionProvider"

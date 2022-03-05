@@ -234,7 +234,7 @@ public class UiUtils {
         if (online != null) {
             drawables.add(new OnlineDrawable(online));
 
-            typing = (AnimationDrawable) ResourcesCompat.getDrawable(res, R.drawable.typing_indicator, null);
+            typing = (AnimationDrawable) ResourcesCompat.getDrawable(res, R.drawable.tinui_typing_indicator, null);
             if (typing != null) {
                 typing.setOneShot(false);
                 typing.setVisible(false, true);
@@ -250,9 +250,9 @@ public class UiUtils {
             // Use thumbnail preview if available, otherwise use default gray disk.
             Drawable placeholder = bmp != null ?
                     (new RoundImageDrawable(res, bmp)) :
-                    ResourcesCompat.getDrawable(res, R.drawable.disk, null);
+                    ResourcesCompat.getDrawable(res, R.drawable.tinui_disk, null);
             layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, Cache.getTinode().toAbsoluteURL(ref).toString(),
-                placeholder, R.drawable.ic_broken_image_round);
+                placeholder, R.drawable.tinui_ic_broken_image_round);
         }
 
         if (online != null) {
@@ -689,7 +689,7 @@ public class UiUtils {
                     .load(ref.toString())
                     .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
                     .placeholder(local)
-                    .error(R.drawable.ic_broken_image_round)
+                    .error(R.drawable.tinui_ic_broken_image_round)
                     .into(avatarView);
         } else {
             avatarView.setImageDrawable(local);
@@ -763,7 +763,7 @@ public class UiUtils {
         Drawable filter;
         if (bkg == null) {
             // Uniformly gray background with rounded corners.
-            bkg = ResourcesCompat.getDrawable(ctx.getResources(), R.drawable.placeholder_image_bkg, null);
+            bkg = ResourcesCompat.getDrawable(ctx.getResources(), R.drawable.tinui_placeholder_image_bkg, null);
             // Transparent filter.
             filter = new ColorDrawable(0x00000000);
         } else {
@@ -784,16 +784,16 @@ public class UiUtils {
 
     public static void setMessageStatusIcon(ImageView holder, int status, int read, int recv) {
         if (status <= BaseDb.Status.SENDING.value) {
-            holder.setImageResource(R.drawable.ic_schedule);
+            holder.setImageResource(R.drawable.tinui_ic_schedule);
         } else if (status == BaseDb.Status.FAILED.value) {
-            holder.setImageResource(R.drawable.ic_warning);
+            holder.setImageResource(R.drawable.tinui_ic_warning);
         } else {
             if (read > 0) {
-                holder.setImageResource(R.drawable.ic_done_all2);
+                holder.setImageResource(R.drawable.tinui_ic_done_all2);
             } else if (recv > 0) {
-                holder.setImageResource(R.drawable.ic_done_all);
+                holder.setImageResource(R.drawable.tinui_ic_done_all);
             } else {
-                holder.setImageResource(R.drawable.ic_done);
+                holder.setImageResource(R.drawable.tinui_ic_done);
             }
         }
     }

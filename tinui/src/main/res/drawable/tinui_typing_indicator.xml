@@ -4,33 +4,33 @@
                 android:oneshot="false"
                 android:visible="false">
     <item
-        android:drawable="@drawable/typing_indicator_0"
+        android:drawable="@drawable/tinui_typing_indicator_0"
         android:duration="300"/>
     <item
-        android:drawable="@drawable/typing_indicator_1"
+        android:drawable="@drawable/tinui_typing_indicator_1"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_2"
+        android:drawable="@drawable/tinui_typing_indicator_2"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_3"
+        android:drawable="@drawable/tinui_typing_indicator_3"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_1"
+        android:drawable="@drawable/tinui_typing_indicator_1"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_2"
+        android:drawable="@drawable/tinui_typing_indicator_2"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_3"
+        android:drawable="@drawable/tinui_typing_indicator_3"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_1"
+        android:drawable="@drawable/tinui_typing_indicator_1"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_2"
+        android:drawable="@drawable/tinui_typing_indicator_2"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/typing_indicator_3"
+        android:drawable="@drawable/tinui_typing_indicator_3"
         android:duration="100"/>
 </animation-list>

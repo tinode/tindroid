@@ -22,6 +22,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:elevation="@dimen/fab_elevation"
         app:borderWidth="0dp"
-        app:srcCompat="@drawable/ic_chat_white"/>
+        app:srcCompat="@drawable/tinui_ic_chat_white"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

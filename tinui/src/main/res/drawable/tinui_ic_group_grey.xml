@@ -2,11 +2,11 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp">
-    <item android:drawable="@drawable/disk" />
-    <item android:drawable="@drawable/ic_group_white"
+    <item android:drawable="@drawable/tinui_disk" />
+    <item android:drawable="@drawable/tinui_ic_group_white"
           android:left="8sp"
           android:right="8sp"
           android:bottom="8sp"
           android:top="8sp" />
-    <item android:drawable="@drawable/circle" />
+    <item android:drawable="@drawable/tinui_circle" />
 </layer-list>

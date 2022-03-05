@@ -299,7 +299,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                     placeholder = new BitmapDrawable(ctx.getResources(), bmpPreview);
                     bg = placeholder;
                 } else {
-                    fg = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
+                    fg = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_image);
                     if (fg != null) {
                         fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                     }
@@ -307,7 +307,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 }
 
                 // "Failed to load image" placeholder.
-                fg = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                fg = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_broken_image);
                 if (fg != null) {
                     fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                 }
@@ -320,7 +320,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         if (span == null) {
             // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-            Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+            Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_broken_image);
             if (broken != null) {
                 broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
                 span = new ImageSpan(UiUtils.getPlaceholder(ctx, broken, null, scaledWidth, scaledHeight));
@@ -380,7 +380,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         SpannableStringBuilder result = new SpannableStringBuilder();
         // Insert document icon
-        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_file);
+        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_file);
         //noinspection ConstantConditions
         icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
         ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
@@ -417,7 +417,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         SpannableStringBuilder saveLink = new SpannableStringBuilder();
         // Add 'download file' icon
         icon = AppCompatResources.getDrawable(ctx, valid ?
-                R.drawable.ic_download_link : R.drawable.ic_error_gray);
+                R.drawable.tinui_ic_download_link : R.drawable.tinui_ic_error_gray);
         DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
         //noinspection ConstantConditions
         icon.setBounds(0, 0,
@@ -534,7 +534,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         SpannableStringBuilder result = null;
-        Drawable unkn = AppCompatResources.getDrawable(ctx, R.drawable.ic_unkn_type);
+        Drawable unkn = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_unkn_type);
         if (unkn != null) {
             unkn.setBounds(0, 0, unkn.getIntrinsicWidth(), unkn.getIntrinsicHeight());
             CharacterStyle span = new ImageSpan(UiUtils.getPlaceholder(ctx, unkn, null, scaledWidth, scaledHeight));

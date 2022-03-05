@@ -6,7 +6,7 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/message_view_bkg"
+    android:background="@drawable/tinui_message_view_bkg"
     android:orientation="vertical">
 
     <co.tinode.tinui.widgets.OverlaidImageView
@@ -19,7 +19,7 @@
         android:contentDescription=""
         android:scaleType="matrix"
         tools:ignore="ContentDescription"
-        tools:src="@drawable/logo_src"/>
+        tools:src="@drawable/tinui_logo_src"/>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/metaPanel"
@@ -65,7 +65,7 @@
                 android:paddingEnd="8sp"
                 android:layout_gravity="center_vertical"
                 app:tint="?attr/colorAccent"
-                app:srcCompat="@drawable/ic_send"/>
+                app:srcCompat="@drawable/tinui_ic_send"/>
         </LinearLayout>
 
         <LinearLayout
@@ -159,6 +159,6 @@
         app:backgroundTint="@color/button_background"
         app:elevation="@dimen/fab_elevation"
         app:borderWidth="0dp"
-        app:srcCompat="@drawable/ic_check"/>
+        app:srcCompat="@drawable/tinui_ic_check"/>
 
 </RelativeLayout>

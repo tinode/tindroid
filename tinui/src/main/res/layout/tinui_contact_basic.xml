@@ -5,7 +5,7 @@
     android:layout_height="?attr/listPreferredItemHeight"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/contact_background"
+    android:background="@drawable/tinui_contact_background"
     android:orientation="horizontal"
     android:paddingStart="@dimen/activity_padding"
     android:paddingEnd="@dimen/activity_padding"
@@ -23,7 +23,7 @@
             android:layout_height="48dp"
             android:contentDescription="@string/avatar"
             app:shapeAppearanceOverlay="@style/roundImageView"
-            app:srcCompat="@drawable/ic_person_circle" />
+            app:srcCompat="@drawable/tinui_ic_person_circle" />
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/selected"
@@ -31,7 +31,7 @@
             android:layout_height="48dp"
             android:contentDescription="@string/avatar"
             app:shapeAppearanceOverlay="@style/roundImageView"
-            app:srcCompat="@drawable/ic_selected" />
+            app:srcCompat="@drawable/tinui_ic_selected" />
     </ImageSwitcher>
 
     <TextView

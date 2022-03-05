@@ -27,7 +27,7 @@
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/attachmentProgressCancel"
-            app:srcCompat="@drawable/ic_close"
+            app:srcCompat="@drawable/tinui_ic_close"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="0.1"

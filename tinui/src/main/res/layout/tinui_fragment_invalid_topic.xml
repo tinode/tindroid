@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/message_view_bkg"
+    android:background="@drawable/tinui_message_view_bkg"
     tools:context="co.tinode.tinui.MessagesFragment">
 
     <TextView

@@ -64,7 +64,7 @@
                         android:paddingStart="2dp"
                         android:alpha="0.8"
                         tools:ignore="ContentDescription,SmallSp"
-                        tools:src="@drawable/ic_done_all" />
+                        tools:src="@drawable/tinui_ic_done_all" />
 
                 </LinearLayout>
 

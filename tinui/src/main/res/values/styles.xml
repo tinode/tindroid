@@ -5,7 +5,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowActionModeOverlay">true</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
-        <item name="android:listDivider">@drawable/list_divider</item>
+        <item name="android:listDivider">@drawable/tinui_list_divider</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.ActionBar">
@@ -29,7 +29,7 @@
     </style>
 
     <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@drawable/splash_screen</item>
+        <item name="android:windowBackground">@drawable/tinui_splash_screen</item>
     </style>
 
     <!--suppress CheckTagEmptyBody. This is required by the component.
