@@ -178,6 +178,7 @@
     <string name="email_rejected">Email rejected</string>
     <string name="invalid_confirmation_code">Invalid code</string>
     <string name="notification_channel_name">New message</string>
+    <!-- Used in push notifications -->
     <string name="new_message">New message</string>
     <string name="notification_channel_description">New message was received</string>
     <string name="request_pass_reset_title">Password reset</string>
@@ -199,6 +200,7 @@
     <string name="new_chat_accept">Accept</string>
     <string name="new_chat_ignore">Ignore</string>
     <string name="new_chat_block">Block</string>
+    <!-- Used in push notifications -->
     <string name="new_chat">New chat</string>
     <string name="messages_not_readable">No access to new messages</string>
     <string name="content_deleted">content deleted</string>
