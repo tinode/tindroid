@@ -65,5 +65,5 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation project(path: ':ui')
+    implementation project(path: ':tinui')
 }

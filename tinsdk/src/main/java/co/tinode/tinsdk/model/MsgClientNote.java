@@ -1,0 +1,25 @@
+package co.tinode.tinsdk.model;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.io.Serializable;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
+
+/**
+ * Typing and read/received notifications packet.
+ */
+@JsonInclude(NON_DEFAULT)
+public class MsgClientNote implements Serializable {
+    public final String topic; // topic to notify, required
+    public final String what;  // one of "kp" (key press), "read" (read notification),
+                // "rcpt" (received notification), any other string will cause
+                // message to be silently dropped, required
+    public final Integer seq; // ID of the message being acknowledged, required for rcpt & read
+
+    public MsgClientNote(String topic, String what, int seq) {
+        this.topic = topic;
+        this.what = what;
+        this.seq = seq > 0 ? seq : null;
+    }
+}

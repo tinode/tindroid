@@ -1,1 +1,1 @@
-include ':app', ':tinodesdk', ':ui'
+include ':app', ':tinsdk', ':tinui'

@@ -1,0 +1,87 @@
+<co.tinode.tinui.widgets.RippleFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp">
+
+        <LinearLayout
+            android:id="@+id/messageBubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:background="@drawable/bubble_r_z"
+            android:backgroundTint="@color/colorMessageBubbleMine"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/messageText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="280dp"
+                android:minWidth="140dp"
+                android:paddingStart="8dp"
+                android:textColor="?android:textColorPrimary"
+                tools:ignore="RtlSymmetry"
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+
+            <include
+                android:id="@+id/progressContainer"
+                layout="@layout/progress_bar"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end">
+
+                <TextView
+                    android:id="@+id/messageMeta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="4sp"
+                    android:paddingRight="4sp"
+                    android:textColor="?android:textColorSecondary"
+                    android:textSize="11sp"
+                    tools:ignore="SmallSp"
+                    tools:text="Jun 11 22:17" />
+
+                <ImageView
+                    android:id="@+id/messageViewedIcon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center_vertical"
+                    android:alpha="0.8"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    tools:ignore="ContentDescription,SmallSp"
+                    tools:src="@drawable/ic_done_all" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/selected"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorMessageSelected"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?android:selectableItemBackground"
+        android:clickable="false"
+        android:focusable="false" />
+
+</co.tinode.tinui.widgets.RippleFrameLayout>
