@@ -217,8 +217,8 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                 text1 = view.findViewById(android.R.id.text1);
                 text2 = view.findViewById(android.R.id.text2);
                 switcher = view.findViewById(R.id.icon_switcher);
-                switcher.setInAnimation(context, R.anim.flip_in);
-                switcher.setOutAnimation(context, R.anim.flip_out);
+                switcher.setInAnimation(context, R.anim.tinui_flip_in);
+                switcher.setOutAnimation(context, R.anim.tinui_flip_out);
             }
         }
 
