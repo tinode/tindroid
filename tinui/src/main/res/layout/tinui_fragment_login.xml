@@ -71,7 +71,7 @@
         android:textColor="@color/white"
         android:enabled="true"
         android:layout_centerHorizontal="true"
-        app:backgroundTint="@color/button_background" />
+        app:backgroundTint="@color/tinui_button_background" />
 
     <Button
         android:id="@+id/forgotPassword"

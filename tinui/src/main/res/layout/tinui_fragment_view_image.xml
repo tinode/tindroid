@@ -156,7 +156,7 @@
         android:layout_alignParentEnd="true"
         android:visibility="gone"
         android:contentDescription="@string/accept_avatar_button_hint"
-        app:backgroundTint="@color/button_background"
+        app:backgroundTint="@color/tinui_button_background"
         app:elevation="@dimen/fab_elevation"
         app:borderWidth="0dp"
         app:srcCompat="@drawable/tinui_ic_check"/>

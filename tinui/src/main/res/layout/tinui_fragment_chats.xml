@@ -17,7 +17,7 @@
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="@string/button_hint_start_new_chat"
-        app:backgroundTint="@color/button_background"
+        app:backgroundTint="@color/tinui_button_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:elevation="@dimen/fab_elevation"

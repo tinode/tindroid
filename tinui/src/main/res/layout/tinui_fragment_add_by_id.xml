@@ -31,6 +31,6 @@
         android:text="@android:string/ok"
         android:textColor="@color/white"
         android:textSize="@dimen/button_text"
-        app:backgroundTint="@color/button_background" />
+        app:backgroundTint="@color/tinui_button_background" />
 
 </LinearLayout>

@@ -181,7 +181,7 @@
         android:clickable="true"
         android:contentDescription="@string/next_button_hint"
         android:focusable="true"
-        app:backgroundTint="@color/button_background"
+        app:backgroundTint="@color/tinui_button_background"
         app:elevation="@dimen/fab_elevation"
         app:layout_anchor="@id/content"
         app:layout_anchorGravity="bottom|end"
