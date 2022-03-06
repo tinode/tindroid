@@ -14,7 +14,7 @@
         android:paddingLeft="6sp"
         android:paddingRight="6sp"
         android:layout_gravity="center"
-        android:background="@drawable/bubble"
+        android:background="@drawable/tinui_bubble"
         android:backgroundTint="@color/colorMessageBubbleMeta"
         tools:ignore="UselessParent">
 

@@ -67,7 +67,7 @@
         android:minHeight="32dp"
         android:text="@string/badge_verified"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_verified" />
+        app:drawableStartCompat="@drawable/tinui_ic_verified" />
 
     <TextView
         android:id="@+id/staff"
@@ -79,7 +79,7 @@
         android:minHeight="32dp"
         android:text="@string/badge_staff"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_verified_user" />
+        app:drawableStartCompat="@drawable/tinui_ic_verified_user" />
 
     <TextView
         android:id="@+id/danger"
@@ -91,7 +91,7 @@
         android:minHeight="32dp"
         android:text="@string/badge_danger"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_danger" />
+        app:drawableStartCompat="@drawable/tinui_ic_danger" />
 
     <LinearLayout
         android:id="@+id/topicDescriptionWrapper"

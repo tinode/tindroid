@@ -17,7 +17,7 @@
             android:id="@+id/messageBubble"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bubble_l_z"
+            android:background="@drawable/tinui_bubble_l_z"
             android:backgroundTint="@color/colorMessageBubbleOther"
             android:clickable="false"
             android:focusable="false"

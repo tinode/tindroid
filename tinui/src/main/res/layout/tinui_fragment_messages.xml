@@ -36,7 +36,7 @@
             style="@style/textPrimary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bubble"
+            android:background="@drawable/tinui_bubble"
             android:backgroundTint="?android:colorBackground"
             android:padding="12dp"
             android:text="@string/messages_not_readable"/>

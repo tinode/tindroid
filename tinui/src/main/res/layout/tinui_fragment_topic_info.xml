@@ -100,7 +100,7 @@
             android:text="@string/badge_verified"
             android:textIsSelectable="false"
             android:visibility="gone"
-            app:drawableStartCompat="@drawable/ic_verified" />
+            app:drawableStartCompat="@drawable/tinui_ic_verified" />
 
         <TextView
             android:id="@+id/staff"
@@ -115,7 +115,7 @@
             android:text="@string/badge_staff"
             android:textIsSelectable="false"
             android:visibility="gone"
-            app:drawableStartCompat="@drawable/ic_verified_user" />
+            app:drawableStartCompat="@drawable/tinui_ic_verified_user" />
 
         <TextView
             android:id="@+id/danger"
@@ -130,7 +130,7 @@
             android:text="@string/badge_danger"
             android:textIsSelectable="false"
             android:visibility="gone"
-            app:drawableStartCompat="@drawable/ic_danger" />
+            app:drawableStartCompat="@drawable/tinui_ic_danger" />
 
         <LinearLayout
             android:id="@+id/topicDescriptionWrapper"

@@ -31,7 +31,7 @@
         android:padding="6dp"
         android:paddingStart="18dp"
         android:textColor="?android:textColorPrimary"
-        android:background="@drawable/bubble"
+        android:background="@drawable/tinui_bubble"
         android:backgroundTint="@color/colorReplyBubble"
         tools:ignore="RtlSymmetry"
         tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />

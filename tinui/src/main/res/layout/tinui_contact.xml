@@ -74,7 +74,7 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
-                app:srcCompat="@drawable/ic_verified" />
+                app:srcCompat="@drawable/tinui_ic_verified" />
 
             <ImageView
                 android:id="@+id/icon_staff"
@@ -84,7 +84,7 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
-                app:srcCompat="@drawable/ic_verified_user" />
+                app:srcCompat="@drawable/tinui_ic_verified_user" />
 
             <ImageView
                 android:id="@+id/icon_danger"
@@ -94,7 +94,7 @@
                 android:baseline="-2dp"
                 android:contentDescription="@string/channel"
                 android:visibility="gone"
-                app:srcCompat="@drawable/ic_danger" />
+                app:srcCompat="@drawable/tinui_ic_danger" />
 
             <TextView
                 android:id="@+id/unreadCount"

@@ -18,7 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:background="@drawable/bubble_r_z"
+            android:background="@drawable/tinui_bubble_r_z"
             android:backgroundTint="@color/colorMessageBubbleMine"
             android:orientation="vertical">
 

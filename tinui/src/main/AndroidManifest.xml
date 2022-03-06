@@ -57,7 +57,7 @@
         <!-- Default icon for push notifications. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_icon_push" />
+            android:resource="@drawable/tinui_ic_icon_push" />
         <!-- Default color for push notifications. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"

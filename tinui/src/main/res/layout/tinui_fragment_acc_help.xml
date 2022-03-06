@@ -73,6 +73,6 @@
         android:drawablePadding="10dp"
         android:textAppearance="?android:textAppearanceLarge"
         android:text="@string/about_the_app"
-        app:drawableStartCompat="@drawable/ic_icon_push"
+        app:drawableStartCompat="@drawable/tinui_ic_icon_push"
         app:drawableTint="@color/colorAccent" />
 </LinearLayout>
