@@ -192,7 +192,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
 
-        inflater.inflate(R.menu.menu_chats, menu);
+        inflater.inflate(R.menu.tinui_menu_chats, menu);
         menu.setGroupVisible(R.id.not_archive, !mIsArchive);
     }
 
@@ -220,7 +220,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-        mode.getMenuInflater().inflate(R.menu.menu_chats_selected, menu);
+        mode.getMenuInflater().inflate(R.menu.tinui_menu_chats_selected, menu);
         return true;
     }
 

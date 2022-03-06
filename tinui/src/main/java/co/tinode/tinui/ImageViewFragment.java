@@ -389,7 +389,7 @@ public class ImageViewFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_image, menu);
+        inflater.inflate(R.menu.tinui_menu_image, menu);
     }
 
     @Override

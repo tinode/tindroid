@@ -176,7 +176,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.clear();
-        inflater.inflate(R.menu.menu_contacts, menu);
+        inflater.inflate(R.menu.tinui_menu_contacts, menu);
 
         final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {

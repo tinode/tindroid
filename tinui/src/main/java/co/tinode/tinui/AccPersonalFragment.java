@@ -316,7 +316,7 @@ public class AccPersonalFragment extends Fragment
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_save, menu);
+        inflater.inflate(R.menu.tinui_menu_save, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
 
