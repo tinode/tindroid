@@ -39,9 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import co.tinode.tinui.Cache;
+import co.tinode.tinui.ImageUtils;
 import co.tinode.tinui.R;
-import co.tinode.tinui.UiUtils;
+import co.tinode.tinui.TinodeClient;
 
 /**
  * Convert Drafty object into a Spanned object with full support for all features.
@@ -289,7 +289,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         // Out of band image.
         if (span == null && (val = data.get("ref")) instanceof String) {
             String ref = (String) val;
-            URL url = Cache.getTinode().toAbsoluteURL(ref);
+            URL url = TinodeClient.getInstance().toAbsoluteURL(ref);
             if (scale > 0 && url != null) {
                 Drawable fg, bg = null;
 
@@ -303,7 +303,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                     if (fg != null) {
                         fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                     }
-                    placeholder = UiUtils.getPlaceholder(ctx, fg, null, scaledWidth, scaledHeight);
+                    placeholder = ImageUtils.getPlaceholder(ctx, fg, null, scaledWidth, scaledHeight);
                 }
 
                 // "Failed to load image" placeholder.
@@ -311,10 +311,10 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 if (fg != null) {
                     fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                 }
-                Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, scaledWidth, scaledHeight);
+                Drawable onError = ImageUtils.getPlaceholder(ctx, fg, bg, scaledWidth, scaledHeight);
 
                 span = new RemoteImageSpan(mContainer, scaledWidth, scaledHeight, false, placeholder, onError);
-                ((RemoteImageSpan) span).load(Cache.getTinode().toAbsoluteURL(ref));
+                ((RemoteImageSpan) span).load(TinodeClient.getInstance().toAbsoluteURL(ref));
             }
         }
 
@@ -323,7 +323,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_broken_image);
             if (broken != null) {
                 broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-                span = new ImageSpan(UiUtils.getPlaceholder(ctx, broken, null, scaledWidth, scaledHeight));
+                span = new ImageSpan(ImageUtils.getPlaceholder(ctx, broken, null, scaledWidth, scaledHeight));
                 result = assignStyle(span, content);
             }
         } else if (mClicker != null) {
@@ -537,7 +537,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         Drawable unkn = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_unkn_type);
         if (unkn != null) {
             unkn.setBounds(0, 0, unkn.getIntrinsicWidth(), unkn.getIntrinsicHeight());
-            CharacterStyle span = new ImageSpan(UiUtils.getPlaceholder(ctx, unkn, null, scaledWidth, scaledHeight));
+            CharacterStyle span = new ImageSpan(ImageUtils.getPlaceholder(ctx, unkn, null, scaledWidth, scaledHeight));
             result = assignStyle(span, content);
         }
 

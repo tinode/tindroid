@@ -10,7 +10,6 @@ import android.util.SparseArray;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import co.tinode.tinui.TindroidApp;
 import co.tinode.tinsdk.Tinode;
 import co.tinode.tinsdk.model.Acs;
 import co.tinode.tinsdk.model.Defacs;
@@ -48,9 +47,7 @@ public class BaseDb extends SQLiteOpenHelper {
      */
     public static BaseDb getInstance() {
         if (sInstance == null) {
-            sInstance = new BaseDb(TindroidApp.getAppContext());
-            sInstance.mAcc = AccountDb.getActiveAccount(sInstance.getReadableDatabase());
-            sInstance.mStore = new SqlStore(sInstance);
+            throw new IllegalStateException("BaseDb.Builder::build() must be called before obtaining BaseDb instance");
         }
         return sInstance;
     }
@@ -325,5 +322,35 @@ public class BaseDb extends SQLiteOpenHelper {
             }
             return type;
         }
+    }
+
+    public static class Builder extends BaseDbBuilder {
+
+        private final Context appContext;
+
+        public Builder(Context appContext) {
+            this.appContext = appContext;
+        }
+
+        @Override
+        public BaseDb internalBuild() {
+            BaseDb sInstance = new BaseDb(this.appContext);
+            sInstance.mAcc = AccountDb.getActiveAccount(sInstance.getReadableDatabase());
+            sInstance.mStore = new SqlStore(sInstance);
+            return sInstance;
+        }
+    }
+
+    public abstract static class BaseDbBuilder {
+        /**
+         * Create a [BaseDb] instance based on the current configuration
+         * of the [Builder].
+         */
+        public BaseDb build() {
+            BaseDb.sInstance = internalBuild();
+            return sInstance;
+        }
+
+        public abstract BaseDb internalBuild();
     }
 }

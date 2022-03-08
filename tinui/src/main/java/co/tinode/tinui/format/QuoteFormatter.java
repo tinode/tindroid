@@ -22,9 +22,9 @@ import androidx.appcompat.content.res.AppCompatResources;
 import java.util.List;
 import java.util.Map;
 
-import co.tinode.tinui.Cache;
+import co.tinode.tinui.ImageUtils;
 import co.tinode.tinui.R;
-import co.tinode.tinui.UiUtils;
+import co.tinode.tinui.TinodeClient;
 
 // Display quoted content.
 public class QuoteFormatter extends PreviewFormatter {
@@ -71,7 +71,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
         // Using fixed dimensions for the image.
         DisplayMetrics metrics = res.getDisplayMetrics();
-        int size = (int) (UiUtils.REPLY_THUMBNAIL_DIM * metrics.density);
+        int size = (int) (ImageUtils.REPLY_THUMBNAIL_DIM * metrics.density);
 
         Object filename = data.get("name");
         if (filename instanceof String) {
@@ -84,7 +84,7 @@ public class QuoteFormatter extends PreviewFormatter {
         Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_broken_image);
         //noinspection ConstantConditions
         broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-        broken = UiUtils.getPlaceholder(ctx, broken, null, size, size);
+        broken = ImageUtils.getPlaceholder(ctx, broken, null, size, size);
 
         SpannableStringBuilder node = new SpannableStringBuilder();
         CharacterStyle span = null;
@@ -102,7 +102,7 @@ public class QuoteFormatter extends PreviewFormatter {
                         Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
                 Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                 if (bmp != null) {
-                    thumbnail = new BitmapDrawable(res, UiUtils.scaleSquareBitmap(bmp, size));
+                    thumbnail = new BitmapDrawable(res, ImageUtils.scaleSquareBitmap(bmp, size));
                     thumbnail.setBounds(0, 0, size, size);
                     span = new StyledImageSpan(thumbnail,
                             new RectF(IMAGE_PADDING * metrics.density,
@@ -119,7 +119,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
             span = new RemoteImageSpan(mParent, size, size, true,
                     AppCompatResources.getDrawable(ctx, R.drawable.tinui_ic_image), broken);
-            ((RemoteImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) val));
+            ((RemoteImageSpan) span).load(TinodeClient.getInstance().toAbsoluteURL((String) val));
         }
 
         if (span == null) {

@@ -19,8 +19,8 @@ import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 
+import co.tinode.tinui.ImageUtils;
 import co.tinode.tinui.R;
-import co.tinode.tinui.UiUtils;
 
 /**
  * Helper class for storing data in the platform content providers.
@@ -221,9 +221,9 @@ class ContactOperations {
         mValues.clear();
         if (ref != null) {
             try {
-                avatar = UiUtils.bitmapToBytes(Picasso.get()
+                avatar = ImageUtils.bitmapToBytes(Picasso.get()
                         .load(Uri.decode(ref))
-                        .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE).centerCrop()
+                        .resize(ImageUtils.MAX_AVATAR_SIZE, ImageUtils.MAX_AVATAR_SIZE).centerCrop()
                         .get(), mimeType);
             } catch (IOException ex) {
                 Log.w(TAG, "Failed to download avatar", ex);

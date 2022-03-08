@@ -11,10 +11,10 @@ import com.squareup.picasso.Target;
 import java.util.LinkedList;
 import java.util.List;
 
-import co.tinode.tinui.Cache;
-import co.tinode.tinui.UiUtils;
 import co.tinode.tinsdk.PromisedReply;
 import co.tinode.tinsdk.model.Drafty;
+import co.tinode.tinui.ImageUtils;
+import co.tinode.tinui.TinodeClient;
 
 // Convert images to thumbnails.
 public class ThumbnailTransformer implements Drafty.Transformer {
@@ -35,8 +35,8 @@ public class ThumbnailTransformer implements Drafty.Transformer {
 
         Object val;
 
-        node.putData("width", UiUtils.REPLY_THUMBNAIL_DIM);
-        node.putData("height", UiUtils.REPLY_THUMBNAIL_DIM);
+        node.putData("width", ImageUtils.REPLY_THUMBNAIL_DIM);
+        node.putData("height", ImageUtils.REPLY_THUMBNAIL_DIM);
 
         // Trying to use in-band image first: we don't need the full image at "ref" to generate a tiny thumbnail.
         if ((val = node.getData("val")) != null) {
@@ -44,8 +44,8 @@ public class ThumbnailTransformer implements Drafty.Transformer {
             try {
                 byte[] bits = Base64.decode((String) val, Base64.DEFAULT);
                 Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_DIM);
-                bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                bmp = ImageUtils.scaleSquareBitmap(bmp, ImageUtils.REPLY_THUMBNAIL_DIM);
+                bits = ImageUtils.bitmapToBytes(bmp, "image/jpeg");
                 node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                 node.putData("size", bits.length);
                 node.putData("mime", "image/jpeg");
@@ -60,11 +60,11 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                 components = new LinkedList<>();
             }
             components.add(done);
-            Picasso.get().load(Cache.getTinode().toAbsoluteURL((String) val).toString()).into(new Target() {
+            Picasso.get().load(TinodeClient.getInstance().toAbsoluteURL((String) val).toString()).into(new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bmp, Picasso.LoadedFrom from) {
-                    bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_DIM);
-                    byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                    bmp = ImageUtils.scaleSquareBitmap(bmp, ImageUtils.REPLY_THUMBNAIL_DIM);
+                    byte[] bits = ImageUtils.bitmapToBytes(bmp, "image/jpeg");
                     node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                     node.putData("size", bits.length);
                     node.putData("mime", "image/jpeg");

@@ -16,7 +16,7 @@ import com.squareup.picasso.Target;
 
 import java.util.HashMap;
 
-import co.tinode.tinui.UiUtils;
+import co.tinode.tinui.ImageUtils;
 
 /**
  * LayerDrawable with some of the layers set by Picasso.
@@ -73,7 +73,7 @@ public class UrlLayerDrawable extends LayerDrawable {
         };
         RequestCreator c = Picasso.get()
                 .load(Uri.decode(url))
-                .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
+                .resize(ImageUtils.MAX_AVATAR_SIZE, ImageUtils.MAX_AVATAR_SIZE)
                 .centerCrop();
         if (error != 0) {
             c = c.error(error);

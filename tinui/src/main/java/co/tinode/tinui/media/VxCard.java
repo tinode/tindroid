@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.ByteArrayOutputStream;
 
-import co.tinode.tinui.UiUtils;
 import co.tinode.tinsdk.model.Mergeable;
 import co.tinode.tinsdk.model.TheCard;
+import co.tinode.tinui.ImageUtils;
 
 /**
  * VxCard - contact descriptor.
@@ -81,7 +81,7 @@ public class VxCard extends TheCard {
         if (photo != null && photo.data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(photo.data, 0, photo.data.length);
             if (bmp != null) {
-                mImage = UiUtils.scaleSquareBitmap(bmp, UiUtils.MAX_AVATAR_SIZE);
+                mImage = ImageUtils.scaleSquareBitmap(bmp, ImageUtils.MAX_AVATAR_SIZE);
                 // createScaledBitmap may return the same object if scaling is not required.
                 if (bmp != mImage) {
                     bmp.recycle();
