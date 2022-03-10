@@ -14,6 +14,7 @@ import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.SqlStore;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -213,5 +214,29 @@ public class Utils {
             Log.i(TAG, "Background Meta fetch failed", ex);
         }
         tinode.disconnect(true);
+    }
+
+    /**
+     * Update cached seq id of the last read message.
+     * <p>
+     * This method SHOULD NOT be called on UI thread.
+     *
+     * @param context   context to use for resources.
+     * @param topicName name of the topic to sync.
+     * @param seq new 'read' value.
+     */
+    public static void backgroundUpdateRead(Context context, String topicName, int seq) {
+        Topic topic = Cache.getTinode().getTopic(topicName);
+        if (topic == null) {
+            // Don't need to handle 'read' notifications for an unknown topic.
+            return;
+        }
+        if (topic.getRead() < seq) {
+            topic.setRead(seq);
+            SqlStore store = BaseDb.getInstance().getStore();
+            if (store != null) {
+                store.setRead(topic, seq);
+            }
+        }
     }
 }

@@ -181,7 +181,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
             String visibleTopic = UiUtils.getVisibleTopic();
             if (visibleTopic != null && visibleTopic.equals(topicName)) {
-                // No need to display a notification if we are in the topic already.
+                // No need to do anything if we are in the topic already.
                 Log.d(TAG, "Topic is visible, no need to show a notification");
                 return;
             }
@@ -189,6 +189,20 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
             if (tp != Topic.TopicType.P2P && tp != Topic.TopicType.GRP) {
                 Log.w(TAG, "Unexpected topic type=" + tp);
+                return;
+            }
+
+            // Check notification type: message, subscription.
+            String what = data.get("what");
+            // Check and maybe download new messages right away *before* showing the notification.
+            String seqStr = data.get("seq");
+            Integer seq = null;
+            if (seqStr != null) {
+                seq = Integer.parseInt(seqStr);
+            }
+
+            if ("read".equals(what) && seq != null) {
+                Utils.backgroundUpdateRead(this, topicName, seq);
                 return;
             }
 
@@ -221,8 +235,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 senderIcon = makeLargeIcon(this, null, Topic.TopicType.P2P, senderId);
             }
 
-            // Check notification type: message, subscription.
-            String what = data.get("what");
             String title = null;
             CharSequence body = null;
             Bitmap avatar = null;
@@ -230,10 +242,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 // Message notification.
 
                 // Check and maybe download new messages right away *before* showing the notification.
-                String seqStr = data.get("seq");
-                if (seqStr != null) {
+                if (seq != null) {
                     // If there was no data to fetch, the notification does not need to be shown.
-                    if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr))) {
+                    if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, seq)) {
                         Log.d(TAG, "No new data. Skipping notification.");
                         return;
                     }
