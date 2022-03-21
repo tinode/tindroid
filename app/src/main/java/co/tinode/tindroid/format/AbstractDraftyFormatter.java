@@ -6,7 +6,6 @@ import android.text.Spanned;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +41,9 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
 
     // Hashtag #searchterm.
     protected abstract T handleHashtag(final Context ctx, List<T> content, final Map<String, Object> data);
+
+    // Embedded voice mail.
+    protected abstract T handleAudio(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Embedded image.
     protected abstract T handleImage(final Context ctx, List<T> content, final Map<String, Object> data);
@@ -103,6 +105,10 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                 case "HT":
                     span = handleHashtag(mContext, content, data);
                     break;
+                case "AU":
+                    // Audio player.
+                    span = handleAudio(mContext, content, data);
+                    break;
                 case "IM":
                     // Additional processing for images
                     span = handleImage(mContext, content, data);
@@ -154,5 +160,21 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
             ssb.setSpan(style, 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         return ssb;
+    }
+
+    // Convert milliseconds to '00:00' format.
+    protected static StringBuilder millisToTime(Number millis, boolean fixedMin) {
+        StringBuilder sb = new StringBuilder();
+        float duration = millis.floatValue() / 1000;
+        int min = (int) Math.floor(duration / 60f);
+        if (fixedMin && min < 10) {
+            sb.append("0");
+        }
+        sb.append(min).append(":");
+        int sec = (int) (duration % 60f);
+        if (sec < 10) {
+            sb.append("0");
+        }
+        return sb.append(sec);
     }
 }

@@ -22,7 +22,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -387,15 +386,11 @@ public class UiUtils {
     }
 
     static boolean isPermissionGranted(Context context, String permission) {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+        return ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     static LinkedList<String> getMissingPermissions(Context context, String[] permissions) {
         LinkedList<String> missing = new LinkedList<>();
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return missing;
-        }
         for (String permission: permissions) {
             if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
                 missing.add(permission);
@@ -424,9 +419,7 @@ public class UiUtils {
         final Account acc = Utils.createAccount(uid);
         // It's OK to call even if the account already exists.
         am.addAccountExplicitly(acc, secret, null);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.notifyAccountAuthenticated(acc);
-        }
+        am.notifyAccountAuthenticated(acc);
         if (!TextUtils.isEmpty(token)) {
             am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
             am.setUserData(acc, Utils.TOKEN_EXPIRATION_TIME, String.valueOf(tokenExpires.getTime()));

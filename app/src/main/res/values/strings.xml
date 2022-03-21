@@ -311,4 +311,6 @@
     <string name="report_channel">Report channel</string>
     <string name="hint_contact_name">Contact name</string>
     <string name="cannot_reply">Unable to reply to this message</string>
+    <string name="record_audio_button_hint">Hold to record a voice message</string>
+    <string name="audio">Audio</string>
 </resources>

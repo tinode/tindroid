@@ -1,5 +1,5 @@
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -9,17 +9,19 @@
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresher"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_above="@id/sendMessageFragment">
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/sendMessageFragment"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/messages_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="vertical"/>
+            android:fitsSystemWindows="true"
+            android:scrollbars="vertical" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -27,8 +29,8 @@
         android:id="@+id/notReadable"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_horizontal|center_vertical"
         android:background="@drawable/disabled_bkg"
+        android:gravity="center_horizontal|center_vertical"
         android:visibility="gone">
 
         <TextView
@@ -39,7 +41,7 @@
             android:background="@drawable/bubble"
             android:backgroundTint="?android:colorBackground"
             android:padding="12dp"
-            android:text="@string/messages_not_readable"/>
+            android:text="@string/messages_not_readable" />
 
     </LinearLayout>
 
@@ -47,24 +49,44 @@
         android:id="@+id/sendMessageFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
         android:layout_marginTop="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         card_view:cardBackgroundColor="?android:colorBackground"
-        card_view:cardUseCompatPadding="true"
         card_view:cardElevation="@dimen/cardview_elevation"
+        card_view:cardUseCompatPadding="true"
         tools:layout="@layout/fragment_send_message">
 
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <include layout="@layout/fragment_send_message" />
+
             <include layout="@layout/fragment_messaging_disabled" />
+
             <include layout="@layout/fragment_enable_peer" />
+
             <include layout="@layout/fragment_forward_message" />
         </FrameLayout>
 
     </androidx.cardview.widget.CardView>
 
-</RelativeLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/goToLatest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:clickable="true"
+        android:contentDescription="@string/button_hint_start_new_chat"
+        android:focusable="true"
+        android:visibility="gone"
+        app:backgroundTint="?android:colorBackgroundFloating"
+        app:borderWidth="0dp"
+        app:elevation="@dimen/fab_elevation"
+        app:layout_constraintBottom_toTopOf="@id/sendMessageFragment"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_arrow_down" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -84,7 +84,8 @@ public class Drafty implements Serializable {
     private static final int MAX_PREVIEW_ATTACHMENTS = 3;
 
     private static final String[] DATA_FIELDS =
-            new String[]{"act", "height", "mime", "name", "ref", "size", "title", "url", "val", "width"};
+            new String[]{"act", "duration", "height", "mime", "name", "preview", "ref",
+                    "size", "title", "url", "val", "width"};
 
     private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP;
     static {

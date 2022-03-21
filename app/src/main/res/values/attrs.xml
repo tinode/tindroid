@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="WaveformView">
+        <attr name="colorBar" format="color" />
+        <attr name="colorThumb" format="color" />
+    </declare-styleable>
+</resources>

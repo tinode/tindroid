@@ -11,7 +11,6 @@ import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
@@ -208,8 +207,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(final Account account, final Bundle extras, String authority,
                               ContentProviderClient provider, final SyncResult syncResult) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                (checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED)) {
+        if (checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             Log.i(TAG, "No permission to access contacts. Sync failed.");
             syncResult.stats.numAuthExceptions++;
             return;

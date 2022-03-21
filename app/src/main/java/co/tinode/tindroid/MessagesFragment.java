@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -735,10 +734,8 @@ public class MessagesFragment extends Fragment {
 
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                 // See explanation here: http://medium.com/@quiro91/ceb9bb0eec3a
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-                    cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
-                    cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }
+                cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
+                cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 mCurrentPhotoFile = photoFile.getAbsolutePath();
                 mCurrentPhotoUri = photoUri;

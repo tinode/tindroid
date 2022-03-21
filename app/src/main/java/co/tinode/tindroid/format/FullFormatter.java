@@ -204,6 +204,57 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     @Override
+    protected SpannableStringBuilder handleAudio(final Context ctx, List<SpannableStringBuilder> content,
+                                                 final Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+
+        SpannableStringBuilder result = new SpannableStringBuilder();
+        // Insert Play icon
+        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_play);
+        //noinspection ConstantConditions
+        icon.setBounds(0, 0, icon.getIntrinsicWidth() * 3 / 2, icon.getIntrinsicHeight() * 3 / 2);
+        ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
+        final Rect bounds = span.getDrawable().getBounds();
+        result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        result.setSpan(new SubscriptSpan(), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // Insert waveform.
+        String fname = null;
+        try {
+            fname = (String) data.get("name");
+        } catch (NullPointerException | ClassCastException ignored) {
+        }
+        if (TextUtils.isEmpty(fname)) {
+            fname = ctx.getResources().getString(R.string.default_attachment_name);
+        } else //noinspection ConstantConditions
+            if (fname.length() > MAX_FILE_LENGTH) {
+                fname = fname.substring(0, MAX_FILE_LENGTH/2 - 1) + "…" +
+                        fname.substring(fname.length() - MAX_FILE_LENGTH/2);
+            }
+        result.append(fname, new TypefaceSpan("monospace"), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // Insert duration on the next line as small text.
+        result.append("\n");
+        String strDur = null;
+        try {
+            Number duration = (Number) data.get("duration");
+            if (duration != null) {
+                strDur = millisToTime(duration, true).toString();
+            }
+        } catch (NullPointerException | ClassCastException ignored) { }
+        if (TextUtils.isEmpty(strDur)) {
+            strDur = "-:--";
+        }
+        SpannableStringBuilder small = new SpannableStringBuilder()
+                .append(strDur, new RelativeSizeSpan(0.8f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // Add space on the left to make time appear under the waveform.
+        result.append(small, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return result;
+    }
+
+    @Override
     protected SpannableStringBuilder handleImage(final Context ctx, List<SpannableStringBuilder> content,
                                                  final Map<String, Object> data) {
         if (data == null) {

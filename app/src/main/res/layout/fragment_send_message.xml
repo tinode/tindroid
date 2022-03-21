@@ -48,11 +48,11 @@
             android:id="@+id/attachImage"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="0.1"
+            android:layout_weight="0"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/send_image_button_hint"
-            android:paddingLeft="6dp"
-            android:paddingRight="6dp"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
             app:srcCompat="@drawable/ic_photo"
             app:tint="?attr/colorAccent" />
 
@@ -60,11 +60,11 @@
             android:id="@+id/attachFile"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="0.1"
+            android:layout_weight="0"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/send_file_button_hint"
-            android:paddingLeft="6dp"
-            android:paddingRight="6dp"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
             app:srcCompat="@drawable/ic_attach"
             app:tint="?attr/colorAccent" />
 
@@ -80,16 +80,35 @@
             android:maxLines="3"
             android:textColor="?android:textColorPrimary" />
 
-        <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/chatSendButton"
+        <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="0.1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/send_message_button_hint"
-            android:paddingStart="4sp"
-            android:paddingEnd="8sp"
-            app:srcCompat="@drawable/ic_send"
-            app:tint="?attr/colorAccent" />
+            android:layout_weight="0">
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/chatAudioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/record_audio_button_hint"
+                android:paddingStart="4dp"
+                android:paddingEnd="6dp"
+                app:srcCompat="@drawable/ic_mic"
+                app:tint="?attr/colorAccent" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/chatSendButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/send_message_button_hint"
+                android:paddingStart="4dp"
+                android:paddingEnd="6dp"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/ic_send"
+                app:tint="?attr/colorAccent" />
+        </FrameLayout>
     </LinearLayout>
 </LinearLayout>
