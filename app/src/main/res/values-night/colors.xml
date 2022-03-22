@@ -9,6 +9,9 @@
     <color name="colorReplyBubble">#10CCCCCC</color>
     <color name="colorReplyText">#CCCCCC</color>
 
+    <!-- Audio waveform color -->
+    <color name="waveform">#40cccccc</color>
+
     <color name="colorChipBackground">#263238</color>
     <color name="colorChipBorder">#546E7A</color>
 

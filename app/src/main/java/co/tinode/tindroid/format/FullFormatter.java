@@ -41,6 +41,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.widgets.WaveDrawable;
 
 /**
  * Convert Drafty object into a Spanned object with full support for all features.
@@ -60,6 +61,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     private static final int STRIPE_GAP_DP = 8;
 
     private static final int MAX_FILE_LENGTH = 28;
+
+    private static final int MIN_AUDIO_PREVIEW_LENGTH = 16;
 
     private static TypedArray sColorsDark;
     private static int sDefaultColor;
@@ -104,23 +107,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
     public void setQuoteFormatter(QuoteFormatter quoteFormatter) {
         mQuoteFormatter = quoteFormatter;
-    }
-
-    // Scale image dimensions to fit under the given viewport size.
-    protected static float scaleBitmap(int srcWidth, int srcHeight, int viewportWidth, float density) {
-        if (srcWidth == 0 || srcHeight == 0) {
-            return 0f;
-        }
-
-        // Convert DP to pixels.
-        float width = srcWidth * density;
-        float height = srcHeight * density;
-        float maxWidth = viewportWidth - IMAGE_H_PADDING * density;
-
-        // Make sure the scaled bitmap is no bigger than the viewport size;
-        float scaleX = Math.min(width, maxWidth) / width;
-        float scaleY = Math.min(height, maxWidth * 0.75f) / height;
-        return Math.min(scaleX, scaleY);
     }
 
     @Override
@@ -210,30 +196,42 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             return null;
         }
 
+        Resources res = ctx.getResources();
         SpannableStringBuilder result = new SpannableStringBuilder();
         // Insert Play icon
-        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_play);
+        Drawable play = AppCompatResources.getDrawable(ctx, R.drawable.ic_play);
         //noinspection ConstantConditions
-        icon.setBounds(0, 0, icon.getIntrinsicWidth() * 3 / 2, icon.getIntrinsicHeight() * 3 / 2);
-        ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
+        play.setBounds(0, 0, play.getIntrinsicWidth() * 3 / 2, play.getIntrinsicHeight() * 3 / 2);
+        play.setTint(res.getColor(R.color.colorAccent));
+        ImageSpan span = new ImageSpan(play, ImageSpan.ALIGN_BOTTOM);
         final Rect bounds = span.getDrawable().getBounds();
         result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        result.setSpan(new SubscriptSpan(), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (mClicker != null) {
+            // Make image clickable by wrapping ImageSpan into a ClickableSpan.
+            result.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    mClicker.onClick("AU", data);
+                }
+            }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
+        }
 
         // Insert waveform.
-        String fname = null;
-        try {
-            fname = (String) data.get("name");
-        } catch (NullPointerException | ClassCastException ignored) {
+        result.append(" ");
+        Object val = data.get("preview");
+        byte[] preview = null;
+        if (val instanceof String) {
+            preview = Base64.decode((String) val, Base64.DEFAULT);
         }
-        if (TextUtils.isEmpty(fname)) {
-            fname = ctx.getResources().getString(R.string.default_attachment_name);
-        } else //noinspection ConstantConditions
-            if (fname.length() > MAX_FILE_LENGTH) {
-                fname = fname.substring(0, MAX_FILE_LENGTH/2 - 1) + "…" +
-                        fname.substring(fname.length() - MAX_FILE_LENGTH/2);
-            }
-        result.append(fname, new TypefaceSpan("monospace"), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (preview != null && preview.length > MIN_AUDIO_PREVIEW_LENGTH) {
+            DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+            float width = mViewport * 0.8f - bounds.width() - 4 * IMAGE_H_PADDING * metrics.density;
+            WaveDrawable wave = new WaveDrawable(res, new Rect(0, 0, (int) width, (int) (bounds.height() * 0.9f)));
+            wave.put(preview);
+            result.append(" ", new ImageSpan(wave, ImageSpan.ALIGN_BASELINE), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            result.append(res.getText(R.string.unavailable));
+        }
 
         // Insert duration on the next line as small text.
         result.append("\n");
@@ -241,11 +239,11 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         try {
             Number duration = (Number) data.get("duration");
             if (duration != null) {
-                strDur = millisToTime(duration, true).toString();
+                strDur = " " + millisToTime(duration, true);
             }
         } catch (NullPointerException | ClassCastException ignored) { }
         if (TextUtils.isEmpty(strDur)) {
-            strDur = "-:--";
+            strDur = " -:--";
         }
         SpannableStringBuilder small = new SpannableStringBuilder()
                 .append(strDur, new RelativeSizeSpan(0.8f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -390,6 +388,23 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         return result;
+    }
+
+    // Scale image dimensions to fit under the given viewport size.
+    protected static float scaleBitmap(int srcWidth, int srcHeight, int viewportWidth, float density) {
+        if (srcWidth == 0 || srcHeight == 0) {
+            return 0f;
+        }
+
+        // Convert DP to pixels.
+        float width = srcWidth * density;
+        float height = srcHeight * density;
+        float maxWidth = viewportWidth - IMAGE_H_PADDING * density;
+
+        // Make sure the scaled bitmap is no bigger than the viewport size;
+        float scaleX = Math.min(width, maxWidth) / width;
+        float scaleY = Math.min(height, maxWidth * 0.75f) / height;
+        return Math.min(scaleX, scaleY);
     }
 
     @Override

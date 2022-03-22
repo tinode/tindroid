@@ -518,7 +518,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         holder.mText.setText(text);
-        if (m.content != null && m.content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"))) {
+        if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "LN", "MN", "HT", "IM", "EX"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -999,6 +999,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             switch (type) {
+                case "AU":
+                    // Audio play/pause.
+                    try {
+                        if (data != null) {
+                            Log.i(TAG, "Play audio");
+                        }
+                    } catch (ClassCastException | NullPointerException ignored) {
+                    }
+                    break;
+
                 case "LN":
                     // Click on an URL
                     try {

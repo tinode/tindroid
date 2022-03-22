@@ -26,8 +26,6 @@ public class WaveformView extends View {
     private int mIndex;
     // Position of the playback as a fraction of the total.
     private float mCurrent;
-    // The number of amplitude bars which can fit onto canvas;
-    private int mMaxBars;
     // Array of 4 values for each bar: startX, startY, stopX, stopY.
     private float[] mBars;
     // Canvas width which fits whole number of bars.
@@ -43,7 +41,6 @@ public class WaveformView extends View {
         mBuffer = null;
         mIndex = 0;
         mBars = new float[0];
-        mMaxBars = 0;
         mBarPaint = new Paint();
         mThumbPaint = new Paint();
         if (attr != null) {
@@ -62,9 +59,9 @@ public class WaveformView extends View {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        mMaxBars = (int) ((right - left -SPACING) / (LINE_WIDTH + SPACING));
-        mEffectiveWidth = (int) (mMaxBars * (LINE_WIDTH + SPACING) + SPACING);
-        mBuffer = Arrays.copyOf(mBuffer, mMaxBars);
+        int maxBars = (int) ((right - left -SPACING) / (LINE_WIDTH + SPACING));
+        mEffectiveWidth = (int) (maxBars * (LINE_WIDTH + SPACING) + SPACING);
+        mBuffer = Arrays.copyOf(mBuffer, maxBars);
     }
 
     @Override
