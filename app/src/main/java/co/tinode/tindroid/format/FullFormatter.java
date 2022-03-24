@@ -6,12 +6,15 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
@@ -213,6 +216,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("AU", data);
                 }
+                // Ignored.
+                @Override public void updateDrawState(@NonNull TextPaint ds) {}
             }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
         }
 
@@ -226,9 +231,33 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         if (preview != null && preview.length > MIN_AUDIO_PREVIEW_LENGTH) {
             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
             float width = mViewport * 0.8f - bounds.width() - 4 * IMAGE_H_PADDING * metrics.density;
-            WaveDrawable wave = new WaveDrawable(res, new Rect(0, 0, (int) width, (int) (bounds.height() * 0.9f)));
-            wave.put(preview);
-            result.append(" ", new ImageSpan(wave, ImageSpan.ALIGN_BASELINE), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            WaveDrawable dw = new WaveDrawable(res);
+            dw.setBounds(new Rect(0, 0, (int) width, (int) (bounds.height() * 0.9f)));
+            dw.put(preview);
+            dw.setLevel(1);
+            ImageSpan wave = new ImageSpan(dw, ImageSpan.ALIGN_BASELINE);
+            result.append(new SpannableStringBuilder().append(" ", wave, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
+                    new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    int clickAt = -1;
+                    Object tag = widget.getTag();
+                    if (tag instanceof Point) {
+                        clickAt = ((Point) tag).x - widget.getPaddingLeft();
+                    }
+                    widget.setTag(null);
+
+                    TextView tv = (TextView) widget;
+                    Layout tvl = tv.getLayout();
+                    Spanned fullText = (Spanned) tv.getText();
+                    float startX = tvl.getPrimaryHorizontal(fullText.getSpanStart(wave));
+                    float endX = tvl.getPrimaryHorizontal(fullText.getSpanEnd(wave));
+                    dw.setLevel((int) ((clickAt - startX) / (endX - startX) * 9999f) + 1);
+                    mContainer.postInvalidate();
+                }
+                @Override
+                public void updateDrawState(@NonNull TextPaint ds) {}
+            }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
             result.append(res.getText(R.string.unavailable));
         }
@@ -524,13 +553,15 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         // Make button clickable.
         final SpannableStringBuilder node = new SpannableStringBuilder();
-        node.append(join(content), new URLSpan("") {
+        node.append(join(content), new ClickableSpan() {
             @Override
-            public void onClick(View widget) {
+            public void onClick(@NonNull View widget) {
                 if (mClicker != null) {
                     mClicker.onClick("BN", data);
                 }
             }
+            // Ignored.
+            @Override public void updateDrawState(@NonNull TextPaint ds) {}
         }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // URLSpan into ButtonSpan.
         node.setSpan(new ButtonSpan(ctx, mFontSize, dipSize), 0, node.length(),

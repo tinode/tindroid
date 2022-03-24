@@ -55,7 +55,8 @@
     <color name="colorImageMetaPanel">#80FFFFFF</color>
 
     <!-- Audio waveform color -->
-    <color name="waveform">#40333333</color>
+    <color name="waveform">#60333333</color>
+    <color name="waveformPast">#80000000</color>
 
     <!-- Indicator of user's online/offline status -->
     <color name="online">#FF40C040</color>

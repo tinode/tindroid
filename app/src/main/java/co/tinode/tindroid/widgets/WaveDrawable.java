@@ -8,7 +8,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import co.tinode.tindroid.R;
@@ -27,44 +26,33 @@ public class WaveDrawable extends Drawable {
     // Bars and spacing sizes in pixels.
     private static float sLineWidth;
     private static float sSpacing;
+    private static float sThumbRadius;
 
     // Amplitude values passed by the caller resampled to fit the screen.
-    private final float[] mBuffer;
+    private float[] mBuffer;
     // Count of amplitude values actually added to the buffer.
     private int mContains;
     // Entry point in mBuffer (mBuffer is a circular buffer).
     private int mIndex;
-    // Position of the playback as a fraction of the total.
-    private float mCurrent;
     // Array of 4 values for each bar: startX, startY, stopX, stopY.
     private float[] mBars = null;
     // Canvas width which fits whole number of bars.
-    private final int mEffectiveWidth;
+    private int mEffectiveWidth;
 
-    @ColorInt private final int mBkgColor;
     private final Paint mBarPaint;
     private final Paint mThumbPaint;
 
-    private final Rect mSize;
+    private Rect mSize = new Rect();
 
-    public WaveDrawable(Resources res, Rect size) {
+    public WaveDrawable(Resources res) {
         super();
-
-        mSize = new Rect(size);
-        setBounds(mSize);
 
         if (sDensity <= 0) {
             sDensity = res.getDisplayMetrics().density;
             sLineWidth = LINE_WIDTH * sDensity;
             sSpacing = SPACING * sDensity;
+            sThumbRadius = sLineWidth * 1.5f;
         }
-
-        int maxBars = (int) ((mSize.width() - sSpacing) / (sLineWidth + sSpacing));
-        mEffectiveWidth = (int) (maxBars * (sLineWidth + sSpacing) + sSpacing);
-        mBuffer = new float[maxBars];
-
-        // Background color.
-        mBkgColor = res.getColor(R.color.colorChipBackground);
 
         // Waveform.
         mBarPaint = new Paint();
@@ -72,14 +60,23 @@ public class WaveDrawable extends Drawable {
         mBarPaint.setStrokeWidth(sLineWidth);
         mBarPaint.setStrokeCap(Paint.Cap.ROUND);
         mBarPaint.setAntiAlias(true);
-        mBarPaint.setDither(true);
         mBarPaint.setColor(res.getColor(R.color.waveform));
 
         // Seek thumb.
         mThumbPaint = new Paint();
         mThumbPaint.setAntiAlias(true);
-        mThumbPaint.setDither(true);
         mThumbPaint.setColor(res.getColor(R.color.colorAccent));
+    }
+
+    @Override
+    protected void onBoundsChange(Rect bounds) {
+        mSize = new Rect(bounds);
+
+        int maxBars = (int) ((mSize.width() - sSpacing) / (sLineWidth + sSpacing));
+        mEffectiveWidth = (int) (maxBars * (sLineWidth + sSpacing) + sSpacing);
+        mBuffer = new float[maxBars];
+
+        invalidateSelf();
     }
 
     @Override
@@ -95,19 +92,23 @@ public class WaveDrawable extends Drawable {
     @Override
     public void draw(@NonNull Canvas canvas) {
         // TODO: Draw background.
-        // canvas.drawColor(mBkgColor);
+        // canvas.drawColor();
 
         if (mBars == null) {
             return;
         }
 
+        // canvas.drawRect(0, 0, mSize.right, mSize.bottom, mBkgColor);
+
         // Draw amplitude bars.
         canvas.drawLines(mBars, mBarPaint);
 
         // Draw thumb.
-        if (mCurrent >= 0) {
-            canvas.drawCircle(mCurrent * mEffectiveWidth + sLineWidth * 2f, mSize.height() * 0.5f,
-                    sLineWidth * 1.5f, mThumbPaint);
+        int level = getLevel();
+        if (level > 0) {
+            float cx = (float) level * (mEffectiveWidth - sThumbRadius * 2) / 10000f + sThumbRadius;
+            canvas.drawCircle(cx, mSize.height() * 0.5f,
+                    sThumbRadius, mThumbPaint);
         }
     }
 
@@ -123,11 +124,18 @@ public class WaveDrawable extends Drawable {
     public void setColorFilter(@Nullable ColorFilter colorFilter) {
         mBarPaint.setColorFilter(colorFilter);
         mThumbPaint.setColorFilter(colorFilter);
+        invalidateSelf();
     }
 
     @Override
     public int getOpacity() {
-        return PixelFormat.OPAQUE;
+        return PixelFormat.TRANSLUCENT;
+    }
+
+    @Override
+    protected boolean onLevelChange(int level) {
+        invalidateSelf();
+        return true;
     }
 
     // Add another bar to waveform.
@@ -149,14 +157,6 @@ public class WaveDrawable extends Drawable {
         mIndex = 0;
         mContains = mBuffer.length;
         recalcBars();
-        invalidateSelf();
-    }
-
-    public void seekTo(float pos) {
-        if (pos < 0 || pos > 1) {
-            throw new IllegalArgumentException("Seek position must be within [0..1] range");
-        }
-        mCurrent = pos;
         invalidateSelf();
     }
 

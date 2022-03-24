@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -32,6 +33,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -61,6 +63,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
@@ -948,6 +951,22 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         public void onShowPress(MotionEvent ev) {
                             mRippleOverlay.setPressed(true);
                             mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
+                        }
+
+                        @Override
+                        public boolean onDown(MotionEvent ev) {
+                            // Convert click coordinates in itemView to TexView.
+                            int[] item = new int[2];
+                            int[] text = new int[2];
+                            itemView.getLocationOnScreen(item);
+                            mText.getLocationOnScreen(text);
+
+                            int x = (int) ev.getX();
+                            int y = (int) ev.getY();
+
+                            mText.setTag(new Point(x, y));
+                            Log.i(TAG, "Down! " + x);
+                            return super.onDown(ev);
                         }
                     });
         }

@@ -1,5 +1,4 @@
-<co.tinode.tindroid.widgets.RippleFrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<co.tinode.tindroid.widgets.RippleFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
@@ -14,59 +13,60 @@
         android:paddingRight="6dp"
         android:paddingBottom="4dp">
 
-            <LinearLayout
-                android:id="@+id/messageBubble"
+        <LinearLayout
+            android:id="@+id/messageBubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:background="@drawable/bubble_r"
+            android:backgroundTint="@color/colorMessageBubbleMine"
+            android:orientation="vertical"
+            tools:ignore="RtlHardcoded,UselessParent">
+
+            <TextView
+                android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bubble_r"
-                android:backgroundTint="@color/colorMessageBubbleMine"
-                android:layout_gravity="right"
-                android:orientation="vertical"
-                tools:ignore="RtlHardcoded,UselessParent">
+                android:maxWidth="280dp"
+                android:minWidth="140dp"
+                android:paddingStart="8dp"
+                android:textColor="?android:textColorPrimary"
+                tools:ignore="RtlSymmetry"
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+
+            <include
+                android:id="@+id/progressContainer"
+                layout="@layout/progress_bar"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end">
 
                 <TextView
-                    android:id="@+id/messageText"
+                    android:id="@+id/messageMeta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:maxWidth="280dp"
-                    android:minWidth="140dp"
-                    android:paddingStart="8dp"
-                    android:textColor="?android:textColorPrimary"
-                    tools:ignore="RtlSymmetry"
-                    tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:textColor="?android:textColorSecondary"
+                    android:textSize="11sp"
+                    tools:ignore="SmallSp"
+                    tools:text="Jun 11 22:17" />
 
-                <include android:id="@+id/progressContainer"
-                    layout="@layout/progress_bar"
-                    android:visibility="gone"/>
+                <ImageView
+                    android:id="@+id/messageViewedIcon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center_vertical"
+                    android:alpha="0.8"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    tools:ignore="ContentDescription,SmallSp"
+                    tools:src="@drawable/ic_done_all" />
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end">
-
-                    <TextView
-                        android:id="@+id/messageMeta"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingLeft="4dp"
-                        android:paddingRight="4dp"
-                        android:textColor="?android:textColorSecondary"
-                        android:textSize="11sp"
-                        tools:ignore="SmallSp"
-                        tools:text="Jun 11 22:17"/>
-
-                    <ImageView
-                        android:id="@+id/messageViewedIcon"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center_vertical"
-                        android:paddingEnd="2dp"
-                        android:paddingStart="2dp"
-                        android:alpha="0.8"
-                        tools:ignore="ContentDescription,SmallSp"
-                        tools:src="@drawable/ic_done_all" />
-
-                </LinearLayout>
+            </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>
@@ -76,8 +76,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorMessageSelected"
-        android:visibility="gone"
-        />
+        android:visibility="gone" />
 
     <View
         android:id="@+id/overlay"
@@ -85,7 +84,6 @@
         android:layout_height="match_parent"
         android:background="?android:selectableItemBackground"
         android:clickable="false"
-        android:focusable="false"
-        />
+        android:focusable="false" />
 
 </co.tinode.tindroid.widgets.RippleFrameLayout>

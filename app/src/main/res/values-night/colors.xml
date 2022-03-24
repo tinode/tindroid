@@ -10,7 +10,8 @@
     <color name="colorReplyText">#CCCCCC</color>
 
     <!-- Audio waveform color -->
-    <color name="waveform">#40cccccc</color>
+    <color name="waveform">#60CCCCCC</color>
+    <color name="waveformPast">#80FFFFFF</color>
 
     <color name="colorChipBackground">#263238</color>
     <color name="colorChipBorder">#546E7A</color>
