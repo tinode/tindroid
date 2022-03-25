@@ -250,7 +250,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 @Override
                 public void onClick(@NonNull View widget) {
                     int clickAt = -1;
-                    Object tag = widget.getTag();
+                    Object tag = widget.getTag(R.id.click_coordinates);
                     if (tag instanceof Point) {
                         clickAt = ((Point) tag).x - widget.getPaddingLeft();
                     }

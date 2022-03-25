@@ -967,7 +967,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             int y = (int) ev.getY();
 
                             // Pass click position to spannable.
-                            mText.setTag(new Point(x, y));
+                            mText.setTag(R.id.click_coordinates, new Point(x, y));
                             return super.onDown(ev);
                         }
                     });
