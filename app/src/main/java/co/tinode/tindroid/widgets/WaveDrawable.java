@@ -8,6 +8,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import co.tinode.tindroid.R;
@@ -40,6 +41,7 @@ public class WaveDrawable extends Drawable {
     private int mEffectiveWidth;
 
     private final Paint mBarPaint;
+    private final Paint mPastBarPaint;
     private final Paint mThumbPaint;
 
     private Rect mSize = new Rect();
@@ -54,13 +56,21 @@ public class WaveDrawable extends Drawable {
             sThumbRadius = sLineWidth * 1.5f;
         }
 
-        // Waveform.
+        // Waveform in the future.
         mBarPaint = new Paint();
         mBarPaint.setStyle(Paint.Style.STROKE);
         mBarPaint.setStrokeWidth(sLineWidth);
         mBarPaint.setStrokeCap(Paint.Cap.ROUND);
         mBarPaint.setAntiAlias(true);
         mBarPaint.setColor(res.getColor(R.color.waveform));
+
+        // Waveform in the past.
+        mPastBarPaint = new Paint();
+        mPastBarPaint.setStyle(Paint.Style.STROKE);
+        mPastBarPaint.setStrokeWidth(sLineWidth);
+        mPastBarPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPastBarPaint.setAntiAlias(true);
+        mPastBarPaint.setColor(res.getColor(R.color.waveformPast));
 
         // Seek thumb.
         mThumbPaint = new Paint();
@@ -91,24 +101,28 @@ public class WaveDrawable extends Drawable {
 
     @Override
     public void draw(@NonNull Canvas canvas) {
-        // TODO: Draw background.
-        // canvas.drawColor();
-
         if (mBars == null) {
             return;
         }
 
-        // canvas.drawRect(0, 0, mSize.right, mSize.bottom, mBkgColor);
-
-        // Draw amplitude bars.
-        canvas.drawLines(mBars, mBarPaint);
-
-        // Draw thumb.
         int level = getLevel();
         if (level > 0) {
+            // Draw past - future bars and thumb on top of them.
             float cx = (float) level * (mEffectiveWidth - sThumbRadius * 2) / 10000f + sThumbRadius;
-            canvas.drawCircle(cx, mSize.height() * 0.5f,
-                    sThumbRadius, mThumbPaint);
+
+            int dividedAt = (int) (mBars.length * 0.25f * (float) level / 10000f) * 4;
+
+            // Already played amplitude bars.
+            canvas.drawLines(mBars, 0, dividedAt, mPastBarPaint);
+
+            // Not yet played amplitude bars.
+            canvas.drawLines(mBars, dividedAt, mBars.length - dividedAt, mBarPaint);
+
+            // Draw thumb.
+            canvas.drawCircle(cx, mSize.height() * 0.5f, sThumbRadius, mThumbPaint);
+        } else {
+            // Just plain amplitude bars in one color.
+            canvas.drawLines(mBars, mBarPaint);
         }
     }
 

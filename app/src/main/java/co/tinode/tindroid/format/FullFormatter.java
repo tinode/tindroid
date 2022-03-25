@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
 import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -199,10 +200,11 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             return null;
         }
 
+        mContainer.setHighlightColor(Color.TRANSPARENT);
         Resources res = ctx.getResources();
         SpannableStringBuilder result = new SpannableStringBuilder();
         // Insert Play icon
-        Drawable play = AppCompatResources.getDrawable(ctx, R.drawable.ic_play);
+        StateListDrawable play = (StateListDrawable) AppCompatResources.getDrawable(ctx, R.drawable.ic_play_pause);
         //noinspection ConstantConditions
         play.setBounds(0, 0, play.getIntrinsicWidth() * 3 / 2, play.getIntrinsicHeight() * 3 / 2);
         play.setTint(res.getColor(R.color.colorAccent));
@@ -210,11 +212,19 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         final Rect bounds = span.getDrawable().getBounds();
         result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (mClicker != null) {
+
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
             result.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("AU", data);
+                    int[] state = play.getState();
+                    if (state.length > 0 && state[0] == android.R.attr.state_checked) {
+                        play.setState(new int[]{});
+                    } else {
+                        play.setState(new int[]{android.R.attr.state_checked});
+                    }
+                    mContainer.postInvalidate();
                 }
                 // Ignored.
                 @Override public void updateDrawState(@NonNull TextPaint ds) {}

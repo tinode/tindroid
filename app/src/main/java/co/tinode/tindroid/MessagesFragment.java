@@ -40,6 +40,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -249,7 +250,10 @@ public class MessagesFragment extends Fragment {
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
         // Send message on button click
-        view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendText(activity));
+        AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
+        audio.setOnClickListener(v -> { /* TODO */ });
+        AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
+        send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
 
         // Send image button
@@ -273,6 +277,15 @@ public class MessagesFragment extends Fragment {
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 if (count > 0 || before > 0) {
                     activity.sendKeyPress();
+                }
+
+                // Show either [send] or [record audio] button.
+                if (charSequence.length() > 0) {
+                    audio.setVisibility(View.INVISIBLE);
+                    send.setVisibility(View.VISIBLE);
+                } else {
+                    audio.setVisibility(View.VISIBLE);
+                    send.setVisibility(View.INVISIBLE);
                 }
             }
 
