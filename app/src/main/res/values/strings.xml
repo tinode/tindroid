@@ -313,4 +313,5 @@
     <string name="cannot_reply">Unable to reply to this message</string>
     <string name="record_audio_button_hint">Hold to record a voice message</string>
     <string name="audio">Audio</string>
+    <string name="unable_to_play_audio">Unable to play this audio message</string>
 </resources>

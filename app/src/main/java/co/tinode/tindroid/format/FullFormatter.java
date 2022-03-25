@@ -153,7 +153,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 @Override
                 public void onClick(View widget) {
                     if (mClicker != null) {
-                        mClicker.onClick("LN", data);
+                        mClicker.onClick("LN", data, null);
                     }
                 }
             }, 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -216,14 +216,17 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             result.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    mClicker.onClick("AU", data);
                     int[] state = play.getState();
+                    AudioClickAction.Action action;
                     if (state.length > 0 && state[0] == android.R.attr.state_checked) {
                         play.setState(new int[]{});
+                        action = AudioClickAction.Action.PAUSE;
                     } else {
                         play.setState(new int[]{android.R.attr.state_checked});
+                        action = AudioClickAction.Action.PLAY;
                     }
                     mContainer.postInvalidate();
+                    mClicker.onClick("AU", data, new AudioClickAction(action));
                 }
                 // Ignored.
                 @Override public void updateDrawState(@NonNull TextPaint ds) {}
@@ -261,8 +264,12 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                     Spanned fullText = (Spanned) tv.getText();
                     float startX = tvl.getPrimaryHorizontal(fullText.getSpanStart(wave));
                     float endX = tvl.getPrimaryHorizontal(fullText.getSpanEnd(wave));
-                    dw.setLevel((int) ((clickAt - startX) / (endX - startX) * 9999f) + 1);
+                    int level = (int) ((clickAt - startX) / (endX - startX) * 9999f) + 1;
+                    dw.setLevel(level);
                     mContainer.postInvalidate();
+                    if (mClicker != null) {
+                        mClicker.onClick("AU", data, new AudioClickAction(level));
+                    }
                 }
                 @Override
                 public void updateDrawState(@NonNull TextPaint ds) {}
@@ -418,7 +425,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             result.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    mClicker.onClick("IM", data);
+                    mClicker.onClick("IM", data, null);
                 }
             }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
         } else {
@@ -533,7 +540,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                     new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    mClicker.onClick("EX", data);
+                    mClicker.onClick("EX", data, null);
                 }
             }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
@@ -566,7 +573,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             @Override
             public void onClick(@NonNull View widget) {
                 if (mClicker != null) {
-                    mClicker.onClick("BN", data);
+                    mClicker.onClick("BN", data, null);
                 }
             }
             // Ignored.
@@ -656,6 +663,23 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     public interface ClickListener {
-        void onClick(String type, Map<String, Object> data);
+        void onClick(String type, Map<String, Object> data, Object params);
+    }
+
+    public static class AudioClickAction {
+        public enum Action {PLAY, PAUSE}
+
+        public Integer seekTo;
+        public Action action;
+
+        public AudioClickAction(Action action) {
+            this.action = action;
+            seekTo = null;
+        }
+
+        public AudioClickAction(int seekTo) {
+            action = null;
+            this.seekTo = seekTo;
+        }
     }
 }

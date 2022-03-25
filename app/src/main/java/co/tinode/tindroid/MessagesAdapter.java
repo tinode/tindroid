@@ -13,6 +13,8 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -39,6 +41,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -63,7 +66,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
-
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
@@ -113,11 +115,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     };
 
     private final MessageActivity mActivity;
-    private ActionMode mSelectionMode;
     private final ActionMode.Callback mSelectionModeCallback;
     private final SwipeRefreshLayout mRefresher;
     private final MessageLoaderCallbacks mMessageLoaderCallback;
     private final SpanClicker mSpanFormatterClicker;
+    private ActionMode mSelectionMode;
     private RecyclerView mRecyclerView;
     private Cursor mCursor;
     private String mTopicName = null;
@@ -220,6 +222,36 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
                 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return span;
+    }
+
+    private static StoredMessage getMessage(Cursor cur, int position, int previewLength) {
+        if (cur.moveToPosition(position)) {
+            return StoredMessage.readMessage(cur, previewLength);
+        }
+        return null;
+    }
+
+    private static int findInCursor(Cursor cur, int seq) {
+        int low = 0;
+        int high = cur.getCount() - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            StoredMessage m = getMessage(cur, mid, 0); // previewLength == 0 means no content is needed.
+            if (m == null) {
+                return -mid;
+            }
+
+            // Messages are sorted in descending order by seq.
+            int cmp = -m.seq + seq;
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found
     }
 
     @Override
@@ -330,8 +362,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     private String messageFrom(StoredMessage msg) {
-        @SuppressWarnings("unchecked")
-        final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+        @SuppressWarnings("unchecked") final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
         String uname = null;
         if (topic != null) {
             if (!topic.isChannel()) {
@@ -633,7 +664,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 int replySeq = -1;
                 try {
                     replySeq = Integer.parseInt(m.getStringHeader("reply"));
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
                 if (replySeq != -1) {
                     // A reply message was clicked. Scroll original into view and animate.
                     final int pos = findInCursor(mCursor, replySeq);
@@ -672,6 +704,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         });
     }
 
+    @Override
+    public void onViewRecycled(final @NonNull ViewHolder vh) {
+        // Stop playing audio and release mMediaPlayer.
+    }
+
     private void animateMessageBubble(final ViewHolder vh, boolean isMine) {
         if (vh == null) {
             return;
@@ -683,7 +720,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         ValueAnimator colorAnimation = ValueAnimator.ofArgb(from, to, from);
         colorAnimation.setDuration(600); // milliseconds
         colorAnimation.addUpdateListener(animator ->
-            vh.mMessageBubble.setBackgroundTintList(ColorStateList.valueOf((int) animator.getAnimatedValue()))
+                vh.mMessageBubble.setBackgroundTintList(ColorStateList.valueOf((int) animator.getAnimatedValue()))
         );
         colorAnimation.start();
     }
@@ -692,13 +729,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private StoredMessage getMessage(int position) {
         if (mCursor != null && !mCursor.isClosed()) {
             return getMessage(mCursor, position, -1);
-        }
-        return null;
-    }
-
-    private static StoredMessage getMessage(Cursor cur, int position, int previewLength) {
-        if (cur.moveToPosition(position)) {
-            return StoredMessage.readMessage(cur, previewLength);
         }
         return null;
     }
@@ -877,29 +907,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    private static int findInCursor(Cursor cur, int seq) {
-        int low = 0;
-        int high = cur.getCount() - 1;
-
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            StoredMessage m = getMessage(cur, mid, 0); // previewLength == 0 means no content is needed.
-            if (m == null) {
-                return -mid;
-            }
-
-            // Messages are sorted in descending order by seq.
-            int cmp = - m.seq + seq;
-            if (cmp < 0)
-                low = mid + 1;
-            else if (cmp > 0)
-                high = mid - 1;
-            else
-                return mid; // key found
-        }
-        return -(low + 1);  // key not found
-    }
-
     static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
         final ImageView mIcon;
@@ -1014,7 +1021,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         @Override
-        public void onClick(String type, Map<String, Object> data) {
+        public void onClick(String type, Map<String, Object> data, Object params) {
             if (mSelectedItems != null) {
                 return;
             }
@@ -1022,11 +1029,47 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             switch (type) {
                 case "AU":
                     // Audio play/pause.
-                    try {
-                        if (data != null) {
-                            Log.i(TAG, "Play audio");
+                    if (data != null) {
+                        try {
+                            FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
+                            if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
+                                Log.i(TAG, "PLAY! pos=" + mPosition);
+                                Object val;
+                                String url = null;
+                                if ((val = data.get("ref")) instanceof String) {
+                                    url = (String) val;
+                                } else if ((val = data.get("val")) instanceof String) {
+                                    String mime = (String) data.get("mime");
+                                    url = "data:" + mime + ";base64," + val;
+                                }
+                                if (url != null) {
+                                    if (mMediaPlayer == null) {
+                                        mMediaPlayer = new MediaPlayer();
+                                    } else {
+                                        mMediaPlayer.reset();
+                                    }
+                                    mMediaPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+                                    mMediaPlayer.setDataSource(url);
+                                    mMediaPlayer.prepare();
+                                    mMediaPlayer.start();
+                                }
+                            } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
+                                Log.i(TAG, "PAUSE! pos=" + mPosition);
+                                if (mMediaPlayer != null) {
+                                    mMediaPlayer.pause();
+                                }
+                            } else if (aca.seekTo != null) {
+                                Log.i(TAG, "Audio SEEK " + aca.seekTo);
+                                if (mMediaPlayer != null) {
+                                    Integer duration = (Integer) data.get("duration");
+                                    if (duration != null) {
+                                        mMediaPlayer.seekTo((int) (aca.seekTo / 10000f * duration));
+                                    }
+                                }
+                            }
+                        } catch (IOException | ClassCastException ignored) {
+                            Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
                         }
-                    } catch (ClassCastException | NullPointerException ignored) {
                     }
                     break;
 
