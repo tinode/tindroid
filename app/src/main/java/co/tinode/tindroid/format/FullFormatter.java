@@ -212,7 +212,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         final Rect bounds = span.getDrawable().getBounds();
         result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (mClicker != null) {
-
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
             result.setSpan(new ClickableSpan() {
                 @Override

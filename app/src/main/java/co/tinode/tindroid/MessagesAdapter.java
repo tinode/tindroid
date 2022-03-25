@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Spannable;
@@ -33,7 +34,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -123,6 +123,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private String mTopicName = null;
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
+
+    private MediaPlayer mMediaPlayer = null;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
@@ -964,8 +966,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             int x = (int) ev.getX();
                             int y = (int) ev.getY();
 
+                            // Pass click position to spannable.
                             mText.setTag(new Point(x, y));
-                            Log.i(TAG, "Down! " + x);
                             return super.onDown(ev);
                         }
                     });
