@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import androidx.annotation.NonNull;
 import co.tinode.tinodesdk.model.Drafty;
 
 public abstract class AbstractDraftyFormatter<T extends Spanned> implements Drafty.Formatter<T> {
@@ -163,7 +164,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     }
 
     // Convert milliseconds to '00:00' format.
-    protected static StringBuilder millisToTime(Number millis, boolean fixedMin) {
+    protected static StringBuilder millisToTime(@NonNull Number millis, boolean fixedMin) {
         StringBuilder sb = new StringBuilder();
         float duration = millis.floatValue() / 1000;
         int min = (int) Math.floor(duration / 60f);

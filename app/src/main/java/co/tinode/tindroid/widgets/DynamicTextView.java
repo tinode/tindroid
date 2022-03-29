@@ -2,6 +2,7 @@ package co.tinode.tindroid.widgets;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -36,7 +37,7 @@ public class DynamicTextView extends AppCompatTextView {
     @Override
     public void scheduleDrawable(@NonNull Drawable who, @NonNull Runnable what, long when) {
         Log.i(TAG, "schedule");
-        postDelayed(what, when);
+        postDelayed(what, when - SystemClock.uptimeMillis());
     }
 
     @Override

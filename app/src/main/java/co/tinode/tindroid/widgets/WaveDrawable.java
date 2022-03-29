@@ -24,7 +24,7 @@ public class WaveDrawable extends Drawable implements Runnable {
     private static final float SPACING = 1f;
 
     // Time between redraws in milliseconds.
-    private static final int FRAME_DURATION = 500;
+    private static final int FRAME_DURATION = 150;
 
     // Display density.
     private static float sDensity = -1f;
@@ -35,7 +35,7 @@ public class WaveDrawable extends Drawable implements Runnable {
     private static float sThumbRadius;
 
     // Duration of the audio in milliseconds.
-    private int mDuration;
+    private int mDuration = 0;
 
     // Current thumb position as a fraction of the total 0..1
     private float mSeekPosition = -1f;
@@ -200,12 +200,20 @@ public class WaveDrawable extends Drawable implements Runnable {
         scheduleSelf(this, SystemClock.uptimeMillis() + FRAME_DURATION);
     }
 
+    public void setDuration(int millis) {
+        mDuration = millis;
+    }
+
     public void seekTo(@FloatRange(from = 0f, to = 1f) float fraction) {
-        if (mSeekPosition != fraction) {
+        if (mDuration > 0 && mSeekPosition != fraction) {
             Log.i("WD", "Seek to " + fraction);
             mSeekPosition = Math.max(Math.min(fraction, 1f), 0f);
             invalidateSelf();
         }
+    }
+
+    public float getPosition() {
+        return mSeekPosition;
     }
 
     // Add another bar to waveform.
@@ -273,7 +281,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     // Get thumb position for level.
     private float seekPositionToX() {
-        float base = (int) (mBars.length / 4f * mSeekPosition);
+        float base = mBars.length / 4f * (mSeekPosition - 0.01f);
         return mBars[(int) base * 4] + (base - (int) base) * (sLineWidth + sSpacing);
     }
 

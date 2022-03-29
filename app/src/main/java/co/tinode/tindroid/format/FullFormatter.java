@@ -216,6 +216,11 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         result.append(" ");
 
+        Number duration = null;
+        try {
+            duration = (Number) data.get("duration");
+        } catch (ClassCastException ignored) {}
+
         // Initialize and insert waveform drawable.
         Object val = data.get("preview");
         byte[] preview = null;
@@ -228,6 +233,9 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             waveDrawable = new WaveDrawable(res);
             waveDrawable.setBounds(new Rect(0, 0, (int) width, (int) (bounds.height() * 0.9f)));
             waveDrawable.setCallback(mContainer);
+            if (duration != null) {
+                waveDrawable.setDuration(duration.intValue());
+            }
             waveDrawable.put(preview);
             ImageSpan wave = new ImageSpan(waveDrawable, ImageSpan.ALIGN_BASELINE);
             result.append(new SpannableStringBuilder().append(" ", wave, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
@@ -294,13 +302,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         // Insert duration on the next line as small text.
         result.append("\n");
-        String strDur = null;
-        try {
-            Number duration = (Number) data.get("duration");
-            if (duration != null) {
-                strDur = " " + millisToTime(duration, true);
-            }
-        } catch (NullPointerException | ClassCastException ignored) { }
+        String strDur = duration != null ? " " + millisToTime(duration, true) : null;
         if (TextUtils.isEmpty(strDur)) {
             strDur = " -:--";
         }
