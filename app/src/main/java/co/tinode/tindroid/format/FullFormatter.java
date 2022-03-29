@@ -270,8 +270,33 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         if (mClicker != null) {
+            final AudioControlCallback aControl;
+
             if (waveDrawable != null) {
                 waveDrawable.seekTo(0);
+                waveDrawable.setOnCompletionListener(() -> {
+                    play.setState(new int[]{});
+                    mContainer.postInvalidate();
+                });
+
+                aControl = new AudioControlCallback() {
+                    @Override
+                    public void reset() {
+                        waveDrawable.reset();
+                    }
+
+                    @Override
+                    public void pause() {
+                        waveDrawable.stop();
+                    }
+
+                    @Override
+                    public void resume() {
+                        waveDrawable.start();
+                    }
+                };
+            } else {
+                aControl = null;
             }
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
             result.setSpan(new ClickableSpan() {
@@ -293,7 +318,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                         }
                     }
                     mContainer.postInvalidate();
-                    mClicker.onClick("AU", data, new AudioClickAction(action));
+                    mClicker.onClick("AU", data, new AudioClickAction(action, aControl));
                 }
                 // Ignored.
                 @Override public void updateDrawState(@NonNull TextPaint ds) {}
@@ -682,15 +707,28 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         void onClick(String type, Map<String, Object> data, Object params);
     }
 
+    public interface AudioControlCallback {
+        void reset();
+        void pause();
+        void resume();
+    }
+
     public static class AudioClickAction {
         public enum Action {PLAY, PAUSE}
 
         public Float seekTo;
         public Action action;
 
+        public AudioControlCallback control;
+
         public AudioClickAction(Action action) {
             this.action = action;
             seekTo = null;
+        }
+
+        public AudioClickAction(Action action, AudioControlCallback callback) {
+            this(action);
+            control = callback;
         }
 
         public AudioClickAction(float seekTo) {

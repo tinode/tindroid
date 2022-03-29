@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,7 +13,6 @@ import androidx.appcompat.widget.AppCompatTextView;
  * Text view which permits animation of embedded ImageSpans.
  */
 public class DynamicTextView extends AppCompatTextView {
-    private static final String TAG = "DynamicTextView";
 
     public DynamicTextView(@NonNull Context context) {
         this(context, null);
@@ -30,19 +28,16 @@ public class DynamicTextView extends AppCompatTextView {
 
     @Override
     public void invalidateDrawable(@NonNull Drawable who) {
-        Log.i(TAG, "invalidate");
         postInvalidate();
     }
 
     @Override
     public void scheduleDrawable(@NonNull Drawable who, @NonNull Runnable what, long when) {
-        Log.i(TAG, "schedule");
         postDelayed(what, when - SystemClock.uptimeMillis());
     }
 
     @Override
     public void unscheduleDrawable(@NonNull Drawable who, @NonNull Runnable what) {
-        Log.i(TAG, "UN-schedule");
         removeCallbacks(what);
     }
 }

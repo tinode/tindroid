@@ -23,8 +23,8 @@ public class WaveDrawable extends Drawable implements Runnable {
     private static final float LINE_WIDTH = 3f;
     private static final float SPACING = 1f;
 
-    // Time between redraws in milliseconds.
-    private static final int FRAME_DURATION = 150;
+    // Minimum time between redraws in milliseconds.
+    private static final int MIN_FRAME_DURATION = 50;
 
     // Display density.
     private static float sDensity = -1f;
@@ -53,12 +53,17 @@ public class WaveDrawable extends Drawable implements Runnable {
     // If the Drawable is animated.
     private boolean mRunning  = false;
 
+    // Duration of a single animation frame: about two pixels at a time, but no shorter than MIN_FRAME_DURATION.
+    private int mFrameDuration = MIN_FRAME_DURATION;
+
     // Paints for individual components of the drawable.
     private final Paint mBarPaint;
     private final Paint mPastBarPaint;
     private final Paint mThumbPaint;
 
     private Rect mSize = new Rect();
+
+    private CompletionListener mCompletionListener = null;
 
     public WaveDrawable(Resources res) {
         super();
@@ -100,6 +105,8 @@ public class WaveDrawable extends Drawable implements Runnable {
         mEffectiveWidth = (int) (maxBars * (sLineWidth + sSpacing) + sSpacing);
         mBuffer = new float[maxBars];
 
+        // Recalculate frame duration (2 pixels per frame).
+        mFrameDuration = Math.max(mDuration / mSize.width() * 2, MIN_FRAME_DURATION);
         invalidateSelf();
     }
 
@@ -161,52 +168,51 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     @Override
     public void run() {
-        Callback cb = getCallback();
-        if (cb == null) {
-            Log.i("WD", "run: No callback");
-        } else {
-            Log.i("WD", "run: Callback class = " + cb.getClass().getSimpleName());
-        }
-
-        float pos = mSeekPosition + (float) FRAME_DURATION / mDuration;
-        seekTo(pos);
+        float pos = mSeekPosition + (float) mFrameDuration / mDuration;
         if (pos < 1) {
+            seekTo(pos);
             nextFrame();
+        } else {
+            seekTo(0);
+            mRunning = false;
+            if (mCompletionListener != null) {
+                mCompletionListener.onFinished();
+            }
         }
     }
 
     public void start() {
-        Callback cb = getCallback();
-        if (cb == null) {
-            Log.i("WD", "start: No callback");
-        } else {
-            Log.i("WD", "start: Callback class = " + cb.getClass().getSimpleName());
-        }
         if (!mRunning) {
-            Log.i("WD", "start");
             mRunning = true;
             nextFrame();
         }
     }
 
     public void stop() {
-        Log.i("WD", "STOP");
         mRunning = false;
         unscheduleSelf(this);
     }
 
+    public void reset() {
+        stop();
+        seekTo(0);
+        if (mCompletionListener != null) {
+            mCompletionListener.onFinished();
+        }
+    }
+
     private void nextFrame() {
         unscheduleSelf(this);
-        scheduleSelf(this, SystemClock.uptimeMillis() + FRAME_DURATION);
+        scheduleSelf(this, SystemClock.uptimeMillis() + mFrameDuration);
     }
 
     public void setDuration(int millis) {
         mDuration = millis;
+        mFrameDuration = Math.min(mDuration / mSize.width(), MIN_FRAME_DURATION);
     }
 
     public void seekTo(@FloatRange(from = 0f, to = 1f) float fraction) {
         if (mDuration > 0 && mSeekPosition != fraction) {
-            Log.i("WD", "Seek to " + fraction);
             mSeekPosition = Math.max(Math.min(fraction, 1f), 0f);
             invalidateSelf();
         }
@@ -236,6 +242,10 @@ public class WaveDrawable extends Drawable implements Runnable {
         mContains = mBuffer.length;
         recalcBars();
         invalidateSelf();
+    }
+
+    public void setOnCompletionListener(CompletionListener listener) {
+        mCompletionListener = listener;
     }
 
     // Calculate vertices of amplitude bars.
@@ -312,5 +322,9 @@ public class WaveDrawable extends Drawable implements Runnable {
                 dst[i] = dst[i] /max;
             }
         }
+    }
+
+    public interface CompletionListener {
+        void onFinished();
     }
 }

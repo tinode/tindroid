@@ -42,7 +42,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -62,7 +61,6 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
-import androidx.media.AudioAttributesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -130,6 +128,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     private MediaPlayer mAudioPlayer = null;
     private int mPlayingAudioSeq = -1;
+    private FullFormatter.AudioControlCallback mAudioControlCallback = null;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
@@ -1064,12 +1063,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
                                         mPlayingAudioSeq = msg.seq;
                                         if (mAudioPlayer != null) {
-                                            mAudioPlayer.stop();
+                                            mAudioPlayer.reset();
                                             mAudioPlayer.release();
+                                            if (mAudioControlCallback != null) {
+                                                mAudioControlCallback.reset();
+                                            }
                                         }
+                                        mAudioControlCallback = aca.control;
                                         mAudioPlayer = new MediaPlayer();
                                         mAudioPlayer.setOnCompletionListener(mp -> {
-                                            Log.i(TAG, "Playback completed at " + mPlayingAudioSeq);
+                                            if (mAudioControlCallback != null) {
+                                                mAudioControlCallback.reset();
+                                            }
                                         });
                                         mAudioPlayer.setAudioAttributes(
                                                 new AudioAttributes.Builder()
