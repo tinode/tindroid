@@ -42,6 +42,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
+import androidx.media.AudioAttributesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -126,7 +128,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
 
-    private MediaPlayer mMediaPlayer = null;
+    private MediaPlayer mAudioPlayer = null;
+    private int mPlayingAudioSeq = -1;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
@@ -525,6 +528,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
+        holder.seqId = m.seq;
+
         if (holder.mIcon != null) {
             // Meta bubble in the center of the screen
             holder.mIcon.setVisibility(View.VISIBLE);
@@ -706,7 +711,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     @Override
     public void onViewRecycled(final @NonNull ViewHolder vh) {
-        // Stop playing audio and release mMediaPlayer.
+        // Stop playing audio and release mAudioPlayer.
+        if (vh.seqId > 0) {
+            if (mAudioPlayer != null) {
+                mAudioPlayer.stop();
+                mAudioPlayer.release();
+                mAudioPlayer = null;
+                mPlayingAudioSeq = -1;
+                vh.seqId = -1;
+            }
+        }
     }
 
     private void animateMessageBubble(final ViewHolder vh, boolean isMine) {
@@ -924,6 +938,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final View mProgress;
         final View mProgressResult;
         final GestureDetector mGestureDetector;
+        int seqId = 0;
 
         ViewHolder(View itemView, int viewType) {
             super(itemView);
@@ -973,7 +988,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             int x = (int) ev.getX();
                             int y = (int) ev.getY();
 
-                            // Pass click position to spannable.
+                            // Make click position available to spannable.
                             mText.setTag(R.id.click_coordinates, new Point(x, y));
                             return super.onDown(ev);
                         }
@@ -1030,10 +1045,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 case "AU":
                     // Audio play/pause.
                     if (data != null) {
+                        StoredMessage msg = getMessage(mPosition);
+                        if (msg == null) {
+                            break;
+                        }
                         try {
                             FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
                             if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
-                                Log.i(TAG, "PLAY! pos=" + mPosition);
                                 Object val;
                                 String url = null;
                                 if ((val = data.get("ref")) instanceof String) {
@@ -1043,27 +1061,35 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     url = "data:" + mime + ";base64," + val;
                                 }
                                 if (url != null) {
-                                    if (mMediaPlayer == null) {
-                                        mMediaPlayer = new MediaPlayer();
-                                    } else {
-                                        mMediaPlayer.reset();
+                                    if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
+                                        mPlayingAudioSeq = msg.seq;
+                                        if (mAudioPlayer != null) {
+                                            mAudioPlayer.stop();
+                                            mAudioPlayer.release();
+                                        }
+                                        mAudioPlayer = new MediaPlayer();
+                                        mAudioPlayer.setOnCompletionListener(mp -> {
+                                            Log.i(TAG, "Playback completed at " + mPlayingAudioSeq);
+                                        });
+                                        mAudioPlayer.setAudioAttributes(
+                                                new AudioAttributes.Builder()
+                                                        .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
+                                        mAudioPlayer.setDataSource(url);
+                                        mAudioPlayer.prepare();
                                     }
-                                    mMediaPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
-                                    mMediaPlayer.setDataSource(url);
-                                    mMediaPlayer.prepare();
-                                    mMediaPlayer.start();
+                                    mAudioPlayer.start();
                                 }
                             } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
-                                Log.i(TAG, "PAUSE! pos=" + mPosition);
-                                if (mMediaPlayer != null) {
-                                    mMediaPlayer.pause();
+                                if (mAudioPlayer != null) {
+                                    mAudioPlayer.pause();
                                 }
                             } else if (aca.seekTo != null) {
-                                Log.i(TAG, "Audio SEEK " + aca.seekTo);
-                                if (mMediaPlayer != null) {
-                                    Integer duration = (Integer) data.get("duration");
-                                    if (duration != null) {
-                                        mMediaPlayer.seekTo((int) (aca.seekTo / 10000f * duration));
+                                if (mAudioPlayer != null) {
+                                    long duration = mAudioPlayer.getDuration();
+                                    if (duration > 0) {
+                                        mAudioPlayer.seekTo((int) (aca.seekTo * duration));
+                                    } else {
+                                        Log.i(TAG, "Audio has no duration");
                                     }
                                 }
                             }

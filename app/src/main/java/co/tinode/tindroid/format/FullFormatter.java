@@ -202,8 +202,10 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         mContainer.setHighlightColor(Color.TRANSPARENT);
         Resources res = ctx.getResources();
+        final WaveDrawable waveDrawable;
         SpannableStringBuilder result = new SpannableStringBuilder();
-        // Insert Play icon
+
+        // Initialize Play icon
         StateListDrawable play = (StateListDrawable) AppCompatResources.getDrawable(ctx, R.drawable.ic_play_pause);
         //noinspection ConstantConditions
         play.setBounds(0, 0, play.getIntrinsicWidth() * 3 / 2, play.getIntrinsicHeight() * 3 / 2);
@@ -211,7 +213,58 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         ImageSpan span = new ImageSpan(play, ImageSpan.ALIGN_BOTTOM);
         final Rect bounds = span.getDrawable().getBounds();
         result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        result.append(" ");
+
+        // Initialize and insert waveform drawable.
+        Object val = data.get("preview");
+        byte[] preview = null;
+        if (val instanceof String) {
+            preview = Base64.decode((String) val, Base64.DEFAULT);
+        }
+        if (preview != null && preview.length > MIN_AUDIO_PREVIEW_LENGTH) {
+            DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+            float width = mViewport * 0.8f - bounds.width() - 4 * IMAGE_H_PADDING * metrics.density;
+            waveDrawable = new WaveDrawable(res);
+            waveDrawable.setBounds(new Rect(0, 0, (int) width, (int) (bounds.height() * 0.9f)));
+            waveDrawable.setCallback(mContainer);
+            waveDrawable.put(preview);
+            ImageSpan wave = new ImageSpan(waveDrawable, ImageSpan.ALIGN_BASELINE);
+            result.append(new SpannableStringBuilder().append(" ", wave, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
+                    new ClickableSpan() {
+                        @Override
+                        public void onClick(@NonNull View widget) {
+                            int clickAt = -1;
+                            Object tag = widget.getTag(R.id.click_coordinates);
+                            if (tag instanceof Point) {
+                                clickAt = ((Point) tag).x - widget.getPaddingLeft();
+                            }
+                            widget.setTag(null);
+
+                            TextView tv = (TextView) widget;
+                            Layout tvl = tv.getLayout();
+                            Spanned fullText = (Spanned) tv.getText();
+                            float startX = tvl.getPrimaryHorizontal(fullText.getSpanStart(wave));
+                            float endX = tvl.getPrimaryHorizontal(fullText.getSpanEnd(wave));
+                            float seekPosition = (clickAt - startX) / (endX - startX);
+                            waveDrawable.seekTo(seekPosition);
+                            mContainer.postInvalidate();
+                            if (mClicker != null) {
+                                mClicker.onClick("AU", data, new AudioClickAction(seekPosition));
+                            }
+                        }
+                        @Override
+                        public void updateDrawState(@NonNull TextPaint ds) {}
+                    }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            waveDrawable = null;
+            result.append(res.getText(R.string.unavailable));
+        }
+
         if (mClicker != null) {
+            if (waveDrawable != null) {
+                waveDrawable.seekTo(0);
+            }
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
             result.setSpan(new ClickableSpan() {
                 @Override
@@ -221,9 +274,15 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                     if (state.length > 0 && state[0] == android.R.attr.state_checked) {
                         play.setState(new int[]{});
                         action = AudioClickAction.Action.PAUSE;
+                        if (waveDrawable != null) {
+                            waveDrawable.stop();
+                        }
                     } else {
                         play.setState(new int[]{android.R.attr.state_checked});
                         action = AudioClickAction.Action.PLAY;
+                        if (waveDrawable != null) {
+                            waveDrawable.start();
+                        }
                     }
                     mContainer.postInvalidate();
                     mClicker.onClick("AU", data, new AudioClickAction(action));
@@ -231,51 +290,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 // Ignored.
                 @Override public void updateDrawState(@NonNull TextPaint ds) {}
             }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
-        }
-
-        // Insert waveform.
-        result.append(" ");
-        Object val = data.get("preview");
-        byte[] preview = null;
-        if (val instanceof String) {
-            preview = Base64.decode((String) val, Base64.DEFAULT);
-        }
-        if (preview != null && preview.length > MIN_AUDIO_PREVIEW_LENGTH) {
-            DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-            float width = mViewport * 0.8f - bounds.width() - 4 * IMAGE_H_PADDING * metrics.density;
-            WaveDrawable dw = new WaveDrawable(res);
-            dw.setBounds(new Rect(0, 0, (int) width, (int) (bounds.height() * 0.9f)));
-            dw.put(preview);
-            dw.setLevel(1);
-            ImageSpan wave = new ImageSpan(dw, ImageSpan.ALIGN_BASELINE);
-            result.append(new SpannableStringBuilder().append(" ", wave, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
-                    new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    int clickAt = -1;
-                    Object tag = widget.getTag(R.id.click_coordinates);
-                    if (tag instanceof Point) {
-                        clickAt = ((Point) tag).x - widget.getPaddingLeft();
-                    }
-                    widget.setTag(null);
-
-                    TextView tv = (TextView) widget;
-                    Layout tvl = tv.getLayout();
-                    Spanned fullText = (Spanned) tv.getText();
-                    float startX = tvl.getPrimaryHorizontal(fullText.getSpanStart(wave));
-                    float endX = tvl.getPrimaryHorizontal(fullText.getSpanEnd(wave));
-                    int level = (int) ((clickAt - startX) / (endX - startX) * 9999f) + 1;
-                    dw.setLevel(level);
-                    mContainer.postInvalidate();
-                    if (mClicker != null) {
-                        mClicker.onClick("AU", data, new AudioClickAction(level));
-                    }
-                }
-                @Override
-                public void updateDrawState(@NonNull TextPaint ds) {}
-            }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            result.append(res.getText(R.string.unavailable));
         }
 
         // Insert duration on the next line as small text.
@@ -669,7 +683,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     public static class AudioClickAction {
         public enum Action {PLAY, PAUSE}
 
-        public Integer seekTo;
+        public Float seekTo;
         public Action action;
 
         public AudioClickAction(Action action) {
@@ -677,7 +691,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             seekTo = null;
         }
 
-        public AudioClickAction(int seekTo) {
+        public AudioClickAction(float seekTo) {
             action = null;
             this.seekTo = seekTo;
         }

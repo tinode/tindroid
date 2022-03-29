@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,6 +84,8 @@ public class MessagesFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
+
+    private FloatingActionButton mGoToLatest;
 
     private String mTopicName = null;
     private String mMessageToSend = null;
@@ -182,6 +185,11 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
+        mGoToLatest = activity.findViewById(R.id.goToLatest);
+        mGoToLatest.setOnClickListener(v -> {
+            scrollToBottom(true);
+        });
+
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override
             public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
@@ -212,6 +220,16 @@ public class MessagesFragment extends Fragment {
                 int pos = mMessageViewLayoutManager.findLastVisibleItemPosition();
                 if (itemCount - pos < 4) {
                     ((MessagesAdapter) adapter).loadNextPage();
+                }
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                int pos = mMessageViewLayoutManager.findFirstVisibleItemPosition();
+                if (dy > 5 && pos > 2) {
+                    mGoToLatest.show();
+                } else if (dy < -5 || pos == 0) {
+                    mGoToLatest.hide();
                 }
             }
         });
@@ -493,8 +511,12 @@ public class MessagesFragment extends Fragment {
     }
 
 
-    private void scrollToBottom() {
-        mRecyclerView.scrollToPosition(0);
+    private void scrollToBottom(boolean smooth) {
+        if (smooth) {
+            mRecyclerView.smoothScrollToPosition(0);
+        } else {
+            mRecyclerView.scrollToPosition(0);
+        }
     }
 
     @Override
@@ -793,7 +815,7 @@ public class MessagesFragment extends Fragment {
         if (activity != null) {
             boolean done = activity.sendMessage(content, replyTo);
             if (done) {
-                scrollToBottom();
+                scrollToBottom(false);
             }
             return done;
         }

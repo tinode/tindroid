@@ -7,8 +7,10 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
+import android.util.Log;
 
-import androidx.annotation.ColorInt;
+import androidx.annotation.FloatRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import co.tinode.tindroid.R;
@@ -16,10 +18,13 @@ import co.tinode.tindroid.R;
 /**
  * Drawable which visualizes sound amplitudes as a waveform.
  */
-public class WaveDrawable extends Drawable {
+public class WaveDrawable extends Drawable implements Runnable {
     // Bars and spacing sizes in DP.
     private static final float LINE_WIDTH = 3f;
     private static final float SPACING = 1f;
+
+    // Time between redraws in milliseconds.
+    private static final int FRAME_DURATION = 500;
 
     // Display density.
     private static float sDensity = -1f;
@@ -29,17 +34,26 @@ public class WaveDrawable extends Drawable {
     private static float sSpacing;
     private static float sThumbRadius;
 
-    // Amplitude values passed by the caller resampled to fit the screen.
+    // Duration of the audio in milliseconds.
+    private int mDuration;
+
+    // Current thumb position as a fraction of the total 0..1
+    private float mSeekPosition = -1f;
+
+    // Amplitude values received from the caller and resampled to fit the screen.
     private float[] mBuffer;
     // Count of amplitude values actually added to the buffer.
     private int mContains;
     // Entry point in mBuffer (mBuffer is a circular buffer).
     private int mIndex;
-    // Array of 4 values for each bar: startX, startY, stopX, stopY.
+    // Array of 4 values for each amplitude bar: startX, startY, stopX, stopY.
     private float[] mBars = null;
     // Canvas width which fits whole number of bars.
     private int mEffectiveWidth;
+    // If the Drawable is animated.
+    private boolean mRunning  = false;
 
+    // Paints for individual components of the drawable.
     private final Paint mBarPaint;
     private final Paint mPastBarPaint;
     private final Paint mThumbPaint;
@@ -105,12 +119,11 @@ public class WaveDrawable extends Drawable {
             return;
         }
 
-        int level = getLevel();
-        if (level > 0) {
+        if (mSeekPosition >= 0) {
             // Draw past - future bars and thumb on top of them.
-            float cx = (float) level * (mEffectiveWidth - sThumbRadius * 2) / 10000f + sThumbRadius;
+            float cx = seekPositionToX();
 
-            int dividedAt = (int) (mBars.length * 0.25f * (float) level / 10000f) * 4;
+            int dividedAt = (int) (mBars.length * 0.25f * mSeekPosition) * 4;
 
             // Already played amplitude bars.
             canvas.drawLines(mBars, 0, dividedAt, mPastBarPaint);
@@ -147,9 +160,52 @@ public class WaveDrawable extends Drawable {
     }
 
     @Override
-    protected boolean onLevelChange(int level) {
-        invalidateSelf();
-        return true;
+    public void run() {
+        Callback cb = getCallback();
+        if (cb == null) {
+            Log.i("WD", "run: No callback");
+        } else {
+            Log.i("WD", "run: Callback class = " + cb.getClass().getSimpleName());
+        }
+
+        float pos = mSeekPosition + (float) FRAME_DURATION / mDuration;
+        seekTo(pos);
+        if (pos < 1) {
+            nextFrame();
+        }
+    }
+
+    public void start() {
+        Callback cb = getCallback();
+        if (cb == null) {
+            Log.i("WD", "start: No callback");
+        } else {
+            Log.i("WD", "start: Callback class = " + cb.getClass().getSimpleName());
+        }
+        if (!mRunning) {
+            Log.i("WD", "start");
+            mRunning = true;
+            nextFrame();
+        }
+    }
+
+    public void stop() {
+        Log.i("WD", "STOP");
+        mRunning = false;
+        unscheduleSelf(this);
+    }
+
+    private void nextFrame() {
+        unscheduleSelf(this);
+        scheduleSelf(this, SystemClock.uptimeMillis() + FRAME_DURATION);
+    }
+
+    public void seekTo(@FloatRange(from = 0f, to = 1f) float fraction) {
+        if (mSeekPosition != fraction) {
+            Log.i("WD", "Seek to " + fraction);
+            mSeekPosition = Math.max(Math.min(fraction, 1f), 0f);
+            invalidateSelf();
+        }
     }
 
     // Add another bar to waveform.
@@ -213,6 +269,12 @@ public class WaveDrawable extends Drawable {
             // stopY
             mBars[i * 4 + 3] = (height + y) * 0.5f;
         }
+    }
+
+    // Get thumb position for level.
+    private float seekPositionToX() {
+        float base = (int) (mBars.length / 4f * mSeekPosition);
+        return mBars[(int) base * 4] + (base - (int) base) * (sLineWidth + sSpacing);
     }
 
     // Quick and dirty resampling of the original preview bars into a smaller (or equal) number of bars we can display here.
