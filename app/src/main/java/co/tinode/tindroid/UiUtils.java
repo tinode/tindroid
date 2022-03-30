@@ -15,6 +15,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
@@ -954,6 +955,7 @@ public class UiUtils {
      * @param <T> type of the topic
      * @return result of the request to the server.
      */
+    @SuppressWarnings("UnusedReturnValue")
     static <T extends Topic<VxCard, ?, ?, ?>>
     PromisedReply<ServerMessage> updateAvatar(final T topic, Bitmap bmp) {
         final VxCard pub;
@@ -1286,6 +1288,16 @@ public class UiUtils {
             return b.length() == 0;
         }
         return a.length() == 0;
+    }
+
+    // Convert point from fromView coordinates to toView coordinates.
+    static PointF convertPoint(float x, float y, View fromView, View toView) {
+        int[] src = new int[2];
+        int[] dst = new int[2];
+        fromView.getLocationOnScreen(src);
+        toView.getLocationOnScreen(dst);
+
+        return new PointF(src[0] - dst[0] + x, src[1] - dst[1] + y);
     }
 
     interface ProgressIndicator {

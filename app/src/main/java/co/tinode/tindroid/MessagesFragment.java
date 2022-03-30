@@ -5,19 +5,24 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
+import android.graphics.PointF;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -55,6 +60,7 @@ import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.SendForwardedFormatter;
 import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.MovableActionButton;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -186,9 +192,7 @@ public class MessagesFragment extends Fragment {
         }
 
         mGoToLatest = activity.findViewById(R.id.goToLatest);
-        mGoToLatest.setOnClickListener(v -> {
-            scrollToBottom(true);
-        });
+        mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override
@@ -267,9 +271,51 @@ public class MessagesFragment extends Fragment {
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
-        // Send message on button click
+        // Audio recorder button.
+        MovableActionButton mab = view.findViewById(R.id.audioRecorder);
+        mab.setConstraintChecker((newPos, buttonRect, parentRect) -> {
+            Log.i("MAB", "Constraint checker");
+            // Constraint: left, right.
+            newPos.x = Math.max(parentRect.left, newPos.x);
+            newPos.x = Math.min(parentRect.right - buttonRect.width(), newPos.x);
+
+            // Constraints: top, bottom.
+            newPos.y = Math.max(parentRect.top, newPos.y);
+            newPos.y = Math.min(parentRect.bottom - buttonRect.height(), newPos.y);
+            return newPos;
+        });
+        // Launch audio recorder.
         AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
-        audio.setOnClickListener(v -> { /* TODO */ });
+        GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+            public void onLongPress(MotionEvent e) {
+                mab.setVisibility(View.VISIBLE);
+                mab.requestFocus();
+                MotionEvent motionEvent = MotionEvent.obtain(
+                    e.getDownTime(), e.getEventTime(),
+                    MotionEvent.ACTION_DOWN,
+                    e.getX(),
+                    e.getY(),
+                    0
+                );
+                mab.dispatchTouchEvent(motionEvent);
+            }
+        });
+        // Ignore the warning: the click detection is not needed here.
+        audio.setOnTouchListener((v, src) -> {
+            if (mab.getVisibility() == View.VISIBLE) {
+                PointF converted = UiUtils.convertPoint(src.getX(), src.getY(), audio, mab);
+                MotionEvent dst = MotionEvent.obtain(
+                        src.getDownTime(), src.getEventTime(),
+                        src.getAction(),
+                        converted.x,
+                        converted.y,
+                        src.getMetaState()
+                );
+                mab.dispatchTouchEvent(dst);
+                return true;
+            }
+            return gd.onTouchEvent(src);
+        });
         AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
         send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));

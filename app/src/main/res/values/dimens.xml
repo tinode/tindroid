@@ -8,6 +8,10 @@
     <dimen name="fab_mini_elevation">3dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="fab_mini_margin">12dp</dimen>
+    <dimen name="fab_large">72dp</dimen>
+    <dimen name="fab_large_icon">36dp</dimen>
+    <dimen name="fab_micro">32dp</dimen>
+    <dimen name="fab_micro_icon">16dp</dimen>
     <dimen name="activity_padding">6dp</dimen>
     <dimen name="avatar_size_large">144dp</dimen>
     <dimen name="label_h_padding">4dp</dimen>
