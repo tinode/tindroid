@@ -3,24 +3,28 @@ package co.tinode.tindroid.widgets;
 import android.content.Context;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.util.ArrayMap;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.Map;
+
 /**
  * FloatingActionButton which can be dragged around.
  */
 public class MovableActionButton extends FloatingActionButton implements View.OnTouchListener {
     private final static int MIN_DRAG_DISTANCE = 8;
-    private final static int ACTION_DRAG_DISTANCE = 32;
 
     private int mDragToIgnore;
 
     private ConstraintChecker mConstraintChecker = null;
+    private ActionListener mActionListener = null;
+
+    private ArrayMap<Integer, Rect> mActionZones;
 
     // Drag started.
     float mRawStartX;
@@ -55,23 +59,40 @@ public class MovableActionButton extends FloatingActionButton implements View.On
         mConstraintChecker = checker;
     }
 
+    public void setOnActionListener(ActionListener listener) {
+        mActionListener = listener;
+    }
+
+    public void addActionZone(int id, Rect zone) {
+        if (mActionZones == null) {
+            mActionZones = new ArrayMap<>();
+        }
+        mActionZones.put(id, new Rect(zone));
+    }
+
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         int action = motionEvent.getAction();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                Log.i("MAB", "DOWN");
                 mRawStartX = motionEvent.getRawX();
                 mRawStartY = motionEvent.getRawY();
+                // Conversion from screen to view coordinates.
                 mDiffX = view.getX() - mRawStartX;
                 mDiffY = view.getY() - mRawStartY;
                 return true;
 
             case MotionEvent.ACTION_UP:
-                Log.i("MAB", "UP");
+                float dX = motionEvent.getRawX() - mRawStartX;
+                float dY = motionEvent.getRawY() - mRawStartY;
+
+                boolean putBack = false;
+                if (mActionListener != null) {
+                    putBack = mActionListener.onUp(dX, dY);
+                }
+
                 // Make sure the drag was long enough.
-                if (Math.abs(motionEvent.getRawX() - mRawStartX) < mDragToIgnore &&
-                        Math.abs(motionEvent.getRawY() - mRawStartY) < mDragToIgnore) {
+                if (Math.abs(dX) < mDragToIgnore && Math.abs(dY) < mDragToIgnore || putBack) {
                     // Not a drag: too short. Move back and register click.
                     view.animate().x(mRawStartX + mDiffX).y(mRawStartY + mDiffY).setDuration(0).start();
                     return performClick();
@@ -92,11 +113,27 @@ public class MovableActionButton extends FloatingActionButton implements View.On
                             layoutParams.topMargin,
                             viewParent.getWidth() - layoutParams.rightMargin,
                             viewParent.getHeight() - layoutParams.bottomMargin);
-                    newPos = mConstraintChecker.check(newPos, viewRect, parentRect);
+                    newPos = mConstraintChecker.check(newPos,
+                            new PointF(mRawStartX + mDiffX, mRawStartY + mDiffY), viewRect, parentRect);
                 }
 
                 // Animate view to the new position.
                 view.animate().x(newPos.x).y(newPos.y).setDuration(0).start();
+
+                // Check if the center of the button is inside the action zone.
+                if (mActionZones != null && mActionListener != null) {
+                    float x = newPos.x + view.getWidth() * 0.5f;
+                    float y = newPos.y + view.getHeight() * 0.5f;
+                    for (Map.Entry<Integer, Rect> e : mActionZones.entrySet()) {
+                        if (e.getValue().contains((int) x, (int) y)) {
+                            if (mActionListener.onZoneReached(e.getKey())) {
+                                view.animate().x(mRawStartX + mDiffX).y(mRawStartY + mDiffY).setDuration(0).start();
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 return true;
 
             default:
@@ -104,7 +141,17 @@ public class MovableActionButton extends FloatingActionButton implements View.On
         }
     }
 
+    public static class ActionListener {
+        public boolean onUp(float dX, float dY) {
+            return false;
+        }
+
+        public boolean onZoneReached(int id) {
+            return false;
+        }
+    }
+
     public interface ConstraintChecker {
-        PointF check(PointF newPos, Rect view, Rect parent);
+        PointF check(PointF newPos, PointF startPos, Rect view, Rect parent);
     }
 }

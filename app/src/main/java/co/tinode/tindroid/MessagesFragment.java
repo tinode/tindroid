@@ -5,19 +5,19 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
-import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -83,6 +83,9 @@ public class MessagesFragment extends Fragment {
     static final String MESSAGE_TO_SEND = "messageText";
     static final String MESSAGE_REPLY = "reply";
     static final String MESSAGE_REPLY_ID = "replyID";
+
+    static final int ZONE_CANCEL = 0;
+    static final int ZONE_LOCK = 1;
 
     private ComTopic<VxCard> mTopic;
 
@@ -183,6 +186,7 @@ public class MessagesFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_messages, container, false);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
@@ -273,49 +277,83 @@ public class MessagesFragment extends Fragment {
 
         // Audio recorder button.
         MovableActionButton mab = view.findViewById(R.id.audioRecorder);
-        mab.setConstraintChecker((newPos, buttonRect, parentRect) -> {
-            Log.i("MAB", "Constraint checker");
-            // Constraint: left, right.
-            newPos.x = Math.max(parentRect.left, newPos.x);
-            newPos.x = Math.min(parentRect.right - buttonRect.width(), newPos.x);
+        // Lock button
+        FloatingActionButton lockFab = view.findViewById(R.id.lockAudioRecording);
+        mab.setConstraintChecker((newPos, startPos, buttonRect, parentRect) -> {
+            // Constrain button moves to strictly vertical UP or horizontal LEFT (no diagonal).
+            float dX = Math.min(0, newPos.x - startPos.x);
+            float dY = Math.min(0, newPos.y - startPos.y);
 
-            // Constraints: top, bottom.
-            newPos.y = Math.max(parentRect.top, newPos.y);
-            newPos.y = Math.min(parentRect.bottom - buttonRect.height(), newPos.y);
+            if (Math.abs(dX) > Math.abs(dY)) {
+                // Horizontal move.
+                newPos.x = Math.max(parentRect.left, newPos.x);
+                newPos.y = startPos.y;
+            } else {
+                // Vertical move.
+                newPos.x = startPos.x;
+                newPos.y = Math.max(parentRect.top, newPos.y);
+            }
             return newPos;
+        });
+        mab.setOnActionListener(new MovableActionButton.ActionListener() {
+            @Override
+            public boolean onUp(float x, float y) {
+                mab.setVisibility(View.INVISIBLE);
+                lockFab.setVisibility(View.GONE);
+                return true;
+            }
+
+            @Override
+            public boolean onZoneReached(int id) {
+                mab.performHapticFeedback(android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.Q ?
+                        (id == ZONE_CANCEL ? HapticFeedbackConstants.REJECT : HapticFeedbackConstants.CONFIRM) :
+                        HapticFeedbackConstants.CONTEXT_CLICK
+                );
+                mab.setVisibility(View.INVISIBLE);
+                lockFab.setVisibility(View.GONE);
+                return true;
+            }
         });
         // Launch audio recorder.
         AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
         GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             public void onLongPress(MotionEvent e) {
                 mab.setVisibility(View.VISIBLE);
+                lockFab.setAlpha(0.8f);
+                lockFab.setVisibility(View.VISIBLE);
                 mab.requestFocus();
+                // Cancel zone on the left.
+                int x = mab.getLeft();
+                int y = mab.getTop();
+                int width = mab.getWidth();
+                int height = mab.getHeight();
+                mab.addActionZone(ZONE_CANCEL, new Rect(x - (int) (width * 1.5), y,
+                        x - (int) (width * 0.5), y + height));
+                // Lock zone above.
+                mab.addActionZone(ZONE_LOCK, new Rect(x, y - (int) (height * 1.5),
+                        x + width, y - (int) (height * 0.5)));
                 MotionEvent motionEvent = MotionEvent.obtain(
                     e.getDownTime(), e.getEventTime(),
                     MotionEvent.ACTION_DOWN,
-                    e.getX(),
-                    e.getY(),
+                    e.getRawX(),
+                    e.getRawY(),
                     0
                 );
                 mab.dispatchTouchEvent(motionEvent);
             }
         });
-        // Ignore the warning: the click detection is not needed here.
-        audio.setOnTouchListener((v, src) -> {
+        // Ignore the warning: click detection is not needed here.
+        audio.setOnTouchListener((v, event) -> {
+            int action = event.getAction();
             if (mab.getVisibility() == View.VISIBLE) {
-                PointF converted = UiUtils.convertPoint(src.getX(), src.getY(), audio, mab);
-                MotionEvent dst = MotionEvent.obtain(
-                        src.getDownTime(), src.getEventTime(),
-                        src.getAction(),
-                        converted.x,
-                        converted.y,
-                        src.getMetaState()
-                );
-                mab.dispatchTouchEvent(dst);
-                return true;
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    audio.setPressed(false);
+                }
+                return mab.dispatchTouchEvent(event);
             }
-            return gd.onTouchEvent(src);
+            return gd.onTouchEvent(event);
         });
+
         AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
         send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
