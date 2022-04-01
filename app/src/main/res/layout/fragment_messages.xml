@@ -61,7 +61,8 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:measureAllChildren="true">
 
             <include layout="@layout/fragment_send_message" />
 
@@ -70,6 +71,10 @@
             <include layout="@layout/fragment_enable_peer" />
 
             <include layout="@layout/fragment_forward_message" />
+
+            <include layout="@layout/fragment_record_audio" />
+
+            <include layout="@layout/fragment_record_audio_short" />
         </FrameLayout>
 
     </androidx.cardview.widget.CardView>

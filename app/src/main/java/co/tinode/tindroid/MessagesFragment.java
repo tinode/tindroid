@@ -55,12 +55,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.Data;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.SendForwardedFormatter;
 import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.MovableActionButton;
+import co.tinode.tindroid.widgets.WaveDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -107,6 +109,8 @@ public class MessagesFragment extends Fragment {
     private Drafty mReply = null;
     private Drafty mContentToForward = null;
     private Drafty mForwardSender = null;
+
+    private int mVisibleSendPanel = R.id.sendMessagePanel;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -311,6 +315,12 @@ public class MessagesFragment extends Fragment {
                 );
                 mab.setVisibility(View.INVISIBLE);
                 lockFab.setVisibility(View.GONE);
+                if (id == ZONE_CANCEL) {
+                    setSendPanelVisible(activity, R.id.sendMessagePanel);
+                } else {
+                    setSendPanelVisible(activity, R.id.recordAudioPanel);
+                    activity.findViewById(R.id.audioWave).setBackground(new WaveDrawable(activity.getResources()));
+                }
                 return true;
             }
         });
@@ -322,6 +332,8 @@ public class MessagesFragment extends Fragment {
                 lockFab.setAlpha(0.8f);
                 lockFab.setVisibility(View.VISIBLE);
                 mab.requestFocus();
+                setSendPanelVisible(activity, R.id.recordAudioShortPanel);
+                activity.findViewById(R.id.audioWaveShort).setBackground(new WaveDrawable(activity.getResources()));
                 // Cancel zone on the left.
                 int x = mab.getLeft();
                 int y = mab.getTop();
@@ -354,6 +366,8 @@ public class MessagesFragment extends Fragment {
             return gd.onTouchEvent(event);
         });
 
+        view.findViewById(R.id.deleteRecording).setOnClickListener(v ->
+                setSendPanelVisible(activity, R.id.sendMessagePanel));
         AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
         send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
@@ -509,6 +523,15 @@ public class MessagesFragment extends Fragment {
         mMessagesAdapter.resetContent(topicName);
     }
 
+    private void setSendPanelVisible(Activity activity, int id) {
+        if (mVisibleSendPanel == id) {
+            return;
+        }
+        activity.findViewById(id).setVisibility(View.VISIBLE);
+        activity.findViewById(mVisibleSendPanel).setVisibility(View.GONE);
+        mVisibleSendPanel = id;
+    }
+
     private void updateFormValues(Bundle args) {
         if (!isAdded()) {
             return;
@@ -519,16 +542,11 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
-        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
-
         if (mTopic == null) {
             // Default view when the topic is not available.
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+            setSendPanelVisible(activity, R.id.sendMessageDisabled);
             UiUtils.setupToolbar(activity, null, mTopicName, false, null);
             return;
         }
@@ -540,6 +558,7 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
+        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
         if (mTopic.isReader()) {
             activity.findViewById(R.id.notReadable).setVisibility(View.GONE);
         } else {
@@ -565,28 +584,23 @@ public class MessagesFragment extends Fragment {
         if (mContentToForward != null) {
             showContentToForward(activity, mForwardSender, mContentToForward);
         } else if (mTopic.isWriter() && !mTopic.isBlocked()) {
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
+            // activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
             boolean isJoiner = peer != null && peer.acs != null && peer.acs.isJoiner(Acs.Side.WANT);
             AcsHelper missing = peer != null && peer.acs != null ? peer.acs.getMissing() : new AcsHelper();
             if (isJoiner && (missing.isReader() || missing.isWriter())) {
-                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+                setSendPanelVisible(activity, R.id.peersMessagingDisabled);
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
                     input.setText(mMessageToSend);
                     mMessageToSend = null;
                 }
-
-                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+                setSendPanelVisible(activity, R.id.sendMessagePanel);
             }
         } else {
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+            setSendPanelVisible(activity, R.id.sendMessageDisabled);
         }
 
         if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {

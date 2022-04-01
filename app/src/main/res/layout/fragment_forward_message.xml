@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="6sp"
-    android:visibility="visible">
+    android:visibility="gone">
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/cancelForwardingPreview"

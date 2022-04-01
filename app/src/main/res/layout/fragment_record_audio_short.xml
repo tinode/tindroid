@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/recordAudioShortPanel"
+    android:layout_width="match_parent"
+    android:layout_height="57dp"
+    android:orientation="horizontal"
+    android:padding="6dp"
+    android:visibility="visible"
+    tools:ignore="RtlSymmetry">
+
+    <TextView
+        android:id="@+id/durationShort"
+        style="@style/textPrimary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:layout_gravity="center_horizontal|center_vertical"
+        tools:text="12:55" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/audioWaveShort"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:importantForAutofill="no"
+        tools:src="@drawable/tag_background" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="0"
+        android:contentDescription="@string/delete_recording_hint"
+        android:paddingStart="6dp"
+        android:paddingEnd="90dp"
+        app:srcCompat="@drawable/ic_delete_outline"
+        app:tint="?android:textColorPrimary" />
+
+</LinearLayout>
