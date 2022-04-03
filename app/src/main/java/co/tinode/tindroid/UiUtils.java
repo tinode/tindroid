@@ -474,6 +474,22 @@ public class UiUtils {
         return "unknown";
     }
 
+    // Convert milliseconds to '00:00' format.
+    static String millisToTime(int millis) {
+        StringBuilder sb = new StringBuilder();
+        float duration = millis / 1000f;
+        int min = (int) Math.floor(duration / 60f);
+        if (min < 10) {
+            sb.append("0");
+        }
+        sb.append(min).append(":");
+        int sec = (int) (duration % 60f);
+        if (sec < 10) {
+            sb.append("0");
+        }
+        return sb.append(sec).toString();
+    }
+
     static Intent avatarSelectorIntent(@NonNull final Activity activity,
                                            @Nullable ActivityResultLauncher<String[]> missingPermissionsLauncher) {
         if (missingPermissionsLauncher != null) {

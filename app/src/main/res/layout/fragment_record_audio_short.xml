@@ -15,17 +15,17 @@
         style="@style/textPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center_vertical"
         android:paddingStart="6dp"
         android:paddingEnd="6dp"
-        android:layout_gravity="center_horizontal|center_vertical"
-        tools:text="12:55" />
+        android:text="00:00"
+        tools:ignore="HardcodedText" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/audioWaveShort"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:importantForAutofill="no"
         tools:src="@drawable/tag_background" />
 
     <androidx.appcompat.widget.AppCompatImageView

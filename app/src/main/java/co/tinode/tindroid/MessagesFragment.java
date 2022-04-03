@@ -6,13 +6,15 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Rect;
-import android.media.EncoderProfiles;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -28,6 +30,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -91,6 +94,9 @@ public class MessagesFragment extends Fragment {
     static final int ZONE_CANCEL = 0;
     static final int ZONE_LOCK = 1;
 
+    // Number of milliseconds between audio samples for recording visualization.
+    static final int AUDIO_SAMPLING = 100;
+
     private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
@@ -114,6 +120,9 @@ public class MessagesFragment extends Fragment {
 
     private MediaRecorder mAudioRecorder = null;
     private File mAudioRecord = null;
+    private long mRecordingStarted = 0;
+
+    private final Handler mAudioSamplingHandler = new Handler(Looper.getMainLooper());
 
     private int mVisibleSendPanel = R.id.sendMessagePanel;
 
@@ -139,15 +148,18 @@ public class MessagesFragment extends Fragment {
                 openImageSelector(getActivity());
             });
 
-    private final ActivityResultLauncher<String> mAudioRecorderPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (!isGranted) {
-                    Activity activity = getActivity();
-                    // Disable audio recording button.
-                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private final ActivityResultLauncher<String[]> mAudioRecorderPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    if (!e.getValue()) {
+                        // Some permission is missing. Disable audio recording button.
+                        Activity activity = getActivity();
+                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                            return;
+                        }
+                        getActivity().findViewById(R.id.audioRecorder).setEnabled(false);
                         return;
                     }
-                    getActivity().findViewById(R.id.audioRecorder).setEnabled(false);
                 }
             });
 
@@ -304,6 +316,30 @@ public class MessagesFragment extends Fragment {
         AppCompatImageButton playButton = view.findViewById(R.id.playRecording);
         // Stop recording button in locked recording panel.
         AppCompatImageButton stopButton = view.findViewById(R.id.stopRecording);
+        // ImageView with waveform visualization.
+        ImageView wave = view.findViewById(R.id.audioWave);
+        wave.setBackground(new WaveDrawable(getResources()));
+        ImageView waveShort = view.findViewById(R.id.audioWaveShort);
+        // Recording timer.
+        TextView timerView = view.findViewById(R.id.duration);
+        TextView timerShortView = view.findViewById(R.id.durationShort);
+        waveShort.setBackground(new WaveDrawable(getResources()));
+        final Runnable visualizer = new Runnable() {
+            @Override
+            public void run() {
+                if (mAudioRecorder != null) {
+                    int x = mAudioRecorder.getMaxAmplitude();
+                    if (mVisibleSendPanel == R.id.recordAudioPanel) {
+                        ((WaveDrawable) wave.getBackground()).put(x);
+                        timerView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                    } else if (mVisibleSendPanel == R.id.recordAudioShortPanel) {
+                        ((WaveDrawable) waveShort.getBackground()).put(x);
+                        timerShortView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                    }
+                    mAudioSamplingHandler.postDelayed(this, AUDIO_SAMPLING);
+                }
+            }
+        };
 
         mab.setConstraintChecker((newPos, startPos, buttonRect, parentRect) -> {
             // Constrain button moves to strictly vertical UP or horizontal LEFT (no diagonal).
@@ -363,7 +399,9 @@ public class MessagesFragment extends Fragment {
         GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             public void onLongPress(MotionEvent e) {
                 if (!UiUtils.isPermissionGranted(activity, Manifest.permission.RECORD_AUDIO)) {
-                    mAudioRecorderPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+                    mAudioRecorderPermissionLauncher.launch(new String[] {
+                            Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS
+                    });
                     return;
                 }
 
@@ -372,9 +410,12 @@ public class MessagesFragment extends Fragment {
                 }
                 try {
                     mAudioRecorder.start();
+                    mRecordingStarted = SystemClock.uptimeMillis();
+                    visualizer.run();
                 } catch (RuntimeException ex) {
                     Log.e(TAG, "Failed to start audio recording", ex);
                     Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
                 mab.setVisibility(View.VISIBLE);
@@ -780,6 +821,7 @@ public class MessagesFragment extends Fragment {
             mAudioRecord.delete();
             mAudioRecord = null;
         }
+
         mAudioRecorder = new MediaRecorder();
         mAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);

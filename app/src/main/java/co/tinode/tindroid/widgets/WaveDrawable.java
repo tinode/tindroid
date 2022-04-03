@@ -224,12 +224,17 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     // Add another bar to waveform.
     public void put(int amplitude) {
-        mBuffer[mIndex + mContains] = amplitude;
-        if (mContains == mBuffer.length) {
+        if (mBuffer == null) {
+            return;
+        }
+
+        if (mContains < mBuffer.length) {
+            mBuffer[mIndex + mContains] = amplitude;
+            mContains++;
+        } else {
             mIndex ++;
             mIndex %= mBuffer.length;
-        } else {
-            mContains ++;
+            mBuffer[mIndex] = amplitude;
         }
         recalcBars();
         invalidateSelf();
@@ -269,7 +274,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
         mBars = new float[mContains * 4];
         for (int i = 0; i < mContains; i++) {
-            float amp = (float) mBuffer[i];
+            float amp = (float) mBuffer[(mIndex + i)  % mContains];
             if (amp < 0) {
                 amp = 0f;
             }
